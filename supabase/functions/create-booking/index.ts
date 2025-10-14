@@ -60,19 +60,26 @@ serve(async (req) => {
 
         const { access_token } = await tokenResponse.json();
 
-        // Create calendar event
-        const startDateTime = new Date(`${bookingData.booking_date}T${bookingData.booking_time}`);
-        const endDateTime = new Date(startDateTime.getTime() + bookingData.total_duration * 60000);
+        // Create calendar event with Madrid timezone
+        // Format datetime strings in local Madrid time (without timezone suffix)
+        const startDateTimeStr = `${bookingData.booking_date}T${bookingData.booking_time}:00`;
+        
+        // Calculate end time in Madrid timezone
+        const [startHours, startMinutes] = bookingData.booking_time.split(':').map(Number);
+        const totalMinutes = startHours * 60 + startMinutes + bookingData.total_duration;
+        const endHours = Math.floor(totalMinutes / 60);
+        const endMinutes = totalMinutes % 60;
+        const endDateTimeStr = `${bookingData.booking_date}T${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}:00`;
 
         const event = {
           summary: `Cita - ${bookingData.customer_name}`,
           description: `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.customer_phone}\nServicios: ${bookingData.services.map(s => s.name).join(', ')}\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
           start: {
-            dateTime: startDateTime.toISOString(),
+            dateTime: startDateTimeStr,
             timeZone: 'Europe/Madrid',
           },
           end: {
-            dateTime: endDateTime.toISOString(),
+            dateTime: endDateTimeStr,
             timeZone: 'Europe/Madrid',
           },
           attendees: [
