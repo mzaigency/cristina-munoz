@@ -33,11 +33,16 @@ export const BookingConfirmation = ({
         setConfirmed(true);
         
         // Call edge function to create booking and Google Calendar event
+        // Format date in local timezone (Madrid)
+        const bookingDate = bookingData.date ? 
+          `${bookingData.date.getFullYear()}-${String(bookingData.date.getMonth() + 1).padStart(2, '0')}-${String(bookingData.date.getDate()).padStart(2, '0')}` 
+          : '';
+        
         const { data, error } = await supabase.functions.invoke('create-booking', {
           body: {
             customer_name: name,
             customer_phone: phone,
-            booking_date: bookingData.date?.toISOString().split('T')[0],
+            booking_date: bookingDate,
             booking_time: bookingData.time,
             stylist: bookingData.stylist,
             services: bookingData.services.map(s => ({ name: s.name, duration: s.duration })),
