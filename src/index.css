@@ -17,34 +17,34 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 340 15% 20%;
 
-    --primary: 340 65% 75%;
-    --primary-foreground: 340 15% 20%;
+    --primary: 215 25% 27%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 340 35% 92%;
-    --secondary-foreground: 340 15% 20%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 215 25% 27%;
 
-    --muted: 340 20% 96%;
-    --muted-foreground: 340 10% 50%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 10% 50%;
 
     --accent: 45 90% 70%;
-    --accent-foreground: 340 15% 20%;
+    --accent-foreground: 215 25% 27%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 340 20% 90%;
-    --input: 340 20% 90%;
-    --ring: 340 65% 75%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 215 25% 27%;
 
     --radius: 0.75rem;
     
     /* Custom salon colors */
-    --salon-pink: 340 65% 75%;
-    --salon-pink-light: 340 35% 92%;
-    --salon-pink-dark: 340 70% 60%;
+    --salon-pink: 215 25% 27%;
+    --salon-pink-light: 220 14% 96%;
+    --salon-pink-dark: 215 28% 17%;
     --salon-gold: 45 90% 70%;
     --salon-gold-light: 45 85% 85%;
-    --salon-cream: 40 30% 97%;
+    --salon-cream: 220 14% 98%;
 
     --sidebar-background: 0 0% 98%;
 
@@ -73,39 +73,39 @@ All colors MUST be HSL.
     --popover: 340 15% 12%;
     --popover-foreground: 340 20% 95%;
 
-    --primary: 340 65% 75%;
-    --primary-foreground: 340 15% 20%;
+    --primary: 215 25% 27%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 340 25% 20%;
-    --secondary-foreground: 340 20% 95%;
+    --secondary: 215 20% 20%;
+    --secondary-foreground: 220 14% 96%;
 
-    --muted: 340 15% 18%;
-    --muted-foreground: 340 20% 70%;
+    --muted: 215 15% 18%;
+    --muted-foreground: 215 15% 70%;
 
     --accent: 45 90% 70%;
-    --accent-foreground: 340 15% 20%;
+    --accent-foreground: 215 25% 27%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 340 20% 95%;
+    --destructive-foreground: 220 14% 96%;
 
-    --border: 340 15% 20%;
-    --input: 340 15% 20%;
-    --ring: 340 65% 75%;
-    --sidebar-background: 340 15% 12%;
-    --sidebar-foreground: 340 20% 95%;
-    --sidebar-primary: 340 65% 75%;
-    --sidebar-primary-foreground: 340 15% 20%;
-    --sidebar-accent: 340 15% 18%;
-    --sidebar-accent-foreground: 340 20% 95%;
-    --sidebar-border: 340 15% 18%;
-    --sidebar-ring: 340 65% 75%;
+    --border: 215 15% 20%;
+    --input: 215 15% 20%;
+    --ring: 215 25% 27%;
+    --sidebar-background: 215 20% 12%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 215 25% 27%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 15% 18%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 215 15% 18%;
+    --sidebar-ring: 215 25% 27%;
     
-    --salon-pink: 340 65% 75%;
-    --salon-pink-light: 340 35% 25%;
-    --salon-pink-dark: 340 70% 80%;
+    --salon-pink: 215 25% 27%;
+    --salon-pink-light: 215 20% 25%;
+    --salon-pink-dark: 215 28% 17%;
     --salon-gold: 45 90% 70%;
     --salon-gold-light: 45 70% 30%;
-    --salon-cream: 40 15% 15%;
+    --salon-cream: 215 15% 15%;
   }
 }
 
