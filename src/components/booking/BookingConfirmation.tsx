@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
@@ -26,14 +27,52 @@ export const BookingConfirmation = ({
   const [confirmed, setConfirmed] = useState(false);
   const { toast } = useToast();
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (name && phone) {
-      onConfirm(name, phone);
-      setConfirmed(true);
-      toast({
-        title: "¡Reserva confirmada!",
-        description: "Te esperamos en nuestra peluquería.",
-      });
+      try {
+        setConfirmed(true);
+        
+        // Call edge function to create booking and Google Calendar event
+        const { data, error } = await supabase.functions.invoke('create-booking', {
+          body: {
+            customer_name: name,
+            customer_phone: phone,
+            booking_date: bookingData.date?.toISOString().split('T')[0],
+            booking_time: bookingData.time,
+            stylist: bookingData.stylist,
+            services: bookingData.services.map(s => ({ name: s.name, duration: s.duration })),
+            total_duration: totalDuration,
+          },
+        });
+
+        if (error) {
+          console.error('Error creating booking:', error);
+          toast({
+            title: "Error",
+            description: "No se pudo completar la reserva. Por favor, intenta de nuevo.",
+            variant: "destructive",
+          });
+          setConfirmed(false);
+          return;
+        }
+
+        console.log('Booking created:', data);
+        onConfirm(name, phone);
+        toast({
+          title: "¡Reserva confirmada!",
+          description: data.googleEventCreated 
+            ? "Tu cita ha sido añadida al calendario de la peluquería."
+            : "Tu reserva ha sido guardada correctamente.",
+        });
+      } catch (error) {
+        console.error('Error:', error);
+        toast({
+          title: "Error",
+          description: "Ocurrió un error al procesar tu reserva.",
+          variant: "destructive",
+        });
+        setConfirmed(false);
+      }
     }
   };
 
