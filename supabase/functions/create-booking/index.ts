@@ -161,6 +161,29 @@ serve(async (req) => {
 
     console.log('Booking created successfully:', data);
 
+    // Trigger n8n webhook for WhatsApp notification (non-blocking)
+    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
+    if (n8nWebhookUrl) {
+      try {
+        fetch(n8nWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_name: data.customer_name,
+            customer_phone: data.customer_phone,
+            booking_date: data.booking_date,
+            booking_time: data.booking_time,
+            end_time: data.end_time,
+            stylist: data.stylist,
+            services: data.services,
+            total_duration: data.total_duration,
+          }),
+        }).catch(err => console.error('Error triggering n8n webhook:', err));
+      } catch (error) {
+        console.error('Error sending webhook:', error);
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 

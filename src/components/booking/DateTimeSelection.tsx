@@ -89,37 +89,65 @@ export const DateTimeSelection = ({
     if (!selectedDate) return [];
 
     const day = selectedDate.getDay();
+    
+    // Define business hours for each day
+    let morningEnd = 0;
+    let afternoonStart = 0;
+    let afternoonEnd = 0;
+    let morningStart = 0;
+    
+    if (day >= 2 && day <= 5) { // Tuesday to Friday
+      morningStart = 9 * 60; // 9:00
+      morningEnd = 12 * 60 + 30; // 12:30
+      afternoonStart = 15 * 60; // 15:00
+      afternoonEnd = 19 * 60; // 19:00
+    } else if (day === 6) { // Saturday
+      morningStart = 8 * 60; // 8:00
+      morningEnd = 13 * 60; // 13:00
+    } else {
+      return []; // Closed on Sunday and Monday
+    }
+
     const allSlots: string[] = [];
 
-    // Tuesday to Friday: 9:00-12:30 and 15:00-19:00
-    if (day >= 2 && day <= 5) {
-      // Morning slots (9:00 - 12:30)
-      for (let hour = 9; hour < 12; hour++) {
-        allSlots.push(`${hour.toString().padStart(2, "0")}:00`);
-        allSlots.push(`${hour.toString().padStart(2, "0")}:30`);
-      }
-      allSlots.push("12:00");
-      
-      // Afternoon slots (15:00 - 19:00)
-      for (let hour = 15; hour < 19; hour++) {
-        allSlots.push(`${hour.toString().padStart(2, "0")}:00`);
-        allSlots.push(`${hour.toString().padStart(2, "0")}:30`);
-      }
-    }
-    // Saturday: 8:00-13:00
-    else if (day === 6) {
-      for (let hour = 8; hour < 13; hour++) {
-        allSlots.push(`${hour.toString().padStart(2, "0")}:00`);
-        allSlots.push(`${hour.toString().padStart(2, "0")}:30`);
+    // Generate morning slots
+    if (morningEnd > 0) {
+      for (let minutes = morningStart; minutes < morningEnd; minutes += 30) {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        allSlots.push(`${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`);
       }
     }
 
-    // Filter out slots that don't have enough consecutive time available
+    // Generate afternoon slots
+    if (afternoonEnd > 0) {
+      for (let minutes = afternoonStart; minutes < afternoonEnd; minutes += 30) {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        allSlots.push(`${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`);
+      }
+    }
+
+    // Filter slots: must have enough consecutive time AND not exceed closing time
     return allSlots.filter((slot) => {
-      // Check if this slot and all needed consecutive slots are available
       const [hours, minutes] = slot.split(':').map(Number);
       const startMinutes = hours * 60 + minutes;
+      const endMinutes = startMinutes + totalDuration;
       
+      // Check if service would end after closing time
+      // Determine which period we're in
+      const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
+      const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
+      
+      if (inMorning && endMinutes > morningEnd) {
+        return false; // Service would extend past morning closing
+      }
+      
+      if (inAfternoon && endMinutes > afternoonEnd) {
+        return false; // Service would extend past afternoon closing
+      }
+      
+      // Check if all required slots are available (not booked)
       for (let i = 0; i < totalDuration; i += 30) {
         const checkMinutes = startMinutes + i;
         const checkHours = Math.floor(checkMinutes / 60);
@@ -128,11 +156,6 @@ export const DateTimeSelection = ({
         
         // If any required slot is booked, this start time is not available
         if (bookedSlots.includes(checkTime)) {
-          return false;
-        }
-        
-        // Also check if the slot exists in business hours
-        if (!allSlots.includes(checkTime)) {
           return false;
         }
       }
