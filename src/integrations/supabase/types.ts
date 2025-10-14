@@ -21,6 +21,7 @@ export type Database = {
           created_at: string | null
           customer_name: string
           customer_phone: string
+          end_time: string | null
           google_calendar_event_id: string | null
           id: string
           services: Json
@@ -35,6 +36,7 @@ export type Database = {
           created_at?: string | null
           customer_name: string
           customer_phone: string
+          end_time?: string | null
           google_calendar_event_id?: string | null
           id?: string
           services: Json
@@ -49,6 +51,7 @@ export type Database = {
           created_at?: string | null
           customer_name?: string
           customer_phone?: string
+          end_time?: string | null
           google_calendar_event_id?: string | null
           id?: string
           services?: Json
