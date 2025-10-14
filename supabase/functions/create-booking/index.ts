@@ -150,6 +150,7 @@ serve(async (req) => {
         total_duration: bookingData.total_duration,
         status: 'confirmed',
         google_calendar_event_id: googleEventId,
+        calendar_id: calendarId,
       })
       .select()
       .single();
@@ -177,6 +178,8 @@ serve(async (req) => {
             stylist: data.stylist,
             services: data.services,
             total_duration: data.total_duration,
+            google_calendar_event_id: data.google_calendar_event_id,
+            calendar_id: data.calendar_id,
           }),
         }).catch(err => console.error('Error triggering n8n webhook:', err));
       } catch (error) {
