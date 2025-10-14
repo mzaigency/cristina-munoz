@@ -59,8 +59,7 @@ export const DateTimeSelection = ({
         // Calculate all blocked time slots
         const blocked: string[] = [];
         data?.forEach((booking) => {
-          // booking_time viene en formato "HH:MM:SS" desde la base de datos
-          const startTime = booking.booking_time; // Mantener el formato original
+          const startTime = booking.booking_time.substring(0, 5); // "HH:MM"
           const [hours, minutes] = startTime.split(':').map(Number);
           const startMinutes = hours * 60 + minutes;
           

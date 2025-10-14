@@ -31,10 +31,20 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get Google Calendar credentials
-    const calendarId = Deno.env.get('GOOGLE_CALENDAR_ID');
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
     const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
+    
+    // Get calendar ID based on stylist
+    let calendarId: string | null = null;
+    if (bookingData.stylist === 'cris') {
+      calendarId = Deno.env.get('GOOGLE_CALENDAR_ID_CRIS') || null;
+    } else if (bookingData.stylist === 'desi') {
+      calendarId = Deno.env.get('GOOGLE_CALENDAR_ID_DESI') || null;
+    } else {
+      // For 'any' stylist, use Cris calendar as default
+      calendarId = Deno.env.get('GOOGLE_CALENDAR_ID_CRIS') || null;
+    }
 
     let googleEventId: string | null = null;
 
@@ -119,7 +129,14 @@ serve(async (req) => {
       console.warn('Google Calendar credentials not configured, skipping calendar event creation');
     }
 
-    // Save booking to database
+    // Calculate end time
+    const [startHours, startMinutes] = bookingData.booking_time.split(':').map(Number);
+    const totalMinutes = startHours * 60 + startMinutes + bookingData.total_duration;
+    const endHours = Math.floor(totalMinutes / 60);
+    const endMinutes = totalMinutes % 60;
+    const endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}:00`;
+
+    // Save booking to database with end_time
     const { data, error } = await supabase
       .from('bookings')
       .insert({
@@ -127,6 +144,7 @@ serve(async (req) => {
         customer_phone: bookingData.customer_phone,
         booking_date: bookingData.booking_date,
         booking_time: bookingData.booking_time,
+        end_time: endTime,
         stylist: bookingData.stylist,
         services: bookingData.services,
         total_duration: bookingData.total_duration,
