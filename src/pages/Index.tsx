@@ -39,12 +39,12 @@ const Index = () => {
           <ServicesSection />
         </div>
         
-        <div id="galeria">
-          <GallerySection />
-        </div>
-        
         <div id="reserva">
           <BookingFlow />
+        </div>
+        
+        <div id="galeria">
+          <GallerySection />
         </div>
         
         <div id="cancelar">
