@@ -9,8 +9,11 @@ const serviceCategories = [{
   icon: Scissors,
   image: cutService,
   services: [{
-    name: "Corte chico",
+    name: "Corte hombre",
     duration: "15 min"
+  }, {
+    name: "Corte y peinado",
+    duration: "30 min"
   }]
 }, {
   category: "Coloración",
