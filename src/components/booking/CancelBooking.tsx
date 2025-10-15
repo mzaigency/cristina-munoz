@@ -122,7 +122,7 @@ export const CancelBooking = () => {
           bookingId: selectedBooking.id,
           googleEventId: selectedBooking.google_calendar_event_id,
           calendarId: selectedBooking.calendar_id,
-          customerPhone: phone.trim(),
+          customerPhone: phone.trim().replace(/[\s-]/g, ''),
         },
       });
 

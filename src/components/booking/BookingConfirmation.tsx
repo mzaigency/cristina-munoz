@@ -32,6 +32,9 @@ export const BookingConfirmation = ({
       try {
         setConfirmed(true);
         
+        // Clean phone number (remove extra spaces and separators)
+        const cleanPhone = phone.trim().replace(/[\s-]/g, '');
+        
         // Call edge function to create booking and Google Calendar event
         // Format date in local timezone (Madrid)
         const bookingDate = bookingData.date ? 
@@ -41,7 +44,7 @@ export const BookingConfirmation = ({
         const { data, error } = await supabase.functions.invoke('create-booking', {
           body: {
             customer_name: name,
-            Telefono: phone,
+            Telefono: cleanPhone,
             booking_date: bookingDate,
             booking_time: bookingData.time,
             stylist: bookingData.stylist,
