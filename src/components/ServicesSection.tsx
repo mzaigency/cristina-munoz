@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scissors, Palette, Sparkles, Flower2 } from "lucide-react";
 import cutService from "@/assets/cut-service.jpg";
-import coloringService from "@/assets/coloring-service.jpg";
+import coloringService from "@/assets/coloring-service-new.jpg";
 import stylingService from "@/assets/styling-service.jpg";
 
 const serviceCategories = [
