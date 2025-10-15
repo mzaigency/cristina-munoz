@@ -3,14 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Instagram } from "lucide-react";
 
 export const GallerySection = () => {
-  // Array de posts de Instagram - puedes reemplazar estos IDs con los reales del Instagram
+  // Copia las URLs completas de tus posts de Instagram aquí
+  // Ejemplo: "https://www.instagram.com/p/ABC123xyz/"
   const instagramPosts = [
-    "C-xxxxxx", // Reemplazar con ID real del post
-    "C-yyyyyy",
-    "C-zzzzzz",
-    "C-aaaaaa",
-    "C-bbbbbb",
-    "C-cccccc",
+    "https://www.instagram.com/p/ejemplo1/",
+    "https://www.instagram.com/p/ejemplo2/",
+    "https://www.instagram.com/p/ejemplo3/",
+    "https://www.instagram.com/p/ejemplo4/",
+    "https://www.instagram.com/p/ejemplo5/",
+    "https://www.instagram.com/p/ejemplo6/",
   ];
 
   return (
@@ -27,14 +28,14 @@ export const GallerySection = () => {
 
         <div className="mb-12">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {instagramPosts.map((postId, index) => (
+            {instagramPosts.map((postUrl, index) => (
               <Card 
-                key={postId} 
+                key={index} 
                 className="overflow-hidden group hover:shadow-lg transition-all duration-300 hover:scale-105"
               >
                 <CardContent className="p-0">
                   <a
-                    href={`https://www.instagram.com/p/${postId}/`}
+                    href={postUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block relative aspect-square bg-gradient-to-br from-salon-accent/20 to-salon-primary/20"
@@ -69,9 +70,17 @@ export const GallerySection = () => {
 
         {/* Instrucciones para actualizar */}
         <div className="mt-12 p-6 bg-muted/50 rounded-lg border border-border">
-          <p className="text-sm text-muted-foreground text-center">
-            <strong>Nota:</strong> Para mostrar tus posts reales de Instagram, actualiza los IDs de los posts en el array <code className="bg-background px-2 py-1 rounded">instagramPosts</code> en el componente GallerySection.tsx
+          <p className="text-sm text-muted-foreground">
+            <strong>Cómo actualizar tus posts:</strong>
           </p>
+          <ol className="text-sm text-muted-foreground mt-2 space-y-1 list-decimal list-inside">
+            <li>Abre Instagram en tu navegador</li>
+            <li>Ve a tu perfil (@cristinamunoz_peluqueria)</li>
+            <li>Haz clic en una foto que quieras mostrar</li>
+            <li>Copia la URL completa de la barra de direcciones (ejemplo: https://www.instagram.com/p/ABC123/)</li>
+            <li>Pega esa URL en el archivo <code className="bg-background px-2 py-1 rounded">src/components/GallerySection.tsx</code> en el array <code className="bg-background px-2 py-1 rounded">instagramPosts</code></li>
+            <li>Repite para cada foto que quieras mostrar</li>
+          </ol>
         </div>
       </div>
     </section>
