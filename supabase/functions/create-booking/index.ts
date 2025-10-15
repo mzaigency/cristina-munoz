@@ -47,39 +47,68 @@ serve(async (req) => {
     let actualStylist = bookingData.stylist;
     
     if (bookingData.stylist === 'any') {
-      // Calculate total duration needed for the booking
+      // Get OAuth2 access token first
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: clientId!,
+          client_secret: clientSecret!,
+          refresh_token: refreshToken!,
+          grant_type: 'refresh_token',
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to authenticate with Google Calendar');
+      }
+
+      const { access_token } = await tokenResponse.json();
+
+      // Calculate time range for the booking
       const [startHours, startMinutes] = bookingData.Hora.split(':').map(Number);
       const startMinutesTotal = startHours * 60 + startMinutes;
       const endMinutesTotal = startMinutesTotal + bookingData.total_duration;
       
-      // Check if Cris is available
-      const { data: crisBookings } = await supabase
-        .from('bookings')
-        .select('Hora, total_duration')
-        .eq('Fecha', bookingData.Fecha)
-        .eq('status', 'confirmed')
-        .or('stylist.eq.cris,stylist.eq.any');
-      
-      const crisAvailable = !crisBookings?.some(booking => {
-        const [bHours, bMinutes] = booking.Hora.split(':').map(Number);
-        const bStart = bHours * 60 + bMinutes;
-        const bEnd = bStart + booking.total_duration;
-        return (startMinutesTotal < bEnd && endMinutesTotal > bStart);
+      // Check Cris calendar
+      const crisCalendarId = Deno.env.get('GOOGLE_CALENDAR_ID_CRIS');
+      const timeMin = `${bookingData.Fecha}T00:00:00Z`;
+      const timeMax = `${bookingData.Fecha}T23:59:59Z`;
+
+      const crisEventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(crisCalendarId!)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
+      const crisResponse = await fetch(crisEventsUrl, {
+        headers: { 'Authorization': `Bearer ${access_token}` },
       });
       
-      // Check if Desi is available
-      const { data: desiBookings } = await supabase
-        .from('bookings')
-        .select('Hora, total_duration')
-        .eq('Fecha', bookingData.Fecha)
-        .eq('status', 'confirmed')
-        .or('stylist.eq.desi,stylist.eq.any');
+      const crisEvents = await crisResponse.json();
+      const crisAvailable = !crisEvents.items?.some((event: any) => {
+        if (!event.start?.dateTime || !event.end?.dateTime) return false;
+        const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 5);
+        const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 5);
+        const [eStartH, eStartM] = startTimeStr.split(':').map(Number);
+        const [eEndH, eEndM] = endTimeStr.split(':').map(Number);
+        const eStart = eStartH * 60 + eStartM;
+        const eEnd = eEndH * 60 + eEndM;
+        return (startMinutesTotal < eEnd && endMinutesTotal > eStart);
+      });
+
+      // Check Desi calendar
+      const desiCalendarId = Deno.env.get('GOOGLE_CALENDAR_ID_DESI');
+      const desiEventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(desiCalendarId!)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
+      const desiResponse = await fetch(desiEventsUrl, {
+        headers: { 'Authorization': `Bearer ${access_token}` },
+      });
       
-      const desiAvailable = !desiBookings?.some(booking => {
-        const [bHours, bMinutes] = booking.Hora.split(':').map(Number);
-        const bStart = bHours * 60 + bMinutes;
-        const bEnd = bStart + booking.total_duration;
-        return (startMinutesTotal < bEnd && endMinutesTotal > bStart);
+      const desiEvents = await desiResponse.json();
+      const desiAvailable = !desiEvents.items?.some((event: any) => {
+        if (!event.start?.dateTime || !event.end?.dateTime) return false;
+        const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 5);
+        const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 5);
+        const [eStartH, eStartM] = startTimeStr.split(':').map(Number);
+        const [eEndH, eEndM] = endTimeStr.split(':').map(Number);
+        const eStart = eStartH * 60 + eStartM;
+        const eEnd = eEndH * 60 + eEndM;
+        return (startMinutesTotal < eEnd && endMinutesTotal > eStart);
       });
       
       // Assign to available stylist (prefer Cris if both available)
@@ -91,7 +120,7 @@ serve(async (req) => {
         throw new Error('No stylist available for the selected time');
       }
       
-      console.log(`Auto-assigned "any" booking to: ${actualStylist}`);
+      console.log(`Auto-assigned "any" booking to: ${actualStylist} (Cris available: ${crisAvailable}, Desi available: ${desiAvailable})`);
     }
     
     // Get calendar ID based on actual stylist
