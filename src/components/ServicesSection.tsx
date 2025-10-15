@@ -3,6 +3,7 @@ import { Scissors, Palette, Sparkles, Flower2 } from "lucide-react";
 import cutService from "@/assets/cut-service.jpg";
 import coloringService from "@/assets/coloring-service-new.jpg";
 import stylingService from "@/assets/styling-service-new.jpg";
+import beautyService from "@/assets/beauty-service.jpg";
 const serviceCategories = [{
   category: "Corte",
   icon: Scissors,
@@ -49,9 +50,9 @@ const serviceCategories = [{
     duration: "20 min"
   }]
 }, {
-  category: "Depilación Facial",
+  category: "Depilación y Maquillaje",
   icon: Flower2,
-  image: stylingService,
+  image: beautyService,
   services: [{
     name: "Cejas",
     duration: "10 min"
@@ -61,6 +62,9 @@ const serviceCategories = [{
   }, {
     name: "Labio",
     duration: "10 min"
+  }, {
+    name: "Makeup",
+    duration: "30 min"
   }]
 }];
 export const ServicesSection = () => {
