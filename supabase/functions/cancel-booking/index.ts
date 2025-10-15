@@ -15,7 +15,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const webhookUrl = Deno.env.get('N8N_WEBHOOK_URL')!;
+    const cancelWebhookUrl = 'https://n8n-n8n.fzgtc4.easypanel.host/webhook/18e4c56c-6dc2-47bb-b4c4-73700574a4a7';
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -95,7 +95,7 @@ serve(async (req) => {
 
     // Trigger n8n webhook for cancellation notification
     try {
-      await fetch(webhookUrl, {
+      await fetch(cancelWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
