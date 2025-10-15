@@ -60,7 +60,7 @@ export const CancelBooking = () => {
       const { data, error } = await supabase
         .from("bookings")
         .select("*")
-        .eq("customer_phone", phone)
+        .eq("customer_phone", phone.trim())
         .eq("status", "confirmed")
         .gte("booking_date", new Date().toISOString().split("T")[0])
         .order("booking_date", { ascending: true })
@@ -119,7 +119,7 @@ export const CancelBooking = () => {
           bookingId: selectedBooking.id,
           googleEventId: selectedBooking.google_calendar_event_id,
           calendarId: selectedBooking.calendar_id,
-          customerPhone: phone,
+          customerPhone: phone.trim(),
         },
       });
 

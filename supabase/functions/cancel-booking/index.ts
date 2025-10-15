@@ -101,22 +101,22 @@ serve(async (req) => {
       await deleteGoogleCalendarEvent(relatedBooking.google_calendar_event_id, relatedBooking.calendar_id);
     }
 
-    // Update booking status to cancelled
-    const { error: updateError } = await supabase
+    // Delete booking from database
+    const { error: deleteError } = await supabase
       .from('bookings')
-      .update({ status: 'cancelled' })
+      .delete()
       .eq('id', bookingId);
 
-    if (updateError) {
-      console.error('Error updating booking:', updateError);
-      throw updateError;
+    if (deleteError) {
+      console.error('Error deleting booking:', deleteError);
+      throw deleteError;
     }
 
-    // Also cancel related booking if exists
+    // Also delete related booking if exists
     if (relatedBooking) {
       await supabase
         .from('bookings')
-        .update({ status: 'cancelled' })
+        .delete()
         .eq('id', relatedBooking.id);
     }
 
