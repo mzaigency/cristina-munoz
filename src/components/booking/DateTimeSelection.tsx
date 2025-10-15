@@ -38,37 +38,94 @@ export const DateTimeSelection = ({
         // Format date in local timezone (Madrid)
         const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         
-        // Query bookings for the selected date and stylist
-        let query = supabase
-          .from('bookings')
-          .select('booking_time, total_duration, is_part_of_compound, compound_part')
-          .eq('booking_date', dateStr)
-          .eq('status', 'confirmed');
-
-        // Filter by stylist unless "any" is selected
-        if (stylist !== 'any') {
-          query = query.or(`stylist.eq.${stylist},stylist.eq.any`);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          console.error('Error fetching bookings:', error);
-          return;
-        }
-
-        // Store each booking as a time range (in minutes from midnight)
-        const ranges: Array<{ start: number; end: number }> = [];
-        data?.forEach((booking) => {
-          const startTime = booking.booking_time.substring(0, 5); // "HH:MM"
-          const [hours, minutes] = startTime.split(':').map(Number);
-          const startMinutes = hours * 60 + minutes;
-          const endMinutes = startMinutes + booking.total_duration;
+        if (stylist === 'any') {
+          // For "any" stylist, we need to check both Cris and Desi separately
+          // Only block a slot if BOTH are busy
           
-          ranges.push({ start: startMinutes, end: endMinutes });
-        });
+          // Get Cris bookings
+          const { data: crisData } = await supabase
+            .from('bookings')
+            .select('booking_time, total_duration, stylist')
+            .eq('booking_date', dateStr)
+            .eq('status', 'confirmed')
+            .or('stylist.eq.cris,stylist.eq.any');
 
-        setBookedRanges(ranges);
+          // Get Desi bookings
+          const { data: desiData } = await supabase
+            .from('bookings')
+            .select('booking_time, total_duration, stylist')
+            .eq('booking_date', dateStr)
+            .eq('status', 'confirmed')
+            .or('stylist.eq.desi,stylist.eq.any');
+
+          // Convert bookings to time ranges
+          const crisRanges: Array<{ start: number; end: number }> = [];
+          crisData?.forEach((booking) => {
+            const startTime = booking.booking_time.substring(0, 5);
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const startMinutes = hours * 60 + minutes;
+            const endMinutes = startMinutes + booking.total_duration;
+            crisRanges.push({ start: startMinutes, end: endMinutes });
+          });
+
+          const desiRanges: Array<{ start: number; end: number }> = [];
+          desiData?.forEach((booking) => {
+            const startTime = booking.booking_time.substring(0, 5);
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const startMinutes = hours * 60 + minutes;
+            const endMinutes = startMinutes + booking.total_duration;
+            desiRanges.push({ start: startMinutes, end: endMinutes });
+          });
+
+          // Find overlapping ranges (where BOTH are busy)
+          const blockedRanges: Array<{ start: number; end: number }> = [];
+          
+          // Check all possible minute slots in the day
+          for (let minute = 0; minute < 24 * 60; minute++) {
+            const crisBusy = crisRanges.some(range => minute >= range.start && minute < range.end);
+            const desiBusy = desiRanges.some(range => minute >= range.start && minute < range.end);
+            
+            // Only block if BOTH are busy
+            if (crisBusy && desiBusy) {
+              // Find or create a range for this blocked minute
+              const lastRange = blockedRanges[blockedRanges.length - 1];
+              if (lastRange && lastRange.end === minute) {
+                // Extend the last range
+                lastRange.end = minute + 1;
+              } else {
+                // Create a new blocked range
+                blockedRanges.push({ start: minute, end: minute + 1 });
+              }
+            }
+          }
+
+          setBookedRanges(blockedRanges);
+        } else {
+          // For specific stylist, get their bookings and "any" bookings
+          const { data, error } = await supabase
+            .from('bookings')
+            .select('booking_time, total_duration')
+            .eq('booking_date', dateStr)
+            .eq('status', 'confirmed')
+            .or(`stylist.eq.${stylist},stylist.eq.any`);
+
+          if (error) {
+            console.error('Error fetching bookings:', error);
+            return;
+          }
+
+          // Store each booking as a time range
+          const ranges: Array<{ start: number; end: number }> = [];
+          data?.forEach((booking) => {
+            const startTime = booking.booking_time.substring(0, 5);
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const startMinutes = hours * 60 + minutes;
+            const endMinutes = startMinutes + booking.total_duration;
+            ranges.push({ start: startMinutes, end: endMinutes });
+          });
+
+          setBookedRanges(ranges);
+        }
       } catch (error) {
         console.error('Error:', error);
       } finally {
