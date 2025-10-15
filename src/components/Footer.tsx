@@ -60,7 +60,8 @@ export const Footer = () => {
               <a
                 href="https://www.instagram.com/cristinamunoz_hairstylist/"
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener"
+                aria-label="Visita nuestro Instagram"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 <Instagram className="h-5 w-5" />
