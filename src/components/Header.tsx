@@ -20,6 +20,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <img src={logo} alt="Cristina Muñoz" className="h-12 w-auto" />
+          <span className="text-xl font-semibold text-foreground">Cristina Muñoz</span>
         </div>
 
         <nav className="hidden md:flex items-center gap-1">
