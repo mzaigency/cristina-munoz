@@ -89,7 +89,7 @@ export const GallerySection = () => {
         <div className={`text-center scroll-reveal ${isVisible ? 'visible' : ''}`}>
           <Button
             size="lg"
-            className="gap-2 bg-gradient-to-r from-salon-primary to-salon-accent hover:opacity-90 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            className="gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg"
             onClick={() => window.open('https://www.instagram.com/cristinamunoz_peluqueria/', '_blank')}
           >
             <Instagram className="w-5 h-5" />
