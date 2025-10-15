@@ -63,9 +63,6 @@ export const GallerySection = () => {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <CardContent className="p-0">
-                  {!loadedEmbeds.has(index) && (
-                    <Skeleton className="w-full aspect-square" />
-                  )}
                   <blockquote
                     className="instagram-media"
                     data-instgrm-permalink={postUrl}
@@ -80,7 +77,6 @@ export const GallerySection = () => {
                       minWidth: '326px',
                       padding: 0,
                       width: 'calc(100% - 2px)',
-                      display: loadedEmbeds.has(index) ? 'block' : 'none'
                     }}
                     onLoad={() => handleEmbedLoad(index)}
                   />
@@ -99,21 +95,6 @@ export const GallerySection = () => {
             <Instagram className="w-5 h-5" />
             Síguenos en Instagram
           </Button>
-        </div>
-
-        {/* Instrucciones para actualizar */}
-        <div className="mt-12 p-6 bg-muted rounded-lg border border-border shadow-sm">
-          <p className="text-sm text-muted-foreground">
-            <strong>Cómo actualizar tus posts:</strong>
-          </p>
-          <ol className="text-sm text-muted-foreground mt-2 space-y-1 list-decimal list-inside">
-            <li>Abre Instagram en tu navegador</li>
-            <li>Ve a tu perfil (@cristinamunoz_peluqueria)</li>
-            <li>Haz clic en una foto que quieras mostrar</li>
-            <li>Copia la URL completa de la barra de direcciones (ejemplo: https://www.instagram.com/p/ABC123/)</li>
-            <li>Pega esa URL en el archivo <code className="bg-background px-2 py-1 rounded">src/components/GallerySection.tsx</code> en el array <code className="bg-background px-2 py-1 rounded">instagramPosts</code></li>
-            <li>Repite para cada foto que quieras mostrar</li>
-          </ol>
         </div>
       </div>
     </section>
