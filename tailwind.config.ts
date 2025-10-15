@@ -66,6 +66,10 @@ export default {
           cream: "hsl(var(--salon-cream))",
         },
       },
+      fontFamily: {
+        'playfair': ['Playfair Display', 'serif'],
+        'montserrat': ['Montserrat', 'sans-serif'],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
