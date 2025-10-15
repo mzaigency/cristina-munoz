@@ -118,15 +118,61 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      search_my_bookings: {
+        Args: { phone_number: string }
+        Returns: {
+          calendar_id: string
+          compound_part: string
+          customer_name: string
+          Fecha: string
+          google_calendar_event_id: string
+          Hora: string
+          id: string
+          is_part_of_compound: boolean
+          related_booking_id: string
+          services: Json
+          status: string
+          stylist: string
+          Telefono: string
+          total_duration: number
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "stylist"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -253,6 +299,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "stylist"],
+    },
   },
 } as const

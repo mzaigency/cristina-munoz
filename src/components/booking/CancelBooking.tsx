@@ -70,19 +70,14 @@ export const CancelBooking = () => {
       const cleanPhone = cleanPhoneNumber(values.phone);
       setLastSearchedPhone(cleanPhone);
       
+      // Use the secure RPC function instead of direct query
       const { data, error } = await supabase
-        .from("bookings")
-        .select("*")
-        .ilike("Telefono", `%${cleanPhone}%`)
-        .eq("status", "confirmed")
-        .gte("Fecha", new Date().toISOString().split("T")[0])
-        .order("Fecha", { ascending: true })
-        .order("Hora", { ascending: true });
+        .rpc("search_my_bookings", { phone_number: cleanPhone });
 
       if (error) throw error;
 
       // Transform the data to match our Booking type
-      const transformedData: Booking[] = (data || []).map((booking: DbBooking) => ({
+      const transformedData: Booking[] = (data || []).map((booking: any) => ({
         id: booking.id,
         Fecha: booking.Fecha,
         Hora: booking.Hora,
