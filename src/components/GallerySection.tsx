@@ -99,7 +99,7 @@ export const GallerySection = () => {
         </div>
 
         {/* Instrucciones para actualizar */}
-        <div className="mt-12 p-6 bg-muted/50 rounded-lg border border-border">
+        <div className="mt-12 p-6 bg-muted rounded-lg border border-border shadow-sm">
           <p className="text-sm text-muted-foreground">
             <strong>Cómo actualizar tus posts:</strong>
           </p>
