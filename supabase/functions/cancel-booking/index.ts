@@ -101,6 +101,19 @@ serve(async (req) => {
       await deleteGoogleCalendarEvent(relatedBooking.google_calendar_event_id, relatedBooking.calendar_id);
     }
 
+    // First, break the foreign key relationship by setting related_booking_id to null
+    if (relatedBooking) {
+      await supabase
+        .from('bookings')
+        .update({ related_booking_id: null })
+        .eq('id', relatedBooking.id);
+      
+      await supabase
+        .from('bookings')
+        .update({ related_booking_id: null })
+        .eq('id', bookingId);
+    }
+
     // Delete booking from database
     const { error: deleteError } = await supabase
       .from('bookings')
