@@ -1,18 +1,44 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Instagram } from "lucide-react";
 
 export const GallerySection = () => {
-  // Copia las URLs completas de tus posts de Instagram aquí
-  // Ejemplo: "https://www.instagram.com/p/ABC123xyz/"
+  const [loadedEmbeds, setLoadedEmbeds] = useState<Set<number>>(new Set());
+  
+  // URLs completas de tus posts de Instagram
   const instagramPosts = [
     "https://www.instagram.com/p/DOOJlP2jCFc/",
-    "https://www.instagram.com/p/DA1mNTQIQii/?img_index=1",
+    "https://www.instagram.com/p/DA1mNTQIQii/",
     "https://www.instagram.com/p/C53dETjoweW/",
     "https://www.instagram.com/p/C4k3-6OIa-K/",
-    "https://www.instagram.com/p/C3um5Rao4XF/?img_index=2",
-    "https://www.instagram.com/p/C-NFDz_I7bE/?img_index=1",
+    "https://www.instagram.com/p/C3um5Rao4XF/",
+    "https://www.instagram.com/p/C-NFDz_I7bE/",
   ];
+
+  useEffect(() => {
+    // Cargar el script de Instagram embeds
+    const script = document.createElement('script');
+    script.src = 'https://www.instagram.com/embed.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    script.onload = () => {
+      // Procesar los embeds cuando el script carga
+      if ((window as any).instgrm) {
+        (window as any).instgrm.Embeds.process();
+      }
+    };
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const handleEmbedLoad = (index: number) => {
+    setLoadedEmbeds(prev => new Set(prev).add(index));
+  };
 
   return (
     <section className="py-20 px-4 bg-gradient-to-b from-background to-secondary/10">
@@ -27,30 +53,34 @@ export const GallerySection = () => {
         </div>
 
         <div className="mb-12">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {instagramPosts.map((postUrl, index) => (
               <Card 
                 key={index} 
-                className="overflow-hidden group hover:shadow-lg transition-all duration-300 hover:scale-105"
+                className="overflow-hidden hover:shadow-lg transition-shadow duration-300"
               >
                 <CardContent className="p-0">
-                  <a
-                    href={postUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block relative aspect-square bg-gradient-to-br from-salon-accent/20 to-salon-primary/20"
-                  >
-                    {/* Instagram embed placeholder */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Instagram className="w-12 h-12 text-muted-foreground group-hover:text-salon-primary transition-colors" />
-                    </div>
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                      <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-semibold">
-                        Ver en Instagram
-                      </span>
-                    </div>
-                  </a>
+                  {!loadedEmbeds.has(index) && (
+                    <Skeleton className="w-full aspect-square" />
+                  )}
+                  <blockquote
+                    className="instagram-media"
+                    data-instgrm-permalink={postUrl}
+                    data-instgrm-version="14"
+                    style={{
+                      background: '#FFF',
+                      border: 0,
+                      borderRadius: '3px',
+                      boxShadow: '0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)',
+                      margin: '1px',
+                      maxWidth: '540px',
+                      minWidth: '326px',
+                      padding: 0,
+                      width: 'calc(100% - 2px)',
+                      display: loadedEmbeds.has(index) ? 'block' : 'none'
+                    }}
+                    onLoad={() => handleEmbedLoad(index)}
+                  />
                 </CardContent>
               </Card>
             ))}
