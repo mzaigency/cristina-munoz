@@ -103,25 +103,41 @@ export const DateTimeSelection = ({
       return []; // Closed on Sunday and Monday
     }
 
-    const allSlots: string[] = [];
+    const slotsSet = new Set<number>();
 
-    // Generate morning slots every 15 minutes for flexibility
+    // Generate base slots every 30 minutes
     if (morningEnd > 0) {
-      for (let minutes = morningStart; minutes < morningEnd; minutes += 15) {
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        allSlots.push(`${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`);
+      for (let minutes = morningStart; minutes < morningEnd; minutes += 30) {
+        slotsSet.add(minutes);
       }
     }
 
-    // Generate afternoon slots every 15 minutes
     if (afternoonEnd > 0) {
-      for (let minutes = afternoonStart; minutes < afternoonEnd; minutes += 15) {
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        allSlots.push(`${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`);
+      for (let minutes = afternoonStart; minutes < afternoonEnd; minutes += 30) {
+        slotsSet.add(minutes);
       }
     }
+
+    // Add flexible slots right after each existing booking ends
+    bookedRanges.forEach(booking => {
+      const endTime = booking.end;
+      // Only add if within business hours
+      const inMorning = endTime >= morningStart && endTime < morningEnd;
+      const inAfternoon = endTime >= afternoonStart && endTime < afternoonEnd;
+      
+      if (inMorning || inAfternoon) {
+        slotsSet.add(endTime);
+      }
+    });
+
+    // Convert to array and sort
+    const allSlots = Array.from(slotsSet)
+      .sort((a, b) => a - b)
+      .map(minutes => {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
+      });
 
     // Helper function to check if two time ranges overlap
     const hasOverlap = (start1: number, end1: number, start2: number, end2: number): boolean => {
