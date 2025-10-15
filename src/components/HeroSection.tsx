@@ -31,7 +31,7 @@ export const HeroSection = ({
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center md:justify-start animate-fade-in stagger-2">
-            <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg bg-rose-700 hover:bg-rose-600">
+            <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg bg-[#7c4204]">
               Reservar Cita
             </Button>
             <Button size="lg" variant="outline" className="transition-all duration-300 hover:scale-105 hover:shadow-lg">
