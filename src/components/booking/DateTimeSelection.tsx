@@ -172,9 +172,13 @@ export const DateTimeSelection = ({
     }
   };
 
-  // Disable Mondays and Sundays
+  // Disable Mondays, Sundays, and past dates
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to start of day
+  
   const disabledDays = [
     { dayOfWeek: [0, 1] }, // Sunday and Monday
+    { before: today }, // Past dates
   ];
 
   return (
@@ -187,6 +191,7 @@ export const DateTimeSelection = ({
             selected={date}
             onSelect={setDate}
             disabled={disabledDays}
+            weekStartsOn={1}
             className={cn("rounded-md border pointer-events-auto")}
           />
         </div>
