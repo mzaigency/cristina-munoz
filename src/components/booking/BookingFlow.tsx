@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServiceSelection } from "./ServiceSelection";
 import { StylistSelection } from "./StylistSelection";
@@ -35,6 +35,7 @@ export const BookingFlow = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const bookingRef = useRef<HTMLElement>(null);
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
     stylist: null,
@@ -89,8 +90,8 @@ export const BookingFlow = () => {
   const handleServicesSelect = (services: Service[]) => {
     setBookingData({ ...bookingData, services });
     setStep(2);
-    // Scroll to top when moving to stylist selection
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll to top of booking section when moving to stylist selection
+    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleStylistSelect = (stylist: Stylist) => {
@@ -114,7 +115,7 @@ export const BookingFlow = () => {
   };
 
   return (
-    <section className="py-20">
+    <section ref={bookingRef} className="py-20">
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
           <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
