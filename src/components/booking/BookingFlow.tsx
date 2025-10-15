@@ -89,6 +89,8 @@ export const BookingFlow = () => {
   const handleServicesSelect = (services: Service[]) => {
     setBookingData({ ...bookingData, services });
     setStep(2);
+    // Scroll to top when moving to stylist selection
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleStylistSelect = (stylist: Stylist) => {
