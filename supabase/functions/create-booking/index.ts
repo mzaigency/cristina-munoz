@@ -43,15 +43,63 @@ serve(async (req) => {
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
     const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
     
-    // Get calendar ID based on stylist
+    // Determine actual stylist for "any" selection
+    let actualStylist = bookingData.stylist;
+    
+    if (bookingData.stylist === 'any') {
+      // Calculate total duration needed for the booking
+      const [startHours, startMinutes] = bookingData.booking_time.split(':').map(Number);
+      const startMinutesTotal = startHours * 60 + startMinutes;
+      const endMinutesTotal = startMinutesTotal + bookingData.total_duration;
+      
+      // Check if Cris is available
+      const { data: crisBookings } = await supabase
+        .from('bookings')
+        .select('booking_time, total_duration')
+        .eq('booking_date', bookingData.booking_date)
+        .eq('status', 'confirmed')
+        .or('stylist.eq.cris,stylist.eq.any');
+      
+      const crisAvailable = !crisBookings?.some(booking => {
+        const [bHours, bMinutes] = booking.booking_time.split(':').map(Number);
+        const bStart = bHours * 60 + bMinutes;
+        const bEnd = bStart + booking.total_duration;
+        return (startMinutesTotal < bEnd && endMinutesTotal > bStart);
+      });
+      
+      // Check if Desi is available
+      const { data: desiBookings } = await supabase
+        .from('bookings')
+        .select('booking_time, total_duration')
+        .eq('booking_date', bookingData.booking_date)
+        .eq('status', 'confirmed')
+        .or('stylist.eq.desi,stylist.eq.any');
+      
+      const desiAvailable = !desiBookings?.some(booking => {
+        const [bHours, bMinutes] = booking.booking_time.split(':').map(Number);
+        const bStart = bHours * 60 + bMinutes;
+        const bEnd = bStart + booking.total_duration;
+        return (startMinutesTotal < bEnd && endMinutesTotal > bStart);
+      });
+      
+      // Assign to available stylist (prefer Cris if both available)
+      if (crisAvailable) {
+        actualStylist = 'cris';
+      } else if (desiAvailable) {
+        actualStylist = 'desi';
+      } else {
+        throw new Error('No stylist available for the selected time');
+      }
+      
+      console.log(`Auto-assigned "any" booking to: ${actualStylist}`);
+    }
+    
+    // Get calendar ID based on actual stylist
     let calendarId: string | null = null;
-    if (bookingData.stylist === 'cris') {
+    if (actualStylist === 'cris') {
       calendarId = Deno.env.get('GOOGLE_CALENDAR_ID_CRIS') || null;
-    } else if (bookingData.stylist === 'desi') {
+    } else if (actualStylist === 'desi') {
       calendarId = Deno.env.get('GOOGLE_CALENDAR_ID_DESI') || null;
-    } else {
-      // For 'any' stylist, use Cris calendar as default
-      calendarId = Deno.env.get('GOOGLE_CALENDAR_ID_CRIS') || null;
     }
 
     // Separate services by type
@@ -80,7 +128,7 @@ serve(async (req) => {
         attendees: [
           {
             email: calendarId,
-            displayName: bookingData.stylist === 'cris' ? 'Cris' : bookingData.stylist === 'desi' ? 'Desi' : 'Peluquería',
+            displayName: actualStylist === 'cris' ? 'Cris' : actualStylist === 'desi' ? 'Desi' : 'Peluquería',
           },
         ],
       };
@@ -150,7 +198,7 @@ serve(async (req) => {
         try {
           googleEventId = await createCalendarEvent(
             `Cita - ${bookingData.customer_name}`,
-            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicios: ${simpleServices.map(s => s.name).join(', ')}\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
+            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicios: ${simpleServices.map(s => s.name).join(', ')}\nPeluquera: ${actualStylist.toUpperCase()}`,
             `${bookingData.booking_time}:00`,
             endTime,
             accessToken
@@ -168,7 +216,7 @@ serve(async (req) => {
           booking_date: bookingData.booking_date,
           booking_time: bookingData.booking_time,
           end_time: endTime,
-          stylist: bookingData.stylist,
+          stylist: actualStylist,
           services: simpleServices.map(s => ({ name: s.name })),
           total_duration: simpleDuration,
           status: 'confirmed',
@@ -203,7 +251,7 @@ serve(async (req) => {
         try {
           part1GoogleEventId = await createCalendarEvent(
             `${service.name} - Parte 1 - ${bookingData.customer_name}`,
-            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicio: ${service.name} (Parte 1)\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
+            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicio: ${service.name} (Parte 1)\nPeluquera: ${actualStylist.toUpperCase()}`,
             part1StartTime,
             part1EndTime,
             accessToken
@@ -221,7 +269,7 @@ serve(async (req) => {
           booking_date: bookingData.booking_date,
           booking_time: part1StartTime,
           end_time: part1EndTime,
-          stylist: bookingData.stylist,
+          stylist: actualStylist,
           services: [{ name: `${service.name} - Parte 1` }],
           total_duration: part1Duration,
           status: 'confirmed',
@@ -254,7 +302,7 @@ serve(async (req) => {
           try {
             part2GoogleEventId = await createCalendarEvent(
               `${service.name} - Parte 2 - ${bookingData.customer_name}`,
-              `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicio: ${service.name} (Parte 2)\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
+              `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicio: ${service.name} (Parte 2)\nPeluquera: ${actualStylist.toUpperCase()}`,
               part2StartTime,
               part2EndTime,
               accessToken
@@ -272,7 +320,7 @@ serve(async (req) => {
             booking_date: bookingData.booking_date,
             booking_time: part2StartTime,
             end_time: part2EndTime,
-            stylist: bookingData.stylist,
+            stylist: actualStylist,
             services: [{ name: `${service.name} - Parte 2` }],
             total_duration: part2Duration,
             status: 'confirmed',
@@ -320,7 +368,7 @@ serve(async (req) => {
             Telefono: bookingData.Telefono,
             booking_date: formattedDate,
             booking_time: bookingData.booking_time,
-            stylist: bookingData.stylist,
+            stylist: actualStylist,
             services: bookingData.services.map(s => s.name),
             bookings: createdBookings,
           }),
