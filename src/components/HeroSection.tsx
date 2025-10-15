@@ -31,10 +31,10 @@ export const HeroSection = ({
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center md:justify-start animate-fade-in stagger-2">
-            <Button size="lg" onClick={onBookNow} className="bg-salon-pink-dark text-white hover:bg-salon-pink-dark/90 transition-all duration-300 hover:scale-105 hover:shadow-lg">
+            <Button size="lg" onClick={onBookNow} className="bg-salon-pink-dark text-white hover:bg-salon-pink-dark/90 transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-md bg-blue-900 hover:bg-blue-800">
               Reservar Cita
             </Button>
-            <Button size="lg" variant="outline" className="transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-salon-primary">
+            <Button size="lg" variant="outline" className="transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-salon-primary bg-slate-300 hover:bg-slate-200 rounded-md">
               Ver Servicios
             </Button>
           </div>
