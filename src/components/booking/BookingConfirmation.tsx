@@ -175,7 +175,7 @@ export const BookingConfirmation = ({
           <Input
             id="phone"
             type="tel"
-            placeholder="+34 600 000 000"
+            placeholder="600 000 000"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="mt-1"
