@@ -62,8 +62,8 @@ export const BookingConfirmation = ({
         body: {
           customer_name: values.name,
           Telefono: cleanPhone,
-          booking_date: bookingDate,
-          booking_time: bookingData.time,
+          Fecha: bookingDate,
+          Hora: bookingData.time,
           stylist: bookingData.stylist,
           services: bookingData.services.map(s => ({ 
             id: s.id,

@@ -16,14 +16,14 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
-          booking_date: string
-          booking_time: string
           calendar_id: string | null
           compound_part: string | null
           created_at: string | null
           customer_name: string
           end_time: string | null
+          Fecha: string
           google_calendar_event_id: string | null
+          Hora: string
           id: string
           is_part_of_compound: boolean | null
           related_booking_id: string | null
@@ -35,14 +35,14 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          booking_date: string
-          booking_time: string
           calendar_id?: string | null
           compound_part?: string | null
           created_at?: string | null
           customer_name: string
           end_time?: string | null
+          Fecha: string
           google_calendar_event_id?: string | null
+          Hora: string
           id?: string
           is_part_of_compound?: boolean | null
           related_booking_id?: string | null
@@ -54,14 +54,14 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          booking_date?: string
-          booking_time?: string
           calendar_id?: string | null
           compound_part?: string | null
           created_at?: string | null
           customer_name?: string
           end_time?: string | null
+          Fecha?: string
           google_calendar_event_id?: string | null
+          Hora?: string
           id?: string
           is_part_of_compound?: boolean | null
           related_booking_id?: string | null

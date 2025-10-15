@@ -10,8 +10,8 @@ const corsHeaders = {
 interface BookingRequest {
   customer_name: string;
   Telefono: string;
-  booking_date: string;
-  booking_time: string;
+  Fecha: string;
+  Hora: string;
   stylist: string;
   services: Array<{ 
     id: string;
@@ -48,20 +48,20 @@ serve(async (req) => {
     
     if (bookingData.stylist === 'any') {
       // Calculate total duration needed for the booking
-      const [startHours, startMinutes] = bookingData.booking_time.split(':').map(Number);
+      const [startHours, startMinutes] = bookingData.Hora.split(':').map(Number);
       const startMinutesTotal = startHours * 60 + startMinutes;
       const endMinutesTotal = startMinutesTotal + bookingData.total_duration;
       
       // Check if Cris is available
       const { data: crisBookings } = await supabase
         .from('bookings')
-        .select('booking_time, total_duration')
-        .eq('booking_date', bookingData.booking_date)
+        .select('Hora, total_duration')
+        .eq('Fecha', bookingData.Fecha)
         .eq('status', 'confirmed')
         .or('stylist.eq.cris,stylist.eq.any');
       
       const crisAvailable = !crisBookings?.some(booking => {
-        const [bHours, bMinutes] = booking.booking_time.split(':').map(Number);
+        const [bHours, bMinutes] = booking.Hora.split(':').map(Number);
         const bStart = bHours * 60 + bMinutes;
         const bEnd = bStart + booking.total_duration;
         return (startMinutesTotal < bEnd && endMinutesTotal > bStart);
@@ -70,13 +70,13 @@ serve(async (req) => {
       // Check if Desi is available
       const { data: desiBookings } = await supabase
         .from('bookings')
-        .select('booking_time, total_duration')
-        .eq('booking_date', bookingData.booking_date)
+        .select('Hora, total_duration')
+        .eq('Fecha', bookingData.Fecha)
         .eq('status', 'confirmed')
         .or('stylist.eq.desi,stylist.eq.any');
       
       const desiAvailable = !desiBookings?.some(booking => {
-        const [bHours, bMinutes] = booking.booking_time.split(':').map(Number);
+        const [bHours, bMinutes] = booking.Hora.split(':').map(Number);
         const bStart = bHours * 60 + bMinutes;
         const bEnd = bStart + booking.total_duration;
         return (startMinutesTotal < bEnd && endMinutesTotal > bStart);
@@ -118,11 +118,11 @@ serve(async (req) => {
         summary,
         description,
         start: {
-          dateTime: `${bookingData.booking_date}T${startTime}`,
+          dateTime: `${bookingData.Fecha}T${startTime}`,
           timeZone: 'Europe/Madrid',
         },
         end: {
-          dateTime: `${bookingData.booking_date}T${endTime}`,
+          dateTime: `${bookingData.Fecha}T${endTime}`,
           timeZone: 'Europe/Madrid',
         },
         attendees: [
@@ -180,7 +180,7 @@ serve(async (req) => {
       }
     }
 
-    const [startHours, startMinutes] = bookingData.booking_time.split(':').map(Number);
+    const [startHours, startMinutes] = bookingData.Hora.split(':').map(Number);
     let currentMinutes = startHours * 60 + startMinutes;
 
     const createdBookings = [];
@@ -199,7 +199,7 @@ serve(async (req) => {
           googleEventId = await createCalendarEvent(
             `Cita - ${bookingData.customer_name}`,
             `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicios: ${simpleServices.map(s => s.name).join(', ')}\nPeluquera: ${actualStylist.toUpperCase()}`,
-            `${bookingData.booking_time}:00`,
+            `${bookingData.Hora}:00`,
             endTime,
             accessToken
           );
@@ -213,8 +213,8 @@ serve(async (req) => {
         .insert({
           customer_name: bookingData.customer_name,
           Telefono: bookingData.Telefono,
-          booking_date: bookingData.booking_date,
-          booking_time: bookingData.booking_time,
+          Fecha: bookingData.Fecha,
+          Hora: bookingData.Hora,
           end_time: endTime,
           stylist: actualStylist,
           services: simpleServices.map(s => ({ name: s.name })),
@@ -266,8 +266,8 @@ serve(async (req) => {
         .insert({
           customer_name: bookingData.customer_name,
           Telefono: bookingData.Telefono,
-          booking_date: bookingData.booking_date,
-          booking_time: part1StartTime,
+          Fecha: bookingData.Fecha,
+          Hora: part1StartTime,
           end_time: part1EndTime,
           stylist: actualStylist,
           services: [{ name: `${service.name} - Parte 1` }],
@@ -317,8 +317,8 @@ serve(async (req) => {
           .insert({
             customer_name: bookingData.customer_name,
             Telefono: bookingData.Telefono,
-            booking_date: bookingData.booking_date,
-            booking_time: part2StartTime,
+            Fecha: bookingData.Fecha,
+            Hora: part2StartTime,
             end_time: part2EndTime,
             stylist: actualStylist,
             services: [{ name: `${service.name} - Parte 2` }],
@@ -358,7 +358,7 @@ serve(async (req) => {
     if (n8nWebhookUrl) {
       try {
         // Format date for webhook (dd-mm-yyyy)
-        const formattedDate = format(new Date(bookingData.booking_date), 'dd-MM-yyyy');
+        const formattedDate = format(new Date(bookingData.Fecha), 'dd-MM-yyyy');
         
         fetch(n8nWebhookUrl, {
           method: 'POST',
@@ -366,8 +366,8 @@ serve(async (req) => {
           body: JSON.stringify({
             customer_name: bookingData.customer_name,
             Telefono: bookingData.Telefono,
-            booking_date: formattedDate,
-            booking_time: bookingData.booking_time,
+            Fecha: formattedDate,
+            Hora: bookingData.Hora,
             stylist: actualStylist,
             services: bookingData.services.map(s => s.name),
             bookings: createdBookings,

@@ -29,8 +29,8 @@ type DbBooking = Database["public"]["Tables"]["bookings"]["Row"];
 
 type Booking = {
   id: string;
-  booking_date: string;
-  booking_time: string;
+  Fecha: string;
+  Hora: string;
   customer_name: string;
   services: Array<{ name: string }>;
   stylist: string;
@@ -75,17 +75,17 @@ export const CancelBooking = () => {
         .select("*")
         .ilike("Telefono", `%${cleanPhone}%`)
         .eq("status", "confirmed")
-        .gte("booking_date", new Date().toISOString().split("T")[0])
-        .order("booking_date", { ascending: true })
-        .order("booking_time", { ascending: true });
+        .gte("Fecha", new Date().toISOString().split("T")[0])
+        .order("Fecha", { ascending: true })
+        .order("Hora", { ascending: true });
 
       if (error) throw error;
 
       // Transform the data to match our Booking type
       const transformedData: Booking[] = (data || []).map((booking: DbBooking) => ({
         id: booking.id,
-        booking_date: booking.booking_date,
-        booking_time: booking.booking_time,
+        Fecha: booking.Fecha,
+        Hora: booking.Hora,
         customer_name: booking.customer_name,
         services: Array.isArray(booking.services) ? booking.services as Array<{ name: string }> : [],
         stylist: booking.stylist,
@@ -232,14 +232,14 @@ export const CancelBooking = () => {
                               <div className="flex items-center gap-2 text-sm">
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
                                 <span className="font-medium">
-                                  {format(new Date(booking.booking_date), "EEEE, d 'de' MMMM 'de' yyyy", {
+                                  {format(new Date(booking.Fecha), "EEEE, d 'de' MMMM 'de' yyyy", {
                                     locale: es,
                                   })}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 text-sm">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
-                                <span>{booking.booking_time}</span>
+                                <span>{booking.Hora}</span>
                               </div>
                               <div className="flex items-center gap-2 text-sm">
                                 <User className="h-4 w-4 text-muted-foreground" />

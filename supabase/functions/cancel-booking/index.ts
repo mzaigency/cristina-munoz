@@ -125,7 +125,7 @@ serve(async (req) => {
     // Trigger n8n webhook for cancellation notification
     try {
       // Format date for webhook (dd-mm-yyyy)
-      const formattedDate = format(new Date(booking.booking_date), 'dd-MM-yyyy');
+      const formattedDate = format(new Date(booking.Fecha), 'dd-MM-yyyy');
       
       await fetch(cancelWebhookUrl, {
         method: 'POST',
@@ -137,8 +137,8 @@ serve(async (req) => {
           booking_id: bookingId,
           customer_name: booking.customer_name,
           Telefono: customerPhone,
-          booking_date: formattedDate,
-          booking_time: booking.booking_time,
+          Fecha: formattedDate,
+          Hora: booking.Hora,
           stylist: booking.stylist,
           services: booking.services,
           google_calendar_event_id: googleEventId,

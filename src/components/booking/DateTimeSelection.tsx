@@ -45,23 +45,23 @@ export const DateTimeSelection = ({
           // Get Cris bookings
           const { data: crisData } = await supabase
             .from('bookings')
-            .select('booking_time, total_duration, stylist')
-            .eq('booking_date', dateStr)
+            .select('Hora, total_duration, stylist')
+            .eq('Fecha', dateStr)
             .eq('status', 'confirmed')
             .or('stylist.eq.cris,stylist.eq.any');
 
           // Get Desi bookings
           const { data: desiData } = await supabase
             .from('bookings')
-            .select('booking_time, total_duration, stylist')
-            .eq('booking_date', dateStr)
+            .select('Hora, total_duration, stylist')
+            .eq('Fecha', dateStr)
             .eq('status', 'confirmed')
             .or('stylist.eq.desi,stylist.eq.any');
 
           // Convert bookings to time ranges
           const crisRanges: Array<{ start: number; end: number }> = [];
           crisData?.forEach((booking) => {
-            const startTime = booking.booking_time.substring(0, 5);
+            const startTime = booking.Hora.substring(0, 5);
             const [hours, minutes] = startTime.split(':').map(Number);
             const startMinutes = hours * 60 + minutes;
             const endMinutes = startMinutes + booking.total_duration;
@@ -70,7 +70,7 @@ export const DateTimeSelection = ({
 
           const desiRanges: Array<{ start: number; end: number }> = [];
           desiData?.forEach((booking) => {
-            const startTime = booking.booking_time.substring(0, 5);
+            const startTime = booking.Hora.substring(0, 5);
             const [hours, minutes] = startTime.split(':').map(Number);
             const startMinutes = hours * 60 + minutes;
             const endMinutes = startMinutes + booking.total_duration;
@@ -104,8 +104,8 @@ export const DateTimeSelection = ({
           // For specific stylist, get their bookings and "any" bookings
           const { data, error } = await supabase
             .from('bookings')
-            .select('booking_time, total_duration')
-            .eq('booking_date', dateStr)
+            .select('Hora, total_duration')
+            .eq('Fecha', dateStr)
             .eq('status', 'confirmed')
             .or(`stylist.eq.${stylist},stylist.eq.any`);
 
@@ -117,7 +117,7 @@ export const DateTimeSelection = ({
           // Store each booking as a time range
           const ranges: Array<{ start: number; end: number }> = [];
           data?.forEach((booking) => {
-            const startTime = booking.booking_time.substring(0, 5);
+            const startTime = booking.Hora.substring(0, 5);
             const [hours, minutes] = startTime.split(':').map(Number);
             const startMinutes = hours * 60 + minutes;
             const endMinutes = startMinutes + booking.total_duration;
