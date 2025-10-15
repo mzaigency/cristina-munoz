@@ -25,10 +25,10 @@ export const DateTimeSelection = ({
 }: DateTimeSelectionProps) => {
   const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
   const [time, setTime] = useState<string | null>(selectedTime);
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [bookedRanges, setBookedRanges] = useState<Array<{ start: number; end: number }>>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch booked slots when date changes
+  // Fetch booked appointments when date changes
   useEffect(() => {
     if (!date) return;
 
@@ -57,24 +57,18 @@ export const DateTimeSelection = ({
           return;
         }
 
-        // Calculate all blocked time slots
-        const blocked: string[] = [];
+        // Store each booking as a time range (in minutes from midnight)
+        const ranges: Array<{ start: number; end: number }> = [];
         data?.forEach((booking) => {
           const startTime = booking.booking_time.substring(0, 5); // "HH:MM"
           const [hours, minutes] = startTime.split(':').map(Number);
           const startMinutes = hours * 60 + minutes;
+          const endMinutes = startMinutes + booking.total_duration;
           
-          // Block all slots during this booking
-          for (let i = 0; i < booking.total_duration; i += 30) {
-            const slotMinutes = startMinutes + i;
-            const slotHours = Math.floor(slotMinutes / 60);
-            const slotMins = slotMinutes % 60;
-            const slotTime = `${slotHours.toString().padStart(2, '0')}:${slotMins.toString().padStart(2, '0')}`;
-            blocked.push(slotTime);
-          }
+          ranges.push({ start: startMinutes, end: endMinutes });
         });
 
-        setBookedSlots(blocked);
+        setBookedRanges(ranges);
       } catch (error) {
         console.error('Error:', error);
       } finally {
@@ -111,32 +105,36 @@ export const DateTimeSelection = ({
 
     const allSlots: string[] = [];
 
-    // Generate morning slots
+    // Generate morning slots every 15 minutes for flexibility
     if (morningEnd > 0) {
-      for (let minutes = morningStart; minutes < morningEnd; minutes += 30) {
+      for (let minutes = morningStart; minutes < morningEnd; minutes += 15) {
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         allSlots.push(`${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`);
       }
     }
 
-    // Generate afternoon slots
+    // Generate afternoon slots every 15 minutes
     if (afternoonEnd > 0) {
-      for (let minutes = afternoonStart; minutes < afternoonEnd; minutes += 30) {
+      for (let minutes = afternoonStart; minutes < afternoonEnd; minutes += 15) {
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         allSlots.push(`${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`);
       }
     }
 
-    // Filter slots: must have enough consecutive time AND not exceed closing time
+    // Helper function to check if two time ranges overlap
+    const hasOverlap = (start1: number, end1: number, start2: number, end2: number): boolean => {
+      return start1 < end2 && start2 < end1;
+    };
+
+    // Filter slots: must fit within business hours AND not overlap with existing bookings
     return allSlots.filter((slot) => {
       const [hours, minutes] = slot.split(':').map(Number);
       const startMinutes = hours * 60 + minutes;
       const endMinutes = startMinutes + totalDuration;
       
       // Check if service would end after closing time
-      // Determine which period we're in
       const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
       const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
       
@@ -148,16 +146,10 @@ export const DateTimeSelection = ({
         return false; // Service would extend past afternoon closing
       }
       
-      // Check if all required slots are available (not booked)
-      for (let i = 0; i < totalDuration; i += 30) {
-        const checkMinutes = startMinutes + i;
-        const checkHours = Math.floor(checkMinutes / 60);
-        const checkMins = checkMinutes % 60;
-        const checkTime = `${checkHours.toString().padStart(2, '0')}:${checkMins.toString().padStart(2, '0')}`;
-        
-        // If any required slot is booked, this start time is not available
-        if (bookedSlots.includes(checkTime)) {
-          return false;
+      // Check if this time slot overlaps with any existing booking
+      for (const booking of bookedRanges) {
+        if (hasOverlap(startMinutes, endMinutes, booking.start, booking.end)) {
+          return false; // This slot would overlap with an existing booking
         }
       }
       
