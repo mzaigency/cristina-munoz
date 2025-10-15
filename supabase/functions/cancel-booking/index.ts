@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { format } from "https://esm.sh/date-fns@3.6.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -95,6 +96,9 @@ serve(async (req) => {
 
     // Trigger n8n webhook for cancellation notification
     try {
+      // Format date for webhook (dd-mm-yyyy)
+      const formattedDate = format(new Date(booking.booking_date), 'dd-MM-yyyy');
+      
       await fetch(cancelWebhookUrl, {
         method: 'POST',
         headers: {
@@ -105,7 +109,7 @@ serve(async (req) => {
           booking_id: bookingId,
           customer_name: booking.customer_name,
           customer_phone: customerPhone,
-          booking_date: booking.booking_date,
+          booking_date: formattedDate,
           booking_time: booking.booking_time,
           stylist: booking.stylist,
           services: booking.services,

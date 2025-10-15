@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { format } from "https://esm.sh/date-fns@3.6.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -166,13 +167,16 @@ serve(async (req) => {
     const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
     if (n8nWebhookUrl) {
       try {
+        // Format date for webhook (dd-mm-yyyy)
+        const formattedDate = format(new Date(data.booking_date), 'dd-MM-yyyy');
+        
         fetch(n8nWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             customer_name: data.customer_name,
             customer_phone: data.customer_phone,
-            booking_date: data.booking_date,
+            booking_date: formattedDate,
             booking_time: data.booking_time,
             end_time: data.end_time,
             stylist: data.stylist,
