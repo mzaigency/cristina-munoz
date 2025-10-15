@@ -91,15 +91,20 @@ serve(async (req) => {
       if (eventsData.items && eventsData.items.length > 0) {
         for (const event of eventsData.items) {
           if (event.start?.dateTime && event.end?.dateTime) {
-            const startTime = new Date(event.start.dateTime);
-            const endTime = new Date(event.end.dateTime);
-            const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
-
-            // Format time as HH:MM:SS
-            const hora = startTime.toTimeString().split(' ')[0];
+            // Extract time directly from the ISO string (format: 2025-10-22T09:00:00+02:00)
+            // This preserves the local time in the timezone
+            const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 8); // Gets "09:00:00"
+            const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 8);
+            
+            // Calculate duration in minutes
+            const [startHours, startMinutes, startSeconds] = startTimeStr.split(':').map(Number);
+            const [endHours, endMinutes, endSeconds] = endTimeStr.split(':').map(Number);
+            const startTotalMinutes = startHours * 60 + startMinutes;
+            const endTotalMinutes = endHours * 60 + endMinutes;
+            const durationMinutes = endTotalMinutes - startTotalMinutes;
 
             allBookedSlots.push({
-              Hora: hora,
+              Hora: startTimeStr,
               total_duration: durationMinutes
             });
           }
