@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Scissors, Palette, Sparkles, Flower2 } from "lucide-react";
 import cutService from "@/assets/cut-service.jpg";
 import coloringService from "@/assets/coloring-service-new.jpg";
-import stylingService from "@/assets/styling-service.jpg";
+import stylingService from "@/assets/styling-service-new.jpg";
 const serviceCategories = [{
   category: "Corte",
   icon: Scissors,
