@@ -6,12 +6,12 @@ export const GallerySection = () => {
   // Copia las URLs completas de tus posts de Instagram aquí
   // Ejemplo: "https://www.instagram.com/p/ABC123xyz/"
   const instagramPosts = [
-    "https://www.instagram.com/p/ejemplo1/",
-    "https://www.instagram.com/p/ejemplo2/",
-    "https://www.instagram.com/p/ejemplo3/",
-    "https://www.instagram.com/p/ejemplo4/",
-    "https://www.instagram.com/p/ejemplo5/",
-    "https://www.instagram.com/p/ejemplo6/",
+    "https://www.instagram.com/p/DOOJlP2jCFc/",
+    "https://www.instagram.com/p/DA1mNTQIQii/?img_index=1",
+    "https://www.instagram.com/p/C53dETjoweW/",
+    "https://www.instagram.com/p/C4k3-6OIa-K/",
+    "https://www.instagram.com/p/C3um5Rao4XF/?img_index=2",
+    "https://www.instagram.com/p/C-NFDz_I7bE/?img_index=1",
   ];
 
   return (
