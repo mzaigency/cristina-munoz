@@ -1,5 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scissors, Palette, Sparkles, Flower2 } from "lucide-react";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import cutService from "@/assets/cut-service.jpg";
 import coloringService from "@/assets/coloring-service-new.jpg";
 import stylingService from "@/assets/styling-treatments.png";
@@ -71,9 +72,12 @@ const serviceCategories = [{
   }]
 }];
 export const ServicesSection = () => {
-  return <section className="py-20 bg-salon-cream animate-fade-in">
+  const { ref, isVisible } = useScrollAnimation(0.1);
+
+  return (
+    <section ref={ref} className="py-20 bg-salon-cream">
       <div className="container mx-auto px-4">
-        <div className="mb-12 text-center">
+        <div className={`mb-12 text-center scroll-reveal ${isVisible ? 'visible' : ''}`}>
           <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
             Nuestros Servicios
           </h2>
@@ -84,14 +88,20 @@ export const ServicesSection = () => {
 
         <div className="grid gap-8 md:grid-cols-2">
           {serviceCategories.map((category, idx) => {
-          const Icon = category.icon;
-          return <Card key={idx} className="overflow-hidden border-none shadow-lg transition-all hover:scale-105 hover:shadow-xl">
-                <div style={{
-              backgroundImage: `url(${category.image})`
-            }} className="h-48 bg-cover bg-center mx-0" />
+            const Icon = category.icon;
+            return (
+              <Card 
+                key={idx} 
+                className={`overflow-hidden border-none shadow-lg hover-lift group scroll-reveal ${isVisible ? 'visible' : ''}`}
+                style={{ animationDelay: `${idx * 0.1}s` }}
+              >
+                <div 
+                  style={{ backgroundImage: `url(${category.image})` }} 
+                  className="h-48 bg-cover bg-center mx-0 transition-transform duration-500 group-hover:scale-110" 
+                />
                 <CardHeader>
                   <div className="mb-2 flex items-center gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110">
                       <Icon className="h-5 w-5 text-primary-foreground" />
                     </div>
                     <CardTitle className="text-2xl">{category.category}</CardTitle>
@@ -99,15 +109,22 @@ export const ServicesSection = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {category.services.map((service, serviceIdx) => <div key={serviceIdx} className="flex items-center justify-between rounded-lg bg-salon-pink-light p-3">
+                    {category.services.map((service, serviceIdx) => (
+                      <div 
+                        key={serviceIdx} 
+                        className="flex items-center justify-between rounded-lg bg-salon-pink-light p-3 transition-all duration-300 hover:bg-salon-gold-light hover:translate-x-2 hover:shadow-md"
+                      >
                         <span className="font-medium text-foreground">{service.name}</span>
                         <span className="text-sm text-muted-foreground">{service.duration}</span>
-                      </div>)}
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
-              </Card>;
-        })}
+              </Card>
+            );
+          })}
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };

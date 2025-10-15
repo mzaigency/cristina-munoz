@@ -3,9 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Instagram } from "lucide-react";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 export const GallerySection = () => {
   const [loadedEmbeds, setLoadedEmbeds] = useState<Set<number>>(new Set());
+  const { ref, isVisible } = useScrollAnimation(0.1);
   
   // URLs completas de tus posts de Instagram
   const instagramPosts = [
@@ -41,9 +43,9 @@ export const GallerySection = () => {
   };
 
   return (
-    <section className="py-20 px-4 bg-gradient-to-b from-background to-secondary/10 animate-fade-in">
+    <section ref={ref} className="py-20 px-4 bg-gradient-to-b from-background to-secondary/10">
       <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-12 space-y-4">
+        <div className={`text-center mb-12 space-y-4 scroll-reveal ${isVisible ? 'visible' : ''}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-foreground">
             Nuestros Trabajos
           </h2>
@@ -57,7 +59,8 @@ export const GallerySection = () => {
             {instagramPosts.map((postUrl, index) => (
               <Card 
                 key={index} 
-                className="overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                className={`overflow-hidden hover-lift scroll-reveal ${isVisible ? 'visible' : ''}`}
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <CardContent className="p-0">
                   {!loadedEmbeds.has(index) && (
@@ -87,10 +90,10 @@ export const GallerySection = () => {
           </div>
         </div>
 
-        <div className="text-center">
+        <div className={`text-center scroll-reveal ${isVisible ? 'visible' : ''}`}>
           <Button
             size="lg"
-            className="gap-2 bg-gradient-to-r from-salon-primary to-salon-accent hover:opacity-90 transition-opacity"
+            className="gap-2 bg-gradient-to-r from-salon-primary to-salon-accent hover:opacity-90 transition-all duration-300 hover:scale-105 hover:shadow-lg"
             onClick={() => window.open('https://www.instagram.com/cristinamunoz_peluqueria/', '_blank')}
           >
             <Instagram className="w-5 h-5" />
