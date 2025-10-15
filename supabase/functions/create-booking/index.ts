@@ -317,7 +317,7 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             customer_name: bookingData.customer_name,
-            customer_phone: bookingData.customer_phone,
+            Telefono: bookingData.customer_phone,
             booking_date: formattedDate,
             booking_time: bookingData.booking_time,
             stylist: bookingData.stylist,
