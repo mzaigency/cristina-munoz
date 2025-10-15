@@ -63,7 +63,8 @@ serve(async (req) => {
     }
 
     // Fetch events from each calendar
-    const allBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
+    const crisBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
+    const desiBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
 
     for (const calendar of calendarsToCheck) {
       const timeMin = `${date}T00:00:00Z`;
@@ -92,30 +93,90 @@ serve(async (req) => {
         for (const event of eventsData.items) {
           if (event.start?.dateTime && event.end?.dateTime) {
             // Extract time directly from the ISO string (format: 2025-10-22T09:00:00+02:00)
-            // This preserves the local time in the timezone
-            const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 8); // Gets "09:00:00"
+            const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 8);
             const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 8);
             
             // Calculate duration in minutes
-            const [startHours, startMinutes, startSeconds] = startTimeStr.split(':').map(Number);
-            const [endHours, endMinutes, endSeconds] = endTimeStr.split(':').map(Number);
+            const [startHours, startMinutes] = startTimeStr.split(':').map(Number);
+            const [endHours, endMinutes] = endTimeStr.split(':').map(Number);
             const startTotalMinutes = startHours * 60 + startMinutes;
             const endTotalMinutes = endHours * 60 + endMinutes;
             const durationMinutes = endTotalMinutes - startTotalMinutes;
 
-            allBookedSlots.push({
+            const slot = {
               Hora: startTimeStr,
               total_duration: durationMinutes
-            });
+            };
+
+            // Store in the appropriate array based on stylist
+            if (calendar.name === 'cris') {
+              crisBookedSlots.push(slot);
+            } else {
+              desiBookedSlots.push(slot);
+            }
           }
         }
       }
     }
 
-    console.log(`Total booked slots found: ${allBookedSlots.length}`, allBookedSlots);
+    // If stylist is 'any', only block slots where BOTH are busy
+    let finalBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
+    
+    if (stylist === 'any') {
+      console.log('Cris booked slots:', crisBookedSlots);
+      console.log('Desi booked slots:', desiBookedSlots);
+      
+      // Convert to minute ranges
+      const crisRanges = crisBookedSlots.map(slot => {
+        const [hours, minutes] = slot.Hora.split(':').map(Number);
+        const start = hours * 60 + minutes;
+        return { start, end: start + slot.total_duration };
+      });
+      
+      const desiRanges = desiBookedSlots.map(slot => {
+        const [hours, minutes] = slot.Hora.split(':').map(Number);
+        const start = hours * 60 + minutes;
+        return { start, end: start + slot.total_duration };
+      });
+
+      // Find overlapping ranges (where BOTH are busy)
+      const blockedRanges: Array<{ start: number; end: number }> = [];
+      
+      for (let minute = 0; minute < 24 * 60; minute++) {
+        const crisBusy = crisRanges.some(range => minute >= range.start && minute < range.end);
+        const desiBusy = desiRanges.some(range => minute >= range.start && minute < range.end);
+        
+        if (crisBusy && desiBusy) {
+          const lastRange = blockedRanges[blockedRanges.length - 1];
+          if (lastRange && lastRange.end === minute) {
+            lastRange.end = minute + 1;
+          } else {
+            blockedRanges.push({ start: minute, end: minute + 1 });
+          }
+        }
+      }
+
+      // Convert blocked ranges back to slots
+      blockedRanges.forEach(range => {
+        const hours = Math.floor(range.start / 60);
+        const minutes = range.start % 60;
+        const horaStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+        finalBookedSlots.push({
+          Hora: horaStr,
+          total_duration: range.end - range.start
+        });
+      });
+
+      console.log('Final blocked slots (both busy):', finalBookedSlots);
+    } else {
+      // For specific stylist, return their booked slots
+      finalBookedSlots = stylist === 'cris' ? crisBookedSlots : desiBookedSlots;
+    }
+
+    console.log(`Total booked slots found: ${finalBookedSlots.length}`, finalBookedSlots);
 
     return new Response(
-      JSON.stringify({ bookedSlots: allBookedSlots }),
+      JSON.stringify({ bookedSlots: finalBookedSlots }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
