@@ -41,7 +41,7 @@ export const BookingConfirmation = ({
         const { data, error } = await supabase.functions.invoke('create-booking', {
           body: {
             customer_name: name,
-            customer_phone: phone,
+            Telefono: phone,
             booking_date: bookingDate,
             booking_time: bookingData.time,
             stylist: bookingData.stylist,

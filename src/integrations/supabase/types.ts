@@ -22,7 +22,6 @@ export type Database = {
           compound_part: string | null
           created_at: string | null
           customer_name: string
-          customer_phone: string
           end_time: string | null
           google_calendar_event_id: string | null
           id: string
@@ -31,6 +30,7 @@ export type Database = {
           services: Json
           status: string
           stylist: string
+          Telefono: string
           total_duration: number
           updated_at: string | null
         }
@@ -41,7 +41,6 @@ export type Database = {
           compound_part?: string | null
           created_at?: string | null
           customer_name: string
-          customer_phone: string
           end_time?: string | null
           google_calendar_event_id?: string | null
           id?: string
@@ -50,6 +49,7 @@ export type Database = {
           services: Json
           status?: string
           stylist: string
+          Telefono: string
           total_duration: number
           updated_at?: string | null
         }
@@ -60,7 +60,6 @@ export type Database = {
           compound_part?: string | null
           created_at?: string | null
           customer_name?: string
-          customer_phone?: string
           end_time?: string | null
           google_calendar_event_id?: string | null
           id?: string
@@ -69,6 +68,7 @@ export type Database = {
           services?: Json
           status?: string
           stylist?: string
+          Telefono?: string
           total_duration?: number
           updated_at?: string | null
         }

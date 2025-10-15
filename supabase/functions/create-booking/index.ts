@@ -9,7 +9,7 @@ const corsHeaders = {
 
 interface BookingRequest {
   customer_name: string;
-  customer_phone: string;
+  Telefono: string;
   booking_date: string;
   booking_time: string;
   stylist: string;
@@ -150,7 +150,7 @@ serve(async (req) => {
         try {
           googleEventId = await createCalendarEvent(
             `Cita - ${bookingData.customer_name}`,
-            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.customer_phone}\nServicios: ${simpleServices.map(s => s.name).join(', ')}\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
+            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicios: ${simpleServices.map(s => s.name).join(', ')}\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
             `${bookingData.booking_time}:00`,
             endTime,
             accessToken
@@ -164,7 +164,7 @@ serve(async (req) => {
         .from('bookings')
         .insert({
           customer_name: bookingData.customer_name,
-          customer_phone: bookingData.customer_phone,
+          Telefono: bookingData.Telefono,
           booking_date: bookingData.booking_date,
           booking_time: bookingData.booking_time,
           end_time: endTime,
@@ -203,7 +203,7 @@ serve(async (req) => {
         try {
           part1GoogleEventId = await createCalendarEvent(
             `${service.name} - Parte 1 - ${bookingData.customer_name}`,
-            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.customer_phone}\nServicio: ${service.name} (Parte 1)\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
+            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicio: ${service.name} (Parte 1)\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
             part1StartTime,
             part1EndTime,
             accessToken
@@ -217,7 +217,7 @@ serve(async (req) => {
         .from('bookings')
         .insert({
           customer_name: bookingData.customer_name,
-          customer_phone: bookingData.customer_phone,
+          Telefono: bookingData.Telefono,
           booking_date: bookingData.booking_date,
           booking_time: part1StartTime,
           end_time: part1EndTime,
@@ -254,7 +254,7 @@ serve(async (req) => {
           try {
             part2GoogleEventId = await createCalendarEvent(
               `${service.name} - Parte 2 - ${bookingData.customer_name}`,
-              `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.customer_phone}\nServicio: ${service.name} (Parte 2)\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
+              `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicio: ${service.name} (Parte 2)\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
               part2StartTime,
               part2EndTime,
               accessToken
@@ -268,7 +268,7 @@ serve(async (req) => {
           .from('bookings')
           .insert({
             customer_name: bookingData.customer_name,
-            customer_phone: bookingData.customer_phone,
+            Telefono: bookingData.Telefono,
             booking_date: bookingData.booking_date,
             booking_time: part2StartTime,
             end_time: part2EndTime,
@@ -317,7 +317,7 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             customer_name: bookingData.customer_name,
-            Telefono: bookingData.customer_phone,
+            Telefono: bookingData.Telefono,
             booking_date: formattedDate,
             booking_time: bookingData.booking_time,
             stylist: bookingData.stylist,
