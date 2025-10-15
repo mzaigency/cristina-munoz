@@ -133,7 +133,7 @@ export const BookingConfirmation = ({
             </p>
             <p>
               <span className="font-medium">Fecha:</span>{" "}
-              {bookingData.date && format(bookingData.date, "PPP", { locale: es })}
+              {bookingData.date && format(bookingData.date, "dd-MM-yyyy")}
             </p>
             <p>
               <span className="font-medium">Hora:</span> {bookingData.time}
@@ -163,7 +163,7 @@ export const BookingConfirmation = ({
           <div className="space-y-2 text-sm">
             <p>
               <span className="font-medium">Fecha:</span>{" "}
-              {bookingData.date && format(bookingData.date, "PPP", { locale: es })}
+              {bookingData.date && format(bookingData.date, "dd-MM-yyyy")}
             </p>
             <p>
               <span className="font-medium">Hora:</span> {bookingData.time}
