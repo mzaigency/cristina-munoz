@@ -3,9 +3,11 @@ import { Sparkles } from "lucide-react";
 import heroImage from "@/assets/salon-hero.jpg";
 interface HeroSectionProps {
   onBookNow: () => void;
+  onViewServices: () => void;
 }
 export const HeroSection = ({
-  onBookNow
+  onBookNow,
+  onViewServices
 }: HeroSectionProps) => {
   return <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0 transition-transform duration-700 hover:scale-105" style={{
@@ -34,7 +36,7 @@ export const HeroSection = ({
             <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg bg-[#7c4204]">
               Reservar Cita
             </Button>
-            <Button size="lg" variant="outline" className="transition-all duration-300 hover:scale-105 hover:shadow-lg">
+            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg">
               Ver Servicios
             </Button>
           </div>

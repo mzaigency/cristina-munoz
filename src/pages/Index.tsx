@@ -22,13 +22,17 @@ const Index = () => {
     scrollToSection("reserva");
   };
 
+  const handleViewServices = () => {
+    scrollToSection("servicios");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header onNavigate={scrollToSection} activeSection={activeSection} />
       
       <main>
         <div id="inicio">
-          <HeroSection onBookNow={handleBookNow} />
+          <HeroSection onBookNow={handleBookNow} onViewServices={handleViewServices} />
         </div>
         
         <div id="servicios">
