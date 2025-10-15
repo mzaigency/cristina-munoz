@@ -172,7 +172,7 @@ export const CancelBooking = () => {
             <CardHeader>
               <CardTitle>Buscar mis citas</CardTitle>
               <CardDescription>
-                Ingresa tu número de teléfono sin el código de país (+34)
+                Ingresa tu número de teléfono
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
