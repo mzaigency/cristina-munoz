@@ -89,14 +89,14 @@ export const Footer = () => {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Ubicación de Peluquería Cris"
+              title="Ubicación de Cristina Muñoz Peluquería"
             />
           </div>
         </div>
 
         <div className="mt-8 border-t pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            © 2025 Peluquería Cris. Todos los derechos reservados.
+            © 2025 Cristina Muñoz. Todos los derechos reservados.
           </p>
         </div>
       </div>

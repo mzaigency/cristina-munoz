@@ -29,7 +29,7 @@ export const HeroSection = ({ onBookNow }: HeroSectionProps) => {
 
           <h1 className="mb-6 text-4xl font-bold tracking-tight text-foreground md:text-6xl">
             Bienvenida a<br />
-            <span className="text-salon-pink-dark">Peluquería Cris</span>
+            <span className="text-salon-pink-dark">Cristina Muñoz</span>
           </h1>
 
           <p className="mb-8 text-lg text-muted-foreground md:text-xl">
