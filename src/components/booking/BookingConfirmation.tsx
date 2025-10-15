@@ -45,7 +45,14 @@ export const BookingConfirmation = ({
             booking_date: bookingDate,
             booking_time: bookingData.time,
             stylist: bookingData.stylist,
-            services: bookingData.services.map(s => ({ name: s.name, duration: s.duration })),
+            services: bookingData.services.map(s => ({ 
+              id: s.id,
+              name: s.name,
+              type: s.type,
+              duration_part1_active: s.duration_part1_active,
+              duration_exposure_pause: s.duration_exposure_pause,
+              duration_part2_active: s.duration_part2_active,
+            })),
             total_duration: totalDuration,
           },
         });

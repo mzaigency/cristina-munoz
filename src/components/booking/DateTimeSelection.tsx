@@ -40,7 +40,7 @@ export const DateTimeSelection = ({
         // Query bookings for the selected date and stylist
         let query = supabase
           .from('bookings')
-          .select('booking_time, total_duration')
+          .select('booking_time, total_duration, is_part_of_compound, compound_part')
           .eq('booking_date', dateStr)
           .eq('status', 'confirmed');
 

@@ -36,8 +36,19 @@ serve(async (req) => {
       throw new Error('Booking not found');
     }
 
-    // Delete from Google Calendar if we have the event ID and calendar ID
-    if (googleEventId && calendarId) {
+    // If this is a compound service, also get the related booking
+    let relatedBooking = null;
+    if (booking.is_part_of_compound && booking.related_booking_id) {
+      const { data: related } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', booking.related_booking_id)
+        .single();
+      relatedBooking = related;
+    }
+
+    // Helper function to delete Google Calendar event
+    const deleteGoogleCalendarEvent = async (eventId: string, calId: string) => {
       try {
         const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN')!;
         const clientId = Deno.env.get('GOOGLE_CLIENT_ID')!;
@@ -62,7 +73,7 @@ serve(async (req) => {
         const { access_token } = await tokenResponse.json();
 
         // Delete the event from Google Calendar
-        const deleteUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`;
+        const deleteUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${eventId}`;
         const deleteResponse = await fetch(deleteUrl, {
           method: 'DELETE',
           headers: {
@@ -73,15 +84,24 @@ serve(async (req) => {
         if (!deleteResponse.ok && deleteResponse.status !== 404) {
           console.error('Failed to delete Google Calendar event:', await deleteResponse.text());
         } else {
-          console.log('Successfully deleted Google Calendar event');
+          console.log('Successfully deleted Google Calendar event:', eventId);
         }
       } catch (error) {
         console.error('Error deleting from Google Calendar:', error);
-        // Continue with database deletion even if Google Calendar fails
       }
+    };
+
+    // Delete from Google Calendar if we have the event ID and calendar ID
+    if (googleEventId && calendarId) {
+      await deleteGoogleCalendarEvent(googleEventId, calendarId);
     }
 
-    // Update booking status to cancelled instead of deleting
+    // Also delete related booking's calendar event
+    if (relatedBooking && relatedBooking.google_calendar_event_id && relatedBooking.calendar_id) {
+      await deleteGoogleCalendarEvent(relatedBooking.google_calendar_event_id, relatedBooking.calendar_id);
+    }
+
+    // Update booking status to cancelled
     const { error: updateError } = await supabase
       .from('bookings')
       .update({ status: 'cancelled' })
@@ -92,7 +112,15 @@ serve(async (req) => {
       throw updateError;
     }
 
-    console.log('Booking cancelled successfully');
+    // Also cancel related booking if exists
+    if (relatedBooking) {
+      await supabase
+        .from('bookings')
+        .update({ status: 'cancelled' })
+        .eq('id', relatedBooking.id);
+    }
+
+    console.log('Booking(s) cancelled successfully');
 
     // Trigger n8n webhook for cancellation notification
     try {

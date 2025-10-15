@@ -19,12 +19,15 @@ export type Database = {
           booking_date: string
           booking_time: string
           calendar_id: string | null
+          compound_part: string | null
           created_at: string | null
           customer_name: string
           customer_phone: string
           end_time: string | null
           google_calendar_event_id: string | null
           id: string
+          is_part_of_compound: boolean | null
+          related_booking_id: string | null
           services: Json
           status: string
           stylist: string
@@ -35,12 +38,15 @@ export type Database = {
           booking_date: string
           booking_time: string
           calendar_id?: string | null
+          compound_part?: string | null
           created_at?: string | null
           customer_name: string
           customer_phone: string
           end_time?: string | null
           google_calendar_event_id?: string | null
           id?: string
+          is_part_of_compound?: boolean | null
+          related_booking_id?: string | null
           services: Json
           status?: string
           stylist: string
@@ -51,17 +57,64 @@ export type Database = {
           booking_date?: string
           booking_time?: string
           calendar_id?: string | null
+          compound_part?: string | null
           created_at?: string | null
           customer_name?: string
           customer_phone?: string
           end_time?: string | null
           google_calendar_event_id?: string | null
           id?: string
+          is_part_of_compound?: boolean | null
+          related_booking_id?: string | null
           services?: Json
           status?: string
           stylist?: string
           total_duration?: number
           updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          category: string | null
+          created_at: string
+          duration_exposure_pause: number
+          duration_part1_active: number
+          duration_part2_active: number
+          id: string
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          duration_exposure_pause?: number
+          duration_part1_active: number
+          duration_part2_active?: number
+          id?: string
+          name: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          duration_exposure_pause?: number
+          duration_part1_active?: number
+          duration_part2_active?: number
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: []
       }

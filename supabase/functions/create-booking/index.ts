@@ -13,7 +13,14 @@ interface BookingRequest {
   booking_date: string;
   booking_time: string;
   stylist: string;
-  services: Array<{ name: string; duration: number }>;
+  services: Array<{ 
+    id: string;
+    name: string;
+    type: 'Simple' | 'Compuesto';
+    duration_part1_active: number;
+    duration_exposure_pause: number;
+    duration_part2_active: number;
+  }>;
   total_duration: number;
 }
 
@@ -47,12 +54,62 @@ serve(async (req) => {
       calendarId = Deno.env.get('GOOGLE_CALENDAR_ID_CRIS') || null;
     }
 
-    let googleEventId: string | null = null;
+    // Separate services by type
+    const simpleServices = bookingData.services.filter(s => s.type === 'Simple');
+    const compoundServices = bookingData.services.filter(s => s.type === 'Compuesto');
 
-    // Create Google Calendar event if credentials are configured
+    // Helper function to create Google Calendar event
+    const createCalendarEvent = async (
+      summary: string,
+      description: string,
+      startTime: string,
+      endTime: string,
+      accessToken: string
+    ) => {
+      const event = {
+        summary,
+        description,
+        start: {
+          dateTime: `${bookingData.booking_date}T${startTime}`,
+          timeZone: 'Europe/Madrid',
+        },
+        end: {
+          dateTime: `${bookingData.booking_date}T${endTime}`,
+          timeZone: 'Europe/Madrid',
+        },
+        attendees: [
+          {
+            email: calendarId,
+            displayName: bookingData.stylist === 'cris' ? 'Cris' : bookingData.stylist === 'desi' ? 'Desi' : 'Peluquería',
+          },
+        ],
+      };
+
+      const calendarResponse = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(event),
+        }
+      );
+
+      if (!calendarResponse.ok) {
+        console.error('Failed to create calendar event:', await calendarResponse.text());
+        throw new Error('Failed to create calendar event');
+      }
+
+      const calendarEvent = await calendarResponse.json();
+      return calendarEvent.id;
+    };
+
+    // Get access token if Google Calendar is configured
+    let accessToken: string | null = null;
     if (calendarId && clientId && clientSecret && refreshToken) {
       try {
-        // Get access token
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -66,124 +123,206 @@ serve(async (req) => {
 
         if (!tokenResponse.ok) {
           console.error('Failed to get access token:', await tokenResponse.text());
-          throw new Error('Failed to authenticate with Google');
+        } else {
+          const tokenData = await tokenResponse.json();
+          accessToken = tokenData.access_token;
         }
-
-        const { access_token } = await tokenResponse.json();
-
-        // Create calendar event with Madrid timezone
-        // Use date-only format to avoid timezone conversion issues
-        const startDate = `${bookingData.booking_date}`;
-        const startTime = `${bookingData.booking_time}:00`;
-        
-        // Calculate end time
-        const [startHours, startMinutes] = bookingData.booking_time.split(':').map(Number);
-        const totalMinutes = startHours * 60 + startMinutes + bookingData.total_duration;
-        const endHours = Math.floor(totalMinutes / 60);
-        const endMinutes = totalMinutes % 60;
-        const endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}:00`;
-
-        const event = {
-          summary: `Cita - ${bookingData.customer_name}`,
-          description: `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.customer_phone}\nServicios: ${bookingData.services.map(s => s.name).join(', ')}\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
-          start: {
-            dateTime: `${startDate}T${startTime}`,
-            timeZone: 'Europe/Madrid',
-          },
-          end: {
-            dateTime: `${startDate}T${endTime}`,
-            timeZone: 'Europe/Madrid',
-          },
-          attendees: [
-            {
-              email: calendarId,
-              displayName: bookingData.stylist === 'cris' ? 'Cris' : bookingData.stylist === 'desi' ? 'Desi' : 'Peluquería',
-            },
-          ],
-        };
-
-        const calendarResponse = await fetch(
-          `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(event),
-          }
-        );
-
-        if (!calendarResponse.ok) {
-          console.error('Failed to create calendar event:', await calendarResponse.text());
-          throw new Error('Failed to create calendar event');
-        }
-
-        const calendarEvent = await calendarResponse.json();
-        googleEventId = calendarEvent.id;
-        console.log('Created Google Calendar event:', googleEventId);
       } catch (error) {
-        console.error('Error creating Google Calendar event:', error);
-        // Continue even if calendar creation fails
+        console.error('Error getting access token:', error);
       }
-    } else {
-      console.warn('Google Calendar credentials not configured, skipping calendar event creation');
     }
 
-    // Calculate end time
     const [startHours, startMinutes] = bookingData.booking_time.split(':').map(Number);
-    const totalMinutes = startHours * 60 + startMinutes + bookingData.total_duration;
-    const endHours = Math.floor(totalMinutes / 60);
-    const endMinutes = totalMinutes % 60;
-    const endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}:00`;
+    let currentMinutes = startHours * 60 + startMinutes;
 
-    // Save booking to database with end_time
-    const { data, error } = await supabase
-      .from('bookings')
-      .insert({
-        customer_name: bookingData.customer_name,
-        customer_phone: bookingData.customer_phone,
-        booking_date: bookingData.booking_date,
-        booking_time: bookingData.booking_time,
-        end_time: endTime,
-        stylist: bookingData.stylist,
-        services: bookingData.services,
-        total_duration: bookingData.total_duration,
-        status: 'confirmed',
-        google_calendar_event_id: googleEventId,
-        calendar_id: calendarId,
-      })
-      .select()
-      .single();
+    const createdBookings = [];
 
-    if (error) {
-      console.error('Error saving booking:', error);
-      throw new Error('Failed to save booking');
+    // Create bookings for simple services
+    if (simpleServices.length > 0) {
+      const simpleDuration = simpleServices.reduce((sum, s) => sum + s.duration_part1_active, 0);
+      const endMinutes = currentMinutes + simpleDuration;
+      const endHours = Math.floor(endMinutes / 60);
+      const endMins = endMinutes % 60;
+      const endTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}:00`;
+
+      let googleEventId: string | null = null;
+      if (accessToken) {
+        try {
+          googleEventId = await createCalendarEvent(
+            `Cita - ${bookingData.customer_name}`,
+            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.customer_phone}\nServicios: ${simpleServices.map(s => s.name).join(', ')}\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
+            `${bookingData.booking_time}:00`,
+            endTime,
+            accessToken
+          );
+        } catch (error) {
+          console.error('Error creating Google Calendar event for simple services:', error);
+        }
+      }
+
+      const { data, error } = await supabase
+        .from('bookings')
+        .insert({
+          customer_name: bookingData.customer_name,
+          customer_phone: bookingData.customer_phone,
+          booking_date: bookingData.booking_date,
+          booking_time: bookingData.booking_time,
+          end_time: endTime,
+          stylist: bookingData.stylist,
+          services: simpleServices.map(s => ({ name: s.name })),
+          total_duration: simpleDuration,
+          status: 'confirmed',
+          google_calendar_event_id: googleEventId,
+          calendar_id: calendarId,
+          is_part_of_compound: false,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error saving simple services booking:', error);
+        throw new Error('Failed to save booking');
+      }
+
+      createdBookings.push(data);
+      currentMinutes = endMinutes;
     }
 
-    console.log('Booking created successfully:', data);
+    // Create bookings for compound services (each gets 2 separate bookings)
+    for (const service of compoundServices) {
+      // Part 1: Active work
+      const part1Duration = service.duration_part1_active;
+      const part1EndMinutes = currentMinutes + part1Duration;
+      const part1EndHours = Math.floor(part1EndMinutes / 60);
+      const part1EndMins = part1EndMinutes % 60;
+      const part1EndTime = `${String(part1EndHours).padStart(2, '0')}:${String(part1EndMins).padStart(2, '0')}:00`;
+      const part1StartTime = `${String(Math.floor(currentMinutes / 60)).padStart(2, '0')}:${String(currentMinutes % 60).padStart(2, '0')}:00`;
+
+      let part1GoogleEventId: string | null = null;
+      if (accessToken) {
+        try {
+          part1GoogleEventId = await createCalendarEvent(
+            `${service.name} - Parte 1 - ${bookingData.customer_name}`,
+            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.customer_phone}\nServicio: ${service.name} (Parte 1)\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
+            part1StartTime,
+            part1EndTime,
+            accessToken
+          );
+        } catch (error) {
+          console.error('Error creating Google Calendar event for part 1:', error);
+        }
+      }
+
+      const { data: part1Data, error: part1Error } = await supabase
+        .from('bookings')
+        .insert({
+          customer_name: bookingData.customer_name,
+          customer_phone: bookingData.customer_phone,
+          booking_date: bookingData.booking_date,
+          booking_time: part1StartTime,
+          end_time: part1EndTime,
+          stylist: bookingData.stylist,
+          services: [{ name: `${service.name} - Parte 1` }],
+          total_duration: part1Duration,
+          status: 'confirmed',
+          google_calendar_event_id: part1GoogleEventId,
+          calendar_id: calendarId,
+          is_part_of_compound: true,
+          compound_part: 'part1',
+        })
+        .select()
+        .single();
+
+      if (part1Error) {
+        console.error('Error saving part 1 booking:', part1Error);
+        throw new Error('Failed to save part 1 booking');
+      }
+
+      // Move time forward past exposure time
+      currentMinutes = part1EndMinutes + service.duration_exposure_pause;
+
+      // Part 2: Final work (only if there's a part 2 duration)
+      if (service.duration_part2_active > 0) {
+        const part2Duration = service.duration_part2_active;
+        const part2StartMinutes = currentMinutes;
+        const part2EndMinutes = currentMinutes + part2Duration;
+        const part2StartTime = `${String(Math.floor(part2StartMinutes / 60)).padStart(2, '0')}:${String(part2StartMinutes % 60).padStart(2, '0')}:00`;
+        const part2EndTime = `${String(Math.floor(part2EndMinutes / 60)).padStart(2, '0')}:${String(part2EndMinutes % 60).padStart(2, '0')}:00`;
+
+        let part2GoogleEventId: string | null = null;
+        if (accessToken) {
+          try {
+            part2GoogleEventId = await createCalendarEvent(
+              `${service.name} - Parte 2 - ${bookingData.customer_name}`,
+              `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.customer_phone}\nServicio: ${service.name} (Parte 2)\nPeluquera: ${bookingData.stylist === 'any' ? 'Cualquiera' : bookingData.stylist.toUpperCase()}`,
+              part2StartTime,
+              part2EndTime,
+              accessToken
+            );
+          } catch (error) {
+            console.error('Error creating Google Calendar event for part 2:', error);
+          }
+        }
+
+        const { data: part2Data, error: part2Error } = await supabase
+          .from('bookings')
+          .insert({
+            customer_name: bookingData.customer_name,
+            customer_phone: bookingData.customer_phone,
+            booking_date: bookingData.booking_date,
+            booking_time: part2StartTime,
+            end_time: part2EndTime,
+            stylist: bookingData.stylist,
+            services: [{ name: `${service.name} - Parte 2` }],
+            total_duration: part2Duration,
+            status: 'confirmed',
+            google_calendar_event_id: part2GoogleEventId,
+            calendar_id: calendarId,
+            is_part_of_compound: true,
+            compound_part: 'part2',
+            related_booking_id: part1Data.id,
+          })
+          .select()
+          .single();
+
+        if (part2Error) {
+          console.error('Error saving part 2 booking:', part2Error);
+          throw new Error('Failed to save part 2 booking');
+        }
+
+        // Update part 1 to reference part 2
+        await supabase
+          .from('bookings')
+          .update({ related_booking_id: part2Data.id })
+          .eq('id', part1Data.id);
+
+        createdBookings.push(part1Data, part2Data);
+        currentMinutes = part2EndMinutes;
+      } else {
+        createdBookings.push(part1Data);
+      }
+    }
+
+    console.log('Bookings created successfully:', createdBookings);
 
     // Trigger n8n webhook for WhatsApp notification (non-blocking)
     const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
     if (n8nWebhookUrl) {
       try {
         // Format date for webhook (dd-mm-yyyy)
-        const formattedDate = format(new Date(data.booking_date), 'dd-MM-yyyy');
+        const formattedDate = format(new Date(bookingData.booking_date), 'dd-MM-yyyy');
         
         fetch(n8nWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            customer_name: data.customer_name,
-            customer_phone: data.customer_phone,
+            customer_name: bookingData.customer_name,
+            customer_phone: bookingData.customer_phone,
             booking_date: formattedDate,
-            booking_time: data.booking_time,
-            end_time: data.end_time,
-            stylist: data.stylist,
-            services: data.services,
-            total_duration: data.total_duration,
-            google_calendar_event_id: data.google_calendar_event_id,
-            calendar_id: data.calendar_id,
+            booking_time: bookingData.booking_time,
+            stylist: bookingData.stylist,
+            services: bookingData.services.map(s => s.name),
+            bookings: createdBookings,
           }),
         }).catch(err => console.error('Error triggering n8n webhook:', err));
       } catch (error) {
@@ -194,8 +333,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        booking: data,
-        googleEventCreated: !!googleEventId 
+        bookings: createdBookings,
+        googleEventCreated: createdBookings.some(b => b.google_calendar_event_id !== null)
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

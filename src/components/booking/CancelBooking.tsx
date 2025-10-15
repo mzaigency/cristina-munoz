@@ -31,6 +31,9 @@ type Booking = {
   stylist: string;
   google_calendar_event_id: string | null;
   calendar_id: string | null;
+  is_part_of_compound: boolean;
+  compound_part: string | null;
+  related_booking_id: string | null;
 };
 
 export const CancelBooking = () => {
@@ -75,11 +78,20 @@ export const CancelBooking = () => {
         stylist: booking.stylist,
         google_calendar_event_id: booking.google_calendar_event_id,
         calendar_id: booking.calendar_id,
+        is_part_of_compound: booking.is_part_of_compound || false,
+        compound_part: booking.compound_part,
+        related_booking_id: booking.related_booking_id,
       }));
 
-      setBookings(transformedData);
+      // Filter to show only Part 1 of compound services or simple services
+      // This way users see one entry per service
+      const displayBookings = transformedData.filter(booking => 
+        !booking.is_part_of_compound || booking.compound_part === 'part1'
+      );
 
-      if (transformedData.length === 0) {
+      setBookings(displayBookings);
+
+      if (displayBookings.length === 0) {
         toast({
           title: "Sin citas",
           description: "No se encontraron citas para este número de teléfono",

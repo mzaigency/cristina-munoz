@@ -1,15 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServiceSelection } from "./ServiceSelection";
 import { StylistSelection } from "./StylistSelection";
 import { DateTimeSelection } from "./DateTimeSelection";
 import { BookingConfirmation } from "./BookingConfirmation";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export type Service = {
   id: string;
   name: string;
-  duration: number; // in minutes
+  type: 'Simple' | 'Compuesto';
+  duration_part1_active: number;
+  duration_exposure_pause: number;
+  duration_part2_active: number;
   category: string;
+  // Computed field for total duration
+  duration: number;
 };
 
 export type Stylist = "cris" | "desi" | "any";
@@ -23,24 +30,11 @@ export type BookingData = {
   phone: string;
 };
 
-const allServices: Service[] = [
-  { id: "1", name: "Corte chico", duration: 15, category: "Corte" },
-  { id: "2", name: "Tinte", duration: 85, category: "Coloración" },
-  { id: "3", name: "Mechas largas", duration: 180, category: "Coloración" },
-  { id: "4", name: "Mechas cortas", duration: 90, category: "Coloración" },
-  { id: "5", name: "Éclat", duration: 30, category: "Coloración" },
-  { id: "6", name: "Recogido", duration: 60, category: "Peinados y Tratamientos" },
-  { id: "7", name: "Peinar con bucles", duration: 25, category: "Peinados y Tratamientos" },
-  { id: "8", name: "Hidratación intensiva con peinado", duration: 65, category: "Peinados y Tratamientos" },
-  { id: "9", name: "Hidratación mantenimiento con peinado", duration: 45, category: "Peinados y Tratamientos" },
-  { id: "10", name: "Lavar y matizar", duration: 20, category: "Peinados y Tratamientos" },
-  { id: "11", name: "Cejas", duration: 10, category: "Depilación Facial" },
-  { id: "12", name: "Bigote", duration: 10, category: "Depilación Facial" },
-  { id: "13", name: "Labio", duration: 10, category: "Depilación Facial" },
-];
-
 export const BookingFlow = () => {
   const [step, setStep] = useState(1);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
     stylist: null,
@@ -49,6 +43,46 @@ export const BookingFlow = () => {
     name: "",
     phone: "",
   });
+
+  // Load services from database
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .order('category', { ascending: true })
+          .order('name', { ascending: true });
+
+        if (error) throw error;
+
+        // Transform data to include computed duration field
+        const transformedServices: Service[] = (data || []).map(service => ({
+          id: service.id,
+          name: service.name,
+          type: service.type as 'Simple' | 'Compuesto',
+          duration_part1_active: service.duration_part1_active,
+          duration_exposure_pause: service.duration_exposure_pause,
+          duration_part2_active: service.duration_part2_active,
+          category: service.category || 'Otros',
+          duration: service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active,
+        }));
+
+        setServices(transformedServices);
+      } catch (error) {
+        console.error('Error loading services:', error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los servicios",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadServices();
+  }, [toast]);
 
   const totalDuration = bookingData.services.reduce((sum, service) => sum + service.duration, 0);
 
@@ -118,12 +152,17 @@ export const BookingFlow = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {step === 1 && (
+              {step === 1 && !loading && (
                 <ServiceSelection
-                  services={allServices}
+                  services={services}
                   selectedServices={bookingData.services}
                   onNext={handleServicesSelect}
                 />
+              )}
+              {step === 1 && loading && (
+                <div className="text-center py-8 text-muted-foreground">
+                  Cargando servicios...
+                </div>
               )}
               {step === 2 && (
                 <StylistSelection
