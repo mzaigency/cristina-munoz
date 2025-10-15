@@ -41,7 +41,7 @@ export const GallerySection = () => {
   };
 
   return (
-    <section className="py-20 px-4 bg-gradient-to-b from-background to-secondary/10">
+    <section className="py-20 px-4 bg-gradient-to-b from-background to-secondary/10 animate-fade-in">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-12 space-y-4">
           <h2 className="text-4xl md:text-5xl font-bold text-foreground">

@@ -3,6 +3,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface HeaderProps {
   onNavigate: (section: string) => void;
@@ -11,18 +12,34 @@ interface HeaderProps {
 
 export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const navItems = [
-    { id: "inicio", label: "Inicio" },
-    { id: "servicios", label: "Servicios" },
-    { id: "galeria", label: "Galería" },
-    { id: "reserva", label: "Reserva Online" },
-    { id: "cancelar", label: "Cancelar Cita" },
-    { id: "contacto", label: "Contacto" },
+    { id: "inicio", label: "Inicio", path: "/" },
+    { id: "servicios", label: "Servicios", path: "/#servicios" },
+    { id: "galeria", label: "Galería", path: "/#galeria" },
+    { id: "sobre-nosotras", label: "Sobre Nosotras", path: "/sobre-nosotras" },
+    { id: "reserva", label: "Reserva Online", path: "/#reserva" },
+    { id: "cancelar", label: "Cancelar Cita", path: "/#cancelar" },
+    { id: "contacto", label: "Contacto", path: "/#contacto" },
   ];
 
-  const handleNavClick = (section: string) => {
-    onNavigate(section);
+  const handleNavClick = (item: typeof navItems[0]) => {
+    if (item.path.startsWith("/#")) {
+      if (location.pathname !== "/") {
+        navigate("/");
+        setTimeout(() => {
+          const section = item.path.replace("/#", "");
+          onNavigate(section);
+        }, 100);
+      } else {
+        const section = item.path.replace("/#", "");
+        onNavigate(section);
+      }
+    } else {
+      navigate(item.path);
+    }
     setOpen(false);
   };
 
@@ -39,8 +56,8 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
             <Button
               key={item.id}
               variant={activeSection === item.id ? "secondary" : "ghost"}
-              onClick={() => onNavigate(item.id)}
-              className="text-sm"
+              onClick={() => handleNavClick(item)}
+              className="text-sm transition-all hover:scale-105"
             >
               {item.label}
             </Button>
@@ -63,7 +80,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                 <Button
                   key={item.id}
                   variant={activeSection === item.id ? "secondary" : "ghost"}
-                  onClick={() => handleNavClick(item.id)}
+                  onClick={() => handleNavClick(item)}
                   className="justify-start text-base"
                 >
                   {item.label}

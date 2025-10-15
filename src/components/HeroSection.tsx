@@ -7,7 +7,7 @@ interface HeroSectionProps {
 export const HeroSection = ({
   onBookNow
 }: HeroSectionProps) => {
-  return <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
+  return <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden animate-fade-in">
       <div className="absolute inset-0 z-0" style={{
       backgroundImage: `url(${heroImage})`,
       backgroundSize: "cover",
@@ -31,10 +31,10 @@ export const HeroSection = ({
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center md:justify-start">
-            <Button size="lg" onClick={onBookNow} className="bg-salon-pink-dark text-white hover:bg-salon-pink-dark/90">
+            <Button size="lg" onClick={onBookNow} className="bg-salon-pink-dark text-white hover:bg-salon-pink-dark/90 transition-all hover:scale-105">
               Reservar Cita
             </Button>
-            <Button size="lg" variant="outline">
+            <Button size="lg" variant="outline" className="transition-all hover:scale-105">
               Ver Servicios
             </Button>
           </div>

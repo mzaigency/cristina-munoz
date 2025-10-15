@@ -71,7 +71,7 @@ const serviceCategories = [{
   }]
 }];
 export const ServicesSection = () => {
-  return <section className="py-20 bg-salon-cream">
+  return <section className="py-20 bg-salon-cream animate-fade-in">
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
           <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
@@ -85,7 +85,7 @@ export const ServicesSection = () => {
         <div className="grid gap-8 md:grid-cols-2">
           {serviceCategories.map((category, idx) => {
           const Icon = category.icon;
-          return <Card key={idx} className="overflow-hidden border-none shadow-lg">
+          return <Card key={idx} className="overflow-hidden border-none shadow-lg transition-all hover:scale-105 hover:shadow-xl">
                 <div style={{
               backgroundImage: `url(${category.image})`
             }} className="h-48 bg-cover bg-center mx-0" />
