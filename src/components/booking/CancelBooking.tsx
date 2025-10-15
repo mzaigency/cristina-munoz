@@ -1,0 +1,270 @@
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { Loader2, Calendar, Clock, User, Trash2 } from "lucide-react";
+import type { Database } from "@/integrations/supabase/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+type DbBooking = Database["public"]["Tables"]["bookings"]["Row"];
+
+type Booking = {
+  id: string;
+  booking_date: string;
+  booking_time: string;
+  customer_name: string;
+  services: Array<{ name: string }>;
+  stylist: string;
+  google_calendar_event_id: string | null;
+  calendar_id: string | null;
+};
+
+export const CancelBooking = () => {
+  const [phone, setPhone] = useState("");
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const { toast } = useToast();
+
+  const handleSearch = async () => {
+    if (!phone.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa tu número de teléfono",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("customer_phone", phone)
+        .eq("status", "confirmed")
+        .gte("booking_date", new Date().toISOString().split("T")[0])
+        .order("booking_date", { ascending: true })
+        .order("booking_time", { ascending: true });
+
+      if (error) throw error;
+
+      // Transform the data to match our Booking type
+      const transformedData: Booking[] = (data || []).map((booking: DbBooking) => ({
+        id: booking.id,
+        booking_date: booking.booking_date,
+        booking_time: booking.booking_time,
+        customer_name: booking.customer_name,
+        services: Array.isArray(booking.services) ? booking.services as Array<{ name: string }> : [],
+        stylist: booking.stylist,
+        google_calendar_event_id: booking.google_calendar_event_id,
+        calendar_id: booking.calendar_id,
+      }));
+
+      setBookings(transformedData);
+
+      if (transformedData.length === 0) {
+        toast({
+          title: "Sin citas",
+          description: "No se encontraron citas para este número de teléfono",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las citas",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelBooking = async () => {
+    if (!selectedBooking) return;
+
+    setCancelling(true);
+    try {
+      const { error } = await supabase.functions.invoke("cancel-booking", {
+        body: {
+          bookingId: selectedBooking.id,
+          googleEventId: selectedBooking.google_calendar_event_id,
+          calendarId: selectedBooking.calendar_id,
+          customerPhone: phone,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Cita cancelada",
+        description: "Tu cita ha sido cancelada exitosamente",
+      });
+
+      // Remove the cancelled booking from the list
+      setBookings(bookings.filter((b) => b.id !== selectedBooking.id));
+      setShowConfirmDialog(false);
+      setSelectedBooking(null);
+    } catch (error) {
+      console.error("Error cancelling booking:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo cancelar la cita. Por favor intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const getStylistName = (stylist: string) => {
+    if (stylist === "cris") return "Cris";
+    if (stylist === "desi") return "Desi";
+    return "Cualquier peluquera";
+  };
+
+  return (
+    <section className="py-20 bg-muted/30">
+      <div className="container mx-auto px-4">
+        <div className="mb-12 text-center">
+          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+            Cancelar Cita
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Ingresa tu número de teléfono para ver y cancelar tus citas
+          </p>
+        </div>
+
+        <div className="mx-auto max-w-2xl">
+          <Card className="border-none shadow-lg">
+            <CardHeader>
+              <CardTitle>Buscar mis citas</CardTitle>
+              <CardDescription>
+                Ingresa tu número de teléfono sin el código de país (+34)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Número de teléfono</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="612345678"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSearch();
+                    }}
+                  />
+                  <Button onClick={handleSearch} disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Buscando
+                      </>
+                    ) : (
+                      "Buscar"
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {bookings.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Tus citas</h3>
+                  <div className="space-y-3">
+                    {bookings.map((booking) => (
+                      <Card key={booking.id} className="border">
+                        <CardContent className="pt-6">
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">
+                                  {format(new Date(booking.booking_date), "EEEE, d 'de' MMMM 'de' yyyy", {
+                                    locale: es,
+                                  })}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <span>{booking.booking_time}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span>{getStylistName(booking.stylist)}</span>
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                Servicios: {booking.services.map((s) => s.name).join(", ")}
+                              </div>
+                            </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedBooking(booking);
+                                setShowConfirmDialog(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar esta cita?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. La cita será eliminada permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>Volver</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelBooking}
+              disabled={cancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelling ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cancelando
+                </>
+              ) : (
+                "Cancelar cita"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
+  );
+};

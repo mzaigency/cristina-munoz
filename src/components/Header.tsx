@@ -11,6 +11,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
     { id: "inicio", label: "Inicio" },
     { id: "servicios", label: "Servicios" },
     { id: "reserva", label: "Reserva Online" },
+    { id: "cancelar", label: "Cancelar Cita" },
     { id: "contacto", label: "Contacto" },
   ];
 

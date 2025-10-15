@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { HeroSection } from "@/components/HeroSection";
 import { ServicesSection } from "@/components/ServicesSection";
 import { BookingFlow } from "@/components/booking/BookingFlow";
+import { CancelBooking } from "@/components/booking/CancelBooking";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("inicio");
@@ -35,6 +36,10 @@ const Index = () => {
         
         <div id="reserva">
           <BookingFlow />
+        </div>
+        
+        <div id="cancelar">
+          <CancelBooking />
         </div>
         
         <div id="contacto">
