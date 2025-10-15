@@ -73,9 +73,7 @@ const About = () => {
                 <img src={cristinaTeam} alt="Equipo Nuviart Beauty Studio" className="relative rounded-lg shadow-xl w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" />
               </div>
               <div className={`space-y-6 order-1 md:order-2 text-center md:text-left scroll-reveal ${teamVisible ? 'visible' : ''} stagger-2`}>
-                <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-                  Nuviart Beauty Studio
-                </h2>
+                <h2 className="text-4xl md:text-5xl font-bold text-foreground">C</h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
                   Un espacio donde la pasión por la belleza se encuentra con la profesionalidad. Cada detalle está pensado para que te sientas especial y única.
                 </p>
