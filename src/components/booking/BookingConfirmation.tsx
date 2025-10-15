@@ -8,6 +8,11 @@ import { es } from "date-fns/locale";
 import { CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { phoneSchema, cleanPhoneNumber } from "@/lib/phoneValidation";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
@@ -16,82 +21,94 @@ interface BookingConfirmationProps {
   onBack: () => void;
 }
 
+const formSchema = z.object({
+  name: z.string().trim().min(1, "El nombre es requerido").max(100, "El nombre debe tener menos de 100 caracteres"),
+  phone: phoneSchema,
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
 export const BookingConfirmation = ({
   bookingData,
   totalDuration,
   onConfirm,
   onBack,
 }: BookingConfirmationProps) => {
-  const [name, setName] = useState(bookingData.name);
-  const [phone, setPhone] = useState(bookingData.phone);
   const [confirmed, setConfirmed] = useState(false);
   const { toast } = useToast();
+  
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: bookingData.name || "",
+      phone: bookingData.phone || "",
+    },
+  });
 
-  const handleConfirm = async () => {
-    if (name && phone) {
-      try {
-        setConfirmed(true);
-        
-        // Clean phone number (remove extra spaces and separators)
-        const cleanPhone = phone.trim().replace(/[\s-]/g, '');
-        
-        // Call edge function to create booking and Google Calendar event
-        // Format date in local timezone (Madrid)
-        const bookingDate = bookingData.date ? 
-          `${bookingData.date.getFullYear()}-${String(bookingData.date.getMonth() + 1).padStart(2, '0')}-${String(bookingData.date.getDate()).padStart(2, '0')}` 
-          : '';
-        
-        const { data, error } = await supabase.functions.invoke('create-booking', {
-          body: {
-            customer_name: name,
-            Telefono: cleanPhone,
-            booking_date: bookingDate,
-            booking_time: bookingData.time,
-            stylist: bookingData.stylist,
-            services: bookingData.services.map(s => ({ 
-              id: s.id,
-              name: s.name,
-              type: s.type,
-              duration_part1_active: s.duration_part1_active,
-              duration_exposure_pause: s.duration_exposure_pause,
-              duration_part2_active: s.duration_part2_active,
-            })),
-            total_duration: totalDuration,
-          },
-        });
+  const handleConfirm = async (values: FormValues) => {
+    try {
+      setConfirmed(true);
+      
+      // Clean phone number (remove extra spaces and separators)
+      const cleanPhone = cleanPhoneNumber(values.phone);
+      
+      // Call edge function to create booking and Google Calendar event
+      // Format date in local timezone (Madrid)
+      const bookingDate = bookingData.date ? 
+        `${bookingData.date.getFullYear()}-${String(bookingData.date.getMonth() + 1).padStart(2, '0')}-${String(bookingData.date.getDate()).padStart(2, '0')}` 
+        : '';
+      
+      const { data, error } = await supabase.functions.invoke('create-booking', {
+        body: {
+          customer_name: values.name,
+          Telefono: cleanPhone,
+          booking_date: bookingDate,
+          booking_time: bookingData.time,
+          stylist: bookingData.stylist,
+          services: bookingData.services.map(s => ({ 
+            id: s.id,
+            name: s.name,
+            type: s.type,
+            duration_part1_active: s.duration_part1_active,
+            duration_exposure_pause: s.duration_exposure_pause,
+            duration_part2_active: s.duration_part2_active,
+          })),
+          total_duration: totalDuration,
+        },
+      });
 
-        if (error) {
-          console.error('Error creating booking:', error);
-          toast({
-            title: "Error",
-            description: "No se pudo completar la reserva. Por favor, intenta de nuevo.",
-            variant: "destructive",
-          });
-          setConfirmed(false);
-          return;
-        }
-
-        console.log('Booking created:', data);
-        onConfirm(name, phone);
-        toast({
-          title: "¡Reserva confirmada!",
-          description: data.googleEventCreated 
-            ? "Tu cita ha sido añadida al calendario de la peluquería."
-            : "Tu reserva ha sido guardada correctamente.",
-        });
-      } catch (error) {
-        console.error('Error:', error);
+      if (error) {
+        console.error('Error creating booking:', error);
         toast({
           title: "Error",
-          description: "Ocurrió un error al procesar tu reserva.",
+          description: "No se pudo completar la reserva. Por favor, intenta de nuevo.",
           variant: "destructive",
         });
         setConfirmed(false);
+        return;
       }
+
+      console.log('Booking created:', data);
+      onConfirm(values.name, values.phone);
+      toast({
+        title: "¡Reserva confirmada!",
+        description: data.googleEventCreated 
+          ? "Tu cita ha sido añadida al calendario de la peluquería."
+          : "Tu reserva ha sido guardada correctamente.",
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al procesar tu reserva.",
+        variant: "destructive",
+      });
+      setConfirmed(false);
     }
   };
 
   if (confirmed) {
+    const formValues = form.getValues();
     return (
       <div className="space-y-6 text-center">
         <div className="flex justify-center">
@@ -108,6 +125,12 @@ export const BookingConfirmation = ({
         <div className="rounded-lg bg-salon-pink-light p-6 text-left">
           <h4 className="mb-3 font-semibold text-foreground">Resumen de tu cita:</h4>
           <div className="space-y-2 text-sm">
+            <p>
+              <span className="font-medium">Nombre:</span> {formValues.name}
+            </p>
+            <p>
+              <span className="font-medium">Teléfono:</span> {formValues.phone}
+            </p>
             <p>
               <span className="font-medium">Fecha:</span>{" "}
               {bookingData.date && format(bookingData.date, "PPP", { locale: es })}
@@ -133,64 +156,70 @@ export const BookingConfirmation = ({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-salon-pink-light p-6">
-        <h4 className="mb-3 font-semibold text-foreground">Resumen de tu reserva:</h4>
-        <div className="space-y-2 text-sm">
-          <p>
-            <span className="font-medium">Fecha:</span>{" "}
-            {bookingData.date && format(bookingData.date, "PPP", { locale: es })}
-          </p>
-          <p>
-            <span className="font-medium">Hora:</span> {bookingData.time}
-          </p>
-          <p>
-            <span className="font-medium">Peluquera:</span>{" "}
-            {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}
-          </p>
-          <p>
-            <span className="font-medium">Servicios:</span>{" "}
-            {bookingData.services.map((s) => s.name).join(", ")}
-          </p>
-          <p>
-            <span className="font-medium">Duración total:</span> {totalDuration} minutos
-          </p>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleConfirm)} className="space-y-6">
+        <div className="rounded-lg bg-salon-pink-light p-6">
+          <h4 className="mb-3 font-semibold text-foreground">Resumen de tu reserva:</h4>
+          <div className="space-y-2 text-sm">
+            <p>
+              <span className="font-medium">Fecha:</span>{" "}
+              {bookingData.date && format(bookingData.date, "PPP", { locale: es })}
+            </p>
+            <p>
+              <span className="font-medium">Hora:</span> {bookingData.time}
+            </p>
+            <p>
+              <span className="font-medium">Peluquera:</span>{" "}
+              {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}
+            </p>
+            <p>
+              <span className="font-medium">Servicios:</span>{" "}
+              {bookingData.services.map((s) => s.name).join(", ")}
+            </p>
+            <p>
+              <span className="font-medium">Duración total:</span> {totalDuration} minutos
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="name">Nombre completo</Label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="Tu nombre"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1"
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nombre completo</FormLabel>
+                <FormControl>
+                  <Input placeholder="Tu nombre" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Teléfono</FormLabel>
+                <FormControl>
+                  <Input type="tel" placeholder="600 000 000" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
-        <div>
-          <Label htmlFor="phone">Teléfono</Label>
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="600 000 000"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="mt-1"
-          />
-        </div>
-      </div>
 
-      <div className="flex justify-between pt-4">
-        <Button variant="outline" onClick={onBack}>
-          Volver
-        </Button>
-        <Button onClick={handleConfirm} disabled={!name || !phone}>
-          Confirmar Reserva
-        </Button>
-      </div>
-    </div>
+        <div className="flex justify-between pt-4">
+          <Button type="button" variant="outline" onClick={onBack}>
+            Volver
+          </Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? "Confirmando..." : "Confirmar Reserva"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };

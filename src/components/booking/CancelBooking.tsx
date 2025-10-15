@@ -9,6 +9,11 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2, Calendar, Clock, User, Trash2 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { phoneSchema, cleanPhoneNumber } from "@/lib/phoneValidation";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,29 +41,34 @@ type Booking = {
   related_booking_id: string | null;
 };
 
+const searchSchema = z.object({
+  phone: phoneSchema,
+});
+
+type SearchFormValues = z.infer<typeof searchSchema>;
+
 export const CancelBooking = () => {
-  const [phone, setPhone] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [lastSearchedPhone, setLastSearchedPhone] = useState("");
   const { toast } = useToast();
+  
+  const form = useForm<SearchFormValues>({
+    resolver: zodResolver(searchSchema),
+    defaultValues: {
+      phone: "",
+    },
+  });
 
-  const handleSearch = async () => {
-    if (!phone.trim()) {
-      toast({
-        title: "Error",
-        description: "Por favor ingresa tu número de teléfono",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleSearch = async (values: SearchFormValues) => {
     setLoading(true);
     try {
       // Clean the phone number (remove spaces and common separators)
-      const cleanPhone = phone.trim().replace(/[\s-]/g, '');
+      const cleanPhone = cleanPhoneNumber(values.phone);
+      setLastSearchedPhone(cleanPhone);
       
       const { data, error } = await supabase
         .from("bookings")
@@ -117,14 +127,14 @@ export const CancelBooking = () => {
 
     setCancelling(true);
     try {
-      const { error } = await supabase.functions.invoke("cancel-booking", {
-        body: {
-          bookingId: selectedBooking.id,
-          googleEventId: selectedBooking.google_calendar_event_id,
-          calendarId: selectedBooking.calendar_id,
-          customerPhone: phone.trim().replace(/[\s-]/g, ''),
-        },
-      });
+        const { error } = await supabase.functions.invoke("cancel-booking", {
+          body: {
+            bookingId: selectedBooking.id,
+            googleEventId: selectedBooking.google_calendar_event_id,
+            calendarId: selectedBooking.calendar_id,
+            customerPhone: lastSearchedPhone,
+          },
+        });
 
       if (error) throw error;
 
@@ -176,31 +186,39 @@ export const CancelBooking = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Número de teléfono</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="612345678"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSearch();
-                    }}
-                  />
-                  <Button onClick={handleSearch} disabled={loading}>
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Buscando
-                      </>
-                    ) : (
-                      "Buscar"
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSearch)} className="space-y-2">
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número de teléfono</FormLabel>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input
+                              type="tel"
+                              placeholder="612345678"
+                              {...field}
+                            />
+                          </FormControl>
+                          <Button type="submit" disabled={loading}>
+                            {loading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Buscando
+                              </>
+                            ) : (
+                              "Buscar"
+                            )}
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </Button>
-                </div>
-              </div>
+                  />
+                </form>
+              </Form>
 
               {bookings.length > 0 && (
                 <div className="space-y-4">
