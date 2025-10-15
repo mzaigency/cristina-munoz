@@ -91,12 +91,25 @@ serve(async (req) => {
       // Convert Google Calendar events to the format expected by the frontend
       if (eventsData.items && eventsData.items.length > 0) {
         for (const event of eventsData.items) {
-          if (event.start?.dateTime && event.end?.dateTime) {
-            // Extract time directly from the ISO string (format: 2025-10-22T09:00:00+02:00)
+          // Check for all-day events (vacations, etc.)
+          if (event.start?.date) {
+            // This is an all-day event - block the entire day
+            // Add a slot that covers the entire business day
+            const slot = {
+              Hora: "00:00:00",
+              total_duration: 24 * 60 // 24 hours in minutes
+            };
+
+            if (calendar.name === 'cris') {
+              crisBookedSlots.push(slot);
+            } else {
+              desiBookedSlots.push(slot);
+            }
+          } else if (event.start?.dateTime && event.end?.dateTime) {
+            // Regular time-specific event
             const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 8);
             const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 8);
             
-            // Calculate duration in minutes
             const [startHours, startMinutes] = startTimeStr.split(':').map(Number);
             const [endHours, endMinutes] = endTimeStr.split(':').map(Number);
             const startTotalMinutes = startHours * 60 + startMinutes;
@@ -108,7 +121,6 @@ serve(async (req) => {
               total_duration: durationMinutes
             };
 
-            // Store in the appropriate array based on stylist
             if (calendar.name === 'cris') {
               crisBookedSlots.push(slot);
             } else {

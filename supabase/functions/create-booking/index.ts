@@ -82,6 +82,11 @@ serve(async (req) => {
       
       const crisEvents = await crisResponse.json();
       const crisAvailable = !crisEvents.items?.some((event: any) => {
+        // Check for all-day events (vacations, etc.)
+        if (event.start?.date) {
+          return true; // All-day event blocks the entire day
+        }
+        // Check for time-specific events
         if (!event.start?.dateTime || !event.end?.dateTime) return false;
         const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 5);
         const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 5);
@@ -101,6 +106,11 @@ serve(async (req) => {
       
       const desiEvents = await desiResponse.json();
       const desiAvailable = !desiEvents.items?.some((event: any) => {
+        // Check for all-day events (vacations, etc.)
+        if (event.start?.date) {
+          return true; // All-day event blocks the entire day
+        }
+        // Check for time-specific events
         if (!event.start?.dateTime || !event.end?.dateTime) return false;
         const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 5);
         const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 5);
