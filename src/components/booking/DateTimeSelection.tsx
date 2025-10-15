@@ -4,6 +4,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Stylist } from "./BookingFlow";
 import { supabase } from "@/integrations/supabase/client";
+import { es } from "date-fns/locale";
 
 interface DateTimeSelectionProps {
   selectedDate: Date | null;
@@ -192,6 +193,7 @@ export const DateTimeSelection = ({
             onSelect={setDate}
             disabled={disabledDays}
             weekStartsOn={1}
+            locale={es}
             className={cn("rounded-md border pointer-events-auto")}
           />
         </div>
