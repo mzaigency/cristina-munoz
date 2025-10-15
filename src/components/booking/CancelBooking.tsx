@@ -57,10 +57,13 @@ export const CancelBooking = () => {
 
     setLoading(true);
     try {
+      // Clean the phone number (remove spaces and common separators)
+      const cleanPhone = phone.trim().replace(/[\s-]/g, '');
+      
       const { data, error } = await supabase
         .from("bookings")
         .select("*")
-        .eq("Telefono", phone.trim())
+        .ilike("Telefono", `%${cleanPhone}%`)
         .eq("status", "confirmed")
         .gte("booking_date", new Date().toISOString().split("T")[0])
         .order("booking_date", { ascending: true })
