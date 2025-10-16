@@ -6,7 +6,7 @@ import { DateTimeSelection } from "./DateTimeSelection";
 import { BookingConfirmation } from "./BookingConfirmation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 
@@ -183,7 +183,9 @@ export const BookingFlow = () => {
                     {!user && (
                       <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2">
                         <User className="h-4 w-4" />
-                        <span className="text-sm">Debes iniciar sesión para continuar</span>
+                        <span className="text-sm">
+                          Debes <Link to="/auth" className="underline hover:text-amber-700 dark:hover:text-amber-400">iniciar sesión</Link> para continuar
+                        </span>
                       </div>
                     )}
                   </div>
