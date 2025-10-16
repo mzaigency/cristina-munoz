@@ -16,7 +16,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const cancelWebhookUrl = 'https://n8n-n8n.fzgtc4.easypanel.host/webhook/18e4c56c-6dc2-47bb-b4c4-73700574a4a7';
+    const cancelWebhookUrl = Deno.env.get('N8N_CANCEL_WEBHOOK_URL')!;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
