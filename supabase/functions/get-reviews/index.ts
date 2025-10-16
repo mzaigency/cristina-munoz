@@ -14,18 +14,27 @@ serve(async (req) => {
     const GOOGLE_PLACES_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY');
     const PLACE_ID = Deno.env.get('GOOGLE_PLACE_ID');
 
+    console.log('Checking API credentials...');
+    console.log('Has API Key:', !!GOOGLE_PLACES_API_KEY);
+    console.log('Has Place ID:', !!PLACE_ID);
+
     if (!GOOGLE_PLACES_API_KEY || !PLACE_ID) {
       throw new Error('Missing Google Places API key or Place ID');
     }
 
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=name,rating,reviews,user_ratings_total&key=${GOOGLE_PLACES_API_KEY}&language=es`
-    );
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=name,rating,reviews,user_ratings_total&key=${GOOGLE_PLACES_API_KEY}&language=es`;
+    console.log('Calling Google Places API...');
 
+    const response = await fetch(url);
     const data = await response.json();
 
+    console.log('API Response status:', data.status);
+    if (data.error_message) {
+      console.log('API Error message:', data.error_message);
+    }
+
     if (data.status !== 'OK') {
-      throw new Error(`Google Places API error: ${data.status}`);
+      throw new Error(`Google Places API error: ${data.status}${data.error_message ? ' - ' + data.error_message : ''}`);
     }
 
     return new Response(JSON.stringify(data.result), {
