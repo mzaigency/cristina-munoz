@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { HeroSection } from "@/components/HeroSection";
 import { ServicesSection } from "@/components/ServicesSection";
 import { GallerySection } from "@/components/GallerySection";
+import { ReviewsSection } from "@/components/ReviewsSection";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 
 const Index = () => {
@@ -44,6 +45,10 @@ const Index = () => {
         
         <div id="galeria">
           <GallerySection />
+        </div>
+        
+        <div id="resenas">
+          <ReviewsSection />
         </div>
         
         <div id="contacto">
