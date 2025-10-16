@@ -23,14 +23,14 @@ serve(async (req) => {
     }
 
     // Using the new Places API (New)
-    const url = `https://places.googleapis.com/v1/places/${ChIJS-xu_3z4pBIRR5cBa_RbVtk}`;
+    const url = `https://places.googleapis.com/v1/places/${PLACE_ID}`;
     console.log('Calling Google Places API (New)...');
 
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'X-Goog-Api-Key': AIzaSyCOwz62N9buUaHinJvsbS2rjeUCScDhs9Y,
+        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
         'X-Goog-FieldMask': 'displayName,rating,userRatingCount,reviews',
         'languageCode': 'es',
       },
