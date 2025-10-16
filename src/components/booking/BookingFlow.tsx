@@ -106,6 +106,17 @@ export const BookingFlow = () => {
   const totalDuration = bookingData.services.reduce((sum, service) => sum + service.duration, 0);
 
   const handleServicesSelect = (services: Service[]) => {
+    // Check if user is logged in before proceeding
+    if (!user) {
+      toast({
+        title: "Inicia sesión",
+        description: "Debes iniciar sesión para continuar con la reserva",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+    
     setBookingData({ ...bookingData, services });
     setStep(2);
     // Scroll to top of booking section when moving to stylist selection
@@ -118,17 +129,6 @@ export const BookingFlow = () => {
   };
 
   const handleDateTimeSelect = (date: Date, time: string) => {
-    // Check if user is logged in before proceeding to confirmation
-    if (!user) {
-      toast({
-        title: "Inicia sesión",
-        description: "Debes iniciar sesión para continuar con la reserva",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
-    
     setBookingData({ ...bookingData, date, time });
     setStep(4);
   };
@@ -177,11 +177,9 @@ export const BookingFlow = () => {
                 {step === 4 && "Confirma tu reserva"}
               </CardTitle>
               <CardDescription>
-                {step === 1 && "Puedes seleccionar varios servicios"}
-                {step === 2 && "Elige quien te atenderá o deja que decidamos nosotras"}
-                {step === 3 && (
-                  <div className="space-y-1">
-                    <p>Duración total: {totalDuration} minutos</p>
+                {step === 1 && (
+                  <div>
+                    <p>Puedes seleccionar varios servicios</p>
                     {!user && (
                       <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2">
                         <User className="h-4 w-4" />
@@ -190,6 +188,8 @@ export const BookingFlow = () => {
                     )}
                   </div>
                 )}
+                {step === 2 && "Elige quien te atenderá o deja que decidamos nosotras"}
+                {step === 3 && `Duración total: ${totalDuration} minutos`}
                 {step === 4 && "Últimos detalles para completar tu reserva"}
               </CardDescription>
             </CardHeader>

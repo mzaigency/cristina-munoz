@@ -13,12 +13,23 @@ import { Loader2 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
-const authSchema = z.object({
+const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(100, "Contraseña demasiado larga"),
 });
 
-type AuthFormValues = z.infer<typeof authSchema>;
+const signUpSchema = signInSchema.extend({
+  firstName: z.string().trim().min(1, "El nombre es requerido").max(50, "El nombre debe tener menos de 50 caracteres"),
+  lastName: z.string().trim().min(1, "El apellido es requerido").max(50, "El apellido debe tener menos de 50 caracteres"),
+  phone: z.string().trim().min(9, "El teléfono debe tener al menos 9 dígitos").max(15, "El teléfono debe tener menos de 15 dígitos"),
+  confirmPassword: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
+});
+
+type SignInFormValues = z.infer<typeof signInSchema>;
+type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -26,11 +37,12 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const form = useForm<AuthFormValues>({
-    resolver: zodResolver(authSchema),
+  const form = useForm<SignInFormValues | SignUpFormValues>({
+    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
     defaultValues: {
       email: "",
       password: "",
+      ...(isSignUp ? { firstName: "", lastName: "", phone: "", confirmPassword: "" } : {}),
     },
   });
 
@@ -53,16 +65,21 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleAuth = async (values: AuthFormValues) => {
+  const handleAuth = async (values: SignInFormValues | SignUpFormValues) => {
     setLoading(true);
     try {
       if (isSignUp) {
+        const signUpValues = values as SignUpFormValues;
         const redirectUrl = `${window.location.origin}/`;
         const { error } = await supabase.auth.signUp({
-          email: values.email,
-          password: values.password,
+          email: signUpValues.email,
+          password: signUpValues.password,
           options: {
-            emailRedirectTo: redirectUrl
+            emailRedirectTo: redirectUrl,
+            data: {
+              full_name: `${signUpValues.firstName} ${signUpValues.lastName}`,
+              phone: signUpValues.phone,
+            }
           }
         });
 
@@ -70,7 +87,7 @@ export default function Auth() {
 
         toast({
           title: "Cuenta creada",
-          description: "Por favor, verifica tu email para activar tu cuenta",
+          description: "Bienvenida a nuestra peluquería",
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -177,6 +194,67 @@ export default function Auth() {
 
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleAuth)} className="space-y-4">
+                  {isSignUp && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nombre</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="text" 
+                                placeholder="Tu nombre" 
+                                {...field}
+                                disabled={loading}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Apellido</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="text" 
+                                placeholder="Tu apellido" 
+                                {...field}
+                                disabled={loading}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Teléfono</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="tel" 
+                                placeholder="600 000 000" 
+                                {...field}
+                                disabled={loading}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+
                   <FormField
                     control={form.control}
                     name="email"
@@ -214,6 +292,27 @@ export default function Auth() {
                       </FormItem>
                     )}
                   />
+
+                  {isSignUp && (
+                    <FormField
+                      control={form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Verificar Contraseña</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              placeholder="••••••" 
+                              {...field}
+                              disabled={loading}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? (

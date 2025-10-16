@@ -1,18 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { BookingData } from "./BookingFlow";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { phoneSchema, cleanPhoneNumber } from "@/lib/phoneValidation";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
@@ -21,12 +13,11 @@ interface BookingConfirmationProps {
   onBack: () => void;
 }
 
-const formSchema = z.object({
-  name: z.string().trim().min(1, "El nombre es requerido").max(100, "El nombre debe tener menos de 100 caracteres"),
-  phone: phoneSchema,
-});
-
-type FormValues = z.infer<typeof formSchema>;
+interface UserProfile {
+  full_name: string;
+  email: string;
+  phone: string;
+}
 
 export const BookingConfirmation = ({
   bookingData,
@@ -35,27 +26,63 @@ export const BookingConfirmation = ({
   onBack,
 }: BookingConfirmationProps) => {
   const [confirmed, setConfirmed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { toast } = useToast();
-  
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: bookingData.name || "",
-      phone: bookingData.phone || "",
-    },
-  });
 
-  const handleConfirm = async (values: FormValues) => {
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          toast({
+            title: "Error",
+            description: "Debes iniciar sesión para continuar",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('full_name, email, phone')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) throw error;
+
+        setUserProfile(profile);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo cargar tu información de perfil",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [toast]);
+
+  const handleConfirm = async () => {
+    if (!userProfile) {
+      toast({
+        title: "Error",
+        description: "No se pudo obtener tu información de perfil",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      setConfirmed(true);
-      
-      // Clean phone number (remove extra spaces and separators)
-      const cleanPhone = cleanPhoneNumber(values.phone);
+      setLoading(true);
       
       // Get current user session
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Call edge function to create booking and Google Calendar event
       // Format date in local timezone (Madrid)
       const bookingDate = bookingData.date ? 
         `${bookingData.date.getFullYear()}-${String(bookingData.date.getMonth() + 1).padStart(2, '0')}-${String(bookingData.date.getDate()).padStart(2, '0')}` 
@@ -63,8 +90,6 @@ export const BookingConfirmation = ({
       
       const { data, error } = await supabase.functions.invoke('create-booking', {
         body: {
-          customer_name: values.name,
-          Telefono: cleanPhone,
           Fecha: bookingDate,
           Hora: bookingData.time,
           stylist: bookingData.stylist,
@@ -88,12 +113,13 @@ export const BookingConfirmation = ({
           description: "No se pudo completar la reserva. Por favor, intenta de nuevo.",
           variant: "destructive",
         });
-        setConfirmed(false);
+        setLoading(false);
         return;
       }
 
       console.log('Booking created:', data);
-      onConfirm(values.name, values.phone);
+      setConfirmed(true);
+      onConfirm(userProfile.full_name, userProfile.phone);
       toast({
         title: "¡Reserva confirmada!",
         description: data.googleEventCreated 
@@ -107,12 +133,27 @@ export const BookingConfirmation = ({
         description: "Ocurrió un error al procesar tu reserva.",
         variant: "destructive",
       });
-      setConfirmed(false);
+      setLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="text-center py-8 text-destructive">
+        No se pudo cargar tu información de perfil. Por favor, intenta de nuevo.
+      </div>
+    );
+  }
+
   if (confirmed) {
-    const formValues = form.getValues();
     return (
       <div className="space-y-6 text-center">
         <div className="flex justify-center">
@@ -130,10 +171,13 @@ export const BookingConfirmation = ({
           <h4 className="mb-3 font-semibold text-foreground">Resumen de tu cita:</h4>
           <div className="space-y-2 text-sm">
             <p>
-              <span className="font-medium">Nombre:</span> {formValues.name}
+              <span className="font-medium">Nombre:</span> {userProfile.full_name}
             </p>
             <p>
-              <span className="font-medium">Teléfono:</span> {formValues.phone}
+              <span className="font-medium">Email:</span> {userProfile.email}
+            </p>
+            <p>
+              <span className="font-medium">Teléfono:</span> {userProfile.phone}
             </p>
             <p>
               <span className="font-medium">Fecha:</span>{" "}
@@ -160,70 +204,55 @@ export const BookingConfirmation = ({
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleConfirm)} className="space-y-6">
-        <div className="rounded-lg bg-salon-pink-light p-6">
-          <h4 className="mb-3 font-semibold text-foreground">Resumen de tu reserva:</h4>
-          <div className="space-y-2 text-sm">
-            <p>
-              <span className="font-medium">Fecha:</span>{" "}
-              {bookingData.date && format(bookingData.date, "dd-MM-yyyy")}
-            </p>
-            <p>
-              <span className="font-medium">Hora:</span> {bookingData.time}
-            </p>
-            <p>
-              <span className="font-medium">Peluquera:</span>{" "}
-              {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}
-            </p>
-            <p>
-              <span className="font-medium">Servicios:</span>{" "}
-              {bookingData.services.map((s) => s.name).join(", ")}
-            </p>
-            <p>
-              <span className="font-medium">Duración total:</span> {totalDuration} minutos
-            </p>
-          </div>
+    <div className="space-y-6">
+      <div className="rounded-lg bg-salon-pink-light p-6">
+        <h4 className="mb-3 font-semibold text-foreground">Resumen de tu reserva:</h4>
+        <div className="space-y-2 text-sm">
+          <p>
+            <span className="font-medium">Nombre:</span> {userProfile.full_name}
+          </p>
+          <p>
+            <span className="font-medium">Email:</span> {userProfile.email}
+          </p>
+          <p>
+            <span className="font-medium">Teléfono:</span> {userProfile.phone}
+          </p>
+          <p>
+            <span className="font-medium">Fecha:</span>{" "}
+            {bookingData.date && format(bookingData.date, "dd-MM-yyyy")}
+          </p>
+          <p>
+            <span className="font-medium">Hora:</span> {bookingData.time}
+          </p>
+          <p>
+            <span className="font-medium">Peluquera:</span>{" "}
+            {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}
+          </p>
+          <p>
+            <span className="font-medium">Servicios:</span>{" "}
+            {bookingData.services.map((s) => s.name).join(", ")}
+          </p>
+          <p>
+            <span className="font-medium">Duración total:</span> {totalDuration} minutos
+          </p>
         </div>
+      </div>
 
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nombre completo</FormLabel>
-                <FormControl>
-                  <Input placeholder="Tu nombre" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Teléfono</FormLabel>
-                <FormControl>
-                  <Input type="tel" placeholder="600 000 000" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="flex justify-between pt-4">
-          <Button type="button" variant="outline" onClick={onBack}>
-            Volver
-          </Button>
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Confirmando..." : "Confirmar Reserva"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+      <div className="flex justify-between pt-4">
+        <Button type="button" variant="outline" onClick={onBack} disabled={loading}>
+          Volver
+        </Button>
+        <Button onClick={handleConfirm} disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Confirmando...
+            </>
+          ) : (
+            "Confirmar Reserva"
+          )}
+        </Button>
+      </div>
+    </div>
   );
 };

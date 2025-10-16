@@ -8,8 +8,6 @@ const corsHeaders = {
 };
 
 interface BookingRequest {
-  customer_name: string;
-  Telefono: string;
   Fecha: string;
   Hora: string;
   stylist: string;
@@ -38,6 +36,26 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get user profile data
+    if (!bookingData.user_id) {
+      throw new Error('User ID is required');
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name, email, phone')
+      .eq('id', bookingData.user_id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('Error fetching profile:', profileError);
+      throw new Error('Could not fetch user profile');
+    }
+
+    const customer_name = profile.full_name;
+    const customer_email = profile.email;
+    const customer_phone = profile.phone;
 
     // Get Google Calendar credentials
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
@@ -165,12 +183,6 @@ serve(async (req) => {
           dateTime: `${bookingData.Fecha}T${endTime}`,
           timeZone: 'Europe/Madrid',
         },
-        attendees: [
-          {
-            email: calendarId,
-            displayName: actualStylist === 'cris' ? 'Cris' : actualStylist === 'desi' ? 'Desi' : 'Peluquería',
-          },
-        ],
       };
 
       const calendarResponse = await fetch(
@@ -236,9 +248,10 @@ serve(async (req) => {
       let googleEventId: string | null = null;
       if (accessToken) {
         try {
+          const serviceNames = simpleServices.map(s => s.name).join(', ');
           googleEventId = await createCalendarEvent(
-            `Cita - ${bookingData.customer_name}`,
-            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicios: ${simpleServices.map(s => s.name).join(', ')}\nPeluquera: ${actualStylist.toUpperCase()}`,
+            `${customer_name} - ${serviceNames}`,
+            `${customer_email} - ${customer_phone}`,
             `${bookingData.Hora}:00`,
             endTime,
             accessToken
@@ -251,8 +264,8 @@ serve(async (req) => {
       const { data, error } = await supabase
         .from('bookings')
         .insert({
-          customer_name: bookingData.customer_name,
-          Telefono: bookingData.Telefono,
+          customer_name,
+          Telefono: customer_phone,
           Fecha: bookingData.Fecha,
           Hora: bookingData.Hora,
           end_time: endTime,
@@ -291,8 +304,8 @@ serve(async (req) => {
       if (accessToken) {
         try {
           part1GoogleEventId = await createCalendarEvent(
-            `${service.name} - Parte 1 - ${bookingData.customer_name}`,
-            `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicio: ${service.name} (Parte 1)\nPeluquera: ${actualStylist.toUpperCase()}`,
+            `${customer_name} - ${service.name} (Parte 1)`,
+            `${customer_email} - ${customer_phone}`,
             part1StartTime,
             part1EndTime,
             accessToken
@@ -305,8 +318,8 @@ serve(async (req) => {
       const { data: part1Data, error: part1Error } = await supabase
         .from('bookings')
         .insert({
-          customer_name: bookingData.customer_name,
-          Telefono: bookingData.Telefono,
+          customer_name,
+          Telefono: customer_phone,
           Fecha: bookingData.Fecha,
           Hora: part1StartTime,
           end_time: part1EndTime,
@@ -343,8 +356,8 @@ serve(async (req) => {
         if (accessToken) {
           try {
             part2GoogleEventId = await createCalendarEvent(
-              `${service.name} - Parte 2 - ${bookingData.customer_name}`,
-              `Cliente: ${bookingData.customer_name}\nTeléfono: ${bookingData.Telefono}\nServicio: ${service.name} (Parte 2)\nPeluquera: ${actualStylist.toUpperCase()}`,
+              `${customer_name} - ${service.name} (Parte 2)`,
+              `${customer_email} - ${customer_phone}`,
               part2StartTime,
               part2EndTime,
               accessToken
@@ -357,8 +370,8 @@ serve(async (req) => {
         const { data: part2Data, error: part2Error } = await supabase
           .from('bookings')
           .insert({
-            customer_name: bookingData.customer_name,
-            Telefono: bookingData.Telefono,
+            customer_name,
+            Telefono: customer_phone,
             Fecha: bookingData.Fecha,
             Hora: part2StartTime,
             end_time: part2EndTime,
@@ -407,8 +420,8 @@ serve(async (req) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            customer_name: bookingData.customer_name,
-            Telefono: bookingData.Telefono,
+            customer_name,
+            Telefono: customer_phone,
             Fecha: formattedDate,
             Hora: bookingData.Hora,
             stylist: actualStylist,
