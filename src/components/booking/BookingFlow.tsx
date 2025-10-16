@@ -6,6 +6,9 @@ import { DateTimeSelection } from "./DateTimeSelection";
 import { BookingConfirmation } from "./BookingConfirmation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { User } from "lucide-react";
 
 export type Service = {
   id: string;
@@ -34,7 +37,9 @@ export const BookingFlow = () => {
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
@@ -44,6 +49,19 @@ export const BookingFlow = () => {
     name: "",
     phone: "",
   });
+
+  // Check authentication status
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Load services from database
   useEffect(() => {
@@ -100,6 +118,17 @@ export const BookingFlow = () => {
   };
 
   const handleDateTimeSelect = (date: Date, time: string) => {
+    // Check if user is logged in before proceeding to confirmation
+    if (!user) {
+      toast({
+        title: "Inicia sesión",
+        description: "Debes iniciar sesión para continuar con la reserva",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+    
     setBookingData({ ...bookingData, date, time });
     setStep(4);
   };
@@ -150,7 +179,17 @@ export const BookingFlow = () => {
               <CardDescription>
                 {step === 1 && "Puedes seleccionar varios servicios"}
                 {step === 2 && "Elige quien te atenderá o deja que decidamos nosotras"}
-                {step === 3 && `Duración total: ${totalDuration} minutos`}
+                {step === 3 && (
+                  <div className="space-y-1">
+                    <p>Duración total: {totalDuration} minutos</p>
+                    {!user && (
+                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2">
+                        <User className="h-4 w-4" />
+                        <span className="text-sm">Debes iniciar sesión para continuar</span>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {step === 4 && "Últimos detalles para completar tu reserva"}
               </CardDescription>
             </CardHeader>

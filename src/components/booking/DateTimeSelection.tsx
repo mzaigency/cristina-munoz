@@ -80,6 +80,11 @@ export const DateTimeSelection = ({
 
     const day = selectedDate.getDay();
     
+    // Check if selected date is today
+    const now = new Date();
+    const isToday = selectedDate.toDateString() === now.toDateString();
+    const currentMinutes = isToday ? now.getHours() * 60 + now.getMinutes() : 0;
+    
     // Define business hours for each day
     let morningEnd = 0;
     let afternoonStart = 0;
@@ -144,6 +149,11 @@ export const DateTimeSelection = ({
       const [hours, minutes] = slot.split(':').map(Number);
       const startMinutes = hours * 60 + minutes;
       const endMinutes = startMinutes + totalDuration;
+      
+      // If it's today, filter out past time slots
+      if (isToday && startMinutes <= currentMinutes) {
+        return false; // Slot is in the past
+      }
       
       // Check if service would end after closing time
       const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
