@@ -47,6 +47,8 @@ export default function Auth() {
   });
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+    
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
