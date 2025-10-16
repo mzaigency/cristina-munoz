@@ -126,11 +126,13 @@ export const BookingFlow = () => {
   const handleStylistSelect = (stylist: Stylist) => {
     setBookingData({ ...bookingData, stylist });
     setStep(3);
+    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleDateTimeSelect = (date: Date, time: string) => {
     setBookingData({ ...bookingData, date, time });
     setStep(4);
+    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleConfirmBooking = (name: string, phone: string) => {
