@@ -153,6 +153,22 @@ export const BookingConfirmation = ({
     );
   }
 
+  if (!userProfile.phone) {
+    return (
+      <div className="text-center py-8 space-y-4">
+        <p className="text-destructive font-semibold">
+          Necesitas un teléfono en tu perfil para hacer una reserva
+        </p>
+        <p className="text-muted-foreground">
+          Por favor, completa tu perfil con un número de teléfono válido antes de continuar.
+        </p>
+        <Button onClick={onBack} variant="outline">
+          Volver
+        </Button>
+      </div>
+    );
+  }
+
   if (confirmed) {
     return (
       <div className="space-y-6 text-center">
