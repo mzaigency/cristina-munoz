@@ -52,6 +52,9 @@ export const BookingConfirmation = ({
       // Clean phone number (remove extra spaces and separators)
       const cleanPhone = cleanPhoneNumber(values.phone);
       
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      
       // Call edge function to create booking and Google Calendar event
       // Format date in local timezone (Madrid)
       const bookingDate = bookingData.date ? 
@@ -74,6 +77,7 @@ export const BookingConfirmation = ({
             duration_part2_active: s.duration_part2_active,
           })),
           total_duration: totalDuration,
+          user_id: session?.user?.id || null,
         },
       });
 

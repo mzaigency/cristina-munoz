@@ -33,6 +33,7 @@ export type Database = {
           Telefono: string
           total_duration: number
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           calendar_id?: string | null
@@ -52,6 +53,7 @@ export type Database = {
           Telefono: string
           total_duration: number
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           calendar_id?: string | null
@@ -71,6 +73,7 @@ export type Database = {
           Telefono?: string
           total_duration?: number
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -81,6 +84,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       services: {
         Row: {
@@ -144,6 +174,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_my_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          calendar_id: string
+          compound_part: string
+          customer_name: string
+          end_time: string
+          Fecha: string
+          google_calendar_event_id: string
+          Hora: string
+          id: string
+          is_part_of_compound: boolean
+          related_booking_id: string
+          services: Json
+          status: string
+          stylist: string
+          Telefono: string
+          total_duration: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

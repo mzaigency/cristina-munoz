@@ -5,7 +5,6 @@ import { HeroSection } from "@/components/HeroSection";
 import { ServicesSection } from "@/components/ServicesSection";
 import { GallerySection } from "@/components/GallerySection";
 import { BookingFlow } from "@/components/booking/BookingFlow";
-import { CancelBooking } from "@/components/booking/CancelBooking";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("inicio");
@@ -45,10 +44,6 @@ const Index = () => {
         
         <div id="galeria">
           <GallerySection />
-        </div>
-        
-        <div id="cancelar">
-          <CancelBooking />
         </div>
         
         <div id="contacto">

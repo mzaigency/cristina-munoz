@@ -22,6 +22,7 @@ interface BookingRequest {
     duration_part2_active: number;
   }>;
   total_duration: number;
+  user_id?: string | null;
 }
 
 serve(async (req) => {
@@ -262,6 +263,7 @@ serve(async (req) => {
           google_calendar_event_id: googleEventId,
           calendar_id: calendarId,
           is_part_of_compound: false,
+          user_id: bookingData.user_id || null,
         })
         .select()
         .single();
@@ -316,6 +318,7 @@ serve(async (req) => {
           calendar_id: calendarId,
           is_part_of_compound: true,
           compound_part: 'part1',
+          user_id: bookingData.user_id || null,
         })
         .select()
         .single();
@@ -368,6 +371,7 @@ serve(async (req) => {
             is_part_of_compound: true,
             compound_part: 'part2',
             related_booking_id: part1Data.id,
+            user_id: bookingData.user_id || null,
           })
           .select()
           .single();
