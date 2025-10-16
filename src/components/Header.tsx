@@ -64,6 +64,11 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
     setTimeout(() => navigate("/mis-citas"), 300);
   };
 
+  const handleProfileClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => navigate("/perfil"), 300);
+  };
+
   const handleNavClick = (item: typeof navItems[0]) => {
     if (item.path.startsWith("/#")) {
       if (location.pathname !== "/") {
@@ -112,6 +117,9 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleProfileClick}>
+                  Mi Perfil
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleMyBookingsClick}>
                   Tus Citas
                 </DropdownMenuItem>
@@ -137,6 +145,9 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleProfileClick}>
+                  Mi Perfil
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleMyBookingsClick}>
                   Tus Citas
                 </DropdownMenuItem>
