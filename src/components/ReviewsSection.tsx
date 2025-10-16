@@ -100,7 +100,15 @@ export const ReviewsSection = () => {
             </span>
           </div>
           <p className="text-muted-foreground">
-            Basado en {placeData.user_ratings_total} reseñas de Google
+            Basado en {placeData.user_ratings_total} reseñas de{" "}
+            <a 
+              href="https://www.google.com/search?sca_esv=3bbeda8844e2ec09&rlz=1C1UEAD_esES1067ES1067&sxsrf=AE3TifO958sBtGFQk8RT_bpwUe61gwbe8Q:1760619626022&q=cristina+mu%C3%B1oz&si=AMgyJEtREmoPL4P1I5IDCfuA8gybfVI2d5Uj7QMwYCZHKDZ-E2j-wl--e1cD3wnzS5P2IRXmXLSOpi1ouDxD8WLWQ-YW3pYIpVvd9pWjHx8BTIcXFHMztug%3D&uds=AOm0WdGjsAzsq6lJpU4jvHKoiUiI5mBD5PZpew4N8teFyZvdwWZjVaheiBeaOfZKaFkMkkNS4aUud5z5J0x0B4e8RPIPV1cPFs_i3V65b5EFB9sASp9Pm08&sa=X&ved=2ahUKEwj18JKb46iQAxWmZ0EAHaR8ESMQ3PALegQIKRAF&biw=1536&bih=695&dpr=1.25"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-primary transition-colors"
+            >
+              Google
+            </a>
           </p>
         </div>
 
