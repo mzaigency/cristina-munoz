@@ -3,6 +3,13 @@ import { Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Review {
   author_name: string;
@@ -97,43 +104,51 @@ export const ReviewsSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {placeData.reviews?.slice(0, 6).map((review, index) => (
-            <Card
-              key={index}
-              className="hover:shadow-lg transition-all duration-300 animate-fade-up border-primary/10"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4 mb-4">
-                  <img
-                    src={review.profile_photo_url}
-                    alt={review.author_name}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">
-                      {review.author_name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      {renderStars(review.rating)}
+        <Carousel
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          className="w-full max-w-5xl mx-auto"
+        >
+          <CarouselContent>
+            {placeData.reviews?.map((review, index) => (
+              <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                <Card className="hover:shadow-lg transition-all duration-300 border-primary/10 h-full">
+                  <CardContent className="p-6 flex flex-col h-full">
+                    <div className="flex items-start gap-4 mb-4">
+                      <img
+                        src={review.profile_photo_url}
+                        alt={review.author_name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">
+                          {review.author_name}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          {renderStars(review.rating)}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <p className="text-muted-foreground leading-relaxed line-clamp-6">
-                  {review.text}
-                </p>
-                <p className="text-xs text-muted-foreground mt-4">
-                  {new Date(review.time * 1000).toLocaleDateString('es-ES', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    <p className="text-muted-foreground leading-relaxed line-clamp-6 flex-1">
+                      {review.text}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-4">
+                      {new Date(review.time * 1000).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
       </div>
     </section>
   );
