@@ -149,7 +149,7 @@ serve(async (req) => {
           type: 'cancellation',
           booking_id: bookingId,
           customer_name: booking.customer_name,
-          Telefono: customerPhone,
+          Telefono: booking.Telefono,
           Fecha: formattedDate,
           Hora: booking.Hora,
           stylist: booking.stylist,
