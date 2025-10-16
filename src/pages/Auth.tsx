@@ -121,8 +121,8 @@ export default function Auth() {
       <Header onNavigate={() => {}} activeSection="" />
       
       <main className="container mx-auto px-4 py-20">
-        <div className="max-w-md mx-auto">
-          <Card>
+        <div className="max-w-md mx-auto animate-fade-in">
+          <Card className="scroll-reveal visible">
             <CardHeader className="text-center">
               <CardTitle>{isSignUp ? "Crear cuenta" : "Iniciar sesión"}</CardTitle>
               <CardDescription>
