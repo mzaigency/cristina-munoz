@@ -22,22 +22,45 @@ serve(async (req) => {
       throw new Error('Missing Google Places API key or Place ID');
     }
 
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=name,rating,reviews,user_ratings_total&key=${GOOGLE_PLACES_API_KEY}&language=es`;
-    console.log('Calling Google Places API...');
+    // Using the new Places API (New)
+    const url = `https://places.googleapis.com/v1/places/${PLACE_ID}`;
+    console.log('Calling Google Places API (New)...');
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+        'X-Goog-FieldMask': 'displayName,rating,userRatingCount,reviews',
+        'languageCode': 'es',
+      },
+    });
+
     const data = await response.json();
+    console.log('API Response status:', response.status);
 
-    console.log('API Response status:', data.status);
-    if (data.error_message) {
-      console.log('API Error message:', data.error_message);
+    if (!response.ok) {
+      console.error('API Error:', data);
+      throw new Error(`Google Places API error: ${response.status} - ${JSON.stringify(data)}`);
     }
 
-    if (data.status !== 'OK') {
-      throw new Error(`Google Places API error: ${data.status}${data.error_message ? ' - ' + data.error_message : ''}`);
-    }
+    // Transform the new API response to match the old format
+    const transformedData = {
+      name: data.displayName?.text || data.displayName,
+      rating: data.rating || 0,
+      user_ratings_total: data.userRatingCount || 0,
+      reviews: data.reviews?.map((review: any) => ({
+        author_name: review.authorAttribution?.displayName || review.author_name,
+        rating: review.rating || 0,
+        text: review.text?.text || review.text,
+        time: review.publishTime ? new Date(review.publishTime).getTime() / 1000 : Date.now() / 1000,
+        profile_photo_url: review.authorAttribution?.photoUri || review.profile_photo_url || '',
+      })) || [],
+    };
 
-    return new Response(JSON.stringify(data.result), {
+    console.log('Transformed data:', JSON.stringify(transformedData));
+
+    return new Response(JSON.stringify(transformedData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
