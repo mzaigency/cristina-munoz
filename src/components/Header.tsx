@@ -50,11 +50,17 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   const handleUserIconClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (user) {
-      navigate("/mis-citas");
+      setTimeout(() => navigate("/mis-citas"), 300);
     } else {
-      navigate("/auth");
+      setTimeout(() => navigate("/auth"), 300);
     }
+  };
+
+  const handleMyBookingsClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => navigate("/mis-citas"), 300);
   };
 
   const handleNavClick = (item: typeof navItems[0]) => {
@@ -105,7 +111,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate("/mis-citas")}>
+                <DropdownMenuItem onClick={handleMyBookingsClick}>
                   Tus Citas
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
@@ -130,7 +136,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate("/mis-citas")}>
+                <DropdownMenuItem onClick={handleMyBookingsClick}>
                   Tus Citas
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
