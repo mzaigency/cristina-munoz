@@ -23,13 +23,18 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
     'Coloración': [],
     'Corte': [],
     'Estética': [],
-    'Peinados y Tratamientos': []
+    'Peinados y Tratamientos': [],
+    'Asesoramiento profesional': []
   };
 
   services.forEach(service => {
     // Mover Éclat a Peinados y Tratamientos
     if (service.name === 'Éclat') {
       groupedServices['Peinados y Tratamientos'].push(service);
+    }
+    // Asesoramiento profesional
+    else if (service.category === 'Asesoramiento profesional') {
+      groupedServices['Asesoramiento profesional'].push(service);
     }
     // Depilación Facial y Makeup van a Estética
     else if (service.category === 'Depilación Facial' || service.category === 'Otros') {
@@ -47,7 +52,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
     }
   });
 
-  const groups = ['Coloración', 'Corte', 'Estética', 'Peinados y Tratamientos'];
+  const groups = ['Asesoramiento profesional', 'Coloración', 'Corte', 'Estética', 'Peinados y Tratamientos'];
 
   const toggleService = (service: Service) => {
     setSelected((prev) =>
