@@ -20,32 +20,40 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { bookingId, googleEventId, calendarId, customerPhone } = await req.json();
+    const { bookingId, bookingIds } = await req.json();
 
-    console.log('Cancelling booking:', { bookingId, googleEventId, calendarId, customerPhone });
+    // Handle both single and multiple bookings
+    const idsToCancel = bookingIds || [bookingId];
+    
+    console.log('Cancelling bookings:', { idsToCancel });
 
-    // Get booking details before deleting
-    const { data: booking, error: fetchError } = await supabase
+    // Get all booking details before deleting
+    const { data: bookings, error: fetchError } = await supabase
       .from('bookings')
       .select('*')
-      .eq('id', bookingId)
-      .single();
+      .in('id', idsToCancel);
 
-    if (fetchError) {
-      console.error('Error fetching booking:', fetchError);
-      throw new Error('Booking not found');
+    if (fetchError || !bookings || bookings.length === 0) {
+      console.error('Error fetching bookings:', fetchError);
+      throw new Error('Bookings not found');
     }
 
-    // If this is a compound service, also get the related booking
-    let relatedBooking = null;
-    if (booking.is_part_of_compound && booking.related_booking_id) {
+    // Collect all related bookings
+    const relatedBookingIds = bookings
+      .filter(b => b.is_part_of_compound && b.related_booking_id)
+      .map(b => b.related_booking_id)
+      .filter(Boolean);
+
+    let relatedBookings = [];
+    if (relatedBookingIds.length > 0) {
       const { data: related } = await supabase
         .from('bookings')
         .select('*')
-        .eq('id', booking.related_booking_id)
-        .single();
-      relatedBooking = related;
+        .in('id', relatedBookingIds);
+      relatedBookings = related || [];
     }
+
+    const allBookings = [...bookings, ...relatedBookings];
 
     // Helper function to delete Google Calendar event
     const deleteGoogleCalendarEvent = async (eventId: string, calId: string) => {
@@ -91,55 +99,49 @@ serve(async (req) => {
       }
     };
 
-    // Delete from Google Calendar if we have the event ID and calendar ID
-    if (googleEventId && calendarId) {
-      await deleteGoogleCalendarEvent(googleEventId, calendarId);
+    // Delete all calendar events
+    for (const booking of allBookings) {
+      if (booking.google_calendar_event_id && booking.calendar_id) {
+        await deleteGoogleCalendarEvent(booking.google_calendar_event_id, booking.calendar_id);
+      }
     }
 
-    // Also delete related booking's calendar event
-    if (relatedBooking && relatedBooking.google_calendar_event_id && relatedBooking.calendar_id) {
-      await deleteGoogleCalendarEvent(relatedBooking.google_calendar_event_id, relatedBooking.calendar_id);
-    }
+    // Get all booking IDs to delete
+    const allBookingIds = allBookings.map(b => b.id);
 
-    // First, break the foreign key relationship by setting related_booking_id to null
-    if (relatedBooking) {
-      await supabase
-        .from('bookings')
-        .update({ related_booking_id: null })
-        .eq('id', relatedBooking.id);
-      
-      await supabase
-        .from('bookings')
-        .update({ related_booking_id: null })
-        .eq('id', bookingId);
-    }
+    // Break foreign key relationships by setting related_booking_id to null
+    await supabase
+      .from('bookings')
+      .update({ related_booking_id: null })
+      .in('id', allBookingIds);
 
-    // Delete booking from database
+    // Delete all bookings from database
     const { error: deleteError } = await supabase
       .from('bookings')
       .delete()
-      .eq('id', bookingId);
+      .in('id', allBookingIds);
 
     if (deleteError) {
-      console.error('Error deleting booking:', deleteError);
+      console.error('Error deleting bookings:', deleteError);
       throw deleteError;
-    }
-
-    // Also delete related booking if exists
-    if (relatedBooking) {
-      await supabase
-        .from('bookings')
-        .delete()
-        .eq('id', relatedBooking.id);
     }
 
     console.log('Booking(s) cancelled successfully');
 
-    // Trigger n8n webhook for cancellation notification
+    // Trigger n8n webhook with all bookings data
     try {
-      // Format date for webhook (dd-mm-yyyy)
-      const formattedDate = format(new Date(booking.Fecha), 'dd-MM-yyyy');
-      
+      const webhookData = bookings.map(booking => ({
+        booking_id: booking.id,
+        customer_name: booking.customer_name,
+        Telefono: booking.Telefono,
+        Fecha: format(new Date(booking.Fecha), 'dd-MM-yyyy'),
+        Hora: booking.Hora,
+        stylist: booking.stylist,
+        services: booking.services,
+        google_calendar_event_id: booking.google_calendar_event_id,
+        calendar_id: booking.calendar_id,
+      }));
+
       await fetch(cancelWebhookUrl, {
         method: 'POST',
         headers: {
@@ -147,15 +149,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           type: 'cancellation',
-          booking_id: bookingId,
-          customer_name: booking.customer_name,
-          Telefono: booking.Telefono,
-          Fecha: formattedDate,
-          Hora: booking.Hora,
-          stylist: booking.stylist,
-          services: booking.services,
-          google_calendar_event_id: googleEventId,
-          calendar_id: calendarId,
+          bookings: webhookData,
         }),
       });
       console.log('n8n webhook triggered successfully');

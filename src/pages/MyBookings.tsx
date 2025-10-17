@@ -118,15 +118,14 @@ export default function MyBookings() {
     setCancelingDate(dateToCancel);
     try {
       const bookingsForDate = bookings.filter(b => b.Fecha === dateToCancel);
+      const bookingIds = bookingsForDate.map(b => b.id);
       
-      // Cancelar todas las citas de ese día
-      for (const booking of bookingsForDate) {
-        const { error: functionError } = await supabase.functions.invoke('cancel-booking', {
-          body: { bookingId: booking.id }
-        });
+      // Cancelar todas las citas de ese día de una sola vez
+      const { error: functionError } = await supabase.functions.invoke('cancel-booking', {
+        body: { bookingIds }
+      });
 
-        if (functionError) throw functionError;
-      }
+      if (functionError) throw functionError;
 
       toast({
         title: "Citas canceladas",
