@@ -18,28 +18,36 @@ interface ServiceSelectionProps {
 export const ServiceSelection = ({ services, selectedServices, onNext }: ServiceSelectionProps) => {
   const [selected, setSelected] = useState<Service[]>(selectedServices);
 
-  // Mapeo de categorías a sus nombres de grupo
-  const categoryGroups: Record<string, string> = {
-    'Coloración': 'Coloración',
-    'Corte': 'Corte',
-    'Estética': 'Estética',
-    'Makeup': 'Estética',
-    'Peinados': 'Peinados',
-    'Tratamientos': 'Tratamientos',
-    'Éclat': 'Tratamientos',
+  // Agrupar servicios por grupo según las categorías de la base de datos
+  const groupedServices: Record<string, Service[]> = {
+    'Coloración': [],
+    'Corte': [],
+    'Estética': [],
+    'Peinados y Tratamientos': []
   };
 
-  // Agrupar servicios por grupo
-  const groupedServices: Record<string, Service[]> = {};
   services.forEach(service => {
-    const group = categoryGroups[service.category] || service.category;
-    if (!groupedServices[group]) {
-      groupedServices[group] = [];
+    // Mover Éclat a Peinados y Tratamientos
+    if (service.name === 'Éclat') {
+      groupedServices['Peinados y Tratamientos'].push(service);
     }
-    groupedServices[group].push(service);
+    // Depilación Facial y Makeup van a Estética
+    else if (service.category === 'Depilación Facial' || service.category === 'Otros') {
+      groupedServices['Estética'].push(service);
+    }
+    // El resto va según su categoría
+    else if (service.category === 'Coloración') {
+      groupedServices['Coloración'].push(service);
+    }
+    else if (service.category === 'Corte') {
+      groupedServices['Corte'].push(service);
+    }
+    else if (service.category === 'Peinados y Tratamientos') {
+      groupedServices['Peinados y Tratamientos'].push(service);
+    }
   });
 
-  const groups = ['Coloración', 'Corte', 'Estética', 'Peinados', 'Tratamientos'];
+  const groups = ['Coloración', 'Corte', 'Estética', 'Peinados y Tratamientos'];
 
   const toggleService = (service: Service) => {
     setSelected((prev) =>
