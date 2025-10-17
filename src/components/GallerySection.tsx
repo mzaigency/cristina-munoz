@@ -84,7 +84,7 @@ export const GallerySection = () => {
           <Button
             size="lg"
             variant="default"
-            onClick={() => window.open("instagram.com/cristinamunoz_hairstylist/", "_blank")}
+            onClick={() => window.open("https://instagram.com/cristinamunoz_hairstylist/", "_blank")}
             className="gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg"
           >
             <Instagram className="w-5 h-5" />
