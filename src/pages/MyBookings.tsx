@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Clock, User, Phone, Loader2 } from "lucide-react";
+import { Calendar, Clock, User, Phone, Loader2, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +19,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 type Booking = {
   id: string;
@@ -37,6 +43,8 @@ export default function MyBookings() {
   const [loading, setLoading] = useState(true);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+  const [dateToCancel, setDateToCancel] = useState<string | null>(null);
+  const [cancelingDate, setCancelingDate] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -104,10 +112,62 @@ export default function MyBookings() {
     }
   };
 
+  const handleCancelAllBookingsForDate = async () => {
+    if (!dateToCancel) return;
+
+    setCancelingDate(dateToCancel);
+    try {
+      const bookingsForDate = bookings.filter(b => b.Fecha === dateToCancel);
+      
+      // Cancelar todas las citas de ese día
+      for (const booking of bookingsForDate) {
+        const { error: functionError } = await supabase.functions.invoke('cancel-booking', {
+          body: { bookingId: booking.id }
+        });
+
+        if (functionError) throw functionError;
+      }
+
+      toast({
+        title: "Citas canceladas",
+        description: `Todas las citas del ${format(new Date(dateToCancel), "dd-MM-yyyy")} han sido canceladas correctamente`,
+      });
+
+      await loadBookings();
+    } catch (error) {
+      console.error('Error canceling bookings for date:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cancelar las citas. Por favor, contacta con nosotras.",
+        variant: "destructive",
+      });
+    } finally {
+      setCancelingDate(null);
+      setDateToCancel(null);
+    }
+  };
+
   const getStylistName = (stylist: string) => {
     if (stylist === 'cris') return 'Cristina';
     if (stylist === 'desi') return 'Desi';
     return stylist;
+  };
+
+  // Agrupar citas por fecha
+  const groupBookingsByDate = () => {
+    const grouped: { [key: string]: Booking[] } = {};
+    
+    bookings.forEach(booking => {
+      if (!grouped[booking.Fecha]) {
+        grouped[booking.Fecha] = [];
+      }
+      grouped[booking.Fecha].push(booking);
+    });
+
+    // Ordenar fechas de más reciente a más antigua
+    return Object.entries(grouped).sort((a, b) => 
+      new Date(b[0]).getTime() - new Date(a[0]).getTime()
+    );
   };
 
   if (loading) {
@@ -144,60 +204,101 @@ export default function MyBookings() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {bookings.map((booking) => (
-                <Card key={booking.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl mb-1">
-                          {format(new Date(booking.Fecha), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
-                        </CardTitle>
-                        <CardDescription className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          {booking.Hora} ({booking.total_duration} min)
-                        </CardDescription>
+            <Accordion type="single" collapsible className="space-y-4">
+              {groupBookingsByDate().map(([date, dateBookings]) => (
+                <AccordionItem key={date} value={date} className="border rounded-lg">
+                  <AccordionTrigger className="px-6 hover:no-underline">
+                    <div className="flex items-center justify-between w-full pr-4">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-5 w-5 text-primary" />
+                        <div className="text-left">
+                          <p className="font-semibold text-lg">
+                            {format(new Date(date), "dd-MM-yyyy")}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {dateBookings.length} {dateBookings.length === 1 ? 'cita' : 'citas'}
+                          </p>
+                        </div>
                       </div>
                       <Button
-                        variant="destructive"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => setBookingToCancel(booking)}
-                        disabled={cancelingId === booking.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDateToCancel(date);
+                        }}
+                        disabled={cancelingDate === date}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
-                        {cancelingId === booking.id ? (
+                        {cancelingDate === date ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             Cancelando...
                           </>
                         ) : (
-                          "Cancelar"
+                          <>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Cancelar día
+                          </>
                         )}
                       </Button>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">Peluquera:</span>
-                        <span>{getStylistName(booking.stylist)}</span>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm font-medium mb-2">Servicios:</p>
-                        <ul className="list-disc list-inside space-y-1">
-                          {Array.isArray(booking.services) && booking.services.map((service: any, idx: number) => (
-                            <li key={idx} className="text-sm text-muted-foreground">
-                              {service.name}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    <div className="space-y-3 pt-2">
+                      {dateBookings.map((booking) => (
+                        <Card key={booking.id} className="hover:shadow-md transition-shadow">
+                          <CardHeader className="pb-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{booking.Hora}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  ({booking.total_duration} min)
+                                </span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setBookingToCancel(booking)}
+                                disabled={cancelingId === booking.id}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8"
+                              >
+                                {cancelingId === booking.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  "Cancelar"
+                                )}
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">Peluquera:</span>
+                                <span>{getStylistName(booking.stylist)}</span>
+                              </div>
+                              
+                              <div>
+                                <p className="text-sm font-medium mb-1">Servicios:</p>
+                                <ul className="list-disc list-inside space-y-1">
+                                  {Array.isArray(booking.services) && booking.services.map((service: any, idx: number) => (
+                                    <li key={idx} className="text-sm text-muted-foreground">
+                                      {service.name}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
-                  </CardContent>
-                </Card>
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
+            </Accordion>
           )}
         </div>
       </main>
@@ -214,6 +315,25 @@ export default function MyBookings() {
             <AlertDialogCancel>No, mantener cita</AlertDialogCancel>
             <AlertDialogAction onClick={handleCancelBooking}>
               Sí, cancelar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!dateToCancel} onOpenChange={() => setDateToCancel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar todas las citas del día?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás segura de que quieres cancelar todas las citas del{" "}
+              {dateToCancel && format(new Date(dateToCancel), "dd-MM-yyyy")}? 
+              Esta acción no se puede deshacer y se eliminarán todas las citas de ese día.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, mantener citas</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelAllBookingsForDate}>
+              Sí, cancelar todas
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
