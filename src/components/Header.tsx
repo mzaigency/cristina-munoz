@@ -82,7 +82,8 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
         onNavigate(section);
       }
     } else {
-      navigate(item.path);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => navigate(item.path), 300);
     }
     setOpen(false);
   };
