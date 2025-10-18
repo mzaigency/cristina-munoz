@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BookingData } from "./BookingFlow";
 import { format } from "date-fns";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -226,6 +226,17 @@ export const BookingConfirmation = ({
             </div>
           </div>
         </div>
+        <Button
+          size="lg"
+          className="bg-[#25D366] hover:bg-[#20BA59] text-white gap-2"
+          onClick={() => {
+            const message = encodeURIComponent("Hola, acabo de reservar una cita y me gustaría hablar con el agente de IA de la peluquería.");
+            window.open(`https://wa.me/34YOUR_PHONE_NUMBER?text=${message}`, '_blank');
+          }}
+        >
+          <MessageCircle className="h-5 w-5" />
+          Hablar con nuestro agente de IA
+        </Button>
         <p className="text-sm text-muted-foreground">
           Nos vemos pronto en el salón ✨
         </p>
