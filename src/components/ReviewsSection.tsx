@@ -90,7 +90,7 @@ export const ReviewsSection = () => {
     <section className="py-24 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 animate-fade-up">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
             Lo Que Dicen Nuestras Clientas
           </h2>
           <div className="flex items-center justify-center gap-3 mb-2">
