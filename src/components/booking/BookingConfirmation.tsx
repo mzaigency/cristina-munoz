@@ -231,7 +231,7 @@ export const BookingConfirmation = ({
           className="bg-[#25D366] hover:bg-[#20BA59] text-white gap-2"
           onClick={() => {
             const message = encodeURIComponent("Hola, acabo de reservar una cita y me gustaría hablar con el agente de IA de la peluquería.");
-            window.open(`https://wa.me/34YOUR_PHONE_NUMBER?text=${message}`, '_blank');
+            window.open(`https://wa.me/34674034526?text=${message}`, '_blank');
           }}
         >
           <MessageCircle className="h-5 w-5" />
