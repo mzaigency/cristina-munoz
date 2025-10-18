@@ -171,50 +171,63 @@ export const BookingConfirmation = ({
 
   if (confirmed) {
     return (
-      <div className="space-y-6 text-center">
+      <div className="space-y-8 text-center py-8">
         <div className="flex justify-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-salon-pink-light">
-            <CheckCircle2 className="h-10 w-10 text-salon-pink-dark" />
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-green-100 animate-in zoom-in duration-500">
+            <CheckCircle2 className="h-12 w-12 text-green-600" />
           </div>
         </div>
-        <div>
-          <h3 className="mb-2 text-2xl font-bold text-foreground">¡Reserva Confirmada!</h3>
-          <p className="text-muted-foreground">
-            Te hemos enviado un mensaje de confirmación a tu teléfono.
+        <div className="space-y-3">
+          <h3 className="text-3xl md:text-4xl font-bold text-foreground">¡Tu Cita ha sido Confirmada!</h3>
+          <p className="text-lg text-muted-foreground max-w-md mx-auto">
+            Recibirás un mensaje de confirmación en tu teléfono con todos los detalles de tu reserva.
           </p>
         </div>
-        <div className="rounded-lg bg-salon-pink-light p-6 text-left">
-          <h4 className="mb-3 font-semibold text-foreground">Resumen de tu cita:</h4>
-          <div className="space-y-2 text-sm">
-            <p>
-              <span className="font-medium">Nombre:</span> {userProfile.full_name}
-            </p>
-            <p>
-              <span className="font-medium">Email:</span> {userProfile.email}
-            </p>
-            <p>
-              <span className="font-medium">Teléfono:</span> {userProfile.phone}
-            </p>
-            <p>
-              <span className="font-medium">Fecha:</span>{" "}
-              {bookingData.date && format(bookingData.date, "dd-MM-yyyy")}
-            </p>
-            <p>
-              <span className="font-medium">Hora:</span> {bookingData.time}
-            </p>
-            <p>
-              <span className="font-medium">Peluquera:</span>{" "}
-              {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}
-            </p>
-            <p>
-              <span className="font-medium">Servicios:</span>{" "}
-              {bookingData.services.map((s) => s.name).join(", ")}
-            </p>
-            <p>
-              <span className="font-medium">Duración:</span> {totalDuration} minutos
-            </p>
+        <div className="rounded-lg border-2 border-green-200 bg-green-50/50 p-6 text-left max-w-lg mx-auto">
+          <h4 className="mb-4 text-lg font-semibold text-foreground flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            Resumen de tu cita
+          </h4>
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-muted-foreground col-span-1">Nombre:</span>
+              <span className="col-span-2">{userProfile.full_name}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-muted-foreground col-span-1">Email:</span>
+              <span className="col-span-2 break-all">{userProfile.email}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-muted-foreground col-span-1">Teléfono:</span>
+              <span className="col-span-2">{userProfile.phone}</span>
+            </div>
+            <div className="h-px bg-border my-2" />
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-muted-foreground col-span-1">Fecha:</span>
+              <span className="col-span-2">{bookingData.date && format(bookingData.date, "dd-MM-yyyy")}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-muted-foreground col-span-1">Hora:</span>
+              <span className="col-span-2">{bookingData.time}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-muted-foreground col-span-1">Peluquera:</span>
+              <span className="col-span-2">{bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}</span>
+            </div>
+            <div className="h-px bg-border my-2" />
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-muted-foreground col-span-1">Servicios:</span>
+              <span className="col-span-2">{bookingData.services.map((s) => s.name).join(", ")}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <span className="font-medium text-muted-foreground col-span-1">Duración:</span>
+              <span className="col-span-2">{totalDuration} minutos</span>
+            </div>
           </div>
         </div>
+        <p className="text-sm text-muted-foreground">
+          Nos vemos pronto en el salón ✨
+        </p>
       </div>
     );
   }
