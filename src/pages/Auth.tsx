@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -23,6 +24,9 @@ const signUpSchema = signInSchema.extend({
   lastName: z.string().trim().min(1, "El apellido es requerido").max(50, "El apellido debe tener menos de 50 caracteres"),
   phone: z.string().trim().min(9, "El teléfono debe tener al menos 9 dígitos").max(15, "El teléfono debe tener menos de 15 dígitos"),
   confirmPassword: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: "Debes aceptar la política de privacidad y los términos de uso",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
@@ -42,7 +46,7 @@ export default function Auth() {
     defaultValues: {
       email: "",
       password: "",
-      ...(isSignUp ? { firstName: "", lastName: "", phone: "", confirmPassword: "" } : {}),
+      ...(isSignUp ? { firstName: "", lastName: "", phone: "", confirmPassword: "", acceptTerms: false } : {}),
     },
   });
 
@@ -234,24 +238,63 @@ export default function Auth() {
                   />
 
                   {isSignUp && (
-                    <FormField
-                      control={form.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Verificar Contraseña</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="••••••" 
-                              {...field}
-                              disabled={loading}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Verificar Contraseña</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                placeholder="••••••" 
+                                {...field}
+                                disabled={loading}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="acceptTerms"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                disabled={loading}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-normal">
+                                Acepto la{" "}
+                                <Link 
+                                  to="/politica-privacidad" 
+                                  target="_blank"
+                                  className="text-primary hover:underline font-medium"
+                                >
+                                  Política de Privacidad
+                                </Link>
+                                {" "}y los{" "}
+                                <Link 
+                                  to="/terminos-uso" 
+                                  target="_blank"
+                                  className="text-primary hover:underline font-medium"
+                                >
+                                  Términos de Uso
+                                </Link>
+                              </FormLabel>
+                              <FormMessage />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </>
                   )}
 
                   <Button type="submit" className="w-full" disabled={loading}>
