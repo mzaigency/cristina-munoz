@@ -1,4 +1,4 @@
-import { MapPin, Phone, Mail, Clock, Instagram } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Instagram, MessageCircle } from "lucide-react";
 export const Footer = () => {
   return <footer className="border-t bg-salon-cream">
       <div className="container mx-auto px-4 py-12">
@@ -18,7 +18,17 @@ export const Footer = () => {
                 <Phone className="h-5 w-5 text-primary" />
                 <p className="text-sm text-muted-foreground">+34 938 321 054</p>
               </div>
-              
+              <div className="flex items-center gap-3">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                <a 
+                  href="https://wa.me/34674034526" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  +34 674 034 526
+                </a>
+              </div>
             </div>
           </div>
 
