@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, User, LogOut } from "lucide-react";
+import { Menu, User, LogOut, Shield } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
@@ -20,20 +21,39 @@ interface HeaderProps {
 export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        checkAdminRole(session.user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        checkAdminRole(session.user.id);
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkAdminRole = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["admin", "stylist"]);
+    
+    setIsAdmin(data && data.length > 0);
+  };
   
   const navItems = [
     { id: "inicio", label: "Inicio", path: "/" },
@@ -67,6 +87,11 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   const handleProfileClick = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => navigate("/perfil"), 300);
+  };
+
+  const handleAdminClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => navigate("/admin"), 300);
   };
 
   const handleNavClick = (item: typeof navItems[0]) => {
@@ -124,6 +149,16 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                 <DropdownMenuItem onClick={handleMyBookingsClick}>
                   Tus Citas
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleAdminClick}>
+                      <Shield className="h-4 w-4 mr-2" />
+                      Panel Admin
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Cerrar Sesión
@@ -152,6 +187,16 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                 <DropdownMenuItem onClick={handleMyBookingsClick}>
                   Tus Citas
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleAdminClick}>
+                      <Shield className="h-4 w-4 mr-2" />
+                      Panel Admin
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Cerrar Sesión

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { LogOut, Calendar, Clock, User, Phone, Loader2 } from "lucide-react";
+import { LogOut, Calendar, Clock, User, Phone, Loader2, Home } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarCRM } from "@/components/admin/CalendarCRM";
@@ -107,10 +107,16 @@ export default function Admin() {
             <h1 className="text-3xl font-bold text-foreground">Panel de Administración</h1>
             <p className="text-muted-foreground">Bienvenida, {userEmail}</p>
           </div>
-          <Button onClick={handleSignOut} variant="outline">
-            <LogOut className="mr-2 h-4 w-4" />
-            Cerrar sesión
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate("/")} variant="outline">
+              <Home className="mr-2 h-4 w-4" />
+              Ir a Inicio
+            </Button>
+            <Button onClick={handleSignOut} variant="outline">
+              <LogOut className="mr-2 h-4 w-4" />
+              Cerrar sesión
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="calendar" className="space-y-6">
