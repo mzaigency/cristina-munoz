@@ -42,11 +42,14 @@ async function getAccessToken(): Promise<string> {
 }
 
 Deno.serve(async (req) => {
+  console.log('list-calendar-events function called');
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Creating Supabase client...');
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -57,16 +60,20 @@ Deno.serve(async (req) => {
       }
     );
 
+    console.log('Getting user...');
     const {
       data: { user },
     } = await supabaseClient.auth.getUser();
 
     if (!user) {
+      console.error('No user found');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    console.log('User found:', user.id);
 
     const { data: userRole } = await supabaseClient
       .from('user_roles')
@@ -75,18 +82,28 @@ Deno.serve(async (req) => {
       .in('role', ['admin', 'stylist'])
       .single();
 
+    console.log('User role:', userRole);
+
     if (!userRole) {
+      console.error('User does not have admin or stylist role');
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    console.log('Parsing request body...');
     const { calendarId, timeMin, timeMax } = await req.json();
+    console.log('Calendar ID:', calendarId, 'TimeMin:', timeMin, 'TimeMax:', timeMax);
 
+    console.log('Getting access token...');
     const accessToken = await getAccessToken();
+    console.log('Access token obtained');
+    
     const calendarIdCris = Deno.env.get('GOOGLE_CALENDAR_ID_CRIS');
     const calendarIdDesi = Deno.env.get('GOOGLE_CALENDAR_ID_DESI');
+
+    console.log('Calendar IDs - Cris:', calendarIdCris, 'Desi:', calendarIdDesi);
 
     let calendarsToFetch: { id: string; stylist: string }[] = [];
 
@@ -100,6 +117,8 @@ Deno.serve(async (req) => {
     } else if (calendarId === 'desi') {
       calendarsToFetch = [{ id: calendarIdDesi!, stylist: 'desi' }];
     }
+
+    console.log('Calendars to fetch:', calendarsToFetch.length);
 
     const allEvents = [];
 
