@@ -2,3 +2,15 @@ project_id = "lyeyzdbplrgqsvyxpfek"
 
 [functions.get-reviews]
 verify_jwt = false
+
+[functions.list-calendar-events]
+verify_jwt = true
+
+[functions.create-calendar-event]
+verify_jwt = true
+
+[functions.update-calendar-event]
+verify_jwt = true
+
+[functions.delete-calendar-event]
+verify_jwt = true

@@ -8,6 +8,8 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { LogOut, Calendar, Clock, User, Phone, Loader2 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarCRM } from "@/components/admin/CalendarCRM";
 
 type DbBooking = Database["public"]["Tables"]["bookings"]["Row"];
 
@@ -99,7 +101,7 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-muted/30 p-6">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Panel de Administración</h1>
@@ -111,67 +113,80 @@ export default function Admin() {
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Próximas Reservas ({bookings.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {bookings.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No hay reservas pendientes
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {bookings.map((booking) => (
-                  <Card key={booking.id} className="border">
-                    <CardContent className="pt-6">
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">
-                              {format(new Date(booking.Fecha), "EEEE, d 'de' MMMM 'de' yyyy", {
-                                locale: es,
-                              })}
-                            </span>
+        <Tabs defaultValue="calendar" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="calendar">📅 CRM - Calendario</TabsTrigger>
+            <TabsTrigger value="bookings">📋 Reservas ({bookings.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="calendar">
+            <CalendarCRM />
+          </TabsContent>
+
+          <TabsContent value="bookings">
+            <Card>
+              <CardHeader>
+                <CardTitle>Próximas Reservas ({bookings.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {bookings.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No hay reservas pendientes
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {bookings.map((booking) => (
+                      <Card key={booking.id} className="border">
+                        <CardContent className="pt-6">
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">
+                                  {format(new Date(booking.Fecha), "EEEE, d 'de' MMMM 'de' yyyy", {
+                                    locale: es,
+                                  })}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <span>{booking.Hora}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span>{getStylistName(booking.stylist)}</span>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="text-sm">
+                                <span className="font-medium">Cliente:</span> {booking.customer_name}
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                <span>{booking.Telefono}</span>
+                              </div>
+                              <div className="text-sm">
+                                <span className="font-medium">Servicios:</span>{" "}
+                                {Array.isArray(booking.services)
+                                  ? (booking.services as Array<{ name: string }>)
+                                      .map((s) => s.name)
+                                      .join(", ")
+                                  : "N/A"}
+                              </div>
+                              <div className="text-sm">
+                                <span className="font-medium">Duración:</span> {booking.total_duration} min
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span>{booking.Hora}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span>{getStylistName(booking.stylist)}</span>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="text-sm">
-                            <span className="font-medium">Cliente:</span> {booking.customer_name}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <span>{booking.Telefono}</span>
-                          </div>
-                          <div className="text-sm">
-                            <span className="font-medium">Servicios:</span>{" "}
-                            {Array.isArray(booking.services)
-                              ? (booking.services as Array<{ name: string }>)
-                                  .map((s) => s.name)
-                                  .join(", ")
-                              : "N/A"}
-                          </div>
-                          <div className="text-sm">
-                            <span className="font-medium">Duración:</span> {booking.total_duration} min
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
