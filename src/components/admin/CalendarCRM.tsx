@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Edit2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,11 +12,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, parseISO, addDays, startOfWeek, endOfWeek } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { AdminBookingFlow } from "./AdminBookingFlow";
 
@@ -33,7 +39,6 @@ interface CalendarEvent {
 export const CalendarCRM = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCalendar, setSelectedCalendar] = useState<"all" | "cris" | "desi">("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -42,7 +47,7 @@ export const CalendarCRM = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, [selectedCalendar, weekStart]);
+  }, [weekStart]);
 
   const fetchEvents = async () => {
     try {
@@ -51,7 +56,7 @@ export const CalendarCRM = () => {
 
       const { data, error } = await supabase.functions.invoke("list-calendar-events", {
         body: {
-          calendarId: selectedCalendar,
+          calendarId: "all",
           timeMin: weekStart.toISOString(),
           timeMax: addDays(weekEnd, 1).toISOString(),
         },
@@ -174,15 +179,7 @@ export const CalendarCRM = () => {
         </div>
       </div>
 
-      <Tabs value={selectedCalendar} onValueChange={(v) => setSelectedCalendar(v as any)}>
-        <TabsList>
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="cris">Cris</TabsTrigger>
-          <TabsTrigger value="desi">Desi</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
           onClick={() => setWeekStart(addDays(weekStart, -7))}
@@ -211,75 +208,172 @@ export const CalendarCRM = () => {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <Accordion type="multiple" className="space-y-4">
           {weekDays.map((day) => {
             const dateKey = format(day, "yyyy-MM-dd");
             const dayEvents = groupedEvents[dateKey] || [];
+            const crisEvents = dayEvents.filter((e) => e.stylist === "cris");
+            const desiEvents = dayEvents.filter((e) => e.stylist === "desi");
+            const isToday = isSameDay(day, new Date());
 
             return (
-              <Card key={dateKey} className={format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") ? "border-primary" : ""}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">
-                    {format(day, "EEEE d 'de' MMMM", { locale: es })}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {dayEvents.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Sin citas</p>
-                  ) : (
-                    dayEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className={`p-3 rounded-lg border ${
-                          event.stylist === "cris"
-                            ? "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800"
-                            : "bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{event.summary}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {format(parseISO(event.start.dateTime), "HH:mm")} -{" "}
-                              {format(parseISO(event.end.dateTime), "HH:mm")}
-                            </p>
-                            <p className="text-xs text-muted-foreground capitalize">{event.stylist}</p>
-                            {event.description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                {event.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 w-6 p-0"
-                              onClick={() => {
-                                setSelectedEvent(event);
-                                setIsEditDialogOpen(true);
-                              }}
-                            >
-                              <Edit2 className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 w-6 p-0 text-destructive"
-                              onClick={() => handleDeleteEvent(event)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
+              <AccordionItem
+                key={dateKey}
+                value={dateKey}
+                className={`border rounded-lg ${isToday ? "border-primary bg-primary/5" : ""}`}
+              >
+                <AccordionTrigger className="px-6 hover:no-underline">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-semibold capitalize">
+                        {format(day, "EEEE d 'de' MMMM", { locale: es })}
+                      </h3>
+                      {isToday && (
+                        <Badge variant="default" className="text-xs">
+                          Hoy
+                        </Badge>
+                      )}
+                    </div>
+                    <Badge variant="secondary" className="ml-2">
+                      {dayEvents.length} {dayEvents.length === 1 ? "cita" : "citas"}
+                    </Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pt-4 pb-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Columna de Cris */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-3 h-3 rounded-full bg-blue-500" />
+                        <h4 className="font-semibold text-sm">Cris</h4>
+                        <Badge variant="outline" className="ml-auto">
+                          {crisEvents.length}
+                        </Badge>
                       </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
+                      {crisEvents.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic">Sin citas</p>
+                      ) : (
+                        crisEvents.map((event) => (
+                          <Card
+                            key={event.id}
+                            className="bg-blue-50/50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1 space-y-1">
+                                  <p className="font-semibold text-base">{event.summary}</p>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span className="font-medium">
+                                      {format(parseISO(event.start.dateTime), "HH:mm")}
+                                    </span>
+                                    <span>-</span>
+                                    <span className="font-medium">
+                                      {format(parseISO(event.end.dateTime), "HH:mm")}
+                                    </span>
+                                  </div>
+                                  {event.description && (
+                                    <p className="text-sm text-muted-foreground pt-2 border-t mt-2">
+                                      {event.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      setSelectedEvent(event);
+                                      setIsEditDialogOpen(true);
+                                    }}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                    onClick={() => handleDeleteEvent(event)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Columna de Desi */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-3 h-3 rounded-full bg-purple-500" />
+                        <h4 className="font-semibold text-sm">Desi</h4>
+                        <Badge variant="outline" className="ml-auto">
+                          {desiEvents.length}
+                        </Badge>
+                      </div>
+                      {desiEvents.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic">Sin citas</p>
+                      ) : (
+                        desiEvents.map((event) => (
+                          <Card
+                            key={event.id}
+                            className="bg-purple-50/50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800"
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1 space-y-1">
+                                  <p className="font-semibold text-base">{event.summary}</p>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span className="font-medium">
+                                      {format(parseISO(event.start.dateTime), "HH:mm")}
+                                    </span>
+                                    <span>-</span>
+                                    <span className="font-medium">
+                                      {format(parseISO(event.end.dateTime), "HH:mm")}
+                                    </span>
+                                  </div>
+                                  {event.description && (
+                                    <p className="text-sm text-muted-foreground pt-2 border-t mt-2">
+                                      {event.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      setSelectedEvent(event);
+                                      setIsEditDialogOpen(true);
+                                    }}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                    onClick={() => handleDeleteEvent(event)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             );
           })}
-        </div>
+        </Accordion>
       )}
 
       {/* Create Event Dialog */}
