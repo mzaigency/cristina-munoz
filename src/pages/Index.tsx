@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { HeroSection } from "@/components/HeroSection";
-import { ServicesSection } from "@/components/ServicesSection";
 import { GallerySection } from "@/components/GallerySection";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { BookingFlow } from "@/components/booking/BookingFlow";
@@ -24,7 +23,7 @@ const Index = () => {
   };
 
   const handleViewServices = () => {
-    scrollToSection("servicios");
+    scrollToSection("galeria");
   };
 
   return (
@@ -36,8 +35,8 @@ const Index = () => {
           <HeroSection onBookNow={handleBookNow} onViewServices={handleViewServices} />
         </div>
         
-        <div id="servicios">
-          <ServicesSection />
+        <div id="galeria">
+          <GallerySection />
         </div>
         
         <div id="reserva">
@@ -45,10 +44,6 @@ const Index = () => {
         </div>
         
         <WhatsAppSection />
-        
-        <div id="galeria">
-          <GallerySection />
-        </div>
         
         <div id="resenas">
           <ReviewsSection />
