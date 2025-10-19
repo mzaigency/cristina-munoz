@@ -4,13 +4,13 @@ project_id = "lyeyzdbplrgqsvyxpfek"
 verify_jwt = false
 
 [functions.list-calendar-events]
-verify_jwt = true
+verify_jwt = false
 
 [functions.create-calendar-event]
-verify_jwt = true
+verify_jwt = false
 
 [functions.update-calendar-event]
-verify_jwt = true
+verify_jwt = false
 
 [functions.delete-calendar-event]
-verify_jwt = true
+verify_jwt = false

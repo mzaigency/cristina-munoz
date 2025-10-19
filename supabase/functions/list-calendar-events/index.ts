@@ -49,24 +49,29 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log('Creating Supabase client...');
+    console.log('Getting authorization header...');
+    const authHeader = req.headers.get('Authorization');
+    
+    if (!authHeader) {
+      console.error('No authorization header found');
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('Creating Supabase client with service role...');
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    console.log('Getting user...');
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
+    console.log('Getting user from token...');
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
-    if (!user) {
-      console.error('No user found');
+    if (userError || !user) {
+      console.error('Error getting user:', userError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -86,7 +91,7 @@ Deno.serve(async (req) => {
 
     if (!userRole) {
       console.error('User does not have admin or stylist role');
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      return new Response(JSON.stringify({ error: 'Forbidden - Admin or stylist role required' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
