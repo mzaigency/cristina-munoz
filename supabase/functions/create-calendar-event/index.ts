@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { stylist, summary, description, start, end } = await req.json();
+    const { stylist, summary, description, start, end, allDay } = await req.json();
 
     if (!stylist || !summary || !start || !end) {
       return new Response(
@@ -113,18 +113,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    const event = {
+    const event: any = {
       summary,
       description: description || '',
-      start: {
+    };
+
+    // Handle all-day events differently
+    if (allDay) {
+      const startDate = start.split('T')[0];
+      const endDate = end.split('T')[0];
+      event.start = { date: startDate };
+      event.end = { date: endDate };
+    } else {
+      event.start = {
         dateTime: start,
         timeZone: 'Europe/Madrid',
-      },
-      end: {
+      };
+      event.end = {
         dateTime: end,
         timeZone: 'Europe/Madrid',
-      },
-    };
+      };
+    }
 
     console.log(`Creating event in calendar for ${stylist}:`, event);
 

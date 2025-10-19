@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Edit2, ChevronDown } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, ChevronDown, Calendar as CalendarIcon, Ban } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,8 +22,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, addMonths, endOfDay, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
 
 interface CalendarEvent {
@@ -42,8 +46,13 @@ export const CalendarCRM = () => {
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [blockStartDate, setBlockStartDate] = useState<Date | undefined>(undefined);
+  const [blockEndDate, setBlockEndDate] = useState<Date | undefined>(undefined);
+  const [blockPeriod, setBlockPeriod] = useState<"day" | "week" | "month">("day");
+  const [blockStylist, setBlockStylist] = useState<"cris" | "desi" | "both">("both");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -197,6 +206,76 @@ export const CalendarCRM = () => {
     }
   };
 
+  const handleBlockPeriod = async () => {
+    if (!blockStartDate) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar una fecha de inicio",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let endDate = blockStartDate;
+    
+    if (blockPeriod === "week") {
+      endDate = addWeeks(blockStartDate, 1);
+    } else if (blockPeriod === "month") {
+      endDate = addMonths(blockStartDate, 1);
+    }
+
+    const finalEndDate = blockEndDate || endDate;
+
+    try {
+      setLoading(true);
+
+      const calendars = blockStylist === "both" 
+        ? ["cris", "desi"] 
+        : [blockStylist];
+
+      for (const stylist of calendars) {
+        const { error } = await supabase.functions.invoke("create-calendar-event", {
+          body: {
+            stylist: stylist,
+            summary: `🌴 VACACIONES - ${stylist.toUpperCase()}`,
+            description: "Periodo bloqueado - Vacaciones",
+            start: startOfDay(blockStartDate).toISOString(),
+            end: endOfDay(finalEndDate).toISOString(),
+            allDay: true,
+          },
+        });
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Periodo bloqueado",
+        description: `Se ha bloqueado el periodo de vacaciones correctamente`,
+      });
+
+      setIsBlockDialogOpen(false);
+      setBlockStartDate(undefined);
+      setBlockEndDate(undefined);
+      setBlockPeriod("day");
+      setBlockStylist("both");
+      fetchEvents();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al bloquear el periodo",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJumpToDate = (date: Date | undefined) => {
+    if (date) {
+      setWeekStart(startOfWeek(date, { weekStartsOn: 1 }));
+    }
+  };
+
   const groupEventsByDate = (events: CalendarEvent[]) => {
     const grouped: { [key: string]: CalendarEvent[] } = {};
     events.forEach((event) => {
@@ -248,10 +327,14 @@ export const CalendarCRM = () => {
             <Plus className="h-4 w-4 mr-2" />
             Nueva Cita
           </Button>
+          <Button variant="secondary" onClick={() => setIsBlockDialogOpen(true)}>
+            <Ban className="h-4 w-4 mr-2" />
+            Bloquear Periodo
+          </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Button
           variant="outline"
           onClick={() => setWeekStart(addDays(weekStart, -7))}
@@ -273,6 +356,24 @@ export const CalendarCRM = () => {
         >
           Semana siguiente →
         </Button>
+        
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline">
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              Ir a fecha
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={weekStart}
+              onSelect={handleJumpToDate}
+              initialFocus
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {loading ? (
@@ -562,6 +663,139 @@ export const CalendarCRM = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Block Period Dialog */}
+      <Dialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bloquear Periodo de Vacaciones</DialogTitle>
+            <DialogDescription>
+              Selecciona el periodo y la peluquera para bloquear el calendario
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Tipo de periodo</Label>
+              <RadioGroup value={blockPeriod} onValueChange={(value: any) => setBlockPeriod(value)}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="day" id="day" />
+                  <Label htmlFor="day" className="font-normal cursor-pointer">Día</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="week" id="week" />
+                  <Label htmlFor="week" className="font-normal cursor-pointer">Semana</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="month" id="month" />
+                  <Label htmlFor="month" className="font-normal cursor-pointer">Mes</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Peluquera</Label>
+              <RadioGroup value={blockStylist} onValueChange={(value: any) => setBlockStylist(value)}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="both" id="both" />
+                  <Label htmlFor="both" className="font-normal cursor-pointer">Ambas</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="cris" id="cris-block" />
+                  <Label htmlFor="cris-block" className="font-normal cursor-pointer">Cris</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="desi" id="desi-block" />
+                  <Label htmlFor="desi-block" className="font-normal cursor-pointer">Desi</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Fecha de inicio</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !blockStartDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {blockStartDate ? format(blockStartDate, "PPP", { locale: es }) : "Selecciona una fecha"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={blockStartDate}
+                    onSelect={setBlockStartDate}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {blockPeriod === "day" && (
+              <div className="space-y-2">
+                <Label>Fecha de fin (opcional)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !blockEndDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {blockEndDate ? format(blockEndDate, "PPP", { locale: es }) : "Mismo día que inicio"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={blockEndDate}
+                      onSelect={setBlockEndDate}
+                      disabled={(date) => blockStartDate ? date < blockStartDate : false}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {blockStartDate && (
+              <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                {blockPeriod === "day" && !blockEndDate && (
+                  <p>Se bloqueará el día: {format(blockStartDate, "PPP", { locale: es })}</p>
+                )}
+                {blockPeriod === "day" && blockEndDate && (
+                  <p>Se bloqueará desde {format(blockStartDate, "PPP", { locale: es })} hasta {format(blockEndDate, "PPP", { locale: es })}</p>
+                )}
+                {blockPeriod === "week" && (
+                  <p>Se bloqueará la semana del {format(blockStartDate, "PPP", { locale: es })} al {format(addWeeks(blockStartDate, 1), "PPP", { locale: es })}</p>
+                )}
+                {blockPeriod === "month" && (
+                  <p>Se bloqueará el mes del {format(blockStartDate, "PPP", { locale: es })} al {format(addMonths(blockStartDate, 1), "PPP", { locale: es })}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBlockDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleBlockPeriod} disabled={!blockStartDate}>
+              Bloquear Periodo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
