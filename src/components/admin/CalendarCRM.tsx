@@ -207,6 +207,32 @@ export const CalendarCRM = () => {
     return grouped;
   };
 
+  const groupEventsByHour = (events: CalendarEvent[]) => {
+    const grouped: { [hour: string]: { cris: CalendarEvent[], desi: CalendarEvent[] } } = {};
+    
+    // Initialize all hours from 9:00 to 21:00
+    for (let hour = 9; hour <= 21; hour++) {
+      const hourKey = `${hour.toString().padStart(2, '0')}:00`;
+      grouped[hourKey] = { cris: [], desi: [] };
+    }
+    
+    events.forEach((event) => {
+      const startTime = format(parseISO(event.start.dateTime), "HH:mm");
+      const hour = startTime.split(':')[0];
+      const hourKey = `${hour}:00`;
+      
+      if (grouped[hourKey]) {
+        if (event.stylist === "cris") {
+          grouped[hourKey].cris.push(event);
+        } else {
+          grouped[hourKey].desi.push(event);
+        }
+      }
+    });
+    
+    return grouped;
+  };
+
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const groupedEvents = groupEventsByDate(events);
 
@@ -286,159 +312,135 @@ export const CalendarCRM = () => {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pt-4 pb-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Columna de Cris */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-3 h-3 rounded-full bg-blue-500" />
-                        <h4 className="font-semibold text-sm">Cris</h4>
-                        <Badge variant="outline" className="ml-auto">
-                          {crisEvents.length}
-                        </Badge>
+                  {dayEvents.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic text-center py-8">Sin citas programadas</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {/* Header */}
+                      <div className="grid grid-cols-[80px_1fr_1fr] gap-3 pb-2 border-b mb-3">
+                        <div className="text-xs font-semibold text-muted-foreground">HORA</div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-blue-500" />
+                          <span className="text-xs font-semibold">CRIS</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-purple-500" />
+                          <span className="text-xs font-semibold">DESI</span>
+                        </div>
                       </div>
-                      {crisEvents.length === 0 ? (
-                        <p className="text-sm text-muted-foreground italic">Sin citas</p>
-                      ) : (
-                        crisEvents.map((event) => (
-                          <Card
-                            key={event.id}
-                            className={`bg-blue-50/50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800 transition-opacity ${
-                              event.completed ? "opacity-60" : ""
-                            }`}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
-                                <div className="pt-1">
-                                  <input
-                                    type="checkbox"
-                                    checked={event.completed || false}
-                                    onChange={() => handleToggleCompleted(event)}
-                                    className="w-5 h-5 rounded border-2 border-blue-400 cursor-pointer accent-blue-500"
-                                  />
-                                </div>
-                                <div className="flex-1 space-y-1">
-                                  <p className={`font-semibold text-base ${event.completed ? "line-through" : ""}`}>
-                                    {event.summary}
-                                  </p>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span className="font-medium">
-                                      {format(parseISO(event.start.dateTime), "HH:mm")}
-                                    </span>
-                                    <span>-</span>
-                                    <span className="font-medium">
-                                      {format(parseISO(event.end.dateTime), "HH:mm")}
-                                    </span>
-                                  </div>
-                                  {event.description && !event.description.includes("[✓ COMPLETADA]") && (
-                                    <p className="text-sm text-muted-foreground pt-2 border-t mt-2">
-                                      {event.description.replace("[✓ COMPLETADA] ", "")}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                      setSelectedEvent(event);
-                                      setIsEditDialogOpen(true);
-                                    }}
-                                  >
-                                    <Edit2 className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                    onClick={() => handleDeleteEvent(event)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))
-                      )}
-                    </div>
 
-                    {/* Columna de Desi */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-3 h-3 rounded-full bg-purple-500" />
-                        <h4 className="font-semibold text-sm">Desi</h4>
-                        <Badge variant="outline" className="ml-auto">
-                          {desiEvents.length}
-                        </Badge>
-                      </div>
-                      {desiEvents.length === 0 ? (
-                        <p className="text-sm text-muted-foreground italic">Sin citas</p>
-                      ) : (
-                        desiEvents.map((event) => (
-                          <Card
-                            key={event.id}
-                            className={`bg-purple-50/50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800 transition-opacity ${
-                              event.completed ? "opacity-60" : ""
-                            }`}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
-                                <div className="pt-1">
-                                  <input
-                                    type="checkbox"
-                                    checked={event.completed || false}
-                                    onChange={() => handleToggleCompleted(event)}
-                                    className="w-5 h-5 rounded border-2 border-purple-400 cursor-pointer accent-purple-500"
-                                  />
-                                </div>
-                                <div className="flex-1 space-y-1">
-                                  <p className={`font-semibold text-base ${event.completed ? "line-through" : ""}`}>
-                                    {event.summary}
-                                  </p>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span className="font-medium">
-                                      {format(parseISO(event.start.dateTime), "HH:mm")}
-                                    </span>
-                                    <span>-</span>
-                                    <span className="font-medium">
-                                      {format(parseISO(event.end.dateTime), "HH:mm")}
-                                    </span>
+                      {/* Timeline */}
+                      {Object.entries(groupEventsByHour(dayEvents)).map(([hour, { cris, desi }]) => {
+                        if (cris.length === 0 && desi.length === 0) return null;
+                        
+                        return (
+                          <div key={hour} className="grid grid-cols-[80px_1fr_1fr] gap-3 items-start py-2 border-b border-border/50">
+                            <div className="text-sm font-medium text-muted-foreground pt-1">{hour}</div>
+                            
+                            {/* Cris column */}
+                            <div className="space-y-2">
+                              {cris.map((event) => (
+                                <div
+                                  key={event.id}
+                                  className={`group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-sm ${
+                                    event.completed ? "opacity-50" : ""
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={event.completed || false}
+                                      onChange={() => handleToggleCompleted(event)}
+                                      className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
+                                        {event.summary}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground mt-0.5">
+                                        {format(parseISO(event.start.dateTime), "HH:mm")} - {format(parseISO(event.end.dateTime), "HH:mm")}
+                                      </p>
+                                    </div>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 w-6 p-0"
+                                        onClick={() => {
+                                          setSelectedEvent(event);
+                                          setIsEditDialogOpen(true);
+                                        }}
+                                      >
+                                        <Edit2 className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                        onClick={() => handleDeleteEvent(event)}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
                                   </div>
-                                  {event.description && !event.description.includes("[✓ COMPLETADA]") && (
-                                    <p className="text-sm text-muted-foreground pt-2 border-t mt-2">
-                                      {event.description.replace("[✓ COMPLETADA] ", "")}
-                                    </p>
-                                  )}
                                 </div>
-                                <div className="flex flex-col gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                      setSelectedEvent(event);
-                                      setIsEditDialogOpen(true);
-                                    }}
-                                  >
-                                    <Edit2 className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                    onClick={() => handleDeleteEvent(event)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                              ))}
+                            </div>
+                            
+                            {/* Desi column */}
+                            <div className="space-y-2">
+                              {desi.map((event) => (
+                                <div
+                                  key={event.id}
+                                  className={`group relative bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-sm ${
+                                    event.completed ? "opacity-50" : ""
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={event.completed || false}
+                                      onChange={() => handleToggleCompleted(event)}
+                                      className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
+                                        {event.summary}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground mt-0.5">
+                                        {format(parseISO(event.start.dateTime), "HH:mm")} - {format(parseISO(event.end.dateTime), "HH:mm")}
+                                      </p>
+                                    </div>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 w-6 p-0"
+                                        onClick={() => {
+                                          setSelectedEvent(event);
+                                          setIsEditDialogOpen(true);
+                                        }}
+                                      >
+                                        <Edit2 className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                        onClick={() => handleDeleteEvent(event)}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))
-                      )}
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             );
