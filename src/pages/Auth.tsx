@@ -313,7 +313,10 @@ export default function Auth() {
               <div className="text-center">
                 <Button
                   variant="link"
-                  onClick={() => setIsSignUp(!isSignUp)}
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   disabled={loading}
                   className="text-sm"
                 >
