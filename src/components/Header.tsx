@@ -57,8 +57,9 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   
   const navItems = [
     { id: "inicio", label: "Inicio", path: "/" },
-    { id: "galeria", label: "Galería", path: "/#galeria" },
+    { id: "servicios", label: "Servicios", path: "/#servicios" },
     { id: "reserva", label: "Reserva Online", path: "/#reserva" },
+    { id: "galeria", label: "Galería", path: "/#galeria" },
     { id: "resenas", label: "Reseñas", path: "/#resenas" },
     { id: "sobre-nosotras", label: "Sobre Nosotras", path: "/sobre-nosotras" },
     { id: "contacto", label: "Contacto", path: "/#contacto" },
