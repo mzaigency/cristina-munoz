@@ -100,29 +100,37 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 p-6">
+    <div className="min-h-screen bg-muted/30 p-3 md:p-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-4 md:mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Panel de Administración</h1>
-            <p className="text-muted-foreground">Bienvenida, {userEmail}</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Panel de Administración</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Bienvenida, {userEmail}</p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={() => navigate("/")} variant="outline">
-              <Home className="mr-2 h-4 w-4" />
-              Ir a Inicio
+          <div className="flex gap-2 w-full md:w-auto">
+            <Button onClick={() => navigate("/")} variant="outline" className="flex-1 md:flex-initial" size="sm">
+              <Home className="mr-1 md:mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Ir a Inicio</span>
+              <span className="sm:hidden">Inicio</span>
             </Button>
-            <Button onClick={handleSignOut} variant="outline">
-              <LogOut className="mr-2 h-4 w-4" />
-              Cerrar sesión
+            <Button onClick={handleSignOut} variant="outline" className="flex-1 md:flex-initial" size="sm">
+              <LogOut className="mr-1 md:mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Cerrar sesión</span>
+              <span className="sm:hidden">Salir</span>
             </Button>
           </div>
         </div>
 
-        <Tabs defaultValue="calendar" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="calendar">📅 CRM - Calendario</TabsTrigger>
-            <TabsTrigger value="bookings">📋 Reservas ({bookings.length})</TabsTrigger>
+        <Tabs defaultValue="calendar" className="space-y-4 md:space-y-6">
+          <TabsList className="w-full grid grid-cols-2 md:w-auto md:inline-flex">
+            <TabsTrigger value="calendar" className="text-xs md:text-sm">
+              <span className="hidden sm:inline">📅 CRM - Calendario</span>
+              <span className="sm:hidden">📅 Calendario</span>
+            </TabsTrigger>
+            <TabsTrigger value="bookings" className="text-xs md:text-sm">
+              <span className="hidden sm:inline">📋 Reservas ({bookings.length})</span>
+              <span className="sm:hidden">📋 ({bookings.length})</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="calendar">
@@ -131,23 +139,23 @@ export default function Admin() {
 
           <TabsContent value="bookings">
             <Card>
-              <CardHeader>
-                <CardTitle>Próximas Reservas ({bookings.length})</CardTitle>
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle className="text-lg md:text-xl">Próximas Reservas ({bookings.length})</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 md:p-6">
                 {bookings.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
                     No hay reservas pendientes
                   </p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     {bookings.map((booking) => (
                       <Card key={booking.id} className="border">
-                        <CardContent className="pt-6">
+                        <CardContent className="p-4 md:pt-6">
                           <div className="grid gap-3 md:grid-cols-2">
                             <div className="space-y-2">
-                              <div className="flex items-center gap-2 text-sm">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <div className="flex items-start gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                                 <span className="font-medium">
                                   {format(new Date(booking.Fecha), "EEEE, d 'de' MMMM 'de' yyyy", {
                                     locale: es,
@@ -155,11 +163,11 @@ export default function Admin() {
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 text-sm">
-                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                 <span>{booking.Hora}</span>
                               </div>
                               <div className="flex items-center gap-2 text-sm">
-                                <User className="h-4 w-4 text-muted-foreground" />
+                                <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                 <span>{getStylistName(booking.stylist)}</span>
                               </div>
                             </div>
@@ -168,16 +176,18 @@ export default function Admin() {
                                 <span className="font-medium">Cliente:</span> {booking.customer_name}
                               </div>
                               <div className="flex items-center gap-2 text-sm">
-                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                <span>{booking.Telefono}</span>
+                                <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <span className="break-all">{booking.Telefono}</span>
                               </div>
                               <div className="text-sm">
                                 <span className="font-medium">Servicios:</span>{" "}
-                                {Array.isArray(booking.services)
-                                  ? (booking.services as Array<{ name: string }>)
-                                      .map((s) => s.name)
-                                      .join(", ")
-                                  : "N/A"}
+                                <span className="break-words">
+                                  {Array.isArray(booking.services)
+                                    ? (booking.services as Array<{ name: string }>)
+                                        .map((s) => s.name)
+                                        .join(", ")
+                                    : "N/A"}
+                                </span>
                               </div>
                               <div className="text-sm">
                                 <span className="font-medium">Duración:</span> {booking.total_duration} min
