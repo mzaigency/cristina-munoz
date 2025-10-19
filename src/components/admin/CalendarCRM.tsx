@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Calendar as CalendarIcon, Trash2, Edit2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,10 +15,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, addDays, startOfWeek, endOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
+import { AdminBookingFlow } from "./AdminBookingFlow";
 
 interface CalendarEvent {
   id: string;
@@ -39,15 +39,6 @@ export const CalendarCRM = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const { toast } = useToast();
-
-  const [newEvent, setNewEvent] = useState({
-    stylist: "cris" as "cris" | "desi",
-    summary: "",
-    description: "",
-    date: format(new Date(), "yyyy-MM-dd"),
-    startTime: "09:00",
-    endTime: "10:00",
-  });
 
   useEffect(() => {
     fetchEvents();
@@ -80,48 +71,9 @@ export const CalendarCRM = () => {
     }
   };
 
-  const handleCreateEvent = async () => {
-    try {
-      setLoading(true);
-      const startDateTime = `${newEvent.date}T${newEvent.startTime}:00`;
-      const endDateTime = `${newEvent.date}T${newEvent.endTime}:00`;
-
-      const { error } = await supabase.functions.invoke("create-calendar-event", {
-        body: {
-          stylist: newEvent.stylist,
-          summary: newEvent.summary,
-          description: newEvent.description,
-          start: startDateTime,
-          end: endDateTime,
-        },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Cita creada",
-        description: "La cita se ha añadido al calendario correctamente",
-      });
-
-      setIsCreateDialogOpen(false);
-      setNewEvent({
-        stylist: "cris",
-        summary: "",
-        description: "",
-        date: format(new Date(), "yyyy-MM-dd"),
-        startTime: "09:00",
-        endTime: "10:00",
-      });
-      fetchEvents();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al crear la cita",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleBookingComplete = () => {
+    setIsCreateDialogOpen(false);
+    fetchEvents();
   };
 
   const handleUpdateEvent = async () => {
@@ -332,81 +284,15 @@ export const CalendarCRM = () => {
 
       {/* Create Event Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nueva Cita</DialogTitle>
-            <DialogDescription>Añade una nueva cita al calendario</DialogDescription>
+            <DialogDescription>Crea una cita siguiendo los pasos</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="stylist">Peluquera</Label>
-              <Select value={newEvent.stylist} onValueChange={(v) => setNewEvent({ ...newEvent, stylist: v as any })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cris">Cris</SelectItem>
-                  <SelectItem value="desi">Desi</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="summary">Título</Label>
-              <Input
-                id="summary"
-                value={newEvent.summary}
-                onChange={(e) => setNewEvent({ ...newEvent, summary: e.target.value })}
-                placeholder="Ej: Corte + Color"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Descripción (opcional)</Label>
-              <Textarea
-                id="description"
-                value={newEvent.description}
-                onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                placeholder="Detalles adicionales..."
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="date">Fecha</Label>
-              <Input
-                id="date"
-                type="date"
-                value={newEvent.date}
-                onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="startTime">Hora inicio</Label>
-                <Input
-                  id="startTime"
-                  type="time"
-                  value={newEvent.startTime}
-                  onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="endTime">Hora fin</Label>
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={newEvent.endTime}
-                  onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreateEvent} disabled={!newEvent.summary || loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear Cita"}
-            </Button>
-          </DialogFooter>
+          <AdminBookingFlow
+            onComplete={handleBookingComplete}
+            onCancel={() => setIsCreateDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
 
