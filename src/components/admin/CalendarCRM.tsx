@@ -34,6 +34,7 @@ interface CalendarEvent {
   end: { dateTime: string; timeZone: string };
   stylist: string;
   calendarId: string;
+  completed?: boolean;
 }
 
 export const CalendarCRM = () => {
@@ -64,7 +65,13 @@ export const CalendarCRM = () => {
 
       if (error) throw error;
 
-      setEvents(data.events || []);
+      // Mark events as completed if they have the completed marker in description
+      const eventsWithStatus = (data.events || []).map((event: CalendarEvent) => ({
+        ...event,
+        completed: event.description?.includes("[✓ COMPLETADA]") || false,
+      }));
+
+      setEvents(eventsWithStatus);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -116,6 +123,45 @@ export const CalendarCRM = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleCompleted = async (event: CalendarEvent) => {
+    try {
+      const updatedDescription = event.completed 
+        ? (event.description || "").replace("[✓ COMPLETADA] ", "")
+        : `[✓ COMPLETADA] ${event.description || ""}`;
+
+      const { error } = await supabase.functions.invoke("update-calendar-event", {
+        body: {
+          eventId: event.id,
+          calendarId: event.calendarId,
+          summary: event.summary,
+          description: updatedDescription,
+          start: event.start.dateTime,
+          end: event.end.dateTime,
+        },
+      });
+
+      if (error) throw error;
+
+      // Update local state
+      setEvents(events.map(e => 
+        e.id === event.id 
+          ? { ...e, completed: !e.completed, description: updatedDescription }
+          : e
+      ));
+
+      toast({
+        title: event.completed ? "Cita desmarcada" : "Cita completada",
+        description: event.completed ? "La cita se ha desmarcado" : "¡Cliente atendido!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al actualizar la cita",
+        variant: "destructive",
+      });
     }
   };
 
@@ -256,12 +302,24 @@ export const CalendarCRM = () => {
                         crisEvents.map((event) => (
                           <Card
                             key={event.id}
-                            className="bg-blue-50/50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+                            className={`bg-blue-50/50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800 transition-opacity ${
+                              event.completed ? "opacity-60" : ""
+                            }`}
                           >
                             <CardContent className="p-4">
-                              <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <div className="pt-1">
+                                  <input
+                                    type="checkbox"
+                                    checked={event.completed || false}
+                                    onChange={() => handleToggleCompleted(event)}
+                                    className="w-5 h-5 rounded border-2 border-blue-400 cursor-pointer accent-blue-500"
+                                  />
+                                </div>
                                 <div className="flex-1 space-y-1">
-                                  <p className="font-semibold text-base">{event.summary}</p>
+                                  <p className={`font-semibold text-base ${event.completed ? "line-through" : ""}`}>
+                                    {event.summary}
+                                  </p>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span className="font-medium">
                                       {format(parseISO(event.start.dateTime), "HH:mm")}
@@ -271,9 +329,9 @@ export const CalendarCRM = () => {
                                       {format(parseISO(event.end.dateTime), "HH:mm")}
                                     </span>
                                   </div>
-                                  {event.description && (
+                                  {event.description && !event.description.includes("[✓ COMPLETADA]") && (
                                     <p className="text-sm text-muted-foreground pt-2 border-t mt-2">
-                                      {event.description}
+                                      {event.description.replace("[✓ COMPLETADA] ", "")}
                                     </p>
                                   )}
                                 </div>
@@ -320,12 +378,24 @@ export const CalendarCRM = () => {
                         desiEvents.map((event) => (
                           <Card
                             key={event.id}
-                            className="bg-purple-50/50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800"
+                            className={`bg-purple-50/50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800 transition-opacity ${
+                              event.completed ? "opacity-60" : ""
+                            }`}
                           >
                             <CardContent className="p-4">
-                              <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <div className="pt-1">
+                                  <input
+                                    type="checkbox"
+                                    checked={event.completed || false}
+                                    onChange={() => handleToggleCompleted(event)}
+                                    className="w-5 h-5 rounded border-2 border-purple-400 cursor-pointer accent-purple-500"
+                                  />
+                                </div>
                                 <div className="flex-1 space-y-1">
-                                  <p className="font-semibold text-base">{event.summary}</p>
+                                  <p className={`font-semibold text-base ${event.completed ? "line-through" : ""}`}>
+                                    {event.summary}
+                                  </p>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span className="font-medium">
                                       {format(parseISO(event.start.dateTime), "HH:mm")}
@@ -335,9 +405,9 @@ export const CalendarCRM = () => {
                                       {format(parseISO(event.end.dateTime), "HH:mm")}
                                     </span>
                                   </div>
-                                  {event.description && (
+                                  {event.description && !event.description.includes("[✓ COMPLETADA]") && (
                                     <p className="text-sm text-muted-foreground pt-2 border-t mt-2">
-                                      {event.description}
+                                      {event.description.replace("[✓ COMPLETADA] ", "")}
                                     </p>
                                   )}
                                 </div>
