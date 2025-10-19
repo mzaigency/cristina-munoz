@@ -1,4 +1,5 @@
 import { MapPin, Phone, Mail, Clock, Instagram, MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 export const Footer = () => {
   return <footer className="border-t bg-salon-cream">
       <div className="container mx-auto px-4 py-12">
@@ -79,10 +80,27 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-8 border-t pt-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            © 2025 Cristina Muñoz. Todos los derechos reservados.
-          </p>
+        <div className="mt-8 border-t pt-8">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-wrap justify-center gap-4 text-sm">
+              <Link 
+                to="/politica-privacidad" 
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                Política de Privacidad
+              </Link>
+              <span className="text-muted-foreground">•</span>
+              <Link 
+                to="/terminos-uso" 
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                Términos de Uso
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              © 2025 Cristina Muñoz. Todos los derechos reservados.
+            </p>
+          </div>
         </div>
       </div>
     </footer>;
