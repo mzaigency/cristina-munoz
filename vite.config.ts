@@ -25,7 +25,8 @@ export default defineConfig(({ mode }) => ({
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
-        start_url: '/',
+        start_url: 'https://cristina-munoz.lovable.app/',
+        id: 'https://cristina-munoz.lovable.app/',
         icons: [
           {
             src: '/pwa-192x192.png',
