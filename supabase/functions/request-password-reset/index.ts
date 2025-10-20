@@ -68,9 +68,8 @@ serve(async (req) => {
       throw new Error('Error al generar el token');
     }
 
-    // Obtener el origin desde el header o usar un valor por defecto
-    const origin = req.headers.get('origin') || Deno.env.get('SITE_URL') || '';
-    const recoveryLink = `${origin}/auth#type=recovery&token=${token}`;
+    // Usar el dominio personalizado para el recovery link
+    const recoveryLink = `https://cristinamunozperruqueria.es/auth#type=recovery&token=${token}`;
     
     // Enviar token al webhook de n8n
     const webhookUrl = 'https://n8n-n8n.fzgtc4.easypanel.host/webhook-test/11869131-e1b0-47bc-95cb-96a61df14d0b';
@@ -85,7 +84,6 @@ serve(async (req) => {
         recoveryLink: recoveryLink,
         token: token,
         timestamp: new Date().toISOString(),
-        origin: origin,
       }),
     });
 
