@@ -272,6 +272,7 @@ export default function Auth() {
                             <Input 
                               type="password" 
                               placeholder="••••••" 
+                              autoComplete="new-password"
                               {...field}
                               disabled={loading}
                             />
@@ -291,6 +292,7 @@ export default function Auth() {
                             <Input 
                               type="password" 
                               placeholder="••••••" 
+                              autoComplete="new-password"
                               {...field}
                               disabled={loading}
                             />
