@@ -1,11 +1,5 @@
 project_id = "lyeyzdbplrgqsvyxpfek"
 
-[functions.email-hook]
-verify_jwt = false
-
-[functions.send-email-gmail]
-verify_jwt = false
-
 [functions.get-reviews]
 verify_jwt = false
 

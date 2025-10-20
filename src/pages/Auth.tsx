@@ -181,20 +181,6 @@ export default function Auth() {
 
         if (error) throw error;
 
-        // Enviar email de bienvenida
-        setTimeout(() => {
-          supabase.functions.invoke('send-welcome-email', {
-            body: {
-              name: signUpValues.firstName,
-              email: signUpValues.email,
-            }
-          }).then(({ error: emailError }) => {
-            if (emailError) {
-              console.error('Error sending welcome email:', emailError);
-            }
-          });
-        }, 0);
-
         toast({
           title: "¡Cuenta creada!",
           description: "Por favor, revisa tu email para confirmar tu cuenta. Puede que el email esté en tu carpeta de spam.",
@@ -226,15 +212,26 @@ export default function Auth() {
   const handleResetPassword = async (values: ResetPasswordFormValues) => {
     setResettingPassword(true);
     try {
-      const redirectUrl = `${window.location.origin}/auth`;
-      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: redirectUrl,
+      const webhookUrl = 'https://n8n-n8n.fzgtc4.easypanel.host/webhook/11869131-e1b0-47bc-95cb-96a61df14d0b';
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: values.email,
+          timestamp: new Date().toISOString(),
+          origin: window.location.origin,
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Error al enviar la solicitud');
+      }
 
       toast({
-        title: "Email enviado",
+        title: "Solicitud enviada",
         description: "Revisa tu correo para restablecer tu contraseña. Puede que esté en tu carpeta de spam.",
       });
       
@@ -243,7 +240,7 @@ export default function Auth() {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Ocurrió un error al enviar el email de recuperación",
+        description: error.message || "Ocurrió un error al enviar la solicitud",
         variant: "destructive",
       });
     } finally {
