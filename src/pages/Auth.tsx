@@ -46,7 +46,7 @@ const resetPasswordSchema = z.object({
 
 const newPasswordSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(100, "Contraseña demasiado larga"),
-  confirmPassword: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
@@ -84,7 +84,7 @@ export default function Auth() {
 
   const newPasswordForm = useForm<NewPasswordFormValues>({
     resolver: zodResolver(newPasswordSchema),
-    mode: "onChange",
+    mode: "onBlur",
     defaultValues: {
       password: "",
       confirmPassword: "",
