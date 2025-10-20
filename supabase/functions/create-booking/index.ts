@@ -430,31 +430,29 @@ serve(async (req) => {
 
     console.log('Bookings created successfully:', createdBookings);
 
-    // Trigger n8n webhook for WhatsApp notification (non-blocking) - only if phone is provided
-    if (customer_phone) {
-      const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
-      if (n8nWebhookUrl) {
-        try {
-          // Format date for webhook (dd-mm-yyyy)
-          const formattedDate = format(new Date(bookingDate), 'dd-MM-yyyy');
-          
-          console.log('Triggering webhook:', n8nWebhookUrl);
-          fetch(n8nWebhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customer_name,
-              Telefono: customer_phone,
-              Fecha: formattedDate,
-              Hora: bookingTime,
-              stylist: actualStylist,
-              services: bookingData.services.map(s => s.name),
-              bookings: createdBookings,
-            }),
-          }).catch(err => console.error('Error triggering n8n webhook:', err));
-        } catch (error) {
-          console.error('Error sending webhook:', error);
-        }
+    // Trigger n8n webhook for WhatsApp notification (non-blocking)
+    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
+    if (n8nWebhookUrl) {
+      try {
+        // Format date for webhook (dd-mm-yyyy)
+        const formattedDate = format(new Date(bookingDate), 'dd-MM-yyyy');
+        
+        console.log('Triggering webhook:', n8nWebhookUrl);
+        fetch(n8nWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_name,
+            Telefono: customer_phone,
+            Fecha: formattedDate,
+            Hora: bookingTime,
+            stylist: actualStylist,
+            services: bookingData.services.map(s => s.name),
+            bookings: createdBookings,
+          }),
+        }).catch(err => console.error('Error triggering n8n webhook:', err));
+      } catch (error) {
+        console.error('Error sending webhook:', error);
       }
     }
 
