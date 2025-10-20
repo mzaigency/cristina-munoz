@@ -84,6 +84,7 @@ export default function Auth() {
 
   const newPasswordForm = useForm<NewPasswordFormValues>({
     resolver: zodResolver(newPasswordSchema),
+    mode: "onChange",
     defaultValues: {
       password: "",
       confirmPassword: "",
@@ -293,9 +294,10 @@ export default function Auth() {
                               type="password" 
                               placeholder="••••••" 
                               autoComplete="off"
-                              {...field}
-                              value={field.value || ""}
-                              onChange={(e) => field.onChange(e.target.value)}
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
                               disabled={loading}
                             />
                           </FormControl>
