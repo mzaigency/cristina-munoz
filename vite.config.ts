@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'logo.png'],
       manifest: {
-        name: 'Peluquería Cristina Muñoz',
-        short_name: 'Peluquería Cris',
+        name: 'Cristina Muñoz',
+        short_name: 'Cristina Muñoz',
         description: 'Reserva tu cita online en Peluquería Cris. Servicios profesionales de corte, coloración, peinados y tratamientos capilares.',
         theme_color: '#8B7355',
         background_color: '#FFF9F5',
