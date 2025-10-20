@@ -8,8 +8,10 @@ const corsHeaders = {
 };
 
 interface BookingRequest {
-  Fecha: string;
-  Hora: string;
+  Fecha?: string;
+  Hora?: string;
+  date?: string;
+  time?: string;
   stylist: string;
   services: Array<{ 
     id: string;
@@ -21,6 +23,8 @@ interface BookingRequest {
   }>;
   total_duration: number;
   user_id?: string | null;
+  customer_name?: string;
+  phone?: string;
 }
 
 serve(async (req) => {
@@ -32,30 +36,44 @@ serve(async (req) => {
     const bookingData: BookingRequest = await req.json();
     console.log('Creating booking:', bookingData);
 
+    // Support both date/time and Fecha/Hora formats
+    const bookingDate = bookingData.date || bookingData.Fecha!;
+    const bookingTime = bookingData.time || bookingData.Hora!;
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user profile data
-    if (!bookingData.user_id) {
-      throw new Error('User ID is required');
+    // Get customer data - either from user profile or from direct input
+    let customer_name: string;
+    let customer_email: string | null = null;
+    let customer_phone: string;
+
+    if (bookingData.user_id) {
+      // User booking - get data from profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, email, phone')
+        .eq('id', bookingData.user_id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('Error fetching profile:', profileError);
+        throw new Error('Could not fetch user profile');
+      }
+
+      customer_name = profile.full_name;
+      customer_email = profile.email;
+      customer_phone = profile.phone;
+    } else {
+      // Admin booking - use provided data
+      if (!bookingData.customer_name) {
+        throw new Error('Customer name is required');
+      }
+      customer_name = bookingData.customer_name;
+      customer_phone = bookingData.phone || '';
     }
-
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('full_name, email, phone')
-      .eq('id', bookingData.user_id)
-      .single();
-
-    if (profileError || !profile) {
-      console.error('Error fetching profile:', profileError);
-      throw new Error('Could not fetch user profile');
-    }
-
-    const customer_name = profile.full_name;
-    const customer_email = profile.email;
-    const customer_phone = profile.phone;
 
     // Get Google Calendar credentials
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
@@ -85,14 +103,14 @@ serve(async (req) => {
       const { access_token } = await tokenResponse.json();
 
       // Calculate time range for the booking
-      const [startHours, startMinutes] = bookingData.Hora.split(':').map(Number);
+      const [startHours, startMinutes] = bookingTime.split(':').map(Number);
       const startMinutesTotal = startHours * 60 + startMinutes;
       const endMinutesTotal = startMinutesTotal + bookingData.total_duration;
       
       // Check Cris calendar
       const crisCalendarId = Deno.env.get('GOOGLE_CALENDAR_ID_CRIS');
-      const timeMin = `${bookingData.Fecha}T00:00:00Z`;
-      const timeMax = `${bookingData.Fecha}T23:59:59Z`;
+      const timeMin = `${bookingDate}T00:00:00Z`;
+      const timeMax = `${bookingDate}T23:59:59Z`;
 
       const crisEventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(crisCalendarId!)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
       const crisResponse = await fetch(crisEventsUrl, {
@@ -176,11 +194,11 @@ serve(async (req) => {
         summary,
         description,
         start: {
-          dateTime: `${bookingData.Fecha}T${startTime}`,
+          dateTime: `${bookingDate}T${startTime}`,
           timeZone: 'Europe/Madrid',
         },
         end: {
-          dateTime: `${bookingData.Fecha}T${endTime}`,
+          dateTime: `${bookingDate}T${endTime}`,
           timeZone: 'Europe/Madrid',
         },
       };
@@ -232,7 +250,7 @@ serve(async (req) => {
       }
     }
 
-    const [startHours, startMinutes] = bookingData.Hora.split(':').map(Number);
+    const [startHours, startMinutes] = bookingTime.split(':').map(Number);
     let currentMinutes = startHours * 60 + startMinutes;
 
     const createdBookings = [];
@@ -249,10 +267,11 @@ serve(async (req) => {
       if (accessToken) {
         try {
           const serviceNames = simpleServices.map(s => s.name).join(', ');
+          const description = customer_email ? `${customer_email} - ${customer_phone}` : customer_phone;
           googleEventId = await createCalendarEvent(
             `${customer_name} - ${serviceNames}`,
-            `${customer_email} - ${customer_phone}`,
-            `${bookingData.Hora}:00`,
+            description,
+            `${bookingTime}:00`,
             endTime,
             accessToken
           );
@@ -266,8 +285,8 @@ serve(async (req) => {
         .insert({
           customer_name,
           Telefono: customer_phone,
-          Fecha: bookingData.Fecha,
-          Hora: bookingData.Hora,
+          Fecha: bookingDate,
+          Hora: bookingTime,
           end_time: endTime,
           stylist: actualStylist,
           services: simpleServices.map(s => ({ name: s.name })),
@@ -303,9 +322,10 @@ serve(async (req) => {
       let part1GoogleEventId: string | null = null;
       if (accessToken) {
         try {
+          const description = customer_email ? `${customer_email} - ${customer_phone}` : customer_phone;
           part1GoogleEventId = await createCalendarEvent(
             `${customer_name} - ${service.name} (Parte 1)`,
-            `${customer_email} - ${customer_phone}`,
+            description,
             part1StartTime,
             part1EndTime,
             accessToken
@@ -320,7 +340,7 @@ serve(async (req) => {
         .insert({
           customer_name,
           Telefono: customer_phone,
-          Fecha: bookingData.Fecha,
+          Fecha: bookingDate,
           Hora: part1StartTime,
           end_time: part1EndTime,
           stylist: actualStylist,
@@ -355,9 +375,10 @@ serve(async (req) => {
         let part2GoogleEventId: string | null = null;
         if (accessToken) {
           try {
+            const description = customer_email ? `${customer_email} - ${customer_phone}` : customer_phone;
             part2GoogleEventId = await createCalendarEvent(
               `${customer_name} - ${service.name} (Parte 2)`,
-              `${customer_email} - ${customer_phone}`,
+              description,
               part2StartTime,
               part2EndTime,
               accessToken
@@ -372,7 +393,7 @@ serve(async (req) => {
           .insert({
             customer_name,
             Telefono: customer_phone,
-            Fecha: bookingData.Fecha,
+            Fecha: bookingDate,
             Hora: part2StartTime,
             end_time: part2EndTime,
             stylist: actualStylist,
@@ -409,28 +430,31 @@ serve(async (req) => {
 
     console.log('Bookings created successfully:', createdBookings);
 
-    // Trigger n8n webhook for WhatsApp notification (non-blocking)
-    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
-    if (n8nWebhookUrl) {
-      try {
-        // Format date for webhook (dd-mm-yyyy)
-        const formattedDate = format(new Date(bookingData.Fecha), 'dd-MM-yyyy');
-        
-        fetch(n8nWebhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            customer_name,
-            Telefono: customer_phone,
-            Fecha: formattedDate,
-            Hora: bookingData.Hora,
-            stylist: actualStylist,
-            services: bookingData.services.map(s => s.name),
-            bookings: createdBookings,
-          }),
-        }).catch(err => console.error('Error triggering n8n webhook:', err));
-      } catch (error) {
-        console.error('Error sending webhook:', error);
+    // Trigger n8n webhook for WhatsApp notification (non-blocking) - only if phone is provided
+    if (customer_phone) {
+      const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
+      if (n8nWebhookUrl) {
+        try {
+          // Format date for webhook (dd-mm-yyyy)
+          const formattedDate = format(new Date(bookingDate), 'dd-MM-yyyy');
+          
+          console.log('Triggering webhook:', n8nWebhookUrl);
+          fetch(n8nWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer_name,
+              Telefono: customer_phone,
+              Fecha: formattedDate,
+              Hora: bookingTime,
+              stylist: actualStylist,
+              services: bookingData.services.map(s => s.name),
+              bookings: createdBookings,
+            }),
+          }).catch(err => console.error('Error triggering n8n webhook:', err));
+        } catch (error) {
+          console.error('Error sending webhook:', error);
+        }
       }
     }
 
