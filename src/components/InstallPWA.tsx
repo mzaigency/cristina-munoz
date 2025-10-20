@@ -37,8 +37,8 @@ export const InstallPWA = () => {
   if (!showInstall) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
-      <div className="bg-card border border-border rounded-lg shadow-lg p-4 max-w-sm">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
+      <div className="bg-card border border-border rounded-lg shadow-lg p-4">
         <button
           onClick={handleDismiss}
           className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
