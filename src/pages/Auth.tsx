@@ -13,6 +13,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
@@ -32,12 +40,19 @@ const signUpSchema = signInSchema.extend({
   path: ["confirmPassword"],
 });
 
+const resetPasswordSchema = z.object({
+  email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
+});
+
 type SignInFormValues = z.infer<typeof signInSchema>;
 type SignUpFormValues = z.infer<typeof signUpSchema>;
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -47,6 +62,13 @@ export default function Auth() {
       email: "",
       password: "",
       ...(isSignUp ? { firstName: "", lastName: "", phone: "", confirmPassword: "", acceptTerms: false } : {}),
+    },
+  });
+
+  const resetForm = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: "",
     },
   });
 
@@ -92,8 +114,8 @@ export default function Auth() {
         if (error) throw error;
 
         toast({
-          title: "Cuenta creada",
-          description: "Bienvenida a nuestra peluquería",
+          title: "¡Cuenta creada!",
+          description: "Por favor, revisa tu email para confirmar tu cuenta. Puede que el email esté en tu carpeta de spam.",
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -119,6 +141,33 @@ export default function Auth() {
     }
   };
 
+  const handleResetPassword = async (values: ResetPasswordFormValues) => {
+    setResettingPassword(true);
+    try {
+      const redirectUrl = `${window.location.origin}/auth`;
+      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email enviado",
+        description: "Revisa tu correo para restablecer tu contraseña. Puede que esté en tu carpeta de spam.",
+      });
+      
+      setResetDialogOpen(false);
+      resetForm.reset();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Ocurrió un error al enviar el email de recuperación",
+        variant: "destructive",
+      });
+    } finally {
+      setResettingPassword(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -309,6 +358,62 @@ export default function Auth() {
                   </Button>
                 </form>
               </Form>
+
+              {!isSignUp && (
+                <div className="text-center">
+                  <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="link"
+                        disabled={loading}
+                        className="text-sm"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Recuperar contraseña</DialogTitle>
+                        <DialogDescription>
+                          Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <Form {...resetForm}>
+                        <form onSubmit={resetForm.handleSubmit(handleResetPassword)} className="space-y-4">
+                          <FormField
+                            control={resetForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="email" 
+                                    placeholder="tu@email.com" 
+                                    {...field}
+                                    disabled={resettingPassword}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button type="submit" className="w-full" disabled={resettingPassword}>
+                            {resettingPassword ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Enviando...
+                              </>
+                            ) : (
+                              "Enviar enlace de recuperación"
+                            )}
+                          </Button>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
 
               <div className="text-center">
                 <Button
