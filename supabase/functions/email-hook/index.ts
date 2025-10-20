@@ -59,6 +59,26 @@ const createRecoveryEmailHTML = (recoveryLink: string): string => {
   `;
 };
 
+// Función para enviar email con Gmail
+async function sendEmailViaGmail(to: string, subject: string, html: string): Promise<void> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/send-email-gmail`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ to, subject, html }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Error llamando a send-email-gmail: ${JSON.stringify(error)}`);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
@@ -90,18 +110,21 @@ Deno.serve(async (req) => {
       const supabaseUrl = Deno.env.get('SUPABASE_URL');
       const recoveryLink = `${supabaseUrl}/auth/v1/verify?token=${token_hash}&type=recovery&redirect_to=${redirect_to}`;
       
-      return new Response(
-        JSON.stringify({
-          email: {
-            subject: 'Recupera tu contraseña - Cristina Muñoz Peluquería',
-            body: createRecoveryEmailHTML(recoveryLink),
-          },
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
+      const html = createRecoveryEmailHTML(recoveryLink);
+      
+      // Enviar con Gmail en lugar de devolver JSON
+      await sendEmailViaGmail(
+        user.email,
+        'Recupera tu contraseña - Cristina Muñoz Peluquería',
+        html
       );
+      
+      console.log(`Email de recuperación enviado via Gmail a ${user.email}`);
+      
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Para otros tipos de email, dejamos que Supabase use su plantilla por defecto
