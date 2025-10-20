@@ -100,15 +100,17 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
   };
 
   const handleConfirmBooking = async () => {
-    // Validate phone
-    const phoneValidation = phoneSchema.safeParse(bookingData.customerPhone);
-    if (!phoneValidation.success) {
-      toast({
-        title: "Error",
-        description: phoneValidation.error.errors[0].message,
-        variant: "destructive",
-      });
-      return;
+    // Validate phone only if provided
+    if (bookingData.customerPhone.trim()) {
+      const phoneValidation = phoneSchema.safeParse(bookingData.customerPhone);
+      if (!phoneValidation.success) {
+        toast({
+          title: "Error",
+          description: phoneValidation.error.errors[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     if (!bookingData.customerName.trim()) {
@@ -240,7 +242,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="customerPhone">Teléfono</Label>
+                <Label htmlFor="customerPhone">Teléfono (opcional)</Label>
                 <Input
                   id="customerPhone"
                   type="tel"
@@ -248,7 +250,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
                   onChange={(e) => setBookingData({ ...bookingData, customerPhone: e.target.value })}
                   placeholder="Ej: 612345678"
                 />
-                <p className="text-xs text-muted-foreground">Se enviará recordatorio por WhatsApp</p>
+                <p className="text-xs text-muted-foreground">Si se proporciona, se enviará recordatorio por WhatsApp</p>
               </div>
 
               <div className="pt-4 border-t space-y-2">
