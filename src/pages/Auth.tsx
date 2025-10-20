@@ -63,6 +63,8 @@ export default function Auth() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -82,14 +84,52 @@ export default function Auth() {
     },
   });
 
-  const newPasswordForm = useForm<NewPasswordFormValues>({
-    resolver: zodResolver(newPasswordSchema),
-    mode: "onBlur",
-    defaultValues: {
-      password: "",
-      confirmPassword: "",
-    },
-  });
+  const handleNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "La contraseña debe tener al menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: "Error",
+        description: "Las contraseñas no coinciden",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Contraseña actualizada",
+        description: "Tu contraseña ha sido cambiada correctamente",
+      });
+      
+      setIsPasswordRecovery(false);
+      navigate("/mis-citas");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Ocurrió un error al cambiar la contraseña",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -211,33 +251,6 @@ export default function Auth() {
     }
   };
 
-  const handleNewPassword = async (values: NewPasswordFormValues) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: values.password,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Contraseña actualizada",
-        description: "Tu contraseña ha sido cambiada correctamente",
-      });
-      
-      setIsPasswordRecovery(false);
-      navigate("/mis-citas");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Ocurrió un error al cambiar la contraseña",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Header onNavigate={() => {}} activeSection="" />
@@ -261,63 +274,48 @@ export default function Auth() {
             </CardHeader>
             <CardContent className="space-y-4">
               {isPasswordRecovery ? (
-                <Form {...newPasswordForm}>
-                  <form onSubmit={newPasswordForm.handleSubmit(handleNewPassword)} className="space-y-4">
-                    <FormField
-                      control={newPasswordForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nueva contraseña</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="••••••" 
-                              autoComplete="off"
-                              {...field}
-                              disabled={loading}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                <form onSubmit={handleNewPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="newPassword" className="text-sm font-medium">
+                      Nueva contraseña
+                    </label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      placeholder="••••••"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      disabled={loading}
+                      className="w-full"
                     />
+                  </div>
 
-                    <FormField
-                      control={newPasswordForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirmar nueva contraseña</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="••••••" 
-                              autoComplete="off"
-                              value={field.value}
-                              onChange={field.onChange}
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              disabled={loading}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                  <div className="space-y-2">
+                    <label htmlFor="confirmNewPassword" className="text-sm font-medium">
+                      Confirmar nueva contraseña
+                    </label>
+                    <Input
+                      id="confirmNewPassword"
+                      type="password"
+                      placeholder="••••••"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      disabled={loading}
+                      className="w-full"
                     />
+                  </div>
 
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Cambiando contraseña...
-                        </>
-                      ) : (
-                        "Cambiar contraseña"
-                      )}
-                    </Button>
-                  </form>
-                </Form>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Cambiando contraseña...
+                      </>
+                    ) : (
+                      "Cambiar contraseña"
+                    )}
+                  </Button>
+                </form>
               ) : (
                 <>
               <Form {...form}>
