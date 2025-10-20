@@ -44,15 +44,25 @@ const resetPasswordSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
 });
 
+const newPasswordSchema = z.object({
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(100, "Contraseña demasiado larga"),
+  confirmPassword: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
+});
+
 type SignInFormValues = z.infer<typeof signInSchema>;
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+type NewPasswordFormValues = z.infer<typeof newPasswordSchema>;
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -72,12 +82,29 @@ export default function Auth() {
     },
   });
 
+  const newPasswordForm = useForm<NewPasswordFormValues>({
+    resolver: zodResolver(newPasswordSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
   useEffect(() => {
     window.scrollTo(0, 0);
     
+    // Verificar si es recuperación de contraseña
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    
+    if (type === 'recovery') {
+      setIsPasswordRecovery(true);
+      return;
+    }
+    
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      if (session && !isPasswordRecovery) {
         navigate("/mis-citas");
       }
     };
@@ -85,13 +112,13 @@ export default function Auth() {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
+      if (session && !isPasswordRecovery) {
         navigate("/mis-citas");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, isPasswordRecovery]);
 
   const handleAuth = async (values: SignInFormValues | SignUpFormValues) => {
     setLoading(true);
@@ -183,6 +210,33 @@ export default function Auth() {
     }
   };
 
+  const handleNewPassword = async (values: NewPasswordFormValues) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: values.password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Contraseña actualizada",
+        description: "Tu contraseña ha sido cambiada correctamente",
+      });
+      
+      setIsPasswordRecovery(false);
+      navigate("/mis-citas");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Ocurrió un error al cambiar la contraseña",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header onNavigate={() => {}} activeSection="" />
@@ -191,14 +245,75 @@ export default function Auth() {
         <div className="max-w-md mx-auto animate-fade-in">
           <Card className="scroll-reveal visible">
             <CardHeader className="text-center">
-              <CardTitle>{isSignUp ? "Crear cuenta" : "Iniciar sesión"}</CardTitle>
+              <CardTitle>
+                {isPasswordRecovery 
+                  ? "Cambiar contraseña" 
+                  : (isSignUp ? "Crear cuenta" : "Iniciar sesión")}
+              </CardTitle>
               <CardDescription>
-                {isSignUp 
-                  ? "Crea una cuenta para gestionar tus citas" 
-                  : "Accede a tu cuenta para ver tus citas"}
+                {isPasswordRecovery
+                  ? "Introduce tu nueva contraseña"
+                  : (isSignUp 
+                    ? "Crea una cuenta para gestionar tus citas" 
+                    : "Accede a tu cuenta para ver tus citas")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {isPasswordRecovery ? (
+                <Form {...newPasswordForm}>
+                  <form onSubmit={newPasswordForm.handleSubmit(handleNewPassword)} className="space-y-4">
+                    <FormField
+                      control={newPasswordForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nueva contraseña</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              placeholder="••••••" 
+                              {...field}
+                              disabled={loading}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={newPasswordForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirmar nueva contraseña</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              placeholder="••••••" 
+                              {...field}
+                              disabled={loading}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Cambiando contraseña...
+                        </>
+                      ) : (
+                        "Cambiar contraseña"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              ) : (
+                <>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleAuth)} className="space-y-4">
                   {isSignUp && (
@@ -444,6 +559,8 @@ export default function Auth() {
                     : "¿No tienes cuenta? Regístrate"}
                 </Button>
               </div>
+              </>
+              )}
             </CardContent>
           </Card>
         </div>
