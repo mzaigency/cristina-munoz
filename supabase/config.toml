@@ -1,5 +1,8 @@
 project_id = "lyeyzdbplrgqsvyxpfek"
 
+[functions.reset-password]
+verify_jwt = false
+
 [functions.get-reviews]
 verify_jwt = false
 

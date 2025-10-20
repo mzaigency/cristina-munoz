@@ -85,6 +85,36 @@ export type Database = {
           },
         ]
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -174,6 +204,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_password_reset_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_my_bookings: {
         Args: Record<PropertyKey, never>
         Returns: {

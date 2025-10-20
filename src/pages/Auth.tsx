@@ -65,6 +65,7 @@ export default function Auth() {
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [recoveryToken, setRecoveryToken] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -104,22 +105,38 @@ export default function Auth() {
       });
       return;
     }
+
+    if (!recoveryToken) {
+      toast({
+        title: "Error",
+        description: "Token de recuperación inválido",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
+      // Llamar a la edge function para resetear la contraseña
+      const { data, error } = await supabase.functions.invoke('reset-password', {
+        body: {
+          token: recoveryToken,
+          newPassword: newPassword,
+        },
       });
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
       toast({
         title: "Contraseña actualizada",
-        description: "Tu contraseña ha sido cambiada correctamente",
+        description: "Tu contraseña ha sido cambiada correctamente. Ahora puedes iniciar sesión.",
       });
       
       setIsPasswordRecovery(false);
-      navigate("/mis-citas");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      navigate("/auth");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -137,8 +154,10 @@ export default function Auth() {
     // Verificar si es recuperación de contraseña
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const type = hashParams.get('type');
+    const token = hashParams.get('token');
     
-    if (type === 'recovery') {
+    if (type === 'recovery' && token) {
+      setRecoveryToken(token);
       setIsPasswordRecovery(true);
       return;
     }
@@ -212,6 +231,39 @@ export default function Auth() {
   const handleResetPassword = async (values: ResetPasswordFormValues) => {
     setResettingPassword(true);
     try {
+      // Generar token único
+      const token = crypto.randomUUID();
+      
+      // Buscar el usuario por email
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', values.email)
+        .single();
+
+      if (userError || !userData) {
+        throw new Error('Usuario no encontrado');
+      }
+
+      // Guardar token en la base de datos (expira en 1 hora)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 1);
+
+      const { error: tokenError } = await supabase
+        .from('password_reset_tokens')
+        .insert({
+          user_id: userData.id,
+          token: token,
+          email: values.email,
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (tokenError) {
+        throw new Error('Error al generar el token');
+      }
+
+      // Enviar token al webhook de n8n
+      const recoveryLink = `${window.location.origin}/auth#type=recovery&token=${token}`;
       const webhookUrl = 'https://n8n-n8n.fzgtc4.easypanel.host/webhook/11869131-e1b0-47bc-95cb-96a61df14d0b';
       
       const response = await fetch(webhookUrl, {
@@ -221,6 +273,8 @@ export default function Auth() {
         },
         body: JSON.stringify({
           email: values.email,
+          recoveryLink: recoveryLink,
+          token: token,
           timestamp: new Date().toISOString(),
           origin: window.location.origin,
         }),
