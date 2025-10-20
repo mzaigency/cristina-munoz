@@ -10,8 +10,24 @@ interface BeforeInstallPromptEvent extends Event {
 export const InstallPWA = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstall, setShowInstall] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
+    // Detect iOS
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(iOS);
+    
+    // Check if already installed (standalone mode)
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || 
+                      (window.navigator as any).standalone === true;
+    setIsStandalone(standalone);
+
+    // For iOS, show install banner if not in standalone mode
+    if (iOS && !standalone) {
+      setShowInstall(true);
+    }
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -32,9 +48,27 @@ export const InstallPWA = () => {
 
   const handleDismiss = () => {
     setShowInstall(false);
+    // Remember dismissal for iOS users (optional - stores for 7 days)
+    if (isIOS) {
+      localStorage.setItem('ios-install-dismissed', Date.now().toString());
+    }
   };
 
-  if (!showInstall) return null;
+  useEffect(() => {
+    // Check if iOS user has dismissed recently (within 7 days)
+    if (isIOS) {
+      const dismissed = localStorage.getItem('ios-install-dismissed');
+      if (dismissed) {
+        const dismissedTime = parseInt(dismissed);
+        const sevenDays = 7 * 24 * 60 * 60 * 1000;
+        if (Date.now() - dismissedTime < sevenDays) {
+          setShowInstall(false);
+        }
+      }
+    }
+  }, [isIOS]);
+
+  if (!showInstall || isStandalone) return null;
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
@@ -52,12 +86,30 @@ export const InstallPWA = () => {
           </div>
           <div className="flex-1 pr-6">
             <h3 className="font-semibold text-sm mb-1">Instalar aplicación</h3>
-            <p className="text-xs text-muted-foreground mb-3">
-              Instala nuestra app en tu teléfono para un acceso rápido y reservas más fáciles
-            </p>
-            <Button onClick={handleInstall} size="sm" className="w-full">
-              Instalar ahora
-            </Button>
+            {isIOS ? (
+              <>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Instala la app en tu iPhone para acceso rápido:
+                </p>
+                <ol className="text-xs text-muted-foreground space-y-1 mb-3 list-decimal list-inside">
+                  <li>Toca el botón <strong>Compartir</strong> <span className="inline-block">⬆️</span></li>
+                  <li>Selecciona <strong>"Añadir a pantalla de inicio"</strong></li>
+                  <li>Toca <strong>"Añadir"</strong></li>
+                </ol>
+                <Button onClick={handleDismiss} size="sm" variant="outline" className="w-full">
+                  Entendido
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Instala nuestra app en tu teléfono para un acceso rápido y reservas más fáciles
+                </p>
+                <Button onClick={handleInstall} size="sm" className="w-full">
+                  Instalar ahora
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
