@@ -37,32 +37,26 @@ export const InstallPWA = () => {
   if (!showInstall) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border shadow-2xl">
-      <div className="container max-w-2xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between gap-6">
-          <div className="flex items-center gap-4 flex-1">
-            <div className="bg-primary/10 p-3 rounded-xl">
-              <Download className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-base mb-1">Instala nuestra aplicación</h3>
-              <p className="text-sm text-muted-foreground">
-                Acceso rápido, reservas más fáciles y disponible sin conexión
-              </p>
-            </div>
+    <div className="fixed bottom-6 right-6 z-50">
+      <div className="bg-card border border-border rounded-lg shadow-lg p-4 max-w-sm">
+        <button
+          onClick={handleDismiss}
+          className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        
+        <div className="flex items-start gap-3">
+          <div className="bg-primary/10 p-2 rounded-lg">
+            <Download className="h-5 w-5 text-primary" />
           </div>
-          
-          <div className="flex items-center gap-3">
-            <Button onClick={handleInstall} size="lg" className="whitespace-nowrap">
+          <div className="flex-1 pr-6">
+            <h3 className="font-semibold text-sm mb-1">Instalar aplicación</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Instala nuestra app en tu teléfono para un acceso rápido y reservas más fáciles
+            </p>
+            <Button onClick={handleInstall} size="sm" className="w-full">
               Instalar ahora
-            </Button>
-            <Button
-              onClick={handleDismiss}
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-5 w-5" />
             </Button>
           </div>
         </div>
