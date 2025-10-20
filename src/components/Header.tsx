@@ -116,7 +116,16 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-3">
+        <div 
+          className="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80"
+          onClick={() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => {
+              navigate("/");
+              onNavigate("inicio");
+            }, 300);
+          }}
+        >
           <img src={logo} alt="Cristina Muñoz" className="h-12 w-auto" />
           <span className="text-xl font-semibold text-foreground">Cristina Muñoz</span>
         </div>
