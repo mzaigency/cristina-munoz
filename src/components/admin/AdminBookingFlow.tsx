@@ -136,7 +136,8 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
           duration_part2_active: s.duration_part2_active,
           type: s.type,
         })),
-        date: bookingData.date!.toISOString().split("T")[0],
+        // Format date in local timezone to avoid timezone issues
+        date: `${bookingData.date!.getFullYear()}-${String(bookingData.date!.getMonth() + 1).padStart(2, '0')}-${String(bookingData.date!.getDate()).padStart(2, '0')}`,
         time: bookingData.time,
         stylist: bookingData.stylist,
         total_duration: totalDuration,
