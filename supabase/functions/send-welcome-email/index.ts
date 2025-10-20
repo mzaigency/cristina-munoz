@@ -149,30 +149,23 @@ const createRecoveryEmailHTML = (recoveryLink: string): string => {
   `;
 };
 
-const sendEmailWithResend = async (
+// Función para enviar email con Gmail API
+const sendEmailWithGmail = async (
   to: string,
   subject: string,
   html: string
 ): Promise<{ success: boolean; data?: any; error?: any }> => {
-  const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-  
-  if (!RESEND_API_KEY) {
-    throw new Error('RESEND_API_KEY not configured');
-  }
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-email-gmail`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Authorization': `Bearer ${supabaseAnonKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: 'Cristina Muñoz Peluquería <onboarding@resend.dev>',
-        to: [to],
-        subject: subject,
-        html: html,
-      }),
+      body: JSON.stringify({ to, subject, html }),
     });
 
     const data = await response.json();
@@ -203,14 +196,14 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Sending welcome email to ${email} (${name})`);
 
       const html = createWelcomeEmailHTML(name);
-      const result = await sendEmailWithResend(
+      const result = await sendEmailWithGmail(
         email,
         '¡Bienvenida a Cristina Muñoz Peluquería!',
         html
       );
 
       if (!result.success) {
-        console.error('Resend error:', result.error);
+        console.error('Gmail error:', result.error);
         throw new Error(result.error?.message || 'Error al enviar el email');
       }
 
@@ -239,14 +232,14 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Sending recovery email to ${email}`);
 
       const html = createRecoveryEmailHTML(recoveryLink);
-      const result = await sendEmailWithResend(
+      const result = await sendEmailWithGmail(
         email,
         'Recupera tu contraseña - Cristina Muñoz Peluquería',
         html
       );
 
       if (!result.success) {
-        console.error('Resend error:', result.error);
+        console.error('Gmail error:', result.error);
         throw new Error(result.error?.message || 'Error al enviar el email');
       }
 
