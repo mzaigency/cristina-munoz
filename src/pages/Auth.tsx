@@ -272,7 +272,7 @@ export default function Auth() {
                             <Input 
                               type="password" 
                               placeholder="••••••" 
-                              autoComplete="new-password"
+                              autoComplete="off"
                               {...field}
                               disabled={loading}
                             />
@@ -292,8 +292,10 @@ export default function Auth() {
                             <Input 
                               type="password" 
                               placeholder="••••••" 
-                              autoComplete="new-password"
+                              autoComplete="off"
                               {...field}
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value)}
                               disabled={loading}
                             />
                           </FormControl>
