@@ -41,8 +41,6 @@ type Booking = {
 export default function MyBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cancelingId, setCancelingId] = useState<string | null>(null);
-  const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
   const [dateToCancel, setDateToCancel] = useState<string | null>(null);
   const [cancelingDate, setCancelingDate] = useState<string | null>(null);
   const { toast } = useToast();
@@ -82,35 +80,6 @@ export default function MyBookings() {
     }
   };
 
-  const handleCancelBooking = async () => {
-    if (!bookingToCancel) return;
-
-    setCancelingId(bookingToCancel.id);
-    try {
-      const { error: functionError } = await supabase.functions.invoke('cancel-booking', {
-        body: { bookingId: bookingToCancel.id }
-      });
-
-      if (functionError) throw functionError;
-
-      toast({
-        title: "Cita cancelada",
-        description: "Tu cita ha sido cancelada correctamente",
-      });
-
-      await loadBookings();
-    } catch (error) {
-      console.error('Error canceling booking:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo cancelar la cita. Por favor, contacta con nosotras.",
-        variant: "destructive",
-      });
-    } finally {
-      setCancelingId(null);
-      setBookingToCancel(null);
-    }
-  };
 
   const handleCancelAllBookingsForDate = async () => {
     if (!dateToCancel) return;
@@ -248,27 +217,12 @@ export default function MyBookings() {
                       {dateBookings.map((booking) => (
                         <Card key={booking.id} className="hover:shadow-md transition-shadow">
                           <CardHeader className="pb-3">
-                            <div className="flex justify-between items-start">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">{booking.Hora}</span>
-                                <span className="text-sm text-muted-foreground">
-                                  ({booking.total_duration} min)
-                                </span>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setBookingToCancel(booking)}
-                                disabled={cancelingId === booking.id}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8"
-                              >
-                                {cancelingId === booking.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  "Cancelar"
-                                )}
-                              </Button>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">{booking.Hora}</span>
+                              <span className="text-sm text-muted-foreground">
+                                ({booking.total_duration} min)
+                              </span>
                             </div>
                           </CardHeader>
                           <CardContent className="pt-0">
@@ -301,23 +255,6 @@ export default function MyBookings() {
           )}
         </div>
       </main>
-
-      <AlertDialog open={!!bookingToCancel} onOpenChange={() => setBookingToCancel(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Cancelar cita?</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Estás segura de que quieres cancelar esta cita? Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>No, mantener cita</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelBooking}>
-              Sí, cancelar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <AlertDialog open={!!dateToCancel} onOpenChange={() => setDateToCancel(null)}>
         <AlertDialogContent>
