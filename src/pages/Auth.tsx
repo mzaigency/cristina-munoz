@@ -113,6 +113,20 @@ export default function Auth() {
 
         if (error) throw error;
 
+        // Enviar email de bienvenida
+        setTimeout(() => {
+          supabase.functions.invoke('send-welcome-email', {
+            body: {
+              name: signUpValues.firstName,
+              email: signUpValues.email,
+            }
+          }).then(({ error: emailError }) => {
+            if (emailError) {
+              console.error('Error sending welcome email:', emailError);
+            }
+          });
+        }, 0);
+
         toast({
           title: "¡Cuenta creada!",
           description: "Por favor, revisa tu email para confirmar tu cuenta. Puede que el email esté en tu carpeta de spam.",
