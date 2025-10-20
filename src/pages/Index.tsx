@@ -7,6 +7,7 @@ import { GallerySection } from "@/components/GallerySection";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { WhatsAppSection } from "@/components/WhatsAppSection";
+import { InstallPWA } from "@/components/InstallPWA";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("inicio");
@@ -58,6 +59,8 @@ const Index = () => {
           <Footer />
         </div>
       </main>
+
+      <InstallPWA />
     </div>
   );
 };
