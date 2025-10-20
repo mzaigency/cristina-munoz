@@ -114,25 +114,58 @@ export default function Admin() {
     if (!confirm("¿Estás segura de que quieres eliminar esta reserva?")) return;
 
     try {
-      const { error } = await supabase
+      setLoading(true);
+      
+      // First, get the booking to check if it has a Google Calendar event
+      const { data: booking, error: fetchError } = await supabase
+        .from("bookings")
+        .select("google_calendar_event_id, calendar_id")
+        .eq("id", bookingId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete from database
+      const { error: deleteError } = await supabase
         .from("bookings")
         .delete()
         .eq("id", bookingId);
 
-      if (error) throw error;
+      if (deleteError) {
+        console.error("Delete error:", deleteError);
+        throw new Error("No se pudo eliminar la reserva. Verifica tus permisos.");
+      }
+
+      // If it had a Google Calendar event, try to delete it too
+      if (booking?.google_calendar_event_id && booking?.calendar_id) {
+        try {
+          await supabase.functions.invoke("delete-calendar-event", {
+            body: {
+              eventId: booking.google_calendar_event_id,
+              calendarId: booking.calendar_id,
+            },
+          });
+        } catch (calendarError) {
+          console.warn("Could not delete calendar event:", calendarError);
+          // Don't fail the whole operation if calendar deletion fails
+        }
+      }
 
       toast({
         title: "Reserva eliminada",
-        description: "La reserva se ha eliminado correctamente",
+        description: "La reserva se ha eliminado correctamente de la base de datos",
       });
 
       loadBookings();
     } catch (error: any) {
+      console.error("Full error:", error);
       toast({
-        title: "Error",
+        title: "Error al eliminar",
         description: error.message || "No se pudo eliminar la reserva",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
