@@ -231,62 +231,19 @@ export default function Auth() {
   const handleResetPassword = async (values: ResetPasswordFormValues) => {
     setResettingPassword(true);
     try {
-      // Generar token único
-      const token = crypto.randomUUID();
-      
-      // Buscar el usuario por email
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', values.email)
-        .single();
-
-      if (userError || !userData) {
-        throw new Error('Usuario no encontrado');
-      }
-
-      // Guardar token en la base de datos (expira en 1 hora)
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 1);
-
-      const { error: tokenError } = await supabase
-        .from('password_reset_tokens')
-        .insert({
-          user_id: userData.id,
-          token: token,
+      // Llamar a la edge function para generar el token y enviar el email
+      const { data, error } = await supabase.functions.invoke('request-password-reset', {
+        body: {
           email: values.email,
-          expires_at: expiresAt.toISOString(),
-        });
-
-      if (tokenError) {
-        throw new Error('Error al generar el token');
-      }
-
-      // Enviar token al webhook de n8n
-      const recoveryLink = `${window.location.origin}/auth#type=recovery&token=${token}`;
-      const webhookUrl = 'https://n8n-n8n.fzgtc4.easypanel.host/webhook/11869131-e1b0-47bc-95cb-96a61df14d0b';
-      
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: values.email,
-          recoveryLink: recoveryLink,
-          token: token,
-          timestamp: new Date().toISOString(),
-          origin: window.location.origin,
-        }),
       });
 
-      if (!response.ok) {
-        throw new Error('Error al enviar la solicitud');
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({
-        title: "Solicitud enviada",
-        description: "Revisa tu correo para restablecer tu contraseña. Puede que esté en tu carpeta de spam.",
+        title: "Email enviado",
+        description: data?.message || "Si el email existe en nuestro sistema, recibirás un enlace para recuperar tu contraseña.",
       });
       
       setResetDialogOpen(false);
