@@ -116,44 +116,24 @@ export default function Admin() {
     try {
       setLoading(true);
       
-      // First, get the booking to check if it has a Google Calendar event
-      const { data: booking, error: fetchError } = await supabase
-        .from("bookings")
-        .select("google_calendar_event_id, calendar_id")
-        .eq("id", bookingId)
-        .single();
+      // Use the cancel-booking edge function which handles everything:
+      // - Database deletion
+      // - Google Calendar deletion  
+      // - N8N webhook notification
+      const { error } = await supabase.functions.invoke("cancel-booking", {
+        body: {
+          bookingId: bookingId,
+        },
+      });
 
-      if (fetchError) throw fetchError;
-
-      // Delete from database
-      const { error: deleteError } = await supabase
-        .from("bookings")
-        .delete()
-        .eq("id", bookingId);
-
-      if (deleteError) {
-        console.error("Delete error:", deleteError);
+      if (error) {
+        console.error("Cancel booking error:", error);
         throw new Error("No se pudo eliminar la reserva. Verifica tus permisos.");
-      }
-
-      // If it had a Google Calendar event, try to delete it too
-      if (booking?.google_calendar_event_id && booking?.calendar_id) {
-        try {
-          await supabase.functions.invoke("delete-calendar-event", {
-            body: {
-              eventId: booking.google_calendar_event_id,
-              calendarId: booking.calendar_id,
-            },
-          });
-        } catch (calendarError) {
-          console.warn("Could not delete calendar event:", calendarError);
-          // Don't fail the whole operation if calendar deletion fails
-        }
       }
 
       toast({
         title: "Reserva eliminada",
-        description: "La reserva se ha eliminado correctamente de la base de datos",
+        description: "La reserva se ha eliminado y se ha enviado la notificación",
       });
 
       loadBookings();
