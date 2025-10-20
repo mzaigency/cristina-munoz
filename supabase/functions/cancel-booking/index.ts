@@ -130,17 +130,24 @@ serve(async (req) => {
 
     // Trigger n8n webhook with all bookings data
     try {
-      const webhookData = bookings.map(booking => ({
-        booking_id: booking.id,
-        customer_name: booking.customer_name,
-        Telefono: booking.Telefono,
-        Fecha: format(new Date(booking.Fecha), 'dd-MM-yyyy'),
-        Hora: booking.Hora,
-        stylist: booking.stylist,
-        services: booking.services,
-        google_calendar_event_id: booking.google_calendar_event_id,
-        calendar_id: booking.calendar_id,
-      }));
+      const webhookData = bookings.map(booking => {
+        // Format date for webhook (dd-mm-yyyy) - parse string directly to avoid timezone issues
+        const dateStr = booking.Fecha.toString();
+        const [year, month, day] = dateStr.split('-');
+        const formattedDate = `${day}-${month}-${year}`;
+        
+        return {
+          booking_id: booking.id,
+          customer_name: booking.customer_name,
+          Telefono: booking.Telefono,
+          Fecha: formattedDate,
+          Hora: booking.Hora,
+          stylist: booking.stylist,
+          services: booking.services,
+          google_calendar_event_id: booking.google_calendar_event_id,
+          calendar_id: booking.calendar_id,
+        };
+      });
 
       await fetch(cancelWebhookUrl, {
         method: 'POST',

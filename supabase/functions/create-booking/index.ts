@@ -434,8 +434,9 @@ serve(async (req) => {
     const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
     if (n8nWebhookUrl) {
       try {
-        // Format date for webhook (dd-mm-yyyy)
-        const formattedDate = format(new Date(bookingDate), 'dd-MM-yyyy');
+        // Format date for webhook (dd-mm-yyyy) - parse string directly to avoid timezone issues
+        const [year, month, day] = bookingDate.split('-');
+        const formattedDate = `${day}-${month}-${year}`;
         
         console.log('Triggering webhook:', n8nWebhookUrl);
         fetch(n8nWebhookUrl, {
