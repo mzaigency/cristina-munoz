@@ -72,7 +72,7 @@ serve(async (req) => {
     const recoveryLink = `https://cristinamunozperruqueria.es/auth#type=recovery&token=${token}`;
     
     // Enviar token al webhook de n8n
-    const webhookUrl = 'https://n8n-n8n.fzgtc4.easypanel.host/webhook/11869131-e1b0-47bc-95cb-96a61df14d0b';
+    const webhookUrl = Deno.env.get('N8N_PASSWORD_RECOVERY_WEBHOOK_URL')!;
     
     const webhookResponse = await fetch(webhookUrl, {
       method: 'POST',
