@@ -66,11 +66,17 @@ serve(async (req) => {
     const crisBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
     const desiBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
 
-    for (const calendar of calendarsToCheck) {
-      const timeMin = `${date}T00:00:00Z`;
-      const timeMax = `${date}T23:59:59Z`;
+    console.log(`\n=== Checking availability for ${stylist} on ${date} ===`);
+    console.log(`Calendars to check: ${calendarsToCheck.map(c => c.name).join(', ')}`);
 
-      const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id!)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
+    for (const calendar of calendarsToCheck) {
+      // Use local timezone (Europe/Madrid) for the date range
+      const timeMin = `${date}T00:00:00+01:00`;
+      const timeMax = `${date}T23:59:59+01:00`;
+
+      const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id!)}/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true`;
+
+      console.log(`\nFetching from ${calendar.name}: ${eventsUrl}`);
 
       const eventsResponse = await fetch(eventsUrl, {
         headers: {
@@ -86,31 +92,52 @@ serve(async (req) => {
       }
 
       const eventsData = await eventsResponse.json();
-      console.log(`Events from ${calendar.name} calendar (${calendar.id}):`, JSON.stringify(eventsData.items, null, 2));
+      
+      const eventCount = eventsData.items?.length || 0;
+      console.log(`\n--- ${calendar.name.toUpperCase()} Calendar ---`);
+      console.log(`Found ${eventCount} event(s)`);
 
       // Convert Google Calendar events to the format expected by the frontend
       if (eventsData.items && eventsData.items.length > 0) {
         for (const event of eventsData.items) {
+          console.log(`\nEvent: "${event.summary}"`);
+          console.log(`  Start:`, event.start);
+          console.log(`  End:`, event.end);
+          
           // Check for all-day events (vacations, blocked periods, etc.)
           if (event.start?.date) {
-            console.log(`All-day event detected for ${calendar.name}:`, event.summary, 'Date:', event.start.date);
-            // This is an all-day event - block all business hours (9:00 to 21:00)
-            // Instead of one 24-hour slot, create slots for each business hour
-            for (let hour = 9; hour <= 20; hour++) {
-              const slot = {
-                Hora: `${String(hour).padStart(2, '0')}:00:00`,
-                total_duration: 60 // 1 hour blocks
-              };
+            console.log(`  Type: ALL-DAY EVENT (blocking full day)`);
+            
+            // Check if this all-day event covers the requested date
+            const eventStartDate = event.start.date;
+            const eventEndDate = event.end.date;
+            
+            console.log(`  Checking if ${date} is between ${eventStartDate} and ${eventEndDate}`);
+            
+            // Google Calendar all-day events have exclusive end dates
+            // So if end is "2025-10-23", the event covers up to but not including Oct 23
+            if (date >= eventStartDate && date < eventEndDate) {
+              console.log(`  ✓ Date ${date} IS within blocked period`);
+              // This is an all-day event covering our target date
+              // Block all business hours (9:00 to 21:00)
+              for (let hour = 9; hour <= 20; hour++) {
+                const slot = {
+                  Hora: `${String(hour).padStart(2, '0')}:00:00`,
+                  total_duration: 60
+                };
 
-              if (calendar.name === 'cris') {
-                crisBookedSlots.push(slot);
-                console.log(`Added blocked hour for cris: ${slot.Hora}`);
-              } else {
-                desiBookedSlots.push(slot);
-                console.log(`Added blocked hour for desi: ${slot.Hora}`);
+                if (calendar.name === 'cris') {
+                  crisBookedSlots.push(slot);
+                } else {
+                  desiBookedSlots.push(slot);
+                }
               }
+              console.log(`  Added ${12} hourly blocks from 09:00 to 20:00`);
+            } else {
+              console.log(`  ✗ Date ${date} is NOT within this blocked period`);
             }
           } else if (event.start?.dateTime && event.end?.dateTime) {
+            console.log(`  Type: TIMED EVENT`);
             // Regular time-specific event
             const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 8);
             const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 8);
@@ -131,17 +158,24 @@ serve(async (req) => {
             } else {
               desiBookedSlots.push(slot);
             }
+            
+            console.log(`  Added slot: ${startTimeStr} (${durationMinutes} min)`);
           }
         }
       }
+      
+      console.log(`\n${calendar.name} total slots: ${calendar.name === 'cris' ? crisBookedSlots.length : desiBookedSlots.length}`);
     }
+
+    console.log(`\n=== Summary ===`);
+    console.log(`Cris total blocked slots: ${crisBookedSlots.length}`);
+    console.log(`Desi total blocked slots: ${desiBookedSlots.length}`);
 
     // If stylist is 'any', only block slots where BOTH are busy
     let finalBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
     
     if (stylist === 'any') {
-      console.log('Cris booked slots:', crisBookedSlots);
-      console.log('Desi booked slots:', desiBookedSlots);
+      console.log('\nProcessing for "any" stylist (both must be busy)');
       
       // Convert to minute ranges
       const crisRanges = crisBookedSlots.map(slot => {
@@ -184,13 +218,14 @@ serve(async (req) => {
         });
       });
 
-      console.log('Final blocked slots (both busy):', finalBookedSlots);
+      console.log(`Final blocked slots (both busy): ${finalBookedSlots.length}`);
     } else {
       // For specific stylist, return their booked slots
       finalBookedSlots = stylist === 'cris' ? crisBookedSlots : desiBookedSlots;
+      console.log(`Final blocked slots for ${stylist}: ${finalBookedSlots.length}`);
     }
 
-    console.log(`Total booked slots found: ${finalBookedSlots.length}`, finalBookedSlots);
+    console.log(`\n=== Returning ${finalBookedSlots.length} blocked slots ===\n`);
 
     return new Response(
       JSON.stringify({ bookedSlots: finalBookedSlots }),
