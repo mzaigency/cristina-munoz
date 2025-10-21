@@ -24,6 +24,9 @@ const serviceCategories = [{
     name: "Tinte",
     duration: "1h 25min"
   }, {
+    name: "Decoloración",
+    duration: "2h"
+  }, {
     name: "Mechas melena larga",
     duration: "3h"
   }, {
