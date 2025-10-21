@@ -202,7 +202,7 @@ export default function Auth() {
 
         toast({
           title: "¡Cuenta creada!",
-          description: "Por favor, revisa tu email para confirmar tu cuenta. Puede que el email esté en tu carpeta de spam.",
+          description: "Has sido registrada correctamente. Redirigiendo...",
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
