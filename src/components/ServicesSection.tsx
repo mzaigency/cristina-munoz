@@ -5,102 +5,119 @@ import cutService from "@/assets/cut-service.jpg";
 import coloringService from "@/assets/coloring-service-new.jpg";
 import stylingService from "@/assets/styling-treatments.png";
 import beautyService from "@/assets/beauty-service.jpg";
-const serviceCategories = [{
-  category: "Corte",
-  icon: Scissors,
-  image: cutService,
-  services: [{
-    name: "Corte hombre",
-    duration: "15 min"
-  }, {
-    name: "Corte y peinado",
-    duration: "30 min"
-  }]
-}, {
-  category: "Coloración",
-  icon: Palette,
-  image: coloringService,
-  services: [{
-    name: "Tinte",
-    duration: "1h 25min"
-  }, {
-    name: "Decoloración",
-    duration: "2h"
-  }, {
-    name: "Mechas melena larga",
-    duration: "3h"
-  }, {
-    name: "Mechas cabello corto",
-    duration: "1h 30min"
-  }, {
-    name: "Éclat",
-    duration: "30 min"
-  }]
-}, {
-  category: "Peinados y Tratamientos",
-  icon: Sparkles,
-  image: stylingService,
-  services: [{
-    name: "Recogido",
-    duration: "60 min"
-  }, {
-    name: "Peinar con bucles",
-    duration: "25 min"
-  }, {
-    name: "Hidratación intensiva con peinado",
-    duration: "1h 5min"
-  }, {
-    name: "Hidratación mantenimiento con peinado",
-    duration: "45 min"
-  }, {
-    name: "Lavar y matizar",
-    duration: "20 min"
-  }]
-}, {
-  category: "Depilación y Maquillaje",
-  icon: Flower2,
-  image: beautyService,
-  services: [{
-    name: "Cejas",
-    duration: "10 min"
-  }, {
-    name: "Bigote",
-    duration: "10 min"
-  }, {
-    name: "Labio",
-    duration: "10 min"
-  }, {
-    name: "Makeup",
-    duration: "30 min"
-  }]
-}];
+const serviceCategories = [
+  {
+    category: "Corte",
+    icon: Scissors,
+    image: cutService,
+    services: [
+      {
+        name: "Corte hombre",
+        duration: "15 min",
+      },
+      {
+        name: "Corte y peinado",
+        duration: "30 min",
+      },
+    ],
+  },
+  {
+    category: "Coloración",
+    icon: Palette,
+    image: coloringService,
+    services: [
+      {
+        name: "Tinte",
+        duration: "1h 25min",
+      },
+      {
+        name: "Decoloración",
+        duration: "2h",
+      },
+      {
+        name: "Mechas melena larga",
+        duration: "3h",
+      },
+      {
+        name: "Mechas cabello corto",
+        duration: "1h 30min",
+      },
+      {
+        name: "Éclat",
+        duration: "30 min",
+      },
+    ],
+  },
+  {
+    category: "Peinados y Tratamientos",
+    icon: Sparkles,
+    image: stylingService,
+    services: [
+      {
+        name: "Recogido",
+        duration: "60 min",
+      },
+      {
+        name: "Peinar con bucles",
+        duration: "25 min",
+      },
+      {
+        name: "Hidratación intensiva con peinado",
+        duration: "1h 5min",
+      },
+      {
+        name: "Hidratación mantenimiento con peinado",
+        duration: "45 min",
+      },
+      {
+        name: "Lavar y matizar",
+        duration: "20 min",
+      },
+    ],
+  },
+  {
+    category: "Depilación y Maquillaje",
+    icon: Flower2,
+    image: beautyService,
+    services: [
+      {
+        name: "Cejas",
+        duration: "10 min",
+      },
+      {
+        name: "Labio",
+        duration: "10 min",
+      },
+      {
+        name: "Makeup",
+        duration: "30 min",
+      },
+    ],
+  },
+];
 export const ServicesSection = () => {
   const { ref, isVisible } = useScrollAnimation(0.1);
 
   return (
     <section ref={ref} className="py-20 bg-salon-cream">
       <div className="container mx-auto px-4">
-        <div className={`mb-12 text-center scroll-reveal ${isVisible ? 'visible' : ''}`}>
-          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
-            Nuestros Servicios
-          </h2>
-          <p className="text-lg text-muted-foreground">
-            Descubre nuestra amplia gama de servicios profesionales
-          </p>
+        <div className={`mb-12 text-center scroll-reveal ${isVisible ? "visible" : ""}`}>
+          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">Nuestros Servicios</h2>
+          <p className="text-lg text-muted-foreground">Descubre nuestra amplia gama de servicios profesionales</p>
         </div>
 
         <div className="grid gap-8 md:grid-cols-2">
           {serviceCategories.map((category, idx) => {
             const Icon = category.icon;
             return (
-              <Card 
-                key={idx} 
-                className={`overflow-hidden border-none shadow-lg hover-lift group scroll-reveal ${isVisible ? 'visible' : ''}`}
+              <Card
+                key={idx}
+                className={`overflow-hidden border-none shadow-lg hover-lift group scroll-reveal ${isVisible ? "visible" : ""}`}
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
-                <div 
-                  style={{ backgroundImage: `url(${category.image})` }} 
-                  className="h-48 bg-cover bg-center mx-0 transition-transform duration-500 group-hover:scale-110" 
+                <div
+                  style={{ backgroundImage: `url(${category.image})` }}
+                  className="h-48 bg-cover bg-center mx-0 transition-transform duration-500 group-hover:scale-110"
                 />
                 <CardHeader>
                   <div className="mb-2 flex items-center gap-2">
@@ -113,8 +130,8 @@ export const ServicesSection = () => {
                 <CardContent>
                   <div className="space-y-3">
                     {category.services.map((service, serviceIdx) => (
-                      <div 
-                        key={serviceIdx} 
+                      <div
+                        key={serviceIdx}
                         className="flex items-center justify-between rounded-lg bg-salon-pink-light p-3 transition-all duration-300 hover:bg-salon-gold-light hover:translate-x-2 hover:shadow-md"
                       >
                         <span className="font-medium text-foreground">{service.name}</span>
