@@ -121,7 +121,10 @@ serve(async (req) => {
       const crisAvailable = !crisEvents.items?.some((event: any) => {
         // Check for all-day events (vacations, etc.)
         if (event.start?.date) {
-          return true; // All-day event blocks the entire day
+          const eventStart = event.start.date; // YYYY-MM-DD
+          const eventEnd = event.end.date;     // YYYY-MM-DD (exclusive)
+          // Check if booking date falls within the all-day event range
+          return bookingDate >= eventStart && bookingDate < eventEnd;
         }
         // Check for time-specific events
         if (!event.start?.dateTime || !event.end?.dateTime) return false;
@@ -145,7 +148,10 @@ serve(async (req) => {
       const desiAvailable = !desiEvents.items?.some((event: any) => {
         // Check for all-day events (vacations, etc.)
         if (event.start?.date) {
-          return true; // All-day event blocks the entire day
+          const eventStart = event.start.date; // YYYY-MM-DD
+          const eventEnd = event.end.date;     // YYYY-MM-DD (exclusive)
+          // Check if booking date falls within the all-day event range
+          return bookingDate >= eventStart && bookingDate < eventEnd;
         }
         // Check for time-specific events
         if (!event.start?.dateTime || !event.end?.dateTime) return false;
