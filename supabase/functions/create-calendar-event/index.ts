@@ -120,10 +120,19 @@ Deno.serve(async (req) => {
 
     // Handle all-day events differently
     if (allDay) {
+      // For all-day events, Google Calendar expects:
+      // - start.date: the start date (YYYY-MM-DD)
+      // - end.date: the day AFTER the last day (exclusive)
       const startDate = start.split('T')[0];
-      const endDate = end.split('T')[0];
+      let endDateObj = new Date(end.split('T')[0]);
+      // Add one day to the end date for Google Calendar's exclusive end
+      endDateObj.setDate(endDateObj.getDate() + 1);
+      const endDate = endDateObj.toISOString().split('T')[0];
+      
       event.start = { date: startDate };
       event.end = { date: endDate };
+      
+      console.log(`Creating all-day event for ${stylist} from ${startDate} to ${endDate} (exclusive)`);
     } else {
       event.start = {
         dateTime: start,
@@ -135,7 +144,7 @@ Deno.serve(async (req) => {
       };
     }
 
-    console.log(`Creating event in calendar for ${stylist}:`, event);
+    console.log(`Creating event in calendar for ${stylist}:`, JSON.stringify(event, null, 2));
 
     const createResponse = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,

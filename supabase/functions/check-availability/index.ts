@@ -86,14 +86,14 @@ serve(async (req) => {
       }
 
       const eventsData = await eventsResponse.json();
-      console.log(`Events from ${calendar.name}:`, JSON.stringify(eventsData.items, null, 2));
+      console.log(`Events from ${calendar.name} calendar (${calendar.id}):`, JSON.stringify(eventsData.items, null, 2));
 
       // Convert Google Calendar events to the format expected by the frontend
       if (eventsData.items && eventsData.items.length > 0) {
         for (const event of eventsData.items) {
           // Check for all-day events (vacations, blocked periods, etc.)
           if (event.start?.date) {
-            console.log(`All-day event detected for ${calendar.name}:`, event.summary);
+            console.log(`All-day event detected for ${calendar.name}:`, event.summary, 'Date:', event.start.date);
             // This is an all-day event - block all business hours (9:00 to 21:00)
             // Instead of one 24-hour slot, create slots for each business hour
             for (let hour = 9; hour <= 20; hour++) {
@@ -104,8 +104,10 @@ serve(async (req) => {
 
               if (calendar.name === 'cris') {
                 crisBookedSlots.push(slot);
+                console.log(`Added blocked hour for cris: ${slot.Hora}`);
               } else {
                 desiBookedSlots.push(slot);
+                console.log(`Added blocked hour for desi: ${slot.Hora}`);
               }
             }
           } else if (event.start?.dateTime && event.end?.dateTime) {
