@@ -185,12 +185,10 @@ export default function Auth() {
     try {
       if (isSignUp) {
         const signUpValues = values as SignUpFormValues;
-        const redirectUrl = `${window.location.origin}/`;
         const { error } = await supabase.auth.signUp({
           email: signUpValues.email,
           password: signUpValues.password,
           options: {
-            emailRedirectTo: redirectUrl,
             data: {
               full_name: `${signUpValues.firstName} ${signUpValues.lastName}`,
               phone: signUpValues.phone,
