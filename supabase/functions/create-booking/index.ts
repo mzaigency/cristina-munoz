@@ -83,6 +83,8 @@ serve(async (req) => {
     // Determine actual stylist for "any" selection
     let actualStylist = bookingData.stylist;
     
+    // Only check availability when stylist is "any" (auto-assignment)
+    // When admin selects a specific stylist, allow the booking
     if (bookingData.stylist === 'any') {
       // Get OAuth2 access token first
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -165,12 +167,15 @@ serve(async (req) => {
       });
       
       // Assign to available stylist (prefer Cris if both available)
+      // If both are busy, default to Cris (admin can override by selecting specific stylist)
       if (crisAvailable) {
         actualStylist = 'cris';
       } else if (desiAvailable) {
         actualStylist = 'desi';
       } else {
-        throw new Error('No stylist available for the selected time');
+        // Default to Cris even if busy when no one is available
+        actualStylist = 'cris';
+        console.log('Warning: No stylist available, defaulting to Cris');
       }
       
       console.log(`Auto-assigned "any" booking to: ${actualStylist} (Cris available: ${crisAvailable}, Desi available: ${desiAvailable})`);
