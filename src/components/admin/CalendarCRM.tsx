@@ -55,6 +55,17 @@ export const CalendarCRM = () => {
   const [blockStylist, setBlockStylist] = useState<"cris" | "desi" | "both">("both");
   const { toast } = useToast();
 
+  // Helper function to safely format date times
+  const safeFormatDateTime = (dateTime: string | undefined, formatStr: string): string => {
+    if (!dateTime) return "N/A";
+    try {
+      return format(parseISO(dateTime), formatStr);
+    } catch (error) {
+      console.error("Error formatting dateTime:", dateTime, error);
+      return "N/A";
+    }
+  };
+
   useEffect(() => {
     fetchEvents();
   }, [weekStart]);
@@ -300,9 +311,18 @@ export const CalendarCRM = () => {
   const groupEventsByDate = (events: CalendarEvent[]) => {
     const grouped: { [key: string]: CalendarEvent[] } = {};
     events.forEach((event) => {
-      const date = format(parseISO(event.start.dateTime), "yyyy-MM-dd");
-      if (!grouped[date]) grouped[date] = [];
-      grouped[date].push(event);
+      // Validate that event has required properties
+      if (!event.start?.dateTime) {
+        console.warn("Event missing start.dateTime:", event);
+        return;
+      }
+      try {
+        const date = format(parseISO(event.start.dateTime), "yyyy-MM-dd");
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(event);
+      } catch (error) {
+        console.error("Error parsing event date:", event, error);
+      }
     });
     return grouped;
   };
@@ -317,16 +337,26 @@ export const CalendarCRM = () => {
     }
     
     events.forEach((event) => {
-      const startTime = format(parseISO(event.start.dateTime), "HH:mm");
-      const hour = startTime.split(':')[0];
-      const hourKey = `${hour}:00`;
+      // Validate that event has required properties
+      if (!event.start?.dateTime) {
+        console.warn("Event missing start.dateTime in groupEventsByHour:", event);
+        return;
+      }
       
-      if (grouped[hourKey]) {
-        if (event.stylist === "cris") {
-          grouped[hourKey].cris.push(event);
-        } else {
-          grouped[hourKey].desi.push(event);
+      try {
+        const startTime = format(parseISO(event.start.dateTime), "HH:mm");
+        const hour = startTime.split(':')[0];
+        const hourKey = `${hour}:00`;
+        
+        if (grouped[hourKey]) {
+          if (event.stylist === "cris") {
+            grouped[hourKey].cris.push(event);
+          } else {
+            grouped[hourKey].desi.push(event);
+          }
         }
+      } catch (error) {
+        console.error("Error parsing event time:", event, error);
       }
     });
     
@@ -475,14 +505,14 @@ export const CalendarCRM = () => {
                                       onChange={() => handleToggleCompleted(event)}
                                       className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
                                     />
-                                    <div className="flex-1 min-w-0">
-                                      <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
-                                        {event.summary}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground mt-0.5">
-                                        {format(parseISO(event.start.dateTime), "HH:mm")} - {format(parseISO(event.end.dateTime), "HH:mm")}
-                                      </p>
-                                    </div>
+                                     <div className="flex-1 min-w-0">
+                                       <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
+                                         {event.summary}
+                                       </p>
+                                       <p className="text-xs text-muted-foreground mt-0.5">
+                                         {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                       </p>
+                                     </div>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                                       <Button
                                         size="sm"
@@ -525,14 +555,14 @@ export const CalendarCRM = () => {
                                       onChange={() => handleToggleCompleted(event)}
                                       className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
                                     />
-                                    <div className="flex-1 min-w-0">
-                                      <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
-                                        {event.summary}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground mt-0.5">
-                                        {format(parseISO(event.start.dateTime), "HH:mm")} - {format(parseISO(event.end.dateTime), "HH:mm")}
-                                      </p>
-                                    </div>
+                                     <div className="flex-1 min-w-0">
+                                       <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
+                                         {event.summary}
+                                       </p>
+                                       <p className="text-xs text-muted-foreground mt-0.5">
+                                         {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                       </p>
+                                     </div>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                                       <Button
                                         size="sm"
@@ -615,11 +645,11 @@ export const CalendarCRM = () => {
                 <Input
                   id="edit-date"
                   type="date"
-                  value={format(parseISO(selectedEvent.start.dateTime), "yyyy-MM-dd")}
+                  value={safeFormatDateTime(selectedEvent.start?.dateTime, "yyyy-MM-dd")}
                   onChange={(e) => {
                     const newDate = e.target.value;
-                    const startTime = format(parseISO(selectedEvent.start.dateTime), "HH:mm");
-                    const endTime = format(parseISO(selectedEvent.end.dateTime), "HH:mm");
+                    const startTime = safeFormatDateTime(selectedEvent.start?.dateTime, "HH:mm");
+                    const endTime = safeFormatDateTime(selectedEvent.end?.dateTime, "HH:mm");
                     setSelectedEvent({
                       ...selectedEvent,
                       start: {
@@ -640,9 +670,9 @@ export const CalendarCRM = () => {
                   <Input
                     id="edit-startTime"
                     type="time"
-                    value={format(parseISO(selectedEvent.start.dateTime), "HH:mm")}
+                    value={safeFormatDateTime(selectedEvent.start?.dateTime, "HH:mm")}
                     onChange={(e) => {
-                      const date = format(parseISO(selectedEvent.start.dateTime), "yyyy-MM-dd");
+                      const date = safeFormatDateTime(selectedEvent.start?.dateTime, "yyyy-MM-dd");
                       setSelectedEvent({
                         ...selectedEvent,
                         start: {
@@ -658,9 +688,9 @@ export const CalendarCRM = () => {
                   <Input
                     id="edit-endTime"
                     type="time"
-                    value={format(parseISO(selectedEvent.end.dateTime), "HH:mm")}
+                    value={safeFormatDateTime(selectedEvent.end?.dateTime, "HH:mm")}
                     onChange={(e) => {
-                      const date = format(parseISO(selectedEvent.end.dateTime), "yyyy-MM-dd");
+                      const date = safeFormatDateTime(selectedEvent.end?.dateTime, "yyyy-MM-dd");
                       setSelectedEvent({
                         ...selectedEvent,
                         end: {
