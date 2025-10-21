@@ -327,11 +327,15 @@ export const CalendarCRM = () => {
     return grouped;
   };
 
-  const groupEventsByHour = (events: CalendarEvent[]) => {
+  const groupEventsByHour = (events: CalendarEvent[], dayDate: Date) => {
     const grouped: { [hour: string]: { cris: CalendarEvent[], desi: CalendarEvent[] } } = {};
     
-    // Initialize all hours from 9:00 to 21:00
-    for (let hour = 9; hour <= 21; hour++) {
+    // Sábados empiezan a las 8:00, otros días a las 9:00
+    const isSaturday = dayDate.getDay() === 6;
+    const startHour = isSaturday ? 8 : 9;
+    
+    // Initialize all hours from startHour to 21:00
+    for (let hour = startHour; hour <= 21; hour++) {
       const hourKey = `${hour.toString().padStart(2, '0')}:00`;
       grouped[hourKey] = { cris: [], desi: [] };
     }
@@ -482,7 +486,7 @@ export const CalendarCRM = () => {
                       </div>
 
                       {/* Timeline */}
-                      {Object.entries(groupEventsByHour(dayEvents)).map(([hour, { cris, desi }]) => {
+                      {Object.entries(groupEventsByHour(dayEvents, day)).map(([hour, { cris, desi }]) => {
                         if (cris.length === 0 && desi.length === 0) return null;
                         
                         return (
