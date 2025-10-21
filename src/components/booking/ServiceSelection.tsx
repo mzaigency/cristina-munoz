@@ -96,9 +96,14 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
                         <div>
                           <p className="font-medium text-foreground">{service.name}</p>
                           {service.type === 'Compuesto' ? (
-                            <p className="text-sm text-muted-foreground">
-                              {service.duration_part1_active + service.duration_part2_active} min activos + {service.duration_exposure_pause} min pausa
-                            </p>
+                            <>
+                              <p className="text-sm text-muted-foreground">
+                                {service.duration_part1_active + service.duration_part2_active} min activos + {service.duration_exposure_pause} min pausa
+                              </p>
+                              <p className="text-xs text-muted-foreground italic mt-1">
+                                ✓ Incluye corte y peinado
+                              </p>
+                            </>
                           ) : (
                             <p className="text-sm text-muted-foreground">{service.duration} min</p>
                           )}
