@@ -106,8 +106,8 @@ serve(async (req) => {
           if (date >= eventStart && date < eventEnd) {
             console.log(`  ✓ BLOCKING ${date} - creating hourly slots`);
             
-            // Block all business hours (9:00 to 20:00 = 12 slots)
-            for (let hour = 9; hour <= 20; hour++) {
+            // Block all business hours (8:00 to 20:00 = 13 slots)
+            for (let hour = 8; hour <= 20; hour++) {
               const slot = {
                 Hora: `${String(hour).padStart(2, '0')}:00:00`,
                 total_duration: 60
