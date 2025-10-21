@@ -185,7 +185,7 @@ export default function Auth() {
     try {
       if (isSignUp) {
         const signUpValues = values as SignUpFormValues;
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: signUpValues.email,
           password: signUpValues.password,
           options: {
@@ -202,6 +202,12 @@ export default function Auth() {
           title: "¡Cuenta creada!",
           description: "Has sido registrada correctamente. Redirigiendo...",
         });
+
+        // Con auto_confirm_email habilitado, la sesión se crea automáticamente
+        // Navegar manualmente después del registro exitoso
+        if (data.session) {
+          navigate("/mis-citas");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: values.email,
