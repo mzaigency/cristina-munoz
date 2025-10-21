@@ -85,7 +85,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { stylist, summary, description, start, end, allDay } = await req.json();
+    const requestBody = await req.json();
+    const { stylist, summary, description, start, end, allDay } = requestBody;
+    
+    console.log('Received request body:', JSON.stringify(requestBody, null, 2));
 
     if (!stylist || !summary || !start || !end) {
       return new Response(
