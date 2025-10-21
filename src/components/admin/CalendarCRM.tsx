@@ -72,21 +72,27 @@ export const CalendarCRM = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching events:", error);
+        throw error;
+      }
 
       // Mark events as completed if they have the completed marker in description
-      const eventsWithStatus = (data.events || []).map((event: CalendarEvent) => ({
+      const eventsWithStatus = (data?.events || []).map((event: CalendarEvent) => ({
         ...event,
         completed: event.description?.includes("[✓ COMPLETADA]") || false,
       }));
 
       setEvents(eventsWithStatus);
     } catch (error: any) {
+      console.error("Error in fetchEvents:", error);
       toast({
         title: "Error",
         description: error.message || "Error al cargar los eventos",
         variant: "destructive",
       });
+      // Reset events to avoid blank page
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -233,14 +239,29 @@ export const CalendarCRM = () => {
         ? ["cris", "desi"] 
         : [blockStylist];
 
+      // Format dates in local timezone to avoid timezone conversion issues
+      const formatDateForCalendar = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}T00:00:00`;
+      };
+
+      const formatEndDateForCalendar = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}T23:59:59`;
+      };
+
       for (const stylist of calendars) {
         const { error } = await supabase.functions.invoke("create-calendar-event", {
           body: {
             stylist: stylist,
             summary: `🌴 VACACIONES - ${stylist.toUpperCase()}`,
             description: "Periodo bloqueado - Vacaciones",
-            start: startOfDay(blockStartDate).toISOString(),
-            end: endOfDay(finalEndDate).toISOString(),
+            start: formatDateForCalendar(blockStartDate),
+            end: formatEndDateForCalendar(finalEndDate),
             allDay: true,
           },
         });
