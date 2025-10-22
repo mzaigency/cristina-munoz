@@ -4,20 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, Edit2, ChevronDown, Calendar as CalendarIcon, Ban } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,18 +17,22 @@ import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks,
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
-
 interface CalendarEvent {
   id: string;
   summary: string;
   description?: string;
-  start: { dateTime: string; timeZone: string };
-  end: { dateTime: string; timeZone: string };
+  start: {
+    dateTime: string;
+    timeZone: string;
+  };
+  end: {
+    dateTime: string;
+    timeZone: string;
+  };
   stylist: string;
   calendarId: string;
   completed?: boolean;
 }
-
 export const CalendarCRM = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,12 +40,16 @@ export const CalendarCRM = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), {
+    weekStartsOn: 1
+  }));
   const [blockStartDate, setBlockStartDate] = useState<Date | undefined>(undefined);
   const [blockEndDate, setBlockEndDate] = useState<Date | undefined>(undefined);
   const [blockPeriod, setBlockPeriod] = useState<"day" | "week" | "month">("day");
   const [blockStylist, setBlockStylist] = useState<"cris" | "desi" | "both">("both");
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Helper function to safely format date times
   const safeFormatDateTime = (dateTime: string | undefined, formatStr: string): string => {
@@ -65,24 +61,25 @@ export const CalendarCRM = () => {
       return "N/A";
     }
   };
-
   useEffect(() => {
     fetchEvents();
   }, [weekStart]);
-
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-
-      const { data, error } = await supabase.functions.invoke("list-calendar-events", {
+      const weekEnd = endOfWeek(weekStart, {
+        weekStartsOn: 1
+      });
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke("list-calendar-events", {
         body: {
           calendarId: "all",
           timeMin: weekStart.toISOString(),
-          timeMax: addDays(weekEnd, 1).toISOString(),
-        },
+          timeMax: addDays(weekEnd, 1).toISOString()
+        }
       });
-
       if (error) {
         console.error("Error fetching events:", error);
         throw error;
@@ -91,16 +88,15 @@ export const CalendarCRM = () => {
       // Mark events as completed if they have the completed marker in description
       const eventsWithStatus = (data?.events || []).map((event: CalendarEvent) => ({
         ...event,
-        completed: event.description?.includes("[✓ COMPLETADA]") || false,
+        completed: event.description?.includes("[✓ COMPLETADA]") || false
       }));
-
       setEvents(eventsWithStatus);
     } catch (error: any) {
       console.error("Error in fetchEvents:", error);
       toast({
         title: "Error",
         description: error.message || "Error al cargar los eventos",
-        variant: "destructive",
+        variant: "destructive"
       });
       // Reset events to avoid blank page
       setEvents([]);
@@ -108,36 +104,31 @@ export const CalendarCRM = () => {
       setLoading(false);
     }
   };
-
   const handleBookingComplete = () => {
     setIsCreateDialogOpen(false);
     fetchEvents();
   };
-
   const handleUpdateEvent = async () => {
     if (!selectedEvent) return;
-
     try {
       setLoading(true);
-
-      const { error } = await supabase.functions.invoke("update-calendar-event", {
+      const {
+        error
+      } = await supabase.functions.invoke("update-calendar-event", {
         body: {
           eventId: selectedEvent.id,
           calendarId: selectedEvent.calendarId,
           summary: selectedEvent.summary,
           description: selectedEvent.description,
           start: selectedEvent.start.dateTime,
-          end: selectedEvent.end.dateTime,
-        },
+          end: selectedEvent.end.dateTime
+        }
       });
-
       if (error) throw error;
-
       toast({
         title: "Cita actualizada",
-        description: "Los cambios se han guardado correctamente",
+        description: "Los cambios se han guardado correctamente"
       });
-
       setIsEditDialogOpen(false);
       setSelectedEvent(null);
       fetchEvents();
@@ -145,110 +136,94 @@ export const CalendarCRM = () => {
       toast({
         title: "Error",
         description: error.message || "Error al actualizar la cita",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
   const handleToggleCompleted = async (event: CalendarEvent) => {
     try {
-      const updatedDescription = event.completed 
-        ? (event.description || "").replace("[✓ COMPLETADA] ", "")
-        : `[✓ COMPLETADA] ${event.description || ""}`;
-
-      const { error } = await supabase.functions.invoke("update-calendar-event", {
+      const updatedDescription = event.completed ? (event.description || "").replace("[✓ COMPLETADA] ", "") : `[✓ COMPLETADA] ${event.description || ""}`;
+      const {
+        error
+      } = await supabase.functions.invoke("update-calendar-event", {
         body: {
           eventId: event.id,
           calendarId: event.calendarId,
           summary: event.summary,
           description: updatedDescription,
           start: event.start.dateTime,
-          end: event.end.dateTime,
-        },
+          end: event.end.dateTime
+        }
       });
-
       if (error) throw error;
 
       // Update local state
-      setEvents(events.map(e => 
-        e.id === event.id 
-          ? { ...e, completed: !e.completed, description: updatedDescription }
-          : e
-      ));
-
+      setEvents(events.map(e => e.id === event.id ? {
+        ...e,
+        completed: !e.completed,
+        description: updatedDescription
+      } : e));
       toast({
         title: event.completed ? "Cita desmarcada" : "Cita completada",
-        description: event.completed ? "La cita se ha desmarcado" : "¡Cliente atendido!",
+        description: event.completed ? "La cita se ha desmarcado" : "¡Cliente atendido!"
       });
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Error al actualizar la cita",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleDeleteEvent = async (event: CalendarEvent) => {
     if (!confirm("¿Estás segura de que quieres eliminar esta cita?")) return;
-
     try {
       setLoading(true);
-
-      const { error } = await supabase.functions.invoke("delete-calendar-event", {
+      const {
+        error
+      } = await supabase.functions.invoke("delete-calendar-event", {
         body: {
           eventId: event.id,
-          calendarId: event.calendarId,
-        },
+          calendarId: event.calendarId
+        }
       });
-
       if (error) throw error;
-
       toast({
         title: "Cita eliminada",
-        description: "La cita se ha eliminado del calendario",
+        description: "La cita se ha eliminado del calendario"
       });
-
       fetchEvents();
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Error al eliminar la cita",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
   const handleBlockPeriod = async () => {
     if (!blockStartDate) {
       toast({
         title: "Error",
         description: "Debes seleccionar una fecha de inicio",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     let endDate = blockStartDate;
-    
     if (blockPeriod === "week") {
       endDate = addWeeks(blockStartDate, 1);
     } else if (blockPeriod === "month") {
       endDate = addMonths(blockStartDate, 1);
     }
-
     const finalEndDate = blockEndDate || endDate;
-
     try {
       setLoading(true);
-
-      const calendars = blockStylist === "both" 
-        ? ["cris", "desi"] 
-        : [blockStylist];
+      const calendars = blockStylist === "both" ? ["cris", "desi"] : [blockStylist];
 
       // Format dates in local timezone to avoid timezone conversion issues
       const formatDateForCalendar = (date: Date) => {
@@ -257,34 +232,31 @@ export const CalendarCRM = () => {
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}T00:00:00`;
       };
-
       const formatEndDateForCalendar = (date: Date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}T23:59:59`;
       };
-
       for (const stylist of calendars) {
-        const { error } = await supabase.functions.invoke("create-calendar-event", {
+        const {
+          error
+        } = await supabase.functions.invoke("create-calendar-event", {
           body: {
             stylist: stylist,
             summary: `🌴 VACACIONES - ${stylist.toUpperCase()}`,
             description: "Periodo bloqueado - Vacaciones",
             start: formatDateForCalendar(blockStartDate),
             end: formatEndDateForCalendar(finalEndDate),
-            allDay: true,
-          },
+            allDay: true
+          }
         });
-
         if (error) throw error;
       }
-
       toast({
         title: "Periodo bloqueado",
-        description: `Se ha bloqueado el periodo de vacaciones correctamente`,
+        description: `Se ha bloqueado el periodo de vacaciones correctamente`
       });
-
       setIsBlockDialogOpen(false);
       setBlockStartDate(undefined);
       setBlockEndDate(undefined);
@@ -295,22 +267,24 @@ export const CalendarCRM = () => {
       toast({
         title: "Error",
         description: error.message || "Error al bloquear el periodo",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
   const handleJumpToDate = (date: Date | undefined) => {
     if (date) {
-      setWeekStart(startOfWeek(date, { weekStartsOn: 1 }));
+      setWeekStart(startOfWeek(date, {
+        weekStartsOn: 1
+      }));
     }
   };
-
   const groupEventsByDate = (events: CalendarEvent[]) => {
-    const grouped: { [key: string]: CalendarEvent[] } = {};
-    events.forEach((event) => {
+    const grouped: {
+      [key: string]: CalendarEvent[];
+    } = {};
+    events.forEach(event => {
       // Validate that event has required properties
       if (!event.start?.dateTime) {
         console.warn("Event missing start.dateTime:", event);
@@ -326,32 +300,36 @@ export const CalendarCRM = () => {
     });
     return grouped;
   };
-
   const groupEventsByHour = (events: CalendarEvent[], dayDate: Date) => {
-    const grouped: { [hour: string]: { cris: CalendarEvent[], desi: CalendarEvent[] } } = {};
-    
+    const grouped: {
+      [hour: string]: {
+        cris: CalendarEvent[];
+        desi: CalendarEvent[];
+      };
+    } = {};
+
     // Sábados empiezan a las 8:00, otros días a las 9:00
     const isSaturday = dayDate.getDay() === 6;
     const startHour = isSaturday ? 8 : 9;
-    
+
     // Initialize all hours from startHour to 21:00
     for (let hour = startHour; hour <= 21; hour++) {
       const hourKey = `${hour.toString().padStart(2, '0')}:00`;
-      grouped[hourKey] = { cris: [], desi: [] };
+      grouped[hourKey] = {
+        cris: [],
+        desi: []
+      };
     }
-    
-    events.forEach((event) => {
+    events.forEach(event => {
       // Validate that event has required properties
       if (!event.start?.dateTime) {
         console.warn("Event missing start.dateTime in groupEventsByHour:", event);
         return;
       }
-      
       try {
         const startTime = format(parseISO(event.start.dateTime), "HH:mm");
         const hour = startTime.split(':')[0];
         const hourKey = `${hour}:00`;
-        
         if (grouped[hourKey]) {
           if (event.stylist === "cris") {
             grouped[hourKey].cris.push(event);
@@ -363,18 +341,16 @@ export const CalendarCRM = () => {
         console.error("Error parsing event time:", event, error);
       }
     });
-    
     return grouped;
   };
-
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const weekDays = Array.from({
+    length: 7
+  }, (_, i) => addDays(weekStart, i));
   const groupedEvents = groupEventsByDate(events);
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">CRM - Gestión de Citas</h2>
+          <h2 className="text-2xl font-bold text-foreground">CRM - Gestión de Citas🗓️</h2>
           <p className="text-muted-foreground">Gestiona los calendarios de Cris y Desi</p>
         </div>
         <div className="flex gap-2">
@@ -390,25 +366,15 @@ export const CalendarCRM = () => {
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          variant="outline"
-          onClick={() => setWeekStart(addDays(weekStart, -7))}
-          disabled={loading}
-        >
+        <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, -7))} disabled={loading}>
           ← Semana anterior
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-          disabled={loading}
-        >
+        <Button variant="outline" onClick={() => setWeekStart(startOfWeek(new Date(), {
+        weekStartsOn: 1
+      }))} disabled={loading}>
           Hoy
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => setWeekStart(addDays(weekStart, 7))}
-          disabled={loading}
-        >
+        <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading}>
           Semana siguiente →
         </Button>
         
@@ -420,47 +386,32 @@ export const CalendarCRM = () => {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={weekStart}
-              onSelect={handleJumpToDate}
-              initialFocus
-              className="pointer-events-auto"
-            />
+            <Calendar mode="single" selected={weekStart} onSelect={handleJumpToDate} initialFocus className="pointer-events-auto" />
           </PopoverContent>
         </Popover>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center py-12">
+      {loading ? <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <Accordion type="multiple" className="space-y-4">
-          {weekDays.map((day) => {
-            const dateKey = format(day, "yyyy-MM-dd");
-            const dayEvents = groupedEvents[dateKey] || [];
-            const crisEvents = dayEvents.filter((e) => e.stylist === "cris");
-            const desiEvents = dayEvents.filter((e) => e.stylist === "desi");
-            const isToday = isSameDay(day, new Date());
-
-            return (
-              <AccordionItem
-                key={dateKey}
-                value={dateKey}
-                className={`border rounded-lg ${isToday ? "border-primary bg-primary/5" : ""}`}
-              >
+        </div> : <Accordion type="multiple" className="space-y-4">
+          {weekDays.map(day => {
+        const dateKey = format(day, "yyyy-MM-dd");
+        const dayEvents = groupedEvents[dateKey] || [];
+        const crisEvents = dayEvents.filter(e => e.stylist === "cris");
+        const desiEvents = dayEvents.filter(e => e.stylist === "desi");
+        const isToday = isSameDay(day, new Date());
+        return <AccordionItem key={dateKey} value={dateKey} className={`border rounded-lg ${isToday ? "border-primary bg-primary/5" : ""}`}>
                 <AccordionTrigger className="px-6 hover:no-underline">
                   <div className="flex items-center justify-between w-full pr-4">
                     <div className="flex items-center gap-3">
                       <h3 className="text-lg font-semibold capitalize">
-                        {format(day, "EEEE d 'de' MMMM", { locale: es })}
+                        {format(day, "EEEE d 'de' MMMM", {
+                    locale: es
+                  })}
                       </h3>
-                      {isToday && (
-                        <Badge variant="default" className="text-xs">
+                      {isToday && <Badge variant="default" className="text-xs">
                           Hoy
-                        </Badge>
-                      )}
+                        </Badge>}
                     </div>
                     <Badge variant="secondary" className="ml-2">
                       {dayEvents.length} {dayEvents.length === 1 ? "cita" : "citas"}
@@ -468,10 +419,7 @@ export const CalendarCRM = () => {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pt-4 pb-6">
-                  {dayEvents.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic text-center py-8">Sin citas programadas</p>
-                  ) : (
-                    <div className="space-y-1">
+                  {dayEvents.length === 0 ? <p className="text-sm text-muted-foreground italic text-center py-8">Sin citas programadas</p> : <div className="space-y-1">
                       {/* Header */}
                       <div className="grid grid-cols-[80px_1fr_1fr] gap-3 pb-2 border-b mb-3">
                         <div className="text-xs font-semibold text-muted-foreground">HORA</div>
@@ -486,29 +434,19 @@ export const CalendarCRM = () => {
                       </div>
 
                       {/* Timeline */}
-                      {Object.entries(groupEventsByHour(dayEvents, day)).map(([hour, { cris, desi }]) => {
-                        if (cris.length === 0 && desi.length === 0) return null;
-                        
-                        return (
-                          <div key={hour} className="grid grid-cols-[80px_1fr_1fr] gap-3 items-start py-2 border-b border-border/50">
+                      {Object.entries(groupEventsByHour(dayEvents, day)).map(([hour, {
+                cris,
+                desi
+              }]) => {
+                if (cris.length === 0 && desi.length === 0) return null;
+                return <div key={hour} className="grid grid-cols-[80px_1fr_1fr] gap-3 items-start py-2 border-b border-border/50">
                             <div className="text-sm font-medium text-muted-foreground pt-1">{hour}</div>
                             
                             {/* Cris column */}
                             <div className="space-y-2">
-                              {cris.map((event) => (
-                                <div
-                                  key={event.id}
-                                  className={`group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-sm ${
-                                    event.completed ? "opacity-50" : ""
-                                  }`}
-                                >
+                              {cris.map(event => <div key={event.id} className={`group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}>
                                   <div className="flex items-start gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={event.completed || false}
-                                      onChange={() => handleToggleCompleted(event)}
-                                      className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
-                                    />
+                                    <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0" />
                                      <div className="flex-1 min-w-0">
                                        <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
                                          {event.summary}
@@ -518,47 +456,25 @@ export const CalendarCRM = () => {
                                        </p>
                                      </div>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 w-6 p-0"
-                                        onClick={() => {
-                                          setSelectedEvent(event);
-                                          setIsEditDialogOpen(true);
-                                        }}
-                                      >
+                                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => {
+                            setSelectedEvent(event);
+                            setIsEditDialogOpen(true);
+                          }}>
                                         <Edit2 className="h-3 w-3" />
                                       </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                        onClick={() => handleDeleteEvent(event)}
-                                      >
+                                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteEvent(event)}>
                                         <Trash2 className="h-3 w-3" />
                                       </Button>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
+                                </div>)}
                             </div>
                             
                             {/* Desi column */}
                             <div className="space-y-2">
-                              {desi.map((event) => (
-                                <div
-                                  key={event.id}
-                                  className={`group relative bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-sm ${
-                                    event.completed ? "opacity-50" : ""
-                                  }`}
-                                >
+                              {desi.map(event => <div key={event.id} className={`group relative bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}>
                                   <div className="flex items-start gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={event.completed || false}
-                                      onChange={() => handleToggleCompleted(event)}
-                                      className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
-                                    />
+                                    <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0" />
                                      <div className="flex-1 min-w-0">
                                        <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
                                          {event.summary}
@@ -568,41 +484,26 @@ export const CalendarCRM = () => {
                                        </p>
                                      </div>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 w-6 p-0"
-                                        onClick={() => {
-                                          setSelectedEvent(event);
-                                          setIsEditDialogOpen(true);
-                                        }}
-                                      >
+                                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => {
+                            setSelectedEvent(event);
+                            setIsEditDialogOpen(true);
+                          }}>
                                         <Edit2 className="h-3 w-3" />
                                       </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                        onClick={() => handleDeleteEvent(event)}
-                                      >
+                                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteEvent(event)}>
                                         <Trash2 className="h-3 w-3" />
                                       </Button>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
+                                </div>)}
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          </div>;
+              })}
+                    </div>}
                 </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
-      )}
+              </AccordionItem>;
+      })}
+        </Accordion>}
 
       {/* Create Event Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -611,16 +512,12 @@ export const CalendarCRM = () => {
             <DialogTitle>Nueva Cita</DialogTitle>
             <DialogDescription>Crea una cita siguiendo los pasos</DialogDescription>
           </DialogHeader>
-          <AdminBookingFlow
-            onComplete={handleBookingComplete}
-            onCancel={() => setIsCreateDialogOpen(false)}
-          />
+          <AdminBookingFlow onComplete={handleBookingComplete} onCancel={() => setIsCreateDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
       {/* Edit Event Dialog */}
-      {selectedEvent && (
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      {selectedEvent && <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Editar Cita</DialogTitle>
@@ -629,81 +526,63 @@ export const CalendarCRM = () => {
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-summary">Título</Label>
-                <Input
-                  id="edit-summary"
-                  value={selectedEvent.summary}
-                  onChange={(e) => setSelectedEvent({ ...selectedEvent, summary: e.target.value })}
-                />
+                <Input id="edit-summary" value={selectedEvent.summary} onChange={e => setSelectedEvent({
+              ...selectedEvent,
+              summary: e.target.value
+            })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-description">Descripción</Label>
-                <Textarea
-                  id="edit-description"
-                  value={selectedEvent.description || ""}
-                  onChange={(e) => setSelectedEvent({ ...selectedEvent, description: e.target.value })}
-                  rows={3}
-                />
+                <Textarea id="edit-description" value={selectedEvent.description || ""} onChange={e => setSelectedEvent({
+              ...selectedEvent,
+              description: e.target.value
+            })} rows={3} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-date">Fecha</Label>
-                <Input
-                  id="edit-date"
-                  type="date"
-                  value={safeFormatDateTime(selectedEvent.start?.dateTime, "yyyy-MM-dd")}
-                  onChange={(e) => {
-                    const newDate = e.target.value;
-                    const startTime = safeFormatDateTime(selectedEvent.start?.dateTime, "HH:mm");
-                    const endTime = safeFormatDateTime(selectedEvent.end?.dateTime, "HH:mm");
-                    setSelectedEvent({
-                      ...selectedEvent,
-                      start: {
-                        ...selectedEvent.start,
-                        dateTime: `${newDate}T${startTime}:00`,
-                      },
-                      end: {
-                        ...selectedEvent.end,
-                        dateTime: `${newDate}T${endTime}:00`,
-                      },
-                    });
-                  }}
-                />
+                <Input id="edit-date" type="date" value={safeFormatDateTime(selectedEvent.start?.dateTime, "yyyy-MM-dd")} onChange={e => {
+              const newDate = e.target.value;
+              const startTime = safeFormatDateTime(selectedEvent.start?.dateTime, "HH:mm");
+              const endTime = safeFormatDateTime(selectedEvent.end?.dateTime, "HH:mm");
+              setSelectedEvent({
+                ...selectedEvent,
+                start: {
+                  ...selectedEvent.start,
+                  dateTime: `${newDate}T${startTime}:00`
+                },
+                end: {
+                  ...selectedEvent.end,
+                  dateTime: `${newDate}T${endTime}:00`
+                }
+              });
+            }} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-startTime">Hora inicio</Label>
-                  <Input
-                    id="edit-startTime"
-                    type="time"
-                    value={safeFormatDateTime(selectedEvent.start?.dateTime, "HH:mm")}
-                    onChange={(e) => {
-                      const date = safeFormatDateTime(selectedEvent.start?.dateTime, "yyyy-MM-dd");
-                      setSelectedEvent({
-                        ...selectedEvent,
-                        start: {
-                          ...selectedEvent.start,
-                          dateTime: `${date}T${e.target.value}:00`,
-                        },
-                      });
-                    }}
-                  />
+                  <Input id="edit-startTime" type="time" value={safeFormatDateTime(selectedEvent.start?.dateTime, "HH:mm")} onChange={e => {
+                const date = safeFormatDateTime(selectedEvent.start?.dateTime, "yyyy-MM-dd");
+                setSelectedEvent({
+                  ...selectedEvent,
+                  start: {
+                    ...selectedEvent.start,
+                    dateTime: `${date}T${e.target.value}:00`
+                  }
+                });
+              }} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-endTime">Hora fin</Label>
-                  <Input
-                    id="edit-endTime"
-                    type="time"
-                    value={safeFormatDateTime(selectedEvent.end?.dateTime, "HH:mm")}
-                    onChange={(e) => {
-                      const date = safeFormatDateTime(selectedEvent.end?.dateTime, "yyyy-MM-dd");
-                      setSelectedEvent({
-                        ...selectedEvent,
-                        end: {
-                          ...selectedEvent.end,
-                          dateTime: `${date}T${e.target.value}:00`,
-                        },
-                      });
-                    }}
-                  />
+                  <Input id="edit-endTime" type="time" value={safeFormatDateTime(selectedEvent.end?.dateTime, "HH:mm")} onChange={e => {
+                const date = safeFormatDateTime(selectedEvent.end?.dateTime, "yyyy-MM-dd");
+                setSelectedEvent({
+                  ...selectedEvent,
+                  end: {
+                    ...selectedEvent.end,
+                    dateTime: `${date}T${e.target.value}:00`
+                  }
+                });
+              }} />
                 </div>
               </div>
             </div>
@@ -716,8 +595,7 @@ export const CalendarCRM = () => {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
-      )}
+        </Dialog>}
 
       {/* Block Period Dialog */}
       <Dialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
@@ -770,75 +648,56 @@ export const CalendarCRM = () => {
               <Label>Fecha de inicio</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !blockStartDate && "text-muted-foreground"
-                    )}
-                  >
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !blockStartDate && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {blockStartDate ? format(blockStartDate, "PPP", { locale: es }) : "Selecciona una fecha"}
+                    {blockStartDate ? format(blockStartDate, "PPP", {
+                    locale: es
+                  }) : "Selecciona una fecha"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={blockStartDate}
-                    onSelect={setBlockStartDate}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
+                  <Calendar mode="single" selected={blockStartDate} onSelect={setBlockStartDate} initialFocus className="pointer-events-auto" />
                 </PopoverContent>
               </Popover>
             </div>
 
-            {blockPeriod === "day" && (
-              <div className="space-y-2">
+            {blockPeriod === "day" && <div className="space-y-2">
                 <Label>Fecha de fin (opcional)</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !blockEndDate && "text-muted-foreground"
-                      )}
-                    >
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !blockEndDate && "text-muted-foreground")}>
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {blockEndDate ? format(blockEndDate, "PPP", { locale: es }) : "Mismo día que inicio"}
+                      {blockEndDate ? format(blockEndDate, "PPP", {
+                    locale: es
+                  }) : "Mismo día que inicio"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={blockEndDate}
-                      onSelect={setBlockEndDate}
-                      disabled={(date) => blockStartDate ? date < blockStartDate : false}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
+                    <Calendar mode="single" selected={blockEndDate} onSelect={setBlockEndDate} disabled={date => blockStartDate ? date < blockStartDate : false} initialFocus className="pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
-              </div>
-            )}
+              </div>}
 
-            {blockStartDate && (
-              <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
-                {blockPeriod === "day" && !blockEndDate && (
-                  <p>Se bloqueará el día: {format(blockStartDate, "PPP", { locale: es })}</p>
-                )}
-                {blockPeriod === "day" && blockEndDate && (
-                  <p>Se bloqueará desde {format(blockStartDate, "PPP", { locale: es })} hasta {format(blockEndDate, "PPP", { locale: es })}</p>
-                )}
-                {blockPeriod === "week" && (
-                  <p>Se bloqueará la semana del {format(blockStartDate, "PPP", { locale: es })} al {format(addWeeks(blockStartDate, 1), "PPP", { locale: es })}</p>
-                )}
-                {blockPeriod === "month" && (
-                  <p>Se bloqueará el mes del {format(blockStartDate, "PPP", { locale: es })} al {format(addMonths(blockStartDate, 1), "PPP", { locale: es })}</p>
-                )}
-              </div>
-            )}
+            {blockStartDate && <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                {blockPeriod === "day" && !blockEndDate && <p>Se bloqueará el día: {format(blockStartDate, "PPP", {
+                locale: es
+              })}</p>}
+                {blockPeriod === "day" && blockEndDate && <p>Se bloqueará desde {format(blockStartDate, "PPP", {
+                locale: es
+              })} hasta {format(blockEndDate, "PPP", {
+                locale: es
+              })}</p>}
+                {blockPeriod === "week" && <p>Se bloqueará la semana del {format(blockStartDate, "PPP", {
+                locale: es
+              })} al {format(addWeeks(blockStartDate, 1), "PPP", {
+                locale: es
+              })}</p>}
+                {blockPeriod === "month" && <p>Se bloqueará el mes del {format(blockStartDate, "PPP", {
+                locale: es
+              })} al {format(addMonths(blockStartDate, 1), "PPP", {
+                locale: es
+              })}</p>}
+              </div>}
           </div>
 
           <DialogFooter>
@@ -851,6 +710,5 @@ export const CalendarCRM = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
