@@ -433,33 +433,57 @@ export const CalendarCRM = () => {
                         </div>
                       </div>
 
-                      {/* Current time indicator for today */}
-                      {isToday && (() => {
-                        const now = new Date();
-                        const currentHour = now.getHours();
-                        const currentMinutes = now.getMinutes();
-                        const isSaturday = day.getDay() === 6;
-                        const startHour = isSaturday ? 8 : 9;
-                        
-                        // Only show if within business hours (startHour to 21:00)
-                        if (currentHour >= startHour && currentHour <= 21) {
-                          // Calculate position: each hour block is approximately 52px (py-2 + border)
-                          const hoursFromStart = currentHour - startHour;
-                          const minuteOffset = (currentMinutes / 60) * 52; // 52px per hour
-                          const topPosition = 100 + (hoursFromStart * 52) + minuteOffset; // 100px for header
-                          
-                          return (
-                            <div 
-                              className="absolute left-0 right-0 z-10 flex items-center"
-                              style={{ top: `${topPosition}px` }}
-                            >
-                              <div className="w-20 text-xs font-bold text-primary pr-2 text-right">
-                                {format(now, "HH:mm")}
-                              </div>
-                              <div className="flex-1 h-0.5 bg-primary relative">
-                                <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-                              </div>
-                            </div>
+                      import { useState, useEffect } from 'react'; // ¡No olvides importar esto!
+import { format } from 'date-fns';
+
+// ... dentro de tu componente
+
+{isToday && (() => {
+  // 1. Usamos useState para guardar la hora actual en el estado del componente.
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // 2. Usamos useEffect para actualizar la hora cada minuto.
+  useEffect(() => {
+    // Se ejecuta cada 60 segundos para actualizar el estado 'currentTime'.
+    const timerId = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // 60000 ms = 1 minuto
+
+    // Función de limpieza: se ejecuta cuando el componente se desmonta.
+    // Es crucial para evitar fugas de memoria.
+    return () => clearInterval(timerId);
+  }, []); // El array vacío [] asegura que el efecto se ejecute solo una vez.
+
+  const currentHour = currentTime.getHours();
+  const currentMinutes = currentTime.getMinutes();
+  const isSaturday = day.getDay() === 6;
+  const startHour = isSaturday ? 8 : 9;
+
+  // Solo se muestra si está dentro del horario laboral
+  if (currentHour >= startHour && currentHour <= 19) {
+    const hoursFromStart = currentHour - startHour;
+    const minuteOffset = (currentMinutes / 60) * 52; // 52px por hora
+    const topPosition = 100 + (hoursFromStart * 52) + minuteOffset; // 100px para la cabecera
+
+    return (
+      <div 
+        // 3. Añadimos la clase de opacidad de Tailwind CSS.
+        className="absolute left-0 right-0 z-10 flex items-center opacity-70"
+        style={{ top: `${topPosition}px` }}
+      >
+        <div className="w-20 text-xs font-bold text-primary pr-2 text-right">
+          {format(currentTime, "HH:mm")}
+        </div>
+        <div className="flex-1 h-0.5 bg-primary relative">
+          <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  // Si no está en horario, no renderiza nada.
+  return null;
+})()}
                           );
                         }
                         return null;
