@@ -616,14 +616,14 @@ export const CalendarCRM = () => {
                         {/* Contenedor de horas y citas */}
                         <div className="grid grid-cols-[80px_1fr_1fr] gap-3">
                           {/* Columna de horas */}
-                          <div className="relative" style={{ height: "660px" }}>
+                          <div className="relative" style={{ height: "1440px" }}>
                             {Array.from({ length: 13 }, (_, i) => {
                               const hour = 8 + i; // De 8:00 a 20:00
                               return (
                                 <div
                                   key={hour}
                                   className="absolute text-xs font-medium text-muted-foreground"
-                                  style={{ top: `${i * 60}px` }}
+                                  style={{ top: `${i * 120}px` }}
                                 >
                                   {String(hour).padStart(2, "0")}:00
                                 </div>
@@ -632,13 +632,13 @@ export const CalendarCRM = () => {
                           </div>
 
                           {/* Columna Cris */}
-                          <div className="relative border-l border-border/30" style={{ height: "660px" }}>
+                          <div className="relative border-l border-border/30" style={{ height: "1440px" }}>
                             {/* Líneas de hora */}
                             {Array.from({ length: 13 }, (_, i) => (
                               <div
                                 key={i}
                                 className="absolute left-0 right-0 border-t border-border/20"
-                                style={{ top: `${i * 60}px` }}
+                                style={{ top: `${i * 120}px` }}
                               />
                             ))}
 
@@ -653,9 +653,9 @@ export const CalendarCRM = () => {
                                 const startMinutes = (start.getHours() - 8) * 60 + start.getMinutes();
                                 const durationMinutes = differenceInMinutes(end, start);
 
-                                // 60px por hora
-                                const top = startMinutes;
-                                const height = Math.max(20, durationMinutes);
+                                // 2px por minuto = 120px por hora
+                                const top = startMinutes * 2;
+                                const height = Math.max(30, durationMinutes * 2);
 
                                 return (
                                   <div
@@ -666,7 +666,7 @@ export const CalendarCRM = () => {
                                     style={{
                                       top: `${top}px`,
                                       height: `${height}px`,
-                                      minHeight: "20px",
+                                      minHeight: "30px",
                                     }}
                                   >
                                     <div className="flex flex-col h-full overflow-hidden">
@@ -684,7 +684,7 @@ export const CalendarCRM = () => {
                                           {event.summary}
                                         </p>
                                       </div>
-                                      {height > 30 && (
+                                      {height > 50 && (
                                         <p className="text-[10px] text-muted-foreground mt-auto">
                                           {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
                                           {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
@@ -722,13 +722,13 @@ export const CalendarCRM = () => {
                           </div>
 
                           {/* Columna Desi */}
-                          <div className="relative border-l border-border/30" style={{ height: "660px" }}>
+                          <div className="relative border-l border-border/30" style={{ height: "1440px" }}>
                             {/* Líneas de hora */}
                             {Array.from({ length: 13 }, (_, i) => (
                               <div
                                 key={i}
                                 className="absolute left-0 right-0 border-t border-border/20"
-                                style={{ top: `${i * 60}px` }}
+                                style={{ top: `${i * 120}px` }}
                               />
                             ))}
 
@@ -743,9 +743,9 @@ export const CalendarCRM = () => {
                                 const startMinutes = (start.getHours() - 8) * 60 + start.getMinutes();
                                 const durationMinutes = differenceInMinutes(end, start);
 
-                                // 60px por hora
-                                const top = startMinutes;
-                                const height = Math.max(20, durationMinutes);
+                                // 2px por minuto = 120px por hora
+                                const top = startMinutes * 2;
+                                const height = Math.max(30, durationMinutes * 2);
 
                                 return (
                                   <div
@@ -756,7 +756,7 @@ export const CalendarCRM = () => {
                                     style={{
                                       top: `${top}px`,
                                       height: `${height}px`,
-                                      minHeight: "20px",
+                                      minHeight: "30px",
                                     }}
                                   >
                                     <div className="flex flex-col h-full overflow-hidden">
@@ -774,7 +774,7 @@ export const CalendarCRM = () => {
                                           {event.summary}
                                         </p>
                                       </div>
-                                      {height > 30 && (
+                                      {height > 50 && (
                                         <p className="text-[10px] text-muted-foreground mt-auto">
                                           {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
                                           {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
