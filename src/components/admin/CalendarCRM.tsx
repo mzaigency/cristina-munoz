@@ -775,15 +775,14 @@ export const CalendarCRM = () => {
                                   const eventsWithPosition = detectOverlaps(crisEvents);
 
                                   return eventsWithPosition.map(({ event, top, height, column }) => {
-                                    // Calcular posición horizontal según la columna
-                                    const leftPosition = column === 0 ? "4px" : "50%";
-                                    const widthPercent =
-                                      column === 0 &&
-                                      eventsWithPosition.some(
-                                        (e) => e.column === 1 && e.top < top + height && e.bottom > top,
-                                      )
-                                        ? "48%"
-                                        : "calc(100% - 8px)";
+                                    // Verificar si hay solapamiento con este evento
+                                    const hasOverlap = eventsWithPosition.some(
+                                      (e) => e.event.id !== event.id && e.top < top + height && e.bottom > top,
+                                    );
+
+                                    // Si hay solapamiento, ambas citas juntas ocupan el ancho normal
+                                    const leftPosition = column === 0 ? "4px" : "calc(50% + 2px)";
+                                    const widthPercent = hasOverlap ? "calc(50% - 6px)" : "calc(100% - 8px)";
 
                                     return (
                                       <div
@@ -809,17 +808,15 @@ export const CalendarCRM = () => {
                                               onClick={(e) => e.stopPropagation()}
                                             />
                                             <p
-                                              className={`text-xs font-medium leading-tight flex-1 ${event.completed ? "line-through" : ""}`}
+                                              className={`text-sm font-medium leading-tight flex-1 ${event.completed ? "line-through" : ""}`}
                                             >
                                               {event.summary}
                                             </p>
                                           </div>
-                                          {height > 80 && (
-                                            <p className="text-[10px] text-muted-foreground mt-auto">
-                                              {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                              {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                            </p>
-                                          )}
+                                          <p className="text-xs text-muted-foreground mt-auto">
+                                            {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                            {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                          </p>
                                           <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Button
                                               size="sm"
@@ -891,15 +888,14 @@ export const CalendarCRM = () => {
                                   const eventsWithPosition = detectOverlaps(desiEvents);
 
                                   return eventsWithPosition.map(({ event, top, height, column }) => {
-                                    // Calcular posición horizontal según la columna
-                                    const leftPosition = column === 0 ? "4px" : "50%";
-                                    const widthPercent =
-                                      column === 0 &&
-                                      eventsWithPosition.some(
-                                        (e) => e.column === 1 && e.top < top + height && e.bottom > top,
-                                      )
-                                        ? "48%"
-                                        : "calc(100% - 8px)";
+                                    // Verificar si hay solapamiento con este evento
+                                    const hasOverlap = eventsWithPosition.some(
+                                      (e) => e.event.id !== event.id && e.top < top + height && e.bottom > top,
+                                    );
+
+                                    // Si hay solapamiento, ambas citas juntas ocupan el ancho normal
+                                    const leftPosition = column === 0 ? "4px" : "calc(50% + 2px)";
+                                    const widthPercent = hasOverlap ? "calc(50% - 6px)" : "calc(100% - 8px)";
 
                                     return (
                                       <div
@@ -925,17 +921,15 @@ export const CalendarCRM = () => {
                                               onClick={(e) => e.stopPropagation()}
                                             />
                                             <p
-                                              className={`text-xs font-medium leading-tight flex-1 ${event.completed ? "line-through" : ""}`}
+                                              className={`text-sm font-medium leading-tight flex-1 ${event.completed ? "line-through" : ""}`}
                                             >
                                               {event.summary}
                                             </p>
                                           </div>
-                                          {height > 80 && (
-                                            <p className="text-[10px] text-muted-foreground mt-auto">
-                                              {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                              {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                            </p>
-                                          )}
+                                          <p className="text-xs text-muted-foreground mt-auto">
+                                            {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                            {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                          </p>
                                           <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Button
                                               size="sm"
