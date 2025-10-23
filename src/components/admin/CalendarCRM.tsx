@@ -386,7 +386,7 @@ export const CalendarCRM = () => {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={weekStart} onSelect={handleJumpToDate} initialFocus className="pointer-events-auto" />
+            <Calendar mode="single" selected={weekStart} onSelect={handleJumpToDate} initialFocus className="pointer-events-auto" weekStartsOn={1} />
           </PopoverContent>
         </Popover>
       </div>
@@ -419,7 +419,7 @@ export const CalendarCRM = () => {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pt-4 pb-6">
-                  {dayEvents.length === 0 ? <p className="text-sm text-muted-foreground italic text-center py-8">Sin citas programadas</p> : <div className="space-y-1">
+                  {dayEvents.length === 0 ? <p className="text-sm text-muted-foreground italic text-center py-8">Sin citas programadas</p> : <div className="space-y-1 relative">
                       {/* Header */}
                       <div className="grid grid-cols-[80px_1fr_1fr] gap-3 pb-2 border-b mb-3">
                         <div className="text-xs font-semibold text-muted-foreground">HORA</div>
@@ -432,6 +432,38 @@ export const CalendarCRM = () => {
                           <span className="text-xs font-semibold">DESI</span>
                         </div>
                       </div>
+
+                      {/* Current time indicator for today */}
+                      {isToday && (() => {
+                        const now = new Date();
+                        const currentHour = now.getHours();
+                        const currentMinutes = now.getMinutes();
+                        const isSaturday = day.getDay() === 6;
+                        const startHour = isSaturday ? 8 : 9;
+                        
+                        // Only show if within business hours (startHour to 21:00)
+                        if (currentHour >= startHour && currentHour <= 21) {
+                          // Calculate position: each hour block is approximately 52px (py-2 + border)
+                          const hoursFromStart = currentHour - startHour;
+                          const minuteOffset = (currentMinutes / 60) * 52; // 52px per hour
+                          const topPosition = 100 + (hoursFromStart * 52) + minuteOffset; // 100px for header
+                          
+                          return (
+                            <div 
+                              className="absolute left-0 right-0 z-10 flex items-center"
+                              style={{ top: `${topPosition}px` }}
+                            >
+                              <div className="w-20 text-xs font-bold text-primary pr-2 text-right">
+                                {format(now, "HH:mm")}
+                              </div>
+                              <div className="flex-1 h-0.5 bg-primary relative">
+                                <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
 
                       {/* Timeline */}
                       {Object.entries(groupEventsByHour(dayEvents, day)).map(([hour, {
@@ -656,7 +688,7 @@ export const CalendarCRM = () => {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={blockStartDate} onSelect={setBlockStartDate} initialFocus className="pointer-events-auto" />
+                  <Calendar mode="single" selected={blockStartDate} onSelect={setBlockStartDate} initialFocus className="pointer-events-auto" weekStartsOn={1} />
                 </PopoverContent>
               </Popover>
             </div>
@@ -673,7 +705,7 @@ export const CalendarCRM = () => {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={blockEndDate} onSelect={setBlockEndDate} disabled={date => blockStartDate ? date < blockStartDate : false} initialFocus className="pointer-events-auto" />
+                    <Calendar mode="single" selected={blockEndDate} onSelect={setBlockEndDate} disabled={date => blockStartDate ? date < blockStartDate : false} initialFocus className="pointer-events-auto" weekStartsOn={1} />
                   </PopoverContent>
                 </Popover>
               </div>}
