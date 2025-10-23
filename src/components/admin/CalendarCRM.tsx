@@ -612,206 +612,332 @@ export const CalendarCRM = () => {
                         })()}
 
                       {/* Timeline continuo */}
-                      <div className="relative">
-                        {/* Contenedor de horas y citas */}
-                        <div className="grid grid-cols-[80px_1fr_1fr] gap-3">
-                          {/* Columna de horas */}
-                          <div className="relative" style={{ height: "1440px" }}>
-                            {Array.from({ length: 13 }, (_, i) => {
-                              const hour = 8 + i; // De 8:00 a 20:00
-                              return (
-                                <div
-                                  key={hour}
-                                  className="absolute text-xs font-medium text-muted-foreground"
-                                  style={{ top: `${i * 120}px` }}
-                                >
-                                  {String(hour).padStart(2, "0")}:00
-                                </div>
-                              );
-                            })}
-                          </div>
+                      {(() => {
+                        const dayOfWeek = day.getDay(); // 0=Domingo, 1=Lunes, 2=Martes, ..., 6=Sábado
+                        const isSaturday = dayOfWeek === 6;
+                        const isWeekday = dayOfWeek >= 2 && dayOfWeek <= 5; // Martes a Viernes
 
-                          {/* Columna Cris */}
-                          <div className="relative border-l border-border/30" style={{ height: "1440px" }}>
-                            {/* Líneas de hora */}
-                            {Array.from({ length: 13 }, (_, i) => (
-                              <div
-                                key={i}
-                                className="absolute left-0 right-0 border-t border-border/20"
-                                style={{ top: `${i * 120}px` }}
-                              />
-                            ))}
+                        // Horarios según el día
+                        let timeSlots: Array<{ start: number; end: number; label: string }> = [];
+                        let totalHeight = 0;
 
-                            {/* Eventos de Cris */}
-                            {dayEvents
-                              .filter((e) => e.stylist === "cris" && e.start?.dateTime && e.end?.dateTime)
-                              .map((event) => {
-                                const start = new Date(event.start.dateTime);
-                                const end = new Date(event.end.dateTime);
+                        if (isSaturday) {
+                          // Sábado: 8:00 a 13:00 (5 horas = 300 minutos = 900px a 3px/min)
+                          timeSlots = [{ start: 8, end: 13, label: "Mañana" }];
+                          totalHeight = 300 * 3; // 900px
+                        } else if (isWeekday) {
+                          // Martes a Viernes: 9:00 a 12:30 y 15:00 a 19:00
+                          timeSlots = [
+                            { start: 9, end: 12.5, label: "Mañana" }, // 3.5h = 210min = 630px
+                            { start: 15, end: 19, label: "Tarde" }, // 4h = 240min = 720px
+                          ];
+                          totalHeight = (210 + 240) * 3; // 1350px
+                        } else {
+                          // Lunes y Domingo: mostrar mensaje o horario vacío
+                          return (
+                            <div className="text-center py-8 text-sm text-muted-foreground">
+                              <p className="italic">Cerrado</p>
+                            </div>
+                          );
+                        }
 
-                                // Calcular minutos desde las 8:00
-                                const startMinutes = (start.getHours() - 8) * 60 + start.getMinutes();
-                                const durationMinutes = differenceInMinutes(end, start);
+                        return (
+                          <div className="relative">
+                            {/* Contenedor de horas y citas */}
+                            <div className="grid grid-cols-[80px_1fr_1fr] gap-3">
+                              {/* Columna de horas */}
+                              <div className="relative" style={{ height: `${totalHeight}px` }}>
+                                {timeSlots.map((slot, slotIndex) => {
+                                  const slotStartMinutes =
+                                    slotIndex === 0
+                                      ? 0
+                                      : timeSlots
+                                          .slice(0, slotIndex)
+                                          .reduce((acc, s) => acc + (s.end - s.start) * 60, 0);
+                                  const slotDurationHours = slot.end - slot.start;
+                                  const hourMarks = Math.ceil(slotDurationHours);
 
-                                // 2px por minuto = 120px por hora
-                                const top = startMinutes * 2;
-                                const height = Math.max(30, durationMinutes * 2);
+                                  return (
+                                    <div key={slotIndex}>
+                                      {Array.from({ length: hourMarks + 1 }, (_, i) => {
+                                        const hour = slot.start + i;
+                                        const minutes = (hour % 1) * 60;
+                                        const hourInt = Math.floor(hour);
+                                        const displayHour = `${String(hourInt).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+                                        const topPosition = (slotStartMinutes + i * 60) * 3;
 
-                                return (
-                                  <div
-                                    key={event.id}
-                                    className={`absolute left-1 right-1 group rounded-md p-2 transition-all hover:shadow-md hover:z-20 ${
-                                      event.completed ? "opacity-50" : ""
-                                    } bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800`}
-                                    style={{
-                                      top: `${top}px`,
-                                      height: `${height}px`,
-                                      minHeight: "30px",
-                                    }}
-                                  >
-                                    <div className="flex flex-col h-full overflow-hidden">
-                                      <div className="flex items-start gap-1.5 min-h-0">
-                                        <input
-                                          type="checkbox"
-                                          checked={event.completed || false}
-                                          onChange={() => handleToggleCompleted(event)}
-                                          className="mt-0.5 w-3.5 h-3.5 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                        />
-                                        <p
-                                          className={`text-xs font-medium leading-tight flex-1 ${event.completed ? "line-through" : ""}`}
-                                        >
-                                          {event.summary}
-                                        </p>
-                                      </div>
-                                      {height > 50 && (
-                                        <p className="text-[10px] text-muted-foreground mt-auto">
-                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                        </p>
-                                      )}
-                                      <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-5 w-5 p-0"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedEvent(event);
-                                            setIsEditDialogOpen(true);
-                                          }}
-                                        >
-                                          <Edit2 className="h-2.5 w-2.5" />
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-5 w-5 p-0 text-destructive hover:text-destructive"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteEvent(event);
-                                          }}
-                                        >
-                                          <Trash2 className="h-2.5 w-2.5" />
-                                        </Button>
-                                      </div>
+                                        if (hour > slot.end) return null;
+
+                                        return (
+                                          <div
+                                            key={`${slotIndex}-${i}`}
+                                            className="absolute text-xs font-medium text-muted-foreground"
+                                            style={{ top: `${topPosition}px` }}
+                                          >
+                                            {displayHour}
+                                          </div>
+                                        );
+                                      })}
                                     </div>
-                                  </div>
-                                );
-                              })}
-                          </div>
+                                  );
+                                })}
+                              </div>
 
-                          {/* Columna Desi */}
-                          <div className="relative border-l border-border/30" style={{ height: "1440px" }}>
-                            {/* Líneas de hora */}
-                            {Array.from({ length: 13 }, (_, i) => (
+                              {/* Columna Cris */}
                               <div
-                                key={i}
-                                className="absolute left-0 right-0 border-t border-border/20"
-                                style={{ top: `${i * 120}px` }}
-                              />
-                            ))}
+                                className="relative border-l border-border/30"
+                                style={{ height: `${totalHeight}px` }}
+                              >
+                                {/* Líneas de hora */}
+                                {timeSlots.map((slot, slotIndex) => {
+                                  const slotStartMinutes =
+                                    slotIndex === 0
+                                      ? 0
+                                      : timeSlots
+                                          .slice(0, slotIndex)
+                                          .reduce((acc, s) => acc + (s.end - s.start) * 60, 0);
+                                  const slotDurationHours = slot.end - slot.start;
+                                  const hourMarks = Math.ceil(slotDurationHours);
 
-                            {/* Eventos de Desi */}
-                            {dayEvents
-                              .filter((e) => e.stylist === "desi" && e.start?.dateTime && e.end?.dateTime)
-                              .map((event) => {
-                                const start = new Date(event.start.dateTime);
-                                const end = new Date(event.end.dateTime);
+                                  return Array.from({ length: hourMarks + 1 }, (_, i) => {
+                                    const hour = slot.start + i;
+                                    if (hour > slot.end) return null;
+                                    const topPosition = (slotStartMinutes + i * 60) * 3;
 
-                                // Calcular minutos desde las 8:00
-                                const startMinutes = (start.getHours() - 8) * 60 + start.getMinutes();
-                                const durationMinutes = differenceInMinutes(end, start);
+                                    return (
+                                      <div
+                                        key={`${slotIndex}-${i}`}
+                                        className="absolute left-0 right-0 border-t border-border/20"
+                                        style={{ top: `${topPosition}px` }}
+                                      />
+                                    );
+                                  });
+                                })}
 
-                                // 2px por minuto = 120px por hora
-                                const top = startMinutes * 2;
-                                const height = Math.max(30, durationMinutes * 2);
+                                {/* Eventos de Cris */}
+                                {dayEvents
+                                  .filter((e) => e.stylist === "cris" && e.start?.dateTime && e.end?.dateTime)
+                                  .map((event) => {
+                                    const start = new Date(event.start.dateTime);
+                                    const end = new Date(event.end.dateTime);
+                                    const startHour = start.getHours() + start.getMinutes() / 60;
 
-                                return (
-                                  <div
-                                    key={event.id}
-                                    className={`absolute left-1 right-1 group rounded-md p-2 transition-all hover:shadow-md hover:z-20 ${
-                                      event.completed ? "opacity-50" : ""
-                                    } bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800`}
-                                    style={{
-                                      top: `${top}px`,
-                                      height: `${height}px`,
-                                      minHeight: "30px",
-                                    }}
-                                  >
-                                    <div className="flex flex-col h-full overflow-hidden">
-                                      <div className="flex items-start gap-1.5 min-h-0">
-                                        <input
-                                          type="checkbox"
-                                          checked={event.completed || false}
-                                          onChange={() => handleToggleCompleted(event)}
-                                          className="mt-0.5 w-3.5 h-3.5 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                        />
-                                        <p
-                                          className={`text-xs font-medium leading-tight flex-1 ${event.completed ? "line-through" : ""}`}
-                                        >
-                                          {event.summary}
-                                        </p>
+                                    // Calcular posición según la franja horaria
+                                    let topOffset = 0;
+                                    let isInWorkingHours = false;
+
+                                    for (let i = 0; i < timeSlots.length; i++) {
+                                      const slot = timeSlots[i];
+                                      if (startHour >= slot.start && startHour < slot.end) {
+                                        const minutesFromSlotStart = (startHour - slot.start) * 60;
+                                        const previousSlotsMinutes =
+                                          i === 0
+                                            ? 0
+                                            : timeSlots.slice(0, i).reduce((acc, s) => acc + (s.end - s.start) * 60, 0);
+                                        topOffset = (previousSlotsMinutes + minutesFromSlotStart) * 3;
+                                        isInWorkingHours = true;
+                                        break;
+                                      }
+                                    }
+
+                                    if (!isInWorkingHours) return null;
+
+                                    const durationMinutes = differenceInMinutes(end, start);
+                                    const height = Math.max(40, durationMinutes * 3);
+
+                                    return (
+                                      <div
+                                        key={event.id}
+                                        className={`absolute left-1 right-1 group rounded-md p-2 transition-all hover:shadow-md hover:z-20 ${
+                                          event.completed ? "opacity-50" : ""
+                                        } bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800`}
+                                        style={{
+                                          top: `${topOffset}px`,
+                                          height: `${height}px`,
+                                          minHeight: "40px",
+                                        }}
+                                      >
+                                        <div className="flex flex-col h-full overflow-hidden">
+                                          <div className="flex items-start gap-1.5 min-h-0">
+                                            <input
+                                              type="checkbox"
+                                              checked={event.completed || false}
+                                              onChange={() => handleToggleCompleted(event)}
+                                              className="mt-0.5 w-3.5 h-3.5 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
+                                              onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <p
+                                              className={`text-xs font-medium leading-tight flex-1 ${event.completed ? "line-through" : ""}`}
+                                            >
+                                              {event.summary}
+                                            </p>
+                                          </div>
+                                          {height > 60 && (
+                                            <p className="text-[10px] text-muted-foreground mt-auto">
+                                              {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                              {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                            </p>
+                                          )}
+                                          <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-5 w-5 p-0"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedEvent(event);
+                                                setIsEditDialogOpen(true);
+                                              }}
+                                            >
+                                              <Edit2 className="h-2.5 w-2.5" />
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-5 w-5 p-0 text-destructive hover:text-destructive"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteEvent(event);
+                                              }}
+                                            >
+                                              <Trash2 className="h-2.5 w-2.5" />
+                                            </Button>
+                                          </div>
+                                        </div>
                                       </div>
-                                      {height > 50 && (
-                                        <p className="text-[10px] text-muted-foreground mt-auto">
-                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                        </p>
-                                      )}
-                                      <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-5 w-5 p-0"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedEvent(event);
-                                            setIsEditDialogOpen(true);
-                                          }}
-                                        >
-                                          <Edit2 className="h-2.5 w-2.5" />
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-5 w-5 p-0 text-destructive hover:text-destructive"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteEvent(event);
-                                          }}
-                                        >
-                                          <Trash2 className="h-2.5 w-2.5" />
-                                        </Button>
+                                    );
+                                  })}
+                              </div>
+
+                              {/* Columna Desi */}
+                              <div
+                                className="relative border-l border-border/30"
+                                style={{ height: `${totalHeight}px` }}
+                              >
+                                {/* Líneas de hora */}
+                                {timeSlots.map((slot, slotIndex) => {
+                                  const slotStartMinutes =
+                                    slotIndex === 0
+                                      ? 0
+                                      : timeSlots
+                                          .slice(0, slotIndex)
+                                          .reduce((acc, s) => acc + (s.end - s.start) * 60, 0);
+                                  const slotDurationHours = slot.end - slot.start;
+                                  const hourMarks = Math.ceil(slotDurationHours);
+
+                                  return Array.from({ length: hourMarks + 1 }, (_, i) => {
+                                    const hour = slot.start + i;
+                                    if (hour > slot.end) return null;
+                                    const topPosition = (slotStartMinutes + i * 60) * 3;
+
+                                    return (
+                                      <div
+                                        key={`${slotIndex}-${i}`}
+                                        className="absolute left-0 right-0 border-t border-border/20"
+                                        style={{ top: `${topPosition}px` }}
+                                      />
+                                    );
+                                  });
+                                })}
+
+                                {/* Eventos de Desi */}
+                                {dayEvents
+                                  .filter((e) => e.stylist === "desi" && e.start?.dateTime && e.end?.dateTime)
+                                  .map((event) => {
+                                    const start = new Date(event.start.dateTime);
+                                    const end = new Date(event.end.dateTime);
+                                    const startHour = start.getHours() + start.getMinutes() / 60;
+
+                                    // Calcular posición según la franja horaria
+                                    let topOffset = 0;
+                                    let isInWorkingHours = false;
+
+                                    for (let i = 0; i < timeSlots.length; i++) {
+                                      const slot = timeSlots[i];
+                                      if (startHour >= slot.start && startHour < slot.end) {
+                                        const minutesFromSlotStart = (startHour - slot.start) * 60;
+                                        const previousSlotsMinutes =
+                                          i === 0
+                                            ? 0
+                                            : timeSlots.slice(0, i).reduce((acc, s) => acc + (s.end - s.start) * 60, 0);
+                                        topOffset = (previousSlotsMinutes + minutesFromSlotStart) * 3;
+                                        isInWorkingHours = true;
+                                        break;
+                                      }
+                                    }
+
+                                    if (!isInWorkingHours) return null;
+
+                                    const durationMinutes = differenceInMinutes(end, start);
+                                    const height = Math.max(40, durationMinutes * 3);
+
+                                    return (
+                                      <div
+                                        key={event.id}
+                                        className={`absolute left-1 right-1 group rounded-md p-2 transition-all hover:shadow-md hover:z-20 ${
+                                          event.completed ? "opacity-50" : ""
+                                        } bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800`}
+                                        style={{
+                                          top: `${topOffset}px`,
+                                          height: `${height}px`,
+                                          minHeight: "40px",
+                                        }}
+                                      >
+                                        <div className="flex flex-col h-full overflow-hidden">
+                                          <div className="flex items-start gap-1.5 min-h-0">
+                                            <input
+                                              type="checkbox"
+                                              checked={event.completed || false}
+                                              onChange={() => handleToggleCompleted(event)}
+                                              className="mt-0.5 w-3.5 h-3.5 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
+                                              onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <p
+                                              className={`text-xs font-medium leading-tight flex-1 ${event.completed ? "line-through" : ""}`}
+                                            >
+                                              {event.summary}
+                                            </p>
+                                          </div>
+                                          {height > 60 && (
+                                            <p className="text-[10px] text-muted-foreground mt-auto">
+                                              {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                              {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                            </p>
+                                          )}
+                                          <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-5 w-5 p-0"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedEvent(event);
+                                                setIsEditDialogOpen(true);
+                                              }}
+                                            >
+                                              <Edit2 className="h-2.5 w-2.5" />
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-5 w-5 p-0 text-destructive hover:text-destructive"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteEvent(event);
+                                              }}
+                                            >
+                                              <Trash2 className="h-2.5 w-2.5" />
+                                            </Button>
+                                          </div>
+                                        </div>
                                       </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                                    );
+                                  })}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </AccordionContent>
