@@ -611,192 +611,207 @@ export const CalendarCRM = () => {
                           return null;
                         })()}
 
-                      {/* Timeline */}
-                      {Object.entries(groupEventsByHour(dayEvents, day)).map(([hour, { cris, desi }]) => {
-                        if (cris.length === 0 && desi.length === 0) return null;
-                        return (
-                          <div
-                            key={hour}
-                            className="grid grid-cols-[80px_1fr_1fr] gap-3 items-start py-2 border-b border-border/50"
-                          >
-                            <div className="text-sm font-medium text-muted-foreground pt-1">{hour}</div>
-
-                            {/* Cris column */}
-                            <div className="relative h-[624px] overflow-hidden">
-                              {cris.map((event) => {
-                                if (!event.start?.dateTime || !event.end?.dateTime) return null;
-
-                                // Calcular posición y altura
-                                const start = new Date(event.start.dateTime);
-                                const end = new Date(event.end.dateTime);
-                                const dayStart = new Date(day);
-                                dayStart.setHours(9, 0, 0, 0); // Hora de inicio del día
-
-                                // Calcular minutos desde el inicio del día
-                                const startMinutes =
-                                  start.getHours() * 60 +
-                                  start.getMinutes() -
-                                  (dayStart.getHours() * 60 + dayStart.getMinutes());
-                                const endMinutes =
-                                  end.getHours() * 60 +
-                                  end.getMinutes() -
-                                  (dayStart.getHours() * 60 + dayStart.getMinutes());
-
-                                // Convertir a píxeles (cada hora son 52px)
-                                const top = Math.max(0, (startMinutes / 60) * 52);
-                                const height = Math.max(30, ((endMinutes - startMinutes) / 60) * 52);
-
-                                return (
-                                  <div
-                                    key={event.id}
-                                    className={`absolute left-0 right-2 group rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
-                                    style={{
-                                      top: `${top}px`,
-                                      height: `${height}px`,
-                                      backgroundColor: "rgba(219, 234, 254, 0.8)",
-                                      border: "1px solid rgba(191, 219, 254, 0.8)",
-                                      zIndex: 1,
-                                    }}
-                                  >
-                                    <div className="flex flex-col h-full">
-                                      <div className="flex items-center gap-2">
-                                        <input
-                                          type="checkbox"
-                                          checked={event.completed || false}
-                                          onChange={() => handleToggleCompleted(event)}
-                                          className="w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                        />
-                                        <p
-                                          className={`text-sm font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}
-                                        >
-                                          {event.summary}
-                                        </p>
-                                      </div>
-                                      <p className="text-xs text-muted-foreground mt-auto">
-                                        {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                        {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                      </p>
-                                      <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-6 w-6 p-0"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedEvent(event);
-                                            setIsEditDialogOpen(true);
-                                          }}
-                                        >
-                                          <Edit2 className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteEvent(event);
-                                          }}
-                                        >
-                                          <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-
-                            {/* Desi column */}
-                            <div className="relative h-[624px] overflow-hidden">
-                              {desi.map((event) => {
-                                if (!event.start?.dateTime || !event.end?.dateTime) return null;
-
-                                // Calcular posición y altura
-                                const start = new Date(event.start.dateTime);
-                                const end = new Date(event.end.dateTime);
-                                const dayStart = new Date(day);
-                                dayStart.setHours(9, 0, 0, 0); // Hora de inicio del día
-
-                                // Calcular minutos desde el inicio del día
-                                const startMinutes =
-                                  start.getHours() * 60 +
-                                  start.getMinutes() -
-                                  (dayStart.getHours() * 60 + dayStart.getMinutes());
-                                const endMinutes =
-                                  end.getHours() * 60 +
-                                  end.getMinutes() -
-                                  (dayStart.getHours() * 60 + dayStart.getMinutes());
-
-                                // Convertir a píxeles (cada hora son 52px)
-                                const top = Math.max(0, (startMinutes / 60) * 52);
-                                const height = Math.max(30, ((endMinutes - startMinutes) / 60) * 52);
-
-                                return (
-                                  <div
-                                    key={event.id}
-                                    className={`absolute left-0 right-2 group rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
-                                    style={{
-                                      top: `${top}px`,
-                                      height: `${height}px`,
-                                      backgroundColor: "rgba(233, 213, 255, 0.8)",
-                                      border: "1px solid rgba(216, 180, 254, 0.8)",
-                                      zIndex: 1,
-                                    }}
-                                  >
-                                    <div className="flex flex-col h-full">
-                                      <div className="flex items-center gap-2">
-                                        <input
-                                          type="checkbox"
-                                          checked={event.completed || false}
-                                          onChange={() => handleToggleCompleted(event)}
-                                          className="w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                        />
-                                        <p
-                                          className={`text-sm font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}
-                                        >
-                                          {event.summary}
-                                        </p>
-                                      </div>
-                                      <p className="text-xs text-muted-foreground mt-auto">
-                                        {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                        {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                      </p>
-                                      <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-6 w-6 p-0"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedEvent(event);
-                                            setIsEditDialogOpen(true);
-                                          }}
-                                        >
-                                          <Edit2 className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteEvent(event);
-                                          }}
-                                        >
-                                          <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                      {/* Timeline continuo */}
+                      <div className="relative">
+                        {/* Contenedor de horas y citas */}
+                        <div className="grid grid-cols-[80px_1fr_1fr] gap-3">
+                          {/* Columna de horas */}
+                          <div className="relative" style={{ height: "660px" }}>
+                            {Array.from({ length: 13 }, (_, i) => {
+                              const hour = 8 + i; // De 8:00 a 20:00
+                              return (
+                                <div
+                                  key={hour}
+                                  className="absolute text-xs font-medium text-muted-foreground"
+                                  style={{ top: `${i * 60}px` }}
+                                >
+                                  {String(hour).padStart(2, "0")}:00
+                                </div>
+                              );
+                            })}
                           </div>
-                        );
-                      })}
+
+                          {/* Columna Cris */}
+                          <div className="relative border-l border-border/30" style={{ height: "660px" }}>
+                            {/* Líneas de hora */}
+                            {Array.from({ length: 13 }, (_, i) => (
+                              <div
+                                key={i}
+                                className="absolute left-0 right-0 border-t border-border/20"
+                                style={{ top: `${i * 60}px` }}
+                              />
+                            ))}
+
+                            {/* Eventos de Cris */}
+                            {dayEvents
+                              .filter((e) => e.stylist === "cris" && e.start?.dateTime && e.end?.dateTime)
+                              .map((event) => {
+                                const start = new Date(event.start.dateTime);
+                                const end = new Date(event.end.dateTime);
+
+                                // Calcular minutos desde las 8:00
+                                const startMinutes = (start.getHours() - 8) * 60 + start.getMinutes();
+                                const durationMinutes = differenceInMinutes(end, start);
+
+                                // 60px por hora
+                                const top = startMinutes;
+                                const height = Math.max(20, durationMinutes);
+
+                                return (
+                                  <div
+                                    key={event.id}
+                                    className={`absolute left-1 right-1 group rounded-md p-2 transition-all hover:shadow-md hover:z-20 ${
+                                      event.completed ? "opacity-50" : ""
+                                    } bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800`}
+                                    style={{
+                                      top: `${top}px`,
+                                      height: `${height}px`,
+                                      minHeight: "20px",
+                                    }}
+                                  >
+                                    <div className="flex flex-col h-full overflow-hidden">
+                                      <div className="flex items-start gap-1.5 min-h-0">
+                                        <input
+                                          type="checkbox"
+                                          checked={event.completed || false}
+                                          onChange={() => handleToggleCompleted(event)}
+                                          className="mt-0.5 w-3.5 h-3.5 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
+                                          onClick={(e) => e.stopPropagation()}
+                                        />
+                                        <p
+                                          className={`text-xs font-medium leading-tight flex-1 ${event.completed ? "line-through" : ""}`}
+                                        >
+                                          {event.summary}
+                                        </p>
+                                      </div>
+                                      {height > 30 && (
+                                        <p className="text-[10px] text-muted-foreground mt-auto">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        </p>
+                                      )}
+                                      <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 w-5 p-0"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedEvent(event);
+                                            setIsEditDialogOpen(true);
+                                          }}
+                                        >
+                                          <Edit2 className="h-2.5 w-2.5" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 w-5 p-0 text-destructive hover:text-destructive"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteEvent(event);
+                                          }}
+                                        >
+                                          <Trash2 className="h-2.5 w-2.5" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                          </div>
+
+                          {/* Columna Desi */}
+                          <div className="relative border-l border-border/30" style={{ height: "660px" }}>
+                            {/* Líneas de hora */}
+                            {Array.from({ length: 13 }, (_, i) => (
+                              <div
+                                key={i}
+                                className="absolute left-0 right-0 border-t border-border/20"
+                                style={{ top: `${i * 60}px` }}
+                              />
+                            ))}
+
+                            {/* Eventos de Desi */}
+                            {dayEvents
+                              .filter((e) => e.stylist === "desi" && e.start?.dateTime && e.end?.dateTime)
+                              .map((event) => {
+                                const start = new Date(event.start.dateTime);
+                                const end = new Date(event.end.dateTime);
+
+                                // Calcular minutos desde las 8:00
+                                const startMinutes = (start.getHours() - 8) * 60 + start.getMinutes();
+                                const durationMinutes = differenceInMinutes(end, start);
+
+                                // 60px por hora
+                                const top = startMinutes;
+                                const height = Math.max(20, durationMinutes);
+
+                                return (
+                                  <div
+                                    key={event.id}
+                                    className={`absolute left-1 right-1 group rounded-md p-2 transition-all hover:shadow-md hover:z-20 ${
+                                      event.completed ? "opacity-50" : ""
+                                    } bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800`}
+                                    style={{
+                                      top: `${top}px`,
+                                      height: `${height}px`,
+                                      minHeight: "20px",
+                                    }}
+                                  >
+                                    <div className="flex flex-col h-full overflow-hidden">
+                                      <div className="flex items-start gap-1.5 min-h-0">
+                                        <input
+                                          type="checkbox"
+                                          checked={event.completed || false}
+                                          onChange={() => handleToggleCompleted(event)}
+                                          className="mt-0.5 w-3.5 h-3.5 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
+                                          onClick={(e) => e.stopPropagation()}
+                                        />
+                                        <p
+                                          className={`text-xs font-medium leading-tight flex-1 ${event.completed ? "line-through" : ""}`}
+                                        >
+                                          {event.summary}
+                                        </p>
+                                      </div>
+                                      {height > 30 && (
+                                        <p className="text-[10px] text-muted-foreground mt-auto">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        </p>
+                                      )}
+                                      <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 w-5 p-0"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedEvent(event);
+                                            setIsEditDialogOpen(true);
+                                          }}
+                                        >
+                                          <Edit2 className="h-2.5 w-2.5" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 w-5 p-0 text-destructive hover:text-destructive"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteEvent(event);
+                                          }}
+                                        >
+                                          <Trash2 className="h-2.5 w-2.5" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </AccordionContent>
