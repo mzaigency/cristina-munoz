@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, addMonths, differenceInMinutes } from "date-fns";
+import { es } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,13 +16,12 @@ import {
 } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import React from 'react';
-import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
 interface CalendarEvent {
@@ -52,83 +53,6 @@ export const CalendarCRM = () => {
     }),
   );
   const [currentTime, setCurrentTime] = useState(new Date());
-
-  // Función para renderizar un evento con altura proporcional
-  const renderEvent = (event: CalendarEvent, type: 'cris' | 'desi') => {
-    if (!event.start?.dateTime || !event.end?.dateTime) return null;
-    
-    const start = new Date(event.start.dateTime);
-    const end = new Date(event.end.dateTime);
-    const dayStart = new Date(start);
-    dayStart.setHours(9, 0, 0, 0); // Hora de inicio del día
-    
-    // Calcular minutos desde el inicio del día
-    const startMinutes = (start.getHours() * 60 + start.getMinutes()) - (dayStart.getHours() * 60 + dayStart.getMinutes());
-    const durationMinutes = differenceInMinutes(end, start);
-    
-    // Convertir a píxeles (cada hora son 60px)
-    const top = Math.max(0, (startMinutes / 60) * 60);
-    const height = Math.max(30, (durationMinutes / 60) * 60);
-    
-    const bgColor = type === 'cris' 
-      ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800' 
-      : 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800';
-    
-    return (
-      <div
-        key={event.id}
-        className={`absolute left-0 right-2 group rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? 'opacity-50' : ''} ${bgColor} border`}
-        style={{
-          top: `${top}px`,
-          height: `${height}px`,
-          zIndex: 1,
-        }}
-      >
-        <div className="flex flex-col h-full">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={event.completed || false}
-              onChange={() => handleToggleCompleted(event)}
-              className={`w-4 h-4 rounded border cursor-pointer ${type === 'cris' ? 'accent-blue-500' : 'accent-purple-500'}`}
-              onClick={(e) => e.stopPropagation()}
-            />
-            <p className={`text-sm font-medium leading-tight truncate ${event.completed ? 'line-through' : ''}`}>
-              {event.summary}
-            </p>
-          </div>
-          <p className="text-xs text-muted-foreground mt-auto">
-            {safeFormatDateTime(event.start?.dateTime, 'HH:mm')} - {safeFormatDateTime(event.end?.dateTime, 'HH:mm')}
-          </p>
-          <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedEvent(event);
-                setIsEditDialogOpen(true);
-              }}
-            >
-              <Edit2 className="h-3 w-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteEvent(event);
-              }}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   // Función para renderizar un evento con altura proporcional
   const renderEvent = (event: CalendarEvent, type: 'cris' | 'desi') => {
@@ -761,8 +685,6 @@ export const CalendarCRM = () => {
                                   </div>
                                 );
                               })}
-                            </div>
-                              ))}
                             </div>
 
                             {/* Desi column */}
