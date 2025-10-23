@@ -419,7 +419,7 @@ export const CalendarCRM = () => {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pt-4 pb-6">
-                  {dayEvents.length === 0 ? <p className="text-sm text-muted-foreground italic text-center py-8">Sin citas programadas</p> : <div className="space-y-1 relative">
+                  {dayEvents.length === 0 ? <p className="text-sm text-muted-foreground italic text-center py-8">Sin citas programadas</p> : <div className="relative">
                       {/* Header */}
                       <div className="grid grid-cols-[80px_1fr_1fr] gap-3 pb-2 border-b mb-3">
                         <div className="text-xs font-semibold text-muted-foreground">HORA</div>
@@ -433,142 +433,192 @@ export const CalendarCRM = () => {
                         </div>
                       </div>
 
-                      {/* Current time indicator for today */}
-                      {isToday && (() => {
-                        const now = new Date();
-                        const currentHour = now.getHours();
-                        const currentMinutes = now.getMinutes();
+                      {/* Timeline Container */}
+                      {(() => {
                         const isSaturday = day.getDay() === 6;
                         const startHour = isSaturday ? 8 : 9;
+                        const endHour = 21;
+                        const totalHours = endHour - startHour + 1;
+                        const pixelsPerHour = 80;
+                        const totalHeight = totalHours * pixelsPerHour;
                         
-                        // Only show if within business hours (startHour to 21:00)
-                        if (currentHour >= startHour && currentHour <= 21) {
-                          // Calculate position: each hour block is approximately 52px (py-2 + border)
-                          const hoursFromStart = currentHour - startHour;
-                          const minuteOffset = (currentMinutes / 60) * 52; // 52px per hour
-                          const topPosition = 100 + (hoursFromStart * 52) + minuteOffset; // 100px for header
+                        // Calculate position for an event
+                        const calculateEventPosition = (event: CalendarEvent) => {
+                          const eventStart = parseISO(event.start?.dateTime);
+                          const eventEnd = parseISO(event.end?.dateTime);
+                          const eventHour = eventStart.getHours();
+                          const eventMinutes = eventStart.getMinutes();
+                          const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
                           
-                          return (
-                            <div 
-                              className="absolute left-0 right-0 z-10 flex items-center"
-                              style={{ top: `${topPosition}px` }}
-                            >
-                              <div className="w-20 text-xs font-bold text-primary pr-2 text-right">
-                                {format(now, "HH:mm")}
-                              </div>
-                              <div className="flex-1 h-0.5 bg-primary relative">
-                                <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-                              </div>
+                          const hoursFromStart = eventHour - startHour;
+                          const minuteOffset = eventMinutes / 60;
+                          const topPosition = (hoursFromStart + minuteOffset) * pixelsPerHour;
+                          const height = (durationMinutes / 60) * pixelsPerHour;
+                          
+                          return { top: topPosition, height };
+                        };
+                        
+                        const crisEvents = dayEvents.filter(e => e.stylist === "cris");
+                        const desiEvents = dayEvents.filter(e => e.stylist === "desi");
+                        
+                        return (
+                          <div className="grid grid-cols-[80px_1fr_1fr] gap-3 relative" style={{ minHeight: `${totalHeight}px` }}>
+                            {/* Time markers */}
+                            <div className="relative">
+                              {Array.from({ length: totalHours }, (_, i) => {
+                                const hour = startHour + i;
+                                return (
+                                  <div 
+                                    key={hour}
+                                    className="absolute w-full text-xs text-muted-foreground font-medium"
+                                    style={{ top: `${i * pixelsPerHour}px` }}
+                                  >
+                                    {hour.toString().padStart(2, '0')}:00
+                                  </div>
+                                );
+                              })}
+                              
+                              {/* Hour lines */}
+                              {Array.from({ length: totalHours }, (_, i) => (
+                                <div 
+                                  key={`line-${i}`}
+                                  className="absolute w-full border-t border-border/30"
+                                  style={{ top: `${i * pixelsPerHour}px`, left: 0, right: 0 }}
+                                />
+                              ))}
                             </div>
-                          );
-                        }
-                        return null;
-                      })()}
-
-                      {/* Timeline */}
-                      {Object.entries(groupEventsByHour(dayEvents, day)).map(([hour, {
-                cris,
-                desi
-              }]) => {
-                if (cris.length === 0 && desi.length === 0) return null;
-                return <div key={hour} className="grid grid-cols-[80px_1fr_1fr] gap-3 items-start py-2 border-b border-border/50">
-                            <div className="text-sm font-medium text-muted-foreground pt-1">{hour}</div>
                             
                             {/* Cris column */}
-                            <div className="space-y-2">
-                              {cris.map(event => {
-                                // Calculate duration in minutes
-                                const start = parseISO(event.start?.dateTime);
-                                const end = parseISO(event.end?.dateTime);
-                                const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+                            <div className="relative border-l border-border/30">
+                              {crisEvents.map(event => {
+                                const { top, height } = calculateEventPosition(event);
+                                const durationMinutes = height / pixelsPerHour * 60;
                                 
-                                // Calculate height: 1 minute = 1.2px, min 60px, max 240px
-                                const minHeight = 60;
-                                const maxHeight = 240;
-                                const calculatedHeight = Math.min(Math.max(durationMinutes * 1.2, minHeight), maxHeight);
-                                
-                                return <div 
-                                  key={event.id} 
-                                  className={`group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
-                                  style={{ minHeight: `${calculatedHeight}px` }}
-                                >
-                                  <div className="flex items-start gap-2 h-full">
-                                    <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0" />
-                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                       <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
-                                         {event.summary}
-                                       </p>
-                                       <p className="text-xs text-muted-foreground mt-0.5">
-                                         {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                       </p>
-                                       <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium">
-                                         {durationMinutes} min
-                                       </p>
-                                     </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => {
-                            setSelectedEvent(event);
-                            setIsEditDialogOpen(true);
-                          }}>
-                                        <Edit2 className="h-3 w-3" />
-                                      </Button>
-                                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteEvent(event)}>
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
+                                return (
+                                  <div
+                                    key={event.id}
+                                    className={`group absolute left-1 right-1 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-md hover:z-10 ${event.completed ? "opacity-50" : ""}`}
+                                    style={{ 
+                                      top: `${top}px`, 
+                                      height: `${Math.max(height, 60)}px` 
+                                    }}
+                                  >
+                                    <div className="flex items-start gap-2 h-full">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={event.completed || false} 
+                                        onChange={() => handleToggleCompleted(event)} 
+                                        className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0" 
+                                      />
+                                      <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
+                                        <p className={`text-sm font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}>
+                                          {event.summary}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        </p>
+                                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 font-medium">
+                                          {Math.round(durationMinutes)} min
+                                        </p>
+                                      </div>
+                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => {
+                                          setSelectedEvent(event);
+                                          setIsEditDialogOpen(true);
+                                        }}>
+                                          <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteEvent(event)}>
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
+                                );
                               })}
                             </div>
                             
                             {/* Desi column */}
-                            <div className="space-y-2">
-                              {desi.map(event => {
-                                // Calculate duration in minutes
-                                const start = parseISO(event.start?.dateTime);
-                                const end = parseISO(event.end?.dateTime);
-                                const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+                            <div className="relative border-l border-border/30">
+                              {desiEvents.map(event => {
+                                const { top, height } = calculateEventPosition(event);
+                                const durationMinutes = height / pixelsPerHour * 60;
                                 
-                                // Calculate height: 1 minute = 1.2px, min 60px, max 240px
-                                const minHeight = 60;
-                                const maxHeight = 240;
-                                const calculatedHeight = Math.min(Math.max(durationMinutes * 1.2, minHeight), maxHeight);
-                                
-                                return <div 
-                                  key={event.id} 
-                                  className={`group relative bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
-                                  style={{ minHeight: `${calculatedHeight}px` }}
-                                >
-                                  <div className="flex items-start gap-2 h-full">
-                                    <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0" />
-                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                       <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
-                                         {event.summary}
-                                       </p>
-                                       <p className="text-xs text-muted-foreground mt-0.5">
-                                         {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                       </p>
-                                       <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">
-                                         {durationMinutes} min
-                                       </p>
-                                     </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => {
-                            setSelectedEvent(event);
-                            setIsEditDialogOpen(true);
-                          }}>
-                                        <Edit2 className="h-3 w-3" />
-                                      </Button>
-                                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteEvent(event)}>
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
+                                return (
+                                  <div
+                                    key={event.id}
+                                    className={`group absolute left-1 right-1 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-md hover:z-10 ${event.completed ? "opacity-50" : ""}`}
+                                    style={{ 
+                                      top: `${top}px`, 
+                                      height: `${Math.max(height, 60)}px` 
+                                    }}
+                                  >
+                                    <div className="flex items-start gap-2 h-full">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={event.completed || false} 
+                                        onChange={() => handleToggleCompleted(event)} 
+                                        className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0" 
+                                      />
+                                      <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
+                                        <p className={`text-sm font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}>
+                                          {event.summary}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        </p>
+                                        <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5 font-medium">
+                                          {Math.round(durationMinutes)} min
+                                        </p>
+                                      </div>
+                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => {
+                                          setSelectedEvent(event);
+                                          setIsEditDialogOpen(true);
+                                        }}>
+                                          <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteEvent(event)}>
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
+                                );
                               })}
                             </div>
-                          </div>;
-              })}
+                            
+                            {/* Current time indicator for today */}
+                            {isToday && (() => {
+                              const now = new Date();
+                              const currentHour = now.getHours();
+                              const currentMinutes = now.getMinutes();
+                              
+                              // Only show if within business hours
+                              if (currentHour >= startHour && currentHour <= endHour) {
+                                const hoursFromStart = currentHour - startHour;
+                                const minuteOffset = currentMinutes / 60;
+                                const topPosition = (hoursFromStart + minuteOffset) * pixelsPerHour;
+                                
+                                return (
+                                  <div 
+                                    className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
+                                    style={{ top: `${topPosition}px` }}
+                                  >
+                                    <div className="w-20 text-xs font-bold text-primary pr-2 text-right bg-background/80 py-0.5">
+                                      {format(now, "HH:mm")}
+                                    </div>
+                                    <div className="flex-1 h-0.5 bg-primary relative">
+                                      <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-primary animate-pulse shadow-lg shadow-primary/50" />
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                        );
+                      })()}
                     </div>}
                 </AccordionContent>
               </AccordionItem>;
