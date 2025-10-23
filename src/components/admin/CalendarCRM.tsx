@@ -14,24 +14,12 @@ import {
 } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  format,
-  parseISO,
-  addDays,
-  startOfWeek,
-  endOfWeek,
-  isSameDay,
-  addWeeks,
-  addMonths,
-  endOfDay,
-  startOfDay,
-} from "date-fns";
+import React from 'react';
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
@@ -64,6 +52,160 @@ export const CalendarCRM = () => {
     }),
   );
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Función para renderizar un evento con altura proporcional
+  const renderEvent = (event: CalendarEvent, type: 'cris' | 'desi') => {
+    if (!event.start?.dateTime || !event.end?.dateTime) return null;
+    
+    const start = new Date(event.start.dateTime);
+    const end = new Date(event.end.dateTime);
+    const dayStart = new Date(start);
+    dayStart.setHours(9, 0, 0, 0); // Hora de inicio del día
+    
+    // Calcular minutos desde el inicio del día
+    const startMinutes = (start.getHours() * 60 + start.getMinutes()) - (dayStart.getHours() * 60 + dayStart.getMinutes());
+    const durationMinutes = differenceInMinutes(end, start);
+    
+    // Convertir a píxeles (cada hora son 60px)
+    const top = Math.max(0, (startMinutes / 60) * 60);
+    const height = Math.max(30, (durationMinutes / 60) * 60);
+    
+    const bgColor = type === 'cris' 
+      ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800' 
+      : 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800';
+    
+    return (
+      <div
+        key={event.id}
+        className={`absolute left-0 right-2 group rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? 'opacity-50' : ''} ${bgColor} border`}
+        style={{
+          top: `${top}px`,
+          height: `${height}px`,
+          zIndex: 1,
+        }}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={event.completed || false}
+              onChange={() => handleToggleCompleted(event)}
+              className={`w-4 h-4 rounded border cursor-pointer ${type === 'cris' ? 'accent-blue-500' : 'accent-purple-500'}`}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <p className={`text-sm font-medium leading-tight truncate ${event.completed ? 'line-through' : ''}`}>
+              {event.summary}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground mt-auto">
+            {safeFormatDateTime(event.start?.dateTime, 'HH:mm')} - {safeFormatDateTime(event.end?.dateTime, 'HH:mm')}
+          </p>
+          <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedEvent(event);
+                setIsEditDialogOpen(true);
+              }}
+            >
+              <Edit2 className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteEvent(event);
+              }}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Función para renderizar un evento con altura proporcional
+  const renderEvent = (event: CalendarEvent, type: 'cris' | 'desi') => {
+    if (!event.start?.dateTime || !event.end?.dateTime) return null;
+    
+    const start = new Date(event.start.dateTime);
+    const end = new Date(event.end.dateTime);
+    const dayStart = new Date(start);
+    dayStart.setHours(9, 0, 0, 0); // Hora de inicio del día
+    
+    // Calcular minutos desde el inicio del día
+    const startMinutes = (start.getHours() * 60 + start.getMinutes()) - (dayStart.getHours() * 60 + dayStart.getMinutes());
+    const durationMinutes = differenceInMinutes(end, start);
+    
+    // Convertir a píxeles (cada hora son 60px)
+    const top = Math.max(0, (startMinutes / 60) * 60);
+    const height = Math.max(30, (durationMinutes / 60) * 60);
+    
+    const bgColor = type === 'cris' 
+      ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800' 
+      : 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800';
+    
+    return (
+      <div
+        key={event.id}
+        className={`absolute left-0 right-2 group rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? 'opacity-50' : ''} ${bgColor} border`}
+        style={{
+          top: `${top}px`,
+          height: `${height}px`,
+          zIndex: 1,
+        }}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={event.completed || false}
+              onChange={() => handleToggleCompleted(event)}
+              className={`w-4 h-4 rounded border cursor-pointer ${type === 'cris' ? 'accent-blue-500' : 'accent-purple-500'}`}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <p className={`text-sm font-medium leading-tight truncate ${event.completed ? 'line-through' : ''}`}>
+              {event.summary}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground mt-auto">
+            {safeFormatDateTime(event.start?.dateTime, 'HH:mm')} - {safeFormatDateTime(event.end?.dateTime, 'HH:mm')}
+          </p>
+          <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedEvent(event);
+                setIsEditDialogOpen(true);
+              }}
+            >
+              <Edit2 className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteEvent(event);
+              }}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   useEffect(() => {
     // Este efecto actualiza la hora cada 60 segundos.
@@ -544,87 +686,139 @@ export const CalendarCRM = () => {
                             <div className="text-sm font-medium text-muted-foreground pt-1">{hour}</div>
 
                             {/* Cris column */}
-                            <div className="space-y-2">
-                              {cris.map((event) => (
-                                <div
-                                  key={event.id}
-                                  className={`group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={event.completed || false}
-                                      onChange={() => handleToggleCompleted(event)}
-                                      className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                      <p
-                                        className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}
-                                      >
-                                        {event.summary}
+                            <div className="relative h-[624px] overflow-hidden">
+                              {cris.map((event) => {
+                                if (!event.start?.dateTime || !event.end?.dateTime) return null;
+                                
+                                // Calcular posición y altura
+                                const start = new Date(event.start.dateTime);
+                                const end = new Date(event.end.dateTime);
+                                const dayStart = new Date(day);
+                                dayStart.setHours(9, 0, 0, 0); // Hora de inicio del día
+                                
+                                // Calcular minutos desde el inicio del día
+                                const startMinutes = (start.getHours() * 60 + start.getMinutes()) - (dayStart.getHours() * 60 + dayStart.getMinutes());
+                                const endMinutes = (end.getHours() * 60 + end.getMinutes()) - (dayStart.getHours() * 60 + dayStart.getMinutes());
+                                
+                                // Convertir a píxeles (cada hora son 52px)
+                                const top = Math.max(0, (startMinutes / 60) * 52);
+                                const height = Math.max(30, ((endMinutes - startMinutes) / 60) * 52);
+                                
+                                return (
+                                  <div
+                                    key={event.id}
+                                    className={`absolute left-0 right-2 group rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
+                                    style={{
+                                      top: `${top}px`,
+                                      height: `${height}px`,
+                                      backgroundColor: 'rgba(219, 234, 254, 0.8)',
+                                      border: '1px solid rgba(191, 219, 254, 0.8)',
+                                      zIndex: 1,
+                                    }}
+                                  >
+                                    <div className="flex flex-col h-full">
+                                      <div className="flex items-center gap-2">
+                                        <input
+                                          type="checkbox"
+                                          checked={event.completed || false}
+                                          onChange={() => handleToggleCompleted(event)}
+                                          className="w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
+                                          onClick={(e) => e.stopPropagation()}
+                                        />
+                                        <p className={`text-sm font-medium leading-tight truncate ${event.completed ? 'line-through' : ''}`}>
+                                          {event.summary}
+                                        </p>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground mt-auto">
+                                        {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
                                       </p>
-                                      <p className="text-xs text-muted-foreground mt-0.5">
-                                        {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                        {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                      </p>
-                                    </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 w-6 p-0"
-                                        onClick={() => {
-                                          setSelectedEvent(event);
-                                          setIsEditDialogOpen(true);
-                                        }}
-                                      >
-                                        <Edit2 className="h-3 w-3" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                        onClick={() => handleDeleteEvent(event)}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
+                                      <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedEvent(event);
+                                            setIsEditDialogOpen(true);
+                                          }}
+                                        >
+                                          <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteEvent(event);
+                                          }}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
+                                );
+                              })}
+                            </div>
                               ))}
                             </div>
 
                             {/* Desi column */}
-                            <div className="space-y-2">
-                              {desi.map((event) => (
+                            <div className="relative h-[624px] overflow-hidden">
+                              {desi.map((event) => {
+                                if (!event.start?.dateTime || !event.end?.dateTime) return null;
+                                
+                                // Calcular posición y altura
+                                const start = new Date(event.start.dateTime);
+                                const end = new Date(event.end.dateTime);
+                                const dayStart = new Date(day);
+                                dayStart.setHours(9, 0, 0, 0); // Hora de inicio del día
+                                
+                                // Calcular minutos desde el inicio del día
+                                const startMinutes = (start.getHours() * 60 + start.getMinutes()) - (dayStart.getHours() * 60 + dayStart.getMinutes());
+                                const endMinutes = (end.getHours() * 60 + end.getMinutes()) - (dayStart.getHours() * 60 + dayStart.getMinutes());
+                                
+                                // Convertir a píxeles (cada hora son 52px)
+                                const top = Math.max(0, (startMinutes / 60) * 52);
+                                const height = Math.max(30, ((endMinutes - startMinutes) / 60) * 52);
+                                
+                                return (
                                 <div
                                   key={event.id}
-                                  className={`group relative bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
+                                  className={`absolute left-0 right-2 group rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
+                                  style={{
+                                    top: `${top}px`,
+                                    height: `${height}px`,
+                                    backgroundColor: 'rgba(233, 213, 255, 0.8)',
+                                    border: '1px solid rgba(216, 180, 254, 0.8)',
+                                    zIndex: 1,
+                                  }}
                                 >
-                                  <div className="flex items-start gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={event.completed || false}
-                                      onChange={() => handleToggleCompleted(event)}
-                                      className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                      <p
-                                        className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}
-                                      >
+                                  <div className="flex flex-col h-full">
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={event.completed || false}
+                                        onChange={() => handleToggleCompleted(event)}
+                                        className="w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                      <p className={`text-sm font-medium leading-tight truncate ${event.completed ? 'line-through' : ''}`}>
                                         {event.summary}
                                       </p>
-                                      <p className="text-xs text-muted-foreground mt-0.5">
-                                        {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                        {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                      </p>
                                     </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                    <p className="text-xs text-muted-foreground mt-auto">
+                                      {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                    </p>
+                                    <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                       <Button
                                         size="sm"
                                         variant="ghost"
                                         className="h-6 w-6 p-0"
-                                        onClick={() => {
+                                        onClick={(e) => {
+                                          e.stopPropagation();
                                           setSelectedEvent(event);
                                           setIsEditDialogOpen(true);
                                         }}
@@ -635,7 +829,10 @@ export const CalendarCRM = () => {
                                         size="sm"
                                         variant="ghost"
                                         className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                        onClick={() => handleDeleteEvent(event)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteEvent(event);
+                                        }}
                                       >
                                         <Trash2 className="h-3 w-3" />
                                       </Button>
