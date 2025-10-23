@@ -63,6 +63,17 @@ export const CalendarCRM = () => {
       weekStartsOn: 1,
     }),
   );
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    // Este efecto actualiza la hora cada 60 segundos.
+    const timerId = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // 1 minuto
+
+    // Función de limpieza para detener el temporizador.
+    return () => clearInterval(timerId);
+  }, []); // El array vacío [] asegura que esto se ejecute solo una vez.
   const [blockStartDate, setBlockStartDate] = useState<Date | undefined>(undefined);
   const [blockEndDate, setBlockEndDate] = useState<Date | undefined>(undefined);
   const [blockPeriod, setBlockPeriod] = useState<"day" | "week" | "month">("day");
@@ -485,36 +496,29 @@ export const CalendarCRM = () => {
                       {/* Current time indicator for today */}
                       {isToday &&
                         (() => {
-                          // Leemos la hora desde el estado del componente (currentTime), que se actualiza solo
-                          const currentHour = currentTime.getHours();
-                          const currentMinutes = currentTime.getMinutes();
+                          const now = new Date();
+                          const currentHour = now.getHours();
+                          const currentMinutes = now.getMinutes();
                           const isSaturday = day.getDay() === 6;
                           const startHour = isSaturday ? 8 : 9;
 
+                          // Only show if within business hours (startHour to 21:00)
                           if (currentHour >= startHour && currentHour <= 21) {
+                            // Calculate position: each hour block is approximately 52px (py-2 + border)
                             const hoursFromStart = currentHour - startHour;
-                            const minuteOffset = (currentMinutes / 60) * 52;
-                            // Ajusta el '90' si la cabecera es más alta o baja
-                            const topPosition = 90 + hoursFromStart * 52 + minuteOffset;
+                            const minuteOffset = (currentMinutes / 60) * 52; // 52px per hour
+                            const topPosition = 100 + hoursFromStart * 52 + minuteOffset; // 100px for header
 
                             return (
                               <div
-                                className="absolute left-0 right-0 z-10 flex items-center opacity-70"
+                                className="absolute left-0 right-0 z-10 flex items-center"
                                 style={{ top: `${topPosition}px` }}
                               >
                                 <div className="w-20 text-xs font-bold text-primary pr-2 text-right">
-                                  {format(currentTime, "HH:mm")}
+                                  {format(now, "HH:mm")}
                                 </div>
-
-                                {/* ESTA ES LA LÍNEA MODIFICADA */}
-                                <div
-                                  className="flex-1 h-px relative" // h-px es 1px de alto
-                                  style={{
-                                    borderBottom: "1px dashed currentColor", // Línea discontinua
-                                    backgroundColor: "transparent",
-                                  }}
-                                >
-                                  <div className="absolute -left-1 -top-1.5 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+                                <div className="flex-1 h-0.5 bg-primary relative">
+                                  <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
                                 </div>
                               </div>
                             );
