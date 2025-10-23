@@ -622,16 +622,16 @@ export const CalendarCRM = () => {
                         let totalHeight = 0;
 
                         if (isSaturday) {
-                          // Sábado: 8:00 a 13:00 (5 horas = 300 minutos = 900px a 3px/min)
+                          // Sábado: 8:00 a 13:00 (5 horas = 300 minutos = 1200px a 4px/min)
                           timeSlots = [{ start: 8, end: 13, label: "Mañana" }];
-                          totalHeight = 300 * 3; // 900px
+                          totalHeight = 300 * 4; // 1200px
                         } else if (isWeekday) {
                           // Martes a Viernes: 9:00 a 12:30 y 15:00 a 19:00
                           timeSlots = [
-                            { start: 9, end: 12.5, label: "Mañana" }, // 3.5h = 210min = 630px
-                            { start: 15, end: 19, label: "Tarde" }, // 4h = 240min = 720px
+                            { start: 9, end: 12.5, label: "Mañana" }, // 3.5h = 210min = 840px
+                            { start: 15, end: 19, label: "Tarde" }, // 4h = 240min = 960px
                           ];
-                          totalHeight = (210 + 240) * 3; // 1350px
+                          totalHeight = (210 + 240) * 4; // 1800px
                         } else {
                           // Lunes y Domingo: mostrar mensaje o horario vacío
                           return (
@@ -640,6 +640,59 @@ export const CalendarCRM = () => {
                             </div>
                           );
                         }
+
+                        // Función para detectar solapamientos
+                        const detectOverlaps = (events: CalendarEvent[]) => {
+                          const eventsWithPosition = events
+                            .map((event) => {
+                              const start = new Date(event.start.dateTime);
+                              const end = new Date(event.end.dateTime);
+                              const startHour = start.getHours() + start.getMinutes() / 60;
+
+                              let topOffset = 0;
+                              let isInWorkingHours = false;
+
+                              for (let i = 0; i < timeSlots.length; i++) {
+                                const slot = timeSlots[i];
+                                if (startHour >= slot.start && startHour < slot.end) {
+                                  const minutesFromSlotStart = (startHour - slot.start) * 60;
+                                  const previousSlotsMinutes =
+                                    i === 0
+                                      ? 0
+                                      : timeSlots.slice(0, i).reduce((acc, s) => acc + (s.end - s.start) * 60, 0);
+                                  topOffset = (previousSlotsMinutes + minutesFromSlotStart) * 4;
+                                  isInWorkingHours = true;
+                                  break;
+                                }
+                              }
+
+                              const durationMinutes = differenceInMinutes(end, start);
+                              const height = Math.max(40, durationMinutes * 4);
+
+                              return {
+                                event,
+                                top: topOffset,
+                                bottom: topOffset + height,
+                                height,
+                                isInWorkingHours,
+                                column: 0,
+                              };
+                            })
+                            .filter((e) => e.isInWorkingHours);
+
+                          // Detectar solapamientos y asignar columnas
+                          eventsWithPosition.forEach((current, i) => {
+                            const overlapping = eventsWithPosition
+                              .slice(0, i)
+                              .filter((other) => current.top < other.bottom && current.bottom > other.top);
+
+                            if (overlapping.length > 0) {
+                              current.column = 1; // Columna derecha
+                            }
+                          });
+
+                          return eventsWithPosition;
+                        };
 
                         return (
                           <div className="relative">
@@ -664,7 +717,7 @@ export const CalendarCRM = () => {
                                         const minutes = (hour % 1) * 60;
                                         const hourInt = Math.floor(hour);
                                         const displayHour = `${String(hourInt).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-                                        const topPosition = (slotStartMinutes + i * 60) * 3;
+                                        const topPosition = (slotStartMinutes + i * 60) * 4;
 
                                         if (hour > slot.end) return null;
 
@@ -702,7 +755,7 @@ export const CalendarCRM = () => {
                                   return Array.from({ length: hourMarks + 1 }, (_, i) => {
                                     const hour = slot.start + i;
                                     if (hour > slot.end) return null;
-                                    const topPosition = (slotStartMinutes + i * 60) * 3;
+                                    const topPosition = (slotStartMinutes + i * 60) * 4;
 
                                     return (
                                       <div
@@ -715,44 +768,33 @@ export const CalendarCRM = () => {
                                 })}
 
                                 {/* Eventos de Cris */}
-                                {dayEvents
-                                  .filter((e) => e.stylist === "cris" && e.start?.dateTime && e.end?.dateTime)
-                                  .map((event) => {
-                                    const start = new Date(event.start.dateTime);
-                                    const end = new Date(event.end.dateTime);
-                                    const startHour = start.getHours() + start.getMinutes() / 60;
+                                {(() => {
+                                  const crisEvents = dayEvents.filter(
+                                    (e) => e.stylist === "cris" && e.start?.dateTime && e.end?.dateTime,
+                                  );
+                                  const eventsWithPosition = detectOverlaps(crisEvents);
 
-                                    // Calcular posición según la franja horaria
-                                    let topOffset = 0;
-                                    let isInWorkingHours = false;
-
-                                    for (let i = 0; i < timeSlots.length; i++) {
-                                      const slot = timeSlots[i];
-                                      if (startHour >= slot.start && startHour < slot.end) {
-                                        const minutesFromSlotStart = (startHour - slot.start) * 60;
-                                        const previousSlotsMinutes =
-                                          i === 0
-                                            ? 0
-                                            : timeSlots.slice(0, i).reduce((acc, s) => acc + (s.end - s.start) * 60, 0);
-                                        topOffset = (previousSlotsMinutes + minutesFromSlotStart) * 3;
-                                        isInWorkingHours = true;
-                                        break;
-                                      }
-                                    }
-
-                                    if (!isInWorkingHours) return null;
-
-                                    const durationMinutes = differenceInMinutes(end, start);
-                                    const height = Math.max(40, durationMinutes * 3);
+                                  return eventsWithPosition.map(({ event, top, height, column }) => {
+                                    // Calcular posición horizontal según la columna
+                                    const leftPosition = column === 0 ? "4px" : "50%";
+                                    const widthPercent =
+                                      column === 0 &&
+                                      eventsWithPosition.some(
+                                        (e) => e.column === 1 && e.top < top + height && e.bottom > top,
+                                      )
+                                        ? "48%"
+                                        : "calc(100% - 8px)";
 
                                     return (
                                       <div
                                         key={event.id}
-                                        className={`absolute left-1 right-1 group rounded-md p-2 transition-all hover:shadow-md hover:z-20 ${
+                                        className={`absolute group rounded-md p-2 transition-all hover:shadow-md hover:z-20 ${
                                           event.completed ? "opacity-50" : ""
                                         } bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800`}
                                         style={{
-                                          top: `${topOffset}px`,
+                                          top: `${top}px`,
+                                          left: leftPosition,
+                                          width: widthPercent,
                                           height: `${height}px`,
                                           minHeight: "40px",
                                         }}
@@ -772,7 +814,7 @@ export const CalendarCRM = () => {
                                               {event.summary}
                                             </p>
                                           </div>
-                                          {height > 60 && (
+                                          {height > 80 && (
                                             <p className="text-[10px] text-muted-foreground mt-auto">
                                               {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
                                               {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
@@ -806,7 +848,8 @@ export const CalendarCRM = () => {
                                         </div>
                                       </div>
                                     );
-                                  })}
+                                  });
+                                })()}
                               </div>
 
                               {/* Columna Desi */}
@@ -828,7 +871,7 @@ export const CalendarCRM = () => {
                                   return Array.from({ length: hourMarks + 1 }, (_, i) => {
                                     const hour = slot.start + i;
                                     if (hour > slot.end) return null;
-                                    const topPosition = (slotStartMinutes + i * 60) * 3;
+                                    const topPosition = (slotStartMinutes + i * 60) * 4;
 
                                     return (
                                       <div
@@ -841,44 +884,33 @@ export const CalendarCRM = () => {
                                 })}
 
                                 {/* Eventos de Desi */}
-                                {dayEvents
-                                  .filter((e) => e.stylist === "desi" && e.start?.dateTime && e.end?.dateTime)
-                                  .map((event) => {
-                                    const start = new Date(event.start.dateTime);
-                                    const end = new Date(event.end.dateTime);
-                                    const startHour = start.getHours() + start.getMinutes() / 60;
+                                {(() => {
+                                  const desiEvents = dayEvents.filter(
+                                    (e) => e.stylist === "desi" && e.start?.dateTime && e.end?.dateTime,
+                                  );
+                                  const eventsWithPosition = detectOverlaps(desiEvents);
 
-                                    // Calcular posición según la franja horaria
-                                    let topOffset = 0;
-                                    let isInWorkingHours = false;
-
-                                    for (let i = 0; i < timeSlots.length; i++) {
-                                      const slot = timeSlots[i];
-                                      if (startHour >= slot.start && startHour < slot.end) {
-                                        const minutesFromSlotStart = (startHour - slot.start) * 60;
-                                        const previousSlotsMinutes =
-                                          i === 0
-                                            ? 0
-                                            : timeSlots.slice(0, i).reduce((acc, s) => acc + (s.end - s.start) * 60, 0);
-                                        topOffset = (previousSlotsMinutes + minutesFromSlotStart) * 3;
-                                        isInWorkingHours = true;
-                                        break;
-                                      }
-                                    }
-
-                                    if (!isInWorkingHours) return null;
-
-                                    const durationMinutes = differenceInMinutes(end, start);
-                                    const height = Math.max(40, durationMinutes * 3);
+                                  return eventsWithPosition.map(({ event, top, height, column }) => {
+                                    // Calcular posición horizontal según la columna
+                                    const leftPosition = column === 0 ? "4px" : "50%";
+                                    const widthPercent =
+                                      column === 0 &&
+                                      eventsWithPosition.some(
+                                        (e) => e.column === 1 && e.top < top + height && e.bottom > top,
+                                      )
+                                        ? "48%"
+                                        : "calc(100% - 8px)";
 
                                     return (
                                       <div
                                         key={event.id}
-                                        className={`absolute left-1 right-1 group rounded-md p-2 transition-all hover:shadow-md hover:z-20 ${
+                                        className={`absolute group rounded-md p-2 transition-all hover:shadow-md hover:z-20 ${
                                           event.completed ? "opacity-50" : ""
                                         } bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800`}
                                         style={{
-                                          top: `${topOffset}px`,
+                                          top: `${top}px`,
+                                          left: leftPosition,
+                                          width: widthPercent,
                                           height: `${height}px`,
                                           minHeight: "40px",
                                         }}
@@ -898,7 +930,7 @@ export const CalendarCRM = () => {
                                               {event.summary}
                                             </p>
                                           </div>
-                                          {height > 60 && (
+                                          {height > 80 && (
                                             <p className="text-[10px] text-muted-foreground mt-auto">
                                               {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
                                               {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
@@ -932,7 +964,8 @@ export const CalendarCRM = () => {
                                         </div>
                                       </div>
                                     );
-                                  })}
+                                  });
+                                })()}
                               </div>
                             </div>
                           </div>
