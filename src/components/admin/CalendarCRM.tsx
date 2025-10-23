@@ -476,15 +476,33 @@ export const CalendarCRM = () => {
                             
                             {/* Cris column */}
                             <div className="space-y-2">
-                              {cris.map(event => <div key={event.id} className={`group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}>
-                                  <div className="flex items-start gap-2">
+                              {cris.map(event => {
+                                // Calculate duration in minutes
+                                const start = parseISO(event.start?.dateTime);
+                                const end = parseISO(event.end?.dateTime);
+                                const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+                                
+                                // Calculate height: 1 minute = 1.2px, min 60px, max 240px
+                                const minHeight = 60;
+                                const maxHeight = 240;
+                                const calculatedHeight = Math.min(Math.max(durationMinutes * 1.2, minHeight), maxHeight);
+                                
+                                return <div 
+                                  key={event.id} 
+                                  className={`group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
+                                  style={{ minHeight: `${calculatedHeight}px` }}
+                                >
+                                  <div className="flex items-start gap-2 h-full">
                                     <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0" />
-                                     <div className="flex-1 min-w-0">
+                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                                        <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
                                          {event.summary}
                                        </p>
                                        <p className="text-xs text-muted-foreground mt-0.5">
                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                       </p>
+                                       <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium">
+                                         {durationMinutes} min
                                        </p>
                                      </div>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
@@ -499,20 +517,39 @@ export const CalendarCRM = () => {
                                       </Button>
                                     </div>
                                   </div>
-                                </div>)}
+                                </div>
+                              })}
                             </div>
                             
                             {/* Desi column */}
                             <div className="space-y-2">
-                              {desi.map(event => <div key={event.id} className={`group relative bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}>
-                                  <div className="flex items-start gap-2">
+                              {desi.map(event => {
+                                // Calculate duration in minutes
+                                const start = parseISO(event.start?.dateTime);
+                                const end = parseISO(event.end?.dateTime);
+                                const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+                                
+                                // Calculate height: 1 minute = 1.2px, min 60px, max 240px
+                                const minHeight = 60;
+                                const maxHeight = 240;
+                                const calculatedHeight = Math.min(Math.max(durationMinutes * 1.2, minHeight), maxHeight);
+                                
+                                return <div 
+                                  key={event.id} 
+                                  className={`group relative bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
+                                  style={{ minHeight: `${calculatedHeight}px` }}
+                                >
+                                  <div className="flex items-start gap-2 h-full">
                                     <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0" />
-                                     <div className="flex-1 min-w-0">
+                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                                        <p className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}>
                                          {event.summary}
                                        </p>
                                        <p className="text-xs text-muted-foreground mt-0.5">
                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                       </p>
+                                       <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">
+                                         {durationMinutes} min
                                        </p>
                                      </div>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
@@ -527,7 +564,8 @@ export const CalendarCRM = () => {
                                       </Button>
                                     </div>
                                   </div>
-                                </div>)}
+                                </div>
+                              })}
                             </div>
                           </div>;
               })}
