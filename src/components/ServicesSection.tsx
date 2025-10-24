@@ -110,7 +110,7 @@ const serviceCategories = [
       },
       {
         name: "Makeup",
-        duration: "30 min",
+        duration: "45 min",
       },
       {
         name: "Makeup Premium",
