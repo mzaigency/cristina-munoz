@@ -19,6 +19,18 @@ const serviceCategories = [
         name: "Corte y peinado",
         duration: "30 min",
       },
+      {
+        name: "Corte Niño",
+        duration: "15 min",
+      },
+      {
+        name: "Corte Niña",
+        duration: "25 min",
+      },
+      {
+        name: "Corte Flequillo",
+        duration: "30 min",
+      },
     ],
   },
   {
@@ -46,6 +58,10 @@ const serviceCategories = [
         name: "Éclat",
         duration: "30 min",
       },
+      {
+        name: "Balayage",
+        duration: "3h",
+      },
     ],
   },
   {
@@ -55,11 +71,15 @@ const serviceCategories = [
     services: [
       {
         name: "Recogido",
-        duration: "60 min",
+        duration: "1h",
       },
       {
-        name: "Peinar con bucles",
+        name: "Peinar",
         duration: "25 min",
+      },
+      {
+        name: "Peinar pelo corto",
+        duration: "20 min",
       },
       {
         name: "Hidratación intensiva con peinado",
@@ -91,6 +111,10 @@ const serviceCategories = [
       {
         name: "Makeup",
         duration: "30 min",
+      },
+      {
+        name: "Makeup Premium",
+        duration: "1h",
       },
     ],
   },
