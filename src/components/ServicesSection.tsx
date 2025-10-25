@@ -55,10 +55,6 @@ const serviceCategories = [
         duration: "1h 30min",
       },
       {
-        name: "Éclat",
-        duration: "30 min",
-      },
-      {
         name: "Balayage",
         duration: "3h",
       },
@@ -80,6 +76,10 @@ const serviceCategories = [
       {
         name: "Peinar pelo corto",
         duration: "20 min",
+      },
+      {
+        name: "Éclat",
+        duration: "30 min",
       },
       {
         name: "Hidratación intensiva con peinado",
@@ -110,10 +110,6 @@ const serviceCategories = [
       },
       {
         name: "Makeup",
-        duration: "45 min",
-      },
-      {
-        name: "Makeup Premium",
         duration: "1h",
       },
     ],
