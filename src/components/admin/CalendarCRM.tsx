@@ -358,12 +358,19 @@ export const CalendarCRM = () => {
         const startTime = format(parseISO(event.start.dateTime), "HH:mm");
         const hour = startTime.split(":")[0];
         const hourKey = `${hour}:00`;
-        if (grouped[hourKey]) {
-          if (event.stylist === "cris") {
-            grouped[hourKey].cris.push(event);
-          } else {
-            grouped[hourKey].desi.push(event);
-          }
+        
+        // Initialize hour if it doesn't exist (for appointments outside regular hours)
+        if (!grouped[hourKey]) {
+          grouped[hourKey] = {
+            cris: [],
+            desi: [],
+          };
+        }
+        
+        if (event.stylist === "cris") {
+          grouped[hourKey].cris.push(event);
+        } else {
+          grouped[hourKey].desi.push(event);
         }
       } catch (error) {
         console.error("Error parsing event time:", event, error);
