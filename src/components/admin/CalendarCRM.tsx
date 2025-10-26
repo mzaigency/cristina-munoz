@@ -501,7 +501,13 @@ export const CalendarCRM = () => {
                       </div>
 
                       {/* Timeline */}
-                      {Object.entries(groupEventsByHour(dayEvents, day)).map(([hour, { cris, desi }]) => {
+                      {Object.entries(groupEventsByHour(dayEvents, day))
+                        .sort(([hourA], [hourB]) => {
+                          const [hoursA] = hourA.split(':').map(Number);
+                          const [hoursB] = hourB.split(':').map(Number);
+                          return hoursA - hoursB;
+                        })
+                        .map(([hour, { cris, desi }]) => {
                         if (cris.length === 0 && desi.length === 0) return null;
                         return (
                           <div
