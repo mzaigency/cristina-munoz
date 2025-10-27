@@ -263,23 +263,33 @@ export const DateTimeSelection = ({
               ) : (
                 <>
                   {isAdmin && <p className="text-sm text-muted-foreground mb-2">O selecciona un horario disponible:</p>}
-                  <div className="grid grid-cols-3 gap-2 max-h-[300px] overflow-y-auto">
-                    {timeSlots.map((slot) => (
-                      <Button
-                        key={slot}
-                        variant={time === slot && !customTime ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          setTime(slot);
-                          setCustomTime("");
-                        }}
-                        className={cn(
-                          time === slot && !customTime && "bg-primary text-primary-foreground"
-                        )}
-                      >
-                        {slot}
-                      </Button>
-                    ))}
+                  <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto">
+                    {timeSlots.map((slot) => {
+                      const [hours, minutes] = slot.split(':').map(Number);
+                      const startMinutes = hours * 60 + minutes;
+                      const endMinutes = startMinutes + totalDuration;
+                      const endHours = Math.floor(endMinutes / 60);
+                      const endMins = endMinutes % 60;
+                      const endTime = `${endHours.toString().padStart(2, "0")}:${endMins.toString().padStart(2, "0")}`;
+                      
+                      return (
+                        <Button
+                          key={slot}
+                          variant={time === slot && !customTime ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setTime(slot);
+                            setCustomTime("");
+                          }}
+                          className={cn(
+                            "text-xs",
+                            time === slot && !customTime && "bg-primary text-primary-foreground"
+                          )}
+                        >
+                          {slot} - {endTime}
+                        </Button>
+                      );
+                    })}
                   </div>
                 </>
               )}
