@@ -13,6 +13,7 @@ interface DateTimeSelectionProps {
   stylist: Stylist;
   onNext: (date: Date, time: string) => void;
   onBack: () => void;
+  isAdmin?: boolean;
 }
 
 export const DateTimeSelection = ({
@@ -22,9 +23,11 @@ export const DateTimeSelection = ({
   stylist,
   onNext,
   onBack,
+  isAdmin = false,
 }: DateTimeSelectionProps) => {
   const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
   const [time, setTime] = useState<string | null>(selectedTime);
+  const [customTime, setCustomTime] = useState<string>("");
   const [bookedRanges, setBookedRanges] = useState<Array<{ start: number; end: number }>>([]);
   const [loading, setLoading] = useState(false);
 
@@ -180,6 +183,15 @@ export const DateTimeSelection = ({
 
   const timeSlots = getAvailableTimeSlots(date);
 
+  const handleCustomTimeChange = (value: string) => {
+    setCustomTime(value);
+    // Validate HH:MM format
+    const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9])$/;
+    if (timeRegex.test(value)) {
+      setTime(value);
+    }
+  };
+
   const handleNext = () => {
     if (date && time) {
       onNext(date, time);
@@ -221,28 +233,59 @@ export const DateTimeSelection = ({
             <p className="text-sm text-muted-foreground">
               Cargando horarios disponibles...
             </p>
-          ) : timeSlots.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No hay horarios disponibles para este día. Todos los slots están reservados.
-            </p>
           ) : (
-            <div className="grid grid-cols-3 gap-2 max-h-[300px] overflow-y-auto">
-              {timeSlots.map((slot) => (
-                <Button
-                  key={slot}
-                  variant={time === slot ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setTime(slot)}
-                  className={cn(
-                    time === slot && "bg-primary text-primary-foreground"
-                  )}
-                >
-                  {slot}
-                </Button>
-              ))}
-            </div>
+            <>
+              {isAdmin && (
+                <div className="mb-4 space-y-2">
+                  <label htmlFor="customTime" className="text-sm font-medium text-foreground">
+                    Hora personalizada (HH:MM)
+                  </label>
+                  <input
+                    id="customTime"
+                    type="text"
+                    value={customTime}
+                    onChange={(e) => handleCustomTimeChange(e.target.value)}
+                    placeholder="15:10"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Puedes introducir cualquier hora en formato 24h (ej: 15:10)
+                  </p>
+                </div>
+              )}
+              
+              {timeSlots.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {isAdmin 
+                    ? "No hay horarios predefinidos disponibles. Puedes usar el campo de hora personalizada arriba."
+                    : "No hay horarios disponibles para este día. Todos los slots están reservados."}
+                </p>
+              ) : (
+                <>
+                  {isAdmin && <p className="text-sm text-muted-foreground mb-2">O selecciona un horario disponible:</p>}
+                  <div className="grid grid-cols-3 gap-2 max-h-[300px] overflow-y-auto">
+                    {timeSlots.map((slot) => (
+                      <Button
+                        key={slot}
+                        variant={time === slot && !customTime ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setTime(slot);
+                          setCustomTime("");
+                        }}
+                        className={cn(
+                          time === slot && !customTime && "bg-primary text-primary-foreground"
+                        )}
+                      >
+                        {slot}
+                      </Button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
           )}
-          {date && timeSlots.length > 0 && (
+          {date && (time || timeSlots.length > 0) && (
             <p className="mt-4 text-xs text-muted-foreground">
               Duración estimada: {totalDuration} minutos
             </p>

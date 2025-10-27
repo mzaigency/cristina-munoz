@@ -224,6 +224,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
             stylist={bookingData.stylist!}
             onNext={handleDateTimeSelect}
             onBack={handleBack}
+            isAdmin={true}
           />
         )}
 
