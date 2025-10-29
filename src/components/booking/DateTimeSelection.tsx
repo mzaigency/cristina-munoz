@@ -55,6 +55,9 @@ export const DateTimeSelection = ({
           return;
         }
 
+        console.log('Raw data from check-availability:', data);
+        console.log('Booked slots received:', data?.bookedSlots);
+
         // Convert booked slots to time ranges
         const ranges: Array<{ start: number; end: number }> = [];
         data?.bookedSlots?.forEach((booking: { Hora: string; total_duration: number }) => {
@@ -63,8 +66,10 @@ export const DateTimeSelection = ({
           const startMinutes = hours * 60 + minutes;
           const endMinutes = startMinutes + booking.total_duration;
           ranges.push({ start: startMinutes, end: endMinutes });
+          console.log(`Blocking: ${startTime} (${startMinutes} min) to ${endMinutes} min`);
         });
 
+        console.log('Final bookedRanges:', ranges);
         setBookedRanges(ranges);
       } catch (error) {
         console.error('Error:', error);

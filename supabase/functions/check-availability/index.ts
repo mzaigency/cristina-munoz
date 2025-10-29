@@ -69,12 +69,14 @@ serve(async (req) => {
     const desiBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
 
     for (const calendar of calendarsToCheck) {
-      // Query Google Calendar using Europe/Madrid timezone
-      // This ensures we get events for the correct local date
-      const timeMin = `${date}T00:00:00`;
-      const timeMax = `${date}T23:59:59`;
+      // Query Google Calendar API using UTC timestamps
+      // The API will return events with their original timezone information
+      const timeMin = `${date}T00:00:00Z`;
+      const timeMax = `${date}T23:59:59Z`;
 
-      const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id!)}/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&timeZone=Europe/Madrid&singleEvents=true`;
+      const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id!)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
+      
+      console.log(`Fetching from ${calendar.name}: ${eventsUrl}`);
 
       const eventsResponse = await fetch(eventsUrl, {
         headers: {
