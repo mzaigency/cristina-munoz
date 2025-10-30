@@ -399,9 +399,9 @@ export const CalendarCRM = () => {
       };
     }
 
-    // Martes a viernes: 9:00 a 19:00 (con descanso 14:00-16:00)
+    // Martes a viernes: 9:00 a 19:00
     return {
-      hours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      hours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
       startHour: 9,
       endHour: 19,
     };
