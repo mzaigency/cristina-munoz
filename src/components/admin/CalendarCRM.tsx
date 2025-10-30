@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -450,183 +450,193 @@ export const CalendarCRM = () => {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <Accordion type="multiple" className="space-y-4">
+        <Tabs defaultValue={format(weekDays.find(day => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")} className="w-full">
+          <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto gap-1 bg-muted/50 p-1">
+            {weekDays.map((day) => {
+              const dateKey = format(day, "yyyy-MM-dd");
+              const dayEvents = groupedEvents[dateKey] || [];
+              const isToday = isSameDay(day, new Date());
+              return (
+                <TabsTrigger
+                  key={dateKey}
+                  value={dateKey}
+                  className={cn(
+                    "flex-col items-start gap-1 data-[state=active]:bg-background px-4 py-2 min-w-[140px]",
+                    isToday && "border-primary"
+                  )}
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    <span className="text-sm font-semibold capitalize">
+                      {format(day, "EEE d MMM", { locale: es })}
+                    </span>
+                    {isToday && (
+                      <Badge variant="default" className="text-xs h-5">
+                        Hoy
+                      </Badge>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {dayEvents.length} {dayEvents.length === 1 ? "cita" : "citas"}
+                  </span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+
           {weekDays.map((day) => {
             const dateKey = format(day, "yyyy-MM-dd");
             const dayEvents = groupedEvents[dateKey] || [];
-            const crisEvents = dayEvents.filter((e) => e.stylist === "cris");
-            const desiEvents = dayEvents.filter((e) => e.stylist === "desi");
-            const isToday = isSameDay(day, new Date());
             return (
-              <AccordionItem
-                key={dateKey}
-                value={dateKey}
-                className={`border rounded-lg ${isToday ? "border-primary bg-primary/5" : ""}`}
-              >
-                <AccordionTrigger className="px-6 hover:no-underline">
-                  <div className="flex items-center justify-between w-full pr-4">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-semibold capitalize">
-                        {format(day, "EEEE d 'de' MMMM", {
-                          locale: es,
-                        })}
-                      </h3>
-                      {isToday && (
-                        <Badge variant="default" className="text-xs">
-                          Hoy
-                        </Badge>
-                      )}
-                    </div>
-                    <Badge variant="secondary" className="ml-2">
-                      {dayEvents.length} {dayEvents.length === 1 ? "cita" : "citas"}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-6 pt-4 pb-6">
-                  {dayEvents.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic text-center py-8">Sin citas programadas</p>
-                  ) : (
-                    <div className="space-y-1 relative">
-                      {/* Header */}
-                      <div className="grid grid-cols-[80px_1fr_1fr] gap-3 pb-2 border-b mb-3">
-                        <div className="text-xs font-semibold text-muted-foreground">HORA</div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-blue-500" />
-                          <span className="text-xs font-semibold">CRIS</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-purple-500" />
-                          <span className="text-xs font-semibold">DESI</span>
-                        </div>
-                      </div>
-
-                      {/* Timeline */}
-                      {Object.entries(groupEventsByHour(dayEvents, day))
-                        .sort(([hourA], [hourB]) => {
-                          const [hoursA] = hourA.split(':').map(Number);
-                          const [hoursB] = hourB.split(':').map(Number);
-                          return hoursA - hoursB;
-                        })
-                        .map(([hour, { cris, desi }]) => {
-                        if (cris.length === 0 && desi.length === 0) return null;
-                        return (
-                          <div
-                            key={hour}
-                            className="grid grid-cols-[80px_1fr_1fr] gap-3 items-start py-2 border-b border-border/50"
-                          >
-                            <div className="text-sm font-medium text-muted-foreground pt-1">{hour}</div>
-
-                            {/* Cris column */}
-                            <div className="space-y-2">
-                              {cris.map((event) => (
-                                <div
-                                  key={event.id}
-                                  className={`group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={event.completed || false}
-                                      onChange={() => handleToggleCompleted(event)}
-                                      className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                      <p
-                                        className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}
-                                      >
-                                        {event.summary}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground mt-0.5">
-                                        {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                        {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                      </p>
-                                    </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 w-6 p-0"
-                                        onClick={() => {
-                                          setSelectedEvent(event);
-                                          setIsEditDialogOpen(true);
-                                        }}
-                                      >
-                                        <Edit2 className="h-3 w-3" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                        onClick={() => handleDeleteEvent(event)}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Desi column */}
-                            <div className="space-y-2">
-                              {desi.map((event) => (
-                                <div
-                                  key={event.id}
-                                  className={`group relative bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={event.completed || false}
-                                      onChange={() => handleToggleCompleted(event)}
-                                      className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                      <p
-                                        className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}
-                                      >
-                                        {event.summary}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground mt-0.5">
-                                        {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                        {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                      </p>
-                                    </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 w-6 p-0"
-                                        onClick={() => {
-                                          setSelectedEvent(event);
-                                          setIsEditDialogOpen(true);
-                                        }}
-                                      >
-                                        <Edit2 className="h-3 w-3" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                        onClick={() => handleDeleteEvent(event)}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+              <TabsContent key={dateKey} value={dateKey} className="mt-4">
+                <Card>
+                  <CardContent className="p-6">
+                    {dayEvents.length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic text-center py-8">
+                        Sin citas programadas para este día
+                      </p>
+                    ) : (
+                      <div className="space-y-1 relative">
+                        {/* Header */}
+                        <div className="grid grid-cols-[80px_1fr_1fr] gap-3 pb-2 border-b mb-3 sticky top-0 bg-background z-10">
+                          <div className="text-xs font-semibold text-muted-foreground">HORA</div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-blue-500" />
+                            <span className="text-xs font-semibold">CRIS</span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-purple-500" />
+                            <span className="text-xs font-semibold">DESI</span>
+                          </div>
+                        </div>
+
+                        {/* Timeline */}
+                        {Object.entries(groupEventsByHour(dayEvents, day))
+                          .sort(([hourA], [hourB]) => {
+                            const [hoursA] = hourA.split(':').map(Number);
+                            const [hoursB] = hourB.split(':').map(Number);
+                            return hoursA - hoursB;
+                          })
+                          .map(([hour, { cris, desi }]) => {
+                          if (cris.length === 0 && desi.length === 0) return null;
+                          return (
+                            <div
+                              key={hour}
+                              className="grid grid-cols-[80px_1fr_1fr] gap-3 items-start py-2 border-b border-border/50"
+                            >
+                              <div className="text-sm font-medium text-muted-foreground pt-1">{hour}</div>
+
+                              {/* Cris column */}
+                              <div className="space-y-2">
+                                {cris.map((event) => (
+                                  <div
+                                    key={event.id}
+                                    className={`group relative bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={event.completed || false}
+                                        onChange={() => handleToggleCompleted(event)}
+                                        className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <p
+                                          className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}
+                                        >
+                                          {event.summary}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        </p>
+                                      </div>
+                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0"
+                                          onClick={() => {
+                                            setSelectedEvent(event);
+                                            setIsEditDialogOpen(true);
+                                          }}
+                                        >
+                                          <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                          onClick={() => handleDeleteEvent(event)}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Desi column */}
+                              <div className="space-y-2">
+                                {desi.map((event) => (
+                                  <div
+                                    key={event.id}
+                                    className={`group relative bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-sm ${event.completed ? "opacity-50" : ""}`}
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={event.completed || false}
+                                        onChange={() => handleToggleCompleted(event)}
+                                        className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <p
+                                          className={`text-sm font-medium leading-tight ${event.completed ? "line-through" : ""}`}
+                                        >
+                                          {event.summary}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        </p>
+                                      </div>
+                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0"
+                                          onClick={() => {
+                                            setSelectedEvent(event);
+                                            setIsEditDialogOpen(true);
+                                          }}
+                                        >
+                                          <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                          onClick={() => handleDeleteEvent(event)}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
             );
           })}
-        </Accordion>
+        </Tabs>
       )}
 
       {/* Create Event Dialog */}
