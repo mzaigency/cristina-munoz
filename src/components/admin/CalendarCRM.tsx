@@ -571,26 +571,22 @@ export const CalendarCRM = () => {
                           </div>
                         </div>
 
-                        {/* Timeline Grid */}
-                        <div className="grid grid-cols-[80px_1fr_1fr] gap-3">
-                          {/* Hours column */}
-                          <div className="relative">
-                            {schedule.hours.map((hour) => {
-                        <div
-                          key={hour}
-                          className="h-[104px] border-b border-border/30 flex items-start pt-1"
-                              const isBreakTime = hour === 14 || hour === 15;
-                              return (
-                                <div
-                                  key={hour}
-                                  className={`h-20 border-b border-border/30 flex items-start pt-1 ${
-                                    isBreakTime ? "bg-muted/30" : ""
-                                  }`}
-                                >
-                                  <span className="text-sm font-medium text-muted-foreground">
-                                    {hour.toString().padStart(2, "0")}:00
-                                  </span>
-                                </div>
+                       {/* Hours column */}
+                        <div className="relative">
+                          {schedule.hours.map((hour) => {
+                            // No se necesita ninguna lógica aquí dentro
+                            return (
+                              <div
+                                key={hour}
+                                className="h-[104px] border-b border-border/30 flex items-start pt-1"
+                              >
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  {hour.toString().padStart(2, "0")}:00
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
                               );
                             })}
                           </div>
