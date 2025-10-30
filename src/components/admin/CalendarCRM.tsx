@@ -699,7 +699,7 @@ export const CalendarCRM = () => {
                             {schedule.hours.map((hour) => (
                               <div
                                 key={hour}
-                                className="h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/0.3)]"
+                                className="h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/2.3)]"
                               ></div>
                             ))}
 
