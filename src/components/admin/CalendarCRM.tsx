@@ -426,7 +426,7 @@ export const CalendarCRM = () => {
       const durationMinutes = endMinutesFromStart - startMinutesFromStart;
 
       // Each hour is 80px tall
-      const pixelsPerMinute = (80 / 60) * 1.3;
+      const pixelsPerMinute = 104 / 60;
       const top = startMinutesFromStart * pixelsPerMinute;
       const height = durationMinutes * pixelsPerMinute;
 
@@ -575,26 +575,19 @@ export const CalendarCRM = () => {
                         <div className="grid grid-cols-[80px_1fr_1fr] gap-3">
                           {/* Hours column */}
                           <div className="relative">
-                            {schedule.hours.map((hour) => {
-                              const isBreakTime = hour === 14 || hour === 15;
-                              return (
-                                <div
-                                  key={hour}
-                                  className={`h-20 border-b border-border/30 flex items-start pt-1 ${
-                                    isBreakTime ? "bg-muted/30" : ""
-                                  }`}
-                                >
-                                  <span className="text-sm font-medium text-muted-foreground">
-                                    {hour.toString().padStart(2, "0")}:00
-                                  </span>
-                                </div>
-                              );
-                            })}
+                            {schedule.hours.map((hour) => (
+                              <div key={hour} className="h-[104px] border-b border-border/30 flex items-start pt-1">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  {hour.toString().padStart(2, "0")}:00
+                                </span>
+                              </div>
+                            ))}
                           </div>
 
                           {/* Cris column */}
                           <div className="relative border-l border-border/30">
                             {schedule.hours.map((hour) => {
+                              <div key={hour} className="h-[104px] border-b border-border/30" />;
                               const dayOfWeek = day.getDay();
                               const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
                               const isBreakTime = isTuesdayToFriday && (hour === 12 || hour === 13 || hour === 14);
@@ -689,6 +682,7 @@ export const CalendarCRM = () => {
                           {/* Desi column */}
                           <div className="relative border-l border-border/30">
                             {schedule.hours.map((hour) => {
+                              <div key={hour} className="h-[104px] border-b border-border/30" />;
                               const dayOfWeek = day.getDay();
                               const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
                               const isBreakTime = isTuesdayToFriday && (hour === 12 || hour === 13 || hour === 14);
