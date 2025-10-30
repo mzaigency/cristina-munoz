@@ -426,7 +426,7 @@ export const CalendarCRM = () => {
       const durationMinutes = endMinutesFromStart - startMinutesFromStart;
 
       // Each hour is 80px tall
-      const pixelsPerMinute = 80 / 60;
+      const pixelsPerMinute = 104 / 60;
       const top = startMinutesFromStart * pixelsPerMinute;
       const height = durationMinutes * pixelsPerMinute;
 
