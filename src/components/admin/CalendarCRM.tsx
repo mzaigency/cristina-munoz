@@ -594,32 +594,27 @@ export const CalendarCRM = () => {
 
                           {/* Cris column */}
                           <div className="relative border-l border-border/30">
-                            {schedule.hours.map((hour) => (
-                              <div key={hour} className="h-20 border-b border-border/30" />
-                            ))}
-                            {/* Zona de Descanso */}
-                            {(() => {
+                            {schedule.hours.map((hour) => {
                               const dayOfWeek = day.getDay();
                               const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
-                              if (isTuesdayToFriday) {
-                                const pixelsPerMinute = (80 / 60) * 1.3;
-                                const breakStartMinutes = (12 - schedule.startHour) * 60 + 30; // 12:30
-                                const breakDurationMinutes = 3 * 60; // 3 hours duration
-                                const top = breakStartMinutes * pixelsPerMinute;
-                                const height = breakDurationMinutes * pixelsPerMinute;
-                                return (
-                                  <div
-                                    className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none"
-                                    style={{ top: `${top}px`, height: `${height}px` }}
-                                  >
-                                    <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-2 py-0.5 rounded">
-                                      Descanso
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })()}
+                              const isBreakTime = isTuesdayToFriday && (hour === 12 || hour === 13 || hour === 14);
+                              return (
+                                <div
+                                  key={hour}
+                                  className={`h-20 border-b border-border/30 relative ${
+                                    isBreakTime ? "bg-gray-200/40 dark:bg-gray-700/20" : ""
+                                  }`}
+                                >
+                                  {isBreakTime && hour === 13 && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                      <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-2 py-0.5 rounded">
+                                        Descanso
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                             {/* Events positioned absolutely with overlap detection */}
                             {(() => {
                               const positions = detectOverlaps(crisEvents);
@@ -693,32 +688,27 @@ export const CalendarCRM = () => {
 
                           {/* Desi column */}
                           <div className="relative border-l border-border/30">
-                            {schedule.hours.map((hour) => (
-                              <div key={hour} className="h-20 border-b border-border/30" />
-                            ))}
-                            {/* Zona de Descanso */}
-                            {(() => {
+                            {schedule.hours.map((hour) => {
                               const dayOfWeek = day.getDay();
                               const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
-                              if (isTuesdayToFriday) {
-                                const pixelsPerMinute = (80 / 60) * 1.3;
-                                const breakStartMinutes = (12 - schedule.startHour) * 60 + 30; // 12:30
-                                const breakDurationMinutes = 3 * 60; // 3 hours duration
-                                const top = breakStartMinutes * pixelsPerMinute;
-                                const height = breakDurationMinutes * pixelsPerMinute;
-                                return (
-                                  <div
-                                    className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none"
-                                    style={{ top: `${top}px`, height: `${height}px` }}
-                                  >
-                                    <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-2 py-0.5 rounded">
-                                      Descanso
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })()}
+                              const isBreakTime = isTuesdayToFriday && (hour === 12 || hour === 13 || hour === 14);
+                              return (
+                                <div
+                                  key={hour}
+                                  className={`h-20 border-b border-border/30 relative ${
+                                    isBreakTime ? "bg-gray-200/40 dark:bg-gray-700/20" : ""
+                                  }`}
+                                >
+                                  {isBreakTime && hour === 13 && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                      <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-2 py-0.5 rounded">
+                                        Descanso
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                             {/* Events positioned absolutely with overlap detection */}
                             {(() => {
                               const positions = detectOverlaps(desiEvents);
