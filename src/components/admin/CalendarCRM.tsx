@@ -604,7 +604,7 @@ export const CalendarCRM = () => {
                               if (isTuesdayToFriday) {
                                 const pixelsPerMinute = 104 / 60;
                                 const breakStartMinutes = (12 - schedule.startHour) * 60 + 30; // Empieza a las 12:30
-                                const breakDurationMinutes = 3 * 60; // Dura 3 horas
+                                const breakDurationMinutes = 150; // 2.5 horas de duración (acaba a las 15:00)
                                 const top = breakStartMinutes * pixelsPerMinute;
                                 const height = breakDurationMinutes * pixelsPerMinute;
                                 return (
@@ -710,7 +710,7 @@ export const CalendarCRM = () => {
                               if (isTuesdayToFriday) {
                                 const pixelsPerMinute = 104 / 60;
                                 const breakStartMinutes = (12 - schedule.startHour) * 60 + 30; // Empieza a las 12:30
-                                const breakDurationMinutes = 3 * 60; // Dura 3 horas
+                                const breakDurationMinutes = 150; // 2.5 horas de duración (acaba a las 15:00)
                                 const top = breakStartMinutes * pixelsPerMinute;
                                 const height = breakDurationMinutes * pixelsPerMinute;
                                 return (
