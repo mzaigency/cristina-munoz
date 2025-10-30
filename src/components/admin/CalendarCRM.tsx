@@ -572,230 +572,135 @@ export const CalendarCRM = () => {
                         </div>
 
                         {/* Timeline Grid */}
-              <div className="grid grid-cols-[80px_1fr_1fr] gap-3">
-                {/* Hours column */}
-                <div className="relative">
-                  {schedule.hours.map((hour) => (
-                    <div
-                      key={hour}
-                      className="h-[104px] border-b border-border/30 flex items-start pt-1"
-                    >
-                      <span className="text-sm font-medium text-muted-foreground">
-                        {hour.toString().padStart(2, "0")}:00
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Cris column */}
-                <div className="relative border-l border-border/30">
-                  {/* Filas de la cuadrícula con línea de media hora */}
-                  {schedule.hours.map((hour) => (
-                    <div key={hour} className="h-[104px] border-b border-border/30 relative">
-                      <div className="absolute top-1/2 -mt-px w-full h-px bg-gray-200 dark:bg-gray-700/50"></div>
-                    </div>
-                  ))}
-                  
-                  {/* Zona de Descanso */}
-                  {(() => {
-                    const dayOfWeek = day.getDay();
-                    const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
-                    if (isTuesdayToFriday) {
-                      const pixelsPerMinute = 104 / 60;
-                      const breakStartMinutes = (12 - schedule.startHour) * 60 + 30; // Empieza a las 12:30
-                      const breakDurationMinutes = 3 * 60; // Dura 3 horas
-                      const top = breakStartMinutes * pixelsPerMinute;
-                      const height = breakDurationMinutes * pixelsPerMinute;
-                      return (
-                        <div
-                          className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none"
-                          style={{ top: `${top}px`, height: `${height}px` }}
-                        >
-                          <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-2 py-0.5 rounded">
-                            Descanso
-                          </span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-
-                  {/* Events positioned absolutely with overlap detection */}
-                  {(() => {
-                    const positions = detectOverlaps(crisEvents);
-                    return positions.map(({ event, column, totalColumns }) => {
-                      const position = calculateEventPosition(event, day);
-                      if (!position) return null;
-
-                      const widthPercentage = 100 / totalColumns;
-                      const leftPercentage = column * widthPercentage;
-
-                      return (
-                        <div
-                          key={event.id}
-                          className={`absolute group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${
-                            event.completed ? "opacity-50" : ""
-                          }`}
-                          style={{
-                            top: `${position.top}px`,
-                            height: `${Math.max(position.height, 40)}px`,
-                            left: `${leftPercentage}%`,
-                            width: `${widthPercentage - 2}%`,
-                          }}
-                        >
-                          {/* Contenido de la cita... */}
-                          <div className="flex items-start gap-2 h-full">
-                            <input
-                              type="checkbox"
-                              checked={event.completed || false}
-                              onChange={() => handleToggleCompleted(event)}
-                              className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
-                            />
-                            <div className="flex-1 min-w-0 overflow-hidden">
-                              <p
-                                className={`text-xs font-medium leading-tight truncate ${
-                                  event.completed ? "line-through" : ""
-                                }`}
-                              >
-                                {event.summary}
-                              </p>
-                              <p className="text-[10px] text-muted-foreground mt-0.5">
-                                {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                              </p>
-                            </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-5 w-5 p-0"
-                                onClick={() => {
-                                  setSelectedEvent(event);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit2 className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-5 w-5 p-0 text-destructive hover:text-destructive"
-                                onClick={() => handleDeleteEvent(event)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
+                        <div className="grid grid-cols-[80px_1fr_1fr] gap-3">
+                          {/* Hours column */}
+                          <div className="relative">
+                            {schedule.hours.map((hour) => (
+                              <div key={hour} className="h-[104px] border-b border-border/30 flex items-start pt-1">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  {hour.toString().padStart(2, "0")}:00
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
 
-                {/* Desi column */}
-                <div className="relative border-l border-border/30">
-                  {/* Filas de la cuadrícula con línea de media hora */}
-                  {schedule.hours.map((hour) => (
-                    <div key={hour} className="h-[104px] border-b border-border/30 relative">
-                      <div className="absolute top-1/2 -mt-px w-full h-px bg-gray-200 dark:bg-gray-700/50"></div>
-                    </div>
-                  ))}
+                          {/* Cris column */}
+                          <div className="relative border-l border-border/30">
+                            {schedule.hours.map((hour) => {
+                              <div key={hour} className="h-[104px] border-b border-border/30" />;
+                              const dayOfWeek = day.getDay();
+                              const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
+                              const isBreakTime = isTuesdayToFriday && (hour === 12 || hour === 13 || hour === 14);
+                              return (
+                                <div
+                                  key={hour}
+                                  className={`h-20 border-b border-border/30 relative ${
+                                    isBreakTime ? "bg-gray-200/40 dark:bg-gray-700/20" : ""
+                                  }`}
+                                >
+                                  {isBreakTime && hour === 13 && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                      <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-2 py-0.5 rounded">
+                                        Descanso
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {/* Events positioned absolutely with overlap detection */}
+                            {(() => {
+                              const positions = detectOverlaps(crisEvents);
+                              return positions.map(({ event, column, totalColumns }) => {
+                                const position = calculateEventPosition(event, day);
+                                if (!position) return null;
 
-                  {/* Zona de Descanso */}
-                  {(() => {
-                    const dayOfWeek = day.getDay();
-                    const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
-                    if (isTuesdayToFriday) {
-                      const pixelsPerMinute = 104 / 60;
-                      const breakStartMinutes = (12 - schedule.startHour) * 60 + 30; // Empieza a las 12:30
-                      const breakDurationMinutes = 3 * 60; // Dura 3 horas
-                      const top = breakStartMinutes * pixelsPerMinute;
-                      const height = breakDurationMinutes * pixelsPerMinute;
-                      return (
-                        <div
-                          className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none"
-                          style={{ top: `${top}px`, height: `${height}px` }}
-                        >
-                          <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-2 py-0.5 rounded">
-                            Descanso
-                          </span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
+                                const widthPercentage = 100 / totalColumns;
+                                const leftPercentage = column * widthPercentage;
 
-                  {/* Events positioned absolutely with overlap detection */}
-                  {(() => {
-                    const positions = detectOverlaps(desiEvents);
-                    return positions.map(({ event, column, totalColumns }) => {
-                      const position = calculateEventPosition(event, day);
-                      if (!position) return null;
-
-                      const widthPercentage = 100 / totalColumns;
-                      const leftPercentage = column * widthPercentage;
-
-                      return (
-                        <div
-                          key={event.id}
-                          className={`absolute group bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${
-                            event.completed ? "opacity-50" : ""
-                          }`}
-                          style={{
-                            top: `${position.top}px`,
-                            height: `${Math.max(position.height, 40)}px`,
-                            left: `${leftPercentage}%`,
-                            width: `${widthPercentage - 2}%`,
-                          }}
-                        >
-                           {/* Contenido de la cita... */}
-                          <div className="flex items-start gap-2 h-full">
-                            <input
-                              type="checkbox"
-                              checked={event.completed || false}
-                              onChange={() => handleToggleCompleted(event)}
-                              className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
-                            />
-                            <div className="flex-1 min-w-0 overflow-hidden">
-                              <p
-                                className={`text-xs font-medium leading-tight truncate ${
-                                  event.completed ? "line-through" : ""
-                                }`}
-                              >
-                                {event.summary}
-                              </p>
-                              <p className="text-[10px] text-muted-foreground mt-0.5">
-                                {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                              </p>
-                            </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-5 w-5 p-0"
-                                onClick={() => {
-                                  setSelectedEvent(event);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit2 className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-5 w-5 p-0 text-destructive hover:text-destructive"
-                                onClick={() => handleDeleteEvent(event)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
+                                return (
+                                  <div
+                                    key={event.id}
+                                    className={`absolute group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${
+                                      event.completed ? "opacity-50" : ""
+                                    }`}
+                                    style={{
+                                      top: `${position.top}px`,
+                                      height: `${Math.max(position.height, 40)}px`,
+                                      left: `${leftPercentage}%`,
+                                      width: `${widthPercentage - 2}%`,
+                                    }}
+                                  >
+                                    <div className="flex items-start gap-2 h-full">
+                                      <input
+                                        type="checkbox"
+                                        checked={event.completed || false}
+                                        onChange={() => handleToggleCompleted(event)}
+                                        className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
+                                      />
+                                      <div className="flex-1 min-w-0 overflow-hidden">
+                                        <p
+                                          className={`text-xs font-medium leading-tight truncate ${
+                                            event.completed ? "line-through" : ""
+                                          }`}
+                                        >
+                                          {event.summary}
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        </p>
+                                      </div>
+                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 w-5 p-0"
+                                          onClick={() => {
+                                            setSelectedEvent(event);
+                                            setIsEditDialogOpen(true);
+                                          }}
+                                        >
+                                          <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 w-5 p-0 text-destructive hover:text-destructive"
+                                          onClick={() => handleDeleteEvent(event)}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              });
+                            })()}
                           </div>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
+
+                          {/* Desi column */}
+                          <div className="relative border-l border-border/30">
+                            {schedule.hours.map((hour) => {
+                              <div key={hour} className="h-[104px] border-b border-border/30" />;
+                              const dayOfWeek = day.getDay();
+                              const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
+                              const isBreakTime = isTuesdayToFriday && (hour === 12 || hour === 13 || hour === 14);
+                              return (
+                                <div
+                                  key={hour}
+                                  className={`h-20 border-b border-border/30 relative ${
+                                    isBreakTime ? "bg-gray-200/40 dark:bg-gray-700/20" : ""
+                                  }`}
+                                >
+                                  {isBreakTime && hour === 13 && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                      <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-2 py-0.5 rounded">
+                                        Descanso
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
                               );
                             })}
                             {/* Events positioned absolutely with overlap detection */}
