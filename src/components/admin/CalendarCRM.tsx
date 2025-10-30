@@ -393,13 +393,13 @@ export const CalendarCRM = () => {
     if (isSaturday) {
       // Sábado: 8:00 a 13:00
       return {
-        hours: Array.from({ length: 6 }, (_, i) => 8 + i),
+        hours: Array.from({ length: 6 }, (_, i) => 8 + i - 1),
         startHour: 8,
         endHour: 13,
       };
     }
 
-    // Martes a viernes: 9:00 a 19:00
+    // Martes a viernes: 9:00 a 19:00 (con descanso 14:00-16:00)
     return {
       hours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
       startHour: 9,
@@ -449,7 +449,6 @@ export const CalendarCRM = () => {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">CRM - Gestión de Citas🗓️</h2>
-          <p className="text-muted-foreground">Gestiona los calendarios de Cris y Desi</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setIsCreateDialogOpen(true)}>
