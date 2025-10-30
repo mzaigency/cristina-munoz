@@ -576,7 +576,10 @@ export const CalendarCRM = () => {
                           {/* Hours column */}
                           <div className="relative">
                             {schedule.hours.map((hour) => (
-                              <div key={hour} className="h-[104px] border-b border-border/30 flex items-start pt-1">
+                              <div
+                                key={hour}
+                                className="h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/0.3)] flex items-start pt-1"
+                              >
                                 <span className="text-sm font-medium text-muted-foreground">
                                   {hour.toString().padStart(2, "0")}:00
                                 </span>
@@ -586,11 +589,12 @@ export const CalendarCRM = () => {
 
                           {/* Cris column */}
                           <div className="relative border-l border-border/30">
-                            {/* Filas de la cuadrícula con línea de media hora */}
+                            {/* Filas de la cuadrícula */}
                             {schedule.hours.map((hour) => (
-                              <div key={hour} className="h-[104px] border-b border-border/30 relative">
-                                <div className="absolute top-1/2 -mt-px w-full h-px bg-gray-200 dark:bg-gray-700/50"></div>
-                              </div>
+                              <div
+                                key={hour}
+                                className="h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/0.3)]"
+                              ></div>
                             ))}
 
                             {/* Zona de Descanso */}
@@ -691,11 +695,12 @@ export const CalendarCRM = () => {
 
                           {/* Desi column */}
                           <div className="relative border-l border-border/30">
-                            {/* Filas de la cuadrícula con línea de media hora */}
+                            {/* Filas de la cuadrícula */}
                             {schedule.hours.map((hour) => (
-                              <div key={hour} className="h-[104px] border-b border-border/30 relative">
-                                <div className="absolute top-1/2 -mt-px w-full h-px bg-gray-200 dark:bg-gray-700/50"></div>
-                              </div>
+                              <div
+                                key={hour}
+                                className="h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/0.3)]"
+                              ></div>
                             ))}
 
                             {/* Zona de Descanso */}
