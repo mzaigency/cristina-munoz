@@ -393,7 +393,7 @@ export const CalendarCRM = () => {
     if (isSaturday) {
       // Sábado: 8:00 a 13:00
       return {
-        hours: Array.from({ length: 6 }, (_, i) => 9 + i - 1),
+        hours: Array.from({ length: 5 }, (_, i) => 8 + i),
         startHour: 8,
         endHour: 13,
       };
