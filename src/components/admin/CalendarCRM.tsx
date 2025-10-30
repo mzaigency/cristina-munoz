@@ -31,6 +31,7 @@ import {
   addMonths,
   endOfDay,
   startOfDay,
+  differenceInMinutes,
 } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -309,34 +310,86 @@ export const CalendarCRM = () => {
     }
   };
   const groupEventsByDate = (events: CalendarEvent[]) => {
-    const grouped: {
-      [key: string]: CalendarEvent[];
-    } = {};
+    const grouped: Record<string, CalendarEvent[]> = {};
     events.forEach((event) => {
-      // Validate that event has required properties
-      if (!event.start?.dateTime) {
-        console.warn("Event missing start.dateTime:", event);
-        return;
+      if (!event.start?.dateTime) return;
+      const date = format(parseISO(event.start.dateTime), "yyyy-MM-dd");
+      if (!grouped[date]) {
+        grouped[date] = [];
       }
-      try {
-        const date = format(parseISO(event.start.dateTime), "yyyy-MM-dd");
-        if (!grouped[date]) grouped[date] = [];
-        grouped[date].push(event);
-      } catch (error) {
-        console.error("Error parsing event date:", event, error);
-      }
+      grouped[date].push(event);
     });
     return grouped;
   };
+
+  // Detect overlapping events and calculate positioning
+  interface EventPosition {
+    event: CalendarEvent;
+    column: number;
+    totalColumns: number;
+  }
+
+  function detectOverlaps(events: CalendarEvent[]): EventPosition[] {
+    if (events.length === 0) return [];
+
+    // Sort events by start time
+    const sortedEvents = [...events].sort(
+      (a, b) => new Date(a.start.dateTime).getTime() - new Date(b.start.dateTime).getTime(),
+    );
+
+    const positions: EventPosition[] = [];
+    const groups: CalendarEvent[][] = [];
+
+    // Group overlapping events
+    sortedEvents.forEach((event) => {
+      const eventStart = new Date(event.start.dateTime);
+      const eventEnd = new Date(event.end.dateTime);
+
+      // Find a group where this event overlaps with at least one event
+      let foundGroup = false;
+      for (const group of groups) {
+        const overlaps = group.some((groupEvent) => {
+          const groupStart = new Date(groupEvent.start.dateTime);
+          const groupEnd = new Date(groupEvent.end.dateTime);
+          return eventStart < groupEnd && eventEnd > groupStart;
+        });
+
+        if (overlaps) {
+          group.push(event);
+          foundGroup = true;
+          break;
+        }
+      }
+
+      if (!foundGroup) {
+        groups.push([event]);
+      }
+    });
+
+    // Assign positions within each group
+    groups.forEach((group) => {
+      const totalColumns = Math.min(group.length, 2); // Maximum 2 columns
+      group.forEach((event, index) => {
+        positions.push({
+          event,
+          column: index % totalColumns,
+          totalColumns,
+        });
+      });
+    });
+
+    return positions;
+  }
+
   const getScheduleForDay = (dayDate: Date) => {
     const dayOfWeek = dayDate.getDay();
     const isSaturday = dayOfWeek === 6;
     const isSunday = dayOfWeek === 0;
-    
+
     if (isSunday) {
       return { hours: [], startHour: 0, endHour: 0 };
     }
-    
+
     if (isSaturday) {
       // Sábado: 8:00 a 13:00
       return {
@@ -345,7 +398,7 @@ export const CalendarCRM = () => {
         endHour: 13,
       };
     }
-    
+
     // Martes a viernes: 9:00 a 19:00 (con descanso 14:00-16:00)
     return {
       hours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
@@ -357,32 +410,33 @@ export const CalendarCRM = () => {
   const calculateEventPosition = (event: CalendarEvent, dayDate: Date) => {
     const schedule = getScheduleForDay(dayDate);
     if (!event.start?.dateTime || !event.end?.dateTime) return null;
-    
+
     try {
       const startTime = parseISO(event.start.dateTime);
       const endTime = parseISO(event.end.dateTime);
-      
+
       const startHour = startTime.getHours();
       const startMinute = startTime.getMinutes();
       const endHour = endTime.getHours();
       const endMinute = endTime.getMinutes();
-      
+
       // Calculate position from schedule start
       const startMinutesFromStart = (startHour - schedule.startHour) * 60 + startMinute;
       const endMinutesFromStart = (endHour - schedule.startHour) * 60 + endMinute;
       const durationMinutes = endMinutesFromStart - startMinutesFromStart;
-      
+
       // Each hour is 80px tall
       const pixelsPerMinute = 80 / 60;
       const top = startMinutesFromStart * pixelsPerMinute;
       const height = durationMinutes * pixelsPerMinute;
-      
+
       return { top, height };
     } catch (error) {
       console.error("Error calculating event position:", error);
       return null;
     }
   };
+
   const weekDays = Array.from(
     {
       length: 7,
@@ -455,7 +509,10 @@ export const CalendarCRM = () => {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <Tabs defaultValue={format(weekDays.find(day => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")} className="w-full">
+        <Tabs
+          defaultValue={format(weekDays.find((day) => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")}
+          className="w-full"
+        >
           <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {weekDays.map((day) => {
               const dateKey = format(day, "yyyy-MM-dd");
@@ -467,13 +524,11 @@ export const CalendarCRM = () => {
                   value={dateKey}
                   className={cn(
                     "flex-col items-start gap-1 data-[state=active]:bg-background px-4 py-2 min-w-[140px]",
-                    isToday && "border-primary"
+                    isToday && "border-primary",
                   )}
                 >
                   <div className="flex items-center gap-2 w-full">
-                    <span className="text-sm font-semibold capitalize">
-                      {format(day, "EEE d MMM", { locale: es })}
-                    </span>
+                    <span className="text-sm font-semibold capitalize">{format(day, "EEE d MMM", { locale: es })}</span>
                     {isToday && (
                       <Badge variant="default" className="text-xs h-5">
                         Hoy
@@ -494,15 +549,13 @@ export const CalendarCRM = () => {
             const schedule = getScheduleForDay(day);
             const crisEvents = dayEvents.filter((e) => e.stylist === "cris");
             const desiEvents = dayEvents.filter((e) => e.stylist === "desi");
-            
+
             return (
               <TabsContent key={dateKey} value={dateKey} className="mt-4">
                 <Card>
                   <CardContent className="p-6">
                     {schedule.hours.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic text-center py-8">
-                        Cerrado los domingos
-                      </p>
+                      <p className="text-sm text-muted-foreground italic text-center py-8">Cerrado los domingos</p>
                     ) : (
                       <div className="relative">
                         {/* Header */}
@@ -542,153 +595,189 @@ export const CalendarCRM = () => {
                           {/* Cris column */}
                           <div className="relative border-l border-border/30">
                             {schedule.hours.map((hour) => {
-                              const isBreakTime = hour === 14 || hour === 15;
+                              const dayOfWeek = day.getDay();
+                              const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
+                              const isBreakTime = isTuesdayToFriday && (hour === 12 || hour === 13 || hour === 14);
                               return (
                                 <div
                                   key={hour}
-                                  className={`h-20 border-b border-border/30 ${
-                                    isBreakTime ? "bg-muted/30" : ""
+                                  className={`h-20 border-b border-border/30 relative ${
+                                    isBreakTime ? "bg-gray-200/40 dark:bg-gray-700/20" : ""
                                   }`}
-                                />
-                              );
-                            })}
-                            {/* Events positioned absolutely */}
-                            {crisEvents.map((event) => {
-                              const position = calculateEventPosition(event, day);
-                              if (!position) return null;
-                              
-                              return (
-                                <div
-                                  key={event.id}
-                                  className={`absolute left-1 right-1 group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${
-                                    event.completed ? "opacity-50" : ""
-                                  }`}
-                                  style={{
-                                    top: `${position.top}px`,
-                                    height: `${Math.max(position.height, 40)}px`,
-                                  }}
                                 >
-                                  <div className="flex items-start gap-2 h-full">
-                                    <input
-                                      type="checkbox"
-                                      checked={event.completed || false}
-                                      onChange={() => handleToggleCompleted(event)}
-                                      className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
-                                    />
-                                    <div className="flex-1 min-w-0 overflow-hidden">
-                                      <p
-                                        className={`text-xs font-medium leading-tight truncate ${
-                                          event.completed ? "line-through" : ""
-                                        }`}
-                                      >
-                                        {event.summary}
-                                      </p>
-                                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                                        {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                        {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                      </p>
+                                  {isBreakTime && hour === 13 && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                      <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-2 py-0.5 rounded">
+                                        Descanso
+                                      </span>
                                     </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-5 w-5 p-0"
-                                        onClick={() => {
-                                          setSelectedEvent(event);
-                                          setIsEditDialogOpen(true);
-                                        }}
-                                      >
-                                        <Edit2 className="h-3 w-3" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-5 w-5 p-0 text-destructive hover:text-destructive"
-                                        onClick={() => handleDeleteEvent(event)}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
+                                  )}
                                 </div>
                               );
                             })}
+                            {/* Events positioned absolutely with overlap detection */}
+                            {(() => {
+                              const positions = detectOverlaps(crisEvents);
+                              return positions.map(({ event, column, totalColumns }) => {
+                                const position = calculateEventPosition(event, day);
+                                if (!position) return null;
+
+                                const widthPercentage = 100 / totalColumns;
+                                const leftPercentage = column * widthPercentage;
+
+                                return (
+                                  <div
+                                    key={event.id}
+                                    className={`absolute group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${
+                                      event.completed ? "opacity-50" : ""
+                                    }`}
+                                    style={{
+                                      top: `${position.top}px`,
+                                      height: `${Math.max(position.height, 40)}px`,
+                                      left: `${leftPercentage}%`,
+                                      width: `${widthPercentage - 2}%`,
+                                    }}
+                                  >
+                                    <div className="flex items-start gap-2 h-full">
+                                      <input
+                                        type="checkbox"
+                                        checked={event.completed || false}
+                                        onChange={() => handleToggleCompleted(event)}
+                                        className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
+                                      />
+                                      <div className="flex-1 min-w-0 overflow-hidden">
+                                        <p
+                                          className={`text-xs font-medium leading-tight truncate ${
+                                            event.completed ? "line-through" : ""
+                                          }`}
+                                        >
+                                          {event.summary}
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        </p>
+                                      </div>
+                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 w-5 p-0"
+                                          onClick={() => {
+                                            setSelectedEvent(event);
+                                            setIsEditDialogOpen(true);
+                                          }}
+                                        >
+                                          <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 w-5 p-0 text-destructive hover:text-destructive"
+                                          onClick={() => handleDeleteEvent(event)}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              });
+                            })()}
                           </div>
 
                           {/* Desi column */}
                           <div className="relative border-l border-border/30">
                             {schedule.hours.map((hour) => {
-                              const isBreakTime = hour === 14 || hour === 15;
+                              const dayOfWeek = day.getDay();
+                              const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
+                              const isBreakTime = isTuesdayToFriday && (hour === 12 || hour === 13 || hour === 14);
                               return (
                                 <div
                                   key={hour}
-                                  className={`h-20 border-b border-border/30 ${
-                                    isBreakTime ? "bg-muted/30" : ""
+                                  className={`h-20 border-b border-border/30 relative ${
+                                    isBreakTime ? "bg-gray-200/40 dark:bg-gray-700/20" : ""
                                   }`}
-                                />
-                              );
-                            })}
-                            {/* Events positioned absolutely */}
-                            {desiEvents.map((event) => {
-                              const position = calculateEventPosition(event, day);
-                              if (!position) return null;
-                              
-                              return (
-                                <div
-                                  key={event.id}
-                                  className={`absolute left-1 right-1 group bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${
-                                    event.completed ? "opacity-50" : ""
-                                  }`}
-                                  style={{
-                                    top: `${position.top}px`,
-                                    height: `${Math.max(position.height, 40)}px`,
-                                  }}
                                 >
-                                  <div className="flex items-start gap-2 h-full">
-                                    <input
-                                      type="checkbox"
-                                      checked={event.completed || false}
-                                      onChange={() => handleToggleCompleted(event)}
-                                      className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
-                                    />
-                                    <div className="flex-1 min-w-0 overflow-hidden">
-                                      <p
-                                        className={`text-xs font-medium leading-tight truncate ${
-                                          event.completed ? "line-through" : ""
-                                        }`}
-                                      >
-                                        {event.summary}
-                                      </p>
-                                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                                        {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                        {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
-                                      </p>
+                                  {isBreakTime && hour === 13 && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                      <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-2 py-0.5 rounded">
+                                        Descanso
+                                      </span>
                                     </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-5 w-5 p-0"
-                                        onClick={() => {
-                                          setSelectedEvent(event);
-                                          setIsEditDialogOpen(true);
-                                        }}
-                                      >
-                                        <Edit2 className="h-3 w-3" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-5 w-5 p-0 text-destructive hover:text-destructive"
-                                        onClick={() => handleDeleteEvent(event)}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
+                                  )}
                                 </div>
                               );
                             })}
+                            {/* Events positioned absolutely with overlap detection */}
+                            {(() => {
+                              const positions = detectOverlaps(desiEvents);
+                              return positions.map(({ event, column, totalColumns }) => {
+                                const position = calculateEventPosition(event, day);
+                                if (!position) return null;
+
+                                const widthPercentage = 100 / totalColumns;
+                                const leftPercentage = column * widthPercentage;
+
+                                return (
+                                  <div
+                                    key={event.id}
+                                    className={`absolute group bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${
+                                      event.completed ? "opacity-50" : ""
+                                    }`}
+                                    style={{
+                                      top: `${position.top}px`,
+                                      height: `${Math.max(position.height, 40)}px`,
+                                      left: `${leftPercentage}%`,
+                                      width: `${widthPercentage - 2}%`,
+                                    }}
+                                  >
+                                    <div className="flex items-start gap-2 h-full">
+                                      <input
+                                        type="checkbox"
+                                        checked={event.completed || false}
+                                        onChange={() => handleToggleCompleted(event)}
+                                        className="mt-0.5 w-4 h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
+                                      />
+                                      <div className="flex-1 min-w-0 overflow-hidden">
+                                        <p
+                                          className={`text-xs font-medium leading-tight truncate ${
+                                            event.completed ? "line-through" : ""
+                                          }`}
+                                        >
+                                          {event.summary}
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
+                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        </p>
+                                      </div>
+                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 w-5 p-0"
+                                          onClick={() => {
+                                            setSelectedEvent(event);
+                                            setIsEditDialogOpen(true);
+                                          }}
+                                        >
+                                          <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 w-5 p-0 text-destructive hover:text-destructive"
+                                          onClick={() => handleDeleteEvent(event)}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              });
+                            })()}
                           </div>
                         </div>
                       </div>
