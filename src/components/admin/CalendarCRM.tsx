@@ -425,9 +425,9 @@ export const CalendarCRM = () => {
       const endMinutesFromStart = (endHour - schedule.startHour) * 60 + endMinute;
       const durationMinutes = endMinutesFromStart - startMinutesFromStart;
 
-      // Each hour is 80px on mobile, 104px on desktop
+      // Each hour is 70px on mobile, 104px on desktop
       const isMobile = window.innerWidth < 768;
-      const pixelsPerMinute = isMobile ? 80 / 60 : 104 / 60;
+      const pixelsPerMinute = isMobile ? 70 / 60 : 104 / 60;
       const top = startMinutesFromStart * pixelsPerMinute;
       const height = durationMinutes * pixelsPerMinute;
 
@@ -447,61 +447,77 @@ export const CalendarCRM = () => {
   const groupedEvents = groupEventsByDate(events);
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">CRM - Gestión de Citas🗓️</h2>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Cita
-          </Button>
-          <Button variant="secondary" onClick={() => setIsBlockDialogOpen(true)}>
-            <Ban className="h-4 w-4 mr-2" />
-            Bloquear Periodo
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, -7))} disabled={loading}>
-          ← Semana anterior
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() =>
-            setWeekStart(
-              startOfWeek(new Date(), {
-                weekStartsOn: 1,
-              }),
-            )
-          }
-          disabled={loading}
-        >
-          Hoy
-        </Button>
-        <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading}>
-          Semana siguiente →
-        </Button>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline">
-              <CalendarIcon className="h-4 w-4 mr-2" />
-              Ir a fecha
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground">CRM - Gestión de Citas🗓️</h2>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="flex-1 sm:flex-none text-xs md:text-sm">
+              <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              Nueva Cita
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={weekStart}
-              onSelect={handleJumpToDate}
-              initialFocus
-              className="pointer-events-auto"
-              weekStartsOn={1}
-            />
-          </PopoverContent>
-        </Popover>
+            <Button variant="secondary" onClick={() => setIsBlockDialogOpen(true)} className="flex-1 sm:flex-none text-xs md:text-sm">
+              <Ban className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              Bloquear
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 md:gap-2">
+          <div className="flex items-center gap-1 flex-1">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setWeekStart(addDays(weekStart, -7))} 
+              disabled={loading}
+              className="flex-1 text-xs md:text-sm px-2 md:px-4"
+            >
+              ←
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setWeekStart(
+                  startOfWeek(new Date(), {
+                    weekStartsOn: 1,
+                  }),
+                )
+              }
+              disabled={loading}
+              className="flex-1 text-xs md:text-sm px-2 md:px-4"
+            >
+              Hoy
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setWeekStart(addDays(weekStart, 7))} 
+              disabled={loading}
+              className="flex-1 text-xs md:text-sm px-2 md:px-4"
+            >
+              →
+            </Button>
+          </div>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="text-xs md:text-sm px-2 md:px-4">
+                <CalendarIcon className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+                <span className="hidden md:inline">Ir a fecha</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={weekStart}
+                onSelect={handleJumpToDate}
+                initialFocus
+                className="pointer-events-auto"
+                weekStartsOn={1}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       {loading ? (
@@ -513,7 +529,7 @@ export const CalendarCRM = () => {
           defaultValue={format(weekDays.find((day) => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")}
           className="w-full"
         >
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap md:flex-wrap h-auto gap-1 bg-muted/50 p-1">
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap md:flex-wrap h-auto gap-1 bg-muted/50 p-1.5 rounded-lg">
             {weekDays.map((day) => {
               const dateKey = format(day, "yyyy-MM-dd");
               const dayEvents = groupedEvents[dateKey] || [];
@@ -523,21 +539,26 @@ export const CalendarCRM = () => {
                   key={dateKey}
                   value={dateKey}
                   className={cn(
-                    "flex-col items-start gap-1 data-[state=active]:bg-background px-2 md:px-4 py-2 min-w-[100px] md:min-w-[140px]",
-                    isToday && "border-primary",
+                    "flex-col items-center gap-0.5 data-[state=active]:bg-background data-[state=active]:shadow-sm px-3 md:px-4 py-2 min-w-[90px] md:min-w-[140px] rounded-md transition-all",
+                    isToday && "ring-2 ring-primary ring-offset-1",
                   )}
                 >
-                  <div className="flex items-center gap-1 md:gap-2 w-full">
-                    <span className="text-xs md:text-sm font-semibold capitalize">{format(day, "EEE d MMM", { locale: es })}</span>
-                    {isToday && (
-                      <Badge variant="default" className="text-[10px] md:text-xs h-4 md:h-5">
-                        Hoy
-                      </Badge>
-                    )}
+                  <div className="flex flex-col items-center gap-0.5 w-full">
+                    <span className="text-xs md:text-sm font-bold capitalize">
+                      {format(day, "EEE", { locale: es })}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-lg md:text-xl font-bold">{format(day, "d")}</span>
+                      {isToday && (
+                        <Badge variant="default" className="text-[8px] md:text-[10px] h-3.5 md:h-4 px-1">
+                          Hoy
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-[9px] md:text-xs text-muted-foreground font-medium">
+                      {dayEvents.length} {dayEvents.length === 1 ? "cita" : "citas"}
+                    </span>
                   </div>
-                  <span className="text-[10px] md:text-xs text-muted-foreground">
-                    {dayEvents.length} {dayEvents.length === 1 ? "cita" : "citas"}
-                  </span>
                 </TabsTrigger>
               );
             })}
@@ -551,36 +572,38 @@ export const CalendarCRM = () => {
             const desiEvents = dayEvents.filter((e) => e.stylist === "desi");
 
             return (
-              <TabsContent key={dateKey} value={dateKey} className="mt-4">
-                <Card>
+              <TabsContent key={dateKey} value={dateKey} className="mt-3">
+                <Card className="border-2">
                   <CardContent className="p-2 md:p-6">
                     {schedule.hours.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic text-center py-8">Cerrado los domingos</p>
+                      <div className="text-center py-12">
+                        <p className="text-sm md:text-base text-muted-foreground italic">Cerrado los domingos</p>
+                      </div>
                     ) : (
                       <div className="relative overflow-x-auto">
                         {/* Header */}
-                        <div className="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1 md:gap-3 pb-2 border-b mb-3 sticky top-0 bg-background z-10 min-w-[320px]">
-                          <div className="text-[10px] md:text-xs font-semibold text-muted-foreground">HORA</div>
+                        <div className="grid grid-cols-[45px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1.5 md:gap-3 pb-2 border-b-2 mb-2 sticky top-0 bg-background z-10 min-w-[300px]">
+                          <div className="text-[9px] md:text-xs font-bold text-muted-foreground uppercase">Hora</div>
                           <div className="flex items-center gap-1 md:gap-2">
-                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500" />
-                            <span className="text-[10px] md:text-xs font-semibold">CRIS</span>
+                            <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-blue-500 shadow-sm" />
+                            <span className="text-[10px] md:text-xs font-bold">CRIS</span>
                           </div>
                           <div className="flex items-center gap-1 md:gap-2">
-                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-purple-500" />
-                            <span className="text-[10px] md:text-xs font-semibold">DESI</span>
+                            <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-purple-500 shadow-sm" />
+                            <span className="text-[10px] md:text-xs font-bold">DESI</span>
                           </div>
                         </div>
 
                         {/* Timeline Grid */}
-                        <div className="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1 md:gap-3 min-w-[320px]">
+                        <div className="grid grid-cols-[45px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1.5 md:gap-3 min-w-[300px]">
                           {/* Hours column */}
                           <div className="relative">
                             {schedule.hours.map((hour) => (
                               <div
                                 key={hour}
-                                className="h-[80px] md:h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/0.3)] flex items-start pt-1"
+                                className="h-[70px] md:h-[104px] border-b border-border/40 flex items-start pt-1.5"
                               >
-                                <span className="text-[10px] md:text-sm font-medium text-muted-foreground">
+                                <span className="text-[11px] md:text-sm font-bold text-muted-foreground tabular-nums">
                                   {hour.toString().padStart(2, "0")}:00
                                 </span>
                               </div>
@@ -588,12 +611,12 @@ export const CalendarCRM = () => {
                           </div>
 
                           {/* Cris column */}
-                          <div className="relative border-l border-border/30">
+                          <div className="relative border-l-2 border-border/50">
                             {/* Filas de la cuadrícula */}
                             {schedule.hours.map((hour) => (
                               <div
                                 key={hour}
-                                className="h-[80px] md:h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/1.5)]"
+                                className="h-[70px] md:h-[104px] border-b border-border/40"
                               ></div>
                             ))}
 
@@ -603,17 +626,17 @@ export const CalendarCRM = () => {
                               const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
                               if (isTuesdayToFriday) {
                                 const isMobile = window.innerWidth < 768;
-                                const pixelsPerMinute = isMobile ? 80 / 60 : 104 / 60;
-                                const breakStartMinutes = (12 - schedule.startHour) * 60 + 30; // Empieza a las 12:30
-                                const breakDurationMinutes = 150; // 2.5 horas de duración (acaba a las 15:00)
+                                const pixelsPerMinute = isMobile ? 70 / 60 : 104 / 60;
+                                const breakStartMinutes = (12 - schedule.startHour) * 60 + 30;
+                                const breakDurationMinutes = 150;
                                 const top = breakStartMinutes * pixelsPerMinute;
                                 const height = breakDurationMinutes * pixelsPerMinute;
                                 return (
                                   <div
-                                    className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none"
+                                    className="absolute inset-x-0 bg-gray-300/50 dark:bg-gray-600/30 z-0 flex items-center justify-center pointer-events-none border-y border-gray-400/30"
                                     style={{ top: `${top}px`, height: `${height}px` }}
                                   >
-                                    <span className="text-[8px] md:text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-1 md:px-2 py-0.5 rounded">
+                                    <span className="text-[9px] md:text-[10px] font-bold text-gray-600 dark:text-gray-400 bg-background/90 px-1.5 md:px-2 py-0.5 rounded-md shadow-sm">
                                       Descanso
                                     </span>
                                   </div>
@@ -635,56 +658,54 @@ export const CalendarCRM = () => {
                                 return (
                                   <div
                                     key={event.id}
-                                    className={`absolute group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${
-                                      event.completed ? "opacity-50" : ""
+                                    className={`absolute group bg-blue-100 dark:bg-blue-950/30 border-2 border-blue-300 dark:border-blue-700 rounded-lg p-1.5 md:p-2 transition-all hover:shadow-lg hover:z-20 hover:scale-[1.02] overflow-hidden cursor-pointer ${
+                                      event.completed ? "opacity-60" : ""
                                     }`}
                                     style={{
                                       top: `${position.top}px`,
-                                      height: `${Math.max(position.height, 40)}px`,
+                                      height: `${Math.max(position.height, 45)}px`,
                                       left: `${leftPercentage}%`,
                                       width: `${widthPercentage - 2}%`,
                                     }}
                                   >
-                                    {/* Contenido de la cita... */}
                                     <div className="flex items-start gap-1 md:gap-2 h-full">
                                       <input
                                         type="checkbox"
                                         checked={event.completed || false}
                                         onChange={() => handleToggleCompleted(event)}
-                                        className="mt-0.5 w-3 h-3 md:w-4 md:h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0"
+                                        className="mt-0.5 w-3.5 h-3.5 md:w-4 md:h-4 rounded border-2 cursor-pointer accent-blue-500 flex-shrink-0"
                                       />
                                       <div className="flex-1 min-w-0 overflow-hidden">
                                         <p
-                                          className={`text-[10px] md:text-xs font-medium leading-tight truncate ${
+                                          className={`text-[10px] md:text-xs font-bold leading-tight line-clamp-2 ${
                                             event.completed ? "line-through" : ""
                                           }`}
                                         >
                                           {event.summary}
                                         </p>
-                                        <p className="text-[8px] md:text-[10px] text-muted-foreground mt-0.5">
-                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        <p className="text-[9px] md:text-[10px] text-muted-foreground font-semibold mt-0.5 tabular-nums">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
                                         </p>
                                       </div>
-                                      <div className="flex gap-0.5 md:gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                      <div className="flex flex-col gap-0.5 md:gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          className="h-4 w-4 md:h-5 md:w-5 p-0"
+                                          className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-blue-200 dark:hover:bg-blue-900"
                                           onClick={() => {
                                             setSelectedEvent(event);
                                             setIsEditDialogOpen(true);
                                           }}
                                         >
-                                          <Edit2 className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                          <Edit2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
                                         </Button>
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          className="h-4 w-4 md:h-5 md:w-5 p-0 text-destructive hover:text-destructive"
+                                          className="h-5 w-5 md:h-6 md:w-6 p-0 text-destructive hover:bg-red-100 dark:hover:bg-red-900"
                                           onClick={() => handleDeleteEvent(event)}
                                         >
-                                          <Trash2 className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                          <Trash2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
                                         </Button>
                                       </div>
                                     </div>
@@ -695,12 +716,12 @@ export const CalendarCRM = () => {
                           </div>
 
                           {/* Desi column */}
-                          <div className="relative border-l border-border/30">
+                          <div className="relative border-l-2 border-border/50">
                             {/* Filas de la cuadrícula */}
                             {schedule.hours.map((hour) => (
                               <div
                                 key={hour}
-                                className="h-[80px] md:h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/1.5)]"
+                                className="h-[70px] md:h-[104px] border-b border-border/40"
                               ></div>
                             ))}
 
@@ -710,17 +731,17 @@ export const CalendarCRM = () => {
                               const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
                               if (isTuesdayToFriday) {
                                 const isMobile = window.innerWidth < 768;
-                                const pixelsPerMinute = isMobile ? 80 / 60 : 104 / 60;
-                                const breakStartMinutes = (12 - schedule.startHour) * 60 + 30; // Empieza a las 12:30
-                                const breakDurationMinutes = 150; // 2.5 horas de duración (acaba a las 15:00)
+                                const pixelsPerMinute = isMobile ? 70 / 60 : 104 / 60;
+                                const breakStartMinutes = (12 - schedule.startHour) * 60 + 30;
+                                const breakDurationMinutes = 150;
                                 const top = breakStartMinutes * pixelsPerMinute;
                                 const height = breakDurationMinutes * pixelsPerMinute;
                                 return (
                                   <div
-                                    className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none"
+                                    className="absolute inset-x-0 bg-gray-300/50 dark:bg-gray-600/30 z-0 flex items-center justify-center pointer-events-none border-y border-gray-400/30"
                                     style={{ top: `${top}px`, height: `${height}px` }}
                                   >
-                                    <span className="text-[8px] md:text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-1 md:px-2 py-0.5 rounded">
+                                    <span className="text-[9px] md:text-[10px] font-bold text-gray-600 dark:text-gray-400 bg-background/90 px-1.5 md:px-2 py-0.5 rounded-md shadow-sm">
                                       Descanso
                                     </span>
                                   </div>
@@ -742,56 +763,54 @@ export const CalendarCRM = () => {
                                 return (
                                   <div
                                     key={event.id}
-                                    className={`absolute group bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${
-                                      event.completed ? "opacity-50" : ""
+                                    className={`absolute group bg-purple-100 dark:bg-purple-950/30 border-2 border-purple-300 dark:border-purple-700 rounded-lg p-1.5 md:p-2 transition-all hover:shadow-lg hover:z-20 hover:scale-[1.02] overflow-hidden cursor-pointer ${
+                                      event.completed ? "opacity-60" : ""
                                     }`}
                                     style={{
                                       top: `${position.top}px`,
-                                      height: `${Math.max(position.height, 40)}px`,
+                                      height: `${Math.max(position.height, 45)}px`,
                                       left: `${leftPercentage}%`,
                                       width: `${widthPercentage - 2}%`,
                                     }}
                                   >
-                                    {/* Contenido de la cita... */}
                                     <div className="flex items-start gap-1 md:gap-2 h-full">
                                       <input
                                         type="checkbox"
                                         checked={event.completed || false}
                                         onChange={() => handleToggleCompleted(event)}
-                                        className="mt-0.5 w-3 h-3 md:w-4 md:h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0"
+                                        className="mt-0.5 w-3.5 h-3.5 md:w-4 md:h-4 rounded border-2 cursor-pointer accent-purple-500 flex-shrink-0"
                                       />
                                       <div className="flex-1 min-w-0 overflow-hidden">
                                         <p
-                                          className={`text-[10px] md:text-xs font-medium leading-tight truncate ${
+                                          className={`text-[10px] md:text-xs font-bold leading-tight line-clamp-2 ${
                                             event.completed ? "line-through" : ""
                                           }`}
                                         >
                                           {event.summary}
                                         </p>
-                                        <p className="text-[8px] md:text-[10px] text-muted-foreground mt-0.5">
-                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} -{" "}
-                                          {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
+                                        <p className="text-[9px] md:text-[10px] text-muted-foreground font-semibold mt-0.5 tabular-nums">
+                                          {safeFormatDateTime(event.start?.dateTime, "HH:mm")} - {safeFormatDateTime(event.end?.dateTime, "HH:mm")}
                                         </p>
                                       </div>
-                                      <div className="flex gap-0.5 md:gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                      <div className="flex flex-col gap-0.5 md:gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          className="h-4 w-4 md:h-5 md:w-5 p-0"
+                                          className="h-5 w-5 md:h-6 md:w-6 p-0 hover:bg-purple-200 dark:hover:bg-purple-900"
                                           onClick={() => {
                                             setSelectedEvent(event);
                                             setIsEditDialogOpen(true);
                                           }}
                                         >
-                                          <Edit2 className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                          <Edit2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
                                         </Button>
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          className="h-4 w-4 md:h-5 md:w-5 p-0 text-destructive hover:text-destructive"
+                                          className="h-5 w-5 md:h-6 md:w-6 p-0 text-destructive hover:bg-red-100 dark:hover:bg-red-900"
                                           onClick={() => handleDeleteEvent(event)}
                                         >
-                                          <Trash2 className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                          <Trash2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
                                         </Button>
                                       </div>
                                     </div>
