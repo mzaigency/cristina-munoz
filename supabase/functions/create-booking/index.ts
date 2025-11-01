@@ -118,13 +118,19 @@ serve(async (req) => {
       });
       
       const crisEvents = await crisResponse.json();
+      console.log('Cris calendar events:', JSON.stringify(crisEvents.items || [], null, 2));
       const crisAvailable = !crisEvents.items?.some((event: any) => {
+        // Skip cancelled events
+        if (event.status === 'cancelled') return false;
+        
         // Check for all-day events (vacations, etc.)
         if (event.start?.date) {
           const eventStart = event.start.date; // YYYY-MM-DD
           const eventEnd = event.end.date;     // YYYY-MM-DD (exclusive)
           // Check if booking date falls within the all-day event range
-          return bookingDate >= eventStart && bookingDate < eventEnd;
+          const isBlocked = bookingDate >= eventStart && bookingDate < eventEnd;
+          console.log(`Cris all-day event ${event.summary}: ${eventStart} to ${eventEnd}, blocks date: ${isBlocked}`);
+          return isBlocked;
         }
         // Check for time-specific events
         if (!event.start?.dateTime || !event.end?.dateTime) return false;
@@ -134,8 +140,11 @@ serve(async (req) => {
         const [eEndH, eEndM] = endTimeStr.split(':').map(Number);
         const eStart = eStartH * 60 + eStartM;
         const eEnd = eEndH * 60 + eEndM;
-        return (startMinutesTotal < eEnd && endMinutesTotal > eStart);
+        const overlaps = (startMinutesTotal < eEnd && endMinutesTotal > eStart);
+        console.log(`Cris event ${event.summary}: ${startTimeStr}-${endTimeStr}, requested: ${bookingTime}, overlaps: ${overlaps}`);
+        return overlaps;
       });
+      console.log(`Cris available: ${crisAvailable}`);
 
       // Check Desi calendar
       const desiCalendarId = Deno.env.get('GOOGLE_CALENDAR_ID_DESI');
@@ -145,13 +154,19 @@ serve(async (req) => {
       });
       
       const desiEvents = await desiResponse.json();
+      console.log('Desi calendar events:', JSON.stringify(desiEvents.items || [], null, 2));
       const desiAvailable = !desiEvents.items?.some((event: any) => {
+        // Skip cancelled events
+        if (event.status === 'cancelled') return false;
+        
         // Check for all-day events (vacations, etc.)
         if (event.start?.date) {
           const eventStart = event.start.date; // YYYY-MM-DD
           const eventEnd = event.end.date;     // YYYY-MM-DD (exclusive)
           // Check if booking date falls within the all-day event range
-          return bookingDate >= eventStart && bookingDate < eventEnd;
+          const isBlocked = bookingDate >= eventStart && bookingDate < eventEnd;
+          console.log(`Desi all-day event ${event.summary}: ${eventStart} to ${eventEnd}, blocks date: ${isBlocked}`);
+          return isBlocked;
         }
         // Check for time-specific events
         if (!event.start?.dateTime || !event.end?.dateTime) return false;
@@ -161,8 +176,11 @@ serve(async (req) => {
         const [eEndH, eEndM] = endTimeStr.split(':').map(Number);
         const eStart = eStartH * 60 + eStartM;
         const eEnd = eEndH * 60 + eEndM;
-        return (startMinutesTotal < eEnd && endMinutesTotal > eStart);
+        const overlaps = (startMinutesTotal < eEnd && endMinutesTotal > eStart);
+        console.log(`Desi event ${event.summary}: ${startTimeStr}-${endTimeStr}, requested: ${bookingTime}, overlaps: ${overlaps}`);
+        return overlaps;
       });
+      console.log(`Desi available: ${desiAvailable}`);
       
       // Assign to available stylist (prefer Cris if both available)
       if (crisAvailable) {
