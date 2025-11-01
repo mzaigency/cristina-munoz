@@ -60,24 +60,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log('Creating Supabase client with user token...');
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Create client with the user's token for authentication
+    console.log('Creating Supabase client with service role...');
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            Authorization: authHeader,
-          },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
     console.log('Getting user from token...');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
     if (userError || !user) {
       console.error('Error getting user:', userError);
@@ -89,13 +80,7 @@ Deno.serve(async (req) => {
 
     console.log('User found:', user.id);
 
-    // Create service role client for privileged operations
-    const serviceClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
-
-    const { data: userRole } = await serviceClient
+    const { data: userRole } = await supabaseClient
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
