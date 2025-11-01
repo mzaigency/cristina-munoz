@@ -60,21 +60,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log('Extracting token from header...');
-    const token = authHeader.replace('Bearer ', '');
-    
-    console.log('Creating Supabase client...');
+    console.log('Creating Supabase client with service role and user token...');
+    // Use service role key but with user's Authorization header
+    // This allows validating the user's JWT token properly in Edge Functions
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
     );
 
-    console.log('Validating user token...');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    console.log('Validating user from token...');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
 
     if (userError || !user) {
-      console.error('Error validating user token:', userError);
-      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid token' }), {
+      console.error('Error validating user:', userError);
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -82,15 +86,8 @@ Deno.serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id);
 
-    // Create service role client for privileged database operations
-    console.log('Creating service client for role check...');
-    const serviceClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
     console.log('Checking user role...');
-    const { data: userRole, error: roleError } = await serviceClient
+    const { data: userRole, error: roleError } = await supabaseClient
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
