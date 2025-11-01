@@ -60,43 +60,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log('Creating Supabase client with service role and user token...');
-    // Use service role key but with user's Authorization header
-    // This allows validating the user's JWT token properly in Edge Functions
+    console.log('Creating Supabase client with service role...');
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
     );
 
-    console.log('Validating user from token...');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    console.log('Getting user from token...');
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
     if (userError || !user) {
-      console.error('Error validating user:', userError);
+      console.error('Error getting user:', userError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('User authenticated successfully:', user.id);
+    console.log('User found:', user.id);
 
-    console.log('Checking user role...');
-    const { data: userRole, error: roleError } = await supabaseClient
+    const { data: userRole } = await supabaseClient
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .in('role', ['admin', 'stylist'])
       .single();
-
-    if (roleError) {
-      console.error('Error checking user role:', roleError);
-    }
 
     console.log('User role:', userRole);
 
