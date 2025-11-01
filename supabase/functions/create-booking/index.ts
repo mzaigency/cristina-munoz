@@ -456,6 +456,7 @@ serve(async (req) => {
             stylist: actualStylist,
             services: bookingData.services.map(s => s.name),
             bookings: createdBookings,
+            canal: bookingData.user_id ? 'WEB' : 'CRM',
           }),
         }).catch(err => console.error('Error triggering n8n webhook:', err));
       } catch (error) {
