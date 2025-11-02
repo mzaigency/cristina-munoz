@@ -12,7 +12,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const webhookUrl = Deno.env.get('WEBHOOK_VALORACION');
+    const webhookUrl = Deno.env.post('WEBHOOK_VALORACION');
 
     if (!webhookUrl) {
       throw new Error('WEBHOOK_VALORACION not configured');
