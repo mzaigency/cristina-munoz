@@ -12,6 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,6 +89,8 @@ export const CalendarCRM = () => {
   const [blockEndDate, setBlockEndDate] = useState<Date | undefined>(undefined);
   const [blockPeriod, setBlockPeriod] = useState<"day" | "week" | "month">("day");
   const [blockStylist, setBlockStylist] = useState<"cris" | "desi" | "both">("both");
+  const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
+  const [pendingCompletionEvent, setPendingCompletionEvent] = useState<CalendarEvent | null>(null);
   const { toast } = useToast();
 
   // Helper function to safely format date times
@@ -169,9 +181,15 @@ export const CalendarCRM = () => {
   };
   const handleToggleCompleted = async (event: CalendarEvent) => {
     try {
-      const updatedDescription = event.completed
-        ? (event.description || "").replace("[✓ COMPLETADA] ", "")
-        : `[✓ COMPLETADA] ${event.description || ""}`;
+      // Si está marcando como completada, mostrar el diálogo
+      if (!event.completed) {
+        setPendingCompletionEvent(event);
+        setCompletionDialogOpen(true);
+        return;
+      }
+
+      // Si está desmarcando como completada, actualizar directamente
+      const updatedDescription = (event.description || "").replace("[✓ COMPLETADA] ", "");
       const { error } = await supabase.functions.invoke("update-calendar-event", {
         body: {
           eventId: event.id,
@@ -190,15 +208,15 @@ export const CalendarCRM = () => {
           e.id === event.id
             ? {
                 ...e,
-                completed: !e.completed,
+                completed: false,
                 description: updatedDescription,
               }
             : e,
         ),
       );
       toast({
-        title: event.completed ? "Cita desmarcada" : "Cita completada",
-        description: event.completed ? "La cita se ha desmarcado" : "¡Cliente atendido!",
+        title: "Cita desmarcada",
+        description: "La cita se ha desmarcado",
       });
     } catch (error: any) {
       toast({
@@ -206,6 +224,136 @@ export const CalendarCRM = () => {
         description: error.message || "Error al actualizar la cita",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleSendReviewMessage = async () => {
+    if (!pendingCompletionEvent) return;
+
+    try {
+      // Obtener los datos de la reserva desde la tabla bookings
+      const { data: booking, error: bookingError } = await supabase
+        .from("bookings")
+        .select("customer_name, Telefono, Fecha, Hora, stylist, services")
+        .eq("google_calendar_event_id", pendingCompletionEvent.id)
+        .single();
+
+      if (bookingError) {
+        console.error("Error fetching booking:", bookingError);
+        // Continuar marcando como completada aunque falle el webhook
+      }
+
+      // Marcar como completada
+      const updatedDescription = `[✓ COMPLETADA] ${pendingCompletionEvent.description || ""}`;
+      const { error } = await supabase.functions.invoke("update-calendar-event", {
+        body: {
+          eventId: pendingCompletionEvent.id,
+          calendarId: pendingCompletionEvent.calendarId,
+          summary: pendingCompletionEvent.summary,
+          description: updatedDescription,
+          start: pendingCompletionEvent.start.dateTime,
+          end: pendingCompletionEvent.end.dateTime,
+        },
+      });
+
+      if (error) throw error;
+
+      // Update local state
+      setEvents(
+        events.map((e) =>
+          e.id === pendingCompletionEvent.id
+            ? {
+                ...e,
+                completed: true,
+                description: updatedDescription,
+              }
+            : e,
+        ),
+      );
+
+      // Enviar webhook de valoración si tenemos los datos
+      if (booking) {
+        try {
+          const { error: webhookError } = await supabase.functions.invoke("webhook-valoracion", {
+            body: {
+              customerName: booking.customer_name,
+              phone: booking.Telefono,
+              date: booking.Fecha,
+              time: booking.Hora,
+              stylist: booking.stylist,
+              services: Array.isArray(booking.services) ? booking.services.map((s: any) => s.name) : [],
+            },
+          });
+
+          if (webhookError) {
+            console.error("Error sending review webhook:", webhookError);
+          }
+        } catch (webhookError) {
+          console.error("Error invoking webhook:", webhookError);
+        }
+      }
+
+      toast({
+        title: "Cita completada",
+        description: booking ? "¡Cliente atendido! Mensaje de valoración enviado" : "¡Cliente atendido!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al completar la cita",
+        variant: "destructive",
+      });
+    } finally {
+      setCompletionDialogOpen(false);
+      setPendingCompletionEvent(null);
+    }
+  };
+
+  const handleCancelCompletion = async () => {
+    if (!pendingCompletionEvent) return;
+
+    try {
+      // Solo actualizar el estado sin enviar mensaje
+      const updatedDescription = `[✓ COMPLETADA] ${pendingCompletionEvent.description || ""}`;
+      const { error } = await supabase.functions.invoke("update-calendar-event", {
+        body: {
+          eventId: pendingCompletionEvent.id,
+          calendarId: pendingCompletionEvent.calendarId,
+          summary: pendingCompletionEvent.summary,
+          description: updatedDescription,
+          start: pendingCompletionEvent.start.dateTime,
+          end: pendingCompletionEvent.end.dateTime,
+        },
+      });
+
+      if (error) throw error;
+
+      // Update local state
+      setEvents(
+        events.map((e) =>
+          e.id === pendingCompletionEvent.id
+            ? {
+                ...e,
+                completed: true,
+                description: updatedDescription,
+              }
+            : e,
+        ),
+      );
+
+      toast({
+        title: "Cita completada",
+        description: "¡Cliente atendido!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al completar la cita",
+        variant: "destructive",
+      });
+    } finally {
+      setCompletionDialogOpen(false);
+      setPendingCompletionEvent(null);
     }
   };
   const handleDeleteEvent = async (event: CalendarEvent) => {
@@ -1117,6 +1265,28 @@ export const CalendarCRM = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={completionDialogOpen} onOpenChange={setCompletionDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cita Completada</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Deseas enviar un mensaje de valoración al cliente?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelCompletion}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSendReviewMessage}
+              className="bg-[#8B4513] hover:bg-[#6B3410] text-white"
+            >
+              Enviar mensaje
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
