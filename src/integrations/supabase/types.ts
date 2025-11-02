@@ -142,6 +142,27 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           category: string | null
@@ -204,12 +225,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_expired_password_reset_tokens: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
       get_my_bookings: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           calendar_id: string
           compound_part: string

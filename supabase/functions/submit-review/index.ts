@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,22 +13,42 @@ serve(async (req) => {
   }
 
   try {
-    const webhookUrl = Deno.env.get('WEBHOOK_RESENAS');
-    
-    if (!webhookUrl) {
-      console.error('WEBHOOK_RESENAS not configured');
-      return new Response(
-        JSON.stringify({ error: 'Webhook not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const { rating, comment } = await req.json();
 
     console.log('Submitting review:', { rating, comment });
 
-    // Send to webhook
-    try {
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+
+    // Save review to database
+    const { data: reviewData, error: dbError } = await supabaseClient
+      .from('reviews')
+      .insert({
+        rating,
+        comment: comment || null
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to save review' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Review saved to database:', reviewData);
+
+    // Try to send to webhook (optional, don't fail if webhook is down)
+    const webhookUrl = Deno.env.get('WEBHOOK_RESENAS');
+
+    // Try to send to webhook if configured
+    if (webhookUrl) {
+      try {
       const webhookResponse = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
@@ -55,12 +76,13 @@ serve(async (req) => {
         );
       }
 
-      console.log('Review submitted successfully to webhook');
-    } catch (webhookError) {
-      console.error('Webhook request failed:', webhookError);
-      console.warn('Webhook unavailable, but review data logged');
-      
-      // Continue anyway - the review data is logged
+        console.log('Review submitted successfully to webhook');
+      } catch (webhookError) {
+        console.error('Webhook request failed:', webhookError);
+        console.warn('Webhook unavailable, but review saved to database');
+      }
+    } else {
+      console.log('No webhook configured, review saved to database only');
     }
 
     return new Response(

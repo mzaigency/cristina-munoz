@@ -8,10 +8,13 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { LogOut, Loader2, Home } from "lucide-react";
 import { CalendarCRM } from "@/components/admin/CalendarCRM";
+import { ReviewsManager } from "@/components/admin/ReviewsManager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
+  const [activeTab, setActiveTab] = useState("calendar");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -86,7 +89,18 @@ export default function Admin() {
           </div>
         </div>
 
-        <CalendarCRM />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="calendar">Calendario</TabsTrigger>
+            <TabsTrigger value="reviews">Reseñas</TabsTrigger>
+          </TabsList>
+          <TabsContent value="calendar" className="mt-6">
+            <CalendarCRM />
+          </TabsContent>
+          <TabsContent value="reviews" className="mt-6">
+            <ReviewsManager />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
