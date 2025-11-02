@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import MyBookings from "./pages/MyBookings";
 import Profile from "./pages/Profile";
+import Review from "./pages/Review";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/admin" element={<Admin />} />
           <Route path="/mis-citas" element={<MyBookings />} />
           <Route path="/perfil" element={<Profile />} />
+          <Route path="/valoracion" element={<Review />} />
           <Route path="/politica-privacidad" element={<PrivacyPolicy />} />
           <Route path="/terminos-uso" element={<TermsOfService />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
