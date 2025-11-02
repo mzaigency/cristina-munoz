@@ -12,7 +12,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const webhookUrl = Deno.env.post('WEBHOOK_VALORACION');
+    const webhookUrl = Deno.env.get('WEBHOOK_VALORACION');
 
     if (!webhookUrl) {
       throw new Error('WEBHOOK_VALORACION not configured');
@@ -41,7 +41,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in webhook-valoracion:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
