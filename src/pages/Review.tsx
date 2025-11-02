@@ -17,7 +17,7 @@ const Review = () => {
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (rating === 0) {
       toast({
         title: "Error",
@@ -29,8 +29,8 @@ const Review = () => {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.functions.invoke('submit-review', {
-        body: { rating, comment }
+      const { error } = await supabase.functions.invoke("submit-review", {
+        body: { rating, comment },
       });
 
       if (error) throw error;
@@ -44,7 +44,7 @@ const Review = () => {
       setRating(0);
       setComment("");
     } catch (error) {
-      console.error('Error submitting review:', error);
+      console.error("Error submitting review:", error);
       toast({
         title: "Error",
         description: "No se pudo enviar tu valoración. Por favor, inténtalo de nuevo.",
@@ -69,9 +69,7 @@ const Review = () => {
           >
             <Star
               className={`w-8 h-8 ${
-                star <= (hoveredRating || rating)
-                  ? "fill-primary text-primary"
-                  : "text-muted-foreground"
+                star <= (hoveredRating || rating) ? "fill-primary text-primary" : "text-muted-foreground"
               }`}
             />
           </button>
@@ -87,9 +85,7 @@ const Review = () => {
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Déjanos tu Valoración</h1>
-            <p className="text-muted-foreground">
-              Tu opinión nos ayuda a mejorar nuestros servicios
-            </p>
+            <p className="text-muted-foreground">Tu opinión nos ayuda a mejorar nuestros servicios</p>
           </div>
 
           <div className="bg-card rounded-lg shadow-lg border border-border p-8">
@@ -99,7 +95,7 @@ const Review = () => {
                 {renderInteractiveStars()}
                 {rating > 0 && (
                   <p className="text-sm text-muted-foreground">
-                    Has seleccionado {rating} estrella{rating !== 1 ? 's' : ''}
+                    Has seleccionado {rating} estrella{rating !== 1 ? "s" : ""}
                   </p>
                 )}
               </div>
@@ -110,17 +106,12 @@ const Review = () => {
                   id="comment"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="Cuéntanos tu experiencia (opcional)"
+                  placeholder="Qué te han parecido nuestros servicios? (Servicio de pelquería, Página web, Asistente de Whatsapp...)"
                   rows={5}
                 />
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
-                size="lg"
-                disabled={submitting}
-              >
+              <Button type="submit" className="w-full" size="lg" disabled={submitting}>
                 {submitting ? "Enviando..." : "Enviar Valoración"}
               </Button>
             </form>
