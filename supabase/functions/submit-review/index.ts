@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const webhookUrl = Deno.env.get('WEBHOOK_RESENAS');
+    const webhookUrl = Deno.env.post('WEBHOOK_RESENAS');
     
     if (!webhookUrl) {
       console.error('WEBHOOK_RESENAS not configured');
