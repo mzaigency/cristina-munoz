@@ -3,6 +3,11 @@ import { Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import {
   Carousel,
   CarouselContent,
@@ -29,6 +34,13 @@ interface PlaceData {
 export const ReviewsSection = () => {
   const [placeData, setPlaceData] = useState<PlaceData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [comment, setComment] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -47,6 +59,48 @@ export const ReviewsSection = () => {
     fetchReviews();
   }, []);
 
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (rating === 0) {
+      toast({
+        title: "Error",
+        description: "Por favor selecciona una valoración",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.functions.invoke('submit-review', {
+        body: { rating, name, email, comment }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "¡Gracias por tu valoración!",
+        description: "Tu opinión nos ayuda a mejorar",
+      });
+
+      // Reset form
+      setRating(0);
+      setName("");
+      setEmail("");
+      setComment("");
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo enviar tu valoración. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const renderStars = (rating: number) => {
     return (
       <div className="flex gap-1">
@@ -58,6 +112,26 @@ export const ReviewsSection = () => {
                 ? "fill-yellow-400 text-yellow-400"
                 : "fill-muted text-muted"
             }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const renderInteractiveStars = () => {
+    return (
+      <div className="flex gap-2">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`h-8 w-8 cursor-pointer transition-all ${
+              i < (hoveredRating || rating)
+                ? "fill-yellow-400 text-yellow-400 scale-110"
+                : "fill-muted text-muted hover:scale-110"
+            }`}
+            onMouseEnter={() => setHoveredRating(i + 1)}
+            onMouseLeave={() => setHoveredRating(0)}
+            onClick={() => setRating(i + 1)}
           />
         ))}
       </div>
@@ -157,6 +231,81 @@ export const ReviewsSection = () => {
           <CarouselPrevious />
           <CarouselNext />
         </Carousel>
+
+        {/* Formulario de valoración */}
+        <div className="max-w-2xl mx-auto mt-16">
+          <Card className="border-primary/20 shadow-lg">
+            <CardContent className="p-8">
+              <h3 className="text-2xl font-bold mb-2 text-center text-foreground">
+                ¿Qué te ha parecido tu experiencia?
+              </h3>
+              <p className="text-muted-foreground text-center mb-6">
+                Tu opinión es muy importante para nosotros
+              </p>
+              
+              <form onSubmit={handleSubmitReview} className="space-y-6">
+                <div className="flex flex-col items-center gap-3">
+                  <Label className="text-lg">Tu valoración</Label>
+                  {renderInteractiveStars()}
+                  {rating > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      {rating === 5 && "¡Excelente!"}
+                      {rating === 4 && "Muy bueno"}
+                      {rating === 3 && "Bueno"}
+                      {rating === 2 && "Regular"}
+                      {rating === 1 && "Necesita mejorar"}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nombre *</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Tu nombre"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="tu@email.com"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="comment">Tu opinión</Label>
+                  <Textarea
+                    id="comment"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Cuéntanos qué te ha gustado, qué mejorarías, o cualquier sugerencia..."
+                    rows={5}
+                    className="resize-none"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={submitting}
+                >
+                  {submitting ? "Enviando..." : "Enviar Valoración"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </section>
   );
