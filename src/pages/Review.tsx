@@ -87,12 +87,16 @@ const Review = () => {
 
           <div className="bg-card rounded-lg shadow-lg border border-border p-8">
             <form onSubmit={handleSubmitReview} className="space-y-6">
-              <div className="space-y-2">
-                <Label>Valoración *</Label>
+              <div className="flex flex-col items-center gap-3">
+                <Label className="text-lg">Valoración *</Label>
                 {renderInteractiveStars()}
                 {rating > 0 && (
                   <p className="text-sm text-muted-foreground">
-                    Has seleccionado {rating} estrella{rating !== 1 ? "s" : ""}
+                    {rating === 5 && "¡Excelente!"}
+                    {rating === 4 && "Muy bueno"}
+                    {rating === 3 && "Bueno"}
+                    {rating === 2 && "Regular"}
+                    {rating === 1 && "Necesita mejorar"}
                   </p>
                 )}
               </div>
