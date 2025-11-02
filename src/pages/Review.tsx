@@ -58,21 +58,18 @@ const Review = () => {
   const renderInteractiveStars = () => {
     return (
       <div className="flex gap-2">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => setRating(star)}
-            onMouseEnter={() => setHoveredRating(star)}
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`h-8 w-8 cursor-pointer transition-all ${
+              i < (hoveredRating || rating)
+                ? "fill-yellow-400 text-yellow-400 scale-110"
+                : "fill-muted text-muted hover:scale-110"
+            }`}
+            onMouseEnter={() => setHoveredRating(i + 1)}
             onMouseLeave={() => setHoveredRating(0)}
-            className="transition-transform hover:scale-110"
-          >
-            <Star
-              className={`w-8 h-8 ${
-                star <= (hoveredRating || rating) ? "fill-primary text-primary" : "text-muted-foreground"
-              }`}
-            />
-          </button>
+            onClick={() => setRating(i + 1)}
+          />
         ))}
       </div>
     );
