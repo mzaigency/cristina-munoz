@@ -37,8 +37,6 @@ export const ReviewsSection = () => {
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [comment, setComment] = useState("");
   const { toast } = useToast();
 
@@ -74,7 +72,7 @@ export const ReviewsSection = () => {
     setSubmitting(true);
     try {
       const { error } = await supabase.functions.invoke('submit-review', {
-        body: { rating, name, email, comment }
+        body: { rating, comment }
       });
 
       if (error) throw error;
@@ -86,8 +84,6 @@ export const ReviewsSection = () => {
 
       // Reset form
       setRating(0);
-      setName("");
-      setEmail("");
       setComment("");
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -256,30 +252,6 @@ export const ReviewsSection = () => {
                       {rating === 1 && "Necesita mejorar"}
                     </p>
                   )}
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nombre *</Label>
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Tu nombre"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="tu@email.com"
-                      required
-                    />
-                  </div>
                 </div>
 
                 <div className="space-y-2">

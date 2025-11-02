@@ -22,9 +22,9 @@ serve(async (req) => {
       );
     }
 
-    const { rating, name, email, comment } = await req.json();
+    const { rating, comment } = await req.json();
 
-    console.log('Submitting review:', { rating, name, email, comment });
+    console.log('Submitting review:', { rating, comment });
 
     // Send to webhook
     try {
@@ -35,8 +35,6 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           rating,
-          name,
-          email,
           comment,
           timestamp: new Date().toISOString(),
         }),
