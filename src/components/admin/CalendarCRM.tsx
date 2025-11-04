@@ -245,7 +245,6 @@ export const CalendarCRM = () => {
               phone: booking.Telefono,
               date: booking.Fecha,
               time: booking.Hora,
-              eventID: booking.google_calendar_event_id,
               stylist: booking.stylist,
               services: Array.isArray(booking.services) ? booking.services.map((s: any) => s.name) : []
             }
