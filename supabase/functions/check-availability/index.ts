@@ -8,6 +8,7 @@ const corsHeaders = {
 interface AvailabilityRequest {
   date: string; // YYYY-MM-DD
   stylist: string; // 'cris', 'desi', or 'any'
+  totalDuration?: number; // Total duration in minutes (optional, for 'any' validation)
 }
 
 serve(async (req) => {
@@ -16,8 +17,8 @@ serve(async (req) => {
   }
 
   try {
-    const { date, stylist }: AvailabilityRequest = await req.json();
-    console.log(`\n>>> Checking availability for ${stylist} on ${date}`);
+    const { date, stylist, totalDuration }: AvailabilityRequest = await req.json();
+    console.log(`\n>>> Checking availability for ${stylist} on ${date}${totalDuration ? ` (duration: ${totalDuration}min)` : ''}`);
 
     const googleClientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const googleClientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
@@ -157,8 +158,7 @@ serve(async (req) => {
     let finalBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
     
     if (stylist === 'any') {
-      // For 'any' stylist, only block times when BOTH are busy
-      console.log('Processing "any" - blocking only when both busy');
+      console.log('Processing "any" stylist');
       
       const crisRanges = crisBookedSlots.map(slot => {
         const [hours, minutes] = slot.Hora.split(':').map(Number);
@@ -172,31 +172,85 @@ serve(async (req) => {
         return { start, end: start + slot.total_duration };
       });
 
-      // Find overlapping time ranges
-      const blockedRanges: Array<{ start: number; end: number }> = [];
-      
-      for (let minute = 0; minute < 24 * 60; minute++) {
-        const crisBusy = crisRanges.some(r => minute >= r.start && minute < r.end);
-        const desiBusy = desiRanges.some(r => minute >= r.start && minute < r.end);
+      // Helper function to check if a stylist has continuous availability
+      const hasContiguousAvailability = (ranges: Array<{ start: number; end: number }>, startMinute: number, durationMinutes: number): boolean => {
+        const endMinute = startMinute + durationMinutes;
         
-        if (crisBusy && desiBusy) {
-          const lastRange = blockedRanges[blockedRanges.length - 1];
-          if (lastRange && lastRange.end === minute) {
-            lastRange.end = minute + 1;
-          } else {
-            blockedRanges.push({ start: minute, end: minute + 1 });
+        // Check if any booked range overlaps with the requested time block
+        for (const range of ranges) {
+          // Overlap occurs if:
+          // - Range starts before our block ends AND
+          // - Range ends after our block starts
+          if (range.start < endMinute && range.end > startMinute) {
+            return false; // There's an overlap, not available
           }
         }
-      }
+        
+        return true; // No overlaps, available
+      };
 
-      // Convert ranges back to slots
-      for (const range of blockedRanges) {
-        const hours = Math.floor(range.start / 60);
-        const minutes = range.start % 60;
-        finalBookedSlots.push({
-          Hora: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`,
-          total_duration: range.end - range.start
-        });
+      if (totalDuration) {
+        // Validate continuous availability for the total duration
+        console.log(`Validating continuous ${totalDuration}min blocks`);
+        
+        const blockedRanges: Array<{ start: number; end: number }> = [];
+        
+        // Check every minute of the day as potential start time
+        for (let minute = 0; minute < 24 * 60; minute++) {
+          const crisAvailable = hasContiguousAvailability(crisRanges, minute, totalDuration);
+          const desiAvailable = hasContiguousAvailability(desiRanges, minute, totalDuration);
+          
+          // If NEITHER stylist has continuous availability, block this start time
+          if (!crisAvailable && !desiAvailable) {
+            const lastRange = blockedRanges[blockedRanges.length - 1];
+            if (lastRange && lastRange.end === minute) {
+              lastRange.end = minute + 1;
+            } else {
+              blockedRanges.push({ start: minute, end: minute + 1 });
+            }
+          }
+        }
+        
+        // Convert ranges back to slots
+        for (const range of blockedRanges) {
+          const hours = Math.floor(range.start / 60);
+          const minutes = range.start % 60;
+          finalBookedSlots.push({
+            Hora: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`,
+            total_duration: range.end - range.start
+          });
+        }
+        
+        console.log(`Blocked ${blockedRanges.length} time ranges (no stylist available for ${totalDuration}min)`);
+      } else {
+        // Original logic: block only when BOTH are busy
+        console.log('No duration specified - blocking only when both busy');
+        
+        const blockedRanges: Array<{ start: number; end: number }> = [];
+        
+        for (let minute = 0; minute < 24 * 60; minute++) {
+          const crisBusy = crisRanges.some(r => minute >= r.start && minute < r.end);
+          const desiBusy = desiRanges.some(r => minute >= r.start && minute < r.end);
+          
+          if (crisBusy && desiBusy) {
+            const lastRange = blockedRanges[blockedRanges.length - 1];
+            if (lastRange && lastRange.end === minute) {
+              lastRange.end = minute + 1;
+            } else {
+              blockedRanges.push({ start: minute, end: minute + 1 });
+            }
+          }
+        }
+
+        // Convert ranges back to slots
+        for (const range of blockedRanges) {
+          const hours = Math.floor(range.start / 60);
+          const minutes = range.start % 60;
+          finalBookedSlots.push({
+            Hora: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`,
+            total_duration: range.end - range.start
+          });
+        }
       }
     } else {
       // For specific stylist, return their booked slots

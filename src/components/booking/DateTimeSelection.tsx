@@ -46,6 +46,7 @@ export const DateTimeSelection = ({
           body: {
             date: dateStr,
             stylist: stylist,
+            totalDuration: totalDuration, // Pass duration for "any" stylist validation
           },
         });
 
