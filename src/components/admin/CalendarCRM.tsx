@@ -611,41 +611,46 @@ export const CalendarCRM = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 md:flex md:items-center md:gap-2 md:flex-wrap">
-        <Button 
-          variant="outline" 
-          onClick={() => setWeekStart(addDays(weekStart, -7))} 
-          disabled={loading}
-          className="w-full md:w-auto"
-        >
-          ← Semana anterior
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() =>
-            setWeekStart(
-              startOfWeek(new Date(), {
-                weekStartsOn: 1,
-              }),
-            )
-          }
-          disabled={loading}
-          className="w-full md:w-auto"
-        >
-          Hoy
-        </Button>
-        <Button 
-          variant="outline" 
-          onClick={() => setWeekStart(addDays(weekStart, 7))} 
-          disabled={loading}
-          className="w-full md:w-auto"
-        >
-          Semana siguiente →
-        </Button>
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:flex-wrap">
+        <div className="flex gap-1 md:gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setWeekStart(addDays(weekStart, -7))} 
+            disabled={loading}
+            size="sm"
+            className="flex-1 md:flex-initial"
+          >
+            ←
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              setWeekStart(
+                startOfWeek(new Date(), {
+                  weekStartsOn: 1,
+                }),
+              )
+            }
+            disabled={loading}
+            size="sm"
+            className="flex-1 md:flex-initial"
+          >
+            Hoy
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setWeekStart(addDays(weekStart, 7))} 
+            disabled={loading}
+            size="sm"
+            className="flex-1 md:flex-initial"
+          >
+            →
+          </Button>
+        </div>
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="w-full md:w-auto">
+            <Button variant="outline" size="sm" className="w-full md:w-auto">
               <CalendarIcon className="h-4 w-4 mr-2" />
               Ir a fecha
             </Button>
@@ -672,7 +677,7 @@ export const CalendarCRM = () => {
           defaultValue={format(weekDays.find((day) => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")}
           className="w-full"
         >
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap md:flex-wrap h-auto gap-1 bg-muted/50 p-2">
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap md:flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {weekDays.map((day) => {
               const dateKey = format(day, "yyyy-MM-dd");
               const dayEvents = groupedEvents[dateKey] || [];
@@ -682,19 +687,19 @@ export const CalendarCRM = () => {
                   key={dateKey}
                   value={dateKey}
                   className={cn(
-                    "flex-col items-start gap-1 data-[state=active]:bg-background px-3 md:px-4 py-3 md:py-2 min-w-[110px] md:min-w-[140px]",
+                    "flex-col items-start gap-1 data-[state=active]:bg-background px-2 md:px-4 py-2 min-w-[100px] md:min-w-[140px]",
                     isToday && "border-primary",
                   )}
                 >
                   <div className="flex items-center gap-1 md:gap-2 w-full">
-                    <span className="text-sm md:text-sm font-semibold capitalize">{format(day, "EEE d MMM", { locale: es })}</span>
+                    <span className="text-xs md:text-sm font-semibold capitalize">{format(day, "EEE d MMM", { locale: es })}</span>
                     {isToday && (
-                      <Badge variant="default" className="text-[10px] md:text-xs h-5 md:h-5">
+                      <Badge variant="default" className="text-[10px] md:text-xs h-4 md:h-5">
                         Hoy
                       </Badge>
                     )}
                   </div>
-                  <span className="text-xs md:text-xs text-muted-foreground">
+                  <span className="text-[10px] md:text-xs text-muted-foreground">
                     {dayEvents.length} {dayEvents.length === 1 ? "cita" : "citas"}
                   </span>
                 </TabsTrigger>
