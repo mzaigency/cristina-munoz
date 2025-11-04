@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
 import { StylistSelection } from "@/components/booking/StylistSelection";
 import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
-import { CompoundDateTimeSelection } from "@/components/booking/CompoundDateTimeSelection";
 import { Loader2 } from "lucide-react";
 import { phoneSchema } from "@/lib/phoneValidation";
 
@@ -30,8 +29,6 @@ type BookingData = {
   stylist: Stylist | null;
   date: Date | null;
   time: string;
-  datePart2: Date | null;
-  timePart2: string;
   customerName: string;
   customerPhone: string;
 };
@@ -50,8 +47,6 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
     stylist: null,
     date: null,
     time: "",
-    datePart2: null,
-    timePart2: "",
     customerName: "",
     customerPhone: "",
   });
@@ -104,13 +99,6 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
     setStep(4);
   };
 
-  const handleCompoundDateTimeSelect = (datePart1: Date, timePart1: string, datePart2: Date, timePart2: string) => {
-    setBookingData({ ...bookingData, date: datePart1, time: timePart1, datePart2: datePart2, timePart2: timePart2 });
-    setStep(4);
-  };
-
-  const hasCompoundService = bookingData.services.some(service => service.type === 'Compuesto');
-
   const handleConfirmBooking = async () => {
     // Validate phone only if provided
     if (bookingData.customerPhone.trim()) {
@@ -137,7 +125,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
     try {
       setLoading(true);
 
-      const bookingPayload: any = {
+      const bookingPayload = {
         customer_name: bookingData.customerName,
         phone: bookingData.customerPhone,
         services: bookingData.services.map((s) => ({
@@ -154,12 +142,6 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
         stylist: bookingData.stylist,
         total_duration: totalDuration,
       };
-
-      // If compound service, add part 2 data
-      if (hasCompoundService && bookingData.datePart2 && bookingData.timePart2) {
-        bookingPayload.datePart2 = `${bookingData.datePart2.getFullYear()}-${String(bookingData.datePart2.getMonth() + 1).padStart(2, '0')}-${String(bookingData.datePart2.getDate()).padStart(2, '0')}`;
-        bookingPayload.timePart2 = bookingData.timePart2;
-      }
 
       const { error } = await supabase.functions.invoke("create-booking", {
         body: bookingPayload,
@@ -235,31 +217,15 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
         )}
 
         {step === 3 && (
-          <>
-            {hasCompoundService ? (
-              <CompoundDateTimeSelection
-                selectedDatePart1={bookingData.date}
-                selectedTimePart1={bookingData.time}
-                selectedDatePart2={bookingData.datePart2}
-                selectedTimePart2={bookingData.timePart2}
-                durationPart1={bookingData.services.reduce((sum, s) => sum + s.duration_part1_active, 0)}
-                durationPart2={bookingData.services.reduce((sum, s) => sum + s.duration_part2_active, 0)}
-                stylist={bookingData.stylist!}
-                onNext={handleCompoundDateTimeSelect}
-                onBack={handleBack}
-              />
-            ) : (
-              <DateTimeSelection
-                selectedDate={bookingData.date}
-                selectedTime={bookingData.time}
-                totalDuration={totalDuration}
-                stylist={bookingData.stylist!}
-                onNext={handleDateTimeSelect}
-                onBack={handleBack}
-                isAdmin={true}
-              />
-            )}
-          </>
+          <DateTimeSelection
+            selectedDate={bookingData.date}
+            selectedTime={bookingData.time}
+            totalDuration={totalDuration}
+            stylist={bookingData.stylist!}
+            onNext={handleDateTimeSelect}
+            onBack={handleBack}
+            isAdmin={true}
+          />
         )}
 
         {step === 4 && (
@@ -300,11 +266,6 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
                 <p className="text-sm text-muted-foreground">
                   <strong>Fecha y hora:</strong> {bookingData.date?.toLocaleDateString("es-ES")} a las {bookingData.time}
                 </p>
-                {hasCompoundService && bookingData.datePart2 && bookingData.timePart2 && (
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Parte 2:</strong> {bookingData.datePart2?.toLocaleDateString("es-ES")} a las {bookingData.timePart2}
-                  </p>
-                )}
                 <p className="text-sm text-muted-foreground">
                   <strong>Duración total:</strong> {totalDuration} minutos
                 </p>

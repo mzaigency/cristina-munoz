@@ -12,8 +12,6 @@ interface BookingRequest {
   Hora?: string;
   date?: string;
   time?: string;
-  datePart2?: string;
-  timePart2?: string;
   stylist: string;
   services: Array<{ 
     id: string;
@@ -196,18 +194,17 @@ serve(async (req) => {
       description: string,
       startTime: string,
       endTime: string,
-      accessToken: string,
-      eventDate: string = bookingDate
+      accessToken: string
     ) => {
       const event = {
         summary,
         description,
         start: {
-          dateTime: `${eventDate}T${startTime}`,
+          dateTime: `${bookingDate}T${startTime}`,
           timeZone: 'Europe/Madrid',
         },
         end: {
-          dateTime: `${eventDate}T${endTime}`,
+          dateTime: `${bookingDate}T${endTime}`,
           timeZone: 'Europe/Madrid',
         },
       };
@@ -320,9 +317,6 @@ serve(async (req) => {
 
     // Create bookings for compound services (each gets 2 separate bookings)
     for (const service of compoundServices) {
-      // Check if manual dates are provided for compound services
-      const hasManualDates = bookingData.datePart2 && bookingData.timePart2;
-      
       // Part 1: Active work
       const part1Duration = service.duration_part1_active;
       const part1EndMinutes = currentMinutes + part1Duration;
@@ -340,8 +334,7 @@ serve(async (req) => {
             description,
             part1StartTime,
             part1EndTime,
-            accessToken,
-            bookingDate
+            accessToken
           );
         } catch (error) {
           console.error('Error creating Google Calendar event for part 1:', error);
@@ -374,32 +367,16 @@ serve(async (req) => {
         throw new Error('Failed to save part 1 booking');
       }
 
+      // Move time forward past exposure time
+      currentMinutes = part1EndMinutes + service.duration_exposure_pause;
+
       // Part 2: Final work (only if there's a part 2 duration)
       if (service.duration_part2_active > 0) {
         const part2Duration = service.duration_part2_active;
-        
-        // Use manual dates if provided, otherwise calculate sequentially
-        let part2Date: string;
-        let part2Time: string;
-        let part2EndTime: string;
-        
-        if (hasManualDates) {
-          // Manual scheduling - use provided date and time
-          part2Date = bookingData.datePart2!;
-          const [part2Hours, part2Minutes] = bookingData.timePart2!.split(':').map(Number);
-          const part2StartMinutes = part2Hours * 60 + part2Minutes;
-          const part2EndMinutes = part2StartMinutes + part2Duration;
-          part2Time = `${String(part2Hours).padStart(2, '0')}:${String(part2Minutes).padStart(2, '0')}:00`;
-          part2EndTime = `${String(Math.floor(part2EndMinutes / 60)).padStart(2, '0')}:${String(part2EndMinutes % 60).padStart(2, '0')}:00`;
-        } else {
-          // Sequential scheduling - calculate based on exposure time
-          currentMinutes = part1EndMinutes + service.duration_exposure_pause;
-          const part2StartMinutes = currentMinutes;
-          const part2EndMinutes = currentMinutes + part2Duration;
-          part2Date = bookingDate;
-          part2Time = `${String(Math.floor(part2StartMinutes / 60)).padStart(2, '0')}:${String(part2StartMinutes % 60).padStart(2, '0')}:00`;
-          part2EndTime = `${String(Math.floor(part2EndMinutes / 60)).padStart(2, '0')}:${String(part2EndMinutes % 60).padStart(2, '0')}:00`;
-        }
+        const part2StartMinutes = currentMinutes;
+        const part2EndMinutes = currentMinutes + part2Duration;
+        const part2StartTime = `${String(Math.floor(part2StartMinutes / 60)).padStart(2, '0')}:${String(part2StartMinutes % 60).padStart(2, '0')}:00`;
+        const part2EndTime = `${String(Math.floor(part2EndMinutes / 60)).padStart(2, '0')}:${String(part2EndMinutes % 60).padStart(2, '0')}:00`;
 
         let part2GoogleEventId: string | null = null;
         if (accessToken) {
@@ -408,10 +385,9 @@ serve(async (req) => {
             part2GoogleEventId = await createCalendarEvent(
               `${customer_name} - ${service.name} (Parte 2)`,
               description,
-              part2Time,
+              part2StartTime,
               part2EndTime,
-              accessToken,
-              part2Date
+              accessToken
             );
           } catch (error) {
             console.error('Error creating Google Calendar event for part 2:', error);
@@ -423,8 +399,8 @@ serve(async (req) => {
           .insert({
             customer_name,
             Telefono: customer_phone,
-            Fecha: part2Date,
-            Hora: part2Time,
+            Fecha: bookingDate,
+            Hora: part2StartTime,
             end_time: part2EndTime,
             stylist: actualStylist,
             services: [{ name: `${service.name} - Parte 2` }],
@@ -452,12 +428,7 @@ serve(async (req) => {
           .eq('id', part1Data.id);
 
         createdBookings.push(part1Data, part2Data);
-        
-        // Only update currentMinutes if not using manual dates
-        if (!hasManualDates) {
-          const [part2EndHours, part2EndMinutes] = part2EndTime.split(':').map(Number);
-          currentMinutes = part2EndHours * 60 + part2EndMinutes;
-        }
+        currentMinutes = part2EndMinutes;
       } else {
         createdBookings.push(part1Data);
       }
