@@ -633,7 +633,7 @@ export const CalendarCRM = () => {
             }
             disabled={loading}
             size="sm"
-            className="flex-1 md:flex-initial"
+            className="flex-1 md:flex-initial border-primary md:border-border"
           >
             Hoy
           </Button>
@@ -694,7 +694,7 @@ export const CalendarCRM = () => {
                   <div className="flex items-center gap-1 md:gap-2 w-full">
                     <span className="text-xs md:text-sm font-semibold capitalize">{format(day, "EEE d MMM", { locale: es })}</span>
                     {isToday && (
-                      <Badge variant="default" className="text-[10px] md:text-xs h-4 md:h-5">
+                      <Badge variant="default" className="text-[9px] md:text-xs h-3.5 px-1 md:h-5 md:px-2">
                         Hoy
                       </Badge>
                     )}
