@@ -565,7 +565,7 @@ export const CalendarCRM = () => {
           </Button>
           <Button variant="outline" onClick={() => setWeekStart(startOfWeek(new Date(), {
           weekStartsOn: 1
-        }))} disabled={loading} size="sm" className="flex-1 md:flex-initial border-primary md:border-border">Hoy</Button>
+        }))} disabled={loading} size="sm" className="flex-1 md:flex-initial border-primary md:border-border rounded-sm">Hoy</Button>
           <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading} size="sm" className="flex-1 md:flex-initial">
             →
           </Button>
