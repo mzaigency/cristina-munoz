@@ -90,9 +90,9 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="calendar">Calendario</TabsTrigger>
-            <TabsTrigger value="reviews">Reseñas</TabsTrigger>
+          <TabsList className="grid w-full max-w-md grid-cols-2 h-auto md:h-10">
+            <TabsTrigger value="calendar" className="py-3 md:py-2 text-base md:text-sm">Calendario</TabsTrigger>
+            <TabsTrigger value="reviews" className="py-3 md:py-2 text-base md:text-sm">Reseñas</TabsTrigger>
           </TabsList>
           <TabsContent value="calendar" className="mt-6">
             <CalendarCRM />
