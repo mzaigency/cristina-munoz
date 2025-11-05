@@ -205,7 +205,7 @@ export const CalendarCRM = () => {
       const {
         data: booking,
         error: bookingError
-      } = await supabase.from("bookings").select("customer_name, Telefono, Fecha, Hora, stylist, services").eq("google_calendar_event_id", pendingCompletionEvent.id).single();
+      } = await supabase.from("bookings").select("customer_name, Telefono, Fecha, Hora, stylist, services, google_calendar_event_id").eq("google_calendar_event_id", pendingCompletionEvent.id).single();
       if (bookingError) {
         console.error("Error fetching booking:", bookingError);
         // Continuar marcando como completada aunque falle el webhook
@@ -246,7 +246,8 @@ export const CalendarCRM = () => {
               date: booking.Fecha,
               time: booking.Hora,
               stylist: booking.stylist,
-              services: Array.isArray(booking.services) ? booking.services.map((s: any) => s.name) : []
+              services: Array.isArray(booking.services) ? booking.services.map((s: any) => s.name) : [],
+              googleCalendarEventId: booking.google_calendar_event_id
             }
           });
           if (webhookError) {
