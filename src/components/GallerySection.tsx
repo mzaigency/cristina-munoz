@@ -37,21 +37,21 @@ export const GallerySection = () => {
     setLoadedEmbeds((prev) => new Set(prev).add(index));
   };
   return (
-    <section ref={ref} className="py-20 px-4 bg-gradient-to-b from-background to-secondary/10">
-      <div className="container mx-auto max-w-6xl">
-        <div className={`text-center mb-12 space-y-4 scroll-reveal ${isVisible ? "visible" : ""}`}>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground">Nuestros Trabajos</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Descubre las últimas tendencias y transformaciones realizadas en nuestro salón
+    <section ref={ref} className="py-32 px-4 bg-muted/20">
+      <div className="container mx-auto max-w-7xl">
+        <div className={`text-center mb-20 space-y-4 scroll-reveal ${isVisible ? "visible" : ""}`}>
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">Portfolio</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Cada trabajo es una historia única de transformación y estilo
           </p>
         </div>
 
-        <div className="mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {instagramPosts.map((postUrl, index) => (
               <Card
                 key={index}
-                className={`overflow-hidden hover-lift scroll-reveal ${isVisible ? "visible" : ""}`}
+                className={`overflow-hidden border-none shadow-md hover:shadow-2xl transition-all duration-500 scroll-reveal ${isVisible ? "visible" : ""}`}
                 style={{
                   animationDelay: `${index * 0.1}s`,
                 }}
@@ -64,8 +64,8 @@ export const GallerySection = () => {
                     style={{
                       background: "#FFF",
                       border: 0,
-                      borderRadius: "3px",
-                      boxShadow: "0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)",
+                      borderRadius: "12px",
+                      boxShadow: "none",
                       margin: "1px",
                       maxWidth: "540px",
                       minWidth: "326px",
@@ -83,9 +83,9 @@ export const GallerySection = () => {
         <div className={`text-center scroll-reveal ${isVisible ? "visible" : ""}`}>
           <Button
             size="lg"
-            variant="default"
+            variant="outline"
             onClick={() => window.open("https://instagram.com/cristinamunoz_hairstylist/", "_blank")}
-            className="gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            className="gap-2 px-8 py-6 text-base bg-background hover:bg-muted transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
           >
             <Instagram className="w-5 h-5" />
             Síguenos en Instagram
