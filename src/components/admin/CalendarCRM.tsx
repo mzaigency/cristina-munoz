@@ -56,8 +56,10 @@ export const CalendarCRM = () => {
   }, []); // El array vacío [] asegura que esto se ejecute solo una vez.
   const [blockStartDate, setBlockStartDate] = useState<Date | undefined>(undefined);
   const [blockEndDate, setBlockEndDate] = useState<Date | undefined>(undefined);
-  const [blockPeriod, setBlockPeriod] = useState<"day" | "week" | "month">("day");
+  const [blockPeriod, setBlockPeriod] = useState<"day" | "week" | "month" | "hours">("day");
   const [blockStylist, setBlockStylist] = useState<"cris" | "desi" | "both">("both");
+  const [blockStartTime, setBlockStartTime] = useState<string>("09:00");
+  const [blockEndTime, setBlockEndTime] = useState<string>("19:00");
   const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
   const [pendingCompletionEvent, setPendingCompletionEvent] = useState<CalendarEvent | null>(null);
   const {
@@ -373,30 +375,57 @@ export const CalendarCRM = () => {
         const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}T23:59:59`;
       };
+      const formatDateTimeForCalendar = (date: Date, time: string) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}T${time}:00`;
+      };
+
       for (const stylist of calendars) {
-        const {
-          error
-        } = await supabase.functions.invoke("create-calendar-event", {
-          body: {
-            stylist: stylist,
-            summary: `🌴 VACACIONES - ${stylist.toUpperCase()}`,
-            description: "Periodo bloqueado - Vacaciones",
-            start: formatDateForCalendar(blockStartDate),
-            end: formatEndDateForCalendar(finalEndDate),
-            allDay: true
-          }
-        });
-        if (error) throw error;
+        if (blockPeriod === "hours") {
+          // Bloquear solo horas específicas
+          const {
+            error
+          } = await supabase.functions.invoke("create-calendar-event", {
+            body: {
+              stylist: stylist,
+              summary: `🔒 BLOQUEADO - ${stylist.toUpperCase()}`,
+              description: "Periodo bloqueado - Horas específicas",
+              start: formatDateTimeForCalendar(blockStartDate, blockStartTime),
+              end: formatDateTimeForCalendar(blockStartDate, blockEndTime),
+              allDay: false
+            }
+          });
+          if (error) throw error;
+        } else {
+          // Bloquear día/semana/mes completo
+          const {
+            error
+          } = await supabase.functions.invoke("create-calendar-event", {
+            body: {
+              stylist: stylist,
+              summary: `🌴 VACACIONES - ${stylist.toUpperCase()}`,
+              description: "Periodo bloqueado - Vacaciones",
+              start: formatDateForCalendar(blockStartDate),
+              end: formatEndDateForCalendar(finalEndDate),
+              allDay: true
+            }
+          });
+          if (error) throw error;
+        }
       }
       toast({
         title: "Periodo bloqueado",
-        description: `Se ha bloqueado el periodo de vacaciones correctamente`
+        description: blockPeriod === "hours" ? "Se han bloqueado las horas correctamente" : `Se ha bloqueado el periodo de vacaciones correctamente`
       });
       setIsBlockDialogOpen(false);
       setBlockStartDate(undefined);
       setBlockEndDate(undefined);
       setBlockPeriod("day");
       setBlockStylist("both");
+      setBlockStartTime("09:00");
+      setBlockEndTime("19:00");
       fetchEvents();
     } catch (error: any) {
       toast({
@@ -905,6 +934,12 @@ export const CalendarCRM = () => {
               <Label>Tipo de periodo</Label>
               <RadioGroup value={blockPeriod} onValueChange={(value: any) => setBlockPeriod(value)}>
                 <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="hours" id="hours" />
+                  <Label htmlFor="hours" className="font-normal cursor-pointer">
+                    Horas
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
                   <RadioGroupItem value="day" id="day" />
                   <Label htmlFor="day" className="font-normal cursor-pointer">
                     Día
@@ -950,7 +985,7 @@ export const CalendarCRM = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Fecha de inicio</Label>
+              <Label>Fecha{blockPeriod === "hours" ? "" : " de inicio"}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !blockStartDate && "text-muted-foreground")}>
@@ -965,6 +1000,29 @@ export const CalendarCRM = () => {
                 </PopoverContent>
               </Popover>
             </div>
+
+            {blockPeriod === "hours" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="block-startTime">Hora inicio</Label>
+                  <Input 
+                    id="block-startTime" 
+                    type="time" 
+                    value={blockStartTime} 
+                    onChange={(e) => setBlockStartTime(e.target.value)} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="block-endTime">Hora fin</Label>
+                  <Input 
+                    id="block-endTime" 
+                    type="time" 
+                    value={blockEndTime} 
+                    onChange={(e) => setBlockEndTime(e.target.value)} 
+                  />
+                </div>
+              </div>
+            )}
 
             {blockPeriod === "day" && <div className="space-y-2">
                 <Label>Fecha de fin (opcional)</Label>
@@ -984,6 +1042,12 @@ export const CalendarCRM = () => {
               </div>}
 
             {blockStartDate && <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                {blockPeriod === "hours" && <p>
+                    Se bloquearán las horas de {blockStartTime} a {blockEndTime} el día{" "}
+                    {format(blockStartDate, "PPP", {
+                locale: es
+              })}
+                  </p>}
                 {blockPeriod === "day" && !blockEndDate && <p>
                     Se bloqueará el día:{" "}
                     {format(blockStartDate, "PPP", {
