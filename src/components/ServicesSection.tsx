@@ -119,45 +119,43 @@ export const ServicesSection = () => {
   const { ref, isVisible } = useScrollAnimation(0.1);
 
   return (
-    <section ref={ref} className="py-32 bg-background">
-      <div className="container mx-auto px-4 max-w-7xl">
-        <div className={`mb-20 text-center space-y-4 scroll-reveal ${isVisible ? "visible" : ""}`}>
-          <h2 className="text-4xl font-bold text-foreground md:text-5xl">Servicios</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Experiencias personalizadas diseñadas para realzar tu belleza natural
-          </p>
+    <section ref={ref} className="py-20 bg-salon-cream">
+      <div className="container mx-auto px-4">
+        <div className={`mb-12 text-center scroll-reveal ${isVisible ? "visible" : ""}`}>
+          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">Nuestros Servicios</h2>
+          <p className="text-lg text-muted-foreground">Descubre nuestra amplia gama de servicios profesionales</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
+        <div className="grid gap-8 md:grid-cols-2">
           {serviceCategories.map((category, idx) => {
             const Icon = category.icon;
             return (
               <Card
                 key={idx}
-                className={`overflow-hidden border border-border/50 shadow-sm hover:shadow-xl transition-all duration-500 scroll-reveal ${isVisible ? "visible" : ""}`}
+                className={`overflow-hidden border-none shadow-lg hover-lift group scroll-reveal ${isVisible ? "visible" : ""}`}
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 <div
                   style={{ backgroundImage: `url(${category.image})` }}
-                  className="h-56 bg-cover bg-center relative group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-6 left-6 flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background/90 backdrop-blur-sm">
-                      <Icon className="h-6 w-6 text-primary" />
+                  className="h-48 bg-cover bg-center mx-0 transition-transform duration-500 group-hover:scale-110"
+                />
+                <CardHeader>
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110">
+                      <Icon className="h-5 w-5 text-primary-foreground" />
                     </div>
-                    <CardTitle className="text-3xl text-white drop-shadow-lg">{category.category}</CardTitle>
+                    <CardTitle className="text-2xl">{category.category}</CardTitle>
                   </div>
-                </div>
-                <CardContent className="p-6">
-                  <div className="space-y-2">
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
                     {category.services.map((service, serviceIdx) => (
                       <div
                         key={serviceIdx}
-                        className="flex items-center justify-between py-3 px-4 rounded-lg hover:bg-muted/50 transition-colors duration-200 group"
+                        className="flex items-center justify-between rounded-lg bg-salon-pink-light p-3 transition-all duration-300 hover:bg-salon-gold-light hover:translate-x-2 hover:shadow-md"
                       >
-                        <span className="font-medium text-foreground group-hover:text-primary transition-colors">{service.name}</span>
-                        <span className="text-sm text-muted-foreground font-mono">{service.duration}</span>
+                        <span className="font-medium text-foreground">{service.name}</span>
+                        <span className="text-sm text-muted-foreground">{service.duration}</span>
                       </div>
                     ))}
                   </div>
