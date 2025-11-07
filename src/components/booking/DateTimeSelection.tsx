@@ -29,6 +29,7 @@ export const DateTimeSelection = ({
   const [time, setTime] = useState<string | null>(selectedTime);
   const [customTime, setCustomTime] = useState<string>("");
   const [bookedRanges, setBookedRanges] = useState<Array<{ start: number; end: number }>>([]);
+  const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Fetch booked appointments from Google Calendar when date changes
@@ -41,47 +42,158 @@ export const DateTimeSelection = ({
         // Format date in YYYY-MM-DD format
         const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         
-        // Call edge function to check Google Calendar availability
-        const { data, error } = await supabase.functions.invoke('check-availability', {
-          body: {
-            date: dateStr,
-            stylist: stylist,
-            totalDuration: totalDuration, // Pass duration for "any" stylist validation
-          },
-        });
+        // Special handling for "any" stylist: fetch both stylists and merge availability
+        if (stylist === 'any') {
+          const [crisResponse, desiResponse] = await Promise.all([
+            supabase.functions.invoke('check-availability', {
+              body: { date: dateStr, stylist: 'cris', totalDuration: totalDuration },
+            }),
+            supabase.functions.invoke('check-availability', {
+              body: { date: dateStr, stylist: 'desi', totalDuration: totalDuration },
+            }),
+          ]);
 
-        if (error) {
-          console.error('Error checking availability:', error);
-          setBookedRanges([]);
-          return;
+          if (crisResponse.error || desiResponse.error) {
+            console.error('Error checking availability:', crisResponse.error || desiResponse.error);
+            setBookedRanges([]);
+            setFusedAvailableSlots([]);
+            return;
+          }
+
+          // Helper function to convert booked slots to ranges and calculate available slots
+          const calculateAvailableSlots = (bookedData: any): string[] => {
+            const ranges: Array<{ start: number; end: number }> = [];
+            bookedData?.bookedSlots?.forEach((booking: { Hora: string; total_duration: number }) => {
+              const startTime = booking.Hora.substring(0, 5);
+              const [hours, minutes] = startTime.split(':').map(Number);
+              const startMinutes = hours * 60 + minutes;
+              const endMinutes = startMinutes + booking.total_duration;
+              ranges.push({ start: startMinutes, end: endMinutes });
+            });
+
+            // Use the same logic as getAvailableTimeSlots but with these specific ranges
+            const day = date.getDay();
+            const isToday = date.toDateString() === new Date().toDateString();
+            const currentMinutes = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : 0;
+            
+            let morningStart = 0, morningEnd = 0, afternoonStart = 0, afternoonEnd = 0;
+            if (day >= 2 && day <= 5) {
+              morningStart = 9 * 60; morningEnd = 12 * 60 + 30;
+              afternoonStart = 15 * 60; afternoonEnd = 19 * 60;
+            } else if (day === 6) {
+              morningStart = 8 * 60; morningEnd = 13 * 60;
+            } else {
+              return [];
+            }
+
+            const slotsSet = new Set<number>();
+            if (morningEnd > 0) {
+              for (let minutes = morningStart; minutes < morningEnd; minutes += 30) {
+                slotsSet.add(minutes);
+              }
+            }
+            if (afternoonEnd > 0) {
+              for (let minutes = afternoonStart; minutes < afternoonEnd; minutes += 30) {
+                slotsSet.add(minutes);
+              }
+            }
+            
+            ranges.forEach(booking => {
+              const endTime = booking.end;
+              const inMorning = endTime >= morningStart && endTime < morningEnd;
+              const inAfternoon = endTime >= afternoonStart && endTime < afternoonEnd;
+              if (inMorning || inAfternoon) slotsSet.add(endTime);
+            });
+
+            const allSlots = Array.from(slotsSet)
+              .sort((a, b) => a - b)
+              .map(minutes => {
+                const hours = Math.floor(minutes / 60);
+                const mins = minutes % 60;
+                return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
+              });
+
+            const hasOverlap = (start1: number, end1: number, start2: number, end2: number): boolean => {
+              return start1 < end2 && start2 < end1;
+            };
+
+            return allSlots.filter((slot) => {
+              const [hours, minutes] = slot.split(':').map(Number);
+              const startMinutes = hours * 60 + minutes;
+              const endMinutes = startMinutes + totalDuration;
+              
+              if (isToday && startMinutes <= currentMinutes) return false;
+              
+              const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
+              const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
+              
+              if (inMorning && endMinutes > morningEnd) return false;
+              if (inAfternoon && endMinutes > afternoonEnd) return false;
+              
+              for (const booking of ranges) {
+                if (hasOverlap(startMinutes, endMinutes, booking.start, booking.end)) return false;
+              }
+              
+              return true;
+            });
+          };
+
+          const crisSlots = calculateAvailableSlots(crisResponse.data);
+          const desiSlots = calculateAvailableSlots(desiResponse.data);
+
+          // Merge and deduplicate
+          const mergedSlots = [...new Set([...crisSlots, ...desiSlots])].sort();
+          
+          console.log('Cris available slots:', crisSlots);
+          console.log('Desi available slots:', desiSlots);
+          console.log('Merged available slots:', mergedSlots);
+          
+          setFusedAvailableSlots(mergedSlots);
+          setBookedRanges([]); // Clear bookedRanges as we're using fused slots
+        } else {
+          // Regular handling for specific stylist
+          const { data, error } = await supabase.functions.invoke('check-availability', {
+            body: {
+              date: dateStr,
+              stylist: stylist,
+              totalDuration: totalDuration,
+            },
+          });
+
+          if (error) {
+            console.error('Error checking availability:', error);
+            setBookedRanges([]);
+            return;
+          }
+
+          console.log('Raw data from check-availability:', data);
+          console.log('Booked slots received:', data?.bookedSlots);
+
+          const ranges: Array<{ start: number; end: number }> = [];
+          data?.bookedSlots?.forEach((booking: { Hora: string; total_duration: number }) => {
+            const startTime = booking.Hora.substring(0, 5);
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const startMinutes = hours * 60 + minutes;
+            const endMinutes = startMinutes + booking.total_duration;
+            ranges.push({ start: startMinutes, end: endMinutes });
+            console.log(`Blocking: ${startTime} (${startMinutes} min) to ${endMinutes} min`);
+          });
+
+          console.log('Final bookedRanges:', ranges);
+          setBookedRanges(ranges);
+          setFusedAvailableSlots([]); // Clear fused slots
         }
-
-        console.log('Raw data from check-availability:', data);
-        console.log('Booked slots received:', data?.bookedSlots);
-
-        // Convert booked slots to time ranges
-        const ranges: Array<{ start: number; end: number }> = [];
-        data?.bookedSlots?.forEach((booking: { Hora: string; total_duration: number }) => {
-          const startTime = booking.Hora.substring(0, 5);
-          const [hours, minutes] = startTime.split(':').map(Number);
-          const startMinutes = hours * 60 + minutes;
-          const endMinutes = startMinutes + booking.total_duration;
-          ranges.push({ start: startMinutes, end: endMinutes });
-          console.log(`Blocking: ${startTime} (${startMinutes} min) to ${endMinutes} min`);
-        });
-
-        console.log('Final bookedRanges:', ranges);
-        setBookedRanges(ranges);
       } catch (error) {
         console.error('Error:', error);
         setBookedRanges([]);
+        setFusedAvailableSlots([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchBookedSlots();
-  }, [date, stylist]);
+  }, [date, stylist, totalDuration]);
 
   // Generate available time slots based on day, duration, and existing bookings
   const getAvailableTimeSlots = (selectedDate: Date | undefined) => {
@@ -187,7 +299,7 @@ export const DateTimeSelection = ({
     });
   };
 
-  const timeSlots = getAvailableTimeSlots(date);
+  const timeSlots = stylist === 'any' ? fusedAvailableSlots : getAvailableTimeSlots(date);
 
   const handleCustomTimeChange = (value: string) => {
     setCustomTime(value);
