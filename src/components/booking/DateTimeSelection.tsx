@@ -244,7 +244,7 @@ export const DateTimeSelection = ({
               {isAdmin && (
                 <div className="mb-4 space-y-2">
                   <label htmlFor="customTime" className="text-sm font-medium text-foreground">
-                    Hora personalizada (HH:MM)
+                    Hora personalizada (SIN RESTRICCIONES)
                   </label>
                   <input
                     id="customTime"
@@ -255,7 +255,7 @@ export const DateTimeSelection = ({
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Puedes introducir cualquier hora en formato 24h (ej: 15:10)
+                    Introduce cualquier hora en formato 24h. No hay límites de horario (ej: 07:00, 22:30, etc.)
                   </p>
                 </div>
               )}
