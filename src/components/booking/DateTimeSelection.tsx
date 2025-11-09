@@ -46,10 +46,10 @@ export const DateTimeSelection = ({
         if (stylist === 'any') {
           const [crisResponse, desiResponse] = await Promise.all([
             supabase.functions.invoke('check-availability', {
-              body: { date: dateStr, stylist: 'cris', totalDuration: totalDuration },
+              body: { date: dateStr, stylist: 'cris' },
             }),
             supabase.functions.invoke('check-availability', {
-              body: { date: dateStr, stylist: 'desi', totalDuration: totalDuration },
+              body: { date: dateStr, stylist: 'desi' },
             }),
           ]);
 
@@ -156,7 +156,6 @@ export const DateTimeSelection = ({
             body: {
               date: dateStr,
               stylist: stylist,
-              totalDuration: totalDuration,
             },
           });
 
