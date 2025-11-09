@@ -46,10 +46,10 @@ export const DateTimeSelection = ({
         if (stylist === 'any') {
           const [crisResponse, desiResponse] = await Promise.all([
             supabase.functions.invoke('check-availability', {
-              body: { date: dateStr, stylist: 'cris' },
+              body: { date: dateStr, stylist: 'cris', totalDuration: totalDuration },
             }),
             supabase.functions.invoke('check-availability', {
-              body: { date: dateStr, stylist: 'desi' },
+              body: { date: dateStr, stylist: 'desi', totalDuration: totalDuration },
             }),
           ]);
 
@@ -61,8 +61,6 @@ export const DateTimeSelection = ({
           }
 
           // Helper function to convert booked slots to ranges and calculate available slots
-          // Since events are already split in Google Calendar, we just need to return
-          // all base time slots that don't overlap with the actual booked events
           const calculateAvailableSlots = (bookedData: any): string[] => {
             const ranges: Array<{ start: number; end: number }> = [];
             bookedData?.bookedSlots?.forEach((booking: { Hora: string; total_duration: number }) => {
@@ -73,6 +71,7 @@ export const DateTimeSelection = ({
               ranges.push({ start: startMinutes, end: endMinutes });
             });
 
+            // Use the same logic as getAvailableTimeSlots but with these specific ranges
             const day = date.getDay();
             const isToday = date.toDateString() === new Date().toDateString();
             const currentMinutes = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : 0;
@@ -118,8 +117,6 @@ export const DateTimeSelection = ({
               return start1 < end2 && start2 < end1;
             };
 
-            // Only check if the START time overlaps with existing bookings
-            // This allows booking in gaps between compound service parts
             return allSlots.filter((slot) => {
               const [hours, minutes] = slot.split(':').map(Number);
               const startMinutes = hours * 60 + minutes;
@@ -127,16 +124,14 @@ export const DateTimeSelection = ({
               
               if (isToday && startMinutes <= currentMinutes) return false;
               
-              // Check if service would end after closing time
               const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
               const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
               
               if (inMorning && endMinutes > morningEnd) return false;
               if (inAfternoon && endMinutes > afternoonEnd) return false;
               
-              // Check if the start time falls within any booked range
               for (const booking of ranges) {
-                if (startMinutes >= booking.start && startMinutes < booking.end) return false;
+                if (hasOverlap(startMinutes, endMinutes, booking.start, booking.end)) return false;
               }
               
               return true;
@@ -161,6 +156,7 @@ export const DateTimeSelection = ({
             body: {
               date: dateStr,
               stylist: stylist,
+              totalDuration: totalDuration,
             },
           });
 
