@@ -123,8 +123,16 @@ export const DateTimeSelection = ({
             return allSlots.filter((slot) => {
               const [hours, minutes] = slot.split(':').map(Number);
               const startMinutes = hours * 60 + minutes;
+              const endMinutes = startMinutes + totalDuration;
               
               if (isToday && startMinutes <= currentMinutes) return false;
+              
+              // Check if service would end after closing time
+              const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
+              const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
+              
+              if (inMorning && endMinutes > morningEnd) return false;
+              if (inAfternoon && endMinutes > afternoonEnd) return false;
               
               // Check if the start time falls within any booked range
               for (const booking of ranges) {
