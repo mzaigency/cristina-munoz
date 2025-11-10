@@ -113,8 +113,8 @@ export const DateTimeSelection = ({
                 return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
               });
 
-            const startsInsideBooking = (startTime: number, bookingStart: number, bookingEnd: number): boolean => {
-              return startTime >= bookingStart && startTime < bookingEnd;
+            const hasOverlap = (start1: number, end1: number, start2: number, end2: number): boolean => {
+              return start1 < end2 && start2 < end1;
             };
 
             return allSlots.filter((slot) => {
@@ -131,7 +131,7 @@ export const DateTimeSelection = ({
               if (inAfternoon && endMinutes > afternoonEnd) return false;
               
               for (const booking of ranges) {
-                if (startsInsideBooking(startMinutes, booking.start, booking.end)) return false;
+                if (hasOverlap(startMinutes, endMinutes, booking.start, booking.end)) return false;
               }
               
               return true;
@@ -260,12 +260,12 @@ export const DateTimeSelection = ({
         return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
       });
 
-    // Helper function to check if start time falls inside a booked range
-    const startsInsideBooking = (startTime: number, bookingStart: number, bookingEnd: number): boolean => {
-      return startTime >= bookingStart && startTime < bookingEnd;
+    // Helper function to check if two time ranges overlap
+    const hasOverlap = (start1: number, end1: number, start2: number, end2: number): boolean => {
+      return start1 < end2 && start2 < end1;
     };
 
-    // Filter slots: must fit within business hours AND start time must not fall inside existing bookings
+    // Filter slots: must fit within business hours AND not overlap with existing bookings (parte 1 o parte 2)
     return allSlots.filter((slot) => {
       const [hours, minutes] = slot.split(':').map(Number);
       const startMinutes = hours * 60 + minutes;
@@ -288,10 +288,11 @@ export const DateTimeSelection = ({
         return false; // Service would extend past afternoon closing
       }
       
-      // Check if start time falls inside any existing booking (parte 1 o parte 2)
+      // Check if this service overlaps with any existing booking (parte 1 o parte 2)
+      // Los bookedRanges ya solo contienen las partes activas, no el tiempo de espera
       for (const booking of bookedRanges) {
-        if (startsInsideBooking(startMinutes, booking.start, booking.end)) {
-          return false; // Start time would be during an existing booking
+        if (hasOverlap(startMinutes, endMinutes, booking.start, booking.end)) {
+          return false; // This slot would overlap with an existing booking
         }
       }
       
