@@ -260,17 +260,12 @@ export const DateTimeSelection = ({
         return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
       });
 
-    // Helper function to check if start time overlaps with any existing booking
-    const startsInsideBooking = (startMinutes: number): boolean => {
-      for (const booking of bookedRanges) {
-        if (startMinutes >= booking.start && startMinutes < booking.end) {
-          return true; // Start time is inside an existing booking
-        }
-      }
-      return false;
+    // Helper function to check if two time ranges overlap
+    const hasOverlap = (start1: number, end1: number, start2: number, end2: number): boolean => {
+      return start1 < end2 && start2 < end1;
     };
 
-    // Filter slots: must fit within business hours AND not start during existing bookings
+    // Filter slots: must fit within business hours AND not overlap with existing bookings
     return allSlots.filter((slot) => {
       const [hours, minutes] = slot.split(':').map(Number);
       const startMinutes = hours * 60 + minutes;
@@ -281,12 +276,7 @@ export const DateTimeSelection = ({
         return false; // Slot is in the past
       }
       
-      // Check if the start time is inside any existing booking (only active parts are blocked)
-      if (startsInsideBooking(startMinutes)) {
-        return false; // Cannot start during an existing booking
-      }
-      
-      // Check if service would end after closing time (total duration must fit)
+      // Check if service would end after closing time
       const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
       const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
       
@@ -296,6 +286,13 @@ export const DateTimeSelection = ({
       
       if (inAfternoon && endMinutes > afternoonEnd) {
         return false; // Service would extend past afternoon closing
+      }
+      
+      // Check if this time slot overlaps with any existing booking
+      for (const booking of bookedRanges) {
+        if (hasOverlap(startMinutes, endMinutes, booking.start, booking.end)) {
+          return false; // This slot would overlap with an existing booking
+        }
       }
       
       return true;
