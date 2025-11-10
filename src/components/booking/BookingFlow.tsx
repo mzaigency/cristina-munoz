@@ -222,6 +222,7 @@ export const BookingFlow = () => {
                   selectedDate={bookingData.date}
                   selectedTime={bookingData.time}
                   totalDuration={totalDuration}
+                  services={bookingData.services}
                   stylist={bookingData.stylist!}
                   onNext={handleDateTimeSelect}
                   onBack={handleBack}

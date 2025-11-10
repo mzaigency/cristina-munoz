@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { Stylist } from "./BookingFlow";
+import { Stylist, Service } from "./BookingFlow";
 import { supabase } from "@/integrations/supabase/client";
 import { es } from "date-fns/locale";
 
@@ -10,6 +10,7 @@ interface DateTimeSelectionProps {
   selectedDate: Date | null;
   selectedTime: string | null;
   totalDuration: number;
+  services: Service[];
   stylist: Stylist;
   onNext: (date: Date, time: string) => void;
   onBack: () => void;
@@ -20,6 +21,7 @@ export const DateTimeSelection = ({
   selectedDate,
   selectedTime,
   totalDuration,
+  services,
   stylist,
   onNext,
   onBack,
@@ -117,6 +119,38 @@ export const DateTimeSelection = ({
               return start1 < end2 && start2 < end1;
             };
 
+            // Calculate active time windows for the selected services
+            const getActiveWindows = (startMin: number): Array<{start: number, end: number}> => {
+              const windows: Array<{start: number, end: number}> = [];
+              let currentTime = startMin;
+              
+              for (const service of services) {
+                if (service.type === 'Compuesto') {
+                  // Part 1 active window
+                  windows.push({ 
+                    start: currentTime, 
+                    end: currentTime + service.duration_part1_active 
+                  });
+                  currentTime += service.duration_part1_active + service.duration_exposure_pause;
+                  // Part 2 active window
+                  windows.push({ 
+                    start: currentTime, 
+                    end: currentTime + service.duration_part2_active 
+                  });
+                  currentTime += service.duration_part2_active;
+                } else {
+                  // Simple service - entire duration is active
+                  windows.push({ 
+                    start: currentTime, 
+                    end: currentTime + service.duration 
+                  });
+                  currentTime += service.duration;
+                }
+              }
+              
+              return windows;
+            };
+
             return allSlots.filter((slot) => {
               const [hours, minutes] = slot.split(':').map(Number);
               const startMinutes = hours * 60 + minutes;
@@ -130,8 +164,16 @@ export const DateTimeSelection = ({
               if (inMorning && endMinutes > morningEnd) return false;
               if (inAfternoon && endMinutes > afternoonEnd) return false;
               
-              for (const booking of ranges) {
-                if (hasOverlap(startMinutes, endMinutes, booking.start, booking.end)) return false;
+              // Get active windows for this slot
+              const activeWindows = getActiveWindows(startMinutes);
+              
+              // Check if any active window overlaps with existing bookings
+              for (const window of activeWindows) {
+                for (const booking of ranges) {
+                  if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
+                    return false;
+                  }
+                }
               }
               
               return true;
@@ -265,7 +307,39 @@ export const DateTimeSelection = ({
       return start1 < end2 && start2 < end1;
     };
 
-    // Filter slots: must fit within business hours AND not overlap with existing bookings (parte 1 o parte 2)
+    // Calculate active time windows for the selected services
+    const getActiveWindows = (startMin: number): Array<{start: number, end: number}> => {
+      const windows: Array<{start: number, end: number}> = [];
+      let currentTime = startMin;
+      
+      for (const service of services) {
+        if (service.type === 'Compuesto') {
+          // Part 1 active window
+          windows.push({ 
+            start: currentTime, 
+            end: currentTime + service.duration_part1_active 
+          });
+          currentTime += service.duration_part1_active + service.duration_exposure_pause;
+          // Part 2 active window
+          windows.push({ 
+            start: currentTime, 
+            end: currentTime + service.duration_part2_active 
+          });
+          currentTime += service.duration_part2_active;
+        } else {
+          // Simple service - entire duration is active
+          windows.push({ 
+            start: currentTime, 
+            end: currentTime + service.duration 
+          });
+          currentTime += service.duration;
+        }
+      }
+      
+      return windows;
+    };
+
+    // Filter slots: must fit within business hours AND active parts must not overlap with existing bookings
     return allSlots.filter((slot) => {
       const [hours, minutes] = slot.split(':').map(Number);
       const startMinutes = hours * 60 + minutes;
@@ -288,11 +362,15 @@ export const DateTimeSelection = ({
         return false; // Service would extend past afternoon closing
       }
       
-      // Check if this service overlaps with any existing booking (parte 1 o parte 2)
-      // Los bookedRanges ya solo contienen las partes activas, no el tiempo de espera
-      for (const booking of bookedRanges) {
-        if (hasOverlap(startMinutes, endMinutes, booking.start, booking.end)) {
-          return false; // This slot would overlap with an existing booking
+      // Get active windows for this slot
+      const activeWindows = getActiveWindows(startMinutes);
+      
+      // Check if any active window overlaps with existing bookings (only active parts)
+      for (const window of activeWindows) {
+        for (const booking of bookedRanges) {
+          if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
+            return false; // Active part would overlap with an existing booking
+          }
         }
       }
       
