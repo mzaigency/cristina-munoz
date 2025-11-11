@@ -158,11 +158,14 @@ export const DateTimeSelection = ({
               
               if (isToday && startMinutes <= currentMinutes) return false;
               
-              const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
-              const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
-              
-              if (inMorning && endMinutes > morningEnd) return false;
-              if (inAfternoon && endMinutes > afternoonEnd) return false;
+              // Skip closing time validations in admin mode
+              if (!isAdmin) {
+                const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
+                const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
+                
+                if (inMorning && endMinutes > morningEnd) return false;
+                if (inAfternoon && endMinutes > afternoonEnd) return false;
+              }
               
               // Get active windows for this slot
               const activeWindows = getActiveWindows(startMinutes);
@@ -350,16 +353,19 @@ export const DateTimeSelection = ({
         return false; // Slot is in the past
       }
       
-      // Check if service would end after closing time
-      const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
-      const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
-      
-      if (inMorning && endMinutes > morningEnd) {
-        return false; // Service would extend past morning closing
-      }
-      
-      if (inAfternoon && endMinutes > afternoonEnd) {
-        return false; // Service would extend past afternoon closing
+      // Skip closing time validations in admin mode
+      if (!isAdmin) {
+        // Check if service would end after closing time
+        const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
+        const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
+        
+        if (inMorning && endMinutes > morningEnd) {
+          return false; // Service would extend past morning closing
+        }
+        
+        if (inAfternoon && endMinutes > afternoonEnd) {
+          return false; // Service would extend past afternoon closing
+        }
       }
       
       // Get active windows for this slot
