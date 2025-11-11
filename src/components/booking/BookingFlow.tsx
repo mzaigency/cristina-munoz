@@ -129,8 +129,10 @@ export const BookingFlow = () => {
     bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const handleDateTimeSelect = (date: Date, time: string) => {
-    setBookingData({ ...bookingData, date, time });
+  const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: Stylist) => {
+    // If a resolved stylist is provided (from 'any' selection), use it instead
+    const finalStylist = resolvedStylist || bookingData.stylist;
+    setBookingData({ ...bookingData, date, time, stylist: finalStylist });
     setStep(4);
     bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };

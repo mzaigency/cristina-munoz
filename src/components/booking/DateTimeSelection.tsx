@@ -12,7 +12,7 @@ interface DateTimeSelectionProps {
   totalDuration: number;
   services: Service[];
   stylist: Stylist;
-  onNext: (date: Date, time: string) => void;
+  onNext: (date: Date, time: string, resolvedStylist?: Stylist) => void;
   onBack: () => void;
   isAdmin?: boolean;
 }
@@ -389,8 +389,107 @@ export const DateTimeSelection = ({
     }
   };
 
-  const handleNext = () => {
-    if (date && time) {
+  const handleNext = async () => {
+    if (!date || !time) return;
+
+    // If stylist is 'any', we need to check which specific stylist is available at this time
+    if (stylist === 'any') {
+      try {
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const [hours, minutes] = time.split(':').map(Number);
+        const selectedStartMinutes = hours * 60 + minutes;
+        
+        // Get active windows for the selected services starting at the chosen time
+        const getActiveWindows = (startMin: number): Array<{start: number, end: number}> => {
+          const windows: Array<{start: number, end: number}> = [];
+          let currentTime = startMin;
+          
+          for (const service of services) {
+            if (service.type === 'Compuesto') {
+              windows.push({ 
+                start: currentTime, 
+                end: currentTime + service.duration_part1_active 
+              });
+              currentTime += service.duration_part1_active + service.duration_exposure_pause;
+              windows.push({ 
+                start: currentTime, 
+                end: currentTime + service.duration_part2_active 
+              });
+              currentTime += service.duration_part2_active;
+            } else {
+              windows.push({ 
+                start: currentTime, 
+                end: currentTime + service.duration 
+              });
+              currentTime += service.duration;
+            }
+          }
+          return windows;
+        };
+
+        const activeWindows = getActiveWindows(selectedStartMinutes);
+
+        // Check availability for both stylists
+        const [crisResponse, desiResponse] = await Promise.all([
+          supabase.functions.invoke('check-availability', {
+            body: { date: dateStr, stylist: 'cris' },
+          }),
+          supabase.functions.invoke('check-availability', {
+            body: { date: dateStr, stylist: 'desi' },
+          }),
+        ]);
+
+        const hasOverlap = (start1: number, end1: number, start2: number, end2: number): boolean => {
+          return start1 < end2 && start2 < end1;
+        };
+
+        const checkStylistAvailability = (bookedData: any): boolean => {
+          const ranges: Array<{ start: number; end: number }> = [];
+          bookedData?.bookedSlots?.forEach((booking: { Hora: string; total_duration: number }) => {
+            const startTime = booking.Hora.substring(0, 5);
+            const [h, m] = startTime.split(':').map(Number);
+            const startMin = h * 60 + m;
+            const endMin = startMin + booking.total_duration;
+            ranges.push({ start: startMin, end: endMin });
+          });
+
+          // Check if any active window overlaps with existing bookings
+          for (const window of activeWindows) {
+            for (const booking of ranges) {
+              if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
+                return false;
+              }
+            }
+          }
+          return true;
+        };
+
+        const crisAvailable = crisResponse.data && checkStylistAvailability(crisResponse.data);
+        const desiAvailable = desiResponse.data && checkStylistAvailability(desiResponse.data);
+
+        // Determine which stylist to assign
+        let assignedStylist: Stylist;
+        if (crisAvailable && desiAvailable) {
+          // Both available, prefer cris by default
+          assignedStylist = 'cris';
+        } else if (crisAvailable) {
+          assignedStylist = 'cris';
+        } else if (desiAvailable) {
+          assignedStylist = 'desi';
+        } else {
+          // Neither available - this shouldn't happen if the time slot was shown as available
+          console.error('No stylist available at selected time');
+          return;
+        }
+
+        console.log(`Assigned stylist for "any" selection: ${assignedStylist}`);
+        // Pass the specific stylist instead of 'any'
+        onNext(date, time, assignedStylist);
+      } catch (error) {
+        console.error('Error determining stylist availability:', error);
+        return;
+      }
+    } else {
       onNext(date, time);
     }
   };
