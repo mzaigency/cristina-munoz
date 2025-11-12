@@ -18,25 +18,21 @@ export const HeroSection = ({
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/60" />
       </div>
 
-      <div className="container relative z-10 px-4 py-20 text-center md:text-left">
-        <div className="mx-auto max-w-2xl space-y-6">
-          <h1 className="mb-6 text-4xl font-bold tracking-tight text-foreground md:text-6xl animate-fade-in">
-            Bienvenida a<br />
-            <span className="text-salon-pink-dark bg-gradient-to-r from-salon-primary to-salon-accent bg-clip-text text-gray-950">
-              Cristina Muñoz
-            </span>
+      <div className="container relative z-10 px-4 py-20 text-center">
+        <div className="mx-auto max-w-3xl space-y-8">
+          <h1 className="text-5xl font-bold tracking-tight text-white md:text-7xl animate-fade-in font-playfair">
+            Elegance Studio
           </h1>
 
-          <p className="mb-8 text-lg text-muted-foreground md:text-xl animate-fade-in stagger-1">
-            Experimenta el cuidado profesional del cabello en un ambiente elegante y relajante.
-            Reserva tu cita online y déjanos realzar tu belleza natural.
+          <p className="text-xl text-white/90 md:text-2xl animate-fade-in stagger-1 font-light">
+            Donde la belleza y el estilo se encuentran. Tu momento de brillar empieza aquí.
           </p>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center md:justify-start animate-fade-in stagger-2">
-            <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg bg-[#7c4204]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center animate-fade-in stagger-2 pt-4">
+            <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg bg-[#b8860b] hover:bg-[#9a7209] text-white font-semibold">
               Reservar Cita
             </Button>
-            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg">
+            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-white/80 text-white hover:bg-white/10">
               Ver Servicios
             </Button>
           </div>
