@@ -20,17 +20,17 @@ export const HeroSection = ({
 
       <div className="container relative z-10 px-4 py-20 text-center">
         <div className="mx-auto max-w-3xl space-y-8">
-          <h1 className="text-5xl font-bold tracking-tight text-white md:text-7xl animate-fade-in font-playfair">Cristina Muñoz</h1>
+          <h1 className="text-5xl font-bold tracking-tight text-salon-cream md:text-7xl animate-fade-in font-playfair">Cristina Muñoz</h1>
 
-          <p className="text-xl text-white/90 md:text-2xl animate-fade-in stagger-1 font-light">
+          <p className="text-xl text-salon-pink-light md:text-2xl animate-fade-in stagger-1 font-light">
             Donde la belleza y el estilo se encuentran. Tu momento de brillar empieza aquí.
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center animate-fade-in stagger-2 pt-4">
-            <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg bg-[#b8860b] hover:bg-[#9a7209] text-white font-semibold">
+            <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg bg-salon-gold hover:bg-accent text-accent-foreground font-semibold">
               Reservar Cita
             </Button>
-            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-white/80 text-white hover:bg-white/10">
+            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-salon-gold text-salon-gold hover:bg-salon-gold/10">
               Ver Servicios
             </Button>
           </div>
