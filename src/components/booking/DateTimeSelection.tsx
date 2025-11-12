@@ -394,6 +394,13 @@ export const DateTimeSelection = ({
   const handleNext = async () => {
     if (!date || !time) return;
 
+    // In admin mode with custom time, skip availability checks
+    if (isAdmin && (customHour || customMinute)) {
+      console.log('Admin mode with custom time - bypassing availability checks');
+      onNext(date, time, stylist === 'any' ? 'cris' : stylist);
+      return;
+    }
+
     // If stylist is 'any', we need to check which specific stylist is available at this time
     if (stylist === 'any') {
       try {
