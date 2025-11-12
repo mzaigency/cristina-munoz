@@ -15,7 +15,7 @@ export const HeroSection = ({
       backgroundSize: "cover",
       backgroundPosition: "center"
     }}>
-        <div className="absolute inset-0 bg-gradient-to-r from-background/98 via-background/95 to-background/85" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/60" />
       </div>
 
       <div className="container relative z-10 px-4 py-20 text-center">
@@ -27,10 +27,10 @@ export const HeroSection = ({
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center animate-fade-in stagger-2 pt-4">
-            <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg text-white font-semibold rounded-full bg-[#815331]">
+            <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg bg-[#b8860b] hover:bg-[#9a7209] text-white font-semibold">
               Reservar Cita
             </Button>
-            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-white/80 text-white rounded-full bg-white/0 hover:bg-[#815331] hover:border-[#815331]">
+            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-white/80 text-white hover:bg-white/10">
               Ver Servicios
             </Button>
           </div>
