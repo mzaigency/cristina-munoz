@@ -20,9 +20,9 @@ export const HeroSection = ({
 
       <div className="container relative z-10 px-4 py-20 text-center">
         <div className="mx-auto max-w-3xl space-y-8">
-          <h1 className="text-5xl font-bold tracking-tight animate-fade-in font-playfair text-[#3b2b30] md:text-7xl">Cristina Muñoz</h1>
+          <h1 className="font-bold tracking-tight animate-fade-in font-playfair text-[#3b2b30] md:text-7xl text-7xl">Cristina Muñoz</h1>
 
-          <p className="text-xl text-white/90 md:text-2xl animate-fade-in stagger-1 font-light">
+          <p className="text-xl animate-fade-in stagger-1 font-light text-[#737d8c] md:text-lg">
             Donde la belleza y el estilo se encuentran. Tu momento de brillar empieza aquí.
           </p>
 
