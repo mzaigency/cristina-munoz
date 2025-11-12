@@ -15,7 +15,7 @@ export const HeroSection = ({
       backgroundSize: "cover",
       backgroundPosition: "center"
     }}>
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/98 via-background/95 to-background/85" />
       </div>
 
       <div className="container relative z-10 px-4 py-20 text-center">
@@ -30,7 +30,7 @@ export const HeroSection = ({
             <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg text-white font-semibold rounded-full bg-[#815331]">
               Reservar Cita
             </Button>
-            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-white/80 text-white rounded-full bg-white/0">
+            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-white/80 text-white rounded-full bg-white/0 hover:bg-[#815331] hover:border-[#815331]">
               Ver Servicios
             </Button>
           </div>
