@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Stylist, Service } from "./BookingFlow";
 import { supabase } from "@/integrations/supabase/client";
 import { es } from "date-fns/locale";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DateTimeSelectionProps {
   selectedDate: Date | null;
@@ -29,7 +30,8 @@ export const DateTimeSelection = ({
 }: DateTimeSelectionProps) => {
   const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
   const [time, setTime] = useState<string | null>(selectedTime);
-  const [customTime, setCustomTime] = useState<string>("");
+  const [customHour, setCustomHour] = useState<string>("");
+  const [customMinute, setCustomMinute] = useState<string>("");
   const [bookedRanges, setBookedRanges] = useState<Array<{ start: number; end: number }>>([]);
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -381,14 +383,13 @@ export const DateTimeSelection = ({
 
   const timeSlots = stylist === 'any' ? fusedAvailableSlots : getAvailableTimeSlots(date);
 
-  const handleCustomTimeChange = (value: string) => {
-    setCustomTime(value);
-    // Validate HH:MM format
-    const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9])$/;
-    if (timeRegex.test(value)) {
-      setTime(value);
+  // Update time when custom hour or minute changes
+  useEffect(() => {
+    if (customHour && customMinute) {
+      const formattedTime = `${customHour.padStart(2, '0')}:${customMinute.padStart(2, '0')}`;
+      setTime(formattedTime);
     }
-  };
+  }, [customHour, customMinute]);
 
   const handleNext = async () => {
     if (!date || !time) return;
@@ -533,20 +534,39 @@ export const DateTimeSelection = ({
           ) : (
             <>
               {isAdmin && (
-                <div className="mb-4 space-y-2">
-                  <label htmlFor="customTime" className="text-sm font-medium text-foreground">
+                <div className="mb-4 space-y-3">
+                  <label className="text-sm font-medium text-foreground">
                     Hora personalizada (SIN RESTRICCIONES)
                   </label>
-                  <input
-                    id="customTime"
-                    type="text"
-                    value={customTime}
-                    onChange={(e) => handleCustomTimeChange(e.target.value)}
-                    placeholder="15:10"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                  />
+                  <div className="flex gap-2 items-center">
+                    <Select value={customHour} onValueChange={setCustomHour}>
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue placeholder="Hora" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                          <SelectItem key={hour} value={hour}>
+                            {hour}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-lg font-semibold">:</span>
+                    <Select value={customMinute} onValueChange={setCustomMinute}>
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue placeholder="Min" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['00', '15', '30', '45'].map(minute => (
+                          <SelectItem key={minute} value={minute}>
+                            {minute}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    Introduce cualquier hora en formato 24h. No hay límites de horario (ej: 07:00, 22:30, etc.)
+                    Selecciona cualquier hora. Esta opción permite agendar fuera de horarios predefinidos.
                   </p>
                 </div>
               )}
@@ -564,14 +584,15 @@ export const DateTimeSelection = ({
                     {timeSlots.map((slot) => (
                       <Button
                         key={slot}
-                        variant={time === slot && !customTime ? "default" : "outline"}
+                        variant={time === slot && !customHour && !customMinute ? "default" : "outline"}
                         size="sm"
                         onClick={() => {
                           setTime(slot);
-                          setCustomTime("");
+                          setCustomHour("");
+                          setCustomMinute("");
                         }}
                         className={cn(
-                          time === slot && !customTime && "bg-primary text-primary-foreground"
+                          time === slot && !customHour && !customMinute && "bg-primary text-primary-foreground"
                         )}
                       >
                         {slot}
