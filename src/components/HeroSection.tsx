@@ -30,7 +30,7 @@ export const HeroSection = ({
             <Button size="lg" onClick={onBookNow} className="transition-all duration-300 hover:scale-105 hover:shadow-lg bg-[#b8860b] hover:bg-[#9a7209] text-white font-semibold rounded-full">
               Reservar Cita
             </Button>
-            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-[#b8860b] rounded-full text-stone-950 bg-[#000a0e]/0">
+            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-#b8860b rounded-full text-stone-950 bg-[#000a0e]/0">
               Ver Servicios
             </Button>
           </div>
