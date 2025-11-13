@@ -164,14 +164,14 @@ export const ReviewsSection = () => {
 
         {reviews.length > 0 && (
           <>
-            <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
+            <div className="flex flex-col items-center justify-center gap-3 mb-8">
               {/* Filter by comment type */}
-              <div className="flex gap-2 flex-wrap justify-center">
+              <div className="flex gap-2 flex-wrap justify-center w-full max-w-md px-4">
                 <Button
                   variant={filterType === "all" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilterType("all")}
-                  className="rounded-full"
+                  className="rounded-full flex-1 min-w-[90px]"
                 >
                   Todas
                 </Button>
@@ -179,33 +179,33 @@ export const ReviewsSection = () => {
                   variant={filterType === "with-comment" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilterType("with-comment")}
-                  className="rounded-full"
+                  className="rounded-full flex-1 min-w-[90px]"
                 >
-                  Con comentario
+                  Con texto
                 </Button>
                 <Button
                   variant={filterType === "no-comment" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilterType("no-comment")}
-                  className="rounded-full"
+                  className="rounded-full flex-1 min-w-[90px]"
                 >
-                  Sin comentario
+                  Sin texto
                 </Button>
               </div>
 
               {/* Filter by stars */}
-              <div className="flex gap-2 items-center">
-                <span className="text-sm text-muted-foreground">Filtrar por:</span>
-                <div className="flex gap-1">
+              <div className="flex flex-col sm:flex-row gap-2 items-center w-full max-w-md px-4">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Estrellas:</span>
+                <div className="flex gap-1.5 flex-wrap justify-center flex-1">
                   {[5, 4, 3, 2, 1].map((stars) => (
                     <Button
                       key={stars}
                       variant={filterStars === stars ? "default" : "outline"}
                       size="sm"
                       onClick={() => setFilterStars(filterStars === stars ? null : stars)}
-                      className="rounded-full px-3"
+                      className="rounded-full px-2.5 min-w-[45px]"
                     >
-                      {stars} <Star className="h-3 w-3 ml-1 fill-current" />
+                      {stars} <Star className="h-3 w-3 ml-0.5 fill-current" />
                     </Button>
                   ))}
                   {filterStars !== null && (
@@ -213,9 +213,9 @@ export const ReviewsSection = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => setFilterStars(null)}
-                      className="rounded-full"
+                      className="rounded-full px-3"
                     >
-                      Limpiar
+                      ✕
                     </Button>
                   )}
                 </div>
