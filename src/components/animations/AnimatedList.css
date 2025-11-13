@@ -1,0 +1,58 @@
+.scroll-list-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.scroll-list {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 1rem 0;
+}
+
+.scroll-list.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-list.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.item.selected {
+  transform: scale(1.02);
+}
+
+.item-text {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.top-gradient,
+.bottom-gradient {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50px;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.top-gradient {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+}
+
+.bottom-gradient {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+}

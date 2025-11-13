@@ -6,6 +6,7 @@ import coloringService from "@/assets/coloring-service-new.jpg";
 import stylingService from "@/assets/styling-treatments.png";
 import beautyService from "@/assets/beauty-service.jpg";
 import ScrollFloat from "@/components/animations/ScrollFloat";
+import AnimatedList from "@/components/animations/AnimatedList";
 const serviceCategories = [
   {
     category: "Corte",
@@ -151,17 +152,23 @@ export const ServicesSection = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {category.services.map((service, serviceIdx) => (
+                  <AnimatedList
+                    items={category.services}
+                    showGradients={false}
+                    enableArrowNavigation={false}
+                    displayScrollbar={false}
+                    className="space-y-0"
+                    renderItem={(service, index, isSelected) => (
                       <div
-                        key={serviceIdx}
-                        className="flex items-center justify-between rounded-lg bg-salon-pink-light p-3 transition-all duration-300 hover:bg-salon-gold-light hover:translate-x-2 hover:shadow-md"
+                        className={`flex items-center justify-between rounded-lg bg-salon-pink-light p-3 transition-all duration-300 hover:bg-salon-gold-light hover:translate-x-2 hover:shadow-md ${
+                          isSelected ? 'bg-salon-gold-light' : ''
+                        }`}
                       >
                         <span className="font-medium text-foreground">{service.name}</span>
                         <span className="text-sm text-muted-foreground">{service.duration}</span>
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  />
                 </CardContent>
               </Card>
             );
