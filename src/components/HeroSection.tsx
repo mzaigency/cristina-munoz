@@ -32,11 +32,11 @@ export const HeroSection = ({
             direction="top"
           />
 
-          <p className="text-base animate-fade-in stagger-1 font-light text-[#737d8c] md:text-xl">
+          <p className="text-base font-light text-[#737d8c] md:text-xl">
             Donde la belleza y el estilo se encuentran. Tu momento de brillar empieza aquí.
           </p>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center animate-fade-in stagger-2 pt-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center pt-4">
             <AnimatedContent delay={0.3} distance={50} duration={0.6}>
               <GlareHover 
                 width="auto" 

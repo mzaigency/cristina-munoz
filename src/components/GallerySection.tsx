@@ -31,7 +31,7 @@ export const GallerySection = () => {
   return (
     <section ref={ref} className="py-20 px-4 bg-gradient-to-b from-background to-secondary/10">
       <div className="container mx-auto max-w-6xl">
-        <div className={`text-center mb-12 space-y-4 scroll-reveal ${isVisible ? "visible" : ""}`}>
+        <div className="text-center mb-12 space-y-4">
           <ScrollFloat containerClassName="text-3xl md:text-4xl font-bold text-foreground">
             Nuestros Trabajos
           </ScrollFloat>
@@ -45,7 +45,7 @@ export const GallerySection = () => {
             {BUSINESS_INFO.instagramPosts.map((postUrl, index) => (
               <Card
                 key={index}
-                className={`overflow-hidden hover-lift scroll-reveal ${isVisible ? "visible" : ""}`}
+                className="overflow-hidden hover-lift"
                 style={{
                   animationDelay: `${index * 0.1}s`,
                 }}
@@ -74,7 +74,7 @@ export const GallerySection = () => {
           </div>
         </div>
 
-        <div className={`text-center scroll-reveal ${isVisible ? "visible" : ""}`}>
+        <div className="text-center">
           <Button
             size="lg"
             variant="default"

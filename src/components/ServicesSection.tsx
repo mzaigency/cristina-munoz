@@ -123,7 +123,7 @@ export const ServicesSection = () => {
   return (
     <section ref={ref} className="py-20 bg-salon-cream">
       <div className="container mx-auto px-4">
-        <div className={`mb-12 text-center scroll-reveal ${isVisible ? "visible" : ""}`}>
+        <div className="mb-12 text-center">
           <ScrollFloat containerClassName="mb-4 text-3xl md:text-4xl font-bold text-foreground">
             Nuestros Servicios
           </ScrollFloat>
@@ -136,7 +136,7 @@ export const ServicesSection = () => {
             return (
               <Card
                 key={idx}
-                className={`overflow-hidden border-none shadow-lg hover-lift group scroll-reveal ${isVisible ? "visible" : ""}`}
+                className="overflow-hidden border-none shadow-lg hover-lift group"
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 <div
