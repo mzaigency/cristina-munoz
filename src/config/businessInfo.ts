@@ -7,7 +7,7 @@
 
 export const BUSINESS_INFO = {
   // Basic Information
-  name: "Cristina Muño",
+  name: "Cristina Muñoz",
   fullName: "Cristina Muñoz Peluquería",
   tagline: "Peluquería profesional en Santpedor",
 
@@ -18,7 +18,6 @@ export const BUSINESS_INFO = {
     whatsapp: "+34 674 034 526",
     whatsappDisplay: "+34 674 034 526",
     whatsappLink: "https://wa.me/34674034526",
-    email: "info@cristinamunoz.com", // Optional
   },
 
   // Location
