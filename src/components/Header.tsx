@@ -22,8 +22,6 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showHeader, setShowHeader] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -46,28 +44,6 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // Show header when at top of page
-      if (currentScrollY < 10) {
-        setShowHeader(true);
-      } 
-      // Hide when scrolling down, show when scrolling up
-      else if (currentScrollY > lastScrollY) {
-        setShowHeader(false);
-      } else {
-        setShowHeader(true);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
 
   const checkAdminRole = async (userId: string) => {
     const { data } = await supabase
@@ -138,7 +114,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   return (
-    <header className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-[env(safe-area-inset-top)] transition-transform duration-300 ${showHeader ? 'translate-y-0' : '-translate-y-full'}`}>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-[env(safe-area-inset-top)]">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div 
           className="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80"
