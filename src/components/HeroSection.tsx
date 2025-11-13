@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import heroImage from "@/assets/salon-hero.jpg";
+import BlurText from "@/components/animations/BlurText";
 interface HeroSectionProps {
   onBookNow: () => void;
   onViewServices: () => void;
@@ -20,7 +21,13 @@ export const HeroSection = ({
 
       <div className="container relative z-10 px-4 py-20 text-center">
         <div className="mx-auto max-w-3xl space-y-8">
-          <h1 className="font-bold tracking-tight animate-fade-in font-playfair text-[#3b2b30] text-5xl md:text-7xl">Cristina Muñoz</h1>
+          <BlurText 
+            text="Cristina Muñoz" 
+            className="font-bold tracking-tight font-playfair text-[#3b2b30] text-5xl md:text-7xl"
+            delay={150}
+            animateBy="words"
+            direction="top"
+          />
 
           <p className="text-base animate-fade-in stagger-1 font-light text-[#737d8c] md:text-xl">
             Donde la belleza y el estilo se encuentran. Tu momento de brillar empieza aquí.
