@@ -6,7 +6,7 @@ export const WhatsAppSection = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center space-y-6">
           <div className="space-y-3">
-            <ScrollFloat containerClassName="text-3xl md:text-4xl font-bold text-foreground">
+            <ScrollFloat containerClassName="text-4xl font-bold text-foreground">
               ¿Necesitas Ayuda?
             </ScrollFloat>
             <p className="text-lg text-muted-foreground">
