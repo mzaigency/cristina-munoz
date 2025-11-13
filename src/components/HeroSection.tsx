@@ -4,6 +4,7 @@ import heroImage from "@/assets/salon-hero.jpg";
 import BlurText from "@/components/animations/BlurText";
 import AnimatedContent from "@/components/animations/AnimatedContent";
 import GlareHover from "@/components/animations/GlareHover";
+import LightRays from "@/components/animations/LightRays";
 interface HeroSectionProps {
   onBookNow: () => void;
   onViewServices: () => void;
@@ -20,6 +21,21 @@ export const HeroSection = ({
     }}>
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/60" />
       </div>
+
+      <LightRays
+        raysOrigin="top-center"
+        raysColor="#815331"
+        raysSpeed={0.5}
+        lightSpread={1.5}
+        rayLength={1.5}
+        fadeDistance={0.8}
+        saturation={0.6}
+        followMouse={true}
+        mouseInfluence={0.15}
+        noiseAmount={0.1}
+        distortion={0.2}
+        className="z-[2]"
+      />
 
       <div className="container relative z-10 px-4 py-20 text-center">
         <div className="mx-auto max-w-3xl space-y-8">
