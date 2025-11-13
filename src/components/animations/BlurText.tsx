@@ -104,6 +104,8 @@ const BlurText = ({
       style={{
         display: "flex",
         flexWrap: "wrap",
+        justifyContent: "center",
+        textAlign: "center",
       }}
     >
       {elements.map((segment, index) => {
@@ -121,7 +123,7 @@ const BlurText = ({
             animate={inView ? animateKeyframes : fromSnapshot}
             transition={spanTransition}
             onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
-            className="inline-block will-change-[transform,filter,opacity] text-center"
+            className="inline-block will-change-[transform,filter,opacity]"
           >
             {segment === " " ? "\u00A0" : segment}
             {animateBy === "words" && index < elements.length - 1 && "\u00A0"}
