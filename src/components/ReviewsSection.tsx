@@ -23,6 +23,8 @@ export const ReviewsSection = () => {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "with-comment" | "no-comment">("all");
+  const [filterStars, setFilterStars] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -113,6 +115,18 @@ export const ReviewsSection = () => {
 
   const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
 
+  // Filter reviews based on selected filters
+  const filteredReviews = reviews.filter((review) => {
+    // Filter by comment type
+    if (filterType === "with-comment" && !review.comment) return false;
+    if (filterType === "no-comment" && review.comment) return false;
+    
+    // Filter by stars
+    if (filterStars !== null && review.rating !== filterStars) return false;
+    
+    return true;
+  });
+
   if (loading) {
     return (
       <section className="py-24 bg-gradient-to-b from-background to-muted/20">
@@ -149,6 +163,74 @@ export const ReviewsSection = () => {
         </div>
 
         {reviews.length > 0 && (
+          <>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
+              {/* Filter by comment type */}
+              <div className="flex gap-2 flex-wrap justify-center">
+                <Button
+                  variant={filterType === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterType("all")}
+                  className="rounded-full"
+                >
+                  Todas
+                </Button>
+                <Button
+                  variant={filterType === "with-comment" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterType("with-comment")}
+                  className="rounded-full"
+                >
+                  Con comentario
+                </Button>
+                <Button
+                  variant={filterType === "no-comment" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterType("no-comment")}
+                  className="rounded-full"
+                >
+                  Sin comentario
+                </Button>
+              </div>
+
+              {/* Filter by stars */}
+              <div className="flex gap-2 items-center">
+                <span className="text-sm text-muted-foreground">Filtrar por:</span>
+                <div className="flex gap-1">
+                  {[5, 4, 3, 2, 1].map((stars) => (
+                    <Button
+                      key={stars}
+                      variant={filterStars === stars ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterStars(filterStars === stars ? null : stars)}
+                      className="rounded-full px-3"
+                    >
+                      {stars} <Star className="h-3 w-3 ml-1 fill-current" />
+                    </Button>
+                  ))}
+                  {filterStars !== null && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFilterStars(null)}
+                      className="rounded-full"
+                    >
+                      Limpiar
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {filteredReviews.length === 0 && (
+              <p className="text-center text-muted-foreground mb-8">
+                No hay reseñas que coincidan con los filtros seleccionados
+              </p>
+            )}
+          </>
+        )}
+
+        {filteredReviews.length > 0 && (
           <Carousel
             opts={{
               align: "start",
@@ -157,7 +239,7 @@ export const ReviewsSection = () => {
             className="w-full max-w-5xl mx-auto mb-16"
           >
             <CarouselContent>
-              {reviews.map((review) => (
+              {filteredReviews.map((review) => (
                 <CarouselItem key={review.id} className="md:basis-1/2 lg:basis-1/3">
                   <Card className="hover:shadow-lg transition-all duration-300 border-primary/10 h-full">
                     <CardContent className="p-6 flex flex-col h-full">
