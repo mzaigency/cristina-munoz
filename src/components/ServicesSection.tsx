@@ -123,7 +123,7 @@ export const ServicesSection = () => {
     <section ref={ref} className="py-20 bg-salon-cream">
       <div className="container mx-auto px-4">
         <div className={`mb-12 text-center scroll-reveal ${isVisible ? "visible" : ""}`}>
-          <ScrollFloat containerClassName="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+          <ScrollFloat containerClassName="mb-4 text-4xl font-bold text-foreground">
             Nuestros Servicios
           </ScrollFloat>
           <p className="text-lg text-muted-foreground">Descubre nuestra amplia gama de servicios profesionales</p>

@@ -152,7 +152,7 @@ export const BookingFlow = () => {
     <section ref={bookingRef} className="py-20">
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
-          <ScrollFloat containerClassName="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+          <ScrollFloat containerClassName="mb-4 text-4xl font-bold text-foreground">
             Reserva tu Cita
           </ScrollFloat>
           <p className="text-lg text-muted-foreground">

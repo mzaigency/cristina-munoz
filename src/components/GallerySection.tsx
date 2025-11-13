@@ -41,7 +41,7 @@ export const GallerySection = () => {
     <section ref={ref} className="py-20 px-4 bg-gradient-to-b from-background to-secondary/10">
       <div className="container mx-auto max-w-6xl">
         <div className={`text-center mb-12 space-y-4 scroll-reveal ${isVisible ? "visible" : ""}`}>
-          <ScrollFloat containerClassName="text-4xl md:text-5xl font-bold text-foreground">
+          <ScrollFloat containerClassName="text-4xl font-bold text-foreground">
             Nuestros Trabajos
           </ScrollFloat>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
