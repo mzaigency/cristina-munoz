@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { BUSINESS_INFO } from "@/config/businessInfo";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -24,7 +25,7 @@ const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">1. Aceptación de los Términos</h2>
             <p className="text-muted-foreground">
-              Al acceder y utilizar el sitio web y los servicios de Cristina Muñoz Peluquería, usted acepta estar sujeto 
+              Al acceder y utilizar el sitio web y los servicios de {BUSINESS_INFO.fullName}, usted acepta estar sujeto 
               a estos Términos de Uso. Si no está de acuerdo con alguna parte de estos términos, no debe utilizar nuestros 
               servicios.
             </p>
@@ -33,7 +34,7 @@ const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">2. Descripción de los Servicios</h2>
             <p className="text-muted-foreground">
-              Cristina Muñoz Peluquería ofrece servicios profesionales de peluquería y estética capilar, que incluyen:
+              {BUSINESS_INFO.fullName} ofrece servicios profesionales de peluquería y estética capilar, que incluyen:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
               <li>Corte de cabello</li>
@@ -134,7 +135,7 @@ const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">8. Limitación de Responsabilidad</h2>
             <p className="text-muted-foreground mb-4">
-              Cristina Muñoz Peluquería no será responsable de:
+              {BUSINESS_INFO.fullName} no será responsable de:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
               <li>Reacciones alérgicas no comunicadas previamente por el cliente</li>
@@ -148,7 +149,7 @@ const TermsOfService = () => {
             <h2 className="text-2xl font-semibold text-foreground mb-4">9. Propiedad Intelectual</h2>
             <p className="text-muted-foreground">
               Todo el contenido del sitio web, incluyendo texto, gráficos, logotipos, imágenes y software, es propiedad de 
-              Cristina Muñoz Peluquería y está protegido por las leyes de propiedad intelectual españolas e internacionales.
+              {BUSINESS_INFO.fullName} y está protegido por las leyes de propiedad intelectual españolas e internacionales.
             </p>
           </section>
 
@@ -184,7 +185,7 @@ const TermsOfService = () => {
               Para cualquier pregunta sobre estos Términos de Uso, puede contactarnos en:
             </p>
             <p className="text-muted-foreground mt-2">
-              Cristina Muñoz Peluquería<br />
+              {BUSINESS_INFO.fullName}<br />
               Carrer Pompeu Fabra, 20, Bajos<br />
               08251 Santpedor, Barcelona<br />
               Teléfono: +34 938 321 054<br />

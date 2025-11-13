@@ -5,19 +5,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Instagram } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import ScrollFloat from "@/components/animations/ScrollFloat";
+import { BUSINESS_INFO } from "@/config/businessInfo";
 export const GallerySection = () => {
   const [loadedEmbeds, setLoadedEmbeds] = useState<Set<number>>(new Set());
   const { ref, isVisible } = useScrollAnimation(0.1);
-
-  // URLs completas de tus posts de Instagram
-  const instagramPosts = [
-    "https://www.instagram.com/p/DOOJlP2jCFc/",
-    "https://www.instagram.com/p/DA1mNTQIQii/",
-    "https://www.instagram.com/p/C53dETjoweW/",
-    "https://www.instagram.com/p/C4k3-6OIa-K/",
-    "https://www.instagram.com/p/C3um5Rao4XF/",
-    "https://www.instagram.com/p/C-NFDz_I7bE/",
-  ];
   useEffect(() => {
     // Cargar el script de Instagram embeds
     const script = document.createElement("script");
@@ -51,7 +42,7 @@ export const GallerySection = () => {
 
         <div className="mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {instagramPosts.map((postUrl, index) => (
+            {BUSINESS_INFO.instagramPosts.map((postUrl, index) => (
               <Card
                 key={index}
                 className={`overflow-hidden hover-lift scroll-reveal ${isVisible ? "visible" : ""}`}
@@ -87,7 +78,7 @@ export const GallerySection = () => {
           <Button
             size="lg"
             variant="default"
-            onClick={() => window.open("https://instagram.com/cristinamunoz_hairstylist/", "_blank")}
+            onClick={() => window.open(BUSINESS_INFO.social.instagram.url, "_blank")}
             className="gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg"
           >
             <Instagram className="w-5 h-5" />

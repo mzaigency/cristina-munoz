@@ -4,6 +4,7 @@ import { Quote } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import cristinaWorking from "@/assets/cristina-working.png";
 import cristinaTeam from "@/assets/cristina-team.png";
+import { BUSINESS_INFO } from "@/config/businessInfo";
 const About = () => {
   const {
     ref: heroRef,
@@ -34,7 +35,7 @@ const About = () => {
           <div className="container mx-auto max-w-6xl">
             <div className={`text-center mb-16 scroll-reveal ${heroVisible ? 'visible' : ''}`}>
               <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
-                Soy Cristina Muñoz
+                Soy {BUSINESS_INFO.about.ownerName}
               </h1>
               <div className="w-24 h-1 bg-gradient-to-r from-salon-primary to-salon-accent mx-auto"></div>
             </div>
@@ -43,15 +44,15 @@ const About = () => {
             <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
               <div className={`space-y-6 scroll-reveal ${heroVisible ? 'visible' : ''} stagger-1`}>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Siempre he tenido un gran espíritu de superación, y desde pequeña me atrajo el mundo de la belleza. Comencé mi carrera a los 15 años, trabajando en diferentes salones, y después de mucho esfuerzo, logré cumplir mi sueño de abrir mi propio salón hace 14 años.
+                  {BUSINESS_INFO.about.story.intro}
                 </p>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  A lo largo de este tiempo, he explorado diferentes áreas, pero ahora he decidido dedicarme de lleno a lo que realmente me apasiona: el maquillaje y los recogidos. Tras una formación intensa y muchos años de experiencia, finalmente puedo ofrecer todo mi conocimiento y dedicación para hacer que cada novia se sienta única en su día más especial.
+                  {BUSINESS_INFO.about.story.specialty}
                 </p>
               </div>
               <div className={`relative group scroll-reveal ${heroVisible ? 'visible' : ''} stagger-2`}>
                 <div className="absolute -inset-1 bg-gradient-to-r from-salon-primary to-salon-accent rounded-lg blur opacity-25 group-hover:opacity-50 transition-all duration-500"></div>
-                <img src={cristinaWorking} alt="Cristina Muñoz trabajando en el salón" className="relative rounded-lg shadow-xl w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" />
+                <img src={cristinaWorking} alt={`${BUSINESS_INFO.about.ownerName} trabajando en el salón`} className="relative rounded-lg shadow-xl w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" />
               </div>
             </div>
 
@@ -60,7 +61,7 @@ const About = () => {
               
               <blockquote className="text-center relative z-10">
                 <p className="text-2xl md:text-3xl font-medium text-foreground italic mb-6">
-                  "El maquillaje y el peinado perfectos no solo realzan la belleza de una novia, sino que cuentan su historia en el día más importante de su vida."
+                  "{BUSINESS_INFO.about.quote}"
                 </p>
               </blockquote>
               
@@ -72,10 +73,12 @@ const About = () => {
                 <div className="absolute -inset-1 bg-gradient-to-r from-salon-accent to-salon-primary rounded-lg blur opacity-25 group-hover:opacity-50 transition-all duration-500"></div>
                 <img src={cristinaTeam} alt="Equipo Nuviart Beauty Studio" className="relative rounded-lg shadow-xl w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" />
               </div>
-              <div className={`space-y-6 order-1 md:order-2 text-center md:text-left scroll-reveal ${teamVisible ? 'visible' : ''} stagger-2`}>
-                <h2 className="text-4xl md:text-5xl font-bold text-foreground">C</h2>
+              <div className={`space-y-6 order-1 md:order-2 scroll-reveal ${teamVisible ? 'visible' : ''} stagger-2`}>
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+                  Nuestro Equipo
+                </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Un espacio donde la pasión por la belleza se encuentra con la profesionalidad. Cada detalle está pensado para que te sientas especial y única.
+                  {BUSINESS_INFO.about.story.team}
                 </p>
                 <div className="pt-4">
                   <a href="/#reserva" className="inline-block px-8 py-3 bg-gradient-to-r from-salon-primary to-salon-accent text-white rounded-lg font-semibold hover:scale-105 hover:shadow-lg transition-all duration-300">
