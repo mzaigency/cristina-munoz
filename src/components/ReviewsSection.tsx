@@ -31,15 +31,12 @@ export const ReviewsSection = () => {
 
   const fetchReviews = async () => {
     try {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+      const { data, error } = await supabase.from("reviews").select("*").order("created_at", { ascending: false });
+
       if (error) throw error;
       setReviews(data || []);
     } catch (error) {
-      console.error('Error fetching reviews:', error);
+      console.error("Error fetching reviews:", error);
     } finally {
       setLoading(false);
     }
@@ -50,20 +47,20 @@ export const ReviewsSection = () => {
       toast({
         title: "Error",
         description: "Por favor selecciona una valoración",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.functions.invoke('submit-review', {
-        body: { rating, comment }
+      const { error } = await supabase.functions.invoke("submit-review", {
+        body: { rating, comment },
       });
       if (error) throw error;
-      
+
       toast({
         title: "¡Gracias por tu valoración!",
-        description: "Tu opinión nos ayuda a mejorar"
+        description: "Tu opinión nos ayuda a mejorar",
       });
 
       // Reset form and refresh reviews
@@ -71,11 +68,11 @@ export const ReviewsSection = () => {
       setComment("");
       fetchReviews();
     } catch (error) {
-      console.error('Error submitting review:', error);
+      console.error("Error submitting review:", error);
       toast({
         title: "Error",
         description: "No se pudo enviar tu valoración. Inténtalo de nuevo.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setSubmitting(false);
@@ -85,9 +82,9 @@ export const ReviewsSection = () => {
     return (
       <div className="flex gap-1">
         {[...Array(5)].map((_, i) => (
-          <Star 
-            key={i} 
-            className={`h-5 w-5 ${i < rating ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"}`} 
+          <Star
+            key={i}
+            className={`h-5 w-5 ${i < rating ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"}`}
           />
         ))}
       </div>
@@ -98,11 +95,11 @@ export const ReviewsSection = () => {
     return (
       <div className="flex gap-2">
         {[...Array(5)].map((_, i) => (
-          <Star 
-            key={i} 
+          <Star
+            key={i}
             className={`h-8 w-8 cursor-pointer transition-all ${
-              i < (hoveredRating || rating) 
-                ? "fill-yellow-400 text-yellow-400 scale-110" 
+              i < (hoveredRating || rating)
+                ? "fill-yellow-400 text-yellow-400 scale-110"
                 : "fill-muted text-muted hover:scale-110"
             }`}
             onMouseEnter={() => setHoveredRating(i + 1)}
@@ -114,9 +111,7 @@ export const ReviewsSection = () => {
     );
   };
 
-  const averageRating = reviews.length > 0
-    ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
-    : 0;
+  const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
 
   if (loading) {
     return (
@@ -127,7 +122,9 @@ export const ReviewsSection = () => {
             <Skeleton className="h-6 w-96 mx-auto" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64" />)}
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-64" />
+            ))}
           </div>
         </div>
       </section>
@@ -137,30 +134,26 @@ export const ReviewsSection = () => {
     <section className="py-24 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 animate-fade-up">
-          <ScrollFloat containerClassName="text-4xl font-bold mb-4 text-foreground">
-            Lo Que Dicen Nuestras Clientas
-          </ScrollFloat>
+          <ScrollFloat containerClassName="text-3xl md:text-4xl font-bold text-foreground mb-4">Opiniones</ScrollFloat>
           {reviews.length > 0 && (
             <>
               <div className="flex items-center justify-center gap-3 mb-2">
                 {renderStars(Math.round(averageRating))}
-                <span className="text-2xl font-bold text-foreground">
-                  {averageRating.toFixed(1)}
-                </span>
+                <span className="text-2xl font-bold text-foreground">{averageRating.toFixed(1)}</span>
               </div>
               <p className="text-muted-foreground">
-                Basado en {reviews.length} {reviews.length === 1 ? 'reseña' : 'reseñas'}
+                Basado en {reviews.length} {reviews.length === 1 ? "reseña" : "reseñas"}
               </p>
             </>
           )}
         </div>
 
         {reviews.length > 0 && (
-          <Carousel 
+          <Carousel
             opts={{
               align: "start",
-              loop: true
-            }} 
+              loop: true,
+            }}
             className="w-full max-w-5xl mx-auto mb-16"
           >
             <CarouselContent>
@@ -168,19 +161,17 @@ export const ReviewsSection = () => {
                 <CarouselItem key={review.id} className="md:basis-1/2 lg:basis-1/3">
                   <Card className="hover:shadow-lg transition-all duration-300 border-primary/10 h-full">
                     <CardContent className="p-6 flex flex-col h-full">
-                      <div className="flex items-center gap-2 mb-4">
-                        {renderStars(review.rating)}
-                      </div>
+                      <div className="flex items-center gap-2 mb-4">{renderStars(review.rating)}</div>
                       {review.comment && (
                         <p className="text-muted-foreground leading-relaxed line-clamp-6 flex-1 mb-4">
                           {review.comment}
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground mt-auto">
-                        {new Date(review.created_at).toLocaleDateString('es-ES', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
+                        {new Date(review.created_at).toLocaleDateString("es-ES", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
                         })}
                       </p>
                     </CardContent>
@@ -203,7 +194,7 @@ export const ReviewsSection = () => {
               <p className="text-muted-foreground text-center mb-6">
                 Tu opinión es muy importante para nosotros. La reseña es totalmente anónima
               </p>
-              
+
               <form onSubmit={handleSubmitReview} className="space-y-6">
                 <div className="flex flex-col items-center gap-3">
                   <Label className="text-lg">Tu valoración</Label>
@@ -221,13 +212,13 @@ export const ReviewsSection = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="comment">Tu opinión (opcional)</Label>
-                  <Textarea 
-                    id="comment" 
-                    value={comment} 
-                    onChange={e => setComment(e.target.value)} 
-                    placeholder="Cuéntanos qué te ha gustado, qué mejorarías, o cualquier sugerencia..." 
-                    rows={5} 
-                    className="resize-none" 
+                  <Textarea
+                    id="comment"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Cuéntanos qué te ha gustado, qué mejorarías, o cualquier sugerencia..."
+                    rows={5}
+                    className="resize-none"
                   />
                 </div>
 
