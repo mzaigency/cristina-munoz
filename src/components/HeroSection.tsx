@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import heroImage from "@/assets/salon-hero.jpg";
 import BlurText from "@/components/animations/BlurText";
+import AnimatedContent from "@/components/animations/AnimatedContent";
+import GlareHover from "@/components/animations/GlareHover";
 interface HeroSectionProps {
   onBookNow: () => void;
   onViewServices: () => void;
@@ -34,12 +36,42 @@ export const HeroSection = ({
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center animate-fade-in stagger-2 pt-4">
-            <Button size="lg" onClick={onBookNow} className="transition-all duration-500 ease-out hover:scale-110 hover:shadow-2xl hover:shadow-[#815331]/50 hover:-translate-y-1 border-1 border-stone-950 text-white font-semibold rounded-full bg-[#815331]">
-              Reservar Cita
-            </Button>
-            <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-500 ease-out hover:scale-110 hover:shadow-2xl hover:shadow-[#815331]/30 hover:-translate-y-1 hover:bg-[#815331] hover:text-white border-2 border-[#815331] rounded-full bg-[#000a0e]/0 text-[#815331] font-bold">
-              Ver Servicios
-            </Button>
+            <AnimatedContent delay={0.3} distance={50} duration={0.6}>
+              <GlareHover 
+                width="auto" 
+                height="auto" 
+                background="transparent" 
+                borderRadius="9999px"
+                borderColor="transparent"
+                glareColor="#ffffff"
+                glareOpacity={0.3}
+                glareSize={150}
+                transitionDuration={500}
+                className="inline-block"
+              >
+                <Button size="lg" onClick={onBookNow} className="transition-all duration-500 ease-out hover:scale-110 hover:shadow-2xl hover:shadow-[#815331]/50 hover:-translate-y-1 border-1 border-stone-950 text-white font-semibold rounded-full bg-[#815331]">
+                  Reservar Cita
+                </Button>
+              </GlareHover>
+            </AnimatedContent>
+            <AnimatedContent delay={0.5} distance={50} duration={0.6}>
+              <GlareHover 
+                width="auto" 
+                height="auto" 
+                background="transparent" 
+                borderRadius="9999px"
+                borderColor="transparent"
+                glareColor="#815331"
+                glareOpacity={0.3}
+                glareSize={150}
+                transitionDuration={500}
+                className="inline-block"
+              >
+                <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-500 ease-out hover:scale-110 hover:shadow-2xl hover:shadow-[#815331]/30 hover:-translate-y-1 hover:bg-[#815331] hover:text-white border-2 border-[#815331] rounded-full bg-[#000a0e]/0 text-[#815331] font-bold">
+                  Ver Servicios
+                </Button>
+              </GlareHover>
+            </AnimatedContent>
           </div>
         </div>
       </div>
