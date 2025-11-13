@@ -5,6 +5,7 @@ import cutService from "@/assets/cut-service.jpg";
 import coloringService from "@/assets/coloring-service-new.jpg";
 import stylingService from "@/assets/styling-treatments.png";
 import beautyService from "@/assets/beauty-service.jpg";
+import ScrollFloat from "@/components/animations/ScrollFloat";
 const serviceCategories = [
   {
     category: "Corte",
@@ -122,7 +123,9 @@ export const ServicesSection = () => {
     <section ref={ref} className="py-20 bg-salon-cream">
       <div className="container mx-auto px-4">
         <div className={`mb-12 text-center scroll-reveal ${isVisible ? "visible" : ""}`}>
-          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">Nuestros Servicios</h2>
+          <ScrollFloat containerClassName="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+            Nuestros Servicios
+          </ScrollFloat>
           <p className="text-lg text-muted-foreground">Descubre nuestra amplia gama de servicios profesionales</p>
         </div>
 

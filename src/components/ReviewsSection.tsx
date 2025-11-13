@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import ScrollFloat from "@/components/animations/ScrollFloat";
 
 interface Review {
   id: string;
@@ -136,9 +137,9 @@ export const ReviewsSection = () => {
     <section className="py-24 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 animate-fade-up">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+          <ScrollFloat containerClassName="text-4xl md:text-5xl font-bold mb-4 text-foreground">
             Lo Que Dicen Nuestras Clientas
-          </h2>
+          </ScrollFloat>
           {reviews.length > 0 && (
             <>
               <div className="flex items-center justify-center gap-3 mb-2">
