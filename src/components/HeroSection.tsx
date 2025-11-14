@@ -13,8 +13,8 @@ export const HeroSection = ({
   onBookNow,
   onViewServices
 }: HeroSectionProps) => {
-  return <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 z-0 transition-transform duration-700 hover:scale-105" style={{
+  return <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden perspective-3d">
+      <div className="absolute inset-0 z-0 smooth-3d transition-transform duration-700 hover:scale-105" style={{
       backgroundImage: `url(${heroImage})`,
       backgroundSize: "cover",
       backgroundPosition: "center"
@@ -50,7 +50,7 @@ export const HeroSection = ({
                 transitionDuration={500}
                 className="inline-block"
               >
-                <Button size="lg" onClick={onBookNow} className="transition-all duration-500 ease-out hover:scale-110 hover:shadow-2xl hover:shadow-[#815331]/50 hover:-translate-y-1 border-1 border-stone-950 text-white font-semibold rounded-full bg-[#815331]">
+                <Button size="lg" onClick={onBookNow} className="transition-all duration-500 ease-out hover:shadow-2xl hover:shadow-[#815331]/50 hover:-translate-y-1 border-1 border-stone-950 text-white font-semibold rounded-full bg-[#815331]">
                   Reservar Cita
                 </Button>
               </GlareHover>
@@ -68,7 +68,7 @@ export const HeroSection = ({
                 transitionDuration={500}
                 className="inline-block"
               >
-                <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-500 ease-out hover:scale-110 hover:shadow-2xl hover:shadow-[#815331]/30 hover:-translate-y-1 hover:bg-[#815331] hover:text-white border-2 border-[#815331] rounded-full bg-[#000a0e]/0 text-[#815331] font-bold">
+                <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-500 ease-out hover:shadow-2xl hover:shadow-[#815331]/30 hover:-translate-y-1 hover:bg-[#815331] hover:text-white border-2 border-[#815331] rounded-full bg-[#000a0e]/0 text-[#815331] font-bold">
                   Ver Servicios
                 </Button>
               </GlareHover>

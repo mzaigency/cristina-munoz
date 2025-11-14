@@ -6,6 +6,7 @@ import { Instagram } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import ScrollFloat from "@/components/animations/ScrollFloat";
 import { BUSINESS_INFO } from "@/config/businessInfo";
+import { Parallax3D } from "@/components/animations/Parallax3D";
 export const GallerySection = () => {
   const [loadedEmbeds, setLoadedEmbeds] = useState<Set<number>>(new Set());
   const { ref, isVisible } = useScrollAnimation(0.1);
@@ -41,35 +42,36 @@ export const GallerySection = () => {
         </div>
 
         <div className="mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 perspective-3d">
             {BUSINESS_INFO.instagramPosts.map((postUrl, index) => (
-              <Card
-                key={index}
-                className="overflow-hidden hover-lift"
-                style={{
-                  animationDelay: `${index * 0.1}s`,
-                }}
-              >
-                <CardContent className="p-0">
-                  <blockquote
-                    className="instagram-media"
-                    data-instgrm-permalink={postUrl}
-                    data-instgrm-version="14"
-                    style={{
-                      background: "#FFF",
-                      border: 0,
-                      borderRadius: "3px",
-                      boxShadow: "0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)",
-                      margin: "1px",
-                      maxWidth: "540px",
-                      minWidth: "326px",
-                      padding: 0,
-                      width: "calc(100% - 2px)",
-                    }}
-                    onLoad={() => handleEmbedLoad(index)}
-                  />
-                </CardContent>
-              </Card>
+              <Parallax3D key={index} intensity={6}>
+                <Card
+                  className="overflow-hidden hover-lift smooth-3d"
+                  style={{
+                    animationDelay: `${index * 0.1}s`,
+                  }}
+                >
+                  <CardContent className="p-0">
+                    <blockquote
+                      className="instagram-media"
+                      data-instgrm-permalink={postUrl}
+                      data-instgrm-version="14"
+                      style={{
+                        background: "#FFF",
+                        border: 0,
+                        borderRadius: "3px",
+                        boxShadow: "0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)",
+                        margin: "1px",
+                        maxWidth: "540px",
+                        minWidth: "326px",
+                        padding: 0,
+                        width: "calc(100% - 2px)",
+                      }}
+                      onLoad={() => handleEmbedLoad(index)}
+                    />
+                  </CardContent>
+                </Card>
+              </Parallax3D>
             ))}
           </div>
         </div>

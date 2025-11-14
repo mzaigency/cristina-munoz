@@ -162,4 +162,53 @@ All colors MUST be HSL.
   .stagger-4 {
     animation-delay: 0.4s;
   }
+
+  /* 3D Animation utilities */
+  .perspective-3d {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+  }
+
+  .card-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    will-change: transform;
+  }
+
+  .card-3d:hover {
+    transform: rotateY(5deg) rotateX(-5deg) translateZ(20px);
+  }
+
+  .parallax-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease-out;
+  }
+
+  .smooth-3d {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  .float-3d {
+    animation: float-3d 6s ease-in-out infinite;
+  }
+
+  @keyframes float-3d {
+    0%, 100% {
+      transform: translateY(0px) translateZ(0px);
+    }
+    50% {
+      transform: translateY(-20px) translateZ(10px);
+    }
+  }
+
+  .section-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .section-3d:hover {
+    transform: translateZ(10px);
+  }
 }
