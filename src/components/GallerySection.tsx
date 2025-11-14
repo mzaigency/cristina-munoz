@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Instagram } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import ScrollFloat from "@/components/animations/ScrollFloat";
 import { BUSINESS_INFO } from "@/config/businessInfo";
 import { Parallax3D } from "@/components/animations/Parallax3D";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import { SmoothTitle } from "@/components/animations/SmoothTitle";
 export const GallerySection = () => {
   const [loadedEmbeds, setLoadedEmbeds] = useState<Set<number>>(new Set());
   const { ref, isVisible } = useScrollAnimation(0.1);
@@ -34,9 +34,11 @@ export const GallerySection = () => {
     <section ref={ref} className="py-20 px-4 bg-gradient-to-b from-background to-secondary/10">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-12 space-y-4">
-          <ScrollFloat containerClassName="text-3xl md:text-4xl font-bold text-foreground">
-            Nuestros Trabajos
-          </ScrollFloat>
+          <SmoothTitle>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+              Nuestros Trabajos
+            </h2>
+          </SmoothTitle>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Descubre las últimas tendencias y transformaciones realizadas en nuestro salón
           </p>
