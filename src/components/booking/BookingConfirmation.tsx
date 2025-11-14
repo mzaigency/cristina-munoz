@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { BookingData } from "./BookingFlow";
 import { format } from "date-fns";
 import { CheckCircle2, Loader2, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
@@ -29,6 +30,7 @@ export const BookingConfirmation = ({
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { toast } = useToast();
+  const confettiRef = useRef<ConfettiRef>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -121,6 +123,16 @@ export const BookingConfirmation = ({
       setLoading(false);
       setConfirmed(true);
       onConfirm(userProfile.full_name, userProfile.phone);
+      
+      // Trigger confetti animation
+      setTimeout(() => {
+        confettiRef.current?.fire({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }, 200);
+      
       toast({
         title: "¡Reserva confirmada!",
         description: data.googleEventCreated 
@@ -172,7 +184,11 @@ export const BookingConfirmation = ({
 
   if (confirmed) {
     return (
-      <div className="space-y-8 text-center py-8">
+      <div className="relative space-y-8 text-center py-8">
+        <Confetti
+          ref={confettiRef}
+          className="absolute top-0 left-0 w-full h-full pointer-events-none z-50"
+        />
         <div className="flex justify-center">
           <div className="flex h-24 w-24 items-center justify-center rounded-full bg-green-100 animate-in zoom-in duration-500">
             <CheckCircle2 className="h-12 w-12 text-green-600" />
