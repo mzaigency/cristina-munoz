@@ -214,7 +214,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
             </Button>
           )}
 
-          <Sheet open={open} onOpenChange={setOpen}>
+          <Sheet open={open} onOpenChange={setOpen} modal={false}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Menu className="h-5 w-5" />
