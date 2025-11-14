@@ -149,7 +149,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
           </nav>
 
           {user ? (
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-9 w-9">
                   <User className="h-5 w-5" />
@@ -183,7 +183,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
 
         <div className="flex md:hidden items-center gap-2">
           {user ? (
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-9 w-9">
                   <User className="h-5 w-5" />
