@@ -179,7 +179,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-56 bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))]z-[101]"
+              className="w-56 bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))] z-[101]"
             >
               {navItems.map((item, index) => (
                 <div key={item.id}>
@@ -213,7 +213,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))]z-[101]"
+                className="bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))] z-[101]"
               >
                 <DropdownMenuItem onClick={handleProfileClick} className="hover:bg-[hsl(var(--salon-pink-light))]/50">
                   <User className="mr-2 h-4 w-4" />
@@ -265,7 +265,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))]z-[101]"
+                className="bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))] z-[101]"
               >
                 <DropdownMenuItem onClick={handleProfileClick} className="hover:bg-[hsl(var(--salon-pink-light))]/50">
                   <User className="mr-2 h-4 w-4" />
