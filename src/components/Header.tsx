@@ -35,7 +35,9 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdminRole(session.user.id);
@@ -63,10 +65,10 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
       .select("role")
       .eq("user_id", userId)
       .in("role", ["admin", "stylist"]);
-    
+
     setIsAdmin(data && data.length > 0);
   };
-  
+
   const navItems = [
     { id: "inicio", label: "Inicio", path: "/" },
     { id: "servicios", label: "Servicios", path: "/#servicios" },
@@ -83,7 +85,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   const handleUserIconClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     if (user) {
       setTimeout(() => navigate("/mis-citas"), 300);
     } else {
@@ -92,67 +94,72 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   const handleMyBookingsClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setTimeout(() => navigate("/mis-citas"), 300);
   };
 
   const handleProfileClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setTimeout(() => navigate("/perfil"), 300);
   };
 
   const handleAdminClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setTimeout(() => navigate("/admin"), 300);
   };
 
-  const handleNavClick = (item: typeof navItems[0]) => {
+  const handleNavClick = (item: (typeof navItems)[0]) => {
     setOpen(false);
-    
+
     if (item.path.startsWith("/#")) {
       const section = item.path.replace("/#", "");
-      
+
       if (location.pathname !== "/") {
         navigate("/");
         setTimeout(() => {
           onNavigate(section);
           const element = document.getElementById(section);
           if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
           }
         }, 100);
       } else {
         onNavigate(section);
         const element = document.getElementById(section);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }
     } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setTimeout(() => navigate(item.path), 300);
     }
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-[100] w-full border-b transition-all duration-300 pt-[env(safe-area-inset-top)] ${
-      isScrolled 
-        ? 'bg-[hsl(var(--salon-pink))] text-white border-[hsl(var(--salon-pink-dark))] shadow-lg' 
-        : 'bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/95'
-    }`}>
+    <header
+      className={`fixed top-0 left-0 right-0 z-[100] w-full border-b transition-all duration-300 pt-[env(safe-area-inset-top)] ${
+        isScrolled
+          ? "bg-[#3b2b30] text-white border-[#3b2b30] shadow-lg"
+          : "bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/95"
+      }`}
+    >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          if (location.pathname !== "/") {
-            setTimeout(() => navigate("/"), 300);
-          }
-        }}>
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            if (location.pathname !== "/") {
+              setTimeout(() => navigate("/"), 300);
+            }
+          }}
+        >
           <img src={logo} alt={BUSINESS_INFO.name} className="h-10 w-auto" />
           <div className="flex flex-col">
-            <span className={`font-playfair font-bold text-lg leading-tight ${isScrolled ? 'text-white' : ''}`}>
+            <span className={`font-playfair font-bold text-lg leading-tight ${isScrolled ? "text-white" : ""}`}>
               {BUSINESS_INFO.name}
             </span>
-            <span className={`text-xs leading-tight ${isScrolled ? 'text-white/80' : 'text-muted-foreground'}`}>
+            <span className={`text-xs leading-tight ${isScrolled ? "text-white/80" : "text-muted-foreground"}`}>
               Peluquería y Estética
             </span>
           </div>
@@ -162,16 +169,16 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
         <div className="hidden md:flex items-center gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className={`gap-2 ${isScrolled ? 'text-white hover:bg-white/10 hover:text-white' : ''}`}
+              <Button
+                variant="ghost"
+                className={`gap-2 ${isScrolled ? "text-white hover:bg-white/10 hover:text-white" : ""}`}
               >
                 <Menu className="h-5 w-5" />
                 <span className="text-sm font-medium">Menú</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
+            <DropdownMenuContent
+              align="end"
               className="w-56 bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))]"
             >
               {navItems.map((item, index) => (
@@ -179,9 +186,9 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                   <DropdownMenuItem
                     onClick={() => handleNavClick(item)}
                     className={`cursor-pointer ${
-                      activeSection === item.id 
-                        ? 'bg-[hsl(var(--salon-pink-light))] text-[hsl(var(--salon-pink))] font-medium' 
-                        : 'hover:bg-[hsl(var(--salon-pink-light))]/50'
+                      activeSection === item.id
+                        ? "bg-[hsl(var(--salon-pink-light))] text-[hsl(var(--salon-pink))] font-medium"
+                        : "hover:bg-[hsl(var(--salon-pink-light))]/50"
                     }`}
                   >
                     {item.label}
@@ -196,56 +203,47 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
-                  className={isScrolled ? 'text-white hover:bg-white/10 hover:text-white' : ''}
+                  className={isScrolled ? "text-white hover:bg-white/10 hover:text-white" : ""}
                 >
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
+              <DropdownMenuContent
                 align="end"
                 className="bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))]"
               >
-                <DropdownMenuItem 
-                  onClick={handleProfileClick}
-                  className="hover:bg-[hsl(var(--salon-pink-light))]/50"
-                >
+                <DropdownMenuItem onClick={handleProfileClick} className="hover:bg-[hsl(var(--salon-pink-light))]/50">
                   <User className="mr-2 h-4 w-4" />
                   Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={handleMyBookingsClick}
                   className="hover:bg-[hsl(var(--salon-pink-light))]/50"
                 >
                   Mis Citas
                 </DropdownMenuItem>
                 {isAdmin && (
-                  <DropdownMenuItem 
-                    onClick={handleAdminClick}
-                    className="hover:bg-[hsl(var(--salon-pink-light))]/50"
-                  >
+                  <DropdownMenuItem onClick={handleAdminClick} className="hover:bg-[hsl(var(--salon-pink-light))]/50">
                     <Shield className="mr-2 h-4 w-4" />
                     Admin
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleSignOut}
-                  className="hover:bg-destructive/10 text-destructive"
-                >
+                <DropdownMenuItem onClick={handleSignOut} className="hover:bg-destructive/10 text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar Sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleUserIconClick}
-              className={isScrolled ? 'text-white hover:bg-white/10 hover:text-white' : ''}
+              className={isScrolled ? "text-white hover:bg-white/10 hover:text-white" : ""}
             >
               <User className="h-5 w-5" />
             </Button>
@@ -257,45 +255,36 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={`h-9 w-9 ${isScrolled ? 'text-white hover:bg-white/10 hover:text-white' : ''}`}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-9 w-9 ${isScrolled ? "text-white hover:bg-white/10 hover:text-white" : ""}`}
                 >
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
+              <DropdownMenuContent
                 align="end"
                 className="bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))]"
               >
-                <DropdownMenuItem 
-                  onClick={handleProfileClick}
-                  className="hover:bg-[hsl(var(--salon-pink-light))]/50"
-                >
+                <DropdownMenuItem onClick={handleProfileClick} className="hover:bg-[hsl(var(--salon-pink-light))]/50">
                   <User className="mr-2 h-4 w-4" />
                   Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={handleMyBookingsClick}
                   className="hover:bg-[hsl(var(--salon-pink-light))]/50"
                 >
                   Mis Citas
                 </DropdownMenuItem>
                 {isAdmin && (
-                  <DropdownMenuItem 
-                    onClick={handleAdminClick}
-                    className="hover:bg-[hsl(var(--salon-pink-light))]/50"
-                  >
+                  <DropdownMenuItem onClick={handleAdminClick} className="hover:bg-[hsl(var(--salon-pink-light))]/50">
                     <Shield className="mr-2 h-4 w-4" />
                     Admin
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleSignOut}
-                  className="hover:bg-destructive/10 text-destructive"
-                >
+                <DropdownMenuItem onClick={handleSignOut} className="hover:bg-destructive/10 text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar Sesión
                 </DropdownMenuItem>
@@ -308,7 +297,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className={isScrolled ? 'text-white hover:bg-white/10 hover:text-white' : ''}
+                className={isScrolled ? "text-white hover:bg-white/10 hover:text-white" : ""}
               >
                 <Menu className="h-5 w-5" />
               </Button>
@@ -325,14 +314,10 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                     {item.label}
                   </Button>
                 ))}
-                
+
                 {!user && (
                   <div className="border-t pt-4 mt-4">
-                    <Button
-                      variant="ghost"
-                      onClick={handleUserIconClick}
-                      className="justify-start text-base w-full"
-                    >
+                    <Button variant="ghost" onClick={handleUserIconClick} className="justify-start text-base w-full">
                       <User className="mr-2 h-5 w-5" />
                       Iniciar Sesión
                     </Button>
