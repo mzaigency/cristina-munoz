@@ -8,9 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import ScrollFloat from "@/components/animations/ScrollFloat";
 import { Parallax3D } from "@/components/animations/Parallax3D";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import { SmoothTitle } from "@/components/animations/SmoothTitle";
 
 interface Review {
   id: string;
@@ -150,7 +150,9 @@ export const ReviewsSection = () => {
     <section className="pt-12 pb-24 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <ScrollFloat containerClassName="text-3xl md:text-4xl font-bold text-foreground mb-4">Opiniones</ScrollFloat>
+          <SmoothTitle>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Opiniones</h2>
+          </SmoothTitle>
           {reviews.length > 0 && (
             <>
               <div className="flex items-center justify-center gap-3 mb-2">

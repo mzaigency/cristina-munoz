@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
-import ScrollFloat from "@/components/animations/ScrollFloat";
+import { SmoothTitle } from "@/components/animations/SmoothTitle";
 
 export type Service = {
   id: string;
@@ -152,9 +152,11 @@ export const BookingFlow = () => {
     <section ref={bookingRef} className="py-20">
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
-          <ScrollFloat containerClassName="mb-4 text-3xl md:text-4xl font-bold text-foreground">
-            Reserva tu Cita
-          </ScrollFloat>
+          <SmoothTitle>
+            <h2 className="mb-4 text-3xl md:text-4xl font-bold text-foreground">
+              Reserva tu Cita
+            </h2>
+          </SmoothTitle>
           <p className="text-lg text-muted-foreground">
             Sigue los pasos para reservar tu cita de forma rápida y sencilla
           </p>

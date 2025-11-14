@@ -5,10 +5,10 @@ import cutService from "@/assets/cut-service.jpg";
 import coloringService from "@/assets/coloring-service-new.jpg";
 import stylingService from "@/assets/styling-treatments.png";
 import beautyService from "@/assets/beauty-service.jpg";
-import ScrollFloat from "@/components/animations/ScrollFloat";
 import AnimatedList from "@/components/animations/AnimatedList";
 import { Parallax3D } from "@/components/animations/Parallax3D";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import { SmoothTitle } from "@/components/animations/SmoothTitle";
 const serviceCategories = [
   {
     category: "Corte",
@@ -126,9 +126,11 @@ export const ServicesSection = () => {
     <section ref={ref} className="py-20 bg-salon-cream">
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
-          <ScrollFloat containerClassName="mb-4 text-3xl md:text-4xl font-bold text-foreground">
-            Nuestros Servicios
-          </ScrollFloat>
+          <SmoothTitle>
+            <h2 className="mb-4 text-3xl md:text-4xl font-bold text-foreground">
+              Nuestros Servicios
+            </h2>
+          </SmoothTitle>
           <p className="text-lg text-muted-foreground">Descubre nuestra amplia gama de servicios profesionales</p>
         </div>
 
