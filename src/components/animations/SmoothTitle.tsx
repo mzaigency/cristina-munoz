@@ -35,19 +35,31 @@ export const SmoothTitle = ({ children, className = "" }: SmoothTitleProps) => {
   }, []);
 
   return (
-    <div
-      ref={elementRef}
-      className={className}
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible 
-          ? "translateY(0) scale(1)" 
-          : "translateY(30px) scale(0.98)",
-        transition: "all 0.9s cubic-bezier(0.16, 1, 0.3, 1)",
-        willChange: "opacity, transform",
-      }}
-    >
-      {children}
+    <div className="relative inline-block">
+      <div
+        ref={elementRef}
+        className={className}
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible 
+            ? "translateY(0) scale(1)" 
+            : "translateY(30px) scale(0.98)",
+          transition: "all 0.9s cubic-bezier(0.16, 1, 0.3, 1)",
+          willChange: "opacity, transform",
+        }}
+      >
+        {children}
+      </div>
+      <div
+        className="mx-auto mt-4 h-0.5 bg-gradient-to-r from-transparent via-salon-gold to-transparent"
+        style={{
+          width: isVisible ? "100px" : "0px",
+          maxWidth: "100%",
+          opacity: isVisible ? 1 : 0,
+          transition: "all 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s",
+          willChange: "width, opacity",
+        }}
+      />
     </div>
   );
 };
