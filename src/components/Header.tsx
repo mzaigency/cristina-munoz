@@ -23,6 +23,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -44,6 +45,16 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const heroHeight = window.innerHeight * 0.8;
+      setIsScrolled(window.scrollY > heroHeight);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const checkAdminRole = async (userId: string) => {
@@ -115,108 +126,172 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-[env(safe-area-inset-top)]">
+    <header className={`sticky top-0 z-50 w-full border-b transition-colors duration-300 pt-[env(safe-area-inset-top)] ${
+      isScrolled 
+        ? 'bg-[hsl(var(--salon-pink))] text-white border-[hsl(var(--salon-pink-dark))]' 
+        : 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'
+    }`}>
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div 
-          className="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80"
-          onClick={() => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            setTimeout(() => {
-              navigate("/");
-              onNavigate("inicio");
-            }, 300);
-          }}
-        >
-          <img src={logo} alt={BUSINESS_INFO.name} className="h-12 w-auto" />
-          <span className="text-xl font-semibold text-foreground">{BUSINESS_INFO.name}</span>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          if (location.pathname !== "/") {
+            setTimeout(() => navigate("/"), 300);
+          }
+        }}>
+          <img src={logo} alt={BUSINESS_INFO.name} className="h-10 w-auto" />
+          <div className="flex flex-col">
+            <span className={`font-playfair font-bold text-lg leading-tight ${isScrolled ? 'text-white' : ''}`}>
+              {BUSINESS_INFO.name}
+            </span>
+            <span className={`text-xs leading-tight ${isScrolled ? 'text-white/80' : 'text-muted-foreground'}`}>
+              Peluquería y Estética
+            </span>
+          </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-2">
-          <nav className="flex items-center gap-1">
-            {navItems.map((item) => (
-              <Button
-                key={item.id}
-                variant={activeSection === item.id ? "secondary" : "ghost"}
-                onClick={() => handleNavClick(item)}
-                className="text-sm transition-all hover:scale-105"
+        {/* Desktop Navigation - Dropdown Menu */}
+        <div className="hidden md:flex items-center gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className={`gap-2 ${isScrolled ? 'text-white hover:bg-white/10 hover:text-white' : ''}`}
               >
-                {item.label}
+                <Menu className="h-5 w-5" />
+                <span className="text-sm font-medium">Menú</span>
               </Button>
-            ))}
-          </nav>
-          
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="end" 
+              className="w-56 bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))]"
+            >
+              {navItems.map((item, index) => (
+                <div key={item.id}>
+                  <DropdownMenuItem
+                    onClick={() => handleNavClick(item)}
+                    className={`cursor-pointer ${
+                      activeSection === item.id 
+                        ? 'bg-[hsl(var(--salon-pink-light))] text-[hsl(var(--salon-pink))] font-medium' 
+                        : 'hover:bg-[hsl(var(--salon-pink-light))]/50'
+                    }`}
+                  >
+                    {item.label}
+                  </DropdownMenuItem>
+                  {index < navItems.length - 1 && <DropdownMenuSeparator />}
+                </div>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* User Menu */}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className={isScrolled ? 'text-white hover:bg-white/10 hover:text-white' : ''}
+                >
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleProfileClick}>
-                  Mi Perfil
+              <DropdownMenuContent 
+                align="end"
+                className="bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))]"
+              >
+                <DropdownMenuItem 
+                  onClick={handleProfileClick}
+                  className="hover:bg-[hsl(var(--salon-pink-light))]/50"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleMyBookingsClick}>
-                  Tus Citas
+                <DropdownMenuItem 
+                  onClick={handleMyBookingsClick}
+                  className="hover:bg-[hsl(var(--salon-pink-light))]/50"
+                >
+                  Mis Citas
                 </DropdownMenuItem>
                 {isAdmin && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleAdminClick}>
-                      <Shield className="h-4 w-4 mr-2" />
-                      Panel Admin
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuItem 
+                    onClick={handleAdminClick}
+                    className="hover:bg-[hsl(var(--salon-pink-light))]/50"
+                  >
+                    <Shield className="mr-2 h-4 w-4" />
+                    Admin
+                  </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
+                <DropdownMenuItem 
+                  onClick={handleSignOut}
+                  className="hover:bg-destructive/10 text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
                   Cerrar Sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="ghost" size="icon" onClick={handleUserIconClick} className="h-9 w-9">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleUserIconClick}
+              className={isScrolled ? 'text-white hover:bg-white/10 hover:text-white' : ''}
+            >
               <User className="h-5 w-5" />
             </Button>
           )}
         </div>
 
+        {/* Mobile Menu */}
         <div className="flex md:hidden items-center gap-2">
-          {user ? (
+          {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={`h-9 w-9 ${isScrolled ? 'text-white hover:bg-white/10 hover:text-white' : ''}`}
+                >
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleProfileClick}>
-                  Mi Perfil
+              <DropdownMenuContent 
+                align="end"
+                className="bg-background/95 backdrop-blur-md border-[hsl(var(--salon-pink-light))]"
+              >
+                <DropdownMenuItem 
+                  onClick={handleProfileClick}
+                  className="hover:bg-[hsl(var(--salon-pink-light))]/50"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleMyBookingsClick}>
-                  Tus Citas
+                <DropdownMenuItem 
+                  onClick={handleMyBookingsClick}
+                  className="hover:bg-[hsl(var(--salon-pink-light))]/50"
+                >
+                  Mis Citas
                 </DropdownMenuItem>
                 {isAdmin && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleAdminClick}>
-                      <Shield className="h-4 w-4 mr-2" />
-                      Panel Admin
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuItem 
+                    onClick={handleAdminClick}
+                    className="hover:bg-[hsl(var(--salon-pink-light))]/50"
+                  >
+                    <Shield className="mr-2 h-4 w-4" />
+                    Admin
+                  </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
+                <DropdownMenuItem 
+                  onClick={handleSignOut}
+                  className="hover:bg-destructive/10 text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
                   Cerrar Sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : (
-            <Button variant="ghost" size="icon" onClick={handleUserIconClick} className="h-9 w-9">
-              <User className="h-5 w-5" />
-            </Button>
           )}
 
           <Sheet open={open} onOpenChange={setOpen}>
@@ -224,11 +299,12 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
               <Button
                 variant="ghost"
                 size="icon"
+                className={isScrolled ? 'text-white hover:bg-white/10 hover:text-white' : ''}
               >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[250px] sm:w-[300px]">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <nav className="flex flex-col gap-4 mt-8">
                 {navItems.map((item) => (
                   <Button
@@ -240,6 +316,19 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                     {item.label}
                   </Button>
                 ))}
+                
+                {!user && (
+                  <div className="border-t pt-4 mt-4">
+                    <Button
+                      variant="ghost"
+                      onClick={handleUserIconClick}
+                      className="justify-start text-base w-full"
+                    >
+                      <User className="mr-2 h-5 w-5" />
+                      Iniciar Sesión
+                    </Button>
+                  </div>
+                )}
               </nav>
             </SheetContent>
           </Sheet>
