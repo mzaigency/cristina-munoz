@@ -16,7 +16,14 @@ const Index = () => {
     setActiveSection(sectionId);
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      const headerOffset = 64; // Height of fixed header
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
     }
   };
 
@@ -33,29 +40,29 @@ const Index = () => {
       <Header onNavigate={scrollToSection} activeSection={activeSection} />
       
       <main>
-        <div id="inicio">
+        <div id="inicio" className="pt-16">
           <HeroSection onBookNow={handleBookNow} onViewServices={handleViewServices} />
         </div>
         
-        <div id="servicios">
+        <div id="servicios" className="scroll-mt-16">
           <ServicesSection />
         </div>
         
-        <div id="reserva">
+        <div id="reserva" className="scroll-mt-16">
           <BookingFlow />
         </div>
         
         <WhatsAppSection />
         
-        <div id="galeria">
+        <div id="galeria" className="scroll-mt-16">
           <GallerySection />
         </div>
         
-        <div id="resenas">
+        <div id="resenas" className="scroll-mt-16">
           <ReviewsSection />
         </div>
         
-        <div id="contacto">
+        <div id="contacto" className="scroll-mt-16">
           <Footer />
         </div>
       </main>

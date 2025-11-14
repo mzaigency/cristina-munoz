@@ -107,29 +107,38 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   const handleNavClick = (item: typeof navItems[0]) => {
+    setOpen(false);
+    
     if (item.path.startsWith("/#")) {
+      const section = item.path.replace("/#", "");
+      
       if (location.pathname !== "/") {
         navigate("/");
         setTimeout(() => {
-          const section = item.path.replace("/#", "");
           onNavigate(section);
+          const element = document.getElementById(section);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
         }, 100);
       } else {
-        const section = item.path.replace("/#", "");
         onNavigate(section);
+        const element = document.getElementById(section);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setTimeout(() => navigate(item.path), 300);
     }
-    setOpen(false);
   };
 
   return (
-    <header className={`sticky top-0 z-50 w-full border-b transition-colors duration-300 pt-[env(safe-area-inset-top)] ${
+    <header className={`fixed top-0 left-0 right-0 z-[100] w-full border-b transition-all duration-300 pt-[env(safe-area-inset-top)] ${
       isScrolled 
-        ? 'bg-[hsl(var(--salon-pink))] text-white border-[hsl(var(--salon-pink-dark))]' 
-        : 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'
+        ? 'bg-[hsl(var(--salon-pink))] text-white border-[hsl(var(--salon-pink-dark))] shadow-lg' 
+        : 'bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/95'
     }`}>
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
