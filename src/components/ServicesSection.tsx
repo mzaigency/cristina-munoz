@@ -7,6 +7,7 @@ import stylingService from "@/assets/styling-treatments.png";
 import beautyService from "@/assets/beauty-service.jpg";
 import ScrollFloat from "@/components/animations/ScrollFloat";
 import AnimatedList from "@/components/animations/AnimatedList";
+import { Parallax3D } from "@/components/animations/Parallax3D";
 const serviceCategories = [
   {
     category: "Corte",
@@ -130,47 +131,48 @@ export const ServicesSection = () => {
           <p className="text-lg text-muted-foreground">Descubre nuestra amplia gama de servicios profesionales</p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-2 perspective-3d">
           {serviceCategories.map((category, idx) => {
             const Icon = category.icon;
             return (
-              <Card
-                key={idx}
-                className="overflow-hidden border-none shadow-lg hover-lift group"
-                style={{ animationDelay: `${idx * 0.1}s` }}
-              >
-                <div
-                  style={{ backgroundImage: `url(${category.image})` }}
-                  className="h-48 bg-cover bg-center mx-0 transition-transform duration-500 group-hover:scale-110"
-                />
-                <CardHeader>
-                  <div className="mb-2 flex items-center gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110">
-                      <Icon className="h-5 w-5 text-primary-foreground" />
-                    </div>
-                    <CardTitle className="text-2xl">{category.category}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <AnimatedList
-                    items={category.services}
-                    showGradients={false}
-                    enableArrowNavigation={false}
-                    displayScrollbar={false}
-                    className="space-y-0"
-                    renderItem={(service, index, isSelected) => (
-                      <div
-                        className={`flex items-center justify-between rounded-lg bg-salon-pink-light p-3 transition-all duration-300 hover:bg-salon-gold-light hover:translate-x-2 hover:shadow-md ${
-                          isSelected ? 'bg-salon-gold-light' : ''
-                        }`}
-                      >
-                        <span className="font-medium text-foreground">{service.name}</span>
-                        <span className="text-sm text-muted-foreground">{service.duration}</span>
-                      </div>
-                    )}
+              <Parallax3D key={idx} intensity={8}>
+                <Card
+                  className="overflow-hidden border-none shadow-lg hover-lift group smooth-3d"
+                  style={{ animationDelay: `${idx * 0.1}s` }}
+                >
+                  <div
+                    style={{ backgroundImage: `url(${category.image})` }}
+                    className="h-48 bg-cover bg-center mx-0 transition-transform duration-500 group-hover:scale-110"
                   />
-                </CardContent>
-              </Card>
+                  <CardHeader>
+                    <div className="mb-2 flex items-center gap-2">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110">
+                        <Icon className="h-5 w-5 text-primary-foreground" />
+                      </div>
+                      <CardTitle className="text-2xl">{category.category}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <AnimatedList
+                      items={category.services}
+                      showGradients={false}
+                      enableArrowNavigation={false}
+                      displayScrollbar={false}
+                      className="space-y-0"
+                      renderItem={(service, index, isSelected) => (
+                        <div
+                          className={`flex items-center justify-between rounded-lg bg-salon-pink-light p-3 transition-all duration-300 hover:bg-salon-gold-light hover:translate-x-2 hover:shadow-md ${
+                            isSelected ? 'bg-salon-gold-light' : ''
+                          }`}
+                        >
+                          <span className="font-medium text-foreground">{service.name}</span>
+                          <span className="text-sm text-muted-foreground">{service.duration}</span>
+                        </div>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </Parallax3D>
             );
           })}
         </div>
