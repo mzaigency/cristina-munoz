@@ -34,7 +34,9 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdminRole(session.user.id);
@@ -52,10 +54,10 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
       .select("role")
       .eq("user_id", userId)
       .in("role", ["admin", "stylist"]);
-    
+
     setIsAdmin(data && data.length > 0);
   };
-  
+
   const navItems = [
     { id: "inicio", label: "Inicio", path: "/" },
     { id: "servicios", label: "Servicios", path: "/#servicios" },
@@ -72,7 +74,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   const handleUserIconClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     if (user) {
       setTimeout(() => navigate("/mis-citas"), 300);
     } else {
@@ -81,21 +83,21 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   const handleMyBookingsClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setTimeout(() => navigate("/mis-citas"), 300);
   };
 
   const handleProfileClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setTimeout(() => navigate("/perfil"), 300);
   };
 
   const handleAdminClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setTimeout(() => navigate("/admin"), 300);
   };
 
-  const handleNavClick = (item: typeof navItems[0]) => {
+  const handleNavClick = (item: (typeof navItems)[0]) => {
     if (item.path.startsWith("/#")) {
       if (location.pathname !== "/") {
         navigate("/");
@@ -108,19 +110,20 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
         onNavigate(section);
       }
     } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setTimeout(() => navigate(item.path), 300);
     }
     setOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-[env(safe-area-inset-top)]">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-[env(safe-area-inset-top)]">
+      {" "}
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div 
+        <div
           className="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80"
           onClick={() => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: "smooth" });
             setTimeout(() => {
               navigate("/");
               onNavigate("inicio");
@@ -144,7 +147,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
               </Button>
             ))}
           </nav>
-          
+
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -153,12 +156,8 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleProfileClick}>
-                  Mi Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleMyBookingsClick}>
-                  Tus Citas
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleProfileClick}>Mi Perfil</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleMyBookingsClick}>Tus Citas</DropdownMenuItem>
                 {isAdmin && (
                   <>
                     <DropdownMenuSeparator />
@@ -191,12 +190,8 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleProfileClick}>
-                  Mi Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleMyBookingsClick}>
-                  Tus Citas
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleProfileClick}>Mi Perfil</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleMyBookingsClick}>Tus Citas</DropdownMenuItem>
                 {isAdmin && (
                   <>
                     <DropdownMenuSeparator />
@@ -221,10 +216,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-              >
+              <Button variant="ghost" size="icon">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
