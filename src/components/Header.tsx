@@ -134,7 +134,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
           <span className="text-xl font-semibold text-foreground">{BUSINESS_INFO.name}</span>
         </div>
 
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden lg:flex items-center gap-2">
           <nav className="flex items-center gap-1">
             {navItems.map((item) => (
               <Button
@@ -181,7 +181,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
           )}
         </div>
 
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex lg:hidden items-center gap-2">
           {user ? (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
