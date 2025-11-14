@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import ScrollFloat from "@/components/animations/ScrollFloat";
 import { Parallax3D } from "@/components/animations/Parallax3D";
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
 
 interface Review {
   id: string;
@@ -240,27 +241,29 @@ export const ReviewsSection = () => {
             className="w-full max-w-5xl mx-auto mb-16"
           >
             <CarouselContent className="perspective-3d">
-              {filteredReviews.map((review) => (
+              {filteredReviews.map((review, index) => (
                 <CarouselItem key={review.id} className="md:basis-1/2 lg:basis-1/3">
-                  <Parallax3D intensity={6}>
-                    <Card className="hover:shadow-lg transition-all duration-300 border-primary/10 h-full smooth-3d">
-                      <CardContent className="p-6 flex flex-col h-full">
-                        <div className="flex items-center gap-2 mb-4">{renderStars(review.rating)}</div>
-                        {review.comment && (
-                          <p className="text-muted-foreground leading-relaxed line-clamp-6 flex-1 mb-4">
-                            {review.comment}
+                  <ScrollReveal delay={index * 80}>
+                    <Parallax3D intensity={6} enableShadow>
+                      <Card className="hover:shadow-lg transition-all duration-300 border-primary/10 h-full smooth-3d">
+                        <CardContent className="p-6 flex flex-col h-full">
+                          <div className="flex items-center gap-2 mb-4">{renderStars(review.rating)}</div>
+                          {review.comment && (
+                            <p className="text-muted-foreground leading-relaxed line-clamp-6 flex-1 mb-4">
+                              {review.comment}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-auto">
+                            {new Date(review.created_at).toLocaleDateString("es-ES", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
                           </p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-auto">
-                          {new Date(review.created_at).toLocaleDateString("es-ES", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </Parallax3D>
+                        </CardContent>
+                      </Card>
+                    </Parallax3D>
+                  </ScrollReveal>
                 </CarouselItem>
               ))}
             </CarouselContent>
