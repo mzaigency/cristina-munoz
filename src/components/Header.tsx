@@ -168,7 +168,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-[100] w-full border-b transition-all duration-300 pt-[env(safe-area-inset-top)] ${isScrolled ? "bg-[#815331] text-white border-[#815331] shadow-lg" : "bg-transparent border-transparent"}`}
+      className={`fixed top-0 left-0 right-0 z-[100] w-full border-b transition-all duration-300 pt-[env(safe-area-inset-top)] ${isScrolled ? "bg-[#815331] text-white border-[#3b2b30] shadow-lg" : "bg-transparent border-transparent"}`}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div
