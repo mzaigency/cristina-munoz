@@ -4,7 +4,6 @@ import heroImage from "@/assets/salon-hero.jpg";
 import BlurText from "@/components/animations/BlurText";
 import AnimatedContent from "@/components/animations/AnimatedContent";
 import GlareHover from "@/components/animations/GlareHover";
-import { BUSINESS_INFO } from "@/config/businessInfo";
 interface HeroSectionProps {
   onBookNow: () => void;
   onViewServices: () => void;
@@ -25,7 +24,7 @@ export const HeroSection = ({
       <div className="container relative z-10 px-4 py-20 text-center">
         <div className="mx-auto max-w-3xl space-y-8">
           <BlurText 
-            text={BUSINESS_INFO.name} 
+            text={import.meta.env.VITE_BUSINESS_NAME} 
             className="font-bold tracking-tight font-playfair text-[#3b2b30] text-5xl md:text-7xl"
             delay={150}
             animateBy="words"

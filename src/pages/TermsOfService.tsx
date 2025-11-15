@@ -1,6 +1,5 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { BUSINESS_INFO } from "@/config/businessInfo";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -25,7 +24,7 @@ const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">1. Aceptación de los Términos</h2>
             <p className="text-muted-foreground">
-              Al acceder y utilizar el sitio web y los servicios de {BUSINESS_INFO.fullName}, usted acepta estar sujeto 
+              Al acceder y utilizar el sitio web y los servicios de {import.meta.env.VITE_BUSINESS_FULL_NAME}, usted acepta estar sujeto 
               a estos Términos de Uso. Si no está de acuerdo con alguna parte de estos términos, no debe utilizar nuestros 
               servicios.
             </p>
@@ -34,7 +33,7 @@ const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">2. Descripción de los Servicios</h2>
             <p className="text-muted-foreground">
-              {BUSINESS_INFO.fullName} ofrece servicios profesionales de peluquería y estética capilar, que incluyen:
+              {import.meta.env.VITE_BUSINESS_FULL_NAME} ofrece servicios profesionales de peluquería y estética capilar, que incluyen:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
               <li>Corte de cabello</li>
@@ -135,7 +134,7 @@ const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">8. Limitación de Responsabilidad</h2>
             <p className="text-muted-foreground mb-4">
-              {BUSINESS_INFO.fullName} no será responsable de:
+              {import.meta.env.VITE_BUSINESS_FULL_NAME} no será responsable de:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
               <li>Reacciones alérgicas no comunicadas previamente por el cliente</li>
@@ -149,7 +148,7 @@ const TermsOfService = () => {
             <h2 className="text-2xl font-semibold text-foreground mb-4">9. Propiedad Intelectual</h2>
             <p className="text-muted-foreground">
               Todo el contenido del sitio web, incluyendo texto, gráficos, logotipos, imágenes y software, es propiedad de 
-              {BUSINESS_INFO.fullName} y está protegido por las leyes de propiedad intelectual españolas e internacionales.
+              {import.meta.env.VITE_BUSINESS_FULL_NAME} y está protegido por las leyes de propiedad intelectual españolas e internacionales.
             </p>
           </section>
 
@@ -185,11 +184,11 @@ const TermsOfService = () => {
               Para cualquier pregunta sobre estos Términos de Uso, puede contactarnos en:
             </p>
             <p className="text-muted-foreground mt-2">
-              {BUSINESS_INFO.fullName}<br />
-              Carrer Pompeu Fabra, 20, Bajos<br />
-              08251 Santpedor, Barcelona<br />
-              Teléfono: +34 938 321 054<br />
-              WhatsApp: +34 674 034 526
+              {import.meta.env.VITE_BUSINESS_FULL_NAME}<br />
+              {import.meta.env.VITE_LOCATION_ADDRESS}<br />
+              {import.meta.env.VITE_LOCATION_POSTAL_CODE} {import.meta.env.VITE_LOCATION_CITY}, {import.meta.env.VITE_LOCATION_PROVINCE}<br />
+              Teléfono: {import.meta.env.VITE_CONTACT_PHONE_DISPLAY}<br />
+              WhatsApp: {import.meta.env.VITE_CONTACT_WHATSAPP_DISPLAY}
             </p>
           </section>
         </article>

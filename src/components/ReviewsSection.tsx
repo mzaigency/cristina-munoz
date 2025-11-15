@@ -148,6 +148,58 @@ export const ReviewsSection = () => {
   }
   return (
     <section className="pt-12 pb-24 bg-gradient-to-b from-background to-muted/20">
+      {/* Schema Markup for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            "@id": import.meta.env.VITE_BUSINESS_FULL_NAME,
+            name: import.meta.env.VITE_BUSINESS_FULL_NAME,
+            image: `${window.location.origin}/logo.png`,
+            telephone: import.meta.env.VITE_CONTACT_PHONE_DISPLAY,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: import.meta.env.VITE_LOCATION_ADDRESS,
+              addressLocality: import.meta.env.VITE_LOCATION_CITY,
+              addressRegion: import.meta.env.VITE_LOCATION_PROVINCE,
+              postalCode: import.meta.env.VITE_LOCATION_POSTAL_CODE,
+              addressCountry: "ES",
+            },
+            geo: {
+              "@type": "GeoCoordinates",
+              latitude: "41.8045",
+              longitude: "1.8234",
+            },
+            url: window.location.origin,
+            openingHoursSpecification: [
+              {
+                "@type": "OpeningHoursSpecification",
+                dayOfWeek: ["Tuesday", "Wednesday", "Thursday", "Friday"],
+                opens: "09:00",
+                closes: "19:00",
+              },
+              {
+                "@type": "OpeningHoursSpecification",
+                dayOfWeek: "Saturday",
+                opens: "08:00",
+                closes: "13:00",
+              },
+            ],
+            aggregateRating:
+              reviews.length > 0
+                ? {
+                    "@type": "AggregateRating",
+                    ratingValue: averageRating.toFixed(1),
+                    reviewCount: reviews.length,
+                    bestRating: "5",
+                    worstRating: "1",
+                  }
+                : undefined,
+          }),
+        }}
+      />
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <SmoothTitle>
