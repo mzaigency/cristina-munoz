@@ -1,7 +1,6 @@
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
-import { BUSINESS_INFO, getWhatsAppLink } from "@/config/businessInfo";
 export const WhatsAppSection = () => {
   return <section className="py-20 bg-gradient-to-br from-background to-salon-pink-light/20">
       <div className="container mx-auto px-4">
@@ -19,7 +18,9 @@ export const WhatsAppSection = () => {
           </div>
           
           <Button size="lg" className="bg-[#25D366] hover:bg-[#20BA59] text-white gap-2 text-lg px-8 py-6" onClick={() => {
-          window.open(getWhatsAppLink(), '_blank');
+          const whatsappLink = import.meta.env.VITE_CONTACT_WHATSAPP_LINK;
+          const defaultMessage = "Hola, me gustaría hablar con el agente de IA de la peluquería.";
+          window.open(`${whatsappLink}?text=${encodeURIComponent(defaultMessage)}`, '_blank');
         }}>
             <MessageCircle className="h-6 w-6" />
             Hablar con nuestro agente de IA

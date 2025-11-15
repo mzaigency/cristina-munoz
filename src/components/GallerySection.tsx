@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Instagram } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { BUSINESS_INFO } from "@/config/businessInfo";
 import { Parallax3D } from "@/components/animations/Parallax3D";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 export const GallerySection = () => {
   const [loadedEmbeds, setLoadedEmbeds] = useState<Set<number>>(new Set());
   const { ref, isVisible } = useScrollAnimation(0.1);
+  
+  const instagramPosts = JSON.parse(import.meta.env.VITE_INSTAGRAM_POSTS_JSON || '[]');
   useEffect(() => {
     // Cargar el script de Instagram embeds
     const script = document.createElement("script");
@@ -46,7 +47,7 @@ export const GallerySection = () => {
 
         <div className="mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 perspective-3d">
-            {BUSINESS_INFO.instagramPosts.map((postUrl, index) => (
+            {instagramPosts.map((postUrl: string, index: number) => (
               <ScrollReveal key={index} delay={index * 100}>
                 <Parallax3D intensity={6} enableShadow>
                   <Card className="overflow-hidden hover-lift smooth-3d">
@@ -80,7 +81,7 @@ export const GallerySection = () => {
           <Button
             size="lg"
             variant="default"
-            onClick={() => window.open(BUSINESS_INFO.social.instagram.url, "_blank")}
+            onClick={() => window.open(import.meta.env.VITE_SOCIAL_INSTAGRAM_URL, "_blank")}
             className="gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg"
           >
             <Instagram className="w-5 h-5" />

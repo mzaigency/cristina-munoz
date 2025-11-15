@@ -1,6 +1,5 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { BUSINESS_INFO } from "@/config/businessInfo";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -25,18 +24,18 @@ const PrivacyPolicy = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">1. Responsable del Tratamiento</h2>
             <p className="text-muted-foreground">
-              <strong>{BUSINESS_INFO.fullName}</strong><br />
-              Carrer Pompeu Fabra, 20, Bajos<br />
-              08251 Santpedor, Barcelona<br />
-              Teléfono: +34 938 321 054<br />
-              WhatsApp: +34 674 034 526
+              <strong>{import.meta.env.VITE_BUSINESS_FULL_NAME}</strong><br />
+              {import.meta.env.VITE_LOCATION_ADDRESS}<br />
+              {import.meta.env.VITE_LOCATION_POSTAL_CODE} {import.meta.env.VITE_LOCATION_CITY}, {import.meta.env.VITE_LOCATION_PROVINCE}<br />
+              Teléfono: {import.meta.env.VITE_CONTACT_PHONE_DISPLAY}<br />
+              WhatsApp: {import.meta.env.VITE_CONTACT_WHATSAPP_DISPLAY}
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">2. Datos que Recopilamos</h2>
             <p className="text-muted-foreground mb-4">
-              En {BUSINESS_INFO.fullName} recopilamos los siguientes datos personales cuando utiliza nuestros servicios:
+              En {import.meta.env.VITE_BUSINESS_FULL_NAME} recopilamos los siguientes datos personales cuando utiliza nuestros servicios:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
               <li>Nombre completo</li>

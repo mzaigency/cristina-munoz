@@ -5,7 +5,6 @@ import logo from "@/assets/logo.png";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { BUSINESS_INFO } from "@/config/businessInfo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,8 +129,8 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
             }, 300);
           }}
         >
-          <img src={logo} alt={BUSINESS_INFO.name} className="h-12 w-auto" />
-          <span className="text-xl font-semibold text-foreground">{BUSINESS_INFO.name}</span>
+          <img src={logo} alt={import.meta.env.VITE_BUSINESS_NAME} className="h-12 w-auto" />
+          <span className="text-xl font-semibold text-foreground">{import.meta.env.VITE_BUSINESS_NAME}</span>
         </div>
 
         <div className="hidden lg:flex items-center gap-2">

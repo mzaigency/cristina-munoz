@@ -4,7 +4,6 @@ import { Quote } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import cristinaWorking from "@/assets/cristina-working.png";
 import cristinaTeam from "@/assets/cristina-team.png";
-import { BUSINESS_INFO } from "@/config/businessInfo";
 const About = () => {
   const {
     ref: heroRef,
@@ -35,7 +34,7 @@ const About = () => {
           <div className="container mx-auto max-w-6xl">
             <div className={`text-center mb-16 scroll-reveal ${heroVisible ? 'visible' : ''}`}>
               <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
-                Soy {BUSINESS_INFO.about.ownerName}
+                Soy {import.meta.env.VITE_ABOUT_OWNER_NAME}
               </h1>
               <div className="w-24 h-1 bg-gradient-to-r from-salon-primary to-salon-accent mx-auto"></div>
             </div>
@@ -44,15 +43,15 @@ const About = () => {
             <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
               <div className={`space-y-6 scroll-reveal ${heroVisible ? 'visible' : ''} stagger-1`}>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  {BUSINESS_INFO.about.story.intro}
+                  {import.meta.env.VITE_ABOUT_STORY_INTRO}
                 </p>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  {BUSINESS_INFO.about.story.specialty}
+                  {import.meta.env.VITE_ABOUT_STORY_SPECIALTY}
                 </p>
               </div>
               <div className={`relative group scroll-reveal ${heroVisible ? 'visible' : ''} stagger-2`}>
                 <div className="absolute -inset-1 bg-gradient-to-r from-salon-primary to-salon-accent rounded-lg blur opacity-25 group-hover:opacity-50 transition-all duration-500"></div>
-                <img src={cristinaWorking} alt={`${BUSINESS_INFO.about.ownerName} trabajando en el salón`} className="relative rounded-lg shadow-xl w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" />
+                <img src={cristinaWorking} alt={`${import.meta.env.VITE_ABOUT_OWNER_NAME} trabajando en el salón`} className="relative rounded-lg shadow-xl w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" />
               </div>
             </div>
 
@@ -61,7 +60,7 @@ const About = () => {
               
               <blockquote className="text-center relative z-10">
                 <p className="text-2xl md:text-3xl font-medium text-foreground italic mb-6">
-                  "{BUSINESS_INFO.about.quote}"
+                  "{import.meta.env.VITE_ABOUT_QUOTE}"
                 </p>
               </blockquote>
               
@@ -78,7 +77,7 @@ const About = () => {
                   Nuestro Equipo
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  {BUSINESS_INFO.about.story.team}
+                  {import.meta.env.VITE_ABOUT_STORY_TEAM}
                 </p>
                 <div className="pt-4">
                   <a href="/#reserva" className="inline-block px-8 py-3 bg-gradient-to-r from-salon-primary to-salon-accent text-white rounded-lg font-semibold hover:scale-105 hover:shadow-lg transition-all duration-300">
