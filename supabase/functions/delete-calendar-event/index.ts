@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
             };
           });
 
-          fetch(cancelWebhookUrl, {
+          await fetch(cancelWebhookUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
               type: 'cancellation',
               bookings: webhookData,
             }),
-          }).catch(err => console.error('Error triggering n8n cancellation webhook:', err));
+          });
 
           console.log('n8n cancellation webhook triggered successfully');
         } catch (error) {
