@@ -27,7 +27,7 @@ const bookingRequestSchema = z.object({
   services: z.array(serviceSchema).min(1).max(10),
   total_duration: z.number().int().min(1).max(960),
   customer_name: z.string().min(1).max(100).optional(),
-  phone: z.string().min(9).max(15).optional(),
+  phone: z.union([z.string().min(9).max(15), z.literal('')]).optional(),
   user_id: z.string().uuid().nullable().optional()
 }).refine(data => (data.Fecha || data.date) && (data.Hora || data.time), {
   message: "Either Fecha/Hora or date/time must be provided"
