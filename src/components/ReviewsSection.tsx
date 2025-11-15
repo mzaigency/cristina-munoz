@@ -20,7 +20,7 @@ interface Review {
 }
 export const ReviewsSection = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -30,19 +30,22 @@ export const ReviewsSection = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Fetch reviews in background without showing loading state
     fetchReviews();
   }, []);
 
   const fetchReviews = async () => {
     try {
-      const { data, error } = await supabase.from("reviews").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50); // Limit to improve performance
 
       if (error) throw error;
       setReviews(data || []);
     } catch (error) {
       console.error("Error fetching reviews:", error);
-    } finally {
-      setLoading(false);
     }
   };
   const handleSubmitReview = async (e: React.FormEvent) => {
@@ -129,23 +132,6 @@ export const ReviewsSection = () => {
     return true;
   });
 
-  if (loading) {
-    return (
-      <section className="py-24 bg-gradient-to-b from-background to-muted/20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Skeleton className="h-12 w-64 mx-auto mb-4" />
-            <Skeleton className="h-6 w-96 mx-auto" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-64" />
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
   return (
     <section className="pt-12 pb-24 bg-gradient-to-b from-background to-muted/20">
       {/* Schema Markup for SEO */}
