@@ -1,9 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from 'https://esm.sh/zod@3.22.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Validation schema
+const availabilityRequestSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  stylist: z.enum(['cris', 'desi', 'any']),
+  totalDuration: z.number().int().min(0).max(960).optional()
+});
 
 interface AvailabilityRequest {
   date: string; // YYYY-MM-DD
@@ -17,7 +25,25 @@ serve(async (req) => {
   }
 
   try {
-    const { date, stylist, totalDuration }: AvailabilityRequest = await req.json();
+    const rawData = await req.json();
+    
+    // Validate input
+    const validationResult = availabilityRequestSchema.safeParse(rawData);
+    if (!validationResult.success) {
+      console.error('Validation error:', validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid input data', 
+          details: validationResult.error.errors 
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+    
+    const { date, stylist, totalDuration }: AvailabilityRequest = validationResult.data;
     console.log(`\n>>> Checking availability for ${stylist} on ${date}${totalDuration ? ` (duration: ${totalDuration}min)` : ''}`);
 
     const googleClientId = Deno.env.get('GOOGLE_CLIENT_ID');

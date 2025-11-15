@@ -1,11 +1,37 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { format } from "https://esm.sh/date-fns@3.6.0";
+import { z } from 'https://esm.sh/zod@3.22.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Validation schemas
+const serviceSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  type: z.enum(['Simple', 'Compuesto']),
+  duration_part1_active: z.number().int().min(0).max(480),
+  duration_exposure_pause: z.number().int().min(0).max(480),
+  duration_part2_active: z.number().int().min(0).max(480)
+});
+
+const bookingRequestSchema = z.object({
+  Fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format").optional(),
+  Hora: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Invalid time format").optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format").optional(),
+  time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Invalid time format").optional(),
+  stylist: z.enum(['cris', 'desi', 'any']),
+  services: z.array(serviceSchema).min(1).max(10),
+  total_duration: z.number().int().min(1).max(960),
+  customer_name: z.string().min(1).max(100).optional(),
+  phone: z.string().min(9).max(15).optional(),
+  user_id: z.string().uuid().nullable().optional()
+}).refine(data => (data.Fecha || data.date) && (data.Hora || data.time), {
+  message: "Either Fecha/Hora or date/time must be provided"
+});
 
 interface BookingRequest {
   Fecha?: string;
@@ -33,7 +59,25 @@ serve(async (req) => {
   }
 
   try {
-    const bookingData: BookingRequest = await req.json();
+    const rawData = await req.json();
+    
+    // Validate input
+    const validationResult = bookingRequestSchema.safeParse(rawData);
+    if (!validationResult.success) {
+      console.error('Validation error:', validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid input data', 
+          details: validationResult.error.errors 
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+    
+    const bookingData: BookingRequest = validationResult.data;
     console.log('Creating booking:', bookingData);
 
     // Support both date/time and Fecha/Hora formats
