@@ -22,6 +22,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -45,6 +46,15 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const checkAdminRole = async (userId: string) => {
@@ -116,7 +126,11 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-[env(safe-area-inset-top)]">
+    <header className={`fixed top-0 left-0 right-0 z-50 w-full pt-[env(safe-area-inset-top)] transition-all duration-300 ${
+      scrolled 
+        ? 'border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' 
+        : 'bg-transparent'
+    }`}>
       {" "}
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div
