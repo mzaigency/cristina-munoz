@@ -15,7 +15,7 @@ export const HeroSection = ({
   return <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img src={heroImage} alt="Salón de belleza elegante" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/55" />
       </div>
 
       <div className="container relative z-10 px-4 py-20 text-center">
@@ -29,14 +29,14 @@ export const HeroSection = ({
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center pt-4">
             <AnimatedContent delay={0.3} distance={50} duration={0.6}>
               <GlareHover width="auto" height="auto" background="transparent" borderRadius="9999px" borderColor="transparent" glareColor="#ffffff" glareOpacity={0.3} glareSize={150} transitionDuration={500} className="inline-block">
-                <Button size="lg" onClick={onBookNow} className="transition-all duration-500 ease-out hover:shadow-2xl hover:shadow-primary/50 hover:-translate-y-1 text-black font-semibold rounded-full bg-white">
+                <Button size="lg" onClick={onBookNow} className="transition-all duration-500 ease-out hover:shadow-2xl hover:shadow-primary/50 hover:-translate-y-1 bg-primary text-primary-foreground font-semibold rounded-full">
                   Reservar Cita
                 </Button>
               </GlareHover>
             </AnimatedContent>
             <AnimatedContent delay={0.5} distance={50} duration={0.6}>
               <GlareHover width="auto" height="auto" background="transparent" borderRadius="9999px" borderColor="transparent" glareColor="#815331" glareOpacity={0.3} glareSize={150} transitionDuration={500} className="inline-block">
-                <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-500 ease-out hover:shadow-2xl hover:shadow-white/30 hover:-translate-y-1 hover:bg-white/10 border-2 border-white rounded-full bg-transparent text-white font-bold">
+                <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-500 ease-out hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-1 hover:bg-primary/10 border-2 border-primary rounded-full bg-transparent text-white font-bold">
                   Ver Servicios
                 </Button>
               </GlareHover>
