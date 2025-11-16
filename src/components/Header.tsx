@@ -189,9 +189,8 @@ export const Header = ({
                 <nav className="flex-1 overflow-y-auto py-6 px-4">
                   <div className="space-y-1">
                     {navItems.map((item, index) => <Button key={item.id} variant={activeSection === item.id ? "secondary" : "ghost"} onClick={() => handleNavClick(item)} className={`w-full justify-start text-base gap-4 h-14 rounded-xl transition-all duration-300 hover:translate-x-1 ${activeSection === item.id ? 'bg-primary/10 text-primary font-semibold shadow-sm' : 'hover:bg-accent/50'}`} style={{
-                    opacity: menuOpen ? 1 : 0,
-                    transform: menuOpen ? 'translateY(0)' : 'translateY(-10px)',
-                    transition: `opacity 0.3s ease-out ${index * 40}ms, transform 0.3s ease-out ${index * 40}ms`
+                    animationDelay: `${index * 50}ms`,
+                    animation: menuOpen ? 'slide-in-left 0.3s ease-out forwards' : 'none'
                   }}>
                         <item.icon className="h-5 w-5" />
                         <span>{item.label}</span>
