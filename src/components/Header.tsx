@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, User, LogOut, Shield, Home, Scissors, Calendar, ImageIcon, Star, Info, Phone } from "lucide-react";
+import { Menu, User, LogOut, Shield } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -11,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
@@ -23,7 +22,6 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -49,15 +47,6 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   const checkAdminRole = async (userId: string) => {
     const { data } = await supabase
       .from("user_roles")
@@ -69,13 +58,13 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   const navItems = [
-    { id: "inicio", label: "Inicio", path: "/", icon: Home },
-    { id: "servicios", label: "Servicios", path: "/#servicios", icon: Scissors },
-    { id: "reserva", label: "Reserva Online", path: "/#reserva", icon: Calendar },
-    { id: "galeria", label: "Galería", path: "/#galeria", icon: ImageIcon },
-    { id: "resenas", label: "Reseñas", path: "/#resenas", icon: Star },
-    { id: "sobre-nosotras", label: "Sobre Nosotras", path: "/sobre-nosotras", icon: Info },
-    { id: "contacto", label: "Contacto", path: "/#contacto", icon: Phone },
+    { id: "inicio", label: "Inicio", path: "/" },
+    { id: "servicios", label: "Servicios", path: "/#servicios" },
+    { id: "reserva", label: "Reserva Online", path: "/#reserva" },
+    { id: "galeria", label: "Galería", path: "/#galeria" },
+    { id: "resenas", label: "Reseñas", path: "/#resenas" },
+    { id: "sobre-nosotras", label: "Sobre Nosotras", path: "/sobre-nosotras" },
+    { id: "contacto", label: "Contacto", path: "/#contacto" },
   ];
 
   const handleSignOut = async () => {
@@ -127,11 +116,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 w-full pt-[env(safe-area-inset-top)] transition-all duration-300 ${
-      scrolled 
-        ? 'border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' 
-        : 'bg-transparent'
-    }`}>
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-[env(safe-area-inset-top)]">
       {" "}
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div
@@ -148,39 +133,19 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
           <span className="text-xl font-semibold text-foreground">{import.meta.env.VITE_BUSINESS_NAME}</span>
         </div>
 
-        <div className="hidden lg:flex items-center gap-3">
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className={`gap-2 transition-all duration-300 ${
-                  scrolled ? 'text-foreground' : 'text-foreground'
-                }`}
+        <div className="hidden lg:flex items-center gap-2">
+          <nav className="flex items-center gap-1">
+            {navItems.map((item) => (
+              <Button
+                key={item.id}
+                variant={activeSection === item.id ? "secondary" : "ghost"}
+                onClick={() => handleNavClick(item)}
+                className="text-sm transition-all hover:scale-105"
               >
-                <Menu className="h-5 w-5" />
-                <span className="font-medium">Menú</span>
+                {item.label}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
-              className="w-56 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-border z-[100]"
-            >
-              <DropdownMenuLabel>Navegación</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {navItems.map((item) => (
-                <DropdownMenuItem 
-                  key={item.id}
-                  onClick={() => handleNavClick(item)}
-                  className={`gap-3 cursor-pointer ${
-                    activeSection === item.id ? 'bg-accent text-accent-foreground font-medium' : ''
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            ))}
+          </nav>
 
           {user ? (
             <DropdownMenu modal={false}>
@@ -189,17 +154,9 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-border z-[100]">
-                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleProfileClick}>
-                  <User className="h-4 w-4 mr-2" />
-                  Mi Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleMyBookingsClick}>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Tus Citas
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleProfileClick}>Mi Perfil</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleMyBookingsClick}>Tus Citas</DropdownMenuItem>
                 {isAdmin && (
                   <>
                     <DropdownMenuSeparator />
@@ -231,17 +188,9 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-border z-[100]">
-                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleProfileClick}>
-                  <User className="h-4 w-4 mr-2" />
-                  Mi Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleMyBookingsClick}>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Tus Citas
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleProfileClick}>Mi Perfil</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleMyBookingsClick}>Tus Citas</DropdownMenuItem>
                 {isAdmin && (
                   <>
                     <DropdownMenuSeparator />
@@ -264,31 +213,25 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
             </Button>
           )}
 
-          <Sheet open={open} onOpenChange={setOpen}>
+          <Sheet open={open} onOpenChange={setOpen} modal={false}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Button variant="ghost" size="icon">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95">
-              <div className="flex flex-col gap-6 mt-8">
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">Navegación</h3>
-                  <nav className="flex flex-col gap-2">
-                    {navItems.map((item) => (
-                      <Button
-                        key={item.id}
-                        variant={activeSection === item.id ? "secondary" : "ghost"}
-                        onClick={() => handleNavClick(item)}
-                        className="justify-start text-base gap-3 h-12"
-                      >
-                        <item.icon className="h-5 w-5" />
-                        {item.label}
-                      </Button>
-                    ))}
-                  </nav>
-                </div>
-              </div>
+            <SheetContent side="right" className="w-[250px] sm:w-[300px]">
+              <nav className="flex flex-col gap-4 mt-8">
+                {navItems.map((item) => (
+                  <Button
+                    key={item.id}
+                    variant={activeSection === item.id ? "secondary" : "ghost"}
+                    onClick={() => handleNavClick(item)}
+                    className="justify-start text-base"
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+              </nav>
             </SheetContent>
           </Sheet>
         </div>
