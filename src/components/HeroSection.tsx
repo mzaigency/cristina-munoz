@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
-import heroImage from "@/assets/salon-hero.jpg";
+import heroImage from "@/assets/foto-hero.jpg";
 import BlurText from "@/components/animations/BlurText";
 import AnimatedContent from "@/components/animations/AnimatedContent";
 import GlareHover from "@/components/animations/GlareHover";
