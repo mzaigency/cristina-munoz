@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Menu, User, LogOut, Shield, Home, Scissors, Calendar, ImageIcon, Star, Info, Phone } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useState, useEffect } from "react";
@@ -19,6 +20,7 @@ interface HeaderProps {
 }
 
 export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
+  const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -121,6 +123,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
       window.scrollTo({ top: 0, behavior: "smooth" });
       setTimeout(() => navigate(item.path), 300);
     }
+    setMenuOpen(false);
   };
 
   return (
@@ -146,8 +149,8 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
               <Button 
                 variant="ghost" 
                 className={`gap-2 transition-all duration-300 ${
@@ -157,27 +160,53 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
                 <Menu className="h-5 w-5" />
                 <span className="font-medium">Menú</span>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
-              className="w-56 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-border z-[100]"
+            </SheetTrigger>
+            <SheetContent 
+              side="left" 
+              className="w-[320px] sm:w-[380px] bg-background/98 backdrop-blur-xl border-r border-border/50 p-0"
             >
-              <DropdownMenuLabel>Navegación</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {navItems.map((item) => (
-                <DropdownMenuItem 
-                  key={item.id}
-                  onClick={() => handleNavClick(item)}
-                  className={`gap-3 cursor-pointer ${
-                    activeSection === item.id ? 'bg-accent text-accent-foreground font-medium' : ''
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <div className="flex flex-col h-full">
+                <SheetHeader className="px-6 py-5 border-b border-border/50">
+                  <div className="flex items-center justify-between">
+                    <SheetTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                      Navegación
+                    </SheetTitle>
+                  </div>
+                </SheetHeader>
+                
+                <nav className="flex-1 overflow-y-auto py-6 px-4">
+                  <div className="space-y-1">
+                    {navItems.map((item, index) => (
+                      <Button
+                        key={item.id}
+                        variant={activeSection === item.id ? "secondary" : "ghost"}
+                        onClick={() => handleNavClick(item)}
+                        className={`w-full justify-start text-base gap-4 h-14 rounded-xl transition-all duration-300 hover:translate-x-1 ${
+                          activeSection === item.id 
+                            ? 'bg-primary/10 text-primary font-semibold shadow-sm' 
+                            : 'hover:bg-accent/50'
+                        }`}
+                        style={{
+                          animationDelay: `${index * 50}ms`,
+                          animation: menuOpen ? 'slide-in-left 0.3s ease-out forwards' : 'none'
+                        }}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.label}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </nav>
+
+                <div className="px-6 py-5 border-t border-border/50 bg-muted/30">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    <span>{import.meta.env.VITE_BUSINESS_NAME}</span>
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
 
           {user ? (
             <DropdownMenu modal={false}>
