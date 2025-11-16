@@ -36,7 +36,7 @@ export const HeroSection = ({
             </AnimatedContent>
             <AnimatedContent delay={0.5} distance={50} duration={0.6}>
               <GlareHover width="auto" height="auto" background="transparent" borderRadius="9999px" borderColor="transparent" glareColor="#815331" glareOpacity={0.3} glareSize={150} transitionDuration={500} className="inline-block">
-                <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-500 ease-out hover:scale-105 border-2 border-primary rounded-full bg-transparent text-white font-bold">
+                <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-500 ease-out hover:scale-105 hover:bg-transparent hover:text-white border-2 border-primary rounded-full bg-transparent text-white font-bold">
                   Ver Servicios
                 </Button>
               </GlareHover>
