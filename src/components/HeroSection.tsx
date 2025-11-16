@@ -28,15 +28,15 @@ export const HeroSection = ({
 
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center pt-4">
             <AnimatedContent delay={0.3} distance={50} duration={0.6}>
-              <GlareHover width="auto" height="auto" background="transparent" borderRadius="9999px" borderColor="transparent" glareColor="#ffffff" glareOpacity={0.3} glareSize={150} transitionDuration={500} className="inline-block">
-                <Button size="lg" onClick={onBookNow} className="transition-all duration-500 ease-out hover:scale-105 bg-primary text-primary-foreground font-semibold rounded-full">
+              <GlareHover width="auto" height="auto" background="transparent" borderRadius="9999px" borderColor="transparent" glareColor="#ffffff" glareOpacity={0.5} glareSize={200} transitionDuration={500} className="inline-block transition-all duration-500 ease-out hover:scale-105">
+                <Button size="lg" onClick={onBookNow} className="bg-primary text-primary-foreground font-semibold rounded-full">
                   Reservar Cita
                 </Button>
               </GlareHover>
             </AnimatedContent>
             <AnimatedContent delay={0.5} distance={50} duration={0.6}>
-              <GlareHover width="auto" height="auto" background="transparent" borderRadius="9999px" borderColor="transparent" glareColor="#815331" glareOpacity={0.3} glareSize={150} transitionDuration={500} className="inline-block">
-                <Button size="lg" variant="outline" onClick={onViewServices} className="transition-all duration-500 ease-out hover:scale-105 hover:bg-transparent hover:text-white border-2 border-primary rounded-full bg-transparent text-white font-bold">
+              <GlareHover width="auto" height="auto" background="transparent" borderRadius="9999px" borderColor="transparent" glareColor="#815331" glareOpacity={0.3} glareSize={150} transitionDuration={500} className="inline-block transition-all duration-500 ease-out hover:scale-105">
+                <Button size="lg" variant="outline" onClick={onViewServices} className="hover:bg-transparent hover:text-white border-2 border-primary rounded-full bg-transparent text-white font-bold">
                   Ver Servicios
                 </Button>
               </GlareHover>
