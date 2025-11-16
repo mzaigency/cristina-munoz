@@ -29,6 +29,7 @@ export const BookingConfirmation = ({
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const isSubmitting = useRef(false);
   const { toast } = useToast();
   const confettiRef = useRef<ConfettiRef>(null);
 
@@ -79,7 +80,13 @@ export const BookingConfirmation = ({
       return;
     }
 
+    // Anti-duplication check
+    if (isSubmitting.current) {
+      return;
+    }
+
     try {
+      isSubmitting.current = true;
       setLoading(true);
       
       // Get current user session
@@ -147,6 +154,7 @@ export const BookingConfirmation = ({
         variant: "destructive",
       });
       setLoading(false);
+      isSubmitting.current = false;
     }
   };
 

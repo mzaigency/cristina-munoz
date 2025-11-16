@@ -22,8 +22,18 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -116,8 +126,13 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-[env(safe-area-inset-top)]">
-      {" "}
+    <header 
+      className={`fixed top-0 left-0 right-0 z-50 w-full border-b transition-all duration-300 pt-[env(safe-area-inset-top)] ${
+        scrolled 
+          ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm" 
+          : "bg-background/40 backdrop-blur-sm supports-[backdrop-filter]:bg-background/20"
+      }`}
+    >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div
           className="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80"
