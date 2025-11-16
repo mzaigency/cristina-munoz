@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
+  const isSubmitting = useRef(false);
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
     stylist: null,
@@ -124,7 +125,13 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
       return;
     }
 
+    // Anti-duplication check
+    if (isSubmitting.current) {
+      return;
+    }
+
     try {
+      isSubmitting.current = true;
       setLoading(true);
 
       const bookingPayload = {
@@ -165,6 +172,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
       });
     } finally {
       setLoading(false);
+      isSubmitting.current = false;
     }
   };
 
