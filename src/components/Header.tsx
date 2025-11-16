@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, User, LogOut, Shield, Home, Scissors, Calendar, ImageIcon, Star, Info, Phone } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useState, useEffect } from "react";
@@ -20,7 +19,6 @@ interface HeaderProps {
 }
 
 export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
-  const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -123,7 +121,6 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
       window.scrollTo({ top: 0, behavior: "smooth" });
       setTimeout(() => navigate(item.path), 300);
     }
-    setOpen(false);
   };
 
   return (
@@ -148,7 +145,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
           <span className="text-xl font-semibold text-foreground">{import.meta.env.VITE_BUSINESS_NAME}</span>
         </div>
 
-        <div className="hidden lg:flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -221,76 +218,6 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
               <User className="h-5 w-5" />
             </Button>
           )}
-        </div>
-
-        <div className="flex lg:hidden items-center gap-2">
-          {user ? (
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <User className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-border z-[100]">
-                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleProfileClick}>
-                  <User className="h-4 w-4 mr-2" />
-                  Mi Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleMyBookingsClick}>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Tus Citas
-                </DropdownMenuItem>
-                {isAdmin && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleAdminClick}>
-                      <Shield className="h-4 w-4 mr-2" />
-                      Panel Admin
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Cerrar Sesión
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button variant="ghost" size="icon" onClick={handleUserIconClick} className="h-9 w-9">
-              <User className="h-5 w-5" />
-            </Button>
-          )}
-
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95">
-              <div className="flex flex-col gap-6 mt-8">
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">Navegación</h3>
-                  <nav className="flex flex-col gap-2">
-                    {navItems.map((item) => (
-                      <Button
-                        key={item.id}
-                        variant={activeSection === item.id ? "secondary" : "ghost"}
-                        onClick={() => handleNavClick(item)}
-                        className="justify-start text-base gap-3 h-12"
-                      >
-                        <item.icon className="h-5 w-5" />
-                        {item.label}
-                      </Button>
-                    ))}
-                  </nav>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
     </header>
