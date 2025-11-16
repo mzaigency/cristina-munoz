@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
-import heroVideo from "@/assets/salon-hero-video.mp4";
+import heroImage from "@/assets/salon-hero.jpg";
 import BlurText from "@/components/animations/BlurText";
 import AnimatedContent from "@/components/animations/AnimatedContent";
 import GlareHover from "@/components/animations/GlareHover";
@@ -14,16 +14,11 @@ export const HeroSection = ({
 }: HeroSectionProps) => {
   return <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden perspective-3d">
       <div className="absolute inset-0 z-0">
-        <video 
-          autoPlay 
-          loop 
-          muted 
-          playsInline
+        <img 
+          src={heroImage}
+          alt="Salón de belleza elegante"
           className="w-full h-full object-cover"
-          style={{ aspectRatio: '4/3' }}
-        >
-          <source src={heroVideo} type="video/mp4" />
-        </video>
+        />
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/60" />
       </div>
 
