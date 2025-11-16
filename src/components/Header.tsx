@@ -165,13 +165,13 @@ export const Header = ({
         }, 300);
       }}>
           
-          <span className="text-xl font-semibold text-foreground font-playfair">{import.meta.env.VITE_BUSINESS_NAME}</span>
+          <span className={`text-xl font-semibold font-playfair transition-colors duration-300 ${scrolled ? 'text-foreground' : 'text-white'}`}>{import.meta.env.VITE_BUSINESS_NAME}</span>
         </div>
 
         <div className="flex items-center gap-3">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" className={`gap-2 transition-all duration-300 ${scrolled ? 'text-foreground' : 'text-foreground'}`}>
+              <Button variant="ghost" className={`gap-2 transition-all duration-300 ${scrolled ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
                 <Menu className="h-5 w-5" />
                 <span className="font-medium">Menú</span>
               </Button>
@@ -210,7 +210,7 @@ export const Header = ({
 
           {user ? <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button variant="ghost" size="icon" className={`h-9 w-9 transition-colors duration-300 ${scrolled ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -238,7 +238,7 @@ export const Header = ({
                   Cerrar Sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu> : <Button variant="ghost" size="icon" onClick={handleUserIconClick} className="h-9 w-9">
+            </DropdownMenu> : <Button variant="ghost" size="icon" onClick={handleUserIconClick} className={`h-9 w-9 transition-colors duration-300 ${scrolled ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
               <User className="h-5 w-5" />
             </Button>}
         </div>
