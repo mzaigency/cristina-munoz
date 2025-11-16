@@ -165,7 +165,7 @@ export const Header = ({
         }, 300);
       }}>
           
-          <span className="text-xl font-semibold text-foreground">{import.meta.env.VITE_BUSINESS_NAME}</span>
+          <span className="text-xl font-semibold text-foreground font-playfair">{import.meta.env.VITE_BUSINESS_NAME}</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -176,7 +176,7 @@ export const Header = ({
                 <span className="font-medium">Menú</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[320px] sm:w-[380px] bg-white dark:bg-background border-r border-border/50 p-0">
+            <SheetContent side="right" className="w-[320px] sm:w-[380px] bg-white dark:bg-background border-l border-border/50 p-0">
               <div className="flex flex-col h-full">
                 <SheetHeader className="px-6 py-5 border-b border-border/50">
                   <div className="flex items-center justify-between">
