@@ -8,6 +8,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to normalize phone numbers
+const normalizePhone = (phone: string): string => {
+  return phone.replace(/[\s\-\(\)]/g, '').replace(/^(\+34)?/, '');
+};
+
 // Validation schemas
 const serviceSchema = z.object({
   id: z.string().uuid(),
@@ -303,6 +308,85 @@ serve(async (req) => {
     const [startHours, startMinutes] = bookingTime.split(':').map(Number);
     let currentMinutes = startHours * 60 + startMinutes;
 
+    // Normalize phone for consistent comparison
+    const normalizedPhone = normalizePhone(customer_phone);
+    
+    // VALIDATION 1: Check if customer already has a booking at this date/time
+    console.log('Checking for duplicate customer booking...');
+    const { data: existingCustomerBooking } = await supabase
+      .from('bookings')
+      .select('id, customer_name, Hora, Telefono')
+      .eq('Fecha', bookingDate)
+      .eq('Hora', bookingTime)
+      .eq('status', 'confirmed');
+    
+    if (existingCustomerBooking && existingCustomerBooking.length > 0) {
+      // Check if any booking has the same normalized phone
+      const duplicateBooking = existingCustomerBooking.find(booking => 
+        normalizePhone(booking.Telefono || '') === normalizedPhone
+      );
+      
+      if (duplicateBooking) {
+        console.error('Duplicate booking detected:', duplicateBooking);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Ya existe una reserva para este cliente en esta fecha y hora',
+            details: { 
+              existing_booking_id: duplicateBooking.id,
+              customer_name: duplicateBooking.customer_name 
+            }
+          }),
+          {
+            status: 409,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
+    
+    // VALIDATION 2: Check stylist availability in database
+    console.log('Checking stylist availability in database...');
+    const endMinutesTotal = currentMinutes + bookingData.total_duration;
+    
+    const { data: stylistBookings } = await supabase
+      .from('bookings')
+      .select('id, Hora, end_time, customer_name, total_duration')
+      .eq('Fecha', bookingDate)
+      .eq('stylist', actualStylist)
+      .eq('status', 'confirmed');
+    
+    if (stylistBookings && stylistBookings.length > 0) {
+      const hasConflict = stylistBookings.some(booking => {
+        const [bStartH, bStartM] = booking.Hora.split(':').map(Number);
+        const bookingStart = bStartH * 60 + bStartM;
+        const bookingEnd = bookingStart + booking.total_duration;
+        
+        // Check if there's any overlap
+        const hasOverlap = (currentMinutes < bookingEnd && endMinutesTotal > bookingStart);
+        
+        if (hasOverlap) {
+          console.log(`Conflict detected with booking ${booking.id} for ${booking.customer_name}: ${booking.Hora} (${booking.total_duration} min)`);
+        }
+        
+        return hasOverlap;
+      });
+      
+      if (hasConflict) {
+        return new Response(
+          JSON.stringify({ 
+            error: `${actualStylist === 'cris' ? 'Cris' : 'Desi'} no está disponible en este horario`,
+            details: 'Ya existe otra reserva en este intervalo de tiempo'
+          }),
+          {
+            status: 409,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
+    
+    console.log('Validations passed. Creating bookings...');
+
     const createdBookings = [];
 
     // Create bookings for simple services
@@ -334,7 +418,7 @@ serve(async (req) => {
         .from('bookings')
         .insert({
           customer_name,
-          Telefono: customer_phone,
+          Telefono: normalizedPhone,
           Fecha: bookingDate,
           Hora: bookingTime,
           end_time: endTime,
@@ -389,7 +473,7 @@ serve(async (req) => {
         .from('bookings')
         .insert({
           customer_name,
-          Telefono: customer_phone,
+          Telefono: normalizedPhone,
           Fecha: bookingDate,
           Hora: part1StartTime,
           end_time: part1EndTime,
@@ -442,7 +526,7 @@ serve(async (req) => {
           .from('bookings')
           .insert({
             customer_name,
-            Telefono: customer_phone,
+            Telefono: normalizedPhone,
             Fecha: bookingDate,
             Hora: part2StartTime,
             end_time: part2EndTime,
