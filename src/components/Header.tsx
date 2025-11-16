@@ -163,7 +163,7 @@ export const Header = ({ onNavigate, activeSection }: HeaderProps) => {
             </SheetTrigger>
             <SheetContent 
               side="left" 
-              className="w-[320px] sm:w-[380px] bg-background/98 backdrop-blur-xl border-r border-border/50 p-0"
+              className="w-[320px] sm:w-[380px] bg-white dark:bg-background border-r border-border/50 p-0"
             >
               <div className="flex flex-col h-full">
                 <SheetHeader className="px-6 py-5 border-b border-border/50">
