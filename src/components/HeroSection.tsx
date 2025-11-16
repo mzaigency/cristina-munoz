@@ -13,7 +13,7 @@ export const HeroSection = ({ onBookNow, onViewServices }: HeroSectionProps) => 
     <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img src={heroImage} alt="Salón de belleza elegante" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-black/70" />
+        <div className="absolute inset-0 bg-black/65" />
       </div>
 
       <div className="container relative z-10 px-4 py-20 text-center">
