@@ -16,7 +16,7 @@ export const HeroSection = ({ onBookNow, onViewServices }: HeroSectionProps) => 
         <div className="absolute inset-0 bg-black/65" />
       </div>
 
-      <div className="container relative z-10 px-4 py-20 text-center">
+      <div className="container relative z-10 px-4 py-20 pt-[calc(5rem+env(safe-area-inset-top))] text-center">
         <div className="mx-auto max-w-3xl space-y-8">
           <BlurText
             text={import.meta.env.VITE_BUSINESS_NAME}
