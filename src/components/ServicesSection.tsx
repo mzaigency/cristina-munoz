@@ -134,12 +134,11 @@ export const ServicesSection = () => {
           <p className="text-lg text-muted-foreground">Descubre nuestra amplia gama de servicios profesionales</p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2 perspective-3d">
+        <div className="grid gap-8 md:grid-cols-2">
           {serviceCategories.map((category, idx) => {
             const Icon = category.icon;
             return (
               <ScrollReveal key={idx} delay={idx * 150}>
-                <Parallax3D intensity={8} enableShadow>
                   <Card
                     className="overflow-hidden border-none shadow-lg hover-lift group smooth-3d"
                   >
@@ -175,7 +174,6 @@ export const ServicesSection = () => {
                       />
                     </CardContent>
                   </Card>
-                </Parallax3D>
               </ScrollReveal>
             );
           })}

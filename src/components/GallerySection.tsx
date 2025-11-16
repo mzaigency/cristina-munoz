@@ -46,11 +46,10 @@ export const GallerySection = () => {
         </div>
 
         <div className="mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 perspective-3d">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {instagramPosts.map((postUrl: string, index: number) => (
               <ScrollReveal key={index} delay={index * 100}>
-                <Parallax3D intensity={6} enableShadow>
-                  <Card className="overflow-hidden hover-lift smooth-3d">
+                  <Card className="overflow-hidden hover-lift">
                     <CardContent className="p-0">
                       <blockquote
                         className="instagram-media"
@@ -71,7 +70,6 @@ export const GallerySection = () => {
                       />
                     </CardContent>
                   </Card>
-                </Parallax3D>
               </ScrollReveal>
             ))}
           </div>
