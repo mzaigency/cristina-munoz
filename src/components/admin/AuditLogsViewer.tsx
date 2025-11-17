@@ -75,7 +75,7 @@ export function AuditLogsViewer() {
         .limit(100);
 
       if (error) throw error;
-      setLogs(data || []);
+      setLogs((data || []) as AuditLog[]);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
       toast({
