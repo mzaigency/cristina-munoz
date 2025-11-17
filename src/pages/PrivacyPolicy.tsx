@@ -1,5 +1,4 @@
 import { SEO } from "@/components/SEO";
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -13,9 +12,7 @@ const PrivacyPolicy = () => {
         canonicalUrl="/politica-privacidad"
         noindex={true}
       />
-      <Header onNavigate={() => {}} activeSection="" />
-      
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
+      <main className="container mx-auto px-4 py-12 max-w-4xl pt-24">
         <Link to="/" className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-8">
           <ArrowLeft className="h-4 w-4" />
           Volver al inicio
