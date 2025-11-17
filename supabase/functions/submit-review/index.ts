@@ -59,6 +59,39 @@ serve(async (req) => {
   }
 
   try {
+    // Verificar autenticación
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Autenticación requerida. Por favor, inicia sesión para dejar una reseña.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Crear cliente con el token del usuario
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        }
+      }
+    );
+
+    // Verificar usuario autenticado
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Sesión inválida. Por favor, inicia sesión nuevamente.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Authenticated user:', user.id);
+
     const rawData = await req.json();
     
     // Validate input
@@ -83,24 +116,35 @@ serve(async (req) => {
     const isSuspicious = detectSuspiciousContent(comment);
     const approved = !isSuspicious;
 
-    console.log('Submitting review:', { rating, comment, approved, isSuspicious });
+    console.log('Submitting review:', { rating, comment, approved, isSuspicious, userId: user.id });
 
-    // Initialize Supabase client with service role to bypass RLS for anonymous reviews
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+    // Verificar rate limiting antes de insertar
+    const { data: canCreate, error: rateLimitError } = await supabaseClient
+      .rpc('can_create_review');
 
-    // Save review to database
+    if (rateLimitError) {
+      console.error('Rate limit check error:', rateLimitError);
+      return new Response(
+        JSON.stringify({ error: 'Error al verificar el límite de reseñas' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!canCreate) {
+      console.log('Rate limit exceeded for user:', user.id);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Solo puedes dejar una reseña cada 24 horas. Por favor, inténtalo más tarde.' 
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Save review to database (user_id se añade automáticamente por RLS)
     const { data: reviewData, error: dbError } = await supabaseClient
       .from('reviews')
       .insert({
+        user_id: user.id,
         rating,
         comment: comment || null,
         approved

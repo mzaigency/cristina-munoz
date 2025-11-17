@@ -182,6 +182,7 @@ export type Database = {
           created_at: string
           id: string
           rating: number
+          user_id: string
         }
         Insert: {
           approved?: boolean
@@ -189,6 +190,7 @@ export type Database = {
           created_at?: string
           id?: string
           rating: number
+          user_id: string
         }
         Update: {
           approved?: boolean
@@ -196,6 +198,7 @@ export type Database = {
           created_at?: string
           id?: string
           rating?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -261,6 +264,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_review: { Args: never; Returns: boolean }
       check_password_reset_rate_limit: {
         Args: { user_email: string }
         Returns: boolean
