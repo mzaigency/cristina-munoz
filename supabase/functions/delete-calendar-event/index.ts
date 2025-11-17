@@ -224,6 +224,7 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               type: 'cancellation',
               bookings: webhookData,
+              user: 'admin',
             }),
           });
 
