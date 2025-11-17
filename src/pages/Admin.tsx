@@ -9,6 +9,9 @@ import { es } from "date-fns/locale";
 import { LogOut, Loader2, Home } from "lucide-react";
 import { CalendarCRM } from "@/components/admin/CalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
+import { AuditLogsViewer } from "@/components/admin/AuditLogsViewer";
+import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
+import { ReviewsModerator } from "@/components/admin/ReviewsModerator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Admin() {
@@ -90,15 +93,21 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 h-auto md:h-10">
-            <TabsTrigger value="calendar" className="py-3 md:py-2 text-base md:text-sm">Calendario</TabsTrigger>
-            <TabsTrigger value="reviews" className="py-3 md:py-2 text-base md:text-sm">Reseñas</TabsTrigger>
+          <TabsList className="grid w-full max-w-3xl grid-cols-3 h-auto md:h-10">
+            <TabsTrigger value="calendar" className="py-3 md:py-2 text-sm md:text-sm">Calendario</TabsTrigger>
+            <TabsTrigger value="reviews" className="py-3 md:py-2 text-sm md:text-sm">Reseñas</TabsTrigger>
+            <TabsTrigger value="security" className="py-3 md:py-2 text-sm md:text-sm">Seguridad</TabsTrigger>
           </TabsList>
           <TabsContent value="calendar" className="mt-6">
             <CalendarCRM />
           </TabsContent>
           <TabsContent value="reviews" className="mt-6">
             <ReviewsManager />
+          </TabsContent>
+          <TabsContent value="security" className="mt-6 space-y-6">
+            <SecurityMonitor />
+            <ReviewsModerator />
+            <AuditLogsViewer />
           </TabsContent>
         </Tabs>
       </div>
