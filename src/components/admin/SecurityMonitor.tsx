@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Shield, Activity, Users, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 interface SecurityStats {
   recentPasswordResets: number;
@@ -19,6 +20,7 @@ interface SuspiciousActivity {
 }
 
 export function SecurityMonitor() {
+  const { toast } = useToast();
   const [stats, setStats] = useState<SecurityStats>({
     recentPasswordResets: 0,
     failedLogins: 0,
@@ -30,9 +32,70 @@ export function SecurityMonitor() {
 
   useEffect(() => {
     fetchSecurityStats();
-    const interval = setInterval(fetchSecurityStats, 30000); // Actualizar cada 30 segundos
-    return () => clearInterval(interval);
-  }, []);
+    
+    // Configurar suscripciones en tiempo real
+    const passwordResetChannel = supabase
+      .channel('password-reset-monitoring')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'password_reset_tokens'
+        },
+        async (payload) => {
+          console.log('Nuevo token de reset detectado:', payload);
+          
+          // Verificar si hay actividad sospechosa
+          const oneDayAgo = new Date();
+          oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+          const { count } = await supabase
+            .from("password_reset_tokens")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", oneDayAgo.toISOString());
+
+          if (count && count > 5) {
+            toast({
+              variant: "destructive",
+              title: "⚠️ Actividad Sospechosa Detectada",
+              description: `Se han detectado ${count} solicitudes de cambio de contraseña en las últimas 24 horas`,
+            });
+            fetchSecurityStats(); // Actualizar estadísticas
+          }
+        }
+      )
+      .subscribe();
+
+    const auditLogChannel = supabase
+      .channel('audit-log-monitoring')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'audit_logs'
+        },
+        (payload) => {
+          console.log('Nueva entrada de auditoría:', payload);
+          // Verificar si es una acción crítica
+          const action = payload.new.action;
+          if (action === 'DELETE' && payload.new.table_name === 'user_roles') {
+            toast({
+              variant: "destructive",
+              title: "🔒 Cambio Crítico Detectado",
+              description: `Se ha eliminado un rol de usuario`,
+            });
+            fetchSecurityStats();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(passwordResetChannel);
+      supabase.removeChannel(auditLogChannel);
+    };
+  }, [toast]);
 
   const fetchSecurityStats = async () => {
     try {
