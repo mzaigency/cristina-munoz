@@ -33,6 +33,8 @@ interface AuditLog {
   ip_address: unknown;
   user_agent: string | null;
   created_at: string;
+  user_email?: string;
+  is_admin?: boolean;
 }
 
 export function AuditLogsViewer() {
@@ -70,12 +72,23 @@ export function AuditLogsViewer() {
     try {
       const { data, error } = await supabase
         .from("audit_logs")
-        .select("*")
+        .select(`
+          *,
+          profiles:user_id (email),
+          user_roles:user_id (role)
+        `)
         .order("created_at", { ascending: false })
         .limit(100);
 
       if (error) throw error;
-      setLogs(data || []);
+      
+      const logsWithUserInfo = data?.map(log => ({
+        ...log,
+        user_email: (log.profiles as any)?.email,
+        is_admin: (log.user_roles as any)?.some((r: any) => r.role === 'admin')
+      })) || [];
+      
+      setLogs(logsWithUserInfo);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
       toast({
@@ -175,8 +188,10 @@ export function AuditLogsViewer() {
                     <TableCell className="text-xs">
                       {format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: es })}
                     </TableCell>
-                    <TableCell className="text-xs font-mono">
-                      {log.user_id ? log.user_id.substring(0, 8) : "Sistema"}
+                    <TableCell className="text-xs">
+                      {log.user_id 
+                        ? (log.is_admin ? "Admin" : log.user_email || "Usuario")
+                        : "Sistema"}
                     </TableCell>
                     <TableCell>{getActionBadge(log.action)}</TableCell>
                     <TableCell>{getTableBadge(log.table_name)}</TableCell>
