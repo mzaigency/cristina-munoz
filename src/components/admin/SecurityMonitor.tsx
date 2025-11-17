@@ -5,7 +5,6 @@ import { AlertTriangle, Shield, Activity, Users, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface SecurityStats {
-  pendingReviews: number;
   recentPasswordResets: number;
   failedLogins: number;
   activeUsers: number;
@@ -21,7 +20,6 @@ interface SuspiciousActivity {
 
 export function SecurityMonitor() {
   const [stats, setStats] = useState<SecurityStats>({
-    pendingReviews: 0,
     recentPasswordResets: 0,
     failedLogins: 0,
     activeUsers: 0,
@@ -38,12 +36,6 @@ export function SecurityMonitor() {
 
   const fetchSecurityStats = async () => {
     try {
-      // Contar reviews pendientes de aprobación
-      const { count: pendingReviewsCount } = await supabase
-        .from("reviews")
-        .select("*", { count: "exact", head: true })
-        .eq("approved", false);
-
       // Contar password resets recientes (últimas 24h)
       const oneDayAgo = new Date();
       oneDayAgo.setHours(oneDayAgo.getHours() - 24);
@@ -70,18 +62,7 @@ export function SecurityMonitor() {
         });
       }
 
-      // Reviews pendientes acumuladas
-      if (pendingReviewsCount && pendingReviewsCount > 10) {
-        suspicious.push({
-          type: "pending_reviews",
-          description: `${pendingReviewsCount} reseñas pendientes de moderación`,
-          severity: "medium",
-          timestamp: new Date().toISOString(),
-        });
-      }
-
       setStats({
-        pendingReviews: pendingReviewsCount || 0,
         recentPasswordResets: passwordResetsCount || 0,
         failedLogins: 0, // Esto requeriría logs adicionales
         activeUsers: profiles?.length || 0,
@@ -125,13 +106,7 @@ export function SecurityMonitor() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={AlertTriangle}
-          label="Reviews Pendientes"
-          value={stats.pendingReviews}
-          color="text-yellow-600"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           icon={Lock}
           label="Password Resets (24h)"
