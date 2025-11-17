@@ -2,16 +2,9 @@ import { SEO } from "@/components/SEO";
 import { Footer } from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-
 const TermsOfService = () => {
-  return (
-    <div className="min-h-screen bg-background">
-      <SEO 
-        title="Términos de Uso - Cristina Muñoz Peluquería"
-        description="Términos y condiciones de uso del servicio de reserva online de Cristina Muñoz Peluquería en Santpedor."
-        canonicalUrl="/terminos-uso"
-        noindex={true}
-      />
+  return <div className="min-h-screen bg-background">
+      <SEO title="Términos de Uso - Cristina Muñoz Peluquería" description="Términos y condiciones de uso del servicio de reserva online de Cristina Muñoz Peluquería en Santpedor." canonicalUrl="/terminos-uso" noindex={true} />
       <main className="container mx-auto px-4 py-12 max-w-4xl pt-24">
         <Link to="/" className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-8">
           <ArrowLeft className="h-4 w-4" />
@@ -22,7 +15,11 @@ const TermsOfService = () => {
           <h1 className="text-4xl font-bold text-foreground mb-8">Términos de Uso</h1>
           
           <p className="text-muted-foreground mb-6">
-            Última actualización: {new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+            Última actualización: {new Date().toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
           </p>
 
           <section className="mb-8">
@@ -96,7 +93,7 @@ const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">5. Precios y Pagos</h2>
             <p className="text-muted-foreground mb-4">
-              Los precios de nuestros servicios están disponibles en el sitio web y pueden variar según:
+              Los precios de nuestros servicios pueden variar según:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
               <li>Tipo de servicio solicitado</li>
@@ -199,8 +196,6 @@ const TermsOfService = () => {
       </main>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default TermsOfService;
