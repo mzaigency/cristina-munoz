@@ -6,6 +6,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting: Track requests by email/IP
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutos
+const MAX_REQUESTS_PER_WINDOW = 3; // Máximo 3 solicitudes por ventana
+
+function checkRateLimit(identifier: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(identifier);
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+
+  record.count++;
+  return true;
+}
+
+// Limpiar registros antiguos periódicamente
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of rateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 60000); // Limpiar cada minuto
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -18,6 +50,20 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Email es requerido' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Rate limiting por email y por IP
+    const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitKey = `${email}:${clientIp}`;
+    
+    if (!checkRateLimit(rateLimitKey)) {
+      console.log(`Rate limit exceeded for ${email} from ${clientIp}`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Demasiados intentos. Por favor, espera 15 minutos antes de intentar nuevamente.' 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
       );
     }
 
