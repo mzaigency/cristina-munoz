@@ -151,7 +151,11 @@ export const Header = ({
     }
     setMenuOpen(false);
   };
-  return <header className={`fixed top-0 left-0 right-0 z-50 w-full pt-[env(safe-area-inset-top)] transition-all duration-300 ${scrolled ? 'border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-transparent'}`}>
+  // Determinar si el header debe ser transparente (solo en home sin scroll)
+  const isHomePage = location.pathname === '/';
+  const isTransparent = isHomePage && !scrolled;
+  
+  return <header className={`fixed top-0 left-0 right-0 z-50 w-full pt-[env(safe-area-inset-top)] transition-all duration-300 ${!isTransparent ? 'border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-transparent'}`}>
       {" "}
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80" onClick={() => {
@@ -165,13 +169,13 @@ export const Header = ({
         }, 300);
       }}>
           
-          <span className={`text-xl font-semibold font-playfair transition-colors duration-300 ${scrolled ? 'text-foreground' : 'text-white'}`}>{import.meta.env.VITE_BUSINESS_NAME}</span>
+          <span className={`text-xl font-semibold font-playfair transition-colors duration-300 ${!isTransparent ? 'text-foreground' : 'text-white'}`}>{import.meta.env.VITE_BUSINESS_NAME}</span>
         </div>
 
         <div className="flex items-center gap-3">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" className={`gap-2 transition-all duration-300 ${scrolled ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
+              <Button variant="ghost" className={`gap-2 transition-all duration-300 ${!isTransparent ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
                 <Menu className="h-5 w-5" />
                 <span className="font-medium">Menú</span>
               </Button>
@@ -210,7 +214,7 @@ export const Header = ({
 
           {user ? <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className={`h-9 w-9 transition-colors duration-300 ${scrolled ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
+                <Button variant="ghost" size="icon" className={`h-9 w-9 transition-colors duration-300 ${!isTransparent ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -238,7 +242,7 @@ export const Header = ({
                   Cerrar Sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu> : <Button variant="ghost" size="icon" onClick={handleUserIconClick} className={`h-9 w-9 transition-colors duration-300 ${scrolled ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
+            </DropdownMenu> : <Button variant="ghost" size="icon" onClick={handleUserIconClick} className={`h-9 w-9 transition-colors duration-300 ${!isTransparent ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
               <User className="h-5 w-5" />
             </Button>}
         </div>
