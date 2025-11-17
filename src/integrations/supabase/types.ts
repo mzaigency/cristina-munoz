@@ -261,6 +261,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_password_reset_rate_limit: {
+        Args: { user_email: string }
+        Returns: boolean
+      }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
       cleanup_old_audit_logs: { Args: never; Returns: undefined }
       get_my_bookings: {
