@@ -18,12 +18,47 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
   const [activeTab, setActiveTab] = useState("calendar");
+  const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     checkAuth();
+    fetchPendingReviews();
+
+    // Subscribe to real-time updates for reviews
+    const channel = supabase
+      .channel('pending-reviews-count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reviews'
+        },
+        () => {
+          fetchPendingReviews();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const fetchPendingReviews = async () => {
+    try {
+      const { count } = await supabase
+        .from('reviews')
+        .select('*', { count: 'exact', head: true })
+        .eq('approved', false);
+      
+      setPendingReviewsCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching pending reviews:', error);
+    }
+  };
 
   const checkAuth = async () => {
     const {
@@ -95,7 +130,14 @@ export default function Admin() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-3xl grid-cols-3 h-auto md:h-10">
             <TabsTrigger value="calendar" className="py-3 md:py-2 text-sm md:text-sm">Calendario</TabsTrigger>
-            <TabsTrigger value="reviews" className="py-3 md:py-2 text-sm md:text-sm">Reseñas</TabsTrigger>
+            <TabsTrigger value="reviews" className="py-3 md:py-2 text-sm md:text-sm relative">
+              Reseñas
+              {pendingReviewsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {pendingReviewsCount > 99 ? '99+' : pendingReviewsCount}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="security" className="py-3 md:py-2 text-sm md:text-sm">Seguridad</TabsTrigger>
           </TabsList>
           <TabsContent value="calendar" className="mt-6">
