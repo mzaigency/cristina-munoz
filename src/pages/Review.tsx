@@ -18,6 +18,18 @@ const Review = () => {
   } = useToast();
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Verificar autenticación
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        title: "Autenticación requerida",
+        description: "Por favor, inicia sesión para dejar una reseña",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (rating === 0) {
       toast({
         title: "Error",
@@ -26,6 +38,7 @@ const Review = () => {
       });
       return;
     }
+    
     setSubmitting(true);
     try {
       const {
@@ -36,7 +49,15 @@ const Review = () => {
           comment
         }
       });
-      if (error) throw error;
+      
+      if (error) {
+        // Manejar errores específicos
+        if (error.message?.includes('24 horas')) {
+          throw new Error('Solo puedes dejar una reseña cada 24 horas');
+        }
+        throw error;
+      }
+      
       toast({
         title: "¡Gracias por tu valoración!",
         description: "Tu opinión es muy importante para nosotros"
@@ -45,11 +66,11 @@ const Review = () => {
       // Reset form
       setRating(0);
       setComment("");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting review:", error);
       toast({
         title: "Error",
-        description: "No se pudo enviar tu valoración. Por favor, inténtalo de nuevo.",
+        description: error.message || "No se pudo enviar tu valoración. Por favor, inténtalo de nuevo.",
         variant: "destructive"
       });
     } finally {
@@ -64,7 +85,7 @@ const Review = () => {
   return <div className="min-h-screen flex flex-col">
       <SEO 
         title="Deja tu Valoración - Cristina Muñoz Peluquería"
-        description="Comparte tu experiencia con Cristina Muñoz Peluquería. Tu opinión nos ayuda a mejorar nuestros servicios. Valoración totalmente anónima."
+        description="Comparte tu experiencia con Cristina Muñoz Peluquería. Tu opinión nos ayuda a mejorar nuestros servicios."
         keywords="valoración peluquería, opiniones cristina muñoz, reseñas peluquería Santpedor"
         canonicalUrl="/valoracion"
       />

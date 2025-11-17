@@ -50,6 +50,18 @@ export const ReviewsSection = () => {
   };
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Verificar autenticación
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        title: "Autenticación requerida",
+        description: "Por favor, inicia sesión para dejar una reseña",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (rating === 0) {
       toast({
         title: "Error",
@@ -58,12 +70,20 @@ export const ReviewsSection = () => {
       });
       return;
     }
+    
     setSubmitting(true);
     try {
       const { error } = await supabase.functions.invoke("submit-review", {
         body: { rating, comment },
       });
-      if (error) throw error;
+      
+      if (error) {
+        // Manejar errores específicos
+        if (error.message?.includes('24 horas')) {
+          throw new Error('Solo puedes dejar una reseña cada 24 horas');
+        }
+        throw error;
+      }
 
       toast({
         title: "¡Gracias por tu valoración!",
@@ -74,11 +94,11 @@ export const ReviewsSection = () => {
       setRating(0);
       setComment("");
       fetchReviews();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting review:", error);
       toast({
         title: "Error",
-        description: "No se pudo enviar tu valoración. Inténtalo de nuevo.",
+        description: error.message || "No se pudo enviar tu valoración. Inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -320,7 +340,7 @@ export const ReviewsSection = () => {
                 ¿Qué te ha parecido tu experiencia?
               </h3>
               <p className="text-muted-foreground text-center mb-6">
-                Tu opinión es muy importante para nosotros. La reseña es totalmente anónima
+                Tu opinión es muy importante para nosotros
               </p>
 
               <form onSubmit={handleSubmitReview} className="space-y-6">
