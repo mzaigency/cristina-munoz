@@ -12,7 +12,12 @@ export const HeroSection = ({ onBookNow, onViewServices }: HeroSectionProps) => 
   return (
     <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <img src={heroImage} alt="Salón de belleza elegante" className="w-full h-full object-cover" />
+        <img 
+          src={heroImage} 
+          alt="Interior de Cristina Muñoz Peluquería en Santpedor - Salón profesional de peluquería con ambiente elegante y moderno" 
+          className="w-full h-full object-cover"
+          loading="eager"
+        />
         <div className="absolute inset-0 bg-black/65" />
       </div>
 

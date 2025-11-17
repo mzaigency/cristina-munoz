@@ -1,3 +1,4 @@
+import { SEO } from "@/components/SEO";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
@@ -6,6 +7,12 @@ import { Link } from "react-router-dom";
 const TermsOfService = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Términos de Uso - Cristina Muñoz Peluquería"
+        description="Términos y condiciones de uso del servicio de reserva online de Cristina Muñoz Peluquería en Santpedor."
+        canonicalUrl="/terminos-uso"
+        noindex={true}
+      />
       <Header onNavigate={() => {}} activeSection="" />
       
       <main className="container mx-auto px-4 py-12 max-w-4xl">

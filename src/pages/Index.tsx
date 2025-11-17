@@ -1,3 +1,4 @@
+import { SEO } from "@/components/SEO";
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -30,6 +31,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <SEO 
+        title="Cristina Muñoz - Peluquería en Santpedor | Reserva tu Cita Online"
+        description="Reserva tu cita online en Cristina Muñoz, peluquería profesional en Santpedor. Especialistas en corte, coloración, mechas, balayage, peinados y tratamientos capilares. Más de 15 años de experiencia."
+        keywords="peluquería Santpedor, peluquería cerca de mí, corte de pelo Santpedor, coloración cabello Santpedor, mechas Santpedor, balayage, tratamientos capilares, peinados profesionales, reserva online peluquería, peluquería Bages"
+        canonicalUrl="/"
+      />
       <Header onNavigate={scrollToSection} activeSection={activeSection} />
       
       <main>

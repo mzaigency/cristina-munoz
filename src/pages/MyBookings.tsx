@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { SEO } from "@/components/SEO";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -141,6 +142,12 @@ export default function MyBookings() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
+        <SEO 
+          title="Mis Citas - Cristina Muñoz Peluquería"
+          description="Consulta y gestiona tus reservas en Cristina Muñoz Peluquería. Ve tus próximas citas y el historial de servicios."
+          canonicalUrl="/mis-citas"
+          noindex={true}
+        />
         <Header onNavigate={() => {}} activeSection="" />
         <div className="container mx-auto px-4 py-20 flex justify-center items-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -151,6 +158,12 @@ export default function MyBookings() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Mis Citas - Cristina Muñoz Peluquería"
+        description="Consulta y gestiona tus reservas en Cristina Muñoz Peluquería. Ve tus próximas citas y el historial de servicios."
+        canonicalUrl="/mis-citas"
+        noindex={true}
+      />
       <Header onNavigate={() => {}} activeSection="" />
       
       <main className="container mx-auto px-4 py-20">
