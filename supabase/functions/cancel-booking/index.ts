@@ -20,7 +20,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { bookingId, bookingIds } = await req.json();
+    const { bookingId, bookingIds, user = 'client' } = await req.json();
 
     // Handle both single and multiple bookings
     const idsToCancel = bookingIds || [bookingId];
@@ -157,7 +157,7 @@ serve(async (req) => {
         body: JSON.stringify({
           type: 'cancellation',
           bookings: webhookData,
-          user: 'admin',
+          user: user,
         }),
       });
       console.log('n8n webhook triggered successfully');

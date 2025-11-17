@@ -92,7 +92,7 @@ export default function MyBookings() {
       
       // Cancelar todas las citas de ese día de una sola vez
       const { error: functionError } = await supabase.functions.invoke('cancel-booking', {
-        body: { bookingIds }
+        body: { bookingIds, user: 'client' }
       });
 
       if (functionError) throw functionError;
