@@ -13,6 +13,45 @@ const reviewSchema = z.object({
   comment: z.string().max(1000).optional()
 });
 
+// Lista de palabras malsonantes y spam
+const badWords = [
+  'puta', 'puto', 'mierda', 'joder', 'coño', 'gilipollas', 'idiota', 'imbecil',
+  'cabrón', 'cabron', 'hijo de puta', 'hijoputa', 'tonto', 'estúpido', 'estupido',
+  'spam', 'scam', 'fake', 'fraude', 'estafa', 'casino', 'viagra', 'porn', 'xxx'
+];
+
+// Función para detectar contenido sospechoso
+function detectSuspiciousContent(text: string | null | undefined): boolean {
+  if (!text) return false;
+  
+  const lowerText = text.toLowerCase();
+  
+  // Detectar palabras malsonantes
+  if (badWords.some(word => lowerText.includes(word))) {
+    return true;
+  }
+  
+  // Detectar spam: demasiados enlaces
+  const urlPattern = /(https?:\/\/[^\s]+)/g;
+  const urls = lowerText.match(urlPattern);
+  if (urls && urls.length > 2) {
+    return true;
+  }
+  
+  // Detectar spam: demasiadas mayúsculas
+  const upperCaseRatio = (text.match(/[A-Z]/g) || []).length / text.length;
+  if (text.length > 20 && upperCaseRatio > 0.5) {
+    return true;
+  }
+  
+  // Detectar spam: repetición excesiva de caracteres
+  if (/(.)\1{4,}/.test(text)) {
+    return true;
+  }
+  
+  return false;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -40,7 +79,11 @@ serve(async (req) => {
     
     const { rating, comment } = validationResult.data;
 
-    console.log('Submitting review:', { rating, comment });
+    // Detectar contenido sospechoso
+    const isSuspicious = detectSuspiciousContent(comment);
+    const approved = !isSuspicious;
+
+    console.log('Submitting review:', { rating, comment, approved, isSuspicious });
 
     // Initialize Supabase client with service role to bypass RLS for anonymous reviews
     const supabaseClient = createClient(
@@ -59,7 +102,8 @@ serve(async (req) => {
       .from('reviews')
       .insert({
         rating,
-        comment: comment || null
+        comment: comment || null,
+        approved
       })
       .select()
       .single();
