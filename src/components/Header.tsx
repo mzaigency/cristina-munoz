@@ -154,8 +154,98 @@ export const Header = ({
   // Determinar si el header debe ser transparente (solo en home sin scroll)
   const isHomePage = location.pathname === '/';
   const isTransparent = isHomePage && !scrolled;
+  
   return <header className={`fixed top-0 left-0 right-0 z-50 w-full pt-[env(safe-area-inset-top)] transition-all duration-300 ${!isTransparent ? 'border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-transparent'}`}>
       {" "}
-      
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80" onClick={() => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+        setTimeout(() => {
+          navigate("/");
+          onNavigate("inicio");
+        }, 300);
+      }}>
+          
+          <span className={`text-xl font-semibold font-playfair transition-colors duration-300 ${!isTransparent ? 'text-foreground' : 'text-white'}`}>{import.meta.env.VITE_BUSINESS_NAME}</span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className={`gap-2 transition-all duration-300 ${!isTransparent ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
+                <Menu className="h-5 w-5" />
+                <span className="font-medium">Menú</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[320px] sm:w-[380px] bg-white dark:bg-background border-l border-border/50 p-0">
+              <div className="flex flex-col h-full">
+                <SheetHeader className="px-6 py-5 border-b border-border/50">
+                  <div className="flex items-center justify-between">
+                    <SheetTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                      Navegación
+                    </SheetTitle>
+                  </div>
+                </SheetHeader>
+                
+                <nav className="flex-1 overflow-y-auto py-6 px-4">
+                  <div className="space-y-1">
+                    {navItems.map((item, index) => <Button key={item.id} variant={activeSection === item.id ? "secondary" : "ghost"} onClick={() => handleNavClick(item)} className={`w-full justify-start text-base gap-4 h-14 rounded-xl transition-all duration-300 hover:translate-x-1 ${activeSection === item.id ? 'bg-primary/10 text-primary font-semibold shadow-sm' : 'hover:bg-accent/50'}`} style={{
+                    animationDelay: `${index * 50}ms`,
+                    animation: menuOpen ? 'slide-in-left 0.3s ease-out forwards' : 'none'
+                  }}>
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.label}</span>
+                      </Button>)}
+                  </div>
+                </nav>
+
+                <div className="px-6 py-5 border-t border-border/50 bg-muted/30">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    <span>{import.meta.env.VITE_BUSINESS_NAME}</span>
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {user ? <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className={`h-9 w-9 transition-colors duration-300 ${!isTransparent ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-border z-[100]">
+                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleProfileClick}>
+                  <User className="h-4 w-4 mr-2" />
+                  Mi Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleMyBookingsClick}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Tus Citas
+                </DropdownMenuItem>
+                {isAdmin && <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleAdminClick}>
+                      <Shield className="h-4 w-4 mr-2" />
+                      Panel Admin
+                    </DropdownMenuItem>
+                  </>}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Cerrar Sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu> : <Button variant="ghost" size="icon" onClick={handleUserIconClick} className={`h-9 w-9 transition-colors duration-300 ${!isTransparent ? 'text-foreground' : 'text-white hover:text-white/80'}`}>
+              <User className="h-5 w-5" />
+            </Button>}
+        </div>
+      </div>
     </header>;
 };
