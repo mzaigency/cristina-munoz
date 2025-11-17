@@ -142,10 +142,14 @@ export const ServicesSection = () => {
                   <Card
                     className="overflow-hidden border-none shadow-lg hover-lift group smooth-3d"
                   >
-                    <div
-                      style={{ backgroundImage: `url(${category.image})` }}
-                      className="h-48 bg-cover bg-center mx-0 transition-transform duration-500 group-hover:scale-110"
-                    />
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={category.image}
+                        alt={`Servicio de ${category.category.toLowerCase()} en Cristina Muñoz - Peluquería profesional en Santpedor`}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                    </div>
                     <CardHeader>
                       <div className="mb-2 flex items-center gap-2">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110">

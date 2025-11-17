@@ -1,3 +1,4 @@
+import { SEO } from "@/components/SEO";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
@@ -6,6 +7,12 @@ import { Link } from "react-router-dom";
 const PrivacyPolicy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Política de Privacidad - Cristina Muñoz Peluquería"
+        description="Política de privacidad y protección de datos de Cristina Muñoz Peluquería. Información sobre cómo tratamos tus datos personales."
+        canonicalUrl="/politica-privacidad"
+        noindex={true}
+      />
       <Header onNavigate={() => {}} activeSection="" />
       
       <main className="container mx-auto px-4 py-12 max-w-4xl">

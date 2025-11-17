@@ -1,3 +1,4 @@
+import { SEO } from "@/components/SEO";
 import { useState } from "react";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,12 @@ const Review = () => {
       </div>;
   };
   return <div className="min-h-screen flex flex-col">
+      <SEO 
+        title="Deja tu Valoración - Cristina Muñoz Peluquería"
+        description="Comparte tu experiencia con Cristina Muñoz Peluquería. Tu opinión nos ayuda a mejorar nuestros servicios. Valoración totalmente anónima."
+        keywords="valoración peluquería, opiniones cristina muñoz, reseñas peluquería Santpedor"
+        canonicalUrl="/valoracion"
+      />
       <Header onNavigate={() => {}} activeSection="valoracion" />
       <main className="flex-grow container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto">

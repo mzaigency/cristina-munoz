@@ -1,3 +1,4 @@
+import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -127,6 +128,12 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Mi Perfil - Cristina Muñoz Peluquería"
+        description="Actualiza tu información personal y preferencias en Cristina Muñoz Peluquería."
+        canonicalUrl="/perfil"
+        noindex={true}
+      />
       <Header onNavigate={() => {}} activeSection="" />
       
       <main className="container mx-auto px-4 py-20">

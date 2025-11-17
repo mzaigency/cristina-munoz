@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -25,7 +25,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-  
+    <!-- Preload Critical Resources -->
+    <link rel="preload" as="image" href="/src/assets/foto-hero.jpg" fetchpriority="high">
+    
+    <!-- Sitemap -->
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
   
   
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -36,8 +40,96 @@
   <meta property="og:title" content="Cristina Muñoz">
   <meta name="twitter:title" content="Cristina Muñoz">
   <meta property="og:description" content="Reserva tu cita online en Cristina Muñoz, una peluquería ubicada en Santpedor. Servicios profesionales de corte, coloración, peinados y tratamientos capilares en un ambiente elegante">
-  <meta name="twitter:description" content="Reserva tu cita online en Cristina Muñoz, una peluquería ubicada en Santpedor. Servicios profesionales de corte, coloración, peinados y tratamientos capilares en un ambiente elegante">
-</head>
+    <meta name="twitter:description" content="Reserva tu cita online en Cristina Muñoz, una peluquería ubicada en Santpedor. Servicios profesionales de corte, coloración, peinados y tratamientos capilares en un ambiente elegante">
+    
+    <!-- Structured Data - LocalBusiness Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HairSalon",
+      "name": "Cristina Muñoz Peluquería",
+      "image": "https://cristinamunoz.lovable.app/pwa-512x512.png",
+      "description": "Peluquería profesional en Santpedor especializada en corte, coloración, mechas, balayage, peinados y tratamientos capilares. Más de 15 años de experiencia.",
+      "@id": "https://cristinamunoz.lovable.app",
+      "url": "https://cristinamunoz.lovable.app",
+      "telephone": "+34638156620",
+      "priceRange": "€€",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Carrer Major, 30",
+        "addressLocality": "Santpedor",
+        "postalCode": "08251",
+        "addressRegion": "Barcelona",
+        "addressCountry": "ES"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 41.8117,
+        "longitude": 1.8892
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+          "opens": "09:00",
+          "closes": "19:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Saturday",
+          "opens": "09:00",
+          "closes": "14:00"
+        }
+      ],
+      "sameAs": [
+        "https://www.instagram.com/cristinamunoz.peluqueria"
+      ],
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "50"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Servicios de peluquería",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Corte de pelo",
+              "description": "Cortes profesionales para hombre, mujer y niños"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Coloración y mechas",
+              "description": "Tinte, decoloración, mechas, balayage con productos profesionales"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Peinados y tratamientos",
+              "description": "Recogidos, peinados y tratamientos de hidratación capilar"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Depilación y maquillaje",
+              "description": "Depilación de cejas y labio, maquillaje profesional"
+            }
+          }
+        ]
+      }
+    }
+    </script>
+  </head>
 
   <body>
     <div id="root"></div>
