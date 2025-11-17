@@ -95,8 +95,17 @@ export const Header = ({
     icon: Phone
   }];
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      // Limpiar el estado local aunque falle el signOut
+    } finally {
+      // Siempre limpiar el estado y redirigir
+      setUser(null);
+      setIsAdmin(false);
+      navigate("/");
+    }
   };
   const handleUserIconClick = () => {
     window.scrollTo({

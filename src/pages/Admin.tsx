@@ -92,8 +92,15 @@ export default function Admin() {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      // Continuar con el logout aunque falle
+    } finally {
+      // Siempre redirigir independientemente del resultado
+      navigate("/auth");
+    }
   };
 
   if (loading) {
