@@ -30,7 +30,7 @@ interface AuditLog {
   action: string;
   table_name: string;
   record_id: string | null;
-  ip_address: string | null;
+  ip_address: unknown;
   user_agent: string | null;
   created_at: string;
 }
@@ -75,7 +75,7 @@ export function AuditLogsViewer() {
         .limit(100);
 
       if (error) throw error;
-      setLogs((data || []) as AuditLog[]);
+      setLogs(data || []);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
       toast({
@@ -181,7 +181,7 @@ export function AuditLogsViewer() {
                     <TableCell>{getActionBadge(log.action)}</TableCell>
                     <TableCell>{getTableBadge(log.table_name)}</TableCell>
                     <TableCell className="text-xs font-mono">
-                      {log.ip_address || "N/A"}
+                      {log.ip_address ? String(log.ip_address) : "N/A"}
                     </TableCell>
                   </TableRow>
                 ))}
