@@ -73,16 +73,27 @@ export const ReviewsSection = () => {
     
     setSubmitting(true);
     try {
-      const { error } = await supabase.functions.invoke("submit-review", {
+      const { data, error } = await supabase.functions.invoke("submit-review", {
         body: { rating, comment },
       });
       
       if (error) {
-        // Manejar errores específicos
-        if (error.message?.includes('24 horas')) {
-          throw new Error('Solo puedes dejar una reseña cada 24 horas');
+        console.error("Edge function error:", error);
+        
+        // Extraer el mensaje de error del edge function
+        let errorMessage = "No se pudo enviar tu valoración. Inténtalo de nuevo.";
+        
+        // El error puede venir en diferentes formatos
+        if (error.message) {
+          errorMessage = error.message;
         }
-        throw error;
+        
+        // Si el edge function devolvió un response con error
+        if (data && typeof data === 'object' && 'error' in data) {
+          errorMessage = (data as { error: string }).error;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       toast({
