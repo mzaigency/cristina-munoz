@@ -128,6 +128,7 @@ export const CancelBooking = () => {
             googleEventId: selectedBooking.google_calendar_event_id,
             calendarId: selectedBooking.calendar_id,
             customerPhone: lastSearchedPhone,
+            user: 'client',
           },
         });
 
