@@ -67,10 +67,15 @@ Deno.serve(async (req) => {
     }
 
     // Marcar el token como usado
-    await supabaseAdmin
+    const { error: updateTokenError } = await supabaseAdmin
       .from('password_reset_tokens')
       .update({ used_at: new Date().toISOString() })
       .eq('token', token);
+
+    if (updateTokenError) {
+      console.error('Error marking token as used:', updateTokenError);
+      // No fallar si no se puede marcar como usado, pero loguearlo
+    }
 
     console.log(`Password reset successfully for user ${tokenData.user_id}`);
 
