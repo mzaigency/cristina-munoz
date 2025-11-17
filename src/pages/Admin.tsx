@@ -11,7 +11,6 @@ import { CalendarCRM } from "@/components/admin/CalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { AuditLogsViewer } from "@/components/admin/AuditLogsViewer";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
-import { ReviewsModerator } from "@/components/admin/ReviewsModerator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Admin() {
@@ -148,7 +147,6 @@ export default function Admin() {
           </TabsContent>
           <TabsContent value="security" className="mt-6 space-y-6">
             <SecurityMonitor />
-            <ReviewsModerator />
             <AuditLogsViewer />
           </TabsContent>
         </Tabs>
