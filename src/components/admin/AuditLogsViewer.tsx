@@ -33,7 +33,6 @@ interface AuditLog {
   ip_address: unknown;
   user_agent: string | null;
   created_at: string;
-  user_email?: string;
   is_admin?: boolean;
 }
 
@@ -70,24 +69,33 @@ export function AuditLogsViewer() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Obtener logs
+      const { data: logsData, error: logsError } = await supabase
         .from("audit_logs")
-        .select(`
-          *,
-          profiles:user_id (email),
-          user_roles:user_id (role)
-        `)
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(100);
 
-      if (error) throw error;
-      
-      const logsWithUserInfo = data?.map(log => ({
+      if (logsError) throw logsError;
+
+      // Obtener user_ids únicos que no son null
+      const userIds = [...new Set(logsData?.map(log => log.user_id).filter(Boolean))];
+
+      // Obtener roles de admin
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin")
+        .in("user_id", userIds);
+
+      const adminUserIds = new Set(adminRoles?.map(r => r.user_id) || []);
+
+      // Combinar datos
+      const logsWithUserInfo = logsData?.map(log => ({
         ...log,
-        user_email: (log.profiles as any)?.email,
-        is_admin: (log.user_roles as any)?.some((r: any) => r.role === 'admin')
+        is_admin: log.user_id ? adminUserIds.has(log.user_id) : false
       })) || [];
-      
+
       setLogs(logsWithUserInfo);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
@@ -188,9 +196,9 @@ export function AuditLogsViewer() {
                     <TableCell className="text-xs">
                       {format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: es })}
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="text-xs font-mono">
                       {log.user_id 
-                        ? (log.is_admin ? "Admin" : log.user_email || "Usuario")
+                        ? (log.is_admin ? "Admin" : log.user_id.substring(0, 8))
                         : "Sistema"}
                     </TableCell>
                     <TableCell>{getActionBadge(log.action)}</TableCell>
