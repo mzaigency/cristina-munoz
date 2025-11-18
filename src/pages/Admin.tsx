@@ -11,6 +11,7 @@ import { CalendarCRM } from "@/components/admin/CalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { AuditLogsViewer } from "@/components/admin/AuditLogsViewer";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
+import { WhatsAppManager } from "@/components/admin/WhatsAppManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Admin() {
@@ -141,7 +142,7 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-3xl grid-cols-3 h-auto md:h-10">
+          <TabsList className="grid w-full max-w-3xl grid-cols-4 h-auto md:h-10">
             <TabsTrigger value="calendar" className="py-3 md:py-2 text-sm md:text-sm">Calendario</TabsTrigger>
             <TabsTrigger value="reviews" className="py-3 md:py-2 text-sm md:text-sm relative">
               Reseñas
@@ -151,6 +152,7 @@ export default function Admin() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="whatsapp" className="py-3 md:py-2 text-sm md:text-sm">WhatsApp</TabsTrigger>
             <TabsTrigger value="security" className="py-3 md:py-2 text-sm md:text-sm">Seguridad</TabsTrigger>
           </TabsList>
           <TabsContent value="calendar" className="mt-6">
@@ -158,6 +160,9 @@ export default function Admin() {
           </TabsContent>
           <TabsContent value="reviews" className="mt-6">
             <ReviewsManager />
+          </TabsContent>
+          <TabsContent value="whatsapp" className="mt-6">
+            <WhatsAppManager />
           </TabsContent>
           <TabsContent value="security" className="mt-6 space-y-6">
             <SecurityMonitor />
