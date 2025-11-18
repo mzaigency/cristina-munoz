@@ -266,6 +266,7 @@ export type Database = {
           last_message_at: string
           name: string | null
           phone_number: string
+          unread_count: number
           updated_at: string
         }
         Insert: {
@@ -274,6 +275,7 @@ export type Database = {
           last_message_at?: string
           name?: string | null
           phone_number: string
+          unread_count?: number
           updated_at?: string
         }
         Update: {
@@ -282,6 +284,7 @@ export type Database = {
           last_message_at?: string
           name?: string | null
           phone_number?: string
+          unread_count?: number
           updated_at?: string
         }
         Relationships: []
