@@ -110,7 +110,7 @@ export const LoadingScreen = ({ onLoadingComplete }: LoadingScreenProps) => {
               <img 
                 src={logoImage} 
                 alt="Cristina Muñoz" 
-                className="w-32 h-32 object-contain mix-blend-normal rounded-full"
+                className="w-32 h-32 object-contain mix-blend-normal rounded-2xl"
                 style={{ 
                   filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15))'
                 }}
