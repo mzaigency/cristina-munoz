@@ -93,14 +93,21 @@ export default function Admin() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      // Forzar limpieza local incluso si la sesión del servidor falla
+      await supabase.auth.signOut({ scope: 'local' });
     } catch (error) {
       console.error("Error during sign out:", error);
-      // Continuar con el logout aunque falle
-    } finally {
-      // Siempre redirigir independientemente del resultado
-      navigate("/auth");
     }
+    
+    // Limpiar localStorage manualmente por si acaso
+    try {
+      localStorage.removeItem('supabase.auth.token');
+    } catch (e) {
+      console.error("Error clearing localStorage:", e);
+    }
+    
+    // Siempre redirigir a auth
+    navigate("/auth", { replace: true });
   };
 
   if (loading) {
