@@ -161,6 +161,13 @@ export const WhatsAppManager = () => {
   const handleContactClick = (contact: Contact) => {
     setSelectedContact(contact);
     fetchMessages(contact.id);
+    
+    // Actualizar el estado local inmediatamente para eliminar el badge
+    setContacts(prevContacts =>
+      prevContacts.map(c =>
+        c.id === contact.id ? { ...c, unread_count: 0 } : c
+      )
+    );
   };
 
   if (loading) {

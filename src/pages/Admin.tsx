@@ -176,32 +176,44 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-3xl grid-cols-4 h-auto md:h-10">
-            <TabsTrigger value="calendar" className="py-3 md:py-2 text-sm md:text-sm flex items-center gap-2">
+          <TabsList className="inline-flex h-12 items-center justify-start gap-1 rounded-lg bg-transparent p-0 border-b w-full max-w-none">
+            <TabsTrigger 
+              value="calendar" 
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
               <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Calendario</span>
+              <span>Calendario</span>
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="py-3 md:py-2 text-sm md:text-sm relative flex items-center gap-2">
+            <TabsTrigger 
+              value="reviews" 
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
+            >
               <Star className="h-4 w-4" />
-              <span className="hidden sm:inline">Reseñas</span>
+              <span>Reseñas</span>
               {pendingReviewsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
                   {pendingReviewsCount > 99 ? '99+' : pendingReviewsCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="whatsapp" className="py-3 md:py-2 text-sm md:text-sm relative flex items-center gap-2">
+            <TabsTrigger 
+              value="whatsapp" 
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
+            >
               <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">WhatsApp</span>
+              <span>WhatsApp</span>
               {whatsappUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
                   {whatsappUnreadCount > 99 ? '99+' : whatsappUnreadCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="security" className="py-3 md:py-2 text-sm md:text-sm flex items-center gap-2">
+            <TabsTrigger 
+              value="security" 
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
               <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Seguridad</span>
+              <span>Seguridad</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="calendar" className="mt-6">
