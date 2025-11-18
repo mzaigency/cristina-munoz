@@ -381,7 +381,6 @@ export const CalendarCRM = () => {
         const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}T${time}:00`;
       };
-
       for (const stylist of calendars) {
         if (blockPeriod === "hours") {
           // Bloquear solo horas específicas
@@ -574,7 +573,7 @@ export const CalendarCRM = () => {
   return <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">CRM - Gestión de Citas🗓️</h2>
+          <h2 className="text-2xl font-bold text-foreground">CRM - Gestión de Citas</h2>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -1001,28 +1000,16 @@ export const CalendarCRM = () => {
               </Popover>
             </div>
 
-            {blockPeriod === "hours" && (
-              <div className="grid grid-cols-2 gap-4">
+            {blockPeriod === "hours" && <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="block-startTime">Hora inicio</Label>
-                  <Input 
-                    id="block-startTime" 
-                    type="time" 
-                    value={blockStartTime} 
-                    onChange={(e) => setBlockStartTime(e.target.value)} 
-                  />
+                  <Input id="block-startTime" type="time" value={blockStartTime} onChange={e => setBlockStartTime(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="block-endTime">Hora fin</Label>
-                  <Input 
-                    id="block-endTime" 
-                    type="time" 
-                    value={blockEndTime} 
-                    onChange={(e) => setBlockEndTime(e.target.value)} 
-                  />
+                  <Input id="block-endTime" type="time" value={blockEndTime} onChange={e => setBlockEndTime(e.target.value)} />
                 </div>
-              </div>
-            )}
+              </div>}
 
             {blockPeriod === "day" && <div className="space-y-2">
                 <Label>Fecha de fin (opcional)</Label>
