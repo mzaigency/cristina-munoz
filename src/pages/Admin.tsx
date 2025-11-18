@@ -179,41 +179,41 @@ export default function Admin() {
           <TabsList className="inline-flex h-12 items-center justify-start gap-1 rounded-lg bg-transparent p-0 border-b w-full max-w-none">
             <TabsTrigger 
               value="calendar" 
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
               <Calendar className="h-4 w-4" />
-              <span>Calendario</span>
+              <span className="hidden md:inline">Calendario</span>
             </TabsTrigger>
             <TabsTrigger 
               value="reviews" 
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
             >
               <Star className="h-4 w-4" />
-              <span>Reseñas</span>
+              <span className="hidden md:inline">Reseñas</span>
               {pendingReviewsCount > 0 && (
-                <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
+                <span className="absolute -top-0.5 -right-0.5 md:relative md:top-0 md:right-0 md:ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
                   {pendingReviewsCount > 99 ? '99+' : pendingReviewsCount}
                 </span>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="whatsapp" 
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
             >
               <MessageSquare className="h-4 w-4" />
-              <span>WhatsApp</span>
+              <span className="hidden md:inline">WhatsApp</span>
               {whatsappUnreadCount > 0 && (
-                <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
+                <span className="absolute -top-0.5 -right-0.5 md:relative md:top-0 md:right-0 md:ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
                   {whatsappUnreadCount > 99 ? '99+' : whatsappUnreadCount}
                 </span>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="security" 
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
               <Shield className="h-4 w-4" />
-              <span>Seguridad</span>
+              <span className="hidden md:inline">Seguridad</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="calendar" className="mt-6">
