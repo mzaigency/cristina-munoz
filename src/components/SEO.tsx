@@ -10,8 +10,8 @@ interface SEOProps {
 }
 
 export const SEO = ({
-  title = "Cristina Muñoz - Peluquería en Santpedor",
-  description = "Reserva tu cita online en Cristina Muñoz, una peluquería ubicada en Santpedor. Servicios profesionales de corte, coloración, peinados y tratamientos capilares en un ambiente elegante",
+  title = "Cristina Muñoz",
+  description = "Reserva tu cita online en Cristina Muñoz, una peluquería ubicada en Santpedor (Barcelona). Servicios profesionales de corte, coloración, peinados y tratamientos capilares en un ambiente elegante",
   keywords = "peluquería Santpedor, peluquería cerca de mí, corte de pelo Santpedor, coloración cabello, mechas, balayage, tratamientos capilares, peinados profesionales, reserva online peluquería",
   ogImage = "https://lovable.dev/opengraph-image-p98pqg.png",
   canonicalUrl,
@@ -27,7 +27,7 @@ export const SEO = ({
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
       {noindex && <meta name="robots" content="noindex,nofollow" />}
-      
+
       {/* Canonical URL */}
       <link rel="canonical" href={fullCanonicalUrl} />
 
