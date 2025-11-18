@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/foto-hero.jpg";
 import GlareHover from "@/components/animations/GlareHover";
+import AnimatedContent from "@/components/animations/AnimatedContent";
 interface HeroSectionProps {
   onBookNow: () => void;
   onViewServices: () => void;
@@ -19,28 +20,45 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
         <div className="absolute inset-0 bg-black/65" />
       </div>
 
-      <div className="container relative z-10 px-4 py-24 pt-[calc(6rem+env(safe-area-inset-top))] pb-32 text-center">
+      <div className="container relative z-10 px-4 py-20 pt-[calc(5rem+env(safe-area-inset-top))] text-center perspective-3d">
         <div className="mx-auto max-w-3xl space-y-8">
           {isLoadingComplete && (
             <>
-              {/* Título con animación Mask */}
-              <div className="relative overflow-hidden py-4">
-                <h1 
-                  data-content={import.meta.env.VITE_BUSINESS_NAME}
-                  className="font-bold tracking-tight font-playfair text-transparent text-5xl md:text-7xl relative after:content-[attr(data-content)] after:absolute after:top-0 after:left-0 after:w-full after:text-white after:[animation:cd-reveal-up_0.4s_0.7s_backwards]"
-                >
+              <AnimatedContent
+                distance={60}
+                direction="vertical"
+                duration={1}
+                ease="power3.out"
+                scale={0.95}
+                delay={0.2}
+              >
+                <h1 className="font-bold tracking-tight font-playfair text-white text-5xl md:text-7xl">
                   {import.meta.env.VITE_BUSINESS_NAME}
                 </h1>
-                <div className="h-0.5 bg-white mx-auto mt-4 w-32 origin-center [animation:cd-loading-mask_1s_0.3s_both]" />
-              </div>
+              </AnimatedContent>
 
-              <p className="text-base text-white md:text-lg font-normal">
-                Donde la belleza y el estilo se encuentran. Tu momento de brillar empieza aquí.
-              </p>
+              <AnimatedContent
+                distance={40}
+                direction="vertical"
+                duration={0.9}
+                ease="power3.out"
+                scale={0.97}
+                delay={0.4}
+              >
+                <p className="text-base text-white md:text-lg font-normal">
+                  Donde la belleza y el estilo se encuentran. Tu momento de brillar empieza aquí.
+                </p>
+              </AnimatedContent>
 
-              {/* Botones con animación Mask */}
-              <div className="overflow-hidden pt-8 pb-4">
-                <div className="flex flex-col gap-4 sm:flex-row sm:justify-center [animation:cd-reveal-down_0.4s_0.7s_backwards]">
+              <AnimatedContent
+                distance={50}
+                direction="vertical"
+                duration={1}
+                ease="power3.out"
+                scale={0.96}
+                delay={0.6}
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
                   <GlareHover
                     width="auto"
                     height="auto"
@@ -83,7 +101,7 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
                     </Button>
                   </GlareHover>
                 </div>
-              </div>
+              </AnimatedContent>
             </>
           )}
         </div>
