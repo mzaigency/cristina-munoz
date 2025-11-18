@@ -19,15 +19,17 @@ export default function Admin() {
   const [userEmail, setUserEmail] = useState("");
   const [activeTab, setActiveTab] = useState("calendar");
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
+  const [whatsappUnreadCount, setWhatsappUnreadCount] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     checkAuth();
     fetchPendingReviews();
+    fetchWhatsAppUnreadCount();
 
     // Subscribe to real-time updates for reviews
-    const channel = supabase
+    const reviewsChannel = supabase
       .channel('pending-reviews-count')
       .on(
         'postgres_changes',
@@ -42,8 +44,25 @@ export default function Admin() {
       )
       .subscribe();
 
+    // Subscribe to real-time updates for WhatsApp contacts
+    const whatsappChannel = supabase
+      .channel('whatsapp-unread-count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'whatsapp_contacts'
+        },
+        () => {
+          fetchWhatsAppUnreadCount();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(reviewsChannel);
+      supabase.removeChannel(whatsappChannel);
     };
   }, []);
 
@@ -57,6 +76,21 @@ export default function Admin() {
       setPendingReviewsCount(count || 0);
     } catch (error) {
       console.error('Error fetching pending reviews:', error);
+    }
+  };
+
+  const fetchWhatsAppUnreadCount = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('whatsapp_contacts')
+        .select('unread_count');
+      
+      if (error) throw error;
+      
+      const totalUnread = data?.reduce((sum, contact) => sum + (contact.unread_count || 0), 0) || 0;
+      setWhatsappUnreadCount(totalUnread);
+    } catch (error) {
+      console.error('Error fetching WhatsApp unread count:', error);
     }
   };
 
@@ -152,7 +186,14 @@ export default function Admin() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="whatsapp" className="py-3 md:py-2 text-sm md:text-sm">WhatsApp</TabsTrigger>
+            <TabsTrigger value="whatsapp" className="py-3 md:py-2 text-sm md:text-sm relative">
+              WhatsApp
+              {whatsappUnreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {whatsappUnreadCount > 99 ? '99+' : whatsappUnreadCount}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="security" className="py-3 md:py-2 text-sm md:text-sm">Seguridad</TabsTrigger>
           </TabsList>
           <TabsContent value="calendar" className="mt-6">

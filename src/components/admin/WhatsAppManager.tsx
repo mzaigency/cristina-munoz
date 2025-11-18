@@ -6,16 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, User, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 interface Contact {
   id: string;
   phone_number: string;
   name: string | null;
   last_message_at: string;
+  unread_count: number;
 }
 
 interface Message {
   id: string;
+  contact_id: string;
   message_type: 'user' | 'assistant';
   content: string;
   created_at: string;
@@ -26,6 +29,7 @@ export const WhatsAppManager = () => {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchContacts();
@@ -56,8 +60,20 @@ export const WhatsAppManager = () => {
           table: 'whatsapp_messages'
         },
         (payload) => {
-          if (selectedContact && payload.new.contact_id === selectedContact.id) {
-            setMessages(prev => [...prev, payload.new as Message]);
+          const newMessage = payload.new as Message;
+          
+          if (selectedContact && newMessage.contact_id === selectedContact.id) {
+            setMessages(prev => [...prev, newMessage]);
+            // Marcar como leído automáticamente si está viendo la conversación
+            markAsRead(selectedContact.id);
+          }
+          
+          // Mostrar notificación para mensajes de usuario
+          if (newMessage.message_type === 'user') {
+            toast({
+              title: "Nuevo mensaje de WhatsApp",
+              description: "Has recibido un nuevo mensaje",
+            });
           }
         }
       )
@@ -67,7 +83,7 @@ export const WhatsAppManager = () => {
       supabase.removeChannel(contactsChannel);
       supabase.removeChannel(messagesChannel);
     };
-  }, [selectedContact]);
+  }, [selectedContact, toast]);
 
   const fetchContacts = async () => {
     try {
@@ -85,6 +101,17 @@ export const WhatsAppManager = () => {
     }
   };
 
+  const markAsRead = async (contactId: string) => {
+    try {
+      await supabase
+        .from('whatsapp_contacts')
+        .update({ unread_count: 0 })
+        .eq('id', contactId);
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
+  };
+
   const fetchMessages = async (contactId: string) => {
     try {
       const { data, error } = await supabase
@@ -95,6 +122,9 @@ export const WhatsAppManager = () => {
 
       if (error) throw error;
       setMessages((data || []) as Message[]);
+      
+      // Marcar como leído al abrir la conversación
+      await markAsRead(contactId);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
@@ -135,7 +165,7 @@ export const WhatsAppManager = () => {
                       selectedContact?.id === contact.id ? 'bg-muted' : ''
                     }`}
                   >
-                    <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3 flex-1">
                         <div className="p-2 rounded-full bg-primary/10">
                           <User className="h-4 w-4 text-primary" />
@@ -157,6 +187,14 @@ export const WhatsAppManager = () => {
                           </div>
                         </div>
                       </div>
+                      {contact.unread_count > 0 && (
+                        <Badge 
+                          variant="destructive" 
+                          className="h-6 min-w-6 flex items-center justify-center rounded-full px-2 text-xs font-semibold"
+                        >
+                          {contact.unread_count}
+                        </Badge>
+                      )}
                     </div>
                   </button>
                 ))}
