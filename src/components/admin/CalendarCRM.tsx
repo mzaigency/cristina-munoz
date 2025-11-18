@@ -44,6 +44,7 @@ export const CalendarCRM = () => {
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), {
     weekStartsOn: 1
   }));
+  const [selectedJumpDate, setSelectedJumpDate] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   useEffect(() => {
     // Este efecto actualiza la hora cada 60 segundos.
@@ -121,6 +122,7 @@ export const CalendarCRM = () => {
   };
   const handleBookingComplete = () => {
     setIsCreateDialogOpen(false);
+    // Mantener la misma semana visible al recargar eventos
     fetchEvents();
   };
   const handleUpdateEvent = async () => {
@@ -331,6 +333,7 @@ export const CalendarCRM = () => {
         title: "Cita eliminada",
         description: "La cita se ha eliminado del calendario"
       });
+      // Mantener la misma semana visible al recargar eventos
       fetchEvents();
     } catch (error: any) {
       toast({
@@ -439,9 +442,22 @@ export const CalendarCRM = () => {
   };
   const handleJumpToDate = (date: Date | undefined) => {
     if (date) {
+      // Ir a la semana de la fecha seleccionada
       setWeekStart(startOfWeek(date, {
         weekStartsOn: 1
       }));
+      // Guardar la fecha específica para destacarla
+      setSelectedJumpDate(date);
+      
+      // Después de un momento, hacer scroll suave al día específico
+      setTimeout(() => {
+        const dayElement = document.querySelector(`[data-date="${format(date, 'yyyy-MM-dd')}"]`);
+        if (dayElement) {
+          dayElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+        // Limpiar el highlight después de 2 segundos
+        setTimeout(() => setSelectedJumpDate(null), 2000);
+      }, 100);
     }
   };
   const groupEventsByDate = (events: CalendarEvent[]) => {
@@ -622,7 +638,16 @@ export const CalendarCRM = () => {
           const dateKey = format(day, "yyyy-MM-dd");
           const dayEvents = groupedEvents[dateKey] || [];
           const isToday = isSameDay(day, new Date());
-          return <TabsTrigger key={dateKey} value={dateKey} className={cn("flex-col items-start gap-1 data-[state=active]:bg-background px-2 md:px-4 py-2 min-w-[100px] md:min-w-[140px]", isToday && "border-primary")}>
+          const isSelectedJumpDate = selectedJumpDate && isSameDay(day, selectedJumpDate);
+          return <TabsTrigger 
+                  key={dateKey} 
+                  value={dateKey} 
+                  data-date={dateKey}
+                  className={cn(
+                    "flex-col items-start gap-1 data-[state=active]:bg-background px-2 md:px-4 py-2 min-w-[100px] md:min-w-[140px]", 
+                    isToday && "border-primary",
+                    isSelectedJumpDate && "ring-2 ring-primary ring-offset-2"
+                  )}>
                   <div className="flex items-center gap-1 md:gap-2 w-full">
                     <span className="text-xs md:text-sm font-semibold capitalize">{format(day, "EEE d MMM", {
                   locale: es
