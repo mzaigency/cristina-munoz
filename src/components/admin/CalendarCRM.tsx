@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, addMonths, endOfDay, startOfDay, differenceInMinutes } from "date-fns";
+import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, addMonths, endOfDay, startOfDay, differenceInMinutes, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
@@ -41,9 +41,11 @@ export const CalendarCRM = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), {
     weekStartsOn: 1
   }));
+  const [monthStart, setMonthStart] = useState(startOfMonth(new Date()));
   const [selectedJumpDate, setSelectedJumpDate] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   useEffect(() => {
@@ -79,21 +81,30 @@ export const CalendarCRM = () => {
   };
   useEffect(() => {
     fetchEvents();
-  }, [weekStart]);
+  }, [weekStart, monthStart, viewMode]);
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const weekEnd = endOfWeek(weekStart, {
-        weekStartsOn: 1
-      });
+      
+      let startDate: Date;
+      let endDate: Date;
+      
+      if (viewMode === 'week') {
+        startDate = weekStart;
+        endDate = endOfWeek(weekStart, { weekStartsOn: 1 });
+      } else {
+        startDate = monthStart;
+        endDate = endOfMonth(monthStart);
+      }
+      
       const {
         data,
         error
       } = await supabase.functions.invoke("list-calendar-events", {
         body: {
           calendarId: "all",
-          timeMin: weekStart.toISOString(),
-          timeMax: addDays(weekEnd, 1).toISOString()
+          timeMin: startDate.toISOString(),
+          timeMax: addDays(endDate, 1).toISOString()
         }
       });
       if (error) {
@@ -442,10 +453,16 @@ export const CalendarCRM = () => {
   };
   const handleJumpToDate = (date: Date | undefined) => {
     if (date) {
-      // Ir a la semana de la fecha seleccionada
-      setWeekStart(startOfWeek(date, {
-        weekStartsOn: 1
-      }));
+      if (viewMode === 'week') {
+        // Ir a la semana de la fecha seleccionada
+        setWeekStart(startOfWeek(date, {
+          weekStartsOn: 1
+        }));
+      } else {
+        // Ir al mes de la fecha seleccionada
+        setMonthStart(startOfMonth(date));
+      }
+      
       // Guardar la fecha específica para destacarla
       setSelectedJumpDate(date);
       
@@ -586,6 +603,13 @@ export const CalendarCRM = () => {
   const weekDays = Array.from({
     length: 7
   }, (_, i) => addDays(weekStart, i));
+  
+  // Get all days in current month for monthly view
+  const monthDays = viewMode === 'month' ? eachDayOfInterval({
+    start: startOfWeek(monthStart, { weekStartsOn: 1 }),
+    end: endOfWeek(endOfMonth(monthStart), { weekStartsOn: 1 })
+  }) : [];
+  
   const groupedEvents = groupEventsByDate(events);
   return <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -605,14 +629,59 @@ export const CalendarCRM = () => {
       </div>
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:flex-wrap">
+        {/* Toggle between week and month view */}
+        <div className="flex gap-1 border rounded-md p-1 bg-muted/30">
+          <Button 
+            variant={viewMode === 'week' ? 'default' : 'ghost'} 
+            size="sm" 
+            onClick={() => setViewMode('week')}
+            className="h-8"
+          >
+            Semana
+          </Button>
+          <Button 
+            variant={viewMode === 'month' ? 'default' : 'ghost'} 
+            size="sm" 
+            onClick={() => setViewMode('month')}
+            className="h-8"
+          >
+            Mes
+          </Button>
+        </div>
+
+        {/* Navigation buttons */}
         <div className="flex gap-1 md:gap-2">
-          <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, -7))} disabled={loading} size="sm" className="flex-1 md:flex-initial">
+          <Button 
+            variant="outline" 
+            onClick={() => viewMode === 'week' ? setWeekStart(addDays(weekStart, -7)) : setMonthStart(addMonths(monthStart, -1))} 
+            disabled={loading} 
+            size="sm" 
+            className="flex-1 md:flex-initial"
+          >
             ←
           </Button>
-          <Button variant="outline" onClick={() => setWeekStart(startOfWeek(new Date(), {
-          weekStartsOn: 1
-        }))} disabled={loading} size="sm" className="flex-1 md:flex-initial border-primary rounded-sm">Hoy</Button>
-          <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading} size="sm" className="flex-1 md:flex-initial">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              if (viewMode === 'week') {
+                setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+              } else {
+                setMonthStart(startOfMonth(new Date()));
+              }
+            }} 
+            disabled={loading} 
+            size="sm" 
+            className="flex-1 md:flex-initial border-primary rounded-sm"
+          >
+            Hoy
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => viewMode === 'week' ? setWeekStart(addDays(weekStart, 7)) : setMonthStart(addMonths(monthStart, 1))} 
+            disabled={loading} 
+            size="sm" 
+            className="flex-1 md:flex-initial"
+          >
             →
           </Button>
         </div>
@@ -621,18 +690,32 @@ export const CalendarCRM = () => {
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="w-full md:w-auto">
               <CalendarIcon className="h-4 w-4 mr-2" />
-              Ir a fecha
+              {viewMode === 'week' 
+                ? `Semana del ${format(weekStart, 'd MMM', { locale: es })}`
+                : format(monthStart, 'MMMM yyyy', { locale: es })
+              }
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={weekStart} onSelect={handleJumpToDate} initialFocus className="pointer-events-auto" weekStartsOn={1} />
+            <Calendar 
+              mode="single" 
+              selected={viewMode === 'week' ? weekStart : monthStart} 
+              onSelect={handleJumpToDate} 
+              initialFocus 
+              className="pointer-events-auto" 
+              weekStartsOn={1} 
+            />
           </PopoverContent>
         </Popover>
       </div>
 
-      {loading ? <div className="flex justify-center items-center py-12">
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div> : <Tabs defaultValue={format(weekDays.find(day => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")} className="w-full">
+        </div>
+      ) : viewMode === 'week' ? (
+        // WEEK VIEW
+        <Tabs defaultValue={format(weekDays.find(day => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")} className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto flex-nowrap md:flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {weekDays.map(day => {
           const dateKey = format(day, "yyyy-MM-dd");
@@ -852,7 +935,92 @@ export const CalendarCRM = () => {
                 </Card>
               </TabsContent>;
       })}
-        </Tabs>}
+        </Tabs>
+      ) : (
+        // MONTH VIEW
+        <div className="grid grid-cols-7 gap-2">
+          {/* Day headers */}
+          {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
+            <div key={day} className="text-center text-sm font-semibold text-muted-foreground p-2">
+              {day}
+            </div>
+          ))}
+          
+          {/* Month days */}
+          {monthDays.map((day, index) => {
+            const dateKey = format(day, 'yyyy-MM-dd');
+            const dayEvents = groupedEvents[dateKey] || [];
+            const isToday = isSameDay(day, new Date());
+            const isCurrentMonth = isSameMonth(day, monthStart);
+            const isSelectedJumpDate = selectedJumpDate && isSameDay(day, selectedJumpDate);
+            
+            return (
+              <Card 
+                key={index}
+                data-date={dateKey}
+                className={cn(
+                  "min-h-[120px] p-2 transition-all hover:shadow-md cursor-pointer",
+                  !isCurrentMonth && "bg-muted/30 opacity-60",
+                  isToday && "border-2 border-primary",
+                  isSelectedJumpDate && "ring-2 ring-primary ring-offset-2"
+                )}
+                onClick={() => {
+                  setSelectedJumpDate(day);
+                  setTimeout(() => setSelectedJumpDate(null), 2000);
+                }}
+              >
+                <div className="flex flex-col h-full">
+                  {/* Day number */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={cn(
+                      "text-sm font-semibold",
+                      isToday && "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center"
+                    )}>
+                      {format(day, 'd')}
+                    </span>
+                    {isToday && (
+                      <Badge variant="default" className="text-[9px] h-4 px-1">Hoy</Badge>
+                    )}
+                  </div>
+                  
+                  {/* Events */}
+                  <div className="flex-1 space-y-1 overflow-y-auto max-h-[80px]">
+                    {dayEvents.slice(0, 3).map((event) => {
+                      const stylistColor = event.stylist === 'cris' ? 'bg-pink-100 dark:bg-pink-950/40 border-pink-300 dark:border-pink-800' : 'bg-purple-100 dark:bg-purple-950/40 border-purple-300 dark:border-purple-800';
+                      
+                      return (
+                        <div
+                          key={event.id}
+                          className={cn(
+                            "text-[10px] p-1 rounded border cursor-pointer hover:shadow-sm transition-all",
+                            stylistColor,
+                            event.completed && "opacity-50 line-through"
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedEvent(event);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <div className="font-medium truncate">{event.summary}</div>
+                          <div className="text-muted-foreground">
+                            {safeFormatDateTime(event.start?.dateTime, 'HH:mm')}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {dayEvents.length > 3 && (
+                      <div className="text-[10px] text-muted-foreground text-center py-1">
+                        +{dayEvents.length - 3} más
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Create Event Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
