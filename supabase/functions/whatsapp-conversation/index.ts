@@ -14,7 +14,7 @@ serve(async (req) => {
   try {
     // Verificar autenticación con token Bearer personalizado
     const authHeader = req.headers.get('Authorization');
-    const expectedToken = 'Bearer CristinaMunozWh4321';
+    const expectedToken = `Bearer ${Deno.env.get('WHATSAPP_WEBHOOK_TOKEN')}`;
     
     if (!authHeader || authHeader !== expectedToken) {
       console.error('Unauthorized access attempt');
