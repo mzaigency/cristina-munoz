@@ -38,9 +38,14 @@ export const LoadingScreen = ({ onLoadingComplete }: LoadingScreenProps) => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6 }}
+          initial={{ opacity: 1, y: 0 }}
+          exit={{ 
+            y: "100%",
+            transition: { 
+              duration: 0.8, 
+              ease: [0.6, 0.01, 0.05, 0.95]
+            }
+          }}
           className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-b from-background via-background to-background/95"
         >
           {/* Logo */}
