@@ -1,8 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
 import heroImage from "@/assets/foto-hero.jpg";
-import BlurText from "@/components/animations/BlurText";
-import AnimatedContent from "@/components/animations/AnimatedContent";
 import GlareHover from "@/components/animations/GlareHover";
 interface HeroSectionProps {
   onBookNow: () => void;
@@ -26,20 +23,24 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
         <div className="mx-auto max-w-3xl space-y-8">
           {isLoadingComplete && (
             <>
-              <BlurText
-                text={import.meta.env.VITE_BUSINESS_NAME}
-                className="font-bold tracking-tight font-playfair text-white text-5xl md:text-7xl"
-                delay={150}
-                animateBy="words"
-                direction="top"
-              />
+              {/* Título con animación Mask */}
+              <div className="relative overflow-hidden">
+                <h1 
+                  data-content={import.meta.env.VITE_BUSINESS_NAME}
+                  className="font-bold tracking-tight font-playfair text-transparent text-5xl md:text-7xl relative after:content-[attr(data-content)] after:absolute after:top-0 after:left-0 after:w-full after:text-white after:[animation:cd-reveal-up_0.4s_0.7s_backwards]"
+                >
+                  {import.meta.env.VITE_BUSINESS_NAME}
+                </h1>
+                <div className="h-0.5 bg-white mx-auto mt-4 w-32 origin-center [animation:cd-loading-mask_1s_0.3s_both]" />
+              </div>
 
               <p className="text-base text-white md:text-lg font-normal">
                 Donde la belleza y el estilo se encuentran. Tu momento de brillar empieza aquí.
               </p>
 
-              <div className="flex flex-col gap-4 sm:flex-row sm:justify-center pt-4">
-                <AnimatedContent delay={0.3} distance={50} duration={0.6}>
+              {/* Botones con animación Mask */}
+              <div className="overflow-hidden pt-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:justify-center [animation:cd-reveal-down_0.4s_0.7s_backwards]">
                   <GlareHover
                     width="auto"
                     height="auto"
@@ -60,8 +61,6 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
                       Reservar Cita
                     </Button>
                   </GlareHover>
-                </AnimatedContent>
-                <AnimatedContent delay={0.5} distance={50} duration={0.6}>
                   <GlareHover
                     width="auto"
                     height="auto"
@@ -83,7 +82,7 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
                       Ver Servicios
                     </Button>
                   </GlareHover>
-                </AnimatedContent>
+                </div>
               </div>
             </>
           )}
