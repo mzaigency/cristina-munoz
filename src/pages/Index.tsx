@@ -9,9 +9,11 @@ import { ReviewsSection } from "@/components/ReviewsSection";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { WhatsAppSection } from "@/components/WhatsAppSection";
 import { InstallPWA } from "@/components/InstallPWA";
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("inicio");
+  const [isLoading, setIsLoading] = useState(true);
 
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId);
@@ -30,7 +32,10 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <>
+      {isLoading && <LoadingScreen onLoadingComplete={() => setIsLoading(false)} />}
+      
+      <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="Cristina Muñoz - Peluquería en Santpedor | Reserva tu Cita Online"
         description="Reserva tu cita online en Cristina Muñoz, peluquería profesional en Santpedor. Especialistas en corte, coloración, mechas, balayage, peinados y tratamientos capilares. Más de 15 años de experiencia."
@@ -68,7 +73,8 @@ const Index = () => {
       </main>
 
       <InstallPWA />
-    </div>
+      </div>
+    </>
   );
 };
 
