@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.submit-review]
 verify_jwt = false
+
+[functions.whatsapp-conversation]
+verify_jwt = false
