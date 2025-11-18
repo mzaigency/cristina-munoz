@@ -13,7 +13,7 @@ interface DateTimeSelectionProps {
   totalDuration: number;
   services: Service[];
   stylist: Stylist;
-  onNext: (date: Date, time: string, resolvedStylist?: Stylist) => void;
+  onNext: (date: Date, time: string, resolvedStylist?: Stylist, skipAvailabilityCheck?: boolean) => void;
   onBack: () => void;
   isAdmin?: boolean;
 }
@@ -397,7 +397,7 @@ export const DateTimeSelection = ({
     // In admin mode with custom time, skip availability checks
     if (isAdmin && (customHour || customMinute)) {
       console.log('Admin mode with custom time - bypassing availability checks');
-      onNext(date, time, stylist === 'any' ? 'cris' : stylist);
+      onNext(date, time, stylist === 'any' ? 'cris' : stylist, true); // Pass skipAvailabilityCheck=true
       return;
     }
 

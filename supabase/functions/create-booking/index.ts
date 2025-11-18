@@ -33,7 +33,8 @@ const bookingRequestSchema = z.object({
   total_duration: z.number().int().min(1).max(960),
   customer_name: z.string().min(1).max(100).optional(),
   phone: z.union([z.string().min(9).max(15), z.literal('')]).optional(),
-  user_id: z.string().uuid().nullable().optional()
+  user_id: z.string().uuid().nullable().optional(),
+  skipAvailabilityCheck: z.boolean().optional()
 }).refine(data => (data.Fecha || data.date) && (data.Hora || data.time), {
   message: "Either Fecha/Hora or date/time must be provided"
 });
@@ -56,6 +57,7 @@ interface BookingRequest {
   user_id?: string | null;
   customer_name?: string;
   phone?: string;
+  skipAvailabilityCheck?: boolean;
 }
 
 serve(async (req) => {
@@ -311,78 +313,83 @@ serve(async (req) => {
     // Normalize phone for consistent comparison
     const normalizedPhone = normalizePhone(customer_phone);
     
-    // VALIDATION 1: Check if customer already has a booking at this date/time
-    console.log('Checking for duplicate customer booking...');
-    const { data: existingCustomerBooking } = await supabase
-      .from('bookings')
-      .select('id, customer_name, Hora, Telefono')
-      .eq('Fecha', bookingDate)
-      .eq('Hora', bookingTime)
-      .eq('status', 'confirmed');
-    
-    if (existingCustomerBooking && existingCustomerBooking.length > 0) {
-      // Check if any booking has the same normalized phone
-      const duplicateBooking = existingCustomerBooking.find(booking => 
-        normalizePhone(booking.Telefono || '') === normalizedPhone
-      );
+    // Skip validations if admin explicitly requests it (custom time mode)
+    if (!bookingData.skipAvailabilityCheck) {
+      // VALIDATION 1: Check if customer already has a booking at this date/time
+      console.log('Checking for duplicate customer booking...');
+      const { data: existingCustomerBooking } = await supabase
+        .from('bookings')
+        .select('id, customer_name, Hora, Telefono')
+        .eq('Fecha', bookingDate)
+        .eq('Hora', bookingTime)
+        .eq('status', 'confirmed');
       
-      if (duplicateBooking) {
-        console.error('Duplicate booking detected:', duplicateBooking);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Ya existe una reserva para este cliente en esta fecha y hora',
-            details: { 
-              existing_booking_id: duplicateBooking.id,
-              customer_name: duplicateBooking.customer_name 
+      if (existingCustomerBooking && existingCustomerBooking.length > 0) {
+        // Check if any booking has the same normalized phone
+        const duplicateBooking = existingCustomerBooking.find(booking => 
+          normalizePhone(booking.Telefono || '') === normalizedPhone
+        );
+        
+        if (duplicateBooking) {
+          console.error('Duplicate booking detected:', duplicateBooking);
+          return new Response(
+            JSON.stringify({ 
+              error: 'Ya existe una reserva para este cliente en esta fecha y hora',
+              details: { 
+                existing_booking_id: duplicateBooking.id,
+                customer_name: duplicateBooking.customer_name 
+              }
+            }),
+            {
+              status: 409,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             }
-          }),
-          {
-            status: 409,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
-      }
-    }
-    
-    // VALIDATION 2: Check stylist availability in database
-    console.log('Checking stylist availability in database...');
-    const endMinutesTotal = currentMinutes + bookingData.total_duration;
-    
-    const { data: stylistBookings } = await supabase
-      .from('bookings')
-      .select('id, Hora, end_time, customer_name, total_duration')
-      .eq('Fecha', bookingDate)
-      .eq('stylist', actualStylist)
-      .eq('status', 'confirmed');
-    
-    if (stylistBookings && stylistBookings.length > 0) {
-      const hasConflict = stylistBookings.some(booking => {
-        const [bStartH, bStartM] = booking.Hora.split(':').map(Number);
-        const bookingStart = bStartH * 60 + bStartM;
-        const bookingEnd = bookingStart + booking.total_duration;
-        
-        // Check if there's any overlap
-        const hasOverlap = (currentMinutes < bookingEnd && endMinutesTotal > bookingStart);
-        
-        if (hasOverlap) {
-          console.log(`Conflict detected with booking ${booking.id} for ${booking.customer_name}: ${booking.Hora} (${booking.total_duration} min)`);
+          );
         }
-        
-        return hasOverlap;
-      });
-      
-      if (hasConflict) {
-        return new Response(
-          JSON.stringify({ 
-            error: `${actualStylist === 'cris' ? 'Cris' : 'Desi'} no está disponible en este horario`,
-            details: 'Ya existe otra reserva en este intervalo de tiempo'
-          }),
-          {
-            status: 409,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
       }
+      
+      // VALIDATION 2: Check stylist availability in database
+      console.log('Checking stylist availability in database...');
+      const endMinutesTotal = currentMinutes + bookingData.total_duration;
+      
+      const { data: stylistBookings } = await supabase
+        .from('bookings')
+        .select('id, Hora, end_time, customer_name, total_duration')
+        .eq('Fecha', bookingDate)
+        .eq('stylist', actualStylist)
+        .eq('status', 'confirmed');
+      
+      if (stylistBookings && stylistBookings.length > 0) {
+        const hasConflict = stylistBookings.some(booking => {
+          const [bStartH, bStartM] = booking.Hora.split(':').map(Number);
+          const bookingStart = bStartH * 60 + bStartM;
+          const bookingEnd = bookingStart + booking.total_duration;
+          
+          // Check if there's any overlap
+          const hasOverlap = (currentMinutes < bookingEnd && endMinutesTotal > bookingStart);
+          
+          if (hasOverlap) {
+            console.log(`Conflict detected with booking ${booking.id} for ${booking.customer_name}: ${booking.Hora} (${booking.total_duration} min)`);
+          }
+          
+          return hasOverlap;
+        });
+        
+        if (hasConflict) {
+          return new Response(
+            JSON.stringify({ 
+              error: `${actualStylist === 'cris' ? 'Cris' : 'Desi'} no está disponible en este horario`,
+              details: 'Ya existe otra reserva en este intervalo de tiempo'
+            }),
+            {
+              status: 409,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+      }
+    } else {
+      console.log('Skipping availability checks (admin override)...');
     }
     
     console.log('Validations passed. Creating bookings...');
