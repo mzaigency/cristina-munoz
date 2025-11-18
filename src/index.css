@@ -2,21 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CodyHouse Mask Animations */
-@keyframes cd-reveal-up {
-  0% { opacity: 1; transform: translateY(100%); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes cd-reveal-down {
-  0% { opacity: 1; transform: translateY(-100%); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes cd-loading-mask {
-  0%, 100% { transform: scaleX(0); }
-  40%, 60% { transform: scaleX(1); }
-}
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
