@@ -46,7 +46,7 @@ const Index = () => {
       
       <main>
         <div id="inicio">
-          <HeroSection onBookNow={handleBookNow} onViewServices={handleViewServices} />
+          <HeroSection onBookNow={handleBookNow} onViewServices={handleViewServices} isLoadingComplete={!isLoading} />
         </div>
         
         <div id="servicios">
