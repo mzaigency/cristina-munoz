@@ -31,6 +31,7 @@ type BookingData = {
   time: string;
   customerName: string;
   customerPhone: string;
+  skipAvailabilityCheck?: boolean;
 };
 
 interface AdminBookingFlowProps {
@@ -94,10 +95,10 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
     setStep(3);
   };
 
-  const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: Stylist) => {
+  const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: Stylist, skipAvailabilityCheck?: boolean) => {
     // If a resolved stylist is provided (from 'any' selection), use it instead
     const finalStylist = resolvedStylist || bookingData.stylist;
-    setBookingData({ ...bookingData, date, time, stylist: finalStylist });
+    setBookingData({ ...bookingData, date, time, stylist: finalStylist, skipAvailabilityCheck });
     setStep(4);
   };
 
@@ -124,6 +125,10 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
       return;
     }
 
+    // Determine if we should skip availability checks
+    // This is set in DateTimeSelection when admin uses custom time
+    const skipAvailabilityCheck = bookingData.skipAvailabilityCheck || false;
+
     try {
       setLoading(true);
 
@@ -143,6 +148,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
         time: bookingData.time,
         stylist: bookingData.stylist,
         total_duration: totalDuration,
+        skipAvailabilityCheck, // Pass the flag to skip validations
       };
 
       const { error } = await supabase.functions.invoke("create-booking", {
