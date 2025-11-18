@@ -128,42 +128,63 @@ serve(async (req) => {
 
     console.log('Booking(s) cancelled successfully');
 
-    // Trigger n8n webhook with all bookings data
+    // ALWAYS trigger n8n webhook with all bookings data
+    console.log('Preparing to send cancellation webhook...');
+    let webhookSuccess = false;
+    
     try {
-      const webhookData = bookings.map(booking => {
-        // Format date for webhook (dd-mm-yyyy) - parse string directly to avoid timezone issues
-        const dateStr = booking.Fecha.toString();
-        const [year, month, day] = dateStr.split('-');
-        const formattedDate = `${day}-${month}-${year}`;
-        
-        return {
-          booking_id: booking.id,
-          customer_name: booking.customer_name,
-          Telefono: booking.Telefono,
-          Fecha: formattedDate,
-          Hora: booking.Hora,
-          stylist: booking.stylist,
-          services: booking.services,
-          google_calendar_event_id: booking.google_calendar_event_id,
-          calendar_id: booking.calendar_id,
-        };
-      });
+      if (!cancelWebhookUrl) {
+        console.error('WARNING: N8N_CANCEL_WEBHOOK_URL not configured');
+      } else {
+        const webhookData = bookings.map(booking => {
+          // Format date for webhook (dd-mm-yyyy) - parse string directly to avoid timezone issues
+          const dateStr = booking.Fecha.toString();
+          const [year, month, day] = dateStr.split('-');
+          const formattedDate = `${day}-${month}-${year}`;
+          
+          return {
+            booking_id: booking.id,
+            customer_name: booking.customer_name,
+            Telefono: booking.Telefono,
+            Fecha: formattedDate,
+            Hora: booking.Hora,
+            stylist: booking.stylist,
+            services: booking.services,
+            google_calendar_event_id: booking.google_calendar_event_id,
+            calendar_id: booking.calendar_id,
+          };
+        });
 
-      await fetch(cancelWebhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'cancellation',
-          bookings: webhookData,
-          user: user,
-        }),
-      });
-      console.log('n8n webhook triggered successfully');
+        console.log('Sending webhook to:', cancelWebhookUrl);
+        console.log('Webhook data:', JSON.stringify(webhookData, null, 2));
+
+        const webhookResponse = await fetch(cancelWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'cancellation',
+            bookings: webhookData,
+            user: user,
+          }),
+        });
+
+        if (webhookResponse.ok) {
+          console.log('✓ n8n webhook triggered successfully');
+          webhookSuccess = true;
+        } else {
+          console.error('✗ Webhook request failed with status:', webhookResponse.status);
+          console.error('Response:', await webhookResponse.text());
+        }
+      }
     } catch (error) {
-      console.error('Error triggering n8n webhook:', error);
-      // Don't fail the cancellation if webhook fails
+      console.error('✗ Error triggering n8n webhook:', error);
+      // Don't fail the cancellation if webhook fails, but log it prominently
+    }
+    
+    if (!webhookSuccess) {
+      console.warn('⚠️ CANCELLATION COMPLETED BUT WEBHOOK FAILED - Manual notification may be required');
     }
 
     return new Response(
