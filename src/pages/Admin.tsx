@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { LogOut, Loader2, Home } from "lucide-react";
+import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, Shield } from "lucide-react";
 import { CalendarCRM } from "@/components/admin/CalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { AuditLogsViewer } from "@/components/admin/AuditLogsViewer";
@@ -177,24 +177,32 @@ export default function Admin() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-3xl grid-cols-4 h-auto md:h-10">
-            <TabsTrigger value="calendar" className="py-3 md:py-2 text-sm md:text-sm">Calendario</TabsTrigger>
-            <TabsTrigger value="reviews" className="py-3 md:py-2 text-sm md:text-sm relative">
-              Reseñas
+            <TabsTrigger value="calendar" className="py-3 md:py-2 text-sm md:text-sm flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Calendario</span>
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="py-3 md:py-2 text-sm md:text-sm relative flex items-center gap-2">
+              <Star className="h-4 w-4" />
+              <span className="hidden sm:inline">Reseñas</span>
               {pendingReviewsCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {pendingReviewsCount > 99 ? '99+' : pendingReviewsCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="whatsapp" className="py-3 md:py-2 text-sm md:text-sm relative">
-              WhatsApp
+            <TabsTrigger value="whatsapp" className="py-3 md:py-2 text-sm md:text-sm relative flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">WhatsApp</span>
               {whatsappUnreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {whatsappUnreadCount > 99 ? '99+' : whatsappUnreadCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="security" className="py-3 md:py-2 text-sm md:text-sm">Seguridad</TabsTrigger>
+            <TabsTrigger value="security" className="py-3 md:py-2 text-sm md:text-sm flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              <span className="hidden sm:inline">Seguridad</span>
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="calendar" className="mt-6">
             <CalendarCRM />
