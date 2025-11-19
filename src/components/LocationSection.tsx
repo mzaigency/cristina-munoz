@@ -2,10 +2,8 @@ import { MapPin, Clock, Phone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
-
 export const LocationSection = () => {
-  return (
-    <section className="py-20 bg-background">
+  return <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center max-w-3xl mx-auto">
           <SmoothTitle>
@@ -71,13 +69,10 @@ export const LocationSection = () => {
         </div>
 
         <div className="mt-12 text-center">
-          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-            Servimos a clientes de Santpedor, Manresa, Navarcles, Sallent, Callús y toda la comarca del Bages. 
-            Tu peluquería de referencia en la zona con servicios de corte, coloración, mechas, balayage, 
-            peinados y tratamientos capilares.
+          <p className="text-sm max-w-2xl mx-auto text-gray-600">
+            Llevamos años sirviendo a clientes de Santpedor, Manresa, Navarcles, Sallent, Callús y toda la comarca del Bages. Tu peluquería de referencia en la zona con servicios de corte, coloración, mechas, balayage, peinados y tratamientos capilares.
           </p>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
