@@ -71,25 +71,48 @@ export const InstallPWA = () => {
   if (!showInstall || isStandalone) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <button
-        onClick={isIOS ? handleDismiss : handleInstall}
-        className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full p-3 shadow-lg transition-all hover:scale-105 group relative"
-        aria-label="Instalar aplicación"
-      >
-        <Download className="h-5 w-5" />
-        <div className="absolute bottom-full right-0 mb-2 w-48 bg-popover text-popover-foreground text-xs rounded-lg shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          {isIOS ? "Toca para ver cómo instalar" : "Instalar aplicación"}
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
+      <div className="bg-card border border-border rounded-lg shadow-lg p-4">
+        <button
+          onClick={handleDismiss}
+          className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        
+        <div className="flex items-start gap-3">
+          <div className="bg-primary/10 p-2 rounded-lg">
+            <Download className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 pr-6">
+            <h3 className="font-semibold text-sm mb-1">Instalar aplicación</h3>
+            {isIOS ? (
+              <>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Instala la app en tu iPhone para acceso rápido:
+                </p>
+                <ol className="text-xs text-muted-foreground space-y-1 mb-3 list-decimal list-inside">
+                  <li>Toca el botón <strong>Compartir</strong> <span className="inline-block">⬆️</span></li>
+                  <li>Selecciona <strong>"Añadir a pantalla de inicio"</strong></li>
+                  <li>Toca <strong>"Añadir"</strong></li>
+                </ol>
+                <Button onClick={handleDismiss} size="sm" variant="outline" className="w-full">
+                  Entendido
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Instala nuestra app en tu teléfono para un acceso rápido y reservas más fáciles
+                </p>
+                <Button onClick={handleInstall} size="sm" className="w-full">
+                  Instalar ahora
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-      </button>
-      
-      <button
-        onClick={handleDismiss}
-        className="absolute -top-1 -right-1 bg-background border border-border rounded-full p-1 hover:bg-muted transition-colors"
-        aria-label="Cerrar"
-      >
-        <X className="h-3 w-3" />
-      </button>
+      </div>
     </div>
   );
 };
