@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff, ArrowDown } from "lucide-react";
+import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff, ArrowDown, Ban, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +18,7 @@ interface Contact {
   last_message_at: string;
   unread_count: number;
   ai_agent_enabled: boolean;
+  blocked: boolean;
 }
 interface Message {
   id: string;
@@ -34,6 +35,7 @@ export const WhatsAppManager = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [showBlocked, setShowBlocked] = useState(false);
   const [manualMessage, setManualMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -112,8 +114,14 @@ export const WhatsAppManager = () => {
     if (showUnreadOnly) {
       filtered = filtered.filter(contact => contact.unread_count > 0);
     }
+
+    // Filtro de bloqueados
+    if (!showBlocked) {
+      filtered = filtered.filter(contact => !contact.blocked);
+    }
+    
     setFilteredContacts(filtered);
-  }, [contacts, searchTerm, showUnreadOnly]);
+  }, [contacts, searchTerm, showUnreadOnly, showBlocked]);
   const markAsRead = async (contactId: string) => {
     try {
       // Actualizar estado local inmediatamente
@@ -278,6 +286,94 @@ export const WhatsAppManager = () => {
       setSendingMessage(false);
     }
   };
+
+  const toggleBlockContact = async (contactId: string, currentBlocked: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('whatsapp_contacts')
+        .update({ blocked: !currentBlocked })
+        .eq('id', contactId);
+
+      if (error) throw error;
+
+      // Actualizar estado local
+      setContacts(prevContacts =>
+        prevContacts.map(c =>
+          c.id === contactId ? { ...c, blocked: !currentBlocked } : c
+        )
+      );
+      setFilteredContacts(prevContacts =>
+        prevContacts.map(c =>
+          c.id === contactId ? { ...c, blocked: !currentBlocked } : c
+        )
+      );
+
+      if (selectedContact?.id === contactId) {
+        setSelectedContact(prev =>
+          prev ? { ...prev, blocked: !currentBlocked } : null
+        );
+      }
+
+      toast({
+        title: !currentBlocked ? "Contacto bloqueado" : "Contacto desbloqueado",
+        description: !currentBlocked 
+          ? "El contacto ya no podrá enviarte mensajes" 
+          : "El contacto puede enviarte mensajes de nuevo"
+      });
+    } catch (error) {
+      console.error('Error toggling block status:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cambiar el estado de bloqueo",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteConversation = async (contactId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      // Primero eliminar todos los mensajes
+      const { error: messagesError } = await supabase
+        .from('whatsapp_messages')
+        .delete()
+        .eq('contact_id', contactId);
+
+      if (messagesError) throw messagesError;
+
+      // Luego eliminar el contacto
+      const { error: contactError } = await supabase
+        .from('whatsapp_contacts')
+        .delete()
+        .eq('id', contactId);
+
+      if (contactError) throw contactError;
+
+      // Actualizar estado local
+      setContacts(prevContacts => prevContacts.filter(c => c.id !== contactId));
+      setFilteredContacts(prevContacts => prevContacts.filter(c => c.id !== contactId));
+
+      if (selectedContact?.id === contactId) {
+        setSelectedContact(null);
+        setMessages([]);
+      }
+
+      toast({
+        title: "Conversación eliminada",
+        description: "La conversación se ha eliminado correctamente"
+      });
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la conversación",
+        variant: "destructive"
+      });
+    }
+  };
   if (loading) {
     return <div className="flex items-center justify-center p-8">Cargando...</div>;
   }
@@ -299,11 +395,17 @@ export const WhatsAppManager = () => {
               </button>}
           </div>
 
-          {/* Filtro de no leídos */}
-          <Button variant={showUnreadOnly ? "default" : "outline"} size="sm" onClick={() => setShowUnreadOnly(!showUnreadOnly)} className="w-full mt-2 h-8 text-xs">
-            <Filter className="h-3 w-3 mr-2" />
-            {showUnreadOnly ? "Mostrar todos" : "Solo no leídos"}
-          </Button>
+          {/* Filtros */}
+          <div className="flex gap-2 mt-2">
+            <Button variant={showUnreadOnly ? "default" : "outline"} size="sm" onClick={() => setShowUnreadOnly(!showUnreadOnly)} className="flex-1 h-8 text-xs">
+              <Filter className="h-3 w-3 mr-2" />
+              {showUnreadOnly ? "Todos" : "No leídos"}
+            </Button>
+            <Button variant={showBlocked ? "default" : "outline"} size="sm" onClick={() => setShowBlocked(!showBlocked)} className="flex-1 h-8 text-xs">
+              <Ban className="h-3 w-3 mr-2" />
+              {showBlocked ? "Activos" : "Bloqueados"}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea className="h-[calc(100vh-400px)] md:h-[calc(100vh-360px)]">
@@ -363,7 +465,7 @@ export const WhatsAppManager = () => {
                   Selecciona un contacto
                 </div>}
             </CardTitle>
-            {selectedContact && <div className="flex items-center gap-3">
+            {selectedContact && <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
                   {selectedContact.ai_agent_enabled ? <Bot className="h-4 w-4 text-primary" /> : <BotOff className="h-4 w-4 text-muted-foreground" />}
                   <Label htmlFor="ai-toggle" className="text-sm cursor-pointer">
@@ -371,6 +473,26 @@ export const WhatsAppManager = () => {
                   </Label>
                 </div>
                 <Switch id="ai-toggle" checked={selectedContact.ai_agent_enabled} onCheckedChange={() => toggleAIAgent(selectedContact.id, selectedContact.ai_agent_enabled)} />
+                
+                <Button
+                  variant={selectedContact.blocked ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleBlockContact(selectedContact.id, selectedContact.blocked)}
+                  className="h-8"
+                >
+                  <Ban className="h-3 w-3 mr-1" />
+                  {selectedContact.blocked ? "Desbloquear" : "Bloquear"}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => deleteConversation(selectedContact.id)}
+                  className="h-8"
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Eliminar
+                </Button>
               </div>}
           </div>
         </CardHeader>
