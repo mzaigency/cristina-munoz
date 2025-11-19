@@ -116,7 +116,9 @@ export const WhatsAppManager = () => {
     }
 
     // Filtro de bloqueados
-    if (!showBlocked) {
+    if (showBlocked) {
+      filtered = filtered.filter(contact => contact.blocked);
+    } else {
       filtered = filtered.filter(contact => !contact.blocked);
     }
     
