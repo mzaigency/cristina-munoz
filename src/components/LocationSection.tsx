@@ -21,14 +21,14 @@ export const LocationSection = () => {
         <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
           <ScrollReveal delay={0}>
             <Card className="text-center h-full">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <MapPin className="h-6 w-6 text-primary" />
+              <CardContent className="pt-4 pb-4">
+                <div className="flex justify-center mb-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <MapPin className="h-5 w-5 text-primary" />
                   </div>
                 </div>
-                <h3 className="font-semibold mb-2 text-foreground">Ubicación Céntrica</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold mb-1.5 text-sm text-foreground">Ubicación Céntrica</h3>
+                <p className="text-xs text-muted-foreground">
                   En pleno centro de Santpedor, fácil acceso y aparcamiento cercano
                 </p>
               </CardContent>
@@ -37,15 +37,15 @@ export const LocationSection = () => {
 
           <ScrollReveal delay={150}>
             <Card className="text-center h-full">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <Clock className="h-6 w-6 text-primary" />
+              <CardContent className="pt-4 pb-4">
+                <div className="flex justify-center mb-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <Clock className="h-5 w-5 text-primary" />
                   </div>
                 </div>
-                <h3 className="font-semibold mb-2 text-foreground">Horario   </h3>
-                <p className="text-sm text-muted-foreground">
-                  De Martes a Viernes de 9:00 a 12:30 y de 15:00 a 19:00, los Sábados de 8:00 a 13:00. Lunes y Domingos  cerrado.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+                <h3 className="font-semibold mb-1.5 text-sm text-foreground">Horario</h3>
+                <p className="text-xs text-muted-foreground">
+                  De Martes a Viernes de 9:00 a 12:30 y de 15:00 a 19:00, los Sábados de 8:00 a 13:00. Lunes y Domingos cerrado.
                 </p>
               </CardContent>
             </Card>
@@ -53,14 +53,14 @@ export const LocationSection = () => {
 
           <ScrollReveal delay={300}>
             <Card className="text-center h-full">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <Phone className="h-6 w-6 text-primary" />
+              <CardContent className="pt-4 pb-4">
+                <div className="flex justify-center mb-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <Phone className="h-5 w-5 text-primary" />
                   </div>
                 </div>
-                <h3 className="font-semibold mb-2 text-foreground">Reserva tu Cita</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-semibold mb-1.5 text-sm text-foreground">Reserva tu Cita</h3>
+                <p className="text-xs text-muted-foreground">
                   Llámanos o reserva online. Atención personalizada y profesional
                 </p>
               </CardContent>
