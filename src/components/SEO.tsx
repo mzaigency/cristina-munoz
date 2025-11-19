@@ -10,9 +10,9 @@ interface SEOProps {
 }
 
 export const SEO = ({
-  title = "Cristina Muñoz",
-  description = "Reserva tu cita online en Cristina Muñoz, una peluquería ubicada en Santpedor (Barcelona). Servicios profesionales de corte, coloración, peinados y tratamientos capilares en un ambiente elegante",
-  keywords = "peluquería Santpedor, peluquería cerca de mí, corte de pelo Santpedor, coloración cabello, mechas, balayage, tratamientos capilares, peinados profesionales, reserva online peluquería",
+  title = "Cristina Muñoz - Peluquería en Santpedor",
+  description = "Peluquería profesional en Santpedor (Bages, Barcelona). Más de 15 años de experiencia en corte, coloración, mechas, balayage, peinados y tratamientos capilares. Reserva tu cita online.",
+  keywords = "peluquería Santpedor, peluquería Bages, peluquería cerca de mí, corte de pelo Santpedor, coloración cabello Santpedor, mechas Santpedor, balayage Santpedor, peluquería Manresa, peluquería comarca Bages, tratamientos capilares Santpedor, peinados profesionales, reserva online peluquería, salón belleza Santpedor",
   ogImage = "https://lovable.dev/opengraph-image-p98pqg.png",
   canonicalUrl,
   noindex = false,

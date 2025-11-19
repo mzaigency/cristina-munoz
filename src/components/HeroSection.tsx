@@ -46,7 +46,7 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
                 delay={0.4}
               >
                 <p className="text-base text-white md:text-lg font-normal">
-                  Donde la belleza y el estilo se encuentran. Tu momento de brillar empieza aquí.
+                  Tu peluquería de confianza en Santpedor. Donde la belleza y el estilo se encuentran.
                 </p>
               </AnimatedContent>
 

@@ -10,6 +10,7 @@ import { BookingFlow } from "@/components/booking/BookingFlow";
 import { WhatsAppSection } from "@/components/WhatsAppSection";
 import { InstallPWA } from "@/components/InstallPWA";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { LocationSection } from "@/components/LocationSection";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("inicio");
@@ -37,9 +38,9 @@ const Index = () => {
       
       <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Cristina Muñoz - Peluquería en Santpedor | Reserva tu Cita Online"
-        description="Reserva tu cita online en Cristina Muñoz, peluquería profesional en Santpedor. Especialistas en corte, coloración, mechas, balayage, peinados y tratamientos capilares. Más de 15 años de experiencia."
-        keywords="peluquería Santpedor, peluquería cerca de mí, corte de pelo Santpedor, coloración cabello Santpedor, mechas Santpedor, balayage, tratamientos capilares, peinados profesionales, reserva online peluquería, peluquería Bages"
+        title="Peluquería en Santpedor - Cristina Muñoz | Reserva Online"
+        description="Peluquería profesional en Santpedor, comarca del Bages (Barcelona). Especialistas en corte, coloración, mechas, balayage, peinados y tratamientos capilares. Más de 15 años de experiencia. Reserva tu cita online."
+        keywords="peluquería Santpedor, peluquería Bages, corte de pelo Santpedor, coloración cabello Santpedor, mechas Santpedor, balayage, peluquería Manresa, peluquería comarca Bages, tratamientos capilares, peinados profesionales, reserva online peluquería"
         canonicalUrl="/"
       />
       <Header onNavigate={scrollToSection} activeSection={activeSection} />
@@ -66,6 +67,8 @@ const Index = () => {
         <div id="resenas">
           <ReviewsSection />
         </div>
+
+        <LocationSection />
         
         <div id="contacto">
           <Footer />
