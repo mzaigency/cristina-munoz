@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-
 interface Contact {
   id: string;
   phone_number: string;
@@ -20,7 +19,6 @@ interface Contact {
   unread_count: number;
   ai_agent_enabled: boolean;
 }
-
 interface Message {
   id: string;
   contact_id: string;
@@ -28,7 +26,6 @@ interface Message {
   content: string;
   created_at: string;
 }
-
 export const WhatsAppManager = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
@@ -43,70 +40,54 @@ export const WhatsAppManager = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     fetchContacts();
-    
+
     // Suscribirse a cambios en tiempo real
-    const contactsChannel = supabase
-      .channel('whatsapp-contacts-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'whatsapp_contacts'
-        },
-        () => {
-          fetchContacts();
-        }
-      )
-      .subscribe();
-
-    const messagesChannel = supabase
-      .channel('whatsapp-messages-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'whatsapp_messages'
-        },
-        (payload) => {
-          const newMessage = payload.new as Message;
-          
-          if (selectedContact && newMessage.contact_id === selectedContact.id) {
-            setMessages(prev => {
-              const updated = [...prev, newMessage];
-              // Si está al final, hacer scroll automático
-              if (isAtBottom) {
-                setTimeout(() => scrollToBottom(true), 100);
-              } else {
-                setShowScrollButton(true);
-              }
-              return updated;
-            });
-            // Marcar como leído automáticamente si está viendo la conversación
-            markAsRead(selectedContact.id);
+    const contactsChannel = supabase.channel('whatsapp-contacts-changes').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'whatsapp_contacts'
+    }, () => {
+      fetchContacts();
+    }).subscribe();
+    const messagesChannel = supabase.channel('whatsapp-messages-changes').on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'whatsapp_messages'
+    }, payload => {
+      const newMessage = payload.new as Message;
+      if (selectedContact && newMessage.contact_id === selectedContact.id) {
+        setMessages(prev => {
+          const updated = [...prev, newMessage];
+          // Si está al final, hacer scroll automático
+          if (isAtBottom) {
+            setTimeout(() => scrollToBottom(true), 100);
+          } else {
+            setShowScrollButton(true);
           }
-        }
-      )
-      .subscribe();
-
+          return updated;
+        });
+        // Marcar como leído automáticamente si está viendo la conversación
+        markAsRead(selectedContact.id);
+      }
+    }).subscribe();
     return () => {
       supabase.removeChannel(contactsChannel);
       supabase.removeChannel(messagesChannel);
     };
   }, [selectedContact, toast]);
-
   const fetchContacts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('whatsapp_contacts')
-        .select('*')
-        .order('last_message_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('whatsapp_contacts').select('*').order('last_message_at', {
+        ascending: false
+      });
       if (error) throw error;
       setContacts(data || []);
       setFilteredContacts(data || []);
@@ -124,42 +105,34 @@ export const WhatsAppManager = () => {
     // Filtro de búsqueda
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (contact) =>
-          contact.name?.toLowerCase().includes(search) ||
-          contact.phone_number.includes(search)
-      );
+      filtered = filtered.filter(contact => contact.name?.toLowerCase().includes(search) || contact.phone_number.includes(search));
     }
 
     // Filtro de no leídos
     if (showUnreadOnly) {
-      filtered = filtered.filter((contact) => contact.unread_count > 0);
+      filtered = filtered.filter(contact => contact.unread_count > 0);
     }
-
     setFilteredContacts(filtered);
   }, [contacts, searchTerm, showUnreadOnly]);
-
   const markAsRead = async (contactId: string) => {
     try {
       // Actualizar estado local inmediatamente
-      setContacts((prevContacts) =>
-        prevContacts.map((c) => (c.id === contactId ? { ...c, unread_count: 0 } : c))
-      );
-      setFilteredContacts((prevContacts) =>
-        prevContacts.map((c) => (c.id === contactId ? { ...c, unread_count: 0 } : c))
-      );
-
-      await supabase
-        .from('whatsapp_contacts')
-        .update({ unread_count: 0 })
-        .eq('id', contactId);
+      setContacts(prevContacts => prevContacts.map(c => c.id === contactId ? {
+        ...c,
+        unread_count: 0
+      } : c));
+      setFilteredContacts(prevContacts => prevContacts.map(c => c.id === contactId ? {
+        ...c,
+        unread_count: 0
+      } : c));
+      await supabase.from('whatsapp_contacts').update({
+        unread_count: 0
+      }).eq('id', contactId);
     } catch (error) {
       console.error('Error marking as read:', error);
     }
   };
-
   const [firstUnreadIndex, setFirstUnreadIndex] = useState<number | null>(null);
-
   const scrollToBottom = (smooth = true) => {
     const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (scrollViewport) {
@@ -170,11 +143,14 @@ export const WhatsAppManager = () => {
       setShowScrollButton(false);
     }
   };
-
   const checkScrollPosition = () => {
     const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (scrollViewport) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollViewport;
+      const {
+        scrollTop,
+        scrollHeight,
+        clientHeight
+      } = scrollViewport;
       const isBottom = scrollHeight - scrollTop - clientHeight < 50;
       setIsAtBottom(isBottom);
       if (isBottom) {
@@ -182,7 +158,6 @@ export const WhatsAppManager = () => {
       }
     }
   };
-
   useEffect(() => {
     const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (scrollViewport) {
@@ -190,35 +165,31 @@ export const WhatsAppManager = () => {
       return () => scrollViewport.removeEventListener('scroll', checkScrollPosition);
     }
   }, [selectedContact]);
-
   useEffect(() => {
     if (!selectedContact || messages.length === 0) return;
-
     if (firstUnreadIndex !== null) {
-      const marker = document.querySelector(
-        '[data-unread-marker="true"]'
-      ) as HTMLElement | null;
-
+      const marker = document.querySelector('[data-unread-marker="true"]') as HTMLElement | null;
       if (marker) {
-        marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        marker.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
       }
     } else {
       scrollToBottom(false);
     }
   }, [firstUnreadIndex, messages.length, selectedContact]);
-
   const fetchMessages = async (contactId: string, unreadCountOnOpen: number) => {
     try {
-      const { data, error } = await supabase
-        .from('whatsapp_messages')
-        .select('*')
-        .eq('contact_id', contactId)
-        .order('created_at', { ascending: true });
-
+      const {
+        data,
+        error
+      } = await supabase.from('whatsapp_messages').select('*').eq('contact_id', contactId).order('created_at', {
+        ascending: true
+      });
       if (error) throw error;
       const loadedMessages = (data || []) as Message[];
       setMessages(loadedMessages);
-
       if (unreadCountOnOpen > 0 && loadedMessages.length > 0) {
         const startIndex = Math.max(0, loadedMessages.length - unreadCountOnOpen);
         setFirstUnreadIndex(startIndex);
@@ -232,93 +203,85 @@ export const WhatsAppManager = () => {
       console.error('Error fetching messages:', error);
     }
   };
-
   const handleContactClick = (contact: Contact) => {
     const unreadCountOnOpen = contact.unread_count || 0;
-    setSelectedContact({ ...contact, unread_count: 0 });
+    setSelectedContact({
+      ...contact,
+      unread_count: 0
+    });
     fetchMessages(contact.id, unreadCountOnOpen);
     setManualMessage("");
   };
-
   const toggleAIAgent = async (contactId: string, currentState: boolean) => {
     try {
-      const { error } = await supabase
-        .from('whatsapp_contacts')
-        .update({ ai_agent_enabled: !currentState })
-        .eq('id', contactId);
-
+      const {
+        error
+      } = await supabase.from('whatsapp_contacts').update({
+        ai_agent_enabled: !currentState
+      }).eq('id', contactId);
       if (error) throw error;
 
       // Actualizar estado local
-      setContacts((prevContacts) =>
-        prevContacts.map((c) =>
-          c.id === contactId ? { ...c, ai_agent_enabled: !currentState } : c
-        )
-      );
-      setFilteredContacts((prevContacts) =>
-        prevContacts.map((c) =>
-          c.id === contactId ? { ...c, ai_agent_enabled: !currentState } : c
-        )
-      );
+      setContacts(prevContacts => prevContacts.map(c => c.id === contactId ? {
+        ...c,
+        ai_agent_enabled: !currentState
+      } : c));
+      setFilteredContacts(prevContacts => prevContacts.map(c => c.id === contactId ? {
+        ...c,
+        ai_agent_enabled: !currentState
+      } : c));
       if (selectedContact?.id === contactId) {
-        setSelectedContact((prev) =>
-          prev ? { ...prev, ai_agent_enabled: !currentState } : null
-        );
+        setSelectedContact(prev => prev ? {
+          ...prev,
+          ai_agent_enabled: !currentState
+        } : null);
       }
-
       toast({
         title: !currentState ? "Agente IA activado" : "Agente IA pausado",
-        description: !currentState
-          ? "El agente de IA responderá automáticamente"
-          : "Debes responder manualmente a los mensajes",
+        description: !currentState ? "El agente de IA responderá automáticamente" : "Debes responder manualmente a los mensajes"
       });
     } catch (error) {
       console.error('Error toggling AI agent:', error);
       toast({
         title: "Error",
         description: "No se pudo cambiar el estado del agente",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const sendManualMessage = async () => {
     if (!selectedContact || !manualMessage.trim()) return;
-
     setSendingMessage(true);
     try {
-      const { error } = await supabase.functions.invoke('send-manual-whatsapp-message', {
+      const {
+        error
+      } = await supabase.functions.invoke('send-manual-whatsapp-message', {
         body: {
           contact_id: selectedContact.id,
-          message_content: manualMessage.trim(),
-        },
+          message_content: manualMessage.trim()
+        }
       });
-
       if (error) throw error;
-
       setManualMessage("");
       toast({
         title: "Mensaje enviado",
-        description: "El mensaje manual se ha enviado correctamente",
+        description: "El mensaje manual se ha enviado correctamente"
       });
     } catch (error) {
       console.error('Error sending manual message:', error);
       toast({
         title: "Error",
         description: "No se pudo enviar el mensaje",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setSendingMessage(false);
     }
   };
-
   if (loading) {
     return <div className="flex items-center justify-center p-8">Cargando...</div>;
   }
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-200px)]">
+  return <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-200px)]">
       {/* Lista de contactos */}
       <Card className="lg:col-span-1">
         <CardHeader className="pb-3">
@@ -330,49 +293,24 @@ export const WhatsAppManager = () => {
           {/* Barra de búsqueda */}
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nombre o teléfono..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-9 h-9 text-sm"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
+            <Input placeholder="Buscar por nombre o teléfono..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9 pr-9 h-9 text-sm" />
+            {searchTerm && <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
-              </button>
-            )}
+              </button>}
           </div>
 
           {/* Filtro de no leídos */}
-          <Button
-            variant={showUnreadOnly ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowUnreadOnly(!showUnreadOnly)}
-            className="w-full mt-2 h-8 text-xs"
-          >
+          <Button variant={showUnreadOnly ? "default" : "outline"} size="sm" onClick={() => setShowUnreadOnly(!showUnreadOnly)} className="w-full mt-2 h-8 text-xs">
             <Filter className="h-3 w-3 mr-2" />
             {showUnreadOnly ? "Mostrar todos" : "Solo no leídos"}
           </Button>
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea className="h-[calc(100vh-400px)] md:h-[calc(100vh-360px)]">
-            {filteredContacts.length === 0 ? (
-              <p className="text-sm text-muted-foreground p-4 text-center">
+            {filteredContacts.length === 0 ? <p className="text-sm text-muted-foreground p-4 text-center">
                 {searchTerm || showUnreadOnly ? "No se encontraron contactos" : "No hay contactos aún"}
-              </p>
-            ) : (
-              <div className="space-y-1">
-                {filteredContacts.map((contact) => (
-                  <button
-                    key={contact.id}
-                    onClick={() => handleContactClick(contact)}
-                    className={`w-full text-left p-4 hover:bg-muted/50 transition-colors border-b ${
-                      selectedContact?.id === contact.id ? 'bg-muted' : ''
-                    }`}
-                  >
+              </p> : <div className="space-y-1">
+                {filteredContacts.map(contact => <button key={contact.id} onClick={() => handleContactClick(contact)} className={`w-full text-left p-4 hover:bg-muted/50 transition-colors border-b ${selectedContact?.id === contact.id ? 'bg-muted' : ''}`}>
                       <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3 flex-1">
                         <div className="p-2 rounded-full bg-primary/10">
@@ -382,32 +320,25 @@ export const WhatsAppManager = () => {
                           <p className="font-medium text-sm truncate">
                             {contact.name || contact.phone_number}
                           </p>
-                          {contact.name && (
-                            <p className="text-xs text-muted-foreground truncate">
+                          {contact.name && <p className="text-xs text-muted-foreground truncate">
                               {contact.phone_number}
-                            </p>
-                          )}
+                            </p>}
                           <div className="flex items-center gap-1 mt-1">
                             <Clock className="h-3 w-3 text-muted-foreground" />
                             <p className="text-xs text-muted-foreground">
-                              {format(new Date(contact.last_message_at), "dd MMM HH:mm", { locale: es })}
+                              {format(new Date(contact.last_message_at), "dd MMM HH:mm", {
+                          locale: es
+                        })}
                             </p>
                           </div>
                         </div>
                       </div>
-                      {contact.unread_count > 0 && (
-                        <Badge 
-                          variant="destructive" 
-                          className="h-6 min-w-6 flex items-center justify-center rounded-full px-2 text-xs font-semibold"
-                        >
+                      {contact.unread_count > 0 && <Badge variant="destructive" className="h-6 min-w-6 flex items-center justify-center rounded-full px-2 text-xs font-semibold">
                           {contact.unread_count}
-                        </Badge>
-                      )}
+                        </Badge>}
                     </div>
-                  </button>
-                ))}
-              </div>
-            )}
+                  </button>)}
+              </div>}
           </ScrollArea>
         </CardContent>
       </Card>
@@ -417,121 +348,63 @@ export const WhatsAppManager = () => {
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">
-              {selectedContact ? (
-                <div className="flex items-center gap-3">
+              {selectedContact ? <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-primary/10">
                     <User className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="text-base font-semibold">{selectedContact.name || selectedContact.phone_number}</p>
-                    {selectedContact.name && (
-                      <p className="text-xs font-normal text-muted-foreground">
+                    {selectedContact.name && <p className="text-xs font-normal text-muted-foreground font-serif">
                         {selectedContact.phone_number}
-                      </p>
-                    )}
+                      </p>}
                   </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-muted-foreground">
+                </div> : <div className="flex items-center gap-2 text-muted-foreground">
                   <MessageCircle className="h-5 w-5" />
                   Selecciona un contacto
-                </div>
-              )}
+                </div>}
             </CardTitle>
-            {selectedContact && (
-              <div className="flex items-center gap-3">
+            {selectedContact && <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  {selectedContact.ai_agent_enabled ? (
-                    <Bot className="h-4 w-4 text-primary" />
-                  ) : (
-                    <BotOff className="h-4 w-4 text-muted-foreground" />
-                  )}
+                  {selectedContact.ai_agent_enabled ? <Bot className="h-4 w-4 text-primary" /> : <BotOff className="h-4 w-4 text-muted-foreground" />}
                   <Label htmlFor="ai-toggle" className="text-sm cursor-pointer">
                     {selectedContact.ai_agent_enabled ? "IA activa" : "IA pausada"}
                   </Label>
                 </div>
-                <Switch
-                  id="ai-toggle"
-                  checked={selectedContact.ai_agent_enabled}
-                  onCheckedChange={() =>
-                    toggleAIAgent(selectedContact.id, selectedContact.ai_agent_enabled)
-                  }
-                />
-              </div>
-            )}
+                <Switch id="ai-toggle" checked={selectedContact.ai_agent_enabled} onCheckedChange={() => toggleAIAgent(selectedContact.id, selectedContact.ai_agent_enabled)} />
+              </div>}
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          {!selectedContact ? (
-            <div className="flex items-center justify-center h-[calc(100vh-400px)] md:h-[calc(100vh-360px)] text-muted-foreground">
+          {!selectedContact ? <div className="flex items-center justify-center h-[calc(100vh-400px)] md:h-[calc(100vh-360px)] text-muted-foreground">
               <div className="text-center">
                 <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">Selecciona un contacto para ver la conversación</p>
               </div>
-            </div>
-          ) : (
-            <div className="relative">
+            </div> : <div className="relative">
               <ScrollArea ref={scrollAreaRef} className="h-[calc(100vh-400px)] md:h-[calc(100vh-360px)]">
-                {messages.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                {messages.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">
                   No hay mensajes
-                </p>
-              ) : (
-                <div className="space-y-4">
+                </p> : <div className="space-y-4">
                   {messages.map((message, index) => {
-                    const showUnreadMarker =
-                      firstUnreadIndex !== null && index === firstUnreadIndex;
-
-                    return (
-                      <div
-                        key={message.id}
-                        data-last-message={index === messages.length - 1 ? 'true' : undefined}
-                      >
-                        {showUnreadMarker && (
-                          <div
-                            data-unread-marker="true"
-                            className="flex items-center my-2 text-[10px] uppercase tracking-wide text-muted-foreground"
-                          >
+                const showUnreadMarker = firstUnreadIndex !== null && index === firstUnreadIndex;
+                return <div key={message.id} data-last-message={index === messages.length - 1 ? 'true' : undefined}>
+                        {showUnreadMarker && <div data-unread-marker="true" className="flex items-center my-2 text-[10px] uppercase tracking-wide text-muted-foreground">
                             <div className="flex-1 h-px bg-border" />
                             <span className="mx-3 bg-background px-2 py-0.5 rounded-full">
                               Nuevos mensajes
                             </span>
                             <div className="flex-1 h-px bg-border" />
-                          </div>
-                        )}
-                        <div
-                          className={`flex ${
-                            message.message_type === 'user'
-                              ? 'justify-start'
-                              : 'justify-end'
-                          }`}
-                        >
-                          <div
-                            className={`max-w-[85%] md:max-w-[80%] rounded-lg p-3 ${
-                              message.message_type === 'user'
-                                ? 'bg-muted'
-                                : 'bg-primary text-primary-foreground'
-                            }`}
-                          >
+                          </div>}
+                        <div className={`flex ${message.message_type === 'user' ? 'justify-start' : 'justify-end'}`}>
+                          <div className={`max-w-[85%] md:max-w-[80%] rounded-lg p-3 ${message.message_type === 'user' ? 'bg-muted' : 'bg-primary text-primary-foreground'}`}>
                             <div className="flex items-center gap-2 mb-1">
-                              <Badge
-                                variant={
-                                  message.message_type === 'user'
-                                    ? 'secondary'
-                                    : 'default'
-                                }
-                                className="text-xs"
-                              >
-                                {message.message_type === 'user'
-                                  ? selectedContact?.name ||
-                                    selectedContact?.phone_number ||
-                                    'Cliente'
-                                  : 'Asistente IA'}
+                              <Badge variant={message.message_type === 'user' ? 'secondary' : 'default'} className="text-xs">
+                                {message.message_type === 'user' ? selectedContact?.name || selectedContact?.phone_number || 'Cliente' : 'Asistente IA'}
                               </Badge>
                               <span className="text-xs opacity-70">
                                 {format(new Date(message.created_at), 'HH:mm', {
-                                  locale: es,
-                                })}
+                            locale: es
+                          })}
                               </span>
                             </div>
                             <p className="text-sm whitespace-pre-wrap break-words">
@@ -539,56 +412,31 @@ export const WhatsAppManager = () => {
                             </p>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      </div>;
+              })}
+                </div>}
             </ScrollArea>
-            {showScrollButton && (
-              <Button
-                onClick={() => scrollToBottom(true)}
-                size="icon"
-                className="absolute bottom-4 right-4 rounded-full shadow-lg z-10"
-                variant="default"
-              >
+            {showScrollButton && <Button onClick={() => scrollToBottom(true)} size="icon" className="absolute bottom-4 right-4 rounded-full shadow-lg z-10" variant="default">
                 <ArrowDown className="h-4 w-4" />
-              </Button>
-            )}
-            </div>
-          )}
-          {selectedContact && !selectedContact.ai_agent_enabled && (
-            <div className="mt-4 pt-4 border-t">
+              </Button>}
+            </div>}
+          {selectedContact && !selectedContact.ai_agent_enabled && <div className="mt-4 pt-4 border-t">
               <div className="flex gap-2">
-                <Input
-                  ref={messageInputRef}
-                  placeholder="Escribe tu mensaje manual..."
-                  value={manualMessage}
-                  onChange={(e) => setManualMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      sendManualMessage();
-                    }
-                  }}
-                  disabled={sendingMessage}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={sendManualMessage}
-                  disabled={!manualMessage.trim() || sendingMessage}
-                  size="icon"
-                >
+                <Input ref={messageInputRef} placeholder="Escribe tu mensaje manual..." value={manualMessage} onChange={e => setManualMessage(e.target.value)} onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendManualMessage();
+              }
+            }} disabled={sendingMessage} className="flex-1" />
+                <Button onClick={sendManualMessage} disabled={!manualMessage.trim() || sendingMessage} size="icon">
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
                 El agente de IA está pausado. Debes responder manualmente.
               </p>
-            </div>
-          )}
+            </div>}
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
