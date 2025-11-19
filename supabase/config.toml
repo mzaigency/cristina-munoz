@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.whatsapp-conversation]
 verify_jwt = false
+
+[functions.send-manual-whatsapp-message]
+verify_jwt = true
