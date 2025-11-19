@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff } from "lucide-react";
+import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -39,7 +39,10 @@ export const WhatsAppManager = () => {
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [manualMessage, setManualMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messageInputRef = useRef<HTMLInputElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -74,17 +77,18 @@ export const WhatsAppManager = () => {
           const newMessage = payload.new as Message;
           
           if (selectedContact && newMessage.contact_id === selectedContact.id) {
-            setMessages(prev => [...prev, newMessage]);
+            setMessages(prev => {
+              const updated = [...prev, newMessage];
+              // Si está al final, hacer scroll automático
+              if (isAtBottom) {
+                setTimeout(() => scrollToBottom(true), 100);
+              } else {
+                setShowScrollButton(true);
+              }
+              return updated;
+            });
             // Marcar como leído automáticamente si está viendo la conversación
             markAsRead(selectedContact.id);
-          }
-          
-          // Mostrar notificación para mensajes de usuario
-          if (newMessage.message_type === 'user') {
-            toast({
-              title: "Nuevo mensaje de WhatsApp",
-              description: "Has recibido un nuevo mensaje",
-            });
           }
         }
       )
@@ -156,6 +160,37 @@ export const WhatsAppManager = () => {
 
   const [firstUnreadIndex, setFirstUnreadIndex] = useState<number | null>(null);
 
+  const scrollToBottom = (smooth = true) => {
+    const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollViewport) {
+      scrollViewport.scrollTo({
+        top: scrollViewport.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto'
+      });
+      setShowScrollButton(false);
+    }
+  };
+
+  const checkScrollPosition = () => {
+    const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollViewport) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollViewport;
+      const isBottom = scrollHeight - scrollTop - clientHeight < 50;
+      setIsAtBottom(isBottom);
+      if (isBottom) {
+        setShowScrollButton(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollViewport) {
+      scrollViewport.addEventListener('scroll', checkScrollPosition);
+      return () => scrollViewport.removeEventListener('scroll', checkScrollPosition);
+    }
+  }, [selectedContact]);
+
   useEffect(() => {
     if (!selectedContact || messages.length === 0) return;
 
@@ -168,15 +203,9 @@ export const WhatsAppManager = () => {
         marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     } else {
-      const lastMessage = document.querySelector(
-        '[data-last-message="true"]'
-      ) as HTMLElement | null;
-
-      if (lastMessage) {
-        lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }
+      scrollToBottom(false);
     }
-  }, [firstUnreadIndex, messages, selectedContact]);
+  }, [firstUnreadIndex, messages.length, selectedContact]);
 
   const fetchMessages = async (contactId: string, unreadCountOnOpen: number) => {
     try {
@@ -441,8 +470,9 @@ export const WhatsAppManager = () => {
               </div>
             </div>
           ) : (
-            <ScrollArea className="h-[calc(100vh-400px)] md:h-[calc(100vh-360px)]">
-              {messages.length === 0 ? (
+            <div className="relative">
+              <ScrollArea ref={scrollAreaRef} className="h-[calc(100vh-400px)] md:h-[calc(100vh-360px)]">
+                {messages.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   No hay mensajes
                 </p>
@@ -515,6 +545,17 @@ export const WhatsAppManager = () => {
                 </div>
               )}
             </ScrollArea>
+            {showScrollButton && (
+              <Button
+                onClick={() => scrollToBottom(true)}
+                size="icon"
+                className="absolute bottom-4 right-4 rounded-full shadow-lg z-10"
+                variant="default"
+              >
+                <ArrowDown className="h-4 w-4" />
+              </Button>
+            )}
+            </div>
           )}
           {selectedContact && !selectedContact.ai_agent_enabled && (
             <div className="mt-4 pt-4 border-t">
