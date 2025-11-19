@@ -380,7 +380,7 @@ export const WhatsAppManager = () => {
                               {contact.name || contact.phone_number}
                             </p>
                             {!contact.ai_agent_enabled && (
-                              <BotOff className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              <BotOff className="h-4 w-4 text-orange-500 flex-shrink-0" />
                             )}
                           </div>
                           {contact.name && <p className="text-xs text-muted-foreground truncate">
