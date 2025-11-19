@@ -176,7 +176,7 @@ export const WhatsAppManager = () => {
         });
       }
     } else {
-      scrollToBottom(false);
+      scrollToBottom(true);
     }
   }, [firstUnreadIndex, messages.length, selectedContact]);
   const fetchMessages = async (contactId: string, unreadCountOnOpen: number) => {
