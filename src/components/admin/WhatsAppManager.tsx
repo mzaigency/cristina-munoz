@@ -131,6 +131,14 @@ export const WhatsAppManager = () => {
 
   const markAsRead = async (contactId: string) => {
     try {
+      // Actualizar estado local inmediatamente
+      setContacts((prevContacts) =>
+        prevContacts.map((c) => (c.id === contactId ? { ...c, unread_count: 0 } : c))
+      );
+      setFilteredContacts((prevContacts) =>
+        prevContacts.map((c) => (c.id === contactId ? { ...c, unread_count: 0 } : c))
+      );
+
       await supabase
         .from('whatsapp_contacts')
         .update({ unread_count: 0 })
@@ -140,7 +148,31 @@ export const WhatsAppManager = () => {
     }
   };
 
-  const fetchMessages = async (contactId: string) => {
+  const [firstUnreadIndex, setFirstUnreadIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!selectedContact || messages.length === 0) return;
+
+    if (firstUnreadIndex !== null) {
+      const marker = document.querySelector(
+        '[data-unread-marker="true"]'
+      ) as HTMLElement | null;
+
+      if (marker) {
+        marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } else {
+      const lastMessage = document.querySelector(
+        '[data-last-message="true"]'
+      ) as HTMLElement | null;
+
+      if (lastMessage) {
+        lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    }
+  }, [firstUnreadIndex, messages, selectedContact]);
+
+  const fetchMessages = async (contactId: string, unreadCountOnOpen: number) => {
     try {
       const { data, error } = await supabase
         .from('whatsapp_messages')
@@ -149,8 +181,16 @@ export const WhatsAppManager = () => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages((data || []) as Message[]);
-      
+      const loadedMessages = (data || []) as Message[];
+      setMessages(loadedMessages);
+
+      if (unreadCountOnOpen > 0 && loadedMessages.length > 0) {
+        const startIndex = Math.max(0, loadedMessages.length - unreadCountOnOpen);
+        setFirstUnreadIndex(startIndex);
+      } else {
+        setFirstUnreadIndex(null);
+      }
+
       // Marcar como leído al abrir la conversación
       await markAsRead(contactId);
     } catch (error) {
@@ -159,15 +199,9 @@ export const WhatsAppManager = () => {
   };
 
   const handleContactClick = (contact: Contact) => {
-    setSelectedContact(contact);
-    fetchMessages(contact.id);
-    
-    // Actualizar el estado local inmediatamente para eliminar el badge
-    setContacts(prevContacts =>
-      prevContacts.map(c =>
-        c.id === contact.id ? { ...c, unread_count: 0 } : c
-      )
-    );
+    const unreadCountOnOpen = contact.unread_count || 0;
+    setSelectedContact({ ...contact, unread_count: 0 });
+    fetchMessages(contact.id, unreadCountOnOpen);
   };
 
   if (loading) {
@@ -311,30 +345,70 @@ export const WhatsAppManager = () => {
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.message_type === 'user' ? 'justify-start' : 'justify-end'}`}
-                    >
+                  {messages.map((message, index) => {
+                    const showUnreadMarker =
+                      firstUnreadIndex !== null && index === firstUnreadIndex;
+
+                    return (
                       <div
-                        className={`max-w-[85%] md:max-w-[80%] rounded-lg p-3 ${
-                          message.message_type === 'user'
-                            ? 'bg-muted'
-                            : 'bg-primary text-primary-foreground'
-                        }`}
+                        key={message.id}
+                        data-last-message={index === messages.length - 1 ? 'true' : undefined}
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant={message.message_type === 'user' ? 'secondary' : 'default'} className="text-xs">
-                            {message.message_type === 'user' ? 'Cliente' : 'Asistente IA'}
-                          </Badge>
-                          <span className="text-xs opacity-70">
-                            {format(new Date(message.created_at), "HH:mm", { locale: es })}
-                          </span>
+                        {showUnreadMarker && (
+                          <div
+                            data-unread-marker="true"
+                            className="flex items-center my-2 text-[10px] uppercase tracking-wide text-muted-foreground"
+                          >
+                            <div className="flex-1 h-px bg-border" />
+                            <span className="mx-3 bg-background px-2 py-0.5 rounded-full">
+                              Nuevos mensajes
+                            </span>
+                            <div className="flex-1 h-px bg-border" />
+                          </div>
+                        )}
+                        <div
+                          className={`flex ${
+                            message.message_type === 'user'
+                              ? 'justify-start'
+                              : 'justify-end'
+                          }`}
+                        >
+                          <div
+                            className={`max-w-[85%] md:max-w-[80%] rounded-lg p-3 ${
+                              message.message_type === 'user'
+                                ? 'bg-muted'
+                                : 'bg-primary text-primary-foreground'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge
+                                variant={
+                                  message.message_type === 'user'
+                                    ? 'secondary'
+                                    : 'default'
+                                }
+                                className="text-xs"
+                              >
+                                {message.message_type === 'user'
+                                  ? selectedContact?.name ||
+                                    selectedContact?.phone_number ||
+                                    'Cliente'
+                                  : 'Asistente IA'}
+                              </Badge>
+                              <span className="text-xs opacity-70">
+                                {format(new Date(message.created_at), 'HH:mm', {
+                                  locale: es,
+                                })}
+                              </span>
+                            </div>
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {message.content}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </ScrollArea>
