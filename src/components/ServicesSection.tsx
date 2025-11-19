@@ -99,9 +99,7 @@ export const ServicesSection = () => {
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
           <SmoothTitle>
-            <h2 className="mb-4 text-3xl font-bold text-[#3b2b30] md:text-4xl">
-              Servicios de Peluquería en Santpedor
-            </h2>
+            <h2 className="mb-4 text-3xl font-bold text-[#3b2b30] md:text-4xl">Nuestros Servicios       </h2>
           </SmoothTitle>
           <p className="text-lg text-muted-foreground">Descubre nuestra amplia gama de servicios profesionales de peluquería en el corazón del Bages</p>
         </div>
