@@ -43,9 +43,19 @@ export const LocationSection = () => {
                     <Clock className="h-6 w-6 text-primary" />
                   </div>
                 </div>
-                <h3 className="font-semibold mb-2 text-foreground">Horario Flexible</h3>
+                <h3 className="font-semibold mb-2 text-foreground">Horario   </h3>
                 <p className="text-sm text-muted-foreground">
-                  De lunes a viernes de 9:00 a 19:00, sábados de 9:00 a 14:00
+                  De Martes a Viernes
+
+9:00 - 12:30 / 15:00 - 19:00
+
+Sábado
+
+8:00 - 13:00
+
+Lun y Dom
+
+Cerrado
                 </p>
               </CardContent>
             </Card>
