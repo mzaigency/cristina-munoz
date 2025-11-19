@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, User, Clock, Search, Filter, X } from "lucide-react";
+import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface Contact {
   id: string;
@@ -16,6 +18,7 @@ interface Contact {
   name: string | null;
   last_message_at: string;
   unread_count: number;
+  ai_agent_enabled: boolean;
 }
 
 interface Message {
@@ -34,6 +37,9 @@ export const WhatsAppManager = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [manualMessage, setManualMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const messageInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -202,6 +208,80 @@ export const WhatsAppManager = () => {
     const unreadCountOnOpen = contact.unread_count || 0;
     setSelectedContact({ ...contact, unread_count: 0 });
     fetchMessages(contact.id, unreadCountOnOpen);
+    setManualMessage("");
+  };
+
+  const toggleAIAgent = async (contactId: string, currentState: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('whatsapp_contacts')
+        .update({ ai_agent_enabled: !currentState })
+        .eq('id', contactId);
+
+      if (error) throw error;
+
+      // Actualizar estado local
+      setContacts((prevContacts) =>
+        prevContacts.map((c) =>
+          c.id === contactId ? { ...c, ai_agent_enabled: !currentState } : c
+        )
+      );
+      setFilteredContacts((prevContacts) =>
+        prevContacts.map((c) =>
+          c.id === contactId ? { ...c, ai_agent_enabled: !currentState } : c
+        )
+      );
+      if (selectedContact?.id === contactId) {
+        setSelectedContact((prev) =>
+          prev ? { ...prev, ai_agent_enabled: !currentState } : null
+        );
+      }
+
+      toast({
+        title: !currentState ? "Agente IA activado" : "Agente IA pausado",
+        description: !currentState
+          ? "El agente de IA responderá automáticamente"
+          : "Debes responder manualmente a los mensajes",
+      });
+    } catch (error) {
+      console.error('Error toggling AI agent:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cambiar el estado del agente",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const sendManualMessage = async () => {
+    if (!selectedContact || !manualMessage.trim()) return;
+
+    setSendingMessage(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-manual-whatsapp-message', {
+        body: {
+          contact_id: selectedContact.id,
+          message_content: manualMessage.trim(),
+        },
+      });
+
+      if (error) throw error;
+
+      setManualMessage("");
+      toast({
+        title: "Mensaje enviado",
+        description: "El mensaje manual se ha enviado correctamente",
+      });
+    } catch (error) {
+      console.error('Error sending manual message:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo enviar el mensaje",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMessage(false);
+    }
   };
 
   if (loading) {
@@ -306,28 +386,51 @@ export const WhatsAppManager = () => {
       {/* Conversación */}
       <Card className="lg:col-span-2">
         <CardHeader className="border-b">
-          <CardTitle className="text-base">
-            {selectedContact ? (
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">
+              {selectedContact ? (
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-primary/10">
+                    <User className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold">{selectedContact.name || selectedContact.phone_number}</p>
+                    {selectedContact.name && (
+                      <p className="text-xs font-normal text-muted-foreground">
+                        {selectedContact.phone_number}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MessageCircle className="h-5 w-5" />
+                  Selecciona un contacto
+                </div>
+              )}
+            </CardTitle>
+            {selectedContact && (
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-primary/10">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-base font-semibold">{selectedContact.name || selectedContact.phone_number}</p>
-                  {selectedContact.name && (
-                    <p className="text-xs font-normal text-muted-foreground">
-                      {selectedContact.phone_number}
-                    </p>
+                <div className="flex items-center gap-2">
+                  {selectedContact.ai_agent_enabled ? (
+                    <Bot className="h-4 w-4 text-primary" />
+                  ) : (
+                    <BotOff className="h-4 w-4 text-muted-foreground" />
                   )}
+                  <Label htmlFor="ai-toggle" className="text-sm cursor-pointer">
+                    {selectedContact.ai_agent_enabled ? "IA activa" : "IA pausada"}
+                  </Label>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MessageCircle className="h-5 w-5" />
-                Selecciona un contacto
+                <Switch
+                  id="ai-toggle"
+                  checked={selectedContact.ai_agent_enabled}
+                  onCheckedChange={() =>
+                    toggleAIAgent(selectedContact.id, selectedContact.ai_agent_enabled)
+                  }
+                />
               </div>
             )}
-          </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-4">
           {!selectedContact ? (
@@ -412,6 +515,36 @@ export const WhatsAppManager = () => {
                 </div>
               )}
             </ScrollArea>
+          )}
+          {selectedContact && !selectedContact.ai_agent_enabled && (
+            <div className="mt-4 pt-4 border-t">
+              <div className="flex gap-2">
+                <Input
+                  ref={messageInputRef}
+                  placeholder="Escribe tu mensaje manual..."
+                  value={manualMessage}
+                  onChange={(e) => setManualMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      sendManualMessage();
+                    }
+                  }}
+                  disabled={sendingMessage}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={sendManualMessage}
+                  disabled={!manualMessage.trim() || sendingMessage}
+                  size="icon"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                El agente de IA está pausado. Debes responder manualmente.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>

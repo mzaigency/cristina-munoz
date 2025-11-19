@@ -261,6 +261,7 @@ export type Database = {
       }
       whatsapp_contacts: {
         Row: {
+          ai_agent_enabled: boolean
           created_at: string
           id: string
           last_message_at: string
@@ -270,6 +271,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_agent_enabled?: boolean
           created_at?: string
           id?: string
           last_message_at?: string
@@ -279,6 +281,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_agent_enabled?: boolean
           created_at?: string
           id?: string
           last_message_at?: string
