@@ -354,7 +354,7 @@ export const WhatsAppManager = () => {
                   </div>
                   <div>
                     <p className="text-base font-semibold">{selectedContact.name || selectedContact.phone_number}</p>
-                    {selectedContact.name && <p className="text-xs font-normal text-muted-foreground font-serif">
+                    {selectedContact.name && <p className="text-xs font-normal text-muted-foreground font-sans">
                         {selectedContact.phone_number}
                       </p>}
                   </div>
