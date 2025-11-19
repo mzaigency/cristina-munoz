@@ -63,7 +63,6 @@ serve(async (req) => {
       const { error: updateError } = await supabase
         .from('whatsapp_contacts')
         .update({
-          name: contact_name || null,
           last_message_at: new Date().toISOString(),
         })
         .eq('id', contactId);
