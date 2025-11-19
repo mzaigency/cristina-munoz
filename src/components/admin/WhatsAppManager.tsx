@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff, ArrowDown, Ban } from "lucide-react";
+import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff, ArrowDown, Ban, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +40,8 @@ export const WhatsAppManager = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
   const messageInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const {
@@ -219,8 +221,44 @@ export const WhatsAppManager = () => {
       ...contact,
       unread_count: 0
     });
+    setEditingName(false);
+    setNewName(contact.name || "");
     fetchMessages(contact.id, unreadCountOnOpen);
     setManualMessage("");
+  };
+
+  const handleUpdateName = async () => {
+    if (!selectedContact) return;
+    
+    try {
+      const { error } = await supabase
+        .from('whatsapp_contacts')
+        .update({ name: newName.trim() || null })
+        .eq('id', selectedContact.id);
+
+      if (error) throw error;
+
+      // Actualizar el contacto en el estado local
+      setContacts(prev => prev.map(c => 
+        c.id === selectedContact.id ? { ...c, name: newName.trim() || null } : c
+      ));
+      setFilteredContacts(prev => prev.map(c => 
+        c.id === selectedContact.id ? { ...c, name: newName.trim() || null } : c
+      ));
+      setSelectedContact(prev => prev ? { ...prev, name: newName.trim() || null } : null);
+      setEditingName(false);
+      toast({
+        title: "Nombre actualizado",
+        description: "El nombre del contacto se ha actualizado correctamente"
+      });
+    } catch (error) {
+      console.error('Error updating contact name:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el nombre",
+        variant: "destructive"
+      });
+    }
   };
   const toggleAIAgent = async (contactId: string, currentState: boolean) => {
     try {
@@ -417,12 +455,56 @@ export const WhatsAppManager = () => {
                   <div className="p-2 rounded-full bg-primary/10">
                     <User className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <p className="text-base font-semibold">{selectedContact.name || selectedContact.phone_number}</p>
-                    {selectedContact.name && <p className="text-xs font-normal text-muted-foreground font-sans">
-                        {selectedContact.phone_number}
-                      </p>}
-                  </div>
+                  {editingName ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        placeholder="Nombre del contacto"
+                        className="max-w-[200px] h-8"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleUpdateName();
+                          } else if (e.key === 'Escape') {
+                            setEditingName(false);
+                            setNewName(selectedContact.name || "");
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <Button size="sm" onClick={handleUpdateName} className="h-7 px-2">
+                        Guardar
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => {
+                          setEditingName(false);
+                          setNewName(selectedContact.name || "");
+                        }}
+                        className="h-7 px-2"
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <p className="text-base font-semibold">{selectedContact.name || selectedContact.phone_number}</p>
+                        {selectedContact.name && <p className="text-xs font-normal text-muted-foreground font-sans">
+                            {selectedContact.phone_number}
+                          </p>}
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => setEditingName(true)}
+                        className="h-7 w-7 p-0"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
                 </div> : <div className="flex items-center gap-2 text-muted-foreground">
                   <MessageCircle className="h-5 w-5" />
                   Selecciona un contacto
