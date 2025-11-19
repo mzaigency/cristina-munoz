@@ -45,17 +45,7 @@ export const LocationSection = () => {
                 </div>
                 <h3 className="font-semibold mb-2 text-foreground">Horario   </h3>
                 <p className="text-sm text-muted-foreground">
-                  De Martes a Viernes
-
-9:00 - 12:30 / 15:00 - 19:00
-
-Sábado
-
-8:00 - 13:00
-
-Lun y Dom
-
-Cerrado
+                  De Martes a Viernes de 9:00 a 12:30 y de 15:00 a 19:00, los Sábados de 8:00 a 13:00. Lunes, Domingos y F                                                                                    
                 </p>
               </CardContent>
             </Card>
