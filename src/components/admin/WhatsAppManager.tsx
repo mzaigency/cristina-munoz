@@ -449,7 +449,7 @@ export const WhatsAppManager = () => {
       {/* Conversación */}
       <Card className="lg:col-span-2">
         <CardHeader className="border-b">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <CardTitle className="text-base">
               {selectedContact ? <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-primary/10">
@@ -510,10 +510,10 @@ export const WhatsAppManager = () => {
                   Selecciona un contacto
                 </div>}
             </CardTitle>
-            {selectedContact && <div className="flex items-center gap-2">
+            {selectedContact && <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2">
                   {selectedContact.ai_agent_enabled ? <Bot className="h-4 w-4 text-primary" /> : <BotOff className="h-4 w-4 text-muted-foreground" />}
-                  <Label htmlFor="ai-toggle" className="text-sm cursor-pointer">
+                  <Label htmlFor="ai-toggle" className="text-xs md:text-sm cursor-pointer whitespace-nowrap">
                     {selectedContact.ai_agent_enabled ? "IA activa" : "IA pausada"}
                   </Label>
                 </div>
@@ -523,7 +523,7 @@ export const WhatsAppManager = () => {
                   variant={selectedContact.blocked ? "default" : "outline"}
                   size="sm"
                   onClick={() => toggleBlockContact(selectedContact.id, selectedContact.blocked)}
-                  className="h-8"
+                  className="h-8 text-xs md:text-sm"
                 >
                   <Ban className="h-3 w-3 mr-1" />
                   {selectedContact.blocked ? "Desbloquear" : "Bloquear"}
@@ -579,13 +579,13 @@ export const WhatsAppManager = () => {
             </div>}
           {selectedContact && !selectedContact.ai_agent_enabled && <div className="mt-4 pt-4 border-t">
               <div className="flex gap-2">
-                <Input ref={messageInputRef} placeholder="Escribe tu mensaje manual..." value={manualMessage} onChange={e => setManualMessage(e.target.value)} onKeyDown={e => {
+                <Input ref={messageInputRef} placeholder="Escribe un mensaje..." value={manualMessage} onChange={e => setManualMessage(e.target.value)} onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendManualMessage();
               }
-            }} disabled={sendingMessage} className="flex-1" />
-                <Button onClick={sendManualMessage} disabled={!manualMessage.trim() || sendingMessage} size="icon">
+            }} disabled={sendingMessage} className="flex-1 text-sm" />
+                <Button onClick={sendManualMessage} disabled={!manualMessage.trim() || sendingMessage} size="icon" className="shrink-0">
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
