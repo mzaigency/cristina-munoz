@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff, ArrowDown, Ban, Trash2 } from "lucide-react";
+import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff, ArrowDown, Ban } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -330,50 +330,6 @@ export const WhatsAppManager = () => {
     }
   };
 
-  const deleteConversation = async (contactId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.')) {
-      return;
-    }
-
-    try {
-      // Primero eliminar todos los mensajes
-      const { error: messagesError } = await supabase
-        .from('whatsapp_messages')
-        .delete()
-        .eq('contact_id', contactId);
-
-      if (messagesError) throw messagesError;
-
-      // Luego eliminar el contacto
-      const { error: contactError } = await supabase
-        .from('whatsapp_contacts')
-        .delete()
-        .eq('id', contactId);
-
-      if (contactError) throw contactError;
-
-      // Actualizar estado local
-      setContacts(prevContacts => prevContacts.filter(c => c.id !== contactId));
-      setFilteredContacts(prevContacts => prevContacts.filter(c => c.id !== contactId));
-
-      if (selectedContact?.id === contactId) {
-        setSelectedContact(null);
-        setMessages([]);
-      }
-
-      toast({
-        title: "Conversación eliminada",
-        description: "La conversación se ha eliminado correctamente"
-      });
-    } catch (error) {
-      console.error('Error deleting conversation:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la conversación",
-        variant: "destructive"
-      });
-    }
-  };
   if (loading) {
     return <div className="flex items-center justify-center p-8">Cargando...</div>;
   }
@@ -419,9 +375,14 @@ export const WhatsAppManager = () => {
                           <User className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">
-                            {contact.name || contact.phone_number}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm truncate">
+                              {contact.name || contact.phone_number}
+                            </p>
+                            {!contact.ai_agent_enabled && (
+                              <BotOff className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                            )}
+                          </div>
                           {contact.name && <p className="text-xs text-muted-foreground truncate">
                               {contact.phone_number}
                             </p>}
@@ -482,16 +443,6 @@ export const WhatsAppManager = () => {
                 >
                   <Ban className="h-3 w-3 mr-1" />
                   {selectedContact.blocked ? "Desbloquear" : "Bloquear"}
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => deleteConversation(selectedContact.id)}
-                  className="h-8"
-                >
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Eliminar
                 </Button>
               </div>}
           </div>
