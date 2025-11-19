@@ -14,6 +14,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const n8nWebhook = Deno.env.get('N8N_SEND_WHATSAPP_MESSAGE_WEBHOOK')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { contact_id, message_content } = await req.json();
@@ -23,6 +24,40 @@ serve(async (req) => {
     }
 
     console.log('Sending manual message to contact:', contact_id);
+
+    // Obtener información del contacto
+    const { data: contact, error: contactError } = await supabase
+      .from('whatsapp_contacts')
+      .select('phone_number, name')
+      .eq('id', contact_id)
+      .single();
+
+    if (contactError || !contact) {
+      console.error('Error fetching contact:', contactError);
+      throw new Error('Contact not found');
+    }
+
+    // Enviar mensaje a través del webhook de n8n
+    console.log('Calling n8n webhook to send WhatsApp message');
+    const n8nResponse = await fetch(n8nWebhook, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        phone_number: contact.phone_number,
+        message: message_content,
+        contact_name: contact.name,
+        is_manual: true, // Indicador de que es un mensaje manual
+      }),
+    });
+
+    if (!n8nResponse.ok) {
+      console.error('n8n webhook error:', await n8nResponse.text());
+      throw new Error('Failed to send WhatsApp message via n8n');
+    }
+
+    console.log('WhatsApp message sent via n8n successfully');
 
     // Insertar mensaje del asistente (mensaje manual de la peluquera)
     const { error: messageError } = await supabase

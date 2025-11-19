@@ -44,9 +44,10 @@ serve(async (req) => {
 
     // Buscar o crear contacto
     let contactId: string;
+    let aiAgentEnabled = true; // Por defecto está habilitado
     const { data: existingContact, error: searchError } = await supabase
       .from('whatsapp_contacts')
-      .select('id')
+      .select('id, ai_agent_enabled')
       .eq('phone_number', phone_number)
       .maybeSingle();
 
@@ -58,6 +59,7 @@ serve(async (req) => {
     if (existingContact) {
       // Actualizar contacto existente
       contactId = existingContact.id;
+      aiAgentEnabled = existingContact.ai_agent_enabled;
       const { error: updateError } = await supabase
         .from('whatsapp_contacts')
         .update({
@@ -70,7 +72,7 @@ serve(async (req) => {
         console.error('Error updating contact:', updateError);
         throw updateError;
       }
-      console.log('Contact updated:', contactId);
+      console.log('Contact updated:', contactId, 'AI Agent enabled:', aiAgentEnabled);
     } else {
       // Crear nuevo contacto
       const { data: newContact, error: createError } = await supabase
@@ -79,8 +81,9 @@ serve(async (req) => {
           phone_number,
           name: contact_name || null,
           last_message_at: new Date().toISOString(),
+          ai_agent_enabled: true, // Por defecto está habilitado
         })
-        .select('id')
+        .select('id, ai_agent_enabled')
         .single();
 
       if (createError) {
@@ -88,22 +91,31 @@ serve(async (req) => {
         throw createError;
       }
       contactId = newContact.id;
+      aiAgentEnabled = newContact.ai_agent_enabled;
       console.log('Contact created:', contactId);
     }
 
-    // Guardar mensajes (usuario y asistente)
-    const messages = [
-      {
-        contact_id: contactId,
-        message_type: 'user',
-        content: user_message,
-      },
-      {
+    // Determinar qué mensajes guardar según el estado del agente
+    const messages = [];
+    
+    // Siempre guardar el mensaje del usuario
+    messages.push({
+      contact_id: contactId,
+      message_type: 'user',
+      content: user_message,
+    });
+
+    // Solo guardar el mensaje del asistente si el agente de IA está habilitado
+    if (aiAgentEnabled && assistant_message) {
+      messages.push({
         contact_id: contactId,
         message_type: 'assistant',
         content: assistant_message,
-      },
-    ];
+      });
+      console.log('AI agent is enabled, saving assistant message');
+    } else {
+      console.log('AI agent is disabled, skipping assistant message');
+    }
 
     const { error: messagesError } = await supabase
       .from('whatsapp_messages')
@@ -120,7 +132,10 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         contact_id: contactId,
-        message: 'Conversation saved successfully' 
+        ai_agent_enabled: aiAgentEnabled,
+        message: aiAgentEnabled 
+          ? 'Conversation saved successfully' 
+          : 'User message saved, AI agent is paused'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
