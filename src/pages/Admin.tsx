@@ -176,7 +176,7 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="inline-flex h-12 items-center justify-start gap-1 rounded-lg bg-transparent p-0 border-b w-full max-w-none">
+          <TabsList className="inline-flex h-12 items-center justify-center gap-1 rounded-lg bg-transparent p-0 border-b w-full max-w-none">
             <TabsTrigger 
               value="calendar" 
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
