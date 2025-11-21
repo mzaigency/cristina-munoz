@@ -7,8 +7,11 @@ const corsHeaders = {
 
 interface BookingRow {
   NOMBRE: string;
+  RECORDATORIO: string;
   TELEFONO: string;
   HORA: string;
+  VALORACION: string;
+  PETICION: string;
   SERVICIO: string;
   CANAL: string;
   'ID_Parte 1': string;
@@ -103,6 +106,9 @@ Deno.serve(async (req) => {
       'ID_Parte 1': row[8] || '',
     }));
 
+    console.log(`Total rows from Sheets: ${rows.length}`);
+    console.log('Sample row:', rows[0]);
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(today);
@@ -112,40 +118,53 @@ Deno.serve(async (req) => {
 
     // Filter bookings with valid ID_Parte 1 (actual bookings)
     const validBookings = rows.filter(row => row['ID_Parte 1'] && row['ID_Parte 1'].trim() !== '');
+    
+    console.log(`Valid bookings: ${validBookings.length}`);
 
-    // Parse dates from HORA field (assuming format like "2025-01-15 10:00")
-    const parseDate = (hora: string): Date | null => {
+    // Parse dates from PETICION field (ISO format)
+    const parseDate = (peticion: string): Date | null => {
       try {
-        const match = hora.match(/(\d{4})-(\d{2})-(\d{2})/);
-        if (match) {
-          return new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
-        }
-        return null;
+        if (!peticion || peticion.trim() === '') return null;
+        const date = new Date(peticion);
+        return isNaN(date.getTime()) ? null : date;
       } catch {
         return null;
       }
     };
 
     const dailyBookings = validBookings.filter(row => {
-      const date = parseDate(row.HORA);
+      const date = parseDate(row.PETICION);
       return date && date >= today;
     });
 
     const weeklyBookings = validBookings.filter(row => {
-      const date = parseDate(row.HORA);
+      const date = parseDate(row.PETICION);
       return date && date >= weekAgo;
     });
 
     const monthlyBookings = validBookings.filter(row => {
-      const date = parseDate(row.HORA);
+      const date = parseDate(row.PETICION);
       return date && date >= monthAgo;
     });
 
+    console.log(`Daily: ${dailyBookings.length}, Weekly: ${weeklyBookings.length}, Monthly: ${monthlyBookings.length}`);
+
     // Count by channel
     const countByChannel = (bookings: BookingRow[]) => {
-      const whatsapp = bookings.filter(b => b.CANAL?.toLowerCase().includes('whatsapp')).length;
-      const crm = bookings.filter(b => b.CANAL?.toLowerCase().includes('crm')).length;
-      const web = bookings.filter(b => b.CANAL?.toLowerCase().includes('web')).length;
+      const whatsapp = bookings.filter(b => {
+        const canal = b.CANAL?.toLowerCase() || '';
+        return canal.includes('whatsapp') || canal.includes('whats');
+      }).length;
+      const crm = bookings.filter(b => {
+        const canal = b.CANAL?.toLowerCase() || '';
+        return canal.includes('crm');
+      }).length;
+      const web = bookings.filter(b => {
+        const canal = b.CANAL?.toLowerCase() || '';
+        return canal.includes('web') || canal.includes('internet');
+      }).length;
+      
+      console.log(`Channel counts - WhatsApp: ${whatsapp}, CRM: ${crm}, Web: ${web}`);
       return { whatsapp, crm, web };
     };
 
