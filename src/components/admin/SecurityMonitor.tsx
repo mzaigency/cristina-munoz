@@ -44,12 +44,17 @@ export function SecurityMonitor() {
   const [stats, setStats] = useState<BookingStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [totalProfiles, setTotalProfiles] = useState(0);
 
   useEffect(() => {
     fetchBookingStats();
+    fetchTotalProfiles();
     
     // Refresh stats every 5 minutes
-    const interval = setInterval(fetchBookingStats, 5 * 60 * 1000);
+    const interval = setInterval(() => {
+      fetchBookingStats();
+      fetchTotalProfiles();
+    }, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, []);
@@ -70,6 +75,20 @@ export function SecurityMonitor() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTotalProfiles = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) throw error;
+      
+      setTotalProfiles(count || 0);
+    } catch (error) {
+      console.error("Error fetching profiles count:", error);
     }
   };
 
@@ -128,7 +147,7 @@ export function SecurityMonitor() {
         <StatCard
           icon={Users}
           label="Clientes Activos"
-          value={currentPeriodData.total}
+          value={totalProfiles}
           color="text-blue-600"
         />
         <StatCard
