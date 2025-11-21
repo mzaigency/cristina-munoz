@@ -121,10 +121,16 @@ Deno.serve(async (req) => {
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
     const weekAgo = new Date(today);
     weekAgo.setDate(weekAgo.getDate() - 7);
+    const twoWeeksAgo = new Date(today);
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const monthAgo = new Date(today);
     monthAgo.setMonth(monthAgo.getMonth() - 1);
+    const twoMonthsAgo = new Date(today);
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
 
     console.log(`Date ranges - Today: ${today.toISOString()}, Week ago: ${weekAgo.toISOString()}, Month ago: ${monthAgo.toISOString()}`);
 
@@ -162,14 +168,29 @@ Deno.serve(async (req) => {
       return date && date >= today;
     });
 
+    const previousDayBookings = validBookings.filter(row => {
+      const date = parseDate(row.PETICION);
+      return date && date >= yesterday && date < today;
+    });
+
     const weeklyBookings = validBookings.filter(row => {
       const date = parseDate(row.PETICION);
       return date && date >= weekAgo;
     });
 
+    const previousWeekBookings = validBookings.filter(row => {
+      const date = parseDate(row.PETICION);
+      return date && date >= twoWeeksAgo && date < weekAgo;
+    });
+
     const monthlyBookings = validBookings.filter(row => {
       const date = parseDate(row.PETICION);
       return date && date >= monthAgo;
+    });
+
+    const previousMonthBookings = validBookings.filter(row => {
+      const date = parseDate(row.PETICION);
+      return date && date >= twoMonthsAgo && date < monthAgo;
     });
 
     console.log(`Daily: ${dailyBookings.length}, Weekly: ${weeklyBookings.length}, Monthly: ${monthlyBookings.length}`);
@@ -193,20 +214,34 @@ Deno.serve(async (req) => {
       return { whatsapp, crm, web };
     };
 
+    // Get average rating from reviews
+    const { data: reviews } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('approved', true);
+    
+    const averageRating = reviews && reviews.length > 0 
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+      : 0;
+
     return new Response(
       JSON.stringify({
         daily: {
           total: dailyBookings.length,
+          previous: previousDayBookings.length,
           byChannel: countByChannel(dailyBookings),
         },
         weekly: {
           total: weeklyBookings.length,
+          previous: previousWeekBookings.length,
           byChannel: countByChannel(weeklyBookings),
         },
         monthly: {
           total: monthlyBookings.length,
+          previous: previousMonthBookings.length,
           byChannel: countByChannel(monthlyBookings),
         },
+        averageRating: Math.round(averageRating * 10) / 10,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
