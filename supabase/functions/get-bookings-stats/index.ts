@@ -87,13 +87,23 @@ Deno.serve(async (req) => {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
 
-    // Read from Google Sheets
-    const sheetsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A2:N1000`;
+    // Read from Google Sheets - Try without sheet name first to get all data
+    const sheetsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A2:N1000`;
+    console.log(`Fetching from: ${sheetsUrl}`);
+    
     const sheetsResponse = await fetch(sheetsUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
+    if (!sheetsResponse.ok) {
+      const errorText = await sheetsResponse.text();
+      console.error('Sheets API error:', errorText);
+      throw new Error(`Failed to fetch from Google Sheets: ${sheetsResponse.status} - ${errorText}`);
+    }
+
     const sheetsData = await sheetsResponse.json();
+    console.log(`Raw response keys:`, Object.keys(sheetsData));
+    console.log(`Values array length:`, sheetsData.values?.length || 0);
     const rows: BookingRow[] = (sheetsData.values || []).map((row: string[]) => ({
       NOMBRE: row[0] || '',
       RECORDATORIO: row[1] || '',
