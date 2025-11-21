@@ -335,7 +335,8 @@ Deno.serve(async (req) => {
       } catch (error) {
         console.error('Error processing row:', error);
         errorCount++;
-        errors.push(`Error processing ${row.NOMBRE}: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        errors.push(`Error processing ${row.NOMBRE}: ${errorMessage}`);
       }
     }
 
@@ -355,10 +356,11 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in sync-bookings-from-sheets:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: errorMessage,
       }),
       {
         status: 500,
