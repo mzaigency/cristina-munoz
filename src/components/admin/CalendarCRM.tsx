@@ -511,56 +511,58 @@ export const CalendarCRM = () => {
     const dayOfWeek = dayDate.getDay();
     const isSaturday = dayOfWeek === 6;
     const isSunday = dayOfWeek === 0;
-    
+
     if (isSunday) {
       return {
         hours: [],
         startHour: 0,
-        endHour: 0
+        endHour: 0,
       };
     }
 
     // Horarios por defecto
     let defaultStartHour = 9;
     let defaultEndHour = 19;
-    
+
     if (isSaturday) {
       defaultStartHour = 8;
       defaultEndHour = 13;
     }
 
-    // Buscar citas para este día y ajustar horarios dinámicamente
-    const dateKey = format(dayDate, "yyyy-MM-dd");
-    const dayEvents = groupedEvents[dateKey] || [];
-    
+    // Buscar citas para este día directamente desde "events"
+    const dayEvents = events.filter((event) => {
+      if (!event.start?.dateTime) return false;
+      try {
+        const eventDate = parseISO(event.start.dateTime);
+        return isSameDay(eventDate, dayDate);
+      } catch {
+        return false;
+      }
+    });
+
     let actualStartHour = defaultStartHour;
     let actualEndHour = defaultEndHour;
-    
-    // Si hay citas, ajustar el rango para incluirlas todas
+
     if (dayEvents.length > 0) {
-      dayEvents.forEach(event => {
+      dayEvents.forEach((event) => {
         if (event.start?.dateTime && event.end?.dateTime) {
           const startTime = parseISO(event.start.dateTime);
           const endTime = parseISO(event.end.dateTime);
           const eventStartHour = startTime.getHours();
           const eventEndHour = endTime.getHours() + (endTime.getMinutes() > 0 ? 1 : 0);
-          
+
           actualStartHour = Math.min(actualStartHour, eventStartHour);
           actualEndHour = Math.max(actualEndHour, eventEndHour);
         }
       });
     }
 
-    // Generar array de horas desde actualStartHour hasta actualEndHour
-    const hours = Array.from(
-      { length: actualEndHour - actualStartHour },
-      (_, i) => actualStartHour + i
-    );
+    const hours = Array.from({ length: actualEndHour - actualStartHour }, (_, i) => actualStartHour + i);
 
     return {
       hours,
       startHour: actualStartHour,
-      endHour: actualEndHour
+      endHour: actualEndHour,
     };
   };
   const calculateEventPosition = (event: CalendarEvent, dayDate: Date) => {
