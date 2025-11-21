@@ -116,10 +116,15 @@ Deno.serve(async (req) => {
     const monthAgo = new Date(today);
     monthAgo.setMonth(monthAgo.getMonth() - 1);
 
+    console.log(`Date ranges - Today: ${today.toISOString()}, Week ago: ${weekAgo.toISOString()}, Month ago: ${monthAgo.toISOString()}`);
+
     // Filter bookings with valid ID_Parte 1 (actual bookings)
     const validBookings = rows.filter(row => row['ID_Parte 1'] && row['ID_Parte 1'].trim() !== '');
     
     console.log(`Valid bookings: ${validBookings.length}`);
+    if (validBookings.length > 0) {
+      console.log('Sample booking:', JSON.stringify(validBookings[0]));
+    }
 
     // Parse dates from PETICION field (ISO format)
     const parseDate = (peticion: string): Date | null => {
@@ -131,6 +136,16 @@ Deno.serve(async (req) => {
         return null;
       }
     };
+
+    // Log some date parsing examples
+    if (validBookings.length > 0) {
+      const sampleDates = validBookings.slice(0, 5).map(b => ({
+        peticion: b.PETICION,
+        parsed: parseDate(b.PETICION),
+        canal: b.CANAL
+      }));
+      console.log('Sample date parsing:', JSON.stringify(sampleDates));
+    }
 
     const dailyBookings = validBookings.filter(row => {
       const date = parseDate(row.PETICION);
