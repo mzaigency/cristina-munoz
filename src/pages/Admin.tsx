@@ -29,33 +29,33 @@ export default function Admin() {
 
     // Subscribe to real-time updates for reviews
     const reviewsChannel = supabase
-      .channel('pending-reviews-count')
+      .channel("pending-reviews-count")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'reviews'
+          event: "*",
+          schema: "public",
+          table: "reviews",
         },
         () => {
           fetchPendingReviews();
-        }
+        },
       )
       .subscribe();
 
     // Subscribe to real-time updates for WhatsApp contacts
     const whatsappChannel = supabase
-      .channel('whatsapp-unread-count')
+      .channel("whatsapp-unread-count")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'whatsapp_contacts'
+          event: "*",
+          schema: "public",
+          table: "whatsapp_contacts",
         },
         () => {
           fetchWhatsAppUnreadCount();
-        }
+        },
       )
       .subscribe();
 
@@ -68,28 +68,26 @@ export default function Admin() {
   const fetchPendingReviews = async () => {
     try {
       const { count } = await supabase
-        .from('reviews')
-        .select('*', { count: 'exact', head: true })
-        .eq('approved', false);
-      
+        .from("reviews")
+        .select("*", { count: "exact", head: true })
+        .eq("approved", false);
+
       setPendingReviewsCount(count || 0);
     } catch (error) {
-      console.error('Error fetching pending reviews:', error);
+      console.error("Error fetching pending reviews:", error);
     }
   };
 
   const fetchWhatsAppUnreadCount = async () => {
     try {
-      const { data, error } = await supabase
-        .from('whatsapp_contacts')
-        .select('unread_count');
-      
+      const { data, error } = await supabase.from("whatsapp_contacts").select("unread_count");
+
       if (error) throw error;
-      
+
       const totalUnread = data?.reduce((sum, contact) => sum + (contact.unread_count || 0), 0) || 0;
       setWhatsappUnreadCount(totalUnread);
     } catch (error) {
-      console.error('Error fetching WhatsApp unread count:', error);
+      console.error("Error fetching WhatsApp unread count:", error);
     }
   };
 
@@ -104,12 +102,9 @@ export default function Admin() {
     }
 
     setUserEmail(session.user.email || "");
-    
+
     // Check if user has admin or stylist role
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", session.user.id);
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id);
 
     if (!roles || roles.length === 0) {
       toast({
@@ -128,18 +123,18 @@ export default function Admin() {
   const handleSignOut = async () => {
     try {
       // Forzar limpieza local incluso si la sesión del servidor falla
-      await supabase.auth.signOut({ scope: 'local' });
+      await supabase.auth.signOut({ scope: "local" });
     } catch (error) {
       console.error("Error during sign out:", error);
     }
-    
+
     // Limpiar localStorage manualmente por si acaso
     try {
-      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem("supabase.auth.token");
     } catch (e) {
       console.error("Error clearing localStorage:", e);
     }
-    
+
     // Siempre redirigir a auth
     navigate("/auth", { replace: true });
   };
@@ -176,43 +171,43 @@ export default function Admin() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="inline-flex h-12 items-center justify-center gap-1 rounded-lg bg-transparent p-0 border-b w-full max-w-none">
-            <TabsTrigger 
-              value="calendar" 
+            <TabsTrigger
+              value="calendar"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
               <Calendar className="h-4 w-4" />
               <span className="hidden md:inline">Calendario</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="reviews" 
+            <TabsTrigger
+              value="reviews"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
             >
               <Star className="h-4 w-4" />
               <span className="hidden md:inline">Reseñas</span>
               {pendingReviewsCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 md:relative md:top-0 md:right-0 md:ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
-                  {pendingReviewsCount > 99 ? '99+' : pendingReviewsCount}
+                  {pendingReviewsCount > 99 ? "99+" : pendingReviewsCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger 
-              value="whatsapp" 
+            <TabsTrigger
+              value="whatsapp"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
             >
               <MessageSquare className="h-4 w-4" />
               <span className="hidden md:inline">WhatsApp</span>
               {whatsappUnreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 md:relative md:top-0 md:right-0 md:ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
-                  {whatsappUnreadCount > 99 ? '99+' : whatsappUnreadCount}
+                  {whatsappUnreadCount > 99 ? "99+" : whatsappUnreadCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger 
-              value="security" 
+            <TabsTrigger
+              value="security"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
               <Shield className="h-4 w-4" />
-              <span className="hidden md:inline">Seguridad</span>
+              <span className="hidden md:inline">Estadísticas</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="calendar" className="mt-6">
