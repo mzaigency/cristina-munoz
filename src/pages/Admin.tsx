@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, Shield } from "lucide-react";
+import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, BarChart3 } from "lucide-react";
 import { CalendarCRM } from "@/components/admin/CalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
@@ -206,7 +206,7 @@ export default function Admin() {
               value="security"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
-              <Shield className="h-4 w-4" />
+              <BarChart3 className="h-4 w-4" />
               <span className="hidden md:inline">Estadísticas</span>
             </TabsTrigger>
           </TabsList>
