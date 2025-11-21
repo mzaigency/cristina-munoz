@@ -34,37 +34,40 @@ interface BookingStats {
 }
 
 const COLORS = {
-  whatsapp: 'hsl(145, 63%, 42%)', // verde vivo
-  crm: 'hsl(186, 94%, 45%)', // cyan vivo
-  web: 'hsl(25, 95%, 53%)', // naranja vivo
+  whatsapp: "hsl(145, 63%, 42%)", // verde vivo
+  crm: "hsl(186, 94%, 45%)", // cyan vivo
+  web: "hsl(25, 95%, 53%)", // naranja vivo
 };
 
 export function SecurityMonitor() {
   const { toast } = useToast();
   const [stats, setStats] = useState<BookingStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [activeTab, setActiveTab] = useState<"daily" | "weekly" | "monthly">("daily");
   const [totalProfiles, setTotalProfiles] = useState(0);
 
   useEffect(() => {
     fetchBookingStats();
     fetchTotalProfiles();
-    
+
     // Refresh stats every 5 minutes
-    const interval = setInterval(() => {
-      fetchBookingStats();
-      fetchTotalProfiles();
-    }, 5 * 60 * 1000);
-    
+    const interval = setInterval(
+      () => {
+        fetchBookingStats();
+        fetchTotalProfiles();
+      },
+      5 * 60 * 1000,
+    );
+
     return () => clearInterval(interval);
   }, []);
 
   const fetchBookingStats = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('get-bookings-stats');
-      
+      const { data, error } = await supabase.functions.invoke("get-bookings-stats");
+
       if (error) throw error;
-      
+
       setStats(data);
     } catch (error) {
       console.error("Error fetching booking stats:", error);
@@ -80,12 +83,10 @@ export function SecurityMonitor() {
 
   const fetchTotalProfiles = async () => {
     try {
-      const { count, error } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-      
+      const { count, error } = await supabase.from("profiles").select("*", { count: "exact", head: true });
+
       if (error) throw error;
-      
+
       setTotalProfiles(count || 0);
     } catch (error) {
       console.error("Error fetching profiles count:", error);
@@ -107,9 +108,9 @@ export function SecurityMonitor() {
   );
 
   const getChartData = (byChannel: { whatsapp: number; crm: number; web: number }) => [
-    { name: 'WhatsApp', value: byChannel.whatsapp, color: COLORS.whatsapp },
-    { name: 'CRM', value: byChannel.crm, color: COLORS.crm },
-    { name: 'Web', value: byChannel.web, color: COLORS.web },
+    { name: "WhatsApp", value: byChannel.whatsapp, color: COLORS.whatsapp },
+    { name: "CRM", value: byChannel.crm, color: COLORS.crm },
+    { name: "Web", value: byChannel.web, color: COLORS.web },
   ];
 
   if (loading) {
@@ -132,30 +133,15 @@ export function SecurityMonitor() {
   }
 
   const currentPeriodData = stats[activeTab];
-  const periodLabel = activeTab === 'daily' ? 'Hoy' : activeTab === 'weekly' ? 'Esta Semana' : 'Este Mes';
+  const periodLabel = activeTab === "daily" ? "Hoy" : activeTab === "weekly" ? "Esta Semana" : "Este Mes";
 
   return (
     <div className="space-y-6">
       {/* Métricas de Seguridad */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard
-          icon={Shield}
-          label="Sistema Seguro"
-          value="Activo"
-          color="text-green-600"
-        />
-        <StatCard
-          icon={Users}
-          label="Clientes Activos"
-          value={totalProfiles}
-          color="text-blue-600"
-        />
-        <StatCard
-          icon={AlertTriangle}
-          label="Actividad Sospechosa"
-          value="0"
-          color="text-orange-600"
-        />
+        <StatCard icon={Shield} label="Sistema Seguro" value="Activo" color="text-green-600" />
+        <StatCard icon={Users} label="Clientes Activos" value={totalProfiles} color="text-blue-600" />
+        <StatCard icon={AlertTriangle} label="Actividad Sospechosa" value="0" color="text-orange-600" />
       </div>
 
       {/* Gráfico Principal con Pestañas */}
@@ -190,18 +176,14 @@ export function SecurityMonitor() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
                   }}
                 />
-                <Legend 
-                  verticalAlign="bottom"
-                  height={36}
-                  iconType="circle"
-                />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
 
@@ -209,15 +191,17 @@ export function SecurityMonitor() {
             <div className="space-y-4">
               <div className="text-center mb-6">
                 <p className="text-4xl font-bold">{currentPeriodData.total}</p>
-                <p className="text-sm text-muted-foreground mt-1">Total Citas {periodLabel}</p>
+                <p className="text-sm text-muted-foreground mt-1">Total Reservas {periodLabel}</p>
               </div>
-              
+
               <div className="space-y-3">
-                <div className="p-4 rounded-lg" style={{ backgroundColor: 'hsl(145, 63%, 95%)' }}>
+                <div className="p-4 rounded-lg" style={{ backgroundColor: "hsl(145, 63%, 95%)" }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS.whatsapp }}></div>
-                      <p className="font-medium" style={{ color: COLORS.whatsapp }}>WhatsApp</p>
+                      <p className="font-medium" style={{ color: COLORS.whatsapp }}>
+                        WhatsApp
+                      </p>
                     </div>
                     <p className="text-2xl font-bold" style={{ color: COLORS.whatsapp }}>
                       {currentPeriodData.byChannel.whatsapp}
@@ -225,11 +209,13 @@ export function SecurityMonitor() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg" style={{ backgroundColor: 'hsl(186, 94%, 95%)' }}>
+                <div className="p-4 rounded-lg" style={{ backgroundColor: "hsl(186, 94%, 95%)" }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS.crm }}></div>
-                      <p className="font-medium" style={{ color: COLORS.crm }}>CRM</p>
+                      <p className="font-medium" style={{ color: COLORS.crm }}>
+                        CRM
+                      </p>
                     </div>
                     <p className="text-2xl font-bold" style={{ color: COLORS.crm }}>
                       {currentPeriodData.byChannel.crm}
@@ -237,11 +223,13 @@ export function SecurityMonitor() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg" style={{ backgroundColor: 'hsl(25, 95%, 95%)' }}>
+                <div className="p-4 rounded-lg" style={{ backgroundColor: "hsl(25, 95%, 95%)" }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS.web }}></div>
-                      <p className="font-medium" style={{ color: COLORS.web }}>Web</p>
+                      <p className="font-medium" style={{ color: COLORS.web }}>
+                        Web
+                      </p>
                     </div>
                     <p className="text-2xl font-bold" style={{ color: COLORS.web }}>
                       {currentPeriodData.byChannel.web}
