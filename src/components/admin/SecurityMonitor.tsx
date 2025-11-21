@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, TrendingUp, PieChart as PieChartIcon } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, TrendingUp, Shield, Users, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
@@ -33,15 +34,16 @@ interface BookingStats {
 }
 
 const COLORS = {
-  whatsapp: 'hsl(142, 76%, 36%)', // verde
-  crm: 'hsl(221, 83%, 53%)', // azul
-  web: 'hsl(25, 75%, 47%)', // marrón
+  whatsapp: 'hsl(145, 63%, 42%)', // verde vivo
+  crm: 'hsl(186, 94%, 45%)', // cyan vivo
+  web: 'hsl(25, 95%, 53%)', // naranja vivo
 };
 
 export function SecurityMonitor() {
   const { toast } = useToast();
   const [stats, setStats] = useState<BookingStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
   useEffect(() => {
     fetchBookingStats();
@@ -110,144 +112,122 @@ export function SecurityMonitor() {
     );
   }
 
+  const currentPeriodData = stats[activeTab];
+  const periodLabel = activeTab === 'daily' ? 'Hoy' : activeTab === 'weekly' ? 'Esta Semana' : 'Este Mes';
+
   return (
     <div className="space-y-6">
-      {/* Estadísticas principales */}
+      {/* Métricas de Seguridad */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
-          icon={Calendar}
-          label="Citas Hoy"
-          value={stats.daily.total}
-          color="text-primary"
+          icon={Shield}
+          label="Sistema Seguro"
+          value="Activo"
+          color="text-green-600"
         />
         <StatCard
-          icon={TrendingUp}
-          label="Citas Esta Semana"
-          value={stats.weekly.total}
+          icon={Users}
+          label="Clientes Activos"
+          value={currentPeriodData.total}
           color="text-blue-600"
         />
         <StatCard
-          icon={PieChartIcon}
-          label="Citas Este Mes"
-          value={stats.monthly.total}
-          color="text-purple-600"
+          icon={AlertTriangle}
+          label="Actividad Sospechosa"
+          value="0"
+          color="text-orange-600"
         />
       </div>
 
-      {/* Gráficos circulares */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Diario */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Citas Hoy por Canal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={getChartData(stats.daily.byChannel)}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {getChartData(stats.daily.byChannel).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Semanal */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Citas Semanales por Canal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={getChartData(stats.weekly.byChannel)}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {getChartData(stats.weekly.byChannel).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Mensual */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Citas Mensuales por Canal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={getChartData(stats.monthly.byChannel)}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {getChartData(stats.monthly.byChannel).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Detalle por canal */}
+      {/* Gráfico Principal con Pestañas */}
       <Card>
         <CardHeader>
-          <CardTitle>Resumen Detallado</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Estadísticas de Reservas</span>
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-auto">
+              <TabsList>
+                <TabsTrigger value="daily">Día</TabsTrigger>
+                <TabsTrigger value="weekly">Semana</TabsTrigger>
+                <TabsTrigger value="monthly">Mes</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-4 rounded-lg" style={{ backgroundColor: 'hsl(142, 76%, 96%)' }}>
-                <p className="text-sm font-medium" style={{ color: COLORS.whatsapp }}>WhatsApp</p>
-                <div className="mt-2 space-y-1">
-                  <p className="text-2xl font-bold" style={{ color: COLORS.whatsapp }}>{stats.daily.byChannel.whatsapp}</p>
-                  <p className="text-xs text-muted-foreground">Hoy</p>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            {/* Gráfico */}
+            <ResponsiveContainer width="100%" height={350}>
+              <PieChart>
+                <Pie
+                  data={getChartData(currentPeriodData.byChannel)}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={80}
+                  outerRadius={130}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {getChartData(currentPeriodData.byChannel).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                />
+                <Legend 
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                />
+              </PieChart>
+            </ResponsiveContainer>
+
+            {/* Estadísticas por Canal */}
+            <div className="space-y-4">
+              <div className="text-center mb-6">
+                <p className="text-4xl font-bold">{currentPeriodData.total}</p>
+                <p className="text-sm text-muted-foreground mt-1">Total Citas {periodLabel}</p>
               </div>
-              <div className="p-4 rounded-lg" style={{ backgroundColor: 'hsl(221, 83%, 96%)' }}>
-                <p className="text-sm font-medium" style={{ color: COLORS.crm }}>CRM</p>
-                <div className="mt-2 space-y-1">
-                  <p className="text-2xl font-bold" style={{ color: COLORS.crm }}>{stats.daily.byChannel.crm}</p>
-                  <p className="text-xs text-muted-foreground">Hoy</p>
+              
+              <div className="space-y-3">
+                <div className="p-4 rounded-lg" style={{ backgroundColor: 'hsl(145, 63%, 95%)' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS.whatsapp }}></div>
+                      <p className="font-medium" style={{ color: COLORS.whatsapp }}>WhatsApp</p>
+                    </div>
+                    <p className="text-2xl font-bold" style={{ color: COLORS.whatsapp }}>
+                      {currentPeriodData.byChannel.whatsapp}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="p-4 rounded-lg" style={{ backgroundColor: 'hsl(25, 75%, 96%)' }}>
-                <p className="text-sm font-medium" style={{ color: COLORS.web }}>Web</p>
-                <div className="mt-2 space-y-1">
-                  <p className="text-2xl font-bold" style={{ color: COLORS.web }}>{stats.daily.byChannel.web}</p>
-                  <p className="text-xs text-muted-foreground">Hoy</p>
+
+                <div className="p-4 rounded-lg" style={{ backgroundColor: 'hsl(186, 94%, 95%)' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS.crm }}></div>
+                      <p className="font-medium" style={{ color: COLORS.crm }}>CRM</p>
+                    </div>
+                    <p className="text-2xl font-bold" style={{ color: COLORS.crm }}>
+                      {currentPeriodData.byChannel.crm}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg" style={{ backgroundColor: 'hsl(25, 95%, 95%)' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS.web }}></div>
+                      <p className="font-medium" style={{ color: COLORS.web }}>Web</p>
+                    </div>
+                    <p className="text-2xl font-bold" style={{ color: COLORS.web }}>
+                      {currentPeriodData.byChannel.web}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

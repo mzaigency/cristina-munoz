@@ -9,7 +9,6 @@ import { es } from "date-fns/locale";
 import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, Shield } from "lucide-react";
 import { CalendarCRM } from "@/components/admin/CalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
-import { AuditLogsViewer } from "@/components/admin/AuditLogsViewer";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
 import { WhatsAppManager } from "@/components/admin/WhatsAppManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -225,9 +224,8 @@ export default function Admin() {
           <TabsContent value="whatsapp" className="mt-6">
             <WhatsAppManager />
           </TabsContent>
-          <TabsContent value="security" className="mt-6 space-y-6">
+          <TabsContent value="security" className="mt-6">
             <SecurityMonitor />
-            <AuditLogsViewer />
           </TabsContent>
         </Tabs>
       </div>
