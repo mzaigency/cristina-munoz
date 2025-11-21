@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, TrendingUp, Shield, Users, AlertTriangle } from "lucide-react";
+import { Calendar, TrendingUp, Shield, Users, AlertTriangle, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface BookingStats {
   daily: {
     total: number;
+    previous: number;
     byChannel: {
       whatsapp: number;
       crm: number;
@@ -17,6 +18,7 @@ interface BookingStats {
   };
   weekly: {
     total: number;
+    previous: number;
     byChannel: {
       whatsapp: number;
       crm: number;
@@ -25,12 +27,14 @@ interface BookingStats {
   };
   monthly: {
     total: number;
+    previous: number;
     byChannel: {
       whatsapp: number;
       crm: number;
       web: number;
     };
   };
+  averageRating: number;
 }
 
 const COLORS = {
@@ -93,19 +97,37 @@ export function SecurityMonitor() {
     }
   };
 
-  const StatCard = ({ icon: Icon, label, value, color }: any) => (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
+  const StatCard = ({ icon: Icon, label, value, color, change }: any) => {
+    const hasChange = change !== undefined && change !== null;
+    const isPositive = change > 0;
+    const isNegative = change < 0;
+
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">{label}</p>
+              <p className="text-2xl font-bold mt-1">{value}</p>
+              {hasChange && (
+                <p
+                  className={`text-sm mt-1 flex items-center gap-1 ${
+                    isPositive ? "text-green-600" : isNegative ? "text-red-600" : "text-muted-foreground"
+                  }`}
+                >
+                  {isPositive && "↑"}
+                  {isNegative && "↓"}
+                  {change > 0 ? "+" : ""}
+                  {change}% vs período anterior
+                </p>
+              )}
+            </div>
+            <Icon className={`h-8 w-8 ${color}`} />
           </div>
-          <Icon className={`h-8 w-8 ${color}`} />
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   const getChartData = (byChannel: { whatsapp: number; crm: number; web: number }) => [
     { name: "WhatsApp", value: byChannel.whatsapp, color: COLORS.whatsapp },
@@ -135,12 +157,32 @@ export function SecurityMonitor() {
   const currentPeriodData = stats[activeTab];
   const periodLabel = activeTab === "daily" ? "Hoy" : activeTab === "weekly" ? "Esta Semana" : "Este Mes";
 
+  // Calculate percentage change
+  const calculateChange = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100);
+  };
+
+  const bookingsChange = calculateChange(currentPeriodData.total, currentPeriodData.previous);
+
   return (
     <div className="space-y-6">
-      {/* Métricas de Seguridad */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard icon={Shield} label="Sistema Seguro" value="Activo" color="text-green-600" />
+      {/* Métricas principales */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatCard
+          icon={Calendar}
+          label={`Reservas ${periodLabel}`}
+          value={currentPeriodData.total}
+          color="text-primary"
+          change={bookingsChange}
+        />
         <StatCard icon={Users} label="Clientes Activos" value={totalProfiles} color="text-blue-600" />
+        <StatCard
+          icon={Star}
+          label="Valoración Media"
+          value={stats.averageRating.toFixed(1)}
+          color="text-yellow-600"
+        />
         <StatCard icon={AlertTriangle} label="Actividad Sospechosa" value="0" color="text-orange-600" />
       </div>
 
