@@ -14,39 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      audit_logs: {
-        Row: {
-          action: string
-          created_at: string
-          id: string
-          ip_address: unknown
-          record_id: string | null
-          table_name: string
-          user_agent: string | null
-          user_id: string | null
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          id?: string
-          ip_address?: unknown
-          record_id?: string | null
-          table_name: string
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          id?: string
-          ip_address?: unknown
-          record_id?: string | null
-          table_name?: string
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       bookings: {
         Row: {
           calendar_id: string | null
@@ -338,7 +305,6 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
-      cleanup_old_audit_logs: { Args: never; Returns: undefined }
       get_my_bookings: {
         Args: never
         Returns: {
