@@ -447,7 +447,7 @@ export const CalendarCRM = () => {
     }
   };
 
-  // Check if a date has blocking events and return array of blocked dates
+  // Devuelve todas las fechas bloqueadas por vacaciones (solo días completos)
   const getBlockedDates = () => {
     const blockedDates: Date[] = [];
     
@@ -461,10 +461,19 @@ export const CalendarCRM = () => {
         if (!startStr || !endStr) return;
 
         const eventStart = startOfDay(parseISO(startStr));
-        const eventEnd = endOfDay(parseISO(endStr));
+        let eventEnd = parseISO(endStr);
+
+        // Si es evento de día completo (solo fecha) y el final es distinto al inicio,
+        // Google lo trata como exclusivo -> restamos 1 día al final efectivo.
+        const isAllDayRange = startStr.length === 10 && endStr.length === 10 && startStr !== endStr;
+        if (isAllDayRange) {
+          eventEnd = addDays(eventEnd, -1);
+        }
+
+        const eventEndDay = endOfDay(eventEnd);
         
         let currentDate = new Date(eventStart);
-        while (currentDate <= eventEnd) {
+        while (currentDate <= eventEndDay) {
           blockedDates.push(new Date(currentDate));
           currentDate = addDays(currentDate, 1);
         }
@@ -687,8 +696,16 @@ export const CalendarCRM = () => {
             if (!startStr || !endStr) return false;
             try {
               const start = startOfDay(parseISO(startStr));
-              const end = endOfDay(parseISO(endStr));
-              return day >= start && day <= end;
+              let end = parseISO(endStr);
+
+              // Ajuste para eventos de día completo: fin exclusivo -> restamos 1 día
+              const isAllDayRange = startStr.length === 10 && endStr.length === 10 && startStr !== endStr;
+              if (isAllDayRange) {
+                end = addDays(end, -1);
+              }
+
+              const endDay = endOfDay(end);
+              return day >= start && day <= endDay;
             } catch {
               return false;
             }
