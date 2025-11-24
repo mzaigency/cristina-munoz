@@ -599,6 +599,13 @@ export const CalendarCRM = () => {
     length: 7
   }, (_, i) => addDays(weekStart, i));
   const groupedEvents = groupEventsByDate(events);
+  
+  // Filtrar eventos de bloqueo
+  const blockedEvents = events.filter(event => 
+    event.summary.includes("🔒 BLOQUEADO") || 
+    event.summary.includes("🌴 VACACIONES")
+  );
+  
   return <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
@@ -615,6 +622,43 @@ export const CalendarCRM = () => {
           </Button>
         </div>
       </div>
+
+      {/* Sección de días bloqueados */}
+      {blockedEvents.length > 0 && (
+        <Card className="border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Ban className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-orange-900 dark:text-orange-100 mb-2">
+                  Períodos Bloqueados en esta Semana ({blockedEvents.length})
+                </h3>
+                <div className="space-y-2">
+                  {blockedEvents.map(event => {
+                    const isVacation = event.summary.includes("🌴 VACACIONES");
+                    const stylist = event.summary.includes("CRIS") ? "CRIS" : 
+                                   event.summary.includes("DESI") ? "DESI" : "AMBAS";
+                    
+                    return (
+                      <div key={event.id} className="flex items-center gap-2 text-xs">
+                        <Badge variant="outline" className="bg-orange-100 dark:bg-orange-900/30 border-orange-300 dark:border-orange-700 text-orange-800 dark:text-orange-200">
+                          {stylist}
+                        </Badge>
+                        <span className="text-orange-800 dark:text-orange-200">
+                          {isVacation ? "🌴 Vacaciones" : "🔒 Bloqueado"}
+                        </span>
+                        <span className="text-orange-700 dark:text-orange-300">
+                          {safeFormatDateTime(event.start?.dateTime, "d MMM")} - {safeFormatDateTime(event.end?.dateTime, "d MMM")}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:flex-wrap">
         <div className="flex gap-1 md:gap-2">
@@ -740,7 +784,17 @@ export const CalendarCRM = () => {
                         if (!position) return null;
                         const widthPercentage = 100 / totalColumns;
                         const leftPercentage = column * widthPercentage;
-                        return <div key={event.id} className={`absolute group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""}`} style={{
+                        
+                        // Detectar si es un evento de bloqueo
+                        const isBlockedEvent = event.summary.includes("🔒 BLOQUEADO") || event.summary.includes("🌴 VACACIONES");
+                        const bgClass = isBlockedEvent 
+                          ? "bg-orange-50 dark:bg-orange-950/20" 
+                          : "bg-blue-50 dark:bg-blue-950/20";
+                        const borderClass = isBlockedEvent
+                          ? "border-orange-300 dark:border-orange-700"
+                          : "border-blue-200 dark:border-blue-800";
+                        
+                        return <div key={event.id} className={`absolute group ${bgClass} border ${borderClass} rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""}`} style={{
                           top: `${position.top}px`,
                           height: `${Math.max(position.height, 40)}px`,
                           left: `${leftPercentage}%`,
@@ -748,7 +802,9 @@ export const CalendarCRM = () => {
                         }}>
                                     {/* Contenido de la cita... */}
                                     <div className="flex items-start gap-1 md:gap-2 h-full">
-                                      <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-3 h-3 md:w-4 md:h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0" />
+                                      {!isBlockedEvent && (
+                                        <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-3 h-3 md:w-4 md:h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0" />
+                                      )}
                                       <div className="flex-1 min-w-0 overflow-hidden">
                                         <p className={`text-[10px] md:text-xs font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}>
                                           {event.summary}
@@ -815,7 +871,17 @@ export const CalendarCRM = () => {
                         if (!position) return null;
                         const widthPercentage = 100 / totalColumns;
                         const leftPercentage = column * widthPercentage;
-                        return <div key={event.id} className={`absolute group bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""}`} style={{
+                        
+                        // Detectar si es un evento de bloqueo
+                        const isBlockedEvent = event.summary.includes("🔒 BLOQUEADO") || event.summary.includes("🌴 VACACIONES");
+                        const bgClass = isBlockedEvent 
+                          ? "bg-orange-50 dark:bg-orange-950/20" 
+                          : "bg-purple-50 dark:bg-purple-950/20";
+                        const borderClass = isBlockedEvent
+                          ? "border-orange-300 dark:border-orange-700"
+                          : "border-purple-200 dark:border-purple-800";
+                        
+                        return <div key={event.id} className={`absolute group ${bgClass} border ${borderClass} rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""}`} style={{
                           top: `${position.top}px`,
                           height: `${Math.max(position.height, 40)}px`,
                           left: `${leftPercentage}%`,
@@ -823,7 +889,9 @@ export const CalendarCRM = () => {
                         }}>
                                     {/* Contenido de la cita... */}
                                     <div className="flex items-start gap-1 md:gap-2 h-full">
-                                      <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-3 h-3 md:w-4 md:h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0" />
+                                      {!isBlockedEvent && (
+                                        <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-3 h-3 md:w-4 md:h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0" />
+                                      )}
                                       <div className="flex-1 min-w-0 overflow-hidden">
                                         <p className={`text-[10px] md:text-xs font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}>
                                           {event.summary}
