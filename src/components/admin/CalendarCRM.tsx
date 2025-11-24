@@ -677,9 +677,19 @@ export const CalendarCRM = () => {
           <TabsList className="w-full justify-start overflow-x-auto flex-nowrap md:flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {weekDays.map(day => {
           const dateKey = format(day, "yyyy-MM-dd");
-          const dayEvents = groupedEvents[dateKey] || [];
+          // Contar eventos que se solapan con este día (no solo los que empiezan ese día)
+          const dayEvents = events.filter(e => {
+            if (!e.start?.dateTime || !e.end?.dateTime) return false;
+            try {
+              const start = parseISO(e.start.dateTime);
+              const end = parseISO(e.end.dateTime);
+              return day >= startOfDay(start) && day <= endOfDay(end);
+            } catch {
+              return false;
+            }
+          });
           const isToday = isSameDay(day, new Date());
-          // Solo marcar como bloqueado cuando haya eventos de VACACIONES (bloqueo de día/semana/mes completo)
+          // Día bloqueado entero si algún evento de VACACIONES se solapa con el día
           const hasFullBlock = dayEvents.some(e =>
             e.summary?.includes("🌴 VACACIONES")
           );
