@@ -110,7 +110,20 @@ export const ServicesSection = () => {
           return <ScrollReveal key={idx} delay={idx * 150}>
                   <Card className="overflow-hidden border-none shadow-lg hover-lift group smooth-3d">
                     <div className="relative h-48 overflow-hidden">
-                      <img src={category.image} alt={`Servicio de ${category.category.toLowerCase()} en Cristina Muñoz - Peluquería profesional en Santpedor`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                      <picture>
+                        <source 
+                          srcSet={category.image.replace(/\.(jpg|png)$/, '.webp')} 
+                          type="image/webp"
+                        />
+                        <img 
+                          src={category.image} 
+                          alt={`Servicio de ${category.category.toLowerCase()} en Cristina Muñoz - Peluquería profesional en Santpedor`} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                          loading="lazy"
+                          width={640}
+                          height={480}
+                        />
+                      </picture>
                     </div>
                     <CardHeader>
                       <div className="mb-2 flex items-center gap-2">

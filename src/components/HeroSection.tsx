@@ -11,12 +11,21 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
   return (
     <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <img 
-          src={heroImage} 
-          alt="Interior de Cristina Muñoz Peluquería en Santpedor - Salón profesional de peluquería con ambiente elegante y moderno" 
-          className="w-full h-full object-cover"
-          loading="eager"
-        />
+        <picture>
+          <source 
+            srcSet={heroImage.replace('.jpg', '.webp')} 
+            type="image/webp"
+          />
+          <img 
+            src={heroImage} 
+            alt="Interior de Cristina Muñoz Peluquería en Santpedor - Salón profesional de peluquería con ambiente elegante y moderno" 
+            className="w-full h-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+            width={1920}
+            height={1080}
+          />
+        </picture>
         <div className="absolute inset-0 bg-black/65" />
       </div>
 
