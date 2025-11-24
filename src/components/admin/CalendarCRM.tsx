@@ -679,6 +679,10 @@ export const CalendarCRM = () => {
           const dateKey = format(day, "yyyy-MM-dd");
           const dayEvents = groupedEvents[dateKey] || [];
           const isToday = isSameDay(day, new Date());
+          const hasBlock = dayEvents.some(e =>
+            e.summary?.includes("🔒 BLOQUEADO") ||
+            e.summary?.includes("🌴 VACACIONES")
+          );
           return <TabsTrigger key={dateKey} value={dateKey} className={cn("flex-col items-start gap-1 data-[state=active]:bg-background px-2 md:px-4 py-2 min-w-[100px] md:min-w-[140px]", isToday && "border-primary")}>
                   <div className="flex items-center gap-1 md:gap-2 w-full">
                     <span className="text-xs md:text-sm font-semibold capitalize">{format(day, "EEE d MMM", {
@@ -687,6 +691,9 @@ export const CalendarCRM = () => {
                     {isToday && <Badge variant="default" className="text-[9px] md:text-xs h-3.5 px-1 md:h-5 md:px-2">
                         Hoy
                       </Badge>}
+                    {hasBlock && (
+                      <Ban className="h-3 w-3 text-destructive" />
+                    )}
                   </div>
                   <span className="text-[10px] md:text-xs text-muted-foreground">
                     {dayEvents.length} {dayEvents.length === 1 ? "cita" : "citas"}
