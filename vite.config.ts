@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      injectRegister: 'inline',
       includeAssets: ["favicon.ico", "robots.txt", "logo.png"],
       manifest: {
         name: "Cristina Muñoz",
