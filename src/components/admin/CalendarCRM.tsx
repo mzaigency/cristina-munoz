@@ -23,17 +23,20 @@ interface CalendarEvent {
   summary: string;
   description?: string;
   start: {
-    dateTime: string;
-    timeZone: string;
+    dateTime?: string;
+    date?: string;
+    timeZone?: string;
   };
   end: {
-    dateTime: string;
-    timeZone: string;
+    dateTime?: string;
+    date?: string;
+    timeZone?: string;
   };
   stylist: string;
   calendarId: string;
   completed?: boolean;
 }
+
 export const CalendarCRM = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -449,24 +452,24 @@ export const CalendarCRM = () => {
     const blockedDates: Date[] = [];
     
     events.forEach(event => {
-      // Check if the event is a blocking event (vacation or locked)
-      const isBlockingEvent = event.summary?.includes("🔒 BLOQUEADO") || event.summary?.includes("🌴 VACACIONES");
+      const isBlockingEvent = event.summary?.includes("🌴 VACACIONES");
       if (!isBlockingEvent) return;
 
       try {
-        const eventStart = parseISO(event.start.dateTime);
-        const eventEnd = parseISO(event.end.dateTime);
+        const startStr = event.start.dateTime || (event.start as any).date;
+        const endStr = event.end.dateTime || (event.end as any).date || startStr;
+        if (!startStr || !endStr) return;
+
+        const eventStart = startOfDay(parseISO(startStr));
+        const eventEnd = endOfDay(parseISO(endStr));
         
-        // Add all dates in the range
-        let currentDate = startOfDay(eventStart);
-        const endDate = endOfDay(eventEnd);
-        
-        while (currentDate <= endDate) {
+        let currentDate = new Date(eventStart);
+        while (currentDate <= eventEnd) {
           blockedDates.push(new Date(currentDate));
           currentDate = addDays(currentDate, 1);
         }
       } catch (error) {
-        console.error("Error parsing event dates:", error);
+        console.error("Error parsing event dates:", error, event);
       }
     });
     
@@ -679,11 +682,13 @@ export const CalendarCRM = () => {
           const dateKey = format(day, "yyyy-MM-dd");
           // Contar eventos que se solapan con este día (no solo los que empiezan ese día)
           const dayEvents = events.filter(e => {
-            if (!e.start?.dateTime || !e.end?.dateTime) return false;
+            const startStr = e.start.dateTime || (e.start as any).date;
+            const endStr = e.end.dateTime || (e.end as any).date || startStr;
+            if (!startStr || !endStr) return false;
             try {
-              const start = parseISO(e.start.dateTime);
-              const end = parseISO(e.end.dateTime);
-              return day >= startOfDay(start) && day <= endOfDay(end);
+              const start = startOfDay(parseISO(startStr));
+              const end = endOfDay(parseISO(endStr));
+              return day >= start && day <= end;
             } catch {
               return false;
             }
