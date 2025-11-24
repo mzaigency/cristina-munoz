@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scissors, Palette, Sparkles, Flower2 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import cutService from "@/assets/cut-service.jpg";
-import coloringService from "@/assets/coloring-service-new.jpg";
-import stylingService from "@/assets/styling-treatments.png";
-import beautyService from "@/assets/beauty-service.jpg";
+import cutService from "@/assets/cut-service.webp";
+import coloringService from "@/assets/coloring-service-new.webp";
+import stylingService from "@/assets/styling-treatments.webp";
+import beautyService from "@/assets/beauty-service.webp";
 import AnimatedList from "@/components/animations/AnimatedList";
 import { Parallax3D } from "@/components/animations/Parallax3D";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
