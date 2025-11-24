@@ -1,14 +1,13 @@
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
-
 export const WhatsAppSection = () => {
   return <section className="py-10 md:py-20 bg-gradient-to-br from-background to-salon-pink-light/20">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center space-y-4 md:space-y-6">
           <div className="space-y-2 md:space-y-3">
             <SmoothTitle>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
+              <h2 className="md:text-3xl lg:text-4xl font-bold text-foreground text-3xl">
                 ¿Necesitas Ayuda?
               </h2>
             </SmoothTitle>
