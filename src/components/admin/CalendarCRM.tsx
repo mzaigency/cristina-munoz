@@ -443,6 +443,34 @@ export const CalendarCRM = () => {
       }));
     }
   };
+
+  // Check if a date has blocking events
+  const isDateBlocked = (date: Date) => {
+    return events.some(event => {
+      // Check if the event is a blocking event (vacation or locked)
+      const isBlockingEvent = event.summary?.includes("🔒 BLOQUEADO") || event.summary?.includes("🌴 VACACIONES");
+      if (!isBlockingEvent) return false;
+
+      const eventStart = parseISO(event.start.dateTime);
+      const eventEnd = parseISO(event.end.dateTime);
+      
+      // Check if the date falls within the blocking period
+      return date >= startOfDay(eventStart) && date <= endOfDay(eventEnd);
+    });
+  };
+
+  // Custom day content renderer to show blocked indicator
+  const DayContent = (props: any) => {
+    const isBlocked = isDateBlocked(props.date);
+    return (
+      <div className="relative w-full h-full flex items-center justify-center">
+        {props.date.getDate()}
+        {isBlocked && (
+          <Ban className="absolute top-0 right-0 h-3 w-3 text-destructive" />
+        )}
+      </div>
+    );
+  };
   const groupEventsByDate = (events: CalendarEvent[]) => {
     const grouped: Record<string, CalendarEvent[]> = {};
     events.forEach(event => {
@@ -1024,7 +1052,17 @@ export const CalendarCRM = () => {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={blockStartDate} onSelect={setBlockStartDate} initialFocus className="pointer-events-auto" weekStartsOn={1} />
+                  <Calendar 
+                    mode="single" 
+                    selected={blockStartDate} 
+                    onSelect={setBlockStartDate} 
+                    initialFocus 
+                    className="pointer-events-auto" 
+                    weekStartsOn={1}
+                    components={{
+                      DayContent: DayContent
+                    }}
+                  />
                 </PopoverContent>
               </Popover>
             </div>
@@ -1052,7 +1090,18 @@ export const CalendarCRM = () => {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={blockEndDate} onSelect={setBlockEndDate} disabled={date => blockStartDate ? date < blockStartDate : false} initialFocus className="pointer-events-auto" weekStartsOn={1} />
+                    <Calendar 
+                      mode="single" 
+                      selected={blockEndDate} 
+                      onSelect={setBlockEndDate} 
+                      disabled={date => blockStartDate ? date < blockStartDate : false} 
+                      initialFocus 
+                      className="pointer-events-auto" 
+                      weekStartsOn={1}
+                      components={{
+                        DayContent: DayContent
+                      }}
+                    />
                   </PopoverContent>
                 </Popover>
               </div>}
