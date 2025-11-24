@@ -444,32 +444,33 @@ export const CalendarCRM = () => {
     }
   };
 
-  // Check if a date has blocking events
-  const isDateBlocked = (date: Date) => {
-    return events.some(event => {
+  // Check if a date has blocking events and return array of blocked dates
+  const getBlockedDates = () => {
+    const blockedDates: Date[] = [];
+    
+    events.forEach(event => {
       // Check if the event is a blocking event (vacation or locked)
       const isBlockingEvent = event.summary?.includes("🔒 BLOQUEADO") || event.summary?.includes("🌴 VACACIONES");
-      if (!isBlockingEvent) return false;
+      if (!isBlockingEvent) return;
 
-      const eventStart = parseISO(event.start.dateTime);
-      const eventEnd = parseISO(event.end.dateTime);
-      
-      // Check if the date falls within the blocking period
-      return date >= startOfDay(eventStart) && date <= endOfDay(eventEnd);
+      try {
+        const eventStart = parseISO(event.start.dateTime);
+        const eventEnd = parseISO(event.end.dateTime);
+        
+        // Add all dates in the range
+        let currentDate = startOfDay(eventStart);
+        const endDate = endOfDay(eventEnd);
+        
+        while (currentDate <= endDate) {
+          blockedDates.push(new Date(currentDate));
+          currentDate = addDays(currentDate, 1);
+        }
+      } catch (error) {
+        console.error("Error parsing event dates:", error);
+      }
     });
-  };
-
-  // Custom day content renderer to show blocked indicator
-  const DayContent = (props: any) => {
-    const isBlocked = isDateBlocked(props.date);
-    return (
-      <div className="relative w-full h-full flex items-center justify-center">
-        {props.date.getDate()}
-        {isBlocked && (
-          <Ban className="absolute top-0 right-0 h-3 w-3 text-destructive" />
-        )}
-      </div>
-    );
+    
+    return blockedDates;
   };
   const groupEventsByDate = (events: CalendarEvent[]) => {
     const grouped: Record<string, CalendarEvent[]> = {};
@@ -1059,8 +1060,11 @@ export const CalendarCRM = () => {
                     initialFocus 
                     className="pointer-events-auto" 
                     weekStartsOn={1}
-                    components={{
-                      DayContent: DayContent
+                    modifiers={{
+                      blocked: getBlockedDates()
+                    }}
+                    modifiersClassNames={{
+                      blocked: "relative after:content-['🔒'] after:absolute after:top-0 after:right-0 after:text-[8px] after:leading-none"
                     }}
                   />
                 </PopoverContent>
@@ -1098,8 +1102,11 @@ export const CalendarCRM = () => {
                       initialFocus 
                       className="pointer-events-auto" 
                       weekStartsOn={1}
-                      components={{
-                        DayContent: DayContent
+                      modifiers={{
+                        blocked: getBlockedDates()
+                      }}
+                      modifiersClassNames={{
+                        blocked: "relative after:content-['🔒'] after:absolute after:top-0 after:right-0 after:text-[8px] after:leading-none"
                       }}
                     />
                   </PopoverContent>
