@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/foto-hero.webp";
+import heroImage from "@/assets/foto-hero.jpg";
 import GlareHover from "@/components/animations/GlareHover";
 import AnimatedContent from "@/components/animations/AnimatedContent";
 interface HeroSectionProps {
