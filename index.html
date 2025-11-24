@@ -23,7 +23,6 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     <link rel="dns-prefetch" href="https://www.instagram.com" />
-    <link rel="dns-prefetch" href="https://scontent-arn2-1.cdninstagram.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://lyeyzdbplrgqsvyxpfek.supabase.co" crossorigin />
@@ -33,7 +32,7 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
       media="print"
-      onload="this.media='all'"
+      onload="this.media='all';this.onload=null"
     />
     <noscript>
       <link
@@ -44,6 +43,7 @@
 
     <!-- Preload Critical Resources -->
     <link rel="preload" as="image" href="/src/assets/foto-hero.jpg" fetchpriority="high" imagesrcset="/src/assets/foto-hero.jpg 1920w" imagesizes="100vw" />
+    <link rel="modulepreload" href="/src/main.tsx" />
 
     <!-- Sitemap -->
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
@@ -159,5 +159,13 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Async PWA registration to avoid blocking
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/registerSW.js');
+        });
+      }
+    </script>
   </body>
 </html>
