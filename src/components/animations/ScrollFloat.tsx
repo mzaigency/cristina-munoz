@@ -35,15 +35,20 @@ const ScrollFloat = ({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const scroller = scrollContainerRef && scrollContainerRef.current ? scrollContainerRef.current : window;
+    
+    const scroller = scrollContainerRef && scrollContainerRef.current 
+      ? scrollContainerRef.current 
+      : window;
     const charElements = el.querySelectorAll('.char');
-    gsap.fromTo(charElements, {
+    
+    const animation = gsap.fromTo(charElements, {
       willChange: 'opacity, transform',
       opacity: 0,
       yPercent: 120,
       scaleY: 2.3,
       scaleX: 0.7,
-      transformOrigin: '50% 0%'
+      transformOrigin: '50% 0%',
+      force3D: true,
     }, {
       duration: animationDuration,
       ease: ease,
@@ -52,14 +57,27 @@ const ScrollFloat = ({
       scaleY: 1,
       scaleX: 1,
       stagger: stagger,
+      force3D: true,
+      onComplete: () => {
+        // Eliminar will-change després de l'animació per alliberar recursos
+        gsap.set(charElements, { clearProps: 'will-change' });
+      },
       scrollTrigger: {
         trigger: el,
         scroller,
         start: scrollStart,
         end: scrollEnd,
-        scrub: true
+        scrub: true,
+        fastScrollEnd: true,
       }
     });
+
+    return () => {
+      animation.kill();
+      ScrollTrigger.getAll().forEach(t => {
+        if (t.vars.trigger === el) t.kill();
+      });
+    };
   }, [scrollContainerRef, animationDuration, ease, scrollStart, scrollEnd, stagger]);
   return <h2 ref={containerRef} className={`scroll-float ${containerClassName}`}>
       <span className={`scroll-float-text ${textClassName}`}>{splitText}</span>

@@ -43,31 +43,41 @@ const AnimatedContent = ({
     const offset = reverse ? -distance : distance;
     const startPct = (1 - threshold) * 100;
 
+    // Utilitzar will-change abans de l'animació
     gsap.set(el, {
       [axis]: offset,
       scale,
-      opacity: animateOpacity ? initialOpacity : 1
+      opacity: animateOpacity ? initialOpacity : 1,
+      force3D: true,
     });
 
-    gsap.to(el, {
+    const animation = gsap.to(el, {
       [axis]: 0,
       scale: 1,
       opacity: 1,
       duration,
       ease,
       delay,
-      onComplete,
+      force3D: true,
+      onComplete: () => {
+        // Eliminar will-change després de l'animació
+        gsap.set(el, { clearProps: 'will-change' });
+        onComplete?.();
+      },
       scrollTrigger: {
         trigger: el,
         start: `top ${startPct}%`,
         toggleActions: 'play none none none',
-        once: true
+        once: true,
+        fastScrollEnd: true,
       }
     });
 
     return () => {
-      ScrollTrigger.getAll().forEach(t => t.kill());
-      gsap.killTweensOf(el);
+      animation.kill();
+      ScrollTrigger.getAll().forEach(t => {
+        if (t.vars.trigger === el) t.kill();
+      });
     };
   }, [
     distance,
