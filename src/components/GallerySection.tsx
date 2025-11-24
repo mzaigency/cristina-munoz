@@ -13,21 +13,34 @@ export const GallerySection = () => {
   
   const instagramPosts = JSON.parse(import.meta.env.VITE_INSTAGRAM_POSTS_JSON || '[]');
   useEffect(() => {
-    // Cargar el script de Instagram embeds
+    // Només carregar el script quan la secció és visible
+    if (!isVisible) return;
+    
+    // Comprovar si el script ja està carregat
+    if (document.querySelector('script[src="https://www.instagram.com/embed.js"]')) {
+      if ((window as any).instgrm) {
+        (window as any).instgrm.Embeds.process();
+      }
+      return;
+    }
+    
+    // Carregar el script d'Instagram només quan la secció és visible
     const script = document.createElement("script");
     script.src = "https://www.instagram.com/embed.js";
     script.async = true;
+    script.defer = true;
     document.body.appendChild(script);
     script.onload = () => {
-      // Procesar los embeds cuando el script carga
+      // Processar els embeds quan el script carrega
       if ((window as any).instgrm) {
         (window as any).instgrm.Embeds.process();
       }
     };
+    
     return () => {
-      document.body.removeChild(script);
+      // No eliminem el script en el cleanup perquè pot ser necessari per altres instàncies
     };
-  }, []);
+  }, [isVisible]);
   const handleEmbedLoad = (index: number) => {
     setLoadedEmbeds((prev) => new Set(prev).add(index));
   };
