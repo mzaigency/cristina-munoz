@@ -6,7 +6,6 @@ import coloringService from "@/assets/coloring-service-new.jpg";
 import stylingService from "@/assets/styling-treatments.png";
 import beautyService from "@/assets/beauty-service.jpg";
 import AnimatedList from "@/components/animations/AnimatedList";
-import { Parallax3D } from "@/components/animations/Parallax3D";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 const serviceCategories = [{
