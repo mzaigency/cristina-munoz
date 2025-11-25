@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Instagram } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { Parallax3D } from "@/components/animations/Parallax3D";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 export const GallerySection = () => {

@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Parallax3D } from "@/components/animations/Parallax3D";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 
@@ -315,25 +314,23 @@ export const ReviewsSection = () => {
               {filteredReviews.map((review, index) => (
                 <CarouselItem key={review.id} className="md:basis-1/2 lg:basis-1/3">
                   <ScrollReveal delay={index * 80}>
-                    <Parallax3D intensity={6} enableShadow>
-                      <Card className="hover:shadow-lg transition-all duration-300 border-primary/10 h-full smooth-3d">
-                        <CardContent className="p-6 flex flex-col h-full">
-                          <div className="flex items-center gap-2 mb-4">{renderStars(review.rating)}</div>
-                          {review.comment && (
-                            <p className="text-muted-foreground leading-relaxed line-clamp-6 flex-1 mb-4">
-                              {review.comment}
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-auto">
-                            {new Date(review.created_at).toLocaleDateString("es-ES", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
+                    <Card className="hover:shadow-lg transition-all duration-300 border-primary/10 h-full smooth-3d">
+                      <CardContent className="p-6 flex flex-col h-full">
+                        <div className="flex items-center gap-2 mb-4">{renderStars(review.rating)}</div>
+                        {review.comment && (
+                          <p className="text-muted-foreground leading-relaxed line-clamp-6 flex-1 mb-4">
+                            {review.comment}
                           </p>
-                        </CardContent>
-                      </Card>
-                    </Parallax3D>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-auto">
+                          {new Date(review.created_at).toLocaleDateString("es-ES", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </CardContent>
+                    </Card>
                   </ScrollReveal>
                 </CarouselItem>
               ))}
