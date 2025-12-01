@@ -1,7 +1,10 @@
 import { MapPin, Phone, Mail, Clock, Instagram, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 export const Footer = () => {
-  return <footer className="border-t bg-salon-cream">
+  return <footer className="border-t bg-salon-cream relative overflow-hidden">
+      {/* Decorative gradient */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      
       <div className="container mx-auto px-4 py-12">
         <div className="grid gap-8 md:grid-cols-3">
           {/* Contacto */}
@@ -63,7 +66,7 @@ export const Footer = () => {
           <div>
             <h3 className="mb-4 text-lg font-semibold text-foreground">Síguenos</h3>
             <div className="flex gap-4">
-              <a href={import.meta.env.VITE_SOCIAL_INSTAGRAM_URL} target="_blank" rel="noopener" aria-label="Visita nuestro Instagram" className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90">
+              <a href={import.meta.env.VITE_SOCIAL_INSTAGRAM_URL} target="_blank" rel="noopener" aria-label="Visita nuestro Instagram" className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90 hover:scale-110 hover:shadow-glow-sm">
                 <Instagram className="h-5 w-5" />
               </a>
             </div>

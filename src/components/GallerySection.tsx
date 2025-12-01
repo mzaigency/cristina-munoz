@@ -44,14 +44,18 @@ export const GallerySection = () => {
     setLoadedEmbeds((prev) => new Set(prev).add(index));
   };
   return (
-    <section ref={ref} className="py-20 px-4 bg-gradient-to-b from-background to-secondary/10">
-      <div className="container mx-auto max-w-6xl">
+    <section ref={ref} className="py-20 px-4 bg-gradient-to-b from-background via-secondary/5 to-background relative overflow-hidden">
+      {/* Decorative pattern */}
+      <div className="absolute inset-0 dot-pattern opacity-30 pointer-events-none" />
+      
+      <div className="container mx-auto max-w-6xl relative z-10">
         <div className="text-center mb-12 space-y-4">
           <SmoothTitle>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
               Nuestros Trabajos
             </h2>
           </SmoothTitle>
+          <div className="line-accent mx-auto" />
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Descubre las últimas tendencias y transformaciones realizadas en nuestro salón
           </p>
@@ -92,7 +96,7 @@ export const GallerySection = () => {
             size="lg"
             variant="default"
             onClick={() => window.open(import.meta.env.VITE_SOCIAL_INSTAGRAM_URL, "_blank")}
-            className="gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            className="gap-2 btn-shine transition-all duration-300 hover:scale-105 hover:shadow-glow"
           >
             <Instagram className="w-5 h-5" />
             Síguenos en Instagram
