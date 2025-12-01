@@ -149,14 +149,20 @@ export const BookingFlow = () => {
   };
 
   return (
-    <section ref={bookingRef} className="py-20">
-      <div className="container mx-auto px-4">
+    <section ref={bookingRef} className="py-20 relative overflow-hidden">
+      {/* Decorative background */}
+      <div className="absolute inset-0 gradient-radial pointer-events-none" />
+      <div className="absolute top-10 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-10 left-10 w-56 h-56 bg-accent/5 rounded-full blur-3xl" />
+      
+      <div className="container mx-auto px-4 relative z-10">
         <div className="mb-12 text-center">
           <SmoothTitle>
             <h2 className="mb-4 text-3xl md:text-4xl font-bold text-foreground">
               Reserva tu Cita
             </h2>
           </SmoothTitle>
+          <div className="line-accent mx-auto mb-4" />
           <p className="text-lg text-muted-foreground">
             Sigue los pasos para reservar tu cita de forma rápida y sencilla
           </p>
@@ -168,16 +174,16 @@ export const BookingFlow = () => {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className={`h-2 w-16 rounded-full transition-colors ${
-                  i <= step ? "bg-primary" : "bg-muted"
+                className={`h-2 w-16 rounded-full transition-all duration-500 ${
+                  i <= step ? "bg-primary shadow-glow-sm" : "bg-muted"
                 }`}
               />
             ))}
           </div>
 
-          <Card className="border-none shadow-lg">
+          <Card className="border-none card-elevated glass">
             <CardHeader>
-              <CardTitle>
+              <CardTitle className="animate-fade-in">
                 {step === 1 && "Selecciona tus servicios"}
                 {step === 2 && "Elige tu peluquera"}
                 {step === 3 && "Selecciona fecha y hora"}
@@ -188,10 +194,10 @@ export const BookingFlow = () => {
                   <div>
                     <p>Puedes seleccionar varios servicios</p>
                     {!user && (
-                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2">
+                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2 animate-fade-in">
                         <User className="h-4 w-4" />
                         <span className="text-sm">
-                          Debes <Link to="/auth" className="underline hover:text-amber-700 dark:hover:text-amber-400">iniciar sesión</Link> para continuar
+                          Debes <Link to="/auth" className="underline hover:text-amber-700 dark:hover:text-amber-400 transition-colors">iniciar sesión</Link> para continuar
                         </span>
                       </div>
                     )}
@@ -212,7 +218,8 @@ export const BookingFlow = () => {
               )}
               {step === 1 && loading && (
                 <div className="text-center py-8 text-muted-foreground">
-                  Cargando servicios...
+                  <div className="inline-block w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                  <p>Cargando servicios...</p>
                 </div>
               )}
               {step === 2 && (

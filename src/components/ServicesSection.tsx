@@ -94,34 +94,40 @@ export const ServicesSection = () => {
     ref,
     isVisible
   } = useScrollAnimation(0.1);
-  return <section ref={ref} className="py-20 bg-salon-cream">
-      <div className="container mx-auto px-4">
+  return <section ref={ref} className="py-20 bg-salon-cream relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-64 h-64 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/5 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl" />
+      
+      <div className="container mx-auto px-4 relative z-10">
         <div className="mb-12 text-center">
           <SmoothTitle>
-            <h2 className="mb-4 text-center text-3xl font-bold text-[#3b2b30] md:text-4xl">Nuestros Servicios</h2>
+            <h2 className="mb-4 text-center text-3xl font-bold text-foreground md:text-4xl">Nuestros Servicios</h2>
           </SmoothTitle>
-          <p className="text-lg text-muted-foreground">Descubre nuestra amplia gama de servicios profesionales de peluquería en el corazón del Bages</p>
+          <div className="line-accent mx-auto mb-4" />
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Descubre nuestra amplia gama de servicios profesionales de peluquería en el corazón del Bages</p>
         </div>
 
         <div className="grid gap-8 md:grid-cols-2">
           {serviceCategories.map((category, idx) => {
           const Icon = category.icon;
           return <ScrollReveal key={idx} delay={idx * 150}>
-                  <Card className="overflow-hidden border-none shadow-lg hover-lift group smooth-3d">
-                    <div className="relative h-48 overflow-hidden">
+                  <Card className="overflow-hidden border-none shadow-lg card-elevated group smooth-3d bg-card">
+                    <div className="relative h-48 overflow-hidden img-zoom">
                       <img 
                         src={category.image} 
                         alt={`Servicio de ${category.category.toLowerCase()} en Cristina Muñoz - Peluquería profesional en Santpedor`} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                        className="w-full h-full object-cover" 
                         loading="lazy"
                         width={640}
                         height={480}
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
                     <CardHeader>
-                      <div className="mb-2 flex items-center gap-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110">
-                          <Icon className="h-5 w-5 text-primary-foreground" />
+                      <div className="mb-2 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary shadow-glow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-glow">
+                          <Icon className="h-5 w-5 text-primary-foreground transition-transform duration-300 group-hover:rotate-12" />
                         </div>
                         <CardTitle className="text-2xl">{category.category}</CardTitle>
                       </div>
