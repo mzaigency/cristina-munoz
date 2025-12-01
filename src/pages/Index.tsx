@@ -35,47 +35,47 @@ const Index = () => {
   return (
     <>
       {isLoading && <LoadingScreen onLoadingComplete={() => setIsLoading(false)} />}
-      
+
       <div className="min-h-screen bg-background overflow-x-hidden">
-      <SEO 
-        title="Peluquería en Santpedor - Cristina Muñoz | Reserva Online"
-        description="Peluquería profesional en Santpedor, comarca del Bages (Barcelona). Especialistas en corte, coloración, mechas, balayage, peinados y tratamientos capilares. Más de 15 años de experiencia. Reserva tu cita online."
-        keywords="peluquería Santpedor, peluquería Bages, corte de pelo Santpedor, coloración cabello Santpedor, mechas Santpedor, balayage, peluquería Manresa, peluquería comarca Bages, tratamientos capilares, peinados profesionales, reserva online peluquería"
-        canonicalUrl="/"
-      />
-      <Header onNavigate={scrollToSection} activeSection={activeSection} />
-      
-      <main>
-        <div id="inicio">
-          <HeroSection onBookNow={handleBookNow} onViewServices={handleViewServices} isLoadingComplete={!isLoading} />
-        </div>
-        
-        <div id="servicios">
-          <ServicesSection />
-        </div>
-        
-        <div id="reserva">
-          <BookingFlow />
-        </div>
-        
-        <WhatsAppSection />
-        
-        <div id="galeria">
-          <GallerySection />
-        </div>
-        
-        <div id="resenas">
-          <ReviewsSection />
-        </div>
+        <SEO
+          title="Cristina Muñoz - Peluquería en Santpedor | Reserva Online"
+          description="Peluquería profesional en Santpedor, comarca del Bages (Barcelona). Especialistas en corte, coloración, mechas, balayage, peinados y tratamientos capilares. Más de 15 años de experiencia. Reserva tu cita online."
+          keywords="peluquería Santpedor, peluquería Bages, corte de pelo Santpedor, coloración cabello Santpedor, mechas Santpedor, balayage, peluquería Manresa, peluquería comarca Bages, tratamientos capilares, peinados profesionales, reserva online peluquería"
+          canonicalUrl="/"
+        />
+        <Header onNavigate={scrollToSection} activeSection={activeSection} />
 
-        <LocationSection />
-        
-        <div id="contacto">
-          <Footer />
-        </div>
-      </main>
+        <main>
+          <div id="inicio">
+            <HeroSection onBookNow={handleBookNow} onViewServices={handleViewServices} isLoadingComplete={!isLoading} />
+          </div>
 
-      <InstallPWA />
+          <div id="servicios">
+            <ServicesSection />
+          </div>
+
+          <div id="reserva">
+            <BookingFlow />
+          </div>
+
+          <WhatsAppSection />
+
+          <div id="galeria">
+            <GallerySection />
+          </div>
+
+          <div id="resenas">
+            <ReviewsSection />
+          </div>
+
+          <LocationSection />
+
+          <div id="contacto">
+            <Footer />
+          </div>
+        </main>
+
+        <InstallPWA />
       </div>
     </>
   );
