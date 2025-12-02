@@ -10,6 +10,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
+import { cn } from "@/lib/utils";
 
 export type Service = {
   id: string;
@@ -169,16 +170,25 @@ export const BookingFlow = () => {
         </div>
 
         <div className="mx-auto max-w-3xl">
-          {/* Progress indicator */}
-          <div className="mb-8 flex justify-center gap-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className={`h-2 w-16 rounded-full transition-all duration-500 ${
-                  i <= step ? "bg-primary shadow-glow-sm" : "bg-muted"
-                }`}
+          {/* Enhanced Progress Bar */}
+          <div className="mb-8 space-y-3">
+            <div className="flex justify-between items-center text-sm text-muted-foreground px-1">
+              <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
+              <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Peluquera</span>
+              <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Fecha</span>
+              <span className={cn("transition-colors duration-300", step >= 4 && "text-primary font-medium")}>Confirmar</span>
+            </div>
+            <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
+              <div 
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out shadow-glow"
+                style={{ width: `${(step / 4) * 100}%` }}
               />
-            ))}
+            </div>
+            <div className="text-center">
+              <span className="text-xs text-muted-foreground">
+                Paso {step} de 4 ({Math.round((step / 4) * 100)}% completado)
+              </span>
+            </div>
           </div>
 
           <Card className="border-none card-elevated glass">
