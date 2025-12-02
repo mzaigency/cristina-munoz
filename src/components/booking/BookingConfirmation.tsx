@@ -250,45 +250,45 @@ export const BookingConfirmation = ({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-salon-pink-light p-6">
+    <div className="space-y-6 animate-fade-in-up">
+      <div className="rounded-lg bg-salon-pink-light p-6 border border-primary/20 shadow-md transition-all duration-300 hover:shadow-lg hover:scale-[1.01]">
         <h4 className="mb-3 font-semibold text-foreground">Resumen de tu reserva:</h4>
         <div className="space-y-2 text-sm">
-          <p>
+          <p className="transition-all duration-200 hover:translate-x-1">
             <span className="font-medium">Nombre:</span> {userProfile.full_name}
           </p>
-          <p>
+          <p className="transition-all duration-200 hover:translate-x-1">
             <span className="font-medium">Email:</span> {userProfile.email}
           </p>
-          <p>
+          <p className="transition-all duration-200 hover:translate-x-1">
             <span className="font-medium">Teléfono:</span> {userProfile.phone}
           </p>
-          <p>
+          <p className="transition-all duration-200 hover:translate-x-1">
             <span className="font-medium">Fecha:</span>{" "}
             {bookingData.date && format(bookingData.date, "dd-MM-yyyy")}
           </p>
-          <p>
+          <p className="transition-all duration-200 hover:translate-x-1">
             <span className="font-medium">Hora:</span> {bookingData.time}
           </p>
-          <p>
+          <p className="transition-all duration-200 hover:translate-x-1">
             <span className="font-medium">Peluquera:</span>{" "}
             {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}
           </p>
-          <p>
+          <p className="transition-all duration-200 hover:translate-x-1">
             <span className="font-medium">Servicios:</span>{" "}
             {bookingData.services.map((s) => s.name).join(", ")}
           </p>
-          <p>
+          <p className="transition-all duration-200 hover:translate-x-1">
             <span className="font-medium">Duración total:</span> {totalDuration} minutos
           </p>
         </div>
       </div>
 
       <div className="flex justify-between pt-4">
-        <Button type="button" variant="outline" onClick={onBack} disabled={loading}>
+        <Button type="button" variant="outline" onClick={onBack} disabled={loading} className="transition-all duration-300 hover:scale-105 disabled:scale-100">
           Volver
         </Button>
-        <Button onClick={handleConfirm} disabled={loading}>
+        <Button onClick={handleConfirm} disabled={loading} className="transition-all duration-300 hover:scale-105 hover:shadow-glow disabled:scale-100">
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
