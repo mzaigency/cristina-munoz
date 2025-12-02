@@ -82,10 +82,11 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-2 pt-2">
-                  {groupServices.map((service) => (
+                  {groupServices.map((service, index) => (
                     <div
                       key={service.id}
-                      className="flex items-center justify-between rounded-lg border bg-card p-4 hover:bg-accent/50 cursor-pointer transition-colors"
+                      className={`flex items-center justify-between rounded-lg border bg-card p-4 cursor-pointer transition-all duration-300 hover:bg-accent/50 hover:shadow-md hover:scale-[1.02] hover:-translate-x-1 group animate-fade-in-left ${selected.some((s) => s.id === service.id) ? 'bg-salon-pink-light border-primary shadow-glow-sm' : 'hover:border-primary/30'}`}
+                      style={{ animationDelay: `${index * 50}ms` }}
                       onClick={() => toggleService(service)}
                     >
                       <div className="flex items-center gap-3">
@@ -94,18 +95,18 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
                           onCheckedChange={() => toggleService(service)}
                         />
                         <div>
-                          <p className="font-medium text-foreground">{service.name}</p>
+                          <p className="font-medium text-foreground transition-colors duration-300 group-hover:text-primary">{service.name}</p>
                           {service.type === 'Compuesto' ? (
                             <>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm text-muted-foreground transition-all duration-300">
                                 {service.duration_part1_active + service.duration_part2_active} min activos + {service.duration_exposure_pause} min pausa
                               </p>
-                              <p className="text-xs text-muted-foreground italic mt-1">
+                              <p className="text-xs text-muted-foreground italic mt-1 transition-all duration-300 group-hover:text-primary/70">
                                 ✓ Incluye corte y peinado
                               </p>
                             </>
                           ) : (
-                            <p className="text-sm text-muted-foreground">{service.duration} min</p>
+                            <p className="text-sm text-muted-foreground transition-all duration-300">{service.duration} min</p>
                           )}
                         </div>
                       </div>
@@ -118,12 +119,16 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
         })}
       </Accordion>
 
-      <div className="flex justify-between pt-4">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex justify-between items-center pt-4">
+        <p className={`text-sm text-muted-foreground transition-all duration-300 ${selected.length > 0 ? 'scale-105 font-semibold text-primary' : ''}`}>
           {selected.length} servicio{selected.length !== 1 ? "s" : ""} seleccionado
           {selected.length !== 1 ? "s" : ""}
         </p>
-        <Button onClick={handleNext} disabled={selected.length === 0}>
+        <Button 
+          onClick={handleNext} 
+          disabled={selected.length === 0}
+          className="transition-all duration-300 hover:scale-105 disabled:scale-100"
+        >
           Continuar
         </Button>
       </div>
