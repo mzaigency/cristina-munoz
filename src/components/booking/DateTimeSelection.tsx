@@ -541,18 +541,18 @@ export const DateTimeSelection = ({
           ) : (
             <>
               {isAdmin && (
-                <div className="mb-4 space-y-3 p-4 bg-accent/20 rounded-lg border border-accent animate-fade-in">
+                <div className="mb-4 space-y-3 p-4 bg-accent/20 rounded-lg border border-accent">
                   <label className="text-sm font-medium text-foreground">
                     Hora personalizada (SIN RESTRICCIONES)
                   </label>
                   <div className="flex gap-2 items-center">
                     <Select value={customHour} onValueChange={setCustomHour}>
-                      <SelectTrigger className="w-[100px] transition-all duration-300 hover:border-primary focus:scale-105">
+                      <SelectTrigger className="w-[100px] transition-colors duration-200 hover:border-primary">
                         <SelectValue placeholder="Hora" />
                       </SelectTrigger>
                       <SelectContent>
                         {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
-                          <SelectItem key={hour} value={hour} className="transition-colors duration-200 hover:bg-primary/10">
+                          <SelectItem key={hour} value={hour}>
                             {hour}
                           </SelectItem>
                         ))}
@@ -560,12 +560,12 @@ export const DateTimeSelection = ({
                     </Select>
                     <span className="text-lg font-semibold">:</span>
                     <Select value={customMinute} onValueChange={setCustomMinute}>
-                      <SelectTrigger className="w-[100px] transition-all duration-300 hover:border-primary focus:scale-105">
+                      <SelectTrigger className="w-[100px] transition-colors duration-200 hover:border-primary">
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
                       <SelectContent>
                         {['00', '15', '30', '45'].map(minute => (
-                          <SelectItem key={minute} value={minute} className="transition-colors duration-200 hover:bg-primary/10">
+                          <SelectItem key={minute} value={minute}>
                             {minute}
                           </SelectItem>
                         ))}
@@ -579,7 +579,7 @@ export const DateTimeSelection = ({
               )}
               
               {timeSlots.length === 0 ? (
-                <p className="text-sm text-muted-foreground animate-fade-in">
+                <p className="text-sm text-muted-foreground">
                   {isAdmin 
                     ? "No hay horarios predefinidos disponibles. Puedes usar el campo de hora personalizada arriba."
                     : "No hay horarios disponibles para este día. Todos los slots están reservados."}
@@ -588,7 +588,7 @@ export const DateTimeSelection = ({
                 <>
                   {isAdmin && <p className="text-sm text-muted-foreground mb-2">O selecciona un horario disponible:</p>}
                   <div className="grid grid-cols-3 gap-2 max-h-[300px] overflow-y-auto">
-                    {timeSlots.map((slot, index) => (
+                    {timeSlots.map((slot) => (
                       <Button
                         key={slot}
                         variant={time === slot && !customHour && !customMinute ? "default" : "outline"}
@@ -599,10 +599,9 @@ export const DateTimeSelection = ({
                           setCustomMinute("");
                         }}
                         className={cn(
-                          "transition-all duration-300 hover:scale-105 hover:shadow-md animate-fade-in-up",
-                          time === slot && !customHour && !customMinute && "bg-primary text-primary-foreground shadow-glow scale-105"
+                          "transition-all duration-200 hover:shadow-md",
+                          time === slot && !customHour && !customMinute && "shadow-glow"
                         )}
-                        style={{ animationDelay: `${index * 30}ms` }}
                       >
                         {slot}
                       </Button>
@@ -629,13 +628,13 @@ export const DateTimeSelection = ({
       </div>
 
       <div className="flex justify-between pt-4">
-        <Button variant="outline" onClick={onBack} className="transition-all duration-300 hover:scale-105">
+        <Button variant="outline" onClick={onBack} className="transition-transform duration-200 hover:scale-105">
           Volver
         </Button>
         <Button 
           onClick={handleNext} 
           disabled={!date || !time}
-          className="transition-all duration-300 hover:scale-105 disabled:scale-100"
+          className="transition-transform duration-200 hover:scale-105 disabled:scale-100"
         >
           Continuar
         </Button>
