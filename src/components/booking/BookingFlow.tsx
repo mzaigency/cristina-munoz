@@ -4,6 +4,7 @@ import { ServiceSelection } from "./ServiceSelection";
 import { StylistSelection } from "./StylistSelection";
 import { DateTimeSelection } from "./DateTimeSelection";
 import { BookingConfirmation } from "./BookingConfirmation";
+import { BookingSummary } from "./BookingSummary";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
@@ -149,6 +150,11 @@ export const BookingFlow = () => {
     if (step > 1) setStep(step - 1);
   };
 
+  const handleRemoveService = (serviceId: string) => {
+    const updatedServices = bookingData.services.filter(s => s.id !== serviceId);
+    setBookingData({ ...bookingData, services: updatedServices });
+  };
+
   return (
     <section ref={bookingRef} className="py-20 relative overflow-hidden">
       {/* Decorative background */}
@@ -169,9 +175,9 @@ export const BookingFlow = () => {
           </p>
         </div>
 
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-5xl">
           {/* Enhanced Progress Bar */}
-          <div className="mb-8 space-y-3">
+          <div className="mb-8 space-y-3 max-w-3xl mx-auto">
             <div className="flex justify-between items-center text-sm text-muted-foreground px-1">
               <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
               <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Peluquera</span>
@@ -190,6 +196,11 @@ export const BookingFlow = () => {
               </span>
             </div>
           </div>
+
+          {/* Layout with sticky summary */}
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Main Form */}
+            <div className="flex-1 max-w-3xl mx-auto lg:mx-0 w-full">
 
           <Card className="border-none card-elevated glass">
             <CardHeader>
@@ -300,6 +311,22 @@ export const BookingFlow = () => {
               </AnimatePresence>
             </CardContent>
           </Card>
+            </div>
+
+            {/* Sticky Summary - Only visible on larger screens when services selected */}
+            <div className="hidden lg:block w-64 shrink-0">
+              <AnimatePresence>
+                {bookingData.services.length > 0 && (
+                  <BookingSummary
+                    bookingData={bookingData}
+                    totalDuration={totalDuration}
+                    step={step}
+                    onRemoveService={step === 1 ? handleRemoveService : undefined}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
     </section>
