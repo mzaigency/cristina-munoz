@@ -5,6 +5,7 @@ import { StylistSelection } from "./StylistSelection";
 import { DateTimeSelection } from "./DateTimeSelection";
 import { BookingConfirmation } from "./BookingConfirmation";
 import { BookingSummary } from "./BookingSummary";
+import { BookingSummaryMobile } from "./BookingSummaryMobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
@@ -156,7 +157,7 @@ export const BookingFlow = () => {
   };
 
   return (
-    <section ref={bookingRef} className="py-20 relative overflow-hidden">
+    <section ref={bookingRef} className={cn("py-20 relative overflow-hidden", bookingData.services.length > 0 && "pb-32 lg:pb-20")}>
       {/* Decorative background */}
       <div className="absolute inset-0 gradient-radial pointer-events-none" />
       <div className="absolute top-10 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
@@ -327,6 +328,18 @@ export const BookingFlow = () => {
               </AnimatePresence>
             </div>
           </div>
+
+          {/* Mobile Bottom Sheet Summary */}
+          <AnimatePresence>
+            {bookingData.services.length > 0 && (
+              <BookingSummaryMobile
+                bookingData={bookingData}
+                totalDuration={totalDuration}
+                step={step}
+                onRemoveService={step === 1 ? handleRemoveService : undefined}
+              />
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </section>
