@@ -771,30 +771,44 @@ export const CalendarCRM = () => {
           
           {/* Search Results */}
           {showSearchResults && searchResults.length > 0 && (
-            <div className="mt-2 border rounded-md divide-y max-h-64 overflow-y-auto">
-              {searchResults.map((result) => (
-                <button
-                  key={result.id}
-                  onClick={() => handleSelectSearchResult(result)}
-                  className="w-full text-left p-3 hover:bg-muted/50 transition-colors flex items-center justify-between gap-4"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{result.customer_name}</p>
-                    <p className="text-sm text-muted-foreground">{result.Telefono}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-medium">
-                      {format(parseISO(result.Fecha), "d MMM", { locale: es })}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {result.Hora.slice(0, 5)} - {result.stylist}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="shrink-0">
-                    {Array.isArray(result.services) ? result.services.length : 0} servicios
-                  </Badge>
-                </button>
-              ))}
+            <div className="mt-2 border rounded-md divide-y max-h-80 overflow-y-auto">
+              {searchResults.map((result) => {
+                const servicesList = Array.isArray(result.services) 
+                  ? result.services.map((s: any) => s.name || s).filter(Boolean)
+                  : [];
+                
+                return (
+                  <button
+                    key={result.id}
+                    onClick={() => handleSelectSearchResult(result)}
+                    className="w-full text-left p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-4 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{result.customer_name}</p>
+                        <p className="text-sm text-muted-foreground">{result.Telefono}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-medium">
+                          {format(parseISO(result.Fecha), "d MMM yyyy", { locale: es })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {result.Hora.slice(0, 5)} - {result.stylist}
+                        </p>
+                      </div>
+                    </div>
+                    {servicesList.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {servicesList.map((serviceName: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {serviceName}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
