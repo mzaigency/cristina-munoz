@@ -559,7 +559,7 @@ export const WhatsAppManager = () => {
                                 {message.message_type === 'user' ? selectedContact?.name || selectedContact?.phone_number || 'Cliente' : 'Asistente IA'}
                               </Badge>
                               <span className="text-xs opacity-70">
-                                {format(new Date(message.created_at), 'HH:mm', {
+                                {format(new Date(message.created_at), 'dd MMM HH:mm', {
                             locale: es
                           })}
                               </span>
