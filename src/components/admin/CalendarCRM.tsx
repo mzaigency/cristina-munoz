@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Edit2, ChevronDown, Calendar as CalendarIcon, Ban } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, ChevronDown, Calendar as CalendarIcon, Ban, Search, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -48,6 +48,21 @@ export const CalendarCRM = () => {
     weekStartsOn: 1
   }));
   const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Array<{
+    id: string;
+    customer_name: string;
+    Telefono: string;
+    Fecha: string;
+    Hora: string;
+    stylist: string;
+    services: any;
+  }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  
   useEffect(() => {
     // Este efecto actualiza la hora cada 60 segundos.
     const timerId = setInterval(() => {
@@ -68,6 +83,73 @@ export const CalendarCRM = () => {
   const {
     toast
   } = useToast();
+
+  // Search appointments
+  const handleSearch = async () => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      toast({
+        title: "Búsqueda inválida",
+        description: "Introduce al menos 2 caracteres para buscar",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsSearching(true);
+      const query = searchQuery.trim().toLowerCase();
+      
+      // Search in bookings table
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id, customer_name, Telefono, Fecha, Hora, stylist, services")
+        .or(`customer_name.ilike.%${query}%,Telefono.ilike.%${query}%`)
+        .eq("status", "confirmed")
+        .gte("Fecha", format(new Date(), "yyyy-MM-dd"))
+        .order("Fecha", { ascending: true })
+        .order("Hora", { ascending: true })
+        .limit(20);
+      
+      if (error) throw error;
+      
+      setSearchResults(data || []);
+      setShowSearchResults(true);
+      
+      if (!data || data.length === 0) {
+        toast({
+          title: "Sin resultados",
+          description: "No se encontraron citas con esos datos"
+        });
+      }
+    } catch (error: any) {
+      console.error("Search error:", error);
+      toast({
+        title: "Error en la búsqueda",
+        description: error.message || "No se pudo realizar la búsqueda",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectSearchResult = (result: typeof searchResults[0]) => {
+    // Jump to the date of the selected appointment
+    const appointmentDate = parseISO(result.Fecha);
+    setWeekStart(startOfWeek(appointmentDate, { weekStartsOn: 1 }));
+    setShowSearchResults(false);
+    setSearchQuery("");
+    toast({
+      title: "Cita encontrada",
+      description: `${result.customer_name} - ${format(appointmentDate, "d MMM yyyy", { locale: es })}`
+    });
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
 
   // Helper function to safely format date times
   const safeFormatDateTime = (dateTime: string | undefined, formatStr: string): string => {
@@ -656,6 +738,67 @@ export const CalendarCRM = () => {
           </Button>
         </div>
       </div>
+
+      {/* Search Section */}
+      <Card className="p-4">
+        <div className="flex flex-col gap-3">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Search className="h-4 w-4" />
+            Buscar cita por nombre o teléfono
+          </Label>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Input
+                placeholder="Buscar por nombre, teléfono..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="pr-8"
+              />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <Button onClick={handleSearch} disabled={isSearching}>
+              {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            </Button>
+          </div>
+          
+          {/* Search Results */}
+          {showSearchResults && searchResults.length > 0 && (
+            <div className="mt-2 border rounded-md divide-y max-h-64 overflow-y-auto">
+              {searchResults.map((result) => (
+                <button
+                  key={result.id}
+                  onClick={() => handleSelectSearchResult(result)}
+                  className="w-full text-left p-3 hover:bg-muted/50 transition-colors flex items-center justify-between gap-4"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{result.customer_name}</p>
+                    <p className="text-sm text-muted-foreground">{result.Telefono}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-medium">
+                      {format(parseISO(result.Fecha), "d MMM", { locale: es })}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {result.Hora.slice(0, 5)} - {result.stylist}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="shrink-0">
+                    {Array.isArray(result.services) ? result.services.length : 0} servicios
+                  </Badge>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:flex-wrap">
         <div className="flex gap-1 md:gap-2">
