@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { format } from "https://esm.sh/date-fns@3.6.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,7 +19,41 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { bookingId, bookingIds, user = 'client' } = await req.json();
+    // Get the JWT token from the request header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('No authorization header provided');
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    // Verify the user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    console.log('Authenticated user:', user.id);
+
+    // Check if user has admin or stylist role
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'stylist']);
+
+    const isAdminOrStylist = roleData && roleData.length > 0;
+    console.log('User is admin/stylist:', isAdminOrStylist);
+
+    const { bookingId, bookingIds, user: cancelUser = 'client' } = await req.json();
 
     // Handle both single and multiple bookings
     const idsToCancel = bookingIds || [bookingId];
@@ -37,6 +70,20 @@ serve(async (req) => {
       console.error('Error fetching bookings:', fetchError);
       throw new Error('Bookings not found');
     }
+
+    // Verify ownership: user must own all bookings OR be admin/stylist
+    if (!isAdminOrStylist) {
+      const unauthorizedBookings = bookings.filter(booking => booking.user_id !== user.id);
+      if (unauthorizedBookings.length > 0) {
+        console.error('User does not own all bookings. Unauthorized booking IDs:', unauthorizedBookings.map(b => b.id));
+        return new Response(
+          JSON.stringify({ error: 'No tienes permiso para cancelar esta cita' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        );
+      }
+    }
+
+    console.log('Authorization verified, proceeding with cancellation');
 
     // Collect all related bookings
     const relatedBookingIds = bookings
@@ -166,7 +213,7 @@ serve(async (req) => {
           body: JSON.stringify({
             type: 'cancellation',
             bookings: webhookData,
-            user: user,
+            user: cancelUser,
           }),
         });
 
