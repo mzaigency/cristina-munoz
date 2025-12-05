@@ -59,9 +59,11 @@ export const CalendarCRM = () => {
     Hora: string;
     stylist: string;
     services: any;
+    google_calendar_event_id: string | null;
   }>>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   
   useEffect(() => {
     // Este efecto actualiza la hora cada 60 segundos.
@@ -102,7 +104,7 @@ export const CalendarCRM = () => {
       // Search in bookings table
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, customer_name, Telefono, Fecha, Hora, stylist, services")
+        .select("id, customer_name, Telefono, Fecha, Hora, stylist, services, google_calendar_event_id")
         .or(`customer_name.ilike.%${query}%,Telefono.ilike.%${query}%`)
         .eq("status", "confirmed")
         .gte("Fecha", format(new Date(), "yyyy-MM-dd"))
@@ -139,11 +141,31 @@ export const CalendarCRM = () => {
     setWeekStart(startOfWeek(appointmentDate, { weekStartsOn: 1 }));
     setShowSearchResults(false);
     setSearchQuery("");
+    
+    // Highlight and scroll to the event
+    if (result.google_calendar_event_id) {
+      setHighlightedEventId(result.google_calendar_event_id);
+      // Clear highlight after 5 seconds
+      setTimeout(() => setHighlightedEventId(null), 5000);
+    }
+    
     toast({
       title: "Cita encontrada",
       description: `${result.customer_name} - ${format(appointmentDate, "d MMM yyyy", { locale: es })}`
     });
   };
+
+  // Scroll to highlighted event when it changes
+  useEffect(() => {
+    if (highlightedEventId) {
+      setTimeout(() => {
+        const eventElement = document.querySelector(`[data-event-id="${highlightedEventId}"]`);
+        if (eventElement) {
+          eventElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 300); // Wait for render
+    }
+  }, [highlightedEventId, events]);
 
   const clearSearch = () => {
     setSearchQuery("");
@@ -965,7 +987,8 @@ export const CalendarCRM = () => {
                         if (!position) return null;
                         const widthPercentage = 100 / totalColumns;
                         const leftPercentage = column * widthPercentage;
-                        return <div key={event.id} className={`absolute group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""}`} style={{
+                        const isHighlighted = highlightedEventId === event.id;
+                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-blue-50 dark:bg-blue-950/20 border rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 z-30 border-primary animate-pulse" : "border-blue-200 dark:border-blue-800"}`} style={{
                           top: `${position.top}px`,
                           height: `${Math.max(position.height, 40)}px`,
                           left: `${leftPercentage}%`,
@@ -1040,7 +1063,8 @@ export const CalendarCRM = () => {
                         if (!position) return null;
                         const widthPercentage = 100 / totalColumns;
                         const leftPercentage = column * widthPercentage;
-                        return <div key={event.id} className={`absolute group bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""}`} style={{
+                        const isHighlighted = highlightedEventId === event.id;
+                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-purple-50 dark:bg-purple-950/20 border rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 z-30 border-primary animate-pulse" : "border-purple-200 dark:border-purple-800"}`} style={{
                           top: `${position.top}px`,
                           height: `${Math.max(position.height, 40)}px`,
                           left: `${leftPercentage}%`,
