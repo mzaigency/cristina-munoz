@@ -48,6 +48,7 @@ export const CalendarCRM = () => {
     weekStartsOn: 1
   }));
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeTab, setActiveTab] = useState<string>("");
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -134,9 +135,11 @@ export const CalendarCRM = () => {
   };
 
   const handleSelectSearchResult = (result: typeof searchResults[0]) => {
-    // Jump to the date of the selected appointment
+    // Jump to the exact date of the selected appointment
     const appointmentDate = parseISO(result.Fecha);
+    const dateKey = format(appointmentDate, "yyyy-MM-dd");
     setWeekStart(startOfWeek(appointmentDate, { weekStartsOn: 1 }));
+    setActiveTab(dateKey);
     setShowSearchResults(false);
     setSearchQuery("");
     toast({
@@ -842,7 +845,7 @@ export const CalendarCRM = () => {
 
       {loading ? <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div> : <Tabs defaultValue={format(weekDays.find(day => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")} className="w-full">
+        </div> : <Tabs value={activeTab || format(weekDays.find(day => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto flex-nowrap md:flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {weekDays.map(day => {
           const dateKey = format(day, "yyyy-MM-dd");
