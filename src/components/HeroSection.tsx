@@ -9,7 +9,7 @@ interface HeroSectionProps {
 }
 export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = false }: HeroSectionProps) => {
   return (
-    <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Animated background gradient overlay */}
       <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/20 via-transparent to-black/40 pointer-events-none" />
       
