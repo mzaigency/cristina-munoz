@@ -2,14 +2,24 @@ import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/foto-hero.jpg";
 import GlareHover from "@/components/animations/GlareHover";
 import AnimatedContent from "@/components/animations/AnimatedContent";
+import { ChevronDown } from "lucide-react";
+
 interface HeroSectionProps {
   onBookNow: () => void;
   onViewServices: () => void;
   isLoadingComplete?: boolean;
 }
+
 export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = false }: HeroSectionProps) => {
+  const scrollToServices = () => {
+    const element = document.getElementById("servicios");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
       {/* Animated background gradient overlay */}
       <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/20 via-transparent to-black/40 pointer-events-none" />
       
@@ -26,7 +36,8 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
         <div className="absolute inset-0 bg-black/65" />
       </div>
 
-      <div className="container relative z-10 px-4 py-20 pt-[calc(5rem+env(safe-area-inset-top))] text-center perspective-3d">
+      {/* Main content - truly centered */}
+      <div className="container relative z-10 px-4 text-center flex-1 flex items-center justify-center">
         <div className="mx-auto max-w-3xl space-y-8">
           {isLoadingComplete && (
             <>
@@ -112,6 +123,26 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
           )}
         </div>
       </div>
+
+      {/* Scroll indicator */}
+      {isLoadingComplete && (
+        <AnimatedContent
+          distance={30}
+          direction="vertical"
+          duration={0.8}
+          ease="power3.out"
+          delay={1}
+        >
+          <button
+            onClick={scrollToServices}
+            className="relative z-10 pb-8 flex flex-col items-center gap-2 text-white/70 hover:text-white transition-colors cursor-pointer group"
+            aria-label="Scroll hacia abajo"
+          >
+            <span className="text-sm font-light tracking-widest uppercase">Descubre más</span>
+            <ChevronDown className="w-6 h-6 animate-bounce" />
+          </button>
+        </AnimatedContent>
+      )}
     </section>
   );
 };
