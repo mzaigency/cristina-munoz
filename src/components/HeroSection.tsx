@@ -124,24 +124,26 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
         </div>
       </div>
 
-      {/* Scroll indicator */}
+      {/* Scroll indicator - positioned at bottom */}
       {isLoadingComplete && (
-        <AnimatedContent
-          distance={30}
-          direction="vertical"
-          duration={0.8}
-          ease="power3.out"
-          delay={1}
-        >
-          <button
-            onClick={scrollToServices}
-            className="relative z-10 pb-8 flex flex-col items-center gap-2 text-white/70 hover:text-white transition-colors cursor-pointer group"
-            aria-label="Scroll hacia abajo"
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+          <AnimatedContent
+            distance={30}
+            direction="vertical"
+            duration={0.8}
+            ease="power3.out"
+            delay={1}
           >
-            <span className="text-sm font-light tracking-widest uppercase">Descubre más</span>
-            <ChevronDown className="w-6 h-6 animate-bounce" />
-          </button>
-        </AnimatedContent>
+            <button
+              onClick={scrollToServices}
+              className="flex flex-col items-center gap-2 text-white/70 hover:text-white transition-colors cursor-pointer group"
+              aria-label="Scroll hacia abajo"
+            >
+              <span className="text-sm font-light tracking-widest uppercase">Descubre más</span>
+              <ChevronDown className="w-6 h-6 animate-bounce" />
+            </button>
+          </AnimatedContent>
+        </div>
       )}
     </section>
   );
