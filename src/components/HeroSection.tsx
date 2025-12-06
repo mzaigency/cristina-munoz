@@ -19,7 +19,7 @@ export const HeroSection = ({ onBookNow, onViewServices, isLoadingComplete = fal
   };
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+    <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden">
       {/* Animated background gradient overlay */}
       <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/20 via-transparent to-black/40 pointer-events-none" />
       
