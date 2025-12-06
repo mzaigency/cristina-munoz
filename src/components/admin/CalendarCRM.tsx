@@ -49,6 +49,7 @@ export const CalendarCRM = () => {
   }));
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<string>("");
+  const [highlightedBookingId, setHighlightedBookingId] = useState<string | null>(null);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,6 +61,7 @@ export const CalendarCRM = () => {
     Hora: string;
     stylist: string;
     services: any;
+    google_calendar_event_id?: string;
   }>>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -103,7 +105,7 @@ export const CalendarCRM = () => {
       // Search in bookings table
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, customer_name, Telefono, Fecha, Hora, stylist, services")
+        .select("id, customer_name, Telefono, Fecha, Hora, stylist, services, google_calendar_event_id")
         .or(`customer_name.ilike.%${query}%,Telefono.ilike.%${query}%`)
         .eq("status", "confirmed")
         .gte("Fecha", format(new Date(), "yyyy-MM-dd"))
@@ -142,6 +144,25 @@ export const CalendarCRM = () => {
     setActiveTab(dateKey);
     setShowSearchResults(false);
     setSearchQuery("");
+    
+    // Set highlighted booking for visual feedback and scroll
+    if (result.google_calendar_event_id) {
+      setHighlightedBookingId(result.google_calendar_event_id);
+      
+      // Scroll to the event after a delay to allow render
+      setTimeout(() => {
+        const eventElement = document.querySelector(`[data-event-id="${result.google_calendar_event_id}"]`);
+        if (eventElement) {
+          eventElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 300);
+      
+      // Clear highlight after 5 seconds
+      setTimeout(() => {
+        setHighlightedBookingId(null);
+      }, 5000);
+    }
+    
     toast({
       title: "Cita encontrada",
       description: `${result.customer_name} - ${format(appointmentDate, "d MMM yyyy", { locale: es })}`
@@ -526,9 +547,11 @@ export const CalendarCRM = () => {
   };
   const handleJumpToDate = (date: Date | undefined) => {
     if (date) {
+      const dateKey = format(date, "yyyy-MM-dd");
       setWeekStart(startOfWeek(date, {
         weekStartsOn: 1
       }));
+      setActiveTab(dateKey);
     }
   };
 
@@ -968,7 +991,8 @@ export const CalendarCRM = () => {
                         if (!position) return null;
                         const widthPercentage = 100 / totalColumns;
                         const leftPercentage = column * widthPercentage;
-                        return <div key={event.id} className={`absolute group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""}`} style={{
+                        const isHighlighted = highlightedBookingId === event.id;
+                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30" : ""}`} style={{
                           top: `${position.top}px`,
                           height: `${Math.max(position.height, 40)}px`,
                           left: `${leftPercentage}%`,
@@ -1043,7 +1067,8 @@ export const CalendarCRM = () => {
                         if (!position) return null;
                         const widthPercentage = 100 / totalColumns;
                         const leftPercentage = column * widthPercentage;
-                        return <div key={event.id} className={`absolute group bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""}`} style={{
+                        const isHighlighted = highlightedBookingId === event.id;
+                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30" : ""}`} style={{
                           top: `${position.top}px`,
                           height: `${Math.max(position.height, 40)}px`,
                           left: `${leftPercentage}%`,
