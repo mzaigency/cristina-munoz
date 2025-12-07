@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Scissors, User, Calendar, ChevronUp, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,16 +30,14 @@ export const BookingSummaryMobile = ({
   
   if (!hasServices) return null;
 
-  // Use createPortal to render outside the normal DOM hierarchy
-  // This ensures the component is always on top regardless of parent stacking contexts
-  return createPortal(
+  return (
     <motion.div
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       exit={{ y: 100 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed bottom-0 left-0 right-0"
-      style={{ zIndex: 99999 }}
+      className="fixed bottom-0 left-0 right-0 z-[9999]"
+      style={{ isolation: 'isolate' }}
     >
       <div className="bg-background border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.15)] rounded-t-2xl">
         {/* Collapsed Header - Always visible */}
@@ -173,7 +170,6 @@ export const BookingSummaryMobile = ({
           )}
         </AnimatePresence>
       </div>
-    </motion.div>,
-    document.body
+    </motion.div>
   );
 };
