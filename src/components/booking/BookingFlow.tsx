@@ -4,7 +4,7 @@ import { ServiceSelection } from "./ServiceSelection";
 import { StylistSelection } from "./StylistSelection";
 import { DateTimeSelection } from "./DateTimeSelection";
 import { BookingConfirmation } from "./BookingConfirmation";
-import { BookingSummary } from "./BookingSummary";
+
 import { BookingSummaryMobile } from "./BookingSummaryMobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -198,135 +198,117 @@ export const BookingFlow = () => {
             </div>
           </div>
 
-          {/* Layout with sticky summary */}
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Main Form */}
-            <div className="flex-1 max-w-3xl mx-auto lg:mx-0 w-full">
-
-          <Card className="border-none card-elevated glass">
-            <CardHeader>
-              <CardTitle className="animate-fade-in">
-                {step === 1 && "Selecciona tus servicios"}
-                {step === 2 && "Elige tu peluquera"}
-                {step === 3 && "Selecciona fecha y hora"}
-                {step === 4 && "Confirma tu reserva"}
-              </CardTitle>
-              <CardDescription>
-                {step === 1 && (
-                  <div>
-                    <p>Puedes seleccionar varios servicios</p>
-                    {!user && (
-                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2 animate-fade-in">
-                        <User className="h-4 w-4" />
-                        <span className="text-sm">
-                          Debes <Link to="/auth" className="underline hover:text-amber-700 dark:hover:text-amber-400 transition-colors">iniciar sesión</Link> para continuar
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {step === 2 && "Elige quien te atenderá o deja que decidamos nosotras"}
-                {step === 3 && `Duración total: ${totalDuration} minutos`}
-                {step === 4 && "Últimos detalles para completar tu reserva"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-hidden">
-              <AnimatePresence mode="wait">
-                {step === 1 && !loading && (
-                  <motion.div
-                    key="step-1"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                  >
-                    <ServiceSelection
-                      services={services}
-                      selectedServices={bookingData.services}
-                      onNext={handleServicesSelect}
-                    />
-                  </motion.div>
-                )}
-                {step === 1 && loading && (
-                  <motion.div
-                    key="loading"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    <div className="inline-block w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                    <p>Cargando servicios...</p>
-                  </motion.div>
-                )}
-                {step === 2 && (
-                  <motion.div
-                    key="step-2"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                  >
-                    <StylistSelection
-                      selectedStylist={bookingData.stylist}
-                      onNext={handleStylistSelect}
-                      onBack={handleBack}
-                    />
-                  </motion.div>
-                )}
-                {step === 3 && (
-                  <motion.div
-                    key="step-3"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                  >
-                    <DateTimeSelection
-                      selectedDate={bookingData.date}
-                      selectedTime={bookingData.time}
-                      totalDuration={totalDuration}
-                      services={bookingData.services}
-                      stylist={bookingData.stylist!}
-                      onNext={handleDateTimeSelect}
-                      onBack={handleBack}
-                    />
-                  </motion.div>
-                )}
-                {step === 4 && (
-                  <motion.div
-                    key="step-4"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                  >
-                    <BookingConfirmation
-                      bookingData={bookingData}
-                      totalDuration={totalDuration}
-                      onConfirm={handleConfirmBooking}
-                      onBack={handleBack}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </CardContent>
-          </Card>
-            </div>
-
-            {/* Sticky Summary - Only visible on larger screens when services selected */}
-            <div className="hidden lg:block w-64 shrink-0">
-              <AnimatePresence>
-                {bookingData.services.length > 0 && (
-                  <BookingSummary
-                    bookingData={bookingData}
-                    totalDuration={totalDuration}
-                    step={step}
-                    onRemoveService={step === 1 ? handleRemoveService : undefined}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
+          {/* Main Form - Centered */}
+          <div className="max-w-3xl mx-auto w-full">
+            <Card className="border-none card-elevated glass">
+              <CardHeader>
+                <CardTitle className="animate-fade-in">
+                  {step === 1 && "Selecciona tus servicios"}
+                  {step === 2 && "Elige tu peluquera"}
+                  {step === 3 && "Selecciona fecha y hora"}
+                  {step === 4 && "Confirma tu reserva"}
+                </CardTitle>
+                <CardDescription>
+                  {step === 1 && (
+                    <div>
+                      <p>Puedes seleccionar varios servicios</p>
+                      {!user && (
+                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2 animate-fade-in">
+                          <User className="h-4 w-4" />
+                          <span className="text-sm">
+                            Debes <Link to="/auth" className="underline hover:text-amber-700 dark:hover:text-amber-400 transition-colors">iniciar sesión</Link> para continuar
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {step === 2 && "Elige quien te atenderá o deja que decidamos nosotras"}
+                  {step === 3 && `Duración total: ${totalDuration} minutos`}
+                  {step === 4 && "Últimos detalles para completar tu reserva"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="overflow-hidden">
+                <AnimatePresence mode="wait">
+                  {step === 1 && !loading && (
+                    <motion.div
+                      key="step-1"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      <ServiceSelection
+                        services={services}
+                        selectedServices={bookingData.services}
+                        onNext={handleServicesSelect}
+                      />
+                    </motion.div>
+                  )}
+                  {step === 1 && loading && (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="text-center py-8 text-muted-foreground"
+                    >
+                      <div className="inline-block w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                      <p>Cargando servicios...</p>
+                    </motion.div>
+                  )}
+                  {step === 2 && (
+                    <motion.div
+                      key="step-2"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      <StylistSelection
+                        selectedStylist={bookingData.stylist}
+                        onNext={handleStylistSelect}
+                        onBack={handleBack}
+                      />
+                    </motion.div>
+                  )}
+                  {step === 3 && (
+                    <motion.div
+                      key="step-3"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      <DateTimeSelection
+                        selectedDate={bookingData.date}
+                        selectedTime={bookingData.time}
+                        totalDuration={totalDuration}
+                        services={bookingData.services}
+                        stylist={bookingData.stylist!}
+                        onNext={handleDateTimeSelect}
+                        onBack={handleBack}
+                      />
+                    </motion.div>
+                  )}
+                  {step === 4 && (
+                    <motion.div
+                      key="step-4"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      <BookingConfirmation
+                        bookingData={bookingData}
+                        totalDuration={totalDuration}
+                        onConfirm={handleConfirmBooking}
+                        onBack={handleBack}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Mobile Bottom Sheet Summary */}
