@@ -85,6 +85,54 @@ export type Database = {
           },
         ]
       }
+      cash_register: {
+        Row: {
+          card_total: number | null
+          cash_total: number | null
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          cris_total: number | null
+          date: string
+          desi_total: number | null
+          id: string
+          notes: string | null
+          opening_balance: number | null
+          total_sales: number | null
+          transaction_count: number | null
+        }
+        Insert: {
+          card_total?: number | null
+          cash_total?: number | null
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          cris_total?: number | null
+          date: string
+          desi_total?: number | null
+          id?: string
+          notes?: string | null
+          opening_balance?: number | null
+          total_sales?: number | null
+          transaction_count?: number | null
+        }
+        Update: {
+          card_total?: number | null
+          cash_total?: number | null
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          cris_total?: number | null
+          date?: string
+          desi_total?: number | null
+          id?: string
+          notes?: string | null
+          opening_balance?: number | null
+          total_sales?: number | null
+          transaction_count?: number | null
+        }
+        Relationships: []
+      }
       password_reset_tokens: {
         Row: {
           created_at: string | null
@@ -178,6 +226,7 @@ export type Database = {
           duration_part2_active: number
           id: string
           name: string
+          price: number | null
           type: string
           updated_at: string
         }
@@ -189,6 +238,7 @@ export type Database = {
           duration_part2_active?: number
           id?: string
           name: string
+          price?: number | null
           type: string
           updated_at?: string
         }
@@ -200,10 +250,73 @@ export type Database = {
           duration_part2_active?: number
           id?: string
           name?: string
+          price?: number | null
           type?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      transactions: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          created_by: string
+          customer_name: string
+          discount: number | null
+          id: string
+          notes: string | null
+          payment_method: string
+          services: Json
+          stylist: string
+          subtotal: number
+          total: number
+          voided: boolean | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          created_by: string
+          customer_name: string
+          discount?: number | null
+          id?: string
+          notes?: string | null
+          payment_method: string
+          services: Json
+          stylist: string
+          subtotal: number
+          total: number
+          voided?: boolean | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          created_by?: string
+          customer_name?: string
+          discount?: number | null
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          services?: Json
+          stylist?: string
+          subtotal?: number
+          total?: number
+          voided?: boolean | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
