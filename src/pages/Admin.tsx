@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, BarChart3 } from "lucide-react";
+import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, BarChart3, Wallet } from "lucide-react";
 import { CalendarCRM } from "@/components/admin/CalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
 import { WhatsAppManager } from "@/components/admin/WhatsAppManager";
+import { CashRegisterManager } from "@/components/admin/CashRegisterManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Admin() {
@@ -170,13 +171,20 @@ export default function Admin() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="inline-flex h-12 items-center justify-center gap-1 rounded-lg bg-transparent p-0 border-b w-full max-w-none">
+          <TabsList className="inline-flex h-12 items-center justify-center gap-1 rounded-lg bg-transparent p-0 border-b w-full max-w-none overflow-x-auto">
             <TabsTrigger
               value="calendar"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
               <Calendar className="h-4 w-4" />
               <span className="hidden md:inline">Calendario</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="cash"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              <Wallet className="h-4 w-4" />
+              <span className="hidden md:inline">Caja</span>
             </TabsTrigger>
             <TabsTrigger
               value="reviews"
@@ -212,6 +220,9 @@ export default function Admin() {
           </TabsList>
           <TabsContent value="calendar" className="mt-6">
             <CalendarCRM />
+          </TabsContent>
+          <TabsContent value="cash" className="mt-6">
+            <CashRegisterManager />
           </TabsContent>
           <TabsContent value="reviews" className="mt-6">
             <ReviewsManager />
