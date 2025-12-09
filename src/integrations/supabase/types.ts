@@ -249,6 +249,7 @@ export type Database = {
       }
       transactions: {
         Row: {
+          booking_id: string | null
           created_at: string
           created_by: string
           customer_name: string
@@ -265,6 +266,7 @@ export type Database = {
           voided_by: string | null
         }
         Insert: {
+          booking_id?: string | null
           created_at?: string
           created_by: string
           customer_name: string
@@ -281,6 +283,7 @@ export type Database = {
           voided_by?: string | null
         }
         Update: {
+          booking_id?: string | null
           created_at?: string
           created_by?: string
           customer_name?: string
@@ -296,7 +299,15 @@ export type Database = {
           voided_at?: string | null
           voided_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
