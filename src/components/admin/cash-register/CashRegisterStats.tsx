@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, TrendingUp, TrendingDown, Calendar } from "lucide-react";
-import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { Loader2, Calendar } from "lucide-react";
+import { format, subDays, startOfMonth, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   LineChart,
@@ -15,7 +15,6 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  Legend,
 } from "recharts";
 
 type Period = "week" | "month" | "quarter";
@@ -25,8 +24,6 @@ interface DailyData {
   total: number;
   cash: number;
   card: number;
-  cris: number;
-  desi: number;
 }
 
 export const CashRegisterStats = () => {
@@ -37,8 +34,6 @@ export const CashRegisterStats = () => {
     total: 0,
     cash: 0,
     card: 0,
-    cris: 0,
-    desi: 0,
     avgDaily: 0,
     transactionCount: 0,
   });
@@ -88,14 +83,11 @@ export const CashRegisterStats = () => {
             total: 0,
             cash: 0,
             card: 0,
-            cris: 0,
-            desi: 0,
           };
         }
 
         grouped[dateKey].total += Number(tx.total);
         grouped[dateKey][tx.payment_method as "cash" | "card"] += Number(tx.total);
-        grouped[dateKey][tx.stylist.toLowerCase() as "cris" | "desi"] += Number(tx.total);
       });
 
       const chartData = Object.values(grouped).sort((a, b) =>
@@ -106,16 +98,12 @@ export const CashRegisterStats = () => {
       const totalAmount = chartData.reduce((sum, d) => sum + d.total, 0);
       const cashAmount = chartData.reduce((sum, d) => sum + d.cash, 0);
       const cardAmount = chartData.reduce((sum, d) => sum + d.card, 0);
-      const crisAmount = chartData.reduce((sum, d) => sum + d.cris, 0);
-      const desiAmount = chartData.reduce((sum, d) => sum + d.desi, 0);
 
       setData(chartData);
       setTotals({
         total: totalAmount,
         cash: cashAmount,
         card: cardAmount,
-        cris: crisAmount,
-        desi: desiAmount,
         avgDaily: chartData.length > 0 ? totalAmount / chartData.length : 0,
         transactionCount: transactions?.length || 0,
       });
@@ -247,10 +235,10 @@ export const CashRegisterStats = () => {
             </CardContent>
           </Card>
 
-          {/* By Stylist Chart */}
+          {/* Payment Method Chart */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Por estilista</CardTitle>
+              <CardTitle className="text-lg">Por método de pago</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
@@ -269,54 +257,25 @@ export const CashRegisterStats = () => {
                         format(new Date(label), "d MMMM yyyy", { locale: es })
                       }
                     />
-                    <Legend />
                     <Bar
-                      dataKey="cris"
-                      name="Cris"
-                      fill="hsl(var(--primary))"
+                      dataKey="cash"
+                      name="Efectivo"
+                      fill="hsl(142, 76%, 36%)"
                       radius={[4, 4, 0, 0]}
+                      stackId="a"
                     />
                     <Bar
-                      dataKey="desi"
-                      name="Desi"
-                      fill="hsl(var(--accent))"
+                      dataKey="card"
+                      name="Tarjeta"
+                      fill="hsl(217, 91%, 60%)"
                       radius={[4, 4, 0, 0]}
+                      stackId="a"
                     />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
-
-          {/* Comparison */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Cris</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-primary">
-                  {formatCurrency(totals.cris)}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {((totals.cris / totals.total) * 100 || 0).toFixed(1)}% del total
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Desi</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-accent">
-                  {formatCurrency(totals.desi)}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {((totals.desi / totals.total) * 100 || 0).toFixed(1)}% del total
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         </>
       ) : (
         <div className="text-center py-12 text-muted-foreground">
