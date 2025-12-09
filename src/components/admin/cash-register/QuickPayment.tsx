@@ -5,7 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Banknote, CreditCard, Delete, CheckCircle2, Calculator } from "lucide-react";
+import { 
+  Loader2, 
+  Banknote, 
+  CreditCard, 
+  Delete,
+  CheckCircle2,
+  Calculator
+} from "lucide-react";
 
 interface QuickPaymentProps {
   onTransactionCreated: () => void;
@@ -16,7 +23,7 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
   const [amount, setAmount] = useState("");
   const [cashGiven, setCashGiven] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
-
+  
   const { toast } = useToast();
 
   const numericAmount = parseFloat(amount) || 0;
@@ -82,15 +89,14 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
 
     try {
       setLoading(true);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
+      
       if (!user) {
         throw new Error("No autenticado");
       }
 
       const { error } = await supabase.from("transactions").insert({
+        booking_id: null,
         stylist: "peluqueria",
         customer_name: "Cliente",
         services: [{ name: "Servicio", price: numericAmount }],
@@ -98,10 +104,9 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
         discount: 0,
         total: numericAmount,
         payment_method: paymentMethod,
-        notes:
-          paymentMethod === "cash" && numericCashGiven > 0
-            ? `Entregado: ${formatCurrency(numericCashGiven)}, Cambio: ${formatCurrency(change)}`
-            : null,
+        notes: paymentMethod === "cash" && numericCashGiven > 0 
+          ? `Entregado: ${formatCurrency(numericCashGiven)}, Cambio: ${formatCurrency(change)}`
+          : null,
         created_by: user.id,
       });
 
@@ -110,7 +115,7 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
       // Reset form
       setAmount("");
       setCashGiven("");
-
+      
       onTransactionCreated();
     } catch (error: any) {
       console.error("Error creating transaction:", error);
@@ -131,7 +136,12 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
     }).format(value);
   };
 
-  const keypadButtons = ["7", "8", "9", "4", "5", "6", "1", "2", "3", ".", "0", "delete"];
+  const keypadButtons = [
+    "7", "8", "9",
+    "4", "5", "6",
+    "1", "2", "3",
+    ".", "0", "delete"
+  ];
 
   return (
     <div className="max-w-md mx-auto space-y-6">
@@ -179,7 +189,11 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
         ))}
       </div>
 
-      <Button variant="ghost" className="w-full" onClick={() => handleKeyPress("clear")}>
+      <Button
+        variant="ghost"
+        className="w-full"
+        onClick={() => handleKeyPress("clear")}
+      >
         Borrar todo
       </Button>
 
@@ -191,7 +205,7 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
               <Calculator className="h-4 w-4" />
               <Label className="text-sm font-medium">Calcular cambio</Label>
             </div>
-
+            
             <div>
               <Label className="text-xs text-muted-foreground">Efectivo entregado</Label>
               <Input
@@ -242,7 +256,12 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
       )}
 
       {/* Submit Button */}
-      <Button onClick={handleSubmit} disabled={loading || numericAmount <= 0} className="w-full h-14 text-lg" size="lg">
+      <Button
+        onClick={handleSubmit}
+        disabled={loading || numericAmount <= 0}
+        className="w-full h-14 text-lg"
+        size="lg"
+      >
         {loading ? (
           <>
             <Loader2 className="h-5 w-5 mr-2 animate-spin" />

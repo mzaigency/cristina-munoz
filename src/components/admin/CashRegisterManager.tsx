@@ -13,6 +13,7 @@ import { DailySummary } from "./cash-register/DailySummary";
 
 export interface Transaction {
   id: string;
+  booking_id: string | null;
   stylist: string;
   customer_name: string;
   services: Array<{ name: string; price: number }>;
@@ -53,7 +54,7 @@ export const CashRegisterManager = () => {
 
   useEffect(() => {
     fetchTodayData();
-
+    
     // Subscribe to real-time updates
     const transactionsChannel = supabase
       .channel("transactions-realtime")
@@ -66,7 +67,7 @@ export const CashRegisterManager = () => {
         },
         () => {
           fetchTodayData();
-        },
+        }
       )
       .subscribe();
 
@@ -182,7 +183,10 @@ export const CashRegisterManager = () => {
               )}
             </TabsContent>
             <TabsContent value="history" className="mt-0">
-              <TransactionHistory transactions={transactions} onUpdate={fetchTodayData} />
+              <TransactionHistory
+                transactions={transactions}
+                onUpdate={fetchTodayData}
+              />
             </TabsContent>
             <TabsContent value="stats" className="mt-0">
               <CashRegisterStats />
