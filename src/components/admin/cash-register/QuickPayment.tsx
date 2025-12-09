@@ -96,7 +96,6 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
       }
 
       const { error } = await supabase.from("transactions").insert({
-        booking_id: null,
         stylist: "peluqueria",
         customer_name: "Cliente",
         services: [{ name: "Servicio", price: numericAmount }],
