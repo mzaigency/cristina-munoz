@@ -34,8 +34,6 @@ export interface DaySummary {
   cashTotal: number;
   cardTotal: number;
   totalSales: number;
-  crisTotal: number;
-  desiTotal: number;
   transactionCount: number;
   isClosed: boolean;
 }
@@ -48,8 +46,6 @@ export const CashRegisterManager = () => {
     cashTotal: 0,
     cardTotal: 0,
     totalSales: 0,
-    crisTotal: 0,
-    desiTotal: 0,
     transactionCount: 0,
     isClosed: false,
   });
@@ -106,27 +102,19 @@ export const CashRegisterManager = () => {
       const cardTotal = validTransactions
         .filter((t) => t.payment_method === "card")
         .reduce((sum, t) => sum + Number(t.total), 0);
-      const crisTotal = validTransactions
-        .filter((t) => t.stylist.toLowerCase() === "cris")
-        .reduce((sum, t) => sum + Number(t.total), 0);
-      const desiTotal = validTransactions
-        .filter((t) => t.stylist.toLowerCase() === "desi")
-        .reduce((sum, t) => sum + Number(t.total), 0);
 
       // Check if day is closed
       const { data: registerData } = await supabase
         .from("cash_register")
         .select("closed_at")
         .eq("date", today)
-        .single();
+        .maybeSingle();
 
       setDaySummary({
         date: today,
         cashTotal,
         cardTotal,
         totalSales: cashTotal + cardTotal,
-        crisTotal,
-        desiTotal,
         transactionCount: validTransactions.length,
         isClosed: !!registerData?.closed_at,
       });

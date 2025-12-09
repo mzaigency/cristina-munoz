@@ -1,43 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, 
   Banknote, 
   CreditCard, 
-  Search,
-  User,
-  Scissors,
-  Percent,
-  CheckCircle2
+  Delete,
+  CheckCircle2,
+  Calculator
 } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-
-interface TodayBooking {
-  id: string;
-  customer_name: string;
-  Telefono: string;
-  Hora: string;
-  stylist: string;
-  services: any;
-  google_calendar_event_id?: string | null;
-}
-
-interface Service {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-}
 
 interface QuickPaymentProps {
   onTransactionCreated: () => void;
@@ -45,115 +20,68 @@ interface QuickPaymentProps {
 
 export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
   const [loading, setLoading] = useState(false);
-  const [loadingBookings, setLoadingBookings] = useState(true);
-  const [todayBookings, setTodayBookings] = useState<TodayBooking[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [selectedBooking, setSelectedBooking] = useState<TodayBooking | null>(null);
-  
-  // Form state
-  const [customerName, setCustomerName] = useState("");
-  const [stylist, setStylist] = useState<"cris" | "desi">("cris");
-  const [selectedServices, setSelectedServices] = useState<Array<{ name: string; price: number }>>([]);
-  const [discount, setDiscount] = useState(0);
+  const [amount, setAmount] = useState("");
+  const [cashGiven, setCashGiven] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
-  const [notes, setNotes] = useState("");
   
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchTodayBookings();
-    fetchServices();
-  }, []);
+  const numericAmount = parseFloat(amount) || 0;
+  const numericCashGiven = parseFloat(cashGiven) || 0;
+  const change = numericCashGiven - numericAmount;
 
-  const fetchTodayBookings = async () => {
-    try {
-      setLoadingBookings(true);
-      const today = format(new Date(), "yyyy-MM-dd");
-      
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("id, customer_name, Telefono, Hora, stylist, services, google_calendar_event_id")
-        .eq("Fecha", today)
-        .eq("status", "confirmed")
-        .order("Hora", { ascending: true });
-
-      if (error) throw error;
-      setTodayBookings(data || []);
-    } catch (error: any) {
-      console.error("Error fetching bookings:", error);
-    } finally {
-      setLoadingBookings(false);
+  const handleKeyPress = (key: string) => {
+    if (key === "delete") {
+      setAmount(amount.slice(0, -1));
+    } else if (key === "clear") {
+      setAmount("");
+      setCashGiven("");
+    } else if (key === ".") {
+      if (!amount.includes(".")) {
+        setAmount(amount + key);
+      }
+    } else {
+      // Limit decimals to 2
+      const parts = amount.split(".");
+      if (parts[1] && parts[1].length >= 2) return;
+      setAmount(amount + key);
     }
   };
 
-  const fetchServices = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("services")
-        .select("id, name, price, category")
-        .order("category", { ascending: true });
-
-      if (error) throw error;
-      setServices(data || []);
-    } catch (error: any) {
-      console.error("Error fetching services:", error);
+  const handleCashKeyPress = (key: string) => {
+    if (key === "delete") {
+      setCashGiven(cashGiven.slice(0, -1));
+    } else if (key === "clear") {
+      setCashGiven("");
+    } else if (key === ".") {
+      if (!cashGiven.includes(".")) {
+        setCashGiven(cashGiven + key);
+      }
+    } else {
+      const parts = cashGiven.split(".");
+      if (parts[1] && parts[1].length >= 2) return;
+      setCashGiven(cashGiven + key);
     }
   };
 
-  const handleSelectBooking = (booking: TodayBooking) => {
-    setSelectedBooking(booking);
-    setCustomerName(booking.customer_name);
-    setStylist(booking.stylist.toLowerCase() as "cris" | "desi");
-    
-    // Map services with prices
-    const bookingServices = (booking.services || []).map((s: any) => {
-      const serviceData = services.find(
-        (srv) => srv.name.toLowerCase() === (s.name || s).toLowerCase()
-      );
-      return {
-        name: s.name || s,
-        price: serviceData?.price || 0,
-      };
-    });
-    setSelectedServices(bookingServices);
+  const handleQuickCash = (value: number) => {
+    setCashGiven(value.toString());
   };
-
-  const handleAddService = (serviceId: string) => {
-    const service = services.find((s) => s.id === serviceId);
-    if (service && !selectedServices.find((s) => s.name === service.name)) {
-      setSelectedServices([...selectedServices, { name: service.name, price: service.price }]);
-    }
-  };
-
-  const handleRemoveService = (serviceName: string) => {
-    setSelectedServices(selectedServices.filter((s) => s.name !== serviceName));
-  };
-
-  const handleUpdateServicePrice = (serviceName: string, newPrice: number) => {
-    setSelectedServices(
-      selectedServices.map((s) =>
-        s.name === serviceName ? { ...s, price: newPrice } : s
-      )
-    );
-  };
-
-  const subtotal = selectedServices.reduce((sum, s) => sum + s.price, 0);
-  const total = Math.max(0, subtotal - discount);
 
   const handleSubmit = async () => {
-    if (!customerName.trim()) {
+    if (numericAmount <= 0) {
       toast({
         title: "Error",
-        description: "Introduce el nombre del cliente",
+        description: "Introduce un importe válido",
         variant: "destructive",
       });
       return;
     }
 
-    if (selectedServices.length === 0) {
+    if (paymentMethod === "cash" && numericCashGiven > 0 && numericCashGiven < numericAmount) {
       toast({
         title: "Error",
-        description: "Añade al menos un servicio",
+        description: "El efectivo entregado es menor que el importe",
         variant: "destructive",
       });
       return;
@@ -168,26 +96,25 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
       }
 
       const { error } = await supabase.from("transactions").insert({
-        booking_id: selectedBooking?.id || null,
-        stylist,
-        customer_name: customerName,
-        services: selectedServices,
-        subtotal,
-        discount,
-        total,
+        booking_id: null,
+        stylist: "peluqueria",
+        customer_name: "Cliente",
+        services: [{ name: "Servicio", price: numericAmount }],
+        subtotal: numericAmount,
+        discount: 0,
+        total: numericAmount,
         payment_method: paymentMethod,
-        notes: notes || null,
+        notes: paymentMethod === "cash" && numericCashGiven > 0 
+          ? `Entregado: ${formatCurrency(numericCashGiven)}, Cambio: ${formatCurrency(change)}`
+          : null,
         created_by: user.id,
       });
 
       if (error) throw error;
 
       // Reset form
-      setSelectedBooking(null);
-      setCustomerName("");
-      setSelectedServices([]);
-      setDiscount(0);
-      setNotes("");
+      setAmount("");
+      setCashGiven("");
       
       onTransactionCreated();
     } catch (error: any) {
@@ -202,261 +129,151 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
     }
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-ES", {
       style: "currency",
       currency: "EUR",
-    }).format(amount);
+    }).format(value);
   };
 
+  const keypadButtons = [
+    "7", "8", "9",
+    "4", "5", "6",
+    "1", "2", "3",
+    ".", "0", "delete"
+  ];
+
   return (
-    <div className="grid lg:grid-cols-2 gap-6">
-      {/* Left: Booking Selection */}
-      <div className="space-y-4">
-        <div>
-          <Label className="text-sm font-medium">Citas de hoy</Label>
-          <p className="text-xs text-muted-foreground mb-3">
-            Selecciona una cita o crea un cobro manual
-          </p>
-          
-          {loadingBookings ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : todayBookings.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No hay citas para hoy
-            </p>
-          ) : (
-            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-              {todayBookings.map((booking) => (
-                <Card
-                  key={booking.id}
-                  className={`cursor-pointer transition-all hover:border-primary/50 ${
-                    selectedBooking?.id === booking.id
-                      ? "border-primary bg-primary/5"
-                      : ""
-                  }`}
-                  onClick={() => handleSelectBooking(booking)}
-                >
-                  <CardContent className="p-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{booking.customer_name}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {booking.Hora.slice(0, 5)}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {booking.stylist} • {booking.services?.map((s: any) => s.name || s).join(", ")}
-                        </p>
-                      </div>
-                      {selectedBooking?.id === booking.id && (
-                        <CheckCircle2 className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="border-t pt-4">
-          <Label className="text-sm font-medium">Cobro manual</Label>
-          <p className="text-xs text-muted-foreground mb-3">
-            O introduce los datos manualmente
-          </p>
-          
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="customerName">Cliente</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="customerName"
-                  placeholder="Nombre del cliente"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label>Estilista</Label>
-              <RadioGroup
-                value={stylist}
-                onValueChange={(v) => setStylist(v as "cris" | "desi")}
-                className="flex gap-4 mt-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="cris" id="cris" />
-                  <Label htmlFor="cris" className="cursor-pointer">Cris</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="desi" id="desi" />
-                  <Label htmlFor="desi" className="cursor-pointer">Desi</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right: Services & Payment */}
-      <div className="space-y-4">
-        <div>
-          <Label>Servicios</Label>
-          <Select onValueChange={handleAddService}>
-            <SelectTrigger className="mt-2">
-              <SelectValue placeholder="Añadir servicio..." />
-            </SelectTrigger>
-            <SelectContent>
-              {services.map((service) => (
-                <SelectItem key={service.id} value={service.id}>
-                  <div className="flex justify-between items-center w-full">
-                    <span>{service.name}</span>
-                    <span className="text-muted-foreground ml-2">
-                      {formatCurrency(service.price)}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {selectedServices.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {selectedServices.map((service, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-2 bg-muted/50 rounded-lg"
-                >
-                  <div className="flex items-center gap-2">
-                    <Scissors className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{service.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={service.price}
-                      onChange={(e) =>
-                        handleUpdateServicePrice(service.name, Number(e.target.value))
-                      }
-                      className="w-20 h-8 text-right"
-                      min={0}
-                      step={0.01}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveService(service.name)}
-                      className="h-8 w-8 p-0 text-destructive"
-                    >
-                      ×
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="discount">Descuento</Label>
-          <div className="relative mt-2">
-            <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="discount"
-              type="number"
-              value={discount}
-              onChange={(e) => setDiscount(Number(e.target.value))}
-              className="pl-10"
-              min={0}
-              step={0.01}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label>Método de pago</Label>
-          <RadioGroup
-            value={paymentMethod}
-            onValueChange={(v) => setPaymentMethod(v as "cash" | "card")}
-            className="flex gap-4 mt-2"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="cash" id="cash" />
-              <Label htmlFor="cash" className="cursor-pointer flex items-center gap-1">
-                <Banknote className="h-4 w-4" />
-                Efectivo
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="card" id="card" />
-              <Label htmlFor="card" className="cursor-pointer flex items-center gap-1">
-                <CreditCard className="h-4 w-4" />
-                Tarjeta
-              </Label>
-            </div>
-          </RadioGroup>
-        </div>
-
-        <div>
-          <Label htmlFor="notes">Notas (opcional)</Label>
-          <Textarea
-            id="notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Añade notas..."
-            className="mt-2"
-            rows={2}
-          />
-        </div>
-
-        {/* Total & Submit */}
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="p-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Subtotal</span>
-                <span>{formatCurrency(subtotal)}</span>
-              </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-sm text-destructive">
-                  <span>Descuento</span>
-                  <span>-{formatCurrency(discount)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
-                <span>Total</span>
-                <span className="text-primary">{formatCurrency(total)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+    <div className="max-w-md mx-auto space-y-6">
+      {/* Payment Method Selection */}
+      <div className="grid grid-cols-2 gap-3">
         <Button
-          onClick={handleSubmit}
-          disabled={loading || selectedServices.length === 0 || !customerName}
-          className="w-full"
-          size="lg"
+          variant={paymentMethod === "cash" ? "default" : "outline"}
+          className="h-14 text-lg gap-2"
+          onClick={() => setPaymentMethod("cash")}
         >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Registrando...
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Registrar cobro - {formatCurrency(total)}
-            </>
-          )}
+          <Banknote className="h-5 w-5" />
+          Efectivo
+        </Button>
+        <Button
+          variant={paymentMethod === "card" ? "default" : "outline"}
+          className="h-14 text-lg gap-2"
+          onClick={() => setPaymentMethod("card")}
+        >
+          <CreditCard className="h-5 w-5" />
+          Tarjeta
         </Button>
       </div>
+
+      {/* Amount Display */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="p-6">
+          <Label className="text-sm text-muted-foreground">Importe a cobrar</Label>
+          <div className="text-4xl font-bold text-primary text-center mt-2">
+            {amount ? formatCurrency(numericAmount) : "0,00 €"}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Numeric Keypad */}
+      <div className="grid grid-cols-3 gap-2">
+        {keypadButtons.map((key) => (
+          <Button
+            key={key}
+            variant="outline"
+            className="h-14 text-xl font-semibold"
+            onClick={() => handleKeyPress(key)}
+          >
+            {key === "delete" ? <Delete className="h-5 w-5" /> : key}
+          </Button>
+        ))}
+      </div>
+
+      <Button
+        variant="ghost"
+        className="w-full"
+        onClick={() => handleKeyPress("clear")}
+      >
+        Borrar todo
+      </Button>
+
+      {/* Cash Change Calculator - Only show when cash is selected */}
+      {paymentMethod === "cash" && numericAmount > 0 && (
+        <Card className="border-emerald-200/50 bg-emerald-50/50 dark:bg-emerald-950/20">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+              <Calculator className="h-4 w-4" />
+              <Label className="text-sm font-medium">Calcular cambio</Label>
+            </div>
+            
+            <div>
+              <Label className="text-xs text-muted-foreground">Efectivo entregado</Label>
+              <Input
+                type="text"
+                value={cashGiven}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9.]/g, "");
+                  setCashGiven(val);
+                }}
+                placeholder="0,00"
+                className="text-lg font-semibold text-center mt-1"
+              />
+            </div>
+
+            {/* Quick cash buttons */}
+            <div className="grid grid-cols-4 gap-2">
+              {[5, 10, 20, 50].map((value) => (
+                <Button
+                  key={value}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickCash(value)}
+                  className="text-sm"
+                >
+                  {value}€
+                </Button>
+              ))}
+            </div>
+
+            {numericCashGiven >= numericAmount && (
+              <div className="p-3 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg text-center">
+                <span className="text-sm text-muted-foreground">Cambio a devolver</span>
+                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {formatCurrency(change)}
+                </div>
+              </div>
+            )}
+
+            {numericCashGiven > 0 && numericCashGiven < numericAmount && (
+              <div className="p-3 bg-destructive/10 rounded-lg text-center">
+                <span className="text-sm text-destructive">
+                  Faltan {formatCurrency(numericAmount - numericCashGiven)}
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Submit Button */}
+      <Button
+        onClick={handleSubmit}
+        disabled={loading || numericAmount <= 0}
+        className="w-full h-14 text-lg"
+        size="lg"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            Registrando...
+          </>
+        ) : (
+          <>
+            <CheckCircle2 className="h-5 w-5 mr-2" />
+            Cobrar {numericAmount > 0 ? formatCurrency(numericAmount) : ""}
+          </>
+        )}
+      </Button>
     </div>
   );
 };

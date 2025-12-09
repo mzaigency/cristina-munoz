@@ -12,7 +12,6 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import {
   Table,
   TableBody,
@@ -127,11 +126,9 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
           <TableHeader>
             <TableRow>
               <TableHead>Hora</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead className="hidden sm:table-cell">Estilista</TableHead>
-              <TableHead className="hidden md:table-cell">Servicios</TableHead>
               <TableHead>Método</TableHead>
-              <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-right">Importe</TableHead>
+              <TableHead className="hidden md:table-cell">Notas</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -143,24 +140,11 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
               >
                 <TableCell className="font-mono text-sm">
                   {format(new Date(transaction.created_at), "HH:mm")}
-                </TableCell>
-                <TableCell>
-                  <div>
-                    <span className="font-medium">{transaction.customer_name}</span>
-                    {transaction.voided && (
-                      <Badge variant="destructive" className="ml-2 text-xs">
-                        Anulado
-                      </Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="hidden sm:table-cell capitalize">
-                  {transaction.stylist}
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <span className="text-sm text-muted-foreground">
-                    {transaction.services.map((s) => s.name).join(", ")}
-                  </span>
+                  {transaction.voided && (
+                    <Badge variant="destructive" className="ml-2 text-xs">
+                      Anulado
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell>
                   {transaction.payment_method === "cash" ? (
@@ -175,13 +159,11 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell className="text-right font-semibold">
+                <TableCell className="text-right font-semibold text-lg">
                   {formatCurrency(transaction.total)}
-                  {transaction.discount > 0 && (
-                    <span className="block text-xs text-muted-foreground">
-                      -{formatCurrency(transaction.discount)}
-                    </span>
-                  )}
+                </TableCell>
+                <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                  {transaction.notes || "-"}
                 </TableCell>
                 <TableCell>
                   {!transaction.voided && (
@@ -224,12 +206,11 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
               anulada y no contará en los totales.
               {selectedTransaction && (
                 <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <p className="font-medium">{selectedTransaction.customer_name}</p>
-                  <p className="text-sm">
-                    {selectedTransaction.services.map((s) => s.name).join(", ")}
+                  <p className="font-semibold text-lg">
+                    {formatCurrency(selectedTransaction.total)}
                   </p>
-                  <p className="font-semibold mt-2">
-                    Total: {formatCurrency(selectedTransaction.total)}
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(selectedTransaction.created_at), "HH:mm")} - {selectedTransaction.payment_method === "cash" ? "Efectivo" : "Tarjeta"}
                   </p>
                 </div>
               )}

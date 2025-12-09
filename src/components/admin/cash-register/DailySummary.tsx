@@ -7,10 +7,10 @@ import {
   Banknote, 
   CreditCard, 
   TrendingUp, 
-  Users, 
   Lock, 
   RefreshCw,
-  Loader2
+  Loader2,
+  Receipt
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -30,8 +30,6 @@ interface DaySummary {
   cashTotal: number;
   cardTotal: number;
   totalSales: number;
-  crisTotal: number;
-  desiTotal: number;
   transactionCount: number;
   isClosed: boolean;
 }
@@ -55,7 +53,6 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         throw new Error("No autenticado");
       }
 
-      // Upsert cash register record
       const { error } = await supabase
         .from("cash_register")
         .upsert({
@@ -63,8 +60,6 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
           cash_total: summary.cashTotal,
           card_total: summary.cardTotal,
           total_sales: summary.totalSales,
-          cris_total: summary.crisTotal,
-          desi_total: summary.desiTotal,
           transaction_count: summary.transactionCount,
           closed_at: new Date().toISOString(),
           closed_by: user.id,
@@ -182,14 +177,13 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-violet-500/20">
-                <Users className="h-5 w-5 text-violet-600" />
+                <Receipt className="h-5 w-5 text-violet-600" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Por estilista</p>
-                <div className="flex gap-2 text-sm">
-                  <span className="font-semibold">C: {formatCurrency(summary.crisTotal)}</span>
-                  <span className="font-semibold">D: {formatCurrency(summary.desiTotal)}</span>
-                </div>
+                <p className="text-xs text-muted-foreground">Operaciones</p>
+                <p className="text-lg font-bold text-violet-600">
+                  {summary.transactionCount}
+                </p>
               </div>
             </div>
           </CardContent>
