@@ -92,9 +92,7 @@ export type Database = {
           closed_at: string | null
           closed_by: string | null
           created_at: string
-          cris_total: number | null
           date: string
-          desi_total: number | null
           id: string
           notes: string | null
           opening_balance: number | null
@@ -107,9 +105,7 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
-          cris_total?: number | null
           date: string
-          desi_total?: number | null
           id?: string
           notes?: string | null
           opening_balance?: number | null
@@ -122,9 +118,7 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
-          cris_total?: number | null
           date?: string
-          desi_total?: number | null
           id?: string
           notes?: string | null
           opening_balance?: number | null
@@ -226,7 +220,6 @@ export type Database = {
           duration_part2_active: number
           id: string
           name: string
-          price: number | null
           type: string
           updated_at: string
         }
@@ -238,7 +231,6 @@ export type Database = {
           duration_part2_active?: number
           id?: string
           name: string
-          price?: number | null
           type: string
           updated_at?: string
         }
@@ -250,7 +242,6 @@ export type Database = {
           duration_part2_active?: number
           id?: string
           name?: string
-          price?: number | null
           type?: string
           updated_at?: string
         }
