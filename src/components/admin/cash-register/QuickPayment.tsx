@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,7 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState("");
   const [cashGiven, setCashGiven] = useState("");
+  const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
   
   const { toast } = useToast();
@@ -36,6 +38,7 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
     } else if (key === "clear") {
       setAmount("");
       setCashGiven("");
+      setNotes("");
     } else if (key === ".") {
       if (!amount.includes(".")) {
         setAmount(amount + key);
@@ -95,6 +98,12 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
         throw new Error("No autenticado");
       }
 
+      // Build notes - combine cash info with user notes
+      const cashInfo = paymentMethod === "cash" && numericCashGiven > 0 
+        ? `Entregado: ${formatCurrency(numericCashGiven)}, Cambio: ${formatCurrency(change)}`
+        : null;
+      const combinedNotes = [cashInfo, notes.trim()].filter(Boolean).join(" | ") || null;
+
       const { error } = await supabase.from("transactions").insert({
         stylist: "peluqueria",
         customer_name: "Cliente",
@@ -103,9 +112,7 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
         discount: 0,
         total: numericAmount,
         payment_method: paymentMethod,
-        notes: paymentMethod === "cash" && numericCashGiven > 0 
-          ? `Entregado: ${formatCurrency(numericCashGiven)}, Cambio: ${formatCurrency(change)}`
-          : null,
+        notes: combinedNotes,
         created_by: user.id,
       });
 
@@ -114,6 +121,7 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
       // Reset form
       setAmount("");
       setCashGiven("");
+      setNotes("");
       
       onTransactionCreated();
     } catch (error: any) {
@@ -253,6 +261,21 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
           </CardContent>
         </Card>
       )}
+
+      {/* Notes Field */}
+      <div className="space-y-2">
+        <Label className="text-sm text-muted-foreground">
+          Notas (opcional)
+        </Label>
+        <Textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value.slice(0, 200))}
+          placeholder="Añadir comentario..."
+          className="resize-none h-20"
+          maxLength={200}
+        />
+        <p className="text-xs text-muted-foreground text-right">{notes.length}/200</p>
+      </div>
 
       {/* Submit Button */}
       <Button
