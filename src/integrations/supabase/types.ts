@@ -28,6 +28,7 @@ export type Database = {
           is_part_of_compound: boolean | null
           related_booking_id: string | null
           services: Json
+          skip_availability_check: boolean
           status: string
           stylist: string
           Telefono: string
@@ -48,6 +49,7 @@ export type Database = {
           is_part_of_compound?: boolean | null
           related_booking_id?: string | null
           services: Json
+          skip_availability_check?: boolean
           status?: string
           stylist: string
           Telefono: string
@@ -68,6 +70,7 @@ export type Database = {
           is_part_of_compound?: boolean | null
           related_booking_id?: string | null
           services?: Json
+          skip_availability_check?: boolean
           status?: string
           stylist?: string
           Telefono?: string

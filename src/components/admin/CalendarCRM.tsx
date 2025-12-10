@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Edit2, ChevronDown, Calendar as CalendarIcon, Ban, Search, X } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, ChevronDown, Calendar as CalendarIcon, Ban, Search, X, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -35,6 +35,7 @@ interface CalendarEvent {
   stylist: string;
   calendarId: string;
   completed?: boolean;
+  skipAvailabilityCheck?: boolean;
 }
 
 export const CalendarCRM = () => {
@@ -209,10 +210,26 @@ export const CalendarCRM = () => {
         throw error;
       }
 
+      // Fetch bookings with skip_availability_check flag for this week
+      const { data: bookingsData } = await supabase
+        .from("bookings")
+        .select("google_calendar_event_id, skip_availability_check")
+        .gte("Fecha", format(weekStart, "yyyy-MM-dd"))
+        .lte("Fecha", format(addDays(weekEnd, 1), "yyyy-MM-dd"))
+        .eq("skip_availability_check", true);
+
+      // Create a set of event IDs that have skip_availability_check
+      const skipCheckEventIds = new Set(
+        (bookingsData || [])
+          .filter(b => b.google_calendar_event_id)
+          .map(b => b.google_calendar_event_id)
+      );
+
       // Mark events as completed if they have the completed marker in description
       const eventsWithStatus = (data?.events || []).map((event: CalendarEvent) => ({
         ...event,
-        completed: event.description?.includes("[✓ COMPLETADA]") || false
+        completed: event.description?.includes("[✓ COMPLETADA]") || false,
+        skipAvailabilityCheck: skipCheckEventIds.has(event.id)
       }));
       setEvents(eventsWithStatus);
     } catch (error: any) {
@@ -1003,6 +1020,11 @@ export const CalendarCRM = () => {
                                       <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-3 h-3 md:w-4 md:h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0" />
                                       <div className="flex-1 min-w-0 overflow-hidden">
                                         <p className={`text-[10px] md:text-xs font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}>
+                                          {event.skipAvailabilityCheck && (
+                                            <span title="Cita sin restricciones">
+                                              <AlertTriangle className="inline-block h-3 w-3 mr-0.5 text-amber-500" />
+                                            </span>
+                                          )}
                                           {event.summary}
                                         </p>
                                         <p className="text-[8px] md:text-[10px] text-muted-foreground mt-0.5">
@@ -1079,6 +1101,11 @@ export const CalendarCRM = () => {
                                       <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-3 h-3 md:w-4 md:h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0" />
                                       <div className="flex-1 min-w-0 overflow-hidden">
                                         <p className={`text-[10px] md:text-xs font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}>
+                                          {event.skipAvailabilityCheck && (
+                                            <span title="Cita sin restricciones">
+                                              <AlertTriangle className="inline-block h-3 w-3 mr-0.5 text-amber-500" />
+                                            </span>
+                                          )}
                                           {event.summary}
                                         </p>
                                         <p className="text-[8px] md:text-[10px] text-muted-foreground mt-0.5">
