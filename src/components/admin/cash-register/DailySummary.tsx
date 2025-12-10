@@ -8,6 +8,7 @@ import {
   CreditCard, 
   TrendingUp, 
   Lock, 
+  LockOpen,
   RefreshCw,
   Loader2,
   Receipt
@@ -41,7 +42,9 @@ interface DailySummaryProps {
 
 export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
   const [isClosing, setIsClosing] = useState(false);
+  const [isReopening, setIsReopening] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [showReopenDialog, setShowReopenDialog] = useState(false);
   const { toast } = useToast();
 
   const handleCloseRegister = async () => {
@@ -88,6 +91,39 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
     }
   };
 
+  const handleReopenRegister = async () => {
+    try {
+      setIsReopening(true);
+      
+      const { error } = await supabase
+        .from("cash_register")
+        .update({
+          closed_at: null,
+          closed_by: null,
+        })
+        .eq("date", summary.date);
+
+      if (error) throw error;
+
+      toast({
+        title: "Caja reabierta",
+        description: "La caja ha sido reabierta correctamente",
+      });
+      
+      onRefresh();
+    } catch (error: any) {
+      console.error("Error reopening register:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo reabrir la caja",
+        variant: "destructive",
+      });
+    } finally {
+      setIsReopening(false);
+      setShowReopenDialog(false);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-ES", {
       style: "currency",
@@ -119,6 +155,16 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
             >
               <Lock className="h-4 w-4 mr-2" />
               Cerrar caja
+            </Button>
+          )}
+          {summary.isClosed && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowReopenDialog(true)}
+            >
+              <LockOpen className="h-4 w-4 mr-2" />
+              Reabrir caja
             </Button>
           )}
         </div>
@@ -224,6 +270,33 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
                 <>
                   <Lock className="h-4 w-4 mr-2" />
                   Cerrar caja
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showReopenDialog} onOpenChange={setShowReopenDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Reabrir la caja?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esto permitirá registrar nuevos cobros para el día de hoy.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isReopening}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReopenRegister} disabled={isReopening}>
+              {isReopening ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Reabriendo...
+                </>
+              ) : (
+                <>
+                  <LockOpen className="h-4 w-4 mr-2" />
+                  Reabrir caja
                 </>
               )}
             </AlertDialogAction>
