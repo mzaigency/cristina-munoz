@@ -73,66 +73,69 @@ export const ServicesSection = () => {
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-8">
           {serviceCategories.map((category, idx) => {
             const Icon = category.icon;
             const isReversed = idx % 2 !== 0;
 
             return (
               <ScrollReveal key={idx} delay={idx * 100}>
-                <div
-                  className={`grid grid-cols-1 lg:grid-cols-2 gap-4 ${
-                    isReversed ? "lg:flex-row-reverse" : ""
-                  }`}
-                >
-                  {/* Image Section */}
+                {/* Card container with unified shadow */}
+                <div className="rounded-2xl overflow-hidden shadow-2xl shadow-black/15 border border-border/30 bg-card">
                   <div
-                    className={`relative h-64 lg:h-96 overflow-hidden rounded-xl shadow-xl shadow-black/20 ${
-                      isReversed ? "lg:order-2" : "lg:order-1"
+                    className={`grid grid-cols-1 lg:grid-cols-2 ${
+                      isReversed ? "lg:flex-row-reverse" : ""
                     }`}
                   >
-                    <img
-                      src={category.image}
-                      alt={`Servicio de ${category.category.toLowerCase()} en Cristina Muñoz`}
-                      className="w-full h-full object-cover object-center"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
-                    
-                    {/* Category Title Overlay */}
-                    <div className="absolute top-4 left-4 flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary shadow-lg shadow-primary/30">
-                        <Icon className="h-6 w-6 text-primary-foreground" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-white uppercase tracking-wide drop-shadow-lg">
-                        {category.category}
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Services List Section */}
-                  <div
-                    className={`bg-card rounded-xl p-6 lg:p-8 flex flex-col justify-center shadow-xl shadow-black/10 border border-border/50 ${
-                      isReversed ? "lg:order-1" : "lg:order-2"
-                    }`}
-                  >
-                    <div className="space-y-4">
-                      {category.services.map((service, serviceIdx) => (
-                        <div
-                          key={serviceIdx}
-                          className="flex items-center justify-between py-3 border-l-4 border-primary pl-4 hover:bg-accent/50 transition-colors rounded-r-md"
-                        >
-                          <div>
-                            <p className="font-semibold text-foreground">
-                              {service.name}
-                            </p>
-                            <p className="text-sm text-muted-foreground uppercase tracking-wide">
-                              {service.duration}
-                            </p>
-                          </div>
+                    {/* Image Section */}
+                    <div
+                      className={`relative h-64 lg:h-auto lg:min-h-[320px] ${
+                        isReversed ? "lg:order-2" : "lg:order-1"
+                      }`}
+                    >
+                      <img
+                        src={category.image}
+                        alt={`Servicio de ${category.category.toLowerCase()} en Cristina Muñoz`}
+                        className="w-full h-full object-cover object-center"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
+                      
+                      {/* Category Title Overlay */}
+                      <div className="absolute top-4 left-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary shadow-lg shadow-primary/30">
+                          <Icon className="h-6 w-6 text-primary-foreground" />
                         </div>
-                      ))}
+                        <h3 className="text-2xl font-bold text-white uppercase tracking-wide drop-shadow-lg">
+                          {category.category}
+                        </h3>
+                      </div>
+                    </div>
+
+                    {/* Services List Section */}
+                    <div
+                      className={`p-6 lg:p-8 flex flex-col justify-center border-l-0 lg:border-l border-border/30 ${
+                        isReversed ? "lg:order-1 lg:border-l-0 lg:border-r" : "lg:order-2"
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        {category.services.map((service, serviceIdx) => (
+                          <div
+                            key={serviceIdx}
+                            className="flex items-center justify-between py-3 border-l-4 border-primary pl-4 hover:bg-accent/50 transition-colors rounded-r-md"
+                          >
+                            <div>
+                              <p className="font-semibold text-foreground">
+                                {service.name}
+                              </p>
+                              <p className="text-sm text-muted-foreground uppercase tracking-wide">
+                                {service.duration}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
