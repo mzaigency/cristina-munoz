@@ -133,7 +133,7 @@ export const ReviewsSection = () => {
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
-            className={`h-8 w-8 cursor-pointer transition-all ${
+            className={`h-8 w-8 cursor-pointer transition-transform duration-200 transform-gpu ${
               i < (hoveredRating || rating)
                 ? "fill-yellow-400 text-yellow-400 scale-110"
                 : "fill-muted text-muted hover:scale-110"
@@ -307,39 +307,42 @@ export const ReviewsSection = () => {
         )}
 
         {filteredReviews.length > 0 && (
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            className="w-full max-w-5xl mx-auto mb-16"
-          >
-            <CarouselContent>
-              {filteredReviews.map((review) => (
-                <CarouselItem key={review.id} className="md:basis-1/2 lg:basis-1/3">
-                  <Card className="card-elevated border-primary/10 h-full group">
-                    <CardContent className="p-6 flex flex-col h-full">
-                      <div className="flex items-center gap-2 mb-4 transition-transform duration-300 group-hover:scale-105">{renderStars(review.rating)}</div>
-                      {review.comment && (
-                        <p className="text-muted-foreground leading-relaxed line-clamp-6 flex-1 mb-4">
-                          {review.comment}
+          <div className="contain-layout contain-paint">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+                watchDrag: true,
+              }}
+              className="w-full max-w-5xl mx-auto mb-16"
+            >
+              <CarouselContent className="will-change-transform">
+                {filteredReviews.map((review) => (
+                  <CarouselItem key={review.id} className="md:basis-1/2 lg:basis-1/3">
+                    <Card className="card-elevated border-primary/10 h-full group transform-gpu">
+                      <CardContent className="p-6 flex flex-col h-full">
+                        <div className="flex items-center gap-2 mb-4">{renderStars(review.rating)}</div>
+                        {review.comment && (
+                          <p className="text-muted-foreground leading-relaxed line-clamp-6 flex-1 mb-4">
+                            {review.comment}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-auto">
+                          {new Date(review.created_at).toLocaleDateString("es-ES", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
                         </p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-auto">
-                        {new Date(review.created_at).toLocaleDateString("es-ES", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden md:flex" />
-            <CarouselNext className="hidden md:flex" />
-          </Carousel>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
+          </div>
         )}
 
         {/* Formulario de valoración */}
