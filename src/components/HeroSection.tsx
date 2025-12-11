@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/foto-hero.jpg";
 import { ChevronDown } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -23,8 +22,8 @@ export const HeroSection = ({ onBookNow, onViewServices }: HeroSectionProps) => 
       
       <div className="absolute inset-0 z-0">
         <img 
-          src={heroImage} 
-          alt="Interior de Cristina Muñoz Peluquería en Santpedor - Salón profesional de peluquería con ambiente elegante y moderno" 
+          src="/images/foto-hero.jpg" 
+          alt="Interior de Cristina Muñoz Peluquería en Santpedor - Salón profesional de peluquería con ambiente elegante y moderno"
           className="w-full h-full object-cover"
           loading="eager"
           fetchPriority="high"
