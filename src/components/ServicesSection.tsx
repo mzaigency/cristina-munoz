@@ -119,8 +119,10 @@ export const ServicesSection = () => {
                         alt={`Servicio de ${category.category.toLowerCase()} en Cristina Muñoz - Peluquería profesional en Santpedor`} 
                         className="w-full h-full object-cover" 
                         loading="lazy"
+                        decoding="async"
+                        fetchPriority="low"
                         width={640}
-                        height={480}
+                        height={192}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
