@@ -81,20 +81,20 @@ export const ServicesSection = () => {
             return (
               <ScrollReveal key={idx} delay={idx * 100}>
                 <div
-                  className={`grid grid-cols-1 lg:grid-cols-2 gap-1 ${
+                  className={`grid grid-cols-1 lg:grid-cols-2 gap-4 ${
                     isReversed ? "lg:flex-row-reverse" : ""
                   }`}
                 >
                   {/* Image Section */}
                   <div
-                    className={`relative h-64 lg:h-96 overflow-hidden rounded-lg ${
+                    className={`relative h-64 lg:h-96 overflow-hidden rounded-xl shadow-xl shadow-black/20 ${
                       isReversed ? "lg:order-2" : "lg:order-1"
                     }`}
                   >
                     <img
                       src={category.image}
                       alt={`Servicio de ${category.category.toLowerCase()} en Cristina Muñoz`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-center"
                       loading="lazy"
                       decoding="async"
                     />
@@ -102,7 +102,7 @@ export const ServicesSection = () => {
                     
                     {/* Category Title Overlay */}
                     <div className="absolute top-4 left-4 flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary shadow-lg shadow-primary/30">
                         <Icon className="h-6 w-6 text-primary-foreground" />
                       </div>
                       <h3 className="text-2xl font-bold text-white uppercase tracking-wide drop-shadow-lg">
@@ -113,7 +113,7 @@ export const ServicesSection = () => {
 
                   {/* Services List Section */}
                   <div
-                    className={`bg-card rounded-lg p-6 lg:p-8 flex flex-col justify-center ${
+                    className={`bg-card rounded-xl p-6 lg:p-8 flex flex-col justify-center shadow-xl shadow-black/10 border border-border/50 ${
                       isReversed ? "lg:order-1" : "lg:order-2"
                     }`}
                   >
