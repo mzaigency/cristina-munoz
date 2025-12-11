@@ -163,9 +163,9 @@ export const ReviewsSection = () => {
 
   return (
     <section className="pt-12 pb-24 bg-gradient-to-b from-background via-muted/10 to-background relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-accent/10 rounded-full blur-3xl animate-pulse-soft" />
-      <div className="absolute bottom-20 right-10 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
+      {/* Decorative elements - static for performance */}
+      <div className="absolute top-20 left-10 w-32 h-32 bg-accent/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 right-10 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
       
       {/* Schema Markup for SEO */}
       <script

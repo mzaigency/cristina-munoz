@@ -12,7 +12,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { User } from "lucide-react";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 
 export type Service = {
   id: string;
