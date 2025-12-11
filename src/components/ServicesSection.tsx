@@ -81,15 +81,22 @@ export const ServicesSection = () => {
             return (
               <ScrollReveal key={idx} delay={idx * 100}>
                 {/* Card container with unified shadow */}
-                <div className="rounded-2xl overflow-hidden shadow-2xl shadow-black/15 border border-border/30 bg-card">
+                <div className={`rounded-2xl overflow-hidden shadow-2xl shadow-black/15 bg-card flex ${
+                  isReversed ? "flex-row-reverse" : ""
+                }`}>
+                  {/* Primary color border on image side */}
+                  <div className={`hidden lg:block w-1.5 bg-primary flex-shrink-0 ${
+                    isReversed ? "order-last" : "order-first"
+                  }`} />
+                  
                   <div
-                    className={`grid grid-cols-1 lg:grid-cols-2 ${
+                    className={`grid grid-cols-1 lg:grid-cols-2 flex-1 ${
                       isReversed ? "lg:flex-row-reverse" : ""
                     }`}
                   >
                     {/* Image Section */}
                     <div
-                      className={`relative h-64 lg:h-auto lg:min-h-[320px] ${
+                      className={`relative h-64 lg:h-auto lg:min-h-[220px] ${
                         isReversed ? "lg:order-2" : "lg:order-1"
                       }`}
                     >
