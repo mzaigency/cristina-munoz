@@ -44,7 +44,24 @@
     </noscript>
 
     <!-- Preload Critical Resources -->
-    <link rel="preload" as="image" href="/images/foto-hero.jpg" fetchpriority="high" />
+    <link rel="preload" as="image" href="/images/foto-hero.jpg" fetchpriority="high" type="image/jpeg" />
+    
+    <!-- DNS Prefetch for faster third-party connections -->
+    <link rel="dns-prefetch" href="https://lyeyzdbplrgqsvyxpfek.supabase.co" />
+    
+    <!-- Critical CSS for LCP optimization -->
+    <style>
+      /* Critical styles for hero section - prevents render delay */
+      .hero-placeholder {
+        background: linear-gradient(135deg, #815331 0%, #5d3a22 100%);
+        min-height: 100vh;
+      }
+      /* Optimize animation performance */
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    </style>
 
     <!-- Sitemap -->
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />

@@ -10,12 +10,27 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-motion': ['motion'],
+          'vendor-carousel': ['embla-carousel-react'],
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-popover', '@radix-ui/react-select'],
+          'vendor-query': ['@tanstack/react-query'],
+        }
+      }
+    },
+    target: 'esnext',
+    minify: 'esbuild',
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      injectRegister: 'auto',
+      injectRegister: 'script-defer',
       devOptions: {
         enabled: false
       },
@@ -83,7 +98,7 @@ export default defineConfig(({ mode }) => ({
             },
           },
           {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,
             handler: "CacheFirst",
             options: {
               cacheName: "images-cache",
@@ -98,7 +113,7 @@ export default defineConfig(({ mode }) => ({
           },
           {
             urlPattern: /\.(?:js|css)$/i,
-            handler: "NetworkFirst",
+            handler: "StaleWhileRevalidate",
             options: {
               cacheName: "static-resources",
               expiration: {

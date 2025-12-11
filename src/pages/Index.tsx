@@ -13,10 +13,16 @@ const BookingFlow = lazy(() => import("@/components/booking/BookingFlow").then(m
 const WhatsAppSection = lazy(() => import("@/components/WhatsAppSection").then(m => ({ default: m.WhatsAppSection })));
 const LocationSection = lazy(() => import("@/components/LocationSection").then(m => ({ default: m.LocationSection })));
 
-// Lightweight skeleton for lazy-loaded sections
+// Lightweight skeleton for lazy-loaded sections - uses only transform/opacity for composite animations
 const SectionSkeleton = () => (
   <div className="min-h-[50vh] flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    <div 
+      className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full"
+      style={{
+        animation: 'spin 1s linear infinite',
+        willChange: 'transform'
+      }}
+    />
   </div>
 );
 
