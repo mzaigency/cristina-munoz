@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Service } from "./BookingFlow";
 import { cn } from "@/lib/utils";
 import {
   Accordion,
@@ -9,6 +8,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Service } from "@/types/booking";
+import { SERVICE_GROUPS, ServiceGroup } from "@/constants/business";
 
 interface ServiceSelectionProps {
   services: Service[];
@@ -20,7 +21,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
   const [selected, setSelected] = useState<Service[]>(selectedServices);
 
   // Agrupar servicios por grupo según las categorías de la base de datos
-  const groupedServices: Record<string, Service[]> = {
+  const groupedServices: Record<ServiceGroup, Service[]> = {
     'Coloración': [],
     'Corte': [],
     'Estética': [],
@@ -53,8 +54,6 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
     }
   });
 
-  const groups = ['Asesoramiento profesional', 'Coloración', 'Corte', 'Estética', 'Peinados y Tratamientos'];
-
   const toggleService = (service: Service) => {
     setSelected((prev) =>
       prev.find((s) => s.id === service.id)
@@ -72,7 +71,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
   return (
     <div className="space-y-6">
       <Accordion type="multiple" className="w-full">
-        {groups.map((group) => {
+        {SERVICE_GROUPS.map((group) => {
           const groupServices = groupedServices[group];
           if (!groupServices || groupServices.length === 0) return null;
 

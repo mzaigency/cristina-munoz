@@ -4,7 +4,6 @@ import { ServiceSelection } from "./ServiceSelection";
 import { StylistSelection } from "./StylistSelection";
 import { DateTimeSelection } from "./DateTimeSelection";
 import { BookingConfirmation } from "./BookingConfirmation";
-
 import { BookingSummaryMobile } from "./BookingSummaryMobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,29 +12,7 @@ import { User } from "lucide-react";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
-
-export type Service = {
-  id: string;
-  name: string;
-  type: 'Simple' | 'Compuesto';
-  duration_part1_active: number;
-  duration_exposure_pause: number;
-  duration_part2_active: number;
-  category: string;
-  // Computed field for total duration
-  duration: number;
-};
-
-export type Stylist = "cris" | "desi" | "any";
-
-export type BookingData = {
-  services: Service[];
-  stylist: Stylist | null;
-  date: Date | null;
-  time: string | null;
-  name: string;
-  phone: string;
-};
+import { Service, Stylist, BookingData } from "@/types/booking";
 
 export const BookingFlow = () => {
   const [step, setStep] = useState(1);
@@ -123,7 +100,6 @@ export const BookingFlow = () => {
     
     setBookingData({ ...bookingData, services });
     setStep(2);
-    // Scroll to top of booking section when moving to stylist selection
     bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -134,7 +110,6 @@ export const BookingFlow = () => {
   };
 
   const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: Stylist) => {
-    // If a resolved stylist is provided (from 'any' selection), use it instead
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist });
     setStep(4);
@@ -143,8 +118,6 @@ export const BookingFlow = () => {
 
   const handleConfirmBooking = (name: string, phone: string) => {
     setBookingData({ ...bookingData, name, phone });
-    // Here you would send the booking to the backend
-    console.log("Booking confirmed:", { ...bookingData, name, phone });
   };
 
   const handleBack = () => {

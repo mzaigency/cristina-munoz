@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { BookingData } from "./BookingFlow";
 import { format } from "date-fns";
-import { CheckCircle2, Loader2, MessageCircle } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
+import { BookingData } from "@/types/booking";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;

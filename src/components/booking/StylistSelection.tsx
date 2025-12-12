@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Stylist } from "./BookingFlow";
 import { User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Stylist } from "@/types/booking";
 interface StylistSelectionProps {
   selectedStylist: Stylist | null;
   onNext: (stylist: Stylist) => void;
