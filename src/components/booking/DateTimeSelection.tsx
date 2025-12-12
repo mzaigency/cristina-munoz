@@ -2,10 +2,18 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { Stylist, Service } from "./BookingFlow";
 import { supabase } from "@/integrations/supabase/client";
 import { es } from "date-fns/locale";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Stylist, Service, TimeRange } from "@/types/booking";
+import { 
+  hasOverlap, 
+  getActiveWindows, 
+  calculateAvailableSlots,
+  formatDateToISO,
+  timeStringToMinutes,
+  minutesToTimeString 
+} from "@/lib/booking-utils";
 
 interface DateTimeSelectionProps {
   selectedDate: Date | null;
@@ -16,6 +24,28 @@ interface DateTimeSelectionProps {
   onNext: (date: Date, time: string, resolvedStylist?: Stylist, skipAvailabilityCheck?: boolean) => void;
   onBack: () => void;
   isAdmin?: boolean;
+}
+
+/** Convierte los slots reservados de la API a rangos de tiempo */
+function parseBookedSlotsToRanges(bookedSlots: Array<{ Hora: string; total_duration: number }>): TimeRange[] {
+  return bookedSlots.map(booking => {
+    const startMinutes = timeStringToMinutes(booking.Hora.substring(0, 5));
+    return { 
+      start: startMinutes, 
+      end: startMinutes + booking.total_duration 
+    };
+  });
+}
+
+/** Calcula slots disponibles para un estilista específico dado los datos de reservas */
+function computeAvailableSlotsForStylist(
+  date: Date,
+  bookedData: { bookedSlots?: Array<{ Hora: string; total_duration: number }> },
+  services: Service[],
+  totalDuration: number
+): string[] {
+  const ranges = parseBookedSlotsToRanges(bookedData?.bookedSlots || []);
+  return calculateAvailableSlots(date, ranges, services, totalDuration);
 }
 
 export const DateTimeSelection = ({
@@ -32,204 +62,58 @@ export const DateTimeSelection = ({
   const [time, setTime] = useState<string | null>(selectedTime);
   const [customHour, setCustomHour] = useState<string>("");
   const [customMinute, setCustomMinute] = useState<string>("");
-  const [bookedRanges, setBookedRanges] = useState<Array<{ start: number; end: number }>>([]);
+  const [bookedRanges, setBookedRanges] = useState<TimeRange[]>([]);
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch booked appointments from Google Calendar when date changes
+  // Fetch booked appointments when date changes
   useEffect(() => {
     if (!date) return;
 
     const fetchBookedSlots = async () => {
       setLoading(true);
       try {
-        // Format date in YYYY-MM-DD format
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const dateStr = formatDateToISO(date);
         
-        // Special handling for "any" stylist: fetch both stylists and merge availability
         if (stylist === 'any') {
+          // Fetch both stylists and merge availability
           const [crisResponse, desiResponse] = await Promise.all([
             supabase.functions.invoke('check-availability', {
-              body: { date: dateStr, stylist: 'cris', totalDuration: totalDuration },
+              body: { date: dateStr, stylist: 'cris', totalDuration },
             }),
             supabase.functions.invoke('check-availability', {
-              body: { date: dateStr, stylist: 'desi', totalDuration: totalDuration },
+              body: { date: dateStr, stylist: 'desi', totalDuration },
             }),
           ]);
 
           if (crisResponse.error || desiResponse.error) {
-            console.error('Error checking availability:', crisResponse.error || desiResponse.error);
             setBookedRanges([]);
             setFusedAvailableSlots([]);
             return;
           }
 
-          // Helper function to convert booked slots to ranges and calculate available slots
-          const calculateAvailableSlots = (bookedData: any): string[] => {
-            const ranges: Array<{ start: number; end: number }> = [];
-            bookedData?.bookedSlots?.forEach((booking: { Hora: string; total_duration: number }) => {
-              const startTime = booking.Hora.substring(0, 5);
-              const [hours, minutes] = startTime.split(':').map(Number);
-              const startMinutes = hours * 60 + minutes;
-              const endMinutes = startMinutes + booking.total_duration;
-              ranges.push({ start: startMinutes, end: endMinutes });
-            });
-
-            // Use the same logic as getAvailableTimeSlots but with these specific ranges
-            const day = date.getDay();
-            const isToday = date.toDateString() === new Date().toDateString();
-            const currentMinutes = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : 0;
-            
-            let morningStart = 0, morningEnd = 0, afternoonStart = 0, afternoonEnd = 0;
-            if (day >= 2 && day <= 5) {
-              morningStart = 9 * 60; morningEnd = 12 * 60 + 30;
-              afternoonStart = 15 * 60; afternoonEnd = 19 * 60;
-            } else if (day === 6) {
-              morningStart = 8 * 60; morningEnd = 13 * 60;
-            } else {
-              return [];
-            }
-
-            const slotsSet = new Set<number>();
-            if (morningEnd > 0) {
-              for (let minutes = morningStart; minutes < morningEnd; minutes += 30) {
-                slotsSet.add(minutes);
-              }
-            }
-            if (afternoonEnd > 0) {
-              for (let minutes = afternoonStart; minutes < afternoonEnd; minutes += 30) {
-                slotsSet.add(minutes);
-              }
-            }
-            
-            ranges.forEach(booking => {
-              const endTime = booking.end;
-              const inMorning = endTime >= morningStart && endTime < morningEnd;
-              const inAfternoon = endTime >= afternoonStart && endTime < afternoonEnd;
-              if (inMorning || inAfternoon) slotsSet.add(endTime);
-            });
-
-            const allSlots = Array.from(slotsSet)
-              .sort((a, b) => a - b)
-              .map(minutes => {
-                const hours = Math.floor(minutes / 60);
-                const mins = minutes % 60;
-                return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
-              });
-
-            const hasOverlap = (start1: number, end1: number, start2: number, end2: number): boolean => {
-              return start1 < end2 && start2 < end1;
-            };
-
-            // Calculate active time windows for the selected services
-            const getActiveWindows = (startMin: number): Array<{start: number, end: number}> => {
-              const windows: Array<{start: number, end: number}> = [];
-              let currentTime = startMin;
-              
-              for (const service of services) {
-                if (service.type === 'Compuesto') {
-                  // Part 1 active window
-                  windows.push({ 
-                    start: currentTime, 
-                    end: currentTime + service.duration_part1_active 
-                  });
-                  currentTime += service.duration_part1_active + service.duration_exposure_pause;
-                  // Part 2 active window
-                  windows.push({ 
-                    start: currentTime, 
-                    end: currentTime + service.duration_part2_active 
-                  });
-                  currentTime += service.duration_part2_active;
-                } else {
-                  // Simple service - entire duration is active
-                  windows.push({ 
-                    start: currentTime, 
-                    end: currentTime + service.duration 
-                  });
-                  currentTime += service.duration;
-                }
-              }
-              
-              return windows;
-            };
-
-            return allSlots.filter((slot) => {
-              const [hours, minutes] = slot.split(':').map(Number);
-              const startMinutes = hours * 60 + minutes;
-              const endMinutes = startMinutes + totalDuration;
-              
-              if (isToday && startMinutes <= currentMinutes) return false;
-              
-              // Always respect closing times
-              const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
-              const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
-              
-              if (inMorning && endMinutes > morningEnd) return false;
-              if (inAfternoon && endMinutes > afternoonEnd) return false;
-              
-              // Get active windows for this slot
-              const activeWindows = getActiveWindows(startMinutes);
-              
-              // Check if any active window overlaps with existing bookings
-              for (const window of activeWindows) {
-                for (const booking of ranges) {
-                  if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
-                    return false;
-                  }
-                }
-              }
-              
-              return true;
-            });
-          };
-
-          const crisSlots = calculateAvailableSlots(crisResponse.data);
-          const desiSlots = calculateAvailableSlots(desiResponse.data);
-
-          // Merge and deduplicate
+          const crisSlots = computeAvailableSlotsForStylist(date, crisResponse.data, services, totalDuration);
+          const desiSlots = computeAvailableSlotsForStylist(date, desiResponse.data, services, totalDuration);
           const mergedSlots = [...new Set([...crisSlots, ...desiSlots])].sort();
           
-          console.log('Cris available slots:', crisSlots);
-          console.log('Desi available slots:', desiSlots);
-          console.log('Merged available slots:', mergedSlots);
-          
           setFusedAvailableSlots(mergedSlots);
-          setBookedRanges([]); // Clear bookedRanges as we're using fused slots
+          setBookedRanges([]);
         } else {
           // Regular handling for specific stylist
           const { data, error } = await supabase.functions.invoke('check-availability', {
-            body: {
-              date: dateStr,
-              stylist: stylist,
-              totalDuration: totalDuration,
-            },
+            body: { date: dateStr, stylist, totalDuration },
           });
 
           if (error) {
-            console.error('Error checking availability:', error);
             setBookedRanges([]);
             return;
           }
 
-          console.log('Raw data from check-availability:', data);
-          console.log('Booked slots received:', data?.bookedSlots);
-
-          const ranges: Array<{ start: number; end: number }> = [];
-          data?.bookedSlots?.forEach((booking: { Hora: string; total_duration: number }) => {
-            const startTime = booking.Hora.substring(0, 5);
-            const [hours, minutes] = startTime.split(':').map(Number);
-            const startMinutes = hours * 60 + minutes;
-            const endMinutes = startMinutes + booking.total_duration;
-            ranges.push({ start: startMinutes, end: endMinutes });
-            console.log(`Blocking: ${startTime} (${startMinutes} min) to ${endMinutes} min`);
-          });
-
-          console.log('Final bookedRanges:', ranges);
+          const ranges = parseBookedSlotsToRanges(data?.bookedSlots || []);
           setBookedRanges(ranges);
-          setFusedAvailableSlots([]); // Clear fused slots
+          setFusedAvailableSlots([]);
         }
-      } catch (error) {
-        console.error('Error:', error);
+      } catch {
         setBookedRanges([]);
         setFusedAvailableSlots([]);
       } finally {
@@ -238,147 +122,12 @@ export const DateTimeSelection = ({
     };
 
     fetchBookedSlots();
-  }, [date, stylist, totalDuration]);
+  }, [date, stylist, totalDuration, services]);
 
-  // Generate available time slots based on day, duration, and existing bookings
-  const getAvailableTimeSlots = (selectedDate: Date | undefined) => {
+  // Generate available time slots for specific stylist
+  const getAvailableTimeSlots = (selectedDate: Date | undefined): string[] => {
     if (!selectedDate) return [];
-
-    const day = selectedDate.getDay();
-    
-    // Check if selected date is today
-    const now = new Date();
-    const isToday = selectedDate.toDateString() === now.toDateString();
-    const currentMinutes = isToday ? now.getHours() * 60 + now.getMinutes() : 0;
-    
-    // Define business hours for each day
-    let morningEnd = 0;
-    let afternoonStart = 0;
-    let afternoonEnd = 0;
-    let morningStart = 0;
-    
-    if (day >= 2 && day <= 5) { // Tuesday to Friday
-      morningStart = 9 * 60; // 9:00
-      morningEnd = 12 * 60 + 30; // 12:30
-      afternoonStart = 15 * 60; // 15:00
-      afternoonEnd = 19 * 60; // 19:00
-    } else if (day === 6) { // Saturday
-      morningStart = 8 * 60; // 8:00
-      morningEnd = 13 * 60; // 13:00
-    } else {
-      return []; // Closed on Sunday and Monday
-    }
-
-    const slotsSet = new Set<number>();
-
-    // Generate base slots every 30 minutes
-    if (morningEnd > 0) {
-      for (let minutes = morningStart; minutes < morningEnd; minutes += 30) {
-        slotsSet.add(minutes);
-      }
-    }
-
-    if (afternoonEnd > 0) {
-      for (let minutes = afternoonStart; minutes < afternoonEnd; minutes += 30) {
-        slotsSet.add(minutes);
-      }
-    }
-
-    // Add flexible slots right after each existing booking ends
-    bookedRanges.forEach(booking => {
-      const endTime = booking.end;
-      // Only add if within business hours
-      const inMorning = endTime >= morningStart && endTime < morningEnd;
-      const inAfternoon = endTime >= afternoonStart && endTime < afternoonEnd;
-      
-      if (inMorning || inAfternoon) {
-        slotsSet.add(endTime);
-      }
-    });
-
-    // Convert to array and sort
-    const allSlots = Array.from(slotsSet)
-      .sort((a, b) => a - b)
-      .map(minutes => {
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
-      });
-
-    // Helper function to check if two time ranges overlap
-    const hasOverlap = (start1: number, end1: number, start2: number, end2: number): boolean => {
-      return start1 < end2 && start2 < end1;
-    };
-
-    // Calculate active time windows for the selected services
-    const getActiveWindows = (startMin: number): Array<{start: number, end: number}> => {
-      const windows: Array<{start: number, end: number}> = [];
-      let currentTime = startMin;
-      
-      for (const service of services) {
-        if (service.type === 'Compuesto') {
-          // Part 1 active window
-          windows.push({ 
-            start: currentTime, 
-            end: currentTime + service.duration_part1_active 
-          });
-          currentTime += service.duration_part1_active + service.duration_exposure_pause;
-          // Part 2 active window
-          windows.push({ 
-            start: currentTime, 
-            end: currentTime + service.duration_part2_active 
-          });
-          currentTime += service.duration_part2_active;
-        } else {
-          // Simple service - entire duration is active
-          windows.push({ 
-            start: currentTime, 
-            end: currentTime + service.duration 
-          });
-          currentTime += service.duration;
-        }
-      }
-      
-      return windows;
-    };
-
-    // Filter slots: must fit within business hours AND active parts must not overlap with existing bookings
-    return allSlots.filter((slot) => {
-      const [hours, minutes] = slot.split(':').map(Number);
-      const startMinutes = hours * 60 + minutes;
-      const endMinutes = startMinutes + totalDuration;
-      
-      // If it's today, filter out past time slots
-      if (isToday && startMinutes <= currentMinutes) {
-        return false; // Slot is in the past
-      }
-      
-      // Always respect closing times
-      const inMorning = startMinutes >= morningStart && startMinutes < morningEnd;
-      const inAfternoon = startMinutes >= afternoonStart && startMinutes < afternoonEnd;
-      
-      if (inMorning && endMinutes > morningEnd) {
-        return false; // Service would extend past morning closing
-      }
-      
-      if (inAfternoon && endMinutes > afternoonEnd) {
-        return false; // Service would extend past afternoon closing
-      }
-      
-      // Get active windows for this slot
-      const activeWindows = getActiveWindows(startMinutes);
-      
-      // Check if any active window overlaps with existing bookings (only active parts)
-      for (const window of activeWindows) {
-        for (const booking of bookedRanges) {
-          if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
-            return false; // Active part would overlap with an existing booking
-          }
-        }
-      }
-      
-      return true;
-    });
+    return calculateAvailableSlots(selectedDate, bookedRanges, services, totalDuration);
   };
 
   const timeSlots = stylist === 'any' ? fusedAvailableSlots : getAvailableTimeSlots(date);
@@ -396,49 +145,17 @@ export const DateTimeSelection = ({
 
     // In admin mode with custom time, skip availability checks
     if (isAdmin && (customHour || customMinute)) {
-      console.log('Admin mode with custom time - bypassing availability checks');
-      onNext(date, time, stylist === 'any' ? 'cris' : stylist, true); // Pass skipAvailabilityCheck=true
+      onNext(date, time, stylist === 'any' ? 'cris' : stylist, true);
       return;
     }
 
-    // If stylist is 'any', we need to check which specific stylist is available at this time
+    // If stylist is 'any', determine which specific stylist is available
     if (stylist === 'any') {
       try {
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        const [hours, minutes] = time.split(':').map(Number);
-        const selectedStartMinutes = hours * 60 + minutes;
-        
-        // Get active windows for the selected services starting at the chosen time
-        const getActiveWindows = (startMin: number): Array<{start: number, end: number}> => {
-          const windows: Array<{start: number, end: number}> = [];
-          let currentTime = startMin;
-          
-          for (const service of services) {
-            if (service.type === 'Compuesto') {
-              windows.push({ 
-                start: currentTime, 
-                end: currentTime + service.duration_part1_active 
-              });
-              currentTime += service.duration_part1_active + service.duration_exposure_pause;
-              windows.push({ 
-                start: currentTime, 
-                end: currentTime + service.duration_part2_active 
-              });
-              currentTime += service.duration_part2_active;
-            } else {
-              windows.push({ 
-                start: currentTime, 
-                end: currentTime + service.duration 
-              });
-              currentTime += service.duration;
-            }
-          }
-          return windows;
-        };
+        const dateStr = formatDateToISO(date);
+        const selectedStartMinutes = timeStringToMinutes(time);
+        const activeWindows = getActiveWindows(selectedStartMinutes, services);
 
-        const activeWindows = getActiveWindows(selectedStartMinutes);
-
-        // Check availability for both stylists
         const [crisResponse, desiResponse] = await Promise.all([
           supabase.functions.invoke('check-availability', {
             body: { date: dateStr, stylist: 'cris' },
@@ -448,21 +165,8 @@ export const DateTimeSelection = ({
           }),
         ]);
 
-        const hasOverlap = (start1: number, end1: number, start2: number, end2: number): boolean => {
-          return start1 < end2 && start2 < end1;
-        };
-
         const checkStylistAvailability = (bookedData: any): boolean => {
-          const ranges: Array<{ start: number; end: number }> = [];
-          bookedData?.bookedSlots?.forEach((booking: { Hora: string; total_duration: number }) => {
-            const startTime = booking.Hora.substring(0, 5);
-            const [h, m] = startTime.split(':').map(Number);
-            const startMin = h * 60 + m;
-            const endMin = startMin + booking.total_duration;
-            ranges.push({ start: startMin, end: endMin });
-          });
-
-          // Check if any active window overlaps with existing bookings
+          const ranges = parseBookedSlotsToRanges(bookedData?.bookedSlots || []);
           for (const window of activeWindows) {
             for (const booking of ranges) {
               if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
@@ -479,23 +183,17 @@ export const DateTimeSelection = ({
         // Determine which stylist to assign
         let assignedStylist: Stylist;
         if (crisAvailable && desiAvailable) {
-          // Both available, prefer cris by default
           assignedStylist = 'cris';
         } else if (crisAvailable) {
           assignedStylist = 'cris';
         } else if (desiAvailable) {
           assignedStylist = 'desi';
         } else {
-          // Neither available - this shouldn't happen if the time slot was shown as available
-          console.error('No stylist available at selected time');
           return;
         }
 
-        console.log(`Assigned stylist for "any" selection: ${assignedStylist}`);
-        // Pass the specific stylist instead of 'any'
         onNext(date, time, assignedStylist);
-      } catch (error) {
-        console.error('Error determining stylist availability:', error);
+      } catch {
         return;
       }
     } else {
@@ -505,11 +203,11 @@ export const DateTimeSelection = ({
 
   // Disable Mondays, Sundays, and past dates
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time to start of day
+  today.setHours(0, 0, 0, 0);
   
   const disabledDays = [
-    { dayOfWeek: [0, 1] }, // Sunday and Monday
-    { before: today }, // Past dates
+    { dayOfWeek: [0, 1] },
+    { before: today },
   ];
 
   return (
@@ -614,12 +312,9 @@ export const DateTimeSelection = ({
           {date && time && (
             <p className="mt-4 text-xs text-muted-foreground">
               {(() => {
-                const [hours, minutes] = time.split(':').map(Number);
-                const startMinutes = hours * 60 + minutes;
+                const startMinutes = timeStringToMinutes(time);
                 const endMinutes = startMinutes + totalDuration;
-                const endHours = Math.floor(endMinutes / 60);
-                const endMins = endMinutes % 60;
-                const endTime = `${endHours.toString().padStart(2, "0")}:${endMins.toString().padStart(2, "0")}`;
+                const endTime = minutesToTimeString(endMinutes);
                 return `Duración estimada: ${totalDuration} minutos (finaliza a las ${endTime})`;
               })()}
             </p>

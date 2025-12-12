@@ -1,9 +1,9 @@
 import { motion, AnimatePresence } from "motion/react";
 import { Clock, Scissors, User, Calendar, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Service, Stylist, BookingData } from "./BookingFlow";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Service, Stylist, BookingData } from "@/types/booking";
 
 interface BookingSummaryProps {
   bookingData: BookingData;

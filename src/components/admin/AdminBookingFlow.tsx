@@ -10,21 +10,9 @@ import { StylistSelection } from "@/components/booking/StylistSelection";
 import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { Loader2 } from "lucide-react";
 import { phoneSchema } from "@/lib/phoneValidation";
+import { Service, Stylist } from "@/types/booking";
 
-type Service = {
-  id: string;
-  name: string;
-  duration_part1_active: number;
-  duration_exposure_pause: number;
-  duration_part2_active: number;
-  type: 'Simple' | 'Compuesto';
-  category: string;
-  duration: number;
-};
-
-type Stylist = "cris" | "desi" | "any";
-
-type BookingData = {
+interface AdminBookingData {
   services: Service[];
   stylist: Stylist | null;
   date: Date | null;
@@ -32,7 +20,7 @@ type BookingData = {
   customerName: string;
   customerPhone: string;
   skipAvailabilityCheck?: boolean;
-};
+}
 
 interface AdminBookingFlowProps {
   onComplete: () => void;
@@ -43,7 +31,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
-  const [bookingData, setBookingData] = useState<BookingData>({
+  const [bookingData, setBookingData] = useState<AdminBookingData>({
     services: [],
     stylist: null,
     date: null,
