@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff, ArrowDown, Ban, Pencil } from "lucide-react";
+import { MessageCircle, User, Clock, Search, Filter, X, Send, Bot, BotOff, ArrowDown, Ban, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -370,6 +370,37 @@ export const WhatsAppManager = () => {
     }
   };
 
+  const clearConversation = async (contactId: string) => {
+    if (!confirm("¿Estás seguro de que quieres borrar toda la conversación? Esta acción no se puede deshacer.")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('whatsapp_messages')
+        .delete()
+        .eq('contact_id', contactId);
+
+      if (error) throw error;
+
+      // Limpiar mensajes del estado local
+      setMessages([]);
+      setFirstUnreadIndex(null);
+
+      toast({
+        title: "Conversación eliminada",
+        description: "Todos los mensajes han sido borrados"
+      });
+    } catch (error) {
+      console.error('Error clearing conversation:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo borrar la conversación",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center p-8">Cargando...</div>;
   }
@@ -527,6 +558,16 @@ export const WhatsAppManager = () => {
                 >
                   <Ban className="h-3 w-3 mr-1" />
                   {selectedContact.blocked ? "Desbloquear" : "Bloquear"}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => clearConversation(selectedContact.id)}
+                  className="h-8 text-xs md:text-sm text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Limpiar
                 </Button>
               </div>}
           </div>
