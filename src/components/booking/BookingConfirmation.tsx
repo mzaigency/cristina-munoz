@@ -119,7 +119,7 @@ export const BookingConfirmation = ({
         return;
       }
 
-      console.log('Booking created:', data);
+      // console.log('Booking created:', data); // Sensitive data - removed for security
       setLoading(false);
       setConfirmed(true);
       onConfirm(userProfile.full_name, userProfile.phone);
