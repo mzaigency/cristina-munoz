@@ -96,6 +96,36 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Verify user identity if user_id is provided
+    if (bookingData.user_id) {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        throw new Error('Authorization header required for user booking');
+      }
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser(
+        authHeader.replace('Bearer ', '')
+      );
+
+      if (authError || !user) {
+        console.error('Auth error:', authError);
+        throw new Error('Invalid user token');
+      }
+
+      // Check if user is booking for themselves or is an admin
+      if (user.id !== bookingData.user_id) {
+        // Check if requester is admin
+        const { data: hasRole } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'admin'
+        });
+
+        if (!hasRole) {
+          throw new Error('Unauthorized: Cannot create booking for another user');
+        }
+      }
+    }
+
     // Get customer data - either from user profile or from direct input
     let customer_name: string;
     let customer_email: string | null = null;
