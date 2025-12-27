@@ -345,13 +345,13 @@ export default function TenantAdmin() {
             <LocalCalendarCRM tenantId={tenant.id} stylists={stylists} />
           </TabsContent>
           <TabsContent value="cash" className="mt-6">
-            <CashRegisterManager />
+            <CashRegisterManager tenantId={tenant.id} />
           </TabsContent>
           <TabsContent value="reviews" className="mt-6">
-            <ReviewsManager />
+            <ReviewsManager tenantId={tenant.id} />
           </TabsContent>
           <TabsContent value="whatsapp" className="mt-6">
-            <WhatsAppManager />
+            <WhatsAppManager tenantId={tenant.id} />
           </TabsContent>
           <TabsContent value="security" className="mt-6">
             <SecurityMonitor />
