@@ -6,6 +6,49 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface GoogleCalendarCredentials {
+  client_id: string;
+  client_secret: string;
+  refresh_token: string;
+}
+
+// Helper function to get tenant credentials
+async function getTenantCredentials(
+  supabase: any, 
+  tenantId: string, 
+  integrationType: string
+): Promise<{ credentials: any; settings: any } | null> {
+  const { data: integration, error } = await supabase
+    .from('tenant_integrations')
+    .select('credentials_encrypted, settings, is_enabled')
+    .eq('tenant_id', tenantId)
+    .eq('integration_type', integrationType)
+    .eq('is_enabled', true)
+    .maybeSingle();
+
+  if (error || !integration) {
+    console.log(`No ${integrationType} integration found for tenant ${tenantId}`);
+    return null;
+  }
+
+  let credentials = null;
+  if (integration.credentials_encrypted) {
+    const { data: decrypted } = await supabase.rpc('decrypt_sensitive_data', {
+      _ciphertext: integration.credentials_encrypted,
+      _tenant_id: tenantId
+    });
+    if (decrypted) {
+      try {
+        credentials = JSON.parse(decrypted);
+      } catch (e) {
+        console.error('Error parsing credentials:', e);
+      }
+    }
+  }
+
+  return { credentials, settings: integration.settings || {} };
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -15,7 +58,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const cancelWebhookUrl = Deno.env.get('N8N_CANCEL_WEBHOOK_URL')!;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -48,12 +90,13 @@ serve(async (req) => {
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .in('role', ['admin', 'stylist']);
+      .in('role', ['admin', 'stylist', 'superadmin']);
 
     const isAdminOrStylist = roleData && roleData.length > 0;
-    console.log('User is admin/stylist:', isAdminOrStylist);
+    const isSuperAdmin = roleData?.some(r => r.role === 'superadmin');
+    console.log('User is admin/stylist:', isAdminOrStylist, 'SuperAdmin:', isSuperAdmin);
 
-    const { bookingId, bookingIds, user: cancelUser = 'client' } = await req.json();
+    const { bookingId, bookingIds, user: cancelUser = 'client', tenant_id: requestTenantId } = await req.json();
 
     // Handle both single and multiple bookings
     const idsToCancel = bookingIds || [bookingId];
@@ -70,6 +113,10 @@ serve(async (req) => {
       console.error('Error fetching bookings:', fetchError);
       throw new Error('Bookings not found');
     }
+
+    // Determine tenant_id from the first booking
+    const tenantId = requestTenantId || bookings[0].tenant_id;
+    console.log('Using tenant_id:', tenantId);
 
     // Verify ownership: user must own all bookings OR be admin/stylist
     if (!isAdminOrStylist) {
@@ -102,21 +149,45 @@ serve(async (req) => {
 
     const allBookings = [...bookings, ...relatedBookings];
 
+    // Get Google Calendar credentials from tenant_integrations
+    let googleCreds: GoogleCalendarCredentials | null = null;
+    
+    if (tenantId) {
+      const gcalIntegration = await getTenantCredentials(supabase, tenantId, 'google_calendar');
+      if (gcalIntegration?.credentials) {
+        googleCreds = gcalIntegration.credentials;
+        console.log('Using tenant Google Calendar integration');
+      }
+    }
+    
+    // Fallback to environment variables
+    if (!googleCreds) {
+      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+      const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
+      const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
+      
+      if (clientId && clientSecret && refreshToken) {
+        googleCreds = { client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken };
+        console.log('Using environment Google Calendar credentials (fallback)');
+      }
+    }
+
     // Helper function to delete Google Calendar event
     const deleteGoogleCalendarEvent = async (eventId: string, calId: string) => {
+      if (!googleCreds) {
+        console.log('No Google Calendar credentials available, skipping calendar event deletion');
+        return;
+      }
+      
       try {
-        const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN')!;
-        const clientId = Deno.env.get('GOOGLE_CLIENT_ID')!;
-        const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')!;
-
         // Get access token
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            client_id: clientId,
-            client_secret: clientSecret,
-            refresh_token: refreshToken,
+            client_id: googleCreds.client_id,
+            client_secret: googleCreds.client_secret,
+            refresh_token: googleCreds.refresh_token,
             grant_type: 'refresh_token',
           }),
         });
@@ -175,13 +246,30 @@ serve(async (req) => {
 
     console.log('Booking(s) cancelled successfully');
 
-    // ALWAYS trigger n8n webhook with all bookings data
+    // Get n8n cancel webhook URL from tenant_integrations
+    let cancelWebhookUrl: string | null = null;
+    
+    if (tenantId) {
+      const n8nIntegration = await getTenantCredentials(supabase, tenantId, 'n8n');
+      if (n8nIntegration?.settings?.cancel_webhook_url) {
+        cancelWebhookUrl = n8nIntegration.settings.cancel_webhook_url;
+        console.log('Using tenant n8n cancel webhook URL');
+      }
+    }
+    
+    // Fallback to environment variable
+    if (!cancelWebhookUrl) {
+      cancelWebhookUrl = Deno.env.get('N8N_CANCEL_WEBHOOK_URL') || null;
+      if (cancelWebhookUrl) console.log('Using environment n8n cancel webhook URL (fallback)');
+    }
+
+    // Trigger n8n webhook with all bookings data
     console.log('Preparing to send cancellation webhook...');
     let webhookSuccess = false;
     
     try {
       if (!cancelWebhookUrl) {
-        console.error('WARNING: N8N_CANCEL_WEBHOOK_URL not configured');
+        console.error('WARNING: No cancel webhook URL configured');
       } else {
         const webhookData = bookings.map(booking => {
           // Format date for webhook (dd-mm-yyyy) - parse string directly to avoid timezone issues
@@ -199,6 +287,7 @@ serve(async (req) => {
             services: booking.services,
             google_calendar_event_id: booking.google_calendar_event_id,
             calendar_id: booking.calendar_id,
+            tenant_id: tenantId,
           };
         });
 
@@ -214,6 +303,7 @@ serve(async (req) => {
             type: 'cancellation',
             bookings: webhookData,
             user: cancelUser,
+            tenant_id: tenantId,
           }),
         });
 
