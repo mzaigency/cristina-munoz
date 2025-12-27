@@ -122,7 +122,12 @@ const TenantLanding = () => {
 
       <main>
         <div id="inicio">
-          <HeroSection onBookNow={handleBookNow} onViewServices={handleViewServices} />
+          <HeroSection 
+            onBookNow={handleBookNow} 
+            onViewServices={handleViewServices}
+            businessName={tenant.name}
+            tagline={`Tu peluquería de confianza en ${tenant.city || 'tu ciudad'}. Donde la belleza y el estilo se encuentran.`}
+          />
         </div>
 
         <Suspense fallback={<SectionSkeleton />}>
