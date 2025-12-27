@@ -14,7 +14,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -34,10 +33,12 @@ import {
   ExternalLink,
   Users,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { TenantOnboardingWizard } from "./TenantOnboardingWizard";
 
 interface Tenant {
   id: string;
@@ -68,7 +69,7 @@ export const TenantsManager = () => {
   const [stats, setStats] = useState<Record<string, TenantStats>>({});
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [formData, setFormData] = useState({
@@ -125,53 +126,6 @@ export const TenantsManager = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCreateTenant = async () => {
-    if (!formData.name || !formData.slug) {
-      toast({
-        title: "Error",
-        description: "Nombre y slug son obligatorios",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      const { data, error } = await supabase
-        .from("tenants")
-        .insert({
-          name: formData.name,
-          slug: formData.slug.toLowerCase().replace(/\s+/g, "-"),
-          email: formData.email || null,
-          phone: formData.phone || null,
-          subscription_plan: formData.subscription_plan,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Tenant creado",
-        description: `${formData.name} ha sido creado correctamente`,
-      });
-
-      setIsCreateDialogOpen(false);
-      setFormData({ name: "", slug: "", email: "", phone: "", subscription_plan: "basic" });
-      fetchTenants();
-    } catch (error: any) {
-      console.error("Error creating tenant:", error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo crear el tenant",
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -278,71 +232,18 @@ export const TenantsManager = () => {
           </p>
         </div>
 
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nuevo Tenant
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Crear Nuevo Tenant</DialogTitle>
-              <DialogDescription>
-                Añade una nueva peluquería a la plataforma
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nombre</Label>
-                <Input
-                  id="name"
-                  placeholder="Peluquería Ejemplo"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="slug">Slug (URL)</Label>
-                <Input
-                  id="slug"
-                  placeholder="peluqueria-ejemplo"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="contacto@ejemplo.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Teléfono</Label>
-                <Input
-                  id="phone"
-                  placeholder="612 345 678"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleCreateTenant} disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Crear Tenant
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button className="gap-2" onClick={() => setIsWizardOpen(true)}>
+          <Sparkles className="h-4 w-4" />
+          Nuevo Tenant
+        </Button>
       </div>
+
+      {/* Onboarding Wizard */}
+      <TenantOnboardingWizard
+        open={isWizardOpen}
+        onOpenChange={setIsWizardOpen}
+        onComplete={fetchTenants}
+      />
 
       {/* Search */}
       <div className="relative">
