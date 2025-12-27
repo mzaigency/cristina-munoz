@@ -701,6 +701,8 @@ export type Database = {
           total_duration: number
         }[]
       }
+      get_tenant_by_slug: { Args: { _slug: string }; Returns: string }
+      get_user_tenant_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -708,6 +710,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_superadmin: { Args: never; Returns: boolean }
       search_my_bookings: {
         Args: { phone_number: string }
         Returns: {
@@ -726,6 +729,10 @@ export type Database = {
           Telefono: string
           total_duration: number
         }[]
+      }
+      user_belongs_to_tenant: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
