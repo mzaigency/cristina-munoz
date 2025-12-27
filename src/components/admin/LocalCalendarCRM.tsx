@@ -603,9 +603,21 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     e.dataTransfer.setData("text/plain", booking.id);
   };
 
-  const handleDragOver = (e: React.DragEvent, stylistSlug: string, hour: number, minute: number = 0) => {
+  const handleDragOverColumn = (e: React.DragEvent, stylistSlug: string, startHour: number) => {
     e.preventDefault();
     if (!draggedBooking) return;
+    
+    // Calculate exact time from mouse position
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeY = e.clientY - rect.top;
+    const minutesFromColumnStart = relativeY / PIXELS_PER_MINUTE;
+    const totalMinutes = startHour * 60 + minutesFromColumnStart;
+    
+    // Snap to 15-minute intervals
+    const snappedMinutes = Math.round(totalMinutes / 15) * 15;
+    const hour = Math.floor(snappedMinutes / 60);
+    const minute = snappedMinutes % 60;
+    
     setDragOverStylist(stylistSlug);
     const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     setDragOverTime(timeStr);
@@ -616,15 +628,26 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     setDragOverTime(null);
   };
 
-  const handleDrop = async (e: React.DragEvent, targetStylist: string, targetHour: number, targetMinute: number = 0, targetDate: string) => {
+  const handleDropOnColumn = async (e: React.DragEvent, targetStylist: string, startHour: number, targetDate: string) => {
     e.preventDefault();
     if (!draggedBooking) return;
+
+    // Calculate exact time from mouse position
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeY = e.clientY - rect.top;
+    const minutesFromColumnStart = relativeY / PIXELS_PER_MINUTE;
+    const totalMinutes = startHour * 60 + minutesFromColumnStart;
+    
+    // Snap to 15-minute intervals
+    const snappedMinutes = Math.round(totalMinutes / 15) * 15;
+    const targetHour = Math.floor(snappedMinutes / 60);
+    const targetMinute = snappedMinutes % 60;
 
     const newTime = `${String(targetHour).padStart(2, "0")}:${String(targetMinute).padStart(2, "0")}`;
     
     // Calculate new end time
     const durationMinutes = draggedBooking.total_duration;
-    const newEndMinutes = targetHour * 60 + targetMinute + durationMinutes;
+    const newEndMinutes = snappedMinutes + durationMinutes;
     const newEndHour = Math.floor(newEndMinutes / 60);
     const newEndMin = newEndMinutes % 60;
     const newEndTime = `${String(newEndHour).padStart(2, "0")}:${String(newEndMin).padStart(2, "0")}`;
@@ -978,6 +1001,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                               <div 
                                 className="relative rounded-lg overflow-hidden"
                                 style={{ backgroundColor: "hsl(var(--muted) / 0.3)" }}
+                                onDragOver={(e) => handleDragOverColumn(e, stylist.slug, schedule.startHour)}
+                                onDragLeave={handleDragLeave}
+                                onDrop={(e) => handleDropOnColumn(e, stylist.slug, schedule.startHour, dateKey)}
                               >
                                 {/* Hour grid lines with break indication */}
                                 {schedule.hours.map((hour, idx) => {
@@ -990,12 +1016,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                     <div 
                                       key={hour}
                                       className={cn(
-                                        "h-[120px] border-b border-border/20 relative",
+                                        "h-[120px] border-b border-border/20 relative pointer-events-none",
                                         isBreakHour && "bg-amber-500/5"
                                       )}
-                                      onDragOver={(e) => handleDragOver(e, stylist.slug, hour, 0)}
-                                      onDragLeave={handleDragLeave}
-                                      onDrop={(e) => handleDrop(e, stylist.slug, hour, 0, dateKey)}
                                     >
                                       {/* Half-hour line */}
                                       <div className="absolute top-[60px] left-0 right-0 border-t border-dashed border-border/15" />
@@ -1008,16 +1031,28 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                           </span>
                                         </div>
                                       )}
-                                      
-                                      {/* Drop zone indicator */}
-                                      {dragOverStylist === stylist.slug && dragOverTime?.startsWith(String(hour).padStart(2, "0")) && (
-                                        <div className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary/40 rounded-md flex items-center justify-center">
-                                          <span className="text-xs text-primary font-medium">Soltar aquí</span>
-                                        </div>
-                                      )}
                                     </div>
                                   );
                                 })}
+                                
+                                {/* Drop indicator - shows exact time where booking will land */}
+                                {dragOverStylist === stylist.slug && dragOverTime && (() => {
+                                  const [h, m] = dragOverTime.split(":").map(Number);
+                                  const minutesFromStart = (h - schedule.startHour) * 60 + m;
+                                  const topPosition = minutesFromStart * PIXELS_PER_MINUTE;
+                                  const height = (draggedBooking?.total_duration || 30) * PIXELS_PER_MINUTE;
+                                  
+                                  return (
+                                    <div 
+                                      className="absolute left-1 right-1 rounded-lg bg-primary/20 border-2 border-dashed border-primary/60 pointer-events-none z-40 flex items-center justify-center"
+                                      style={{ top: Math.max(0, topPosition), height }}
+                                    >
+                                      <span className="text-xs font-semibold text-primary bg-background/80 px-2 py-0.5 rounded">
+                                        {dragOverTime}
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
                                 
                                 {/* Current time indicator - only show on today */}
                                 {isSameDay(day, new Date()) && (() => {
