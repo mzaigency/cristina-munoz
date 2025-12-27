@@ -684,10 +684,17 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       const deltaMinutes = Math.round(deltaY / PIXELS_PER_MINUTE / 15) * 15; // Snap to 15min
       const newDuration = Math.max(15, resizeOriginalDuration + deltaMinutes);
       
+      // Calculate new end_time for visual feedback
+      const [startH, startM] = resizingBooking.Hora.split(":").map(Number);
+      const newEndMinutes = startH * 60 + startM + newDuration;
+      const newEndHour = Math.floor(newEndMinutes / 60);
+      const newEndMin = newEndMinutes % 60;
+      const newEndTime = `${String(newEndHour).padStart(2, "0")}:${String(newEndMin).padStart(2, "0")}`;
+      
       // Update locally for visual feedback
       setBookings(prev => prev.map(b => 
         b.id === resizingBooking.id 
-          ? { ...b, total_duration: newDuration }
+          ? { ...b, total_duration: newDuration, end_time: newEndTime }
           : b
       ));
     };
