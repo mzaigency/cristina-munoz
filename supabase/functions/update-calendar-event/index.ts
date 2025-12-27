@@ -11,12 +11,61 @@ interface GoogleTokenResponse {
   token_type: string;
 }
 
-async function getAccessToken(): Promise<string> {
-  const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
-  const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-  const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
+interface TenantCredentials {
+  google_client_id?: string;
+  google_client_secret?: string;
+  google_refresh_token?: string;
+}
 
-  if (!clientId || !clientSecret || !refreshToken) {
+function getSupabaseClient() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  );
+}
+
+async function getTenantIdForUser(supabase: any, userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('tenant_admins')
+    .select('tenant_id')
+    .eq('user_id', userId)
+    .single();
+
+  if (!data) {
+    const { data: stylistData } = await supabase
+      .from('tenant_stylists')
+      .select('tenant_id')
+      .eq('user_id', userId)
+      .single();
+    return stylistData?.tenant_id || null;
+  }
+
+  return data.tenant_id;
+}
+
+async function getGoogleCalendarCredentials(supabase: any, tenantId: string): Promise<TenantCredentials> {
+  const { data } = await supabase
+    .from('tenant_integrations')
+    .select('settings, is_enabled')
+    .eq('tenant_id', tenantId)
+    .eq('integration_type', 'google_calendar')
+    .single();
+
+  if (!data || !data.is_enabled) {
+    return {
+      google_client_id: Deno.env.get('GOOGLE_CLIENT_ID'),
+      google_client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET'),
+      google_refresh_token: Deno.env.get('GOOGLE_REFRESH_TOKEN'),
+    };
+  }
+
+  return data.settings || {};
+}
+
+async function getGoogleAccessToken(credentials: TenantCredentials): Promise<string> {
+  const { google_client_id, google_client_secret, google_refresh_token } = credentials;
+
+  if (!google_client_id || !google_client_secret || !google_refresh_token) {
     throw new Error('Missing Google Calendar credentials');
   }
 
@@ -24,16 +73,14 @@ async function getAccessToken(): Promise<string> {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      refresh_token: refreshToken,
+      client_id: google_client_id,
+      client_secret: google_client_secret,
+      refresh_token: google_refresh_token,
       grant_type: 'refresh_token',
     }),
   });
 
   if (!tokenResponse.ok) {
-    const error = await tokenResponse.text();
-    console.error('Token refresh error:', error);
     throw new Error('Failed to refresh access token');
   }
 
@@ -56,13 +103,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
-
+    const supabase = getSupabaseClient();
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -71,11 +114,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: userRole } = await supabaseClient
+    const { data: userRole } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .in('role', ['admin', 'stylist'])
+      .in('role', ['admin', 'stylist', 'superadmin'])
       .single();
 
     if (!userRole) {
@@ -85,39 +128,48 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { eventId, calendarId, summary, description, start, end } = await req.json();
+    const { eventId, calendarId, summary, description, start, end, tenant_id: requestTenantId } = await req.json();
 
     if (!eventId || !calendarId) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: eventId, calendarId' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const accessToken = await getAccessToken();
+    // Determine tenant ID
+    let tenantId: string | null = null;
+    if (userRole.role === 'superadmin' && requestTenantId) {
+      tenantId = requestTenantId;
+    } else {
+      tenantId = await getTenantIdForUser(supabase, user.id);
+    }
 
-    // Build the update object with only provided fields
+    if (!tenantId) {
+      return new Response(JSON.stringify({ error: 'No tenant assigned to user' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`Updating calendar event for tenant: ${tenantId}`);
+
+    const credentials = await getGoogleCalendarCredentials(supabase, tenantId);
+    const accessToken = await getGoogleAccessToken(credentials);
+
+    // Build the update object
     const updateData: any = {};
     
     if (summary) updateData.summary = summary;
     if (description !== undefined) updateData.description = description;
     if (start) {
-      updateData.start = {
-        dateTime: start,
-        timeZone: 'Europe/Madrid',
-      };
+      updateData.start = { dateTime: start, timeZone: 'Europe/Madrid' };
     }
     if (end) {
-      updateData.end = {
-        dateTime: end,
-        timeZone: 'Europe/Madrid',
-      };
+      updateData.end = { dateTime: end, timeZone: 'Europe/Madrid' };
     }
 
-    console.log(`Updating event ${eventId} in calendar:`, updateData);
+    console.log(`Updating event ${eventId}:`, updateData);
 
     const updateResponse = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`,
@@ -140,18 +192,14 @@ Deno.serve(async (req) => {
     const updatedEvent = await updateResponse.json();
     console.log('Event updated successfully:', updatedEvent.id);
 
-    return new Response(JSON.stringify({ event: updatedEvent }), {
+    return new Response(JSON.stringify({ event: updatedEvent, tenant_id: tenantId }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in update-calendar-event:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

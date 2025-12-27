@@ -12,12 +12,79 @@ interface GoogleTokenResponse {
   token_type: string;
 }
 
-async function getAccessToken(): Promise<string> {
-  const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
-  const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-  const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
+interface TenantCredentials {
+  google_client_id?: string;
+  google_client_secret?: string;
+  google_refresh_token?: string;
+  n8n_cancel_webhook_url?: string;
+}
 
-  if (!clientId || !clientSecret || !refreshToken) {
+function getSupabaseClient() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  );
+}
+
+async function getTenantIdForUser(supabase: any, userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('tenant_admins')
+    .select('tenant_id')
+    .eq('user_id', userId)
+    .single();
+
+  if (!data) {
+    const { data: stylistData } = await supabase
+      .from('tenant_stylists')
+      .select('tenant_id')
+      .eq('user_id', userId)
+      .single();
+    return stylistData?.tenant_id || null;
+  }
+
+  return data.tenant_id;
+}
+
+async function getGoogleCalendarCredentials(supabase: any, tenantId: string): Promise<TenantCredentials> {
+  const { data } = await supabase
+    .from('tenant_integrations')
+    .select('settings, is_enabled')
+    .eq('tenant_id', tenantId)
+    .eq('integration_type', 'google_calendar')
+    .single();
+
+  if (!data || !data.is_enabled) {
+    return {
+      google_client_id: Deno.env.get('GOOGLE_CLIENT_ID'),
+      google_client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET'),
+      google_refresh_token: Deno.env.get('GOOGLE_REFRESH_TOKEN'),
+    };
+  }
+
+  return data.settings || {};
+}
+
+async function getN8nCredentials(supabase: any, tenantId: string): Promise<TenantCredentials> {
+  const { data } = await supabase
+    .from('tenant_integrations')
+    .select('settings, is_enabled')
+    .eq('tenant_id', tenantId)
+    .eq('integration_type', 'n8n_webhooks')
+    .single();
+
+  if (!data || !data.is_enabled) {
+    return {
+      n8n_cancel_webhook_url: Deno.env.get('N8N_CANCEL_WEBHOOK_URL'),
+    };
+  }
+
+  return data.settings || {};
+}
+
+async function getGoogleAccessToken(credentials: TenantCredentials): Promise<string> {
+  const { google_client_id, google_client_secret, google_refresh_token } = credentials;
+
+  if (!google_client_id || !google_client_secret || !google_refresh_token) {
     throw new Error('Missing Google Calendar credentials');
   }
 
@@ -25,16 +92,14 @@ async function getAccessToken(): Promise<string> {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      refresh_token: refreshToken,
+      client_id: google_client_id,
+      client_secret: google_client_secret,
+      refresh_token: google_refresh_token,
       grant_type: 'refresh_token',
     }),
   });
 
   if (!tokenResponse.ok) {
-    const error = await tokenResponse.text();
-    console.error('Token refresh error:', error);
     throw new Error('Failed to refresh access token');
   }
 
@@ -57,13 +122,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
-
+    const supabase = getSupabaseClient();
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -72,11 +133,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: userRole } = await supabaseClient
+    const { data: userRole } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .in('role', ['admin', 'stylist'])
+      .in('role', ['admin', 'stylist', 'superadmin'])
       .single();
 
     if (!userRole) {
@@ -86,20 +147,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { eventId, calendarId } = await req.json();
+    const { eventId, calendarId, tenant_id: requestTenantId } = await req.json();
 
     if (!eventId || !calendarId) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: eventId, calendarId' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // First, get the booking(s) from database using the google calendar event id
-    const { data: bookings, error: fetchError } = await supabaseClient
+    // Determine tenant ID
+    let tenantId: string | null = null;
+    if (userRole.role === 'superadmin' && requestTenantId) {
+      tenantId = requestTenantId;
+    } else {
+      tenantId = await getTenantIdForUser(supabase, user.id);
+    }
+
+    // Get bookings from database
+    const { data: bookings, error: fetchError } = await supabase
       .from('bookings')
       .select('*')
       .eq('google_calendar_event_id', eventId);
@@ -109,15 +175,20 @@ Deno.serve(async (req) => {
       throw new Error('Failed to fetch bookings from database');
     }
 
-    // Collect all related bookings if they exist
+    // Use tenant_id from booking if available
+    if (bookings && bookings.length > 0 && bookings[0].tenant_id) {
+      tenantId = bookings[0].tenant_id;
+    }
+
+    // Get related bookings
     const relatedBookingIds = bookings
       ?.filter(b => b.is_part_of_compound && b.related_booking_id)
       .map(b => b.related_booking_id)
       .filter(Boolean) || [];
 
-    let relatedBookings = [];
+    let relatedBookings: any[] = [];
     if (relatedBookingIds.length > 0) {
-      const { data: related } = await supabaseClient
+      const { data: related } = await supabase
         .from('bookings')
         .select('*')
         .in('id', relatedBookingIds);
@@ -126,17 +197,17 @@ Deno.serve(async (req) => {
 
     const allBookings = [...(bookings || []), ...relatedBookings];
 
-    // Delete from Google Calendar
-    const accessToken = await getAccessToken();
-    console.log(`Deleting event ${eventId} from calendar`);
+    // Get Google Calendar credentials for this tenant
+    const credentials = await getGoogleCalendarCredentials(supabase, tenantId || '');
+    const accessToken = await getGoogleAccessToken(credentials);
+
+    console.log(`Deleting event ${eventId} from calendar for tenant ${tenantId}`);
 
     const deleteResponse = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`,
       {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
 
@@ -148,40 +219,34 @@ Deno.serve(async (req) => {
 
     console.log('Event deleted from Google Calendar successfully');
 
-    // Delete related calendar events for compound bookings
+    // Delete related calendar events
     for (const booking of relatedBookings) {
       if (booking.google_calendar_event_id && booking.calendar_id) {
         try {
-          const relatedDeleteResponse = await fetch(
+          await fetch(
             `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(booking.calendar_id)}/events/${booking.google_calendar_event_id}`,
             {
               method: 'DELETE',
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
+              headers: { Authorization: `Bearer ${accessToken}` },
             }
           );
-          if (relatedDeleteResponse.ok || relatedDeleteResponse.status === 404) {
-            console.log('Related calendar event deleted:', booking.google_calendar_event_id);
-          }
+          console.log('Related calendar event deleted:', booking.google_calendar_event_id);
         } catch (error) {
           console.error('Error deleting related calendar event:', error);
         }
       }
     }
 
-    // Delete from database if bookings exist
+    // Delete from database
     if (allBookings.length > 0) {
       const allBookingIds = allBookings.map(b => b.id);
 
-      // Break foreign key relationships
-      await supabaseClient
+      await supabase
         .from('bookings')
         .update({ related_booking_id: null })
         .in('id', allBookingIds);
 
-      // Delete bookings from database
-      const { error: deleteError } = await supabaseClient
+      const { error: deleteError } = await supabase
         .from('bookings')
         .delete()
         .in('id', allBookingIds);
@@ -194,11 +259,12 @@ Deno.serve(async (req) => {
       console.log('Bookings deleted from database successfully');
 
       // Trigger n8n cancellation webhook
-      const cancelWebhookUrl = Deno.env.get('N8N_CANCEL_WEBHOOK_URL');
+      const n8nCredentials = await getN8nCredentials(supabase, tenantId || '');
+      const cancelWebhookUrl = n8nCredentials.n8n_cancel_webhook_url;
+      
       if (cancelWebhookUrl && bookings && bookings.length > 0) {
         try {
           const webhookData = bookings.map(booking => {
-            // Format date for webhook (dd-mm-yyyy) - parse string directly to avoid timezone issues
             const dateStr = booking.Fecha.toString();
             const [year, month, day] = dateStr.split('-');
             const formattedDate = `${day}-${month}-${year}`;
@@ -213,18 +279,18 @@ Deno.serve(async (req) => {
               services: booking.services,
               google_calendar_event_id: booking.google_calendar_event_id,
               calendar_id: booking.calendar_id,
+              tenant_id: booking.tenant_id,
             };
           });
 
           await fetch(cancelWebhookUrl, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               type: 'cancellation',
               bookings: webhookData,
               user: 'admin',
+              tenant_id: tenantId,
             }),
           });
 
@@ -235,18 +301,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, tenant_id: tenantId }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in delete-calendar-event:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
