@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Review from "./pages/Review";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import TenantLanding from "./pages/TenantLanding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/valoracion" element={<Review />} />
           <Route path="/politica-privacidad" element={<PrivacyPolicy />} />
           <Route path="/terminos-uso" element={<TermsOfService />} />
+          <Route path="/salon/:slug" element={<TenantLanding />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
