@@ -7,7 +7,7 @@ import { Loader2, Building2, Users, BarChart3, Settings, Shield } from "lucide-r
 import { TenantsManager } from "@/components/superadmin/TenantsManager";
 import { GlobalStats } from "@/components/superadmin/GlobalStats";
 import { UsersManager } from "@/components/superadmin/UsersManager";
-
+import { IntegrationsManager } from "@/components/superadmin/IntegrationsManager";
 const SuperAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -111,10 +111,14 @@ const SuperAdmin = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
             <TabsTrigger value="tenants" className="gap-2">
               <Building2 className="h-4 w-4" />
               <span className="hidden sm:inline">Tenants</span>
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Integraciones</span>
             </TabsTrigger>
             <TabsTrigger value="stats" className="gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -128,6 +132,10 @@ const SuperAdmin = () => {
 
           <TabsContent value="tenants" className="space-y-6">
             <TenantsManager />
+          </TabsContent>
+
+          <TabsContent value="integrations" className="space-y-6">
+            <IntegrationsManager />
           </TabsContent>
 
           <TabsContent value="stats" className="space-y-6">

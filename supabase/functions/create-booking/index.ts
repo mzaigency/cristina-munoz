@@ -34,7 +34,8 @@ const bookingRequestSchema = z.object({
   customer_name: z.string().min(1).max(100).optional(),
   phone: z.union([z.string().min(9).max(15), z.literal('')]).optional(),
   user_id: z.string().uuid().nullable().optional(),
-  skipAvailabilityCheck: z.boolean().optional()
+  skipAvailabilityCheck: z.boolean().optional(),
+  tenant_id: z.string().uuid().optional()
 }).refine(data => (data.Fecha || data.date) && (data.Hora || data.time), {
   message: "Either Fecha/Hora or date/time must be provided"
 });
@@ -58,6 +59,68 @@ interface BookingRequest {
   customer_name?: string;
   phone?: string;
   skipAvailabilityCheck?: boolean;
+  tenant_id?: string;
+}
+
+interface GoogleCalendarCredentials {
+  client_id: string;
+  client_secret: string;
+  refresh_token: string;
+}
+
+interface TenantIntegrationSettings {
+  calendar_id_cris?: string;
+  calendar_id_desi?: string;
+  n8n_webhook_url?: string;
+}
+
+// Helper function to get tenant credentials
+async function getTenantCredentials(
+  supabase: any, 
+  tenantId: string, 
+  integrationType: string
+): Promise<{ credentials: any; settings: any } | null> {
+  const { data: integration, error } = await supabase
+    .from('tenant_integrations')
+    .select('credentials_encrypted, settings, is_enabled')
+    .eq('tenant_id', tenantId)
+    .eq('integration_type', integrationType)
+    .eq('is_enabled', true)
+    .maybeSingle();
+
+  if (error || !integration) {
+    console.log(`No ${integrationType} integration found for tenant ${tenantId}`);
+    return null;
+  }
+
+  let credentials = null;
+  if (integration.credentials_encrypted) {
+    const { data: decrypted } = await supabase.rpc('decrypt_sensitive_data', {
+      _ciphertext: integration.credentials_encrypted,
+      _tenant_id: tenantId
+    });
+    if (decrypted) {
+      try {
+        credentials = JSON.parse(decrypted);
+      } catch (e) {
+        console.error('Error parsing credentials:', e);
+      }
+    }
+  }
+
+  return { credentials, settings: integration.settings || {} };
+}
+
+// Helper function to get default tenant ID
+async function getDefaultTenantId(supabase: any): Promise<string | null> {
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle();
+  
+  return tenant?.id || null;
 }
 
 serve(async (req) => {
@@ -96,6 +159,53 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Determine tenant_id
+    let tenantId: string | undefined = bookingData.tenant_id;
+    if (!tenantId) {
+      const defaultTenant = await getDefaultTenantId(supabase);
+      if (!defaultTenant) {
+        throw new Error('No active tenant found');
+      }
+      tenantId = defaultTenant;
+    }
+    console.log('Using tenant_id:', tenantId);
+
+    // Get Google Calendar credentials from tenant_integrations
+    let googleCreds: GoogleCalendarCredentials | null = null;
+    let calendarSettings: TenantIntegrationSettings = {};
+    
+    const gcalIntegration = await getTenantCredentials(supabase, tenantId, 'google_calendar');
+    if (gcalIntegration) {
+      googleCreds = gcalIntegration.credentials;
+      calendarSettings = gcalIntegration.settings || {};
+      console.log('Using tenant Google Calendar integration');
+    } else {
+      // Fallback to environment variables
+      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+      const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
+      const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
+      
+      if (clientId && clientSecret && refreshToken) {
+        googleCreds = { client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken };
+        calendarSettings = {
+          calendar_id_cris: Deno.env.get('GOOGLE_CALENDAR_ID_CRIS'),
+          calendar_id_desi: Deno.env.get('GOOGLE_CALENDAR_ID_DESI')
+        };
+        console.log('Using environment Google Calendar credentials (fallback)');
+      }
+    }
+
+    // Get n8n credentials from tenant_integrations
+    let n8nWebhookUrl: string | null = null;
+    const n8nIntegration = await getTenantCredentials(supabase, tenantId, 'n8n');
+    if (n8nIntegration?.settings?.webhook_url) {
+      n8nWebhookUrl = n8nIntegration.settings.webhook_url;
+      console.log('Using tenant n8n webhook URL');
+    } else {
+      n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL') || null;
+      if (n8nWebhookUrl) console.log('Using environment n8n webhook URL (fallback)');
+    }
+
     // Get customer data - either from user profile or from direct input
     let customer_name: string;
     let customer_email: string | null = null;
@@ -126,23 +236,18 @@ serve(async (req) => {
       customer_phone = bookingData.phone || '';
     }
 
-    // Get Google Calendar credentials
-    const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
-    const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-    const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
-    
     // Determine actual stylist for "any" selection
     let actualStylist = bookingData.stylist;
     
-    if (bookingData.stylist === 'any') {
+    if (bookingData.stylist === 'any' && googleCreds) {
       // Get OAuth2 access token first
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          client_id: clientId!,
-          client_secret: clientSecret!,
-          refresh_token: refreshToken!,
+          client_id: googleCreds.client_id,
+          client_secret: googleCreds.client_secret,
+          refresh_token: googleCreds.refresh_token,
           grant_type: 'refresh_token',
         }),
       });
@@ -159,61 +264,61 @@ serve(async (req) => {
       const endMinutesTotal = startMinutesTotal + bookingData.total_duration;
       
       // Check Cris calendar
-      const crisCalendarId = Deno.env.get('GOOGLE_CALENDAR_ID_CRIS');
+      const crisCalendarId = calendarSettings.calendar_id_cris;
       const timeMin = `${bookingDate}T00:00:00Z`;
       const timeMax = `${bookingDate}T23:59:59Z`;
 
-      const crisEventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(crisCalendarId!)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
-      const crisResponse = await fetch(crisEventsUrl, {
-        headers: { 'Authorization': `Bearer ${access_token}` },
-      });
-      
-      const crisEvents = await crisResponse.json();
-      const crisAvailable = !crisEvents.items?.some((event: any) => {
-        // Check for all-day events (vacations, etc.)
-        if (event.start?.date) {
-          const eventStart = event.start.date; // YYYY-MM-DD
-          const eventEnd = event.end.date;     // YYYY-MM-DD (exclusive)
-          // Check if booking date falls within the all-day event range
-          return bookingDate >= eventStart && bookingDate < eventEnd;
-        }
-        // Check for time-specific events
-        if (!event.start?.dateTime || !event.end?.dateTime) return false;
-        const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 5);
-        const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 5);
-        const [eStartH, eStartM] = startTimeStr.split(':').map(Number);
-        const [eEndH, eEndM] = endTimeStr.split(':').map(Number);
-        const eStart = eStartH * 60 + eStartM;
-        const eEnd = eEndH * 60 + eEndM;
-        return (startMinutesTotal < eEnd && endMinutesTotal > eStart);
-      });
+      let crisAvailable = false;
+      if (crisCalendarId) {
+        const crisEventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(crisCalendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
+        const crisResponse = await fetch(crisEventsUrl, {
+          headers: { 'Authorization': `Bearer ${access_token}` },
+        });
+        
+        const crisEvents = await crisResponse.json();
+        crisAvailable = !crisEvents.items?.some((event: any) => {
+          if (event.start?.date) {
+            const eventStart = event.start.date;
+            const eventEnd = event.end.date;
+            return bookingDate >= eventStart && bookingDate < eventEnd;
+          }
+          if (!event.start?.dateTime || !event.end?.dateTime) return false;
+          const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 5);
+          const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 5);
+          const [eStartH, eStartM] = startTimeStr.split(':').map(Number);
+          const [eEndH, eEndM] = endTimeStr.split(':').map(Number);
+          const eStart = eStartH * 60 + eStartM;
+          const eEnd = eEndH * 60 + eEndM;
+          return (startMinutesTotal < eEnd && endMinutesTotal > eStart);
+        });
+      }
 
       // Check Desi calendar
-      const desiCalendarId = Deno.env.get('GOOGLE_CALENDAR_ID_DESI');
-      const desiEventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(desiCalendarId!)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
-      const desiResponse = await fetch(desiEventsUrl, {
-        headers: { 'Authorization': `Bearer ${access_token}` },
-      });
-      
-      const desiEvents = await desiResponse.json();
-      const desiAvailable = !desiEvents.items?.some((event: any) => {
-        // Check for all-day events (vacations, etc.)
-        if (event.start?.date) {
-          const eventStart = event.start.date; // YYYY-MM-DD
-          const eventEnd = event.end.date;     // YYYY-MM-DD (exclusive)
-          // Check if booking date falls within the all-day event range
-          return bookingDate >= eventStart && bookingDate < eventEnd;
-        }
-        // Check for time-specific events
-        if (!event.start?.dateTime || !event.end?.dateTime) return false;
-        const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 5);
-        const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 5);
-        const [eStartH, eStartM] = startTimeStr.split(':').map(Number);
-        const [eEndH, eEndM] = endTimeStr.split(':').map(Number);
-        const eStart = eStartH * 60 + eStartM;
-        const eEnd = eEndH * 60 + eEndM;
-        return (startMinutesTotal < eEnd && endMinutesTotal > eStart);
-      });
+      const desiCalendarId = calendarSettings.calendar_id_desi;
+      let desiAvailable = false;
+      if (desiCalendarId) {
+        const desiEventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(desiCalendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
+        const desiResponse = await fetch(desiEventsUrl, {
+          headers: { 'Authorization': `Bearer ${access_token}` },
+        });
+        
+        const desiEvents = await desiResponse.json();
+        desiAvailable = !desiEvents.items?.some((event: any) => {
+          if (event.start?.date) {
+            const eventStart = event.start.date;
+            const eventEnd = event.end.date;
+            return bookingDate >= eventStart && bookingDate < eventEnd;
+          }
+          if (!event.start?.dateTime || !event.end?.dateTime) return false;
+          const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 5);
+          const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 5);
+          const [eStartH, eStartM] = startTimeStr.split(':').map(Number);
+          const [eEndH, eEndM] = endTimeStr.split(':').map(Number);
+          const eStart = eStartH * 60 + eStartM;
+          const eEnd = eEndH * 60 + eEndM;
+          return (startMinutesTotal < eEnd && endMinutesTotal > eStart);
+        });
+      }
       
       // Assign to available stylist (prefer Cris if both available)
       if (crisAvailable) {
@@ -230,9 +335,9 @@ serve(async (req) => {
     // Get calendar ID based on actual stylist
     let calendarId: string | null = null;
     if (actualStylist === 'cris') {
-      calendarId = Deno.env.get('GOOGLE_CALENDAR_ID_CRIS') || null;
+      calendarId = calendarSettings.calendar_id_cris || null;
     } else if (actualStylist === 'desi') {
-      calendarId = Deno.env.get('GOOGLE_CALENDAR_ID_DESI') || null;
+      calendarId = calendarSettings.calendar_id_desi || null;
     }
 
     // Separate services by type
@@ -247,6 +352,8 @@ serve(async (req) => {
       endTime: string,
       accessToken: string
     ) => {
+      if (!calendarId) return null;
+      
       const event = {
         summary,
         description,
@@ -283,15 +390,15 @@ serve(async (req) => {
 
     // Get access token if Google Calendar is configured
     let accessToken: string | null = null;
-    if (calendarId && clientId && clientSecret && refreshToken) {
+    if (calendarId && googleCreds) {
       try {
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
-            client_id: clientId,
-            client_secret: clientSecret,
-            refresh_token: refreshToken,
+            client_id: googleCreds.client_id,
+            client_secret: googleCreds.client_secret,
+            refresh_token: googleCreds.refresh_token,
             grant_type: 'refresh_token',
           }),
         });
@@ -322,10 +429,10 @@ serve(async (req) => {
         .select('id, customer_name, Hora, Telefono')
         .eq('Fecha', bookingDate)
         .eq('Hora', bookingTime)
-        .eq('status', 'confirmed');
+        .eq('status', 'confirmed')
+        .eq('tenant_id', tenantId);
       
       if (existingCustomerBooking && existingCustomerBooking.length > 0) {
-        // Check if any booking has the same normalized phone
         const duplicateBooking = existingCustomerBooking.find(booking => 
           normalizePhone(booking.Telefono || '') === normalizedPhone
         );
@@ -357,7 +464,8 @@ serve(async (req) => {
         .select('id, Hora, end_time, customer_name, total_duration')
         .eq('Fecha', bookingDate)
         .eq('stylist', actualStylist)
-        .eq('status', 'confirmed');
+        .eq('status', 'confirmed')
+        .eq('tenant_id', tenantId);
       
       if (stylistBookings && stylistBookings.length > 0) {
         const hasConflict = stylistBookings.some(booking => {
@@ -365,7 +473,6 @@ serve(async (req) => {
           const bookingStart = bStartH * 60 + bStartM;
           const bookingEnd = bookingStart + booking.total_duration;
           
-          // Check if there's any overlap
           const hasOverlap = (currentMinutes < bookingEnd && endMinutesTotal > bookingStart);
           
           if (hasOverlap) {
@@ -438,6 +545,7 @@ serve(async (req) => {
           is_part_of_compound: false,
           user_id: bookingData.user_id || null,
           skip_availability_check: bookingData.skipAvailabilityCheck || false,
+          tenant_id: tenantId,
         })
         .select()
         .single();
@@ -495,6 +603,7 @@ serve(async (req) => {
           compound_part: 'part1',
           user_id: bookingData.user_id || null,
           skip_availability_check: bookingData.skipAvailabilityCheck || false,
+          tenant_id: tenantId,
         })
         .select()
         .single();
@@ -550,6 +659,7 @@ serve(async (req) => {
             related_booking_id: part1Data.id,
             user_id: bookingData.user_id || null,
             skip_availability_check: bookingData.skipAvailabilityCheck || false,
+            tenant_id: tenantId,
           })
           .select()
           .single();
@@ -575,7 +685,6 @@ serve(async (req) => {
     console.log('Bookings created successfully:', createdBookings);
 
     // Trigger n8n webhook for WhatsApp notification
-    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
     if (n8nWebhookUrl) {
       try {
         // Format date for webhook (dd-mm-yyyy) - parse string directly to avoid timezone issues
@@ -595,6 +704,7 @@ serve(async (req) => {
             services: bookingData.services.map(s => s.name),
             bookings: createdBookings,
             canal: bookingData.user_id ? 'WEB' : 'CRM',
+            tenant_id: tenantId,
           }),
         });
         console.log('n8n webhook triggered successfully');
