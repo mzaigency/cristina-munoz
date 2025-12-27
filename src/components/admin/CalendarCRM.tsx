@@ -1144,7 +1144,7 @@ export const CalendarCRM = () => {
             <DialogTitle>Nueva Cita</DialogTitle>
             <DialogDescription>Crea una cita siguiendo los pasos</DialogDescription>
           </DialogHeader>
-          <AdminBookingFlow onComplete={handleBookingComplete} onCancel={() => setIsCreateDialogOpen(false)} />
+          <AdminBookingFlow onComplete={handleBookingComplete} onCancel={() => setIsCreateDialogOpen(false)} tenantId="" />
         </DialogContent>
       </Dialog>
 

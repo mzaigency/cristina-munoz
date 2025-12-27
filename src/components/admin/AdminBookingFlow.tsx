@@ -25,9 +25,10 @@ interface AdminBookingData {
 interface AdminBookingFlowProps {
   onComplete: () => void;
   onCancel: () => void;
+  tenantId: string;
 }
 
-export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps) => {
+export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookingFlowProps) => {
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,7 +47,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
   }, []);
 
   const fetchServices = async () => {
-    const { data, error } = await supabase.from("services").select("*").order("name");
+    const { data, error } = await supabase.from("services").select("*").eq("tenant_id", tenantId).order("name");
 
     if (error) {
       toast({
@@ -137,6 +138,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel }: AdminBookingFlowProps
         stylist: bookingData.stylist,
         total_duration: totalDuration,
         skipAvailabilityCheck, // Pass the flag to skip validations
+        tenant_id: tenantId,
       };
 
       const { error } = await supabase.functions.invoke("create-booking", {
