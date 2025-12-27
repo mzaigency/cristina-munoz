@@ -39,9 +39,10 @@ import {
 
 interface Transaction {
   id: string;
-  booking_id: string | null;
+  tenant_id?: string | null;
   stylist: string;
   customer_name: string;
+  customer_name_encrypted?: string | null;
   services: Array<{ name: string; price: number }>;
   subtotal: number;
   discount: number;
