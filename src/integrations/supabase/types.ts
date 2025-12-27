@@ -96,6 +96,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_decrypted"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -755,6 +762,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "whatsapp_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contacts_decrypted"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "whatsapp_messages_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -765,7 +779,255 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      bookings_decrypted: {
+        Row: {
+          calendar_id: string | null
+          compound_part: string | null
+          created_at: string | null
+          customer_name: string | null
+          end_time: string | null
+          Fecha: string | null
+          google_calendar_event_id: string | null
+          Hora: string | null
+          id: string | null
+          is_part_of_compound: boolean | null
+          related_booking_id: string | null
+          services: Json | null
+          skip_availability_check: boolean | null
+          status: string | null
+          stylist: string | null
+          Telefono: string | null
+          tenant_id: string | null
+          total_duration: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          calendar_id?: string | null
+          compound_part?: string | null
+          created_at?: string | null
+          customer_name?: never
+          end_time?: string | null
+          Fecha?: string | null
+          google_calendar_event_id?: string | null
+          Hora?: string | null
+          id?: string | null
+          is_part_of_compound?: boolean | null
+          related_booking_id?: string | null
+          services?: Json | null
+          skip_availability_check?: boolean | null
+          status?: string | null
+          stylist?: string | null
+          Telefono?: never
+          tenant_id?: string | null
+          total_duration?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          calendar_id?: string | null
+          compound_part?: string | null
+          created_at?: string | null
+          customer_name?: never
+          end_time?: string | null
+          Fecha?: string | null
+          google_calendar_event_id?: string | null
+          Hora?: string | null
+          id?: string | null
+          is_part_of_compound?: boolean | null
+          related_booking_id?: string | null
+          services?: Json | null
+          skip_availability_check?: boolean | null
+          status?: string | null
+          stylist?: string | null
+          Telefono?: never
+          tenant_id?: string | null
+          total_duration?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_decrypted"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions_decrypted: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          customer_name: string | null
+          discount: number | null
+          id: string | null
+          notes: string | null
+          payment_method: string | null
+          services: Json | null
+          stylist: string | null
+          subtotal: number | null
+          tenant_id: string | null
+          total: number | null
+          voided: boolean | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          customer_name?: never
+          discount?: number | null
+          id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          services?: Json | null
+          stylist?: string | null
+          subtotal?: number | null
+          tenant_id?: string | null
+          total?: number | null
+          voided?: boolean | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          customer_name?: never
+          discount?: number | null
+          id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          services?: Json | null
+          stylist?: string | null
+          subtotal?: number | null
+          tenant_id?: string | null
+          total?: number | null
+          voided?: boolean | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_contacts_decrypted: {
+        Row: {
+          ai_agent_enabled: boolean | null
+          blocked: boolean | null
+          created_at: string | null
+          id: string | null
+          last_message_at: string | null
+          name: string | null
+          phone_number: string | null
+          tenant_id: string | null
+          unread_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_agent_enabled?: boolean | null
+          blocked?: boolean | null
+          created_at?: string | null
+          id?: string | null
+          last_message_at?: string | null
+          name?: never
+          phone_number?: never
+          tenant_id?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_agent_enabled?: boolean | null
+          blocked?: boolean | null
+          created_at?: string | null
+          id?: string | null
+          last_message_at?: string | null
+          name?: never
+          phone_number?: never
+          tenant_id?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_contacts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages_decrypted: {
+        Row: {
+          contact_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string | null
+          message_type: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          contact_id?: string | null
+          content?: never
+          created_at?: string | null
+          id?: string | null
+          message_type?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          contact_id?: string | null
+          content?: never
+          created_at?: string | null
+          id?: string | null
+          message_type?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contacts_decrypted"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_create_review: { Args: never; Returns: boolean }
@@ -774,6 +1036,14 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
+      decrypt_sensitive_data: {
+        Args: { _ciphertext: string; _tenant_id: string }
+        Returns: string
+      }
+      encrypt_sensitive_data: {
+        Args: { _plaintext: string; _tenant_id: string }
+        Returns: string
+      }
       get_my_bookings: {
         Args: never
         Returns: {
