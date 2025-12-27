@@ -502,10 +502,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     const endMinutesFromStart = (endH - schedule.startHour) * 60 + endM;
     const durationMinutes = endMinutesFromStart - startMinutesFromStart;
 
-    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    const pixelsPerMinute = isMobile ? 80 / 60 : 104 / 60;
+    // 60 pixels per hour = 1 pixel per minute for clean calculations
+    const pixelsPerMinute = 1;
     const top = startMinutesFromStart * pixelsPerMinute;
-    const height = Math.max(durationMinutes * pixelsPerMinute, 30);
+    const height = Math.max(durationMinutes * pixelsPerMinute, 20);
 
     return { top, height };
   };
@@ -706,10 +706,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                       </div>
                     ) : (
                       <div className="flex gap-4">
-                        {/* Time column */}
+                        {/* Time column - 60px per hour (1px per minute) */}
                         <div className="w-12 md:w-16 shrink-0">
                           {schedule.hours.map(hour => (
-                            <div key={hour} className="h-20 md:h-26 text-xs md:text-sm text-muted-foreground">
+                            <div key={hour} className="h-[60px] text-xs md:text-sm text-muted-foreground border-b border-border/20">
                               {String(hour).padStart(2, "0")}:00
                             </div>
                           ))}
@@ -727,7 +727,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                               </div>
                               <div className="relative border-l border-border/50">
                                 {schedule.hours.map(hour => (
-                                  <div key={hour} className="h-20 md:h-26 border-b border-border/30" />
+                                  <div key={hour} className="h-[60px] border-b border-border/20" />
                                 ))}
                                 
                                 {/* Render bookings */}
@@ -736,20 +736,27 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                   const isCompleted = booking.notes?.includes("[✓ COMPLETADA]");
                                   const isBlocked = booking.title?.includes("🔒 BLOQUEADO") || booking.title?.includes("🌴 VACACIONES");
                                   const isHighlighted = highlightedBookingId === booking.id;
+                                  
+                                  // Get first service name
+                                  const servicesList = Array.isArray(booking.services) 
+                                    ? booking.services.map((s: any) => s.name || s).filter(Boolean)
+                                    : [];
+                                  const firstService = servicesList[0] || "";
+                                  const moreServices = servicesList.length > 1 ? ` +${servicesList.length - 1}` : "";
 
                                   return (
                                     <div
                                       key={booking.id}
                                       data-booking-id={booking.id}
                                       className={cn(
-                                        "absolute left-1 right-1 rounded-md p-1 md:p-2 text-xs overflow-hidden cursor-pointer transition-all",
+                                        "absolute left-0.5 right-0.5 rounded p-1 text-[10px] md:text-xs overflow-hidden cursor-pointer transition-all hover:z-10 hover:shadow-md",
                                         isCompleted && "opacity-60",
-                                        isHighlighted && "ring-2 ring-primary ring-offset-2 animate-pulse"
+                                        isHighlighted && "ring-2 ring-primary ring-offset-1 animate-pulse"
                                       )}
                                       style={{
                                         top: pos.top,
                                         height: pos.height,
-                                        backgroundColor: isBlocked ? "#EF444420" : `${getStylistColor(booking.stylist)}20`,
+                                        backgroundColor: isBlocked ? "#EF444430" : `${getStylistColor(booking.stylist)}25`,
                                         borderLeft: `3px solid ${isBlocked ? "#EF4444" : getStylistColor(booking.stylist)}`
                                       }}
                                       onClick={() => {
@@ -759,27 +766,35 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                         }
                                       }}
                                     >
-                                      <div className="flex items-start justify-between gap-1">
-                                        <div className="flex-1 min-w-0">
-                                          <p className="font-medium truncate text-foreground">
+                                      <div className="h-full flex flex-col justify-between overflow-hidden">
+                                        <div className="min-w-0">
+                                          <p className="font-semibold truncate text-foreground leading-tight">
                                             {isCompleted && "✓ "}
                                             {booking.customer_name}
                                           </p>
-                                          <p className="text-muted-foreground truncate">
-                                            {booking.Hora.slice(0, 5)}
-                                          </p>
+                                          {pos.height >= 35 && (
+                                            <p className="text-muted-foreground truncate leading-tight">
+                                              {firstService}{moreServices}
+                                            </p>
+                                          )}
+                                          {pos.height >= 50 && (
+                                            <p className="text-muted-foreground/70 truncate leading-tight text-[9px]">
+                                              {booking.Hora.slice(0, 5)} · {booking.total_duration}min
+                                            </p>
+                                          )}
                                         </div>
-                                        {!isBlocked && (
-                                          <div className="flex gap-1 shrink-0">
+                                        {!isBlocked && pos.height >= 40 && (
+                                          <div className="flex gap-0.5 shrink-0 mt-0.5">
                                             <button
                                               onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleMarkCompleted(booking);
                                               }}
                                               className={cn(
-                                                "p-0.5 rounded hover:bg-background/50",
+                                                "p-0.5 rounded hover:bg-background/60",
                                                 isCompleted && "text-green-600"
                                               )}
+                                              title={isCompleted ? "Desmarcar" : "Marcar completada"}
                                             >
                                               <Check className="h-3 w-3" />
                                             </button>
@@ -788,7 +803,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                                 e.stopPropagation();
                                                 handleDeleteBooking(booking);
                                               }}
-                                              className="p-0.5 rounded hover:bg-background/50 text-destructive"
+                                              className="p-0.5 rounded hover:bg-background/60 text-destructive"
+                                              title="Eliminar"
                                             >
                                               <Trash2 className="h-3 w-3" />
                                             </button>
