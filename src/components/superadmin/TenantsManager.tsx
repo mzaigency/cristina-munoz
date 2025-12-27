@@ -71,7 +71,9 @@ export const TenantsManager = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -80,6 +82,7 @@ export const TenantsManager = () => {
     subscription_plan: "basic",
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -204,6 +207,63 @@ export const TenantsManager = () => {
     setIsEditDialogOpen(true);
   };
 
+  const openDeleteDialog = (tenant: Tenant) => {
+    setTenantToDelete(tenant);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteTenant = async () => {
+    if (!tenantToDelete) return;
+
+    try {
+      setDeleting(true);
+
+      // Delete related data first (in order of dependencies)
+      await supabase.from("whatsapp_messages").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("whatsapp_contacts").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("transactions").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("cash_register").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("reviews").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("bookings").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("services").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("tenant_business_hours").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("tenant_stylists").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("tenant_integrations").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("tenant_encryption_keys").delete().eq("tenant_id", tenantToDelete.id);
+      await supabase.from("tenant_admins").delete().eq("tenant_id", tenantToDelete.id);
+
+      // Finally delete the tenant
+      const { error } = await supabase
+        .from("tenants")
+        .delete()
+        .eq("id", tenantToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Tenant eliminado",
+        description: `${tenantToDelete.name} ha sido eliminado permanentemente`,
+      });
+
+      setIsDeleteDialogOpen(false);
+      setTenantToDelete(null);
+      fetchTenants();
+    } catch (error: any) {
+      console.error("Error deleting tenant:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el tenant",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const openTenantLanding = (slug: string) => {
+    window.open(`/salon/${slug}`, '_blank');
+  };
+
   const filteredTenants = tenants.filter(
     (t) =>
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -308,13 +368,33 @@ export const TenantsManager = () => {
                     />
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditDialog(tenant)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openTenantLanding(tenant.slug)}
+                        title="Ver landing"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(tenant)}
+                        title="Editar"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openDeleteDialog(tenant)}
+                        title="Eliminar"
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -377,6 +457,47 @@ export const TenantsManager = () => {
             <Button onClick={handleUpdateTenant} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Guardar cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Eliminar Tenant</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que quieres eliminar <strong>{tenantToDelete?.name}</strong>?
+              <br /><br />
+              Esta acción eliminará permanentemente:
+              <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                <li>Todas las reservas</li>
+                <li>Todos los servicios</li>
+                <li>Todas las transacciones</li>
+                <li>Todos los contactos de WhatsApp</li>
+                <li>Todas las reseñas</li>
+                <li>Todas las integraciones</li>
+              </ul>
+              <br />
+              <strong className="text-destructive">Esta acción no se puede deshacer.</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={deleting}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteTenant} 
+              disabled={deleting}
+            >
+              {deleting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Eliminar permanentemente
             </Button>
           </DialogFooter>
         </DialogContent>
