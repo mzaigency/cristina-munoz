@@ -250,6 +250,286 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_admins: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_owner: boolean | null
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_owner?: boolean | null
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_owner?: boolean | null
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_admins_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_business_hours: {
+        Row: {
+          break_end: string | null
+          break_start: string | null
+          close_time: string | null
+          created_at: string | null
+          day_of_week: number
+          id: string
+          is_open: boolean | null
+          open_time: string | null
+          tenant_id: string
+        }
+        Insert: {
+          break_end?: string | null
+          break_start?: string | null
+          close_time?: string | null
+          created_at?: string | null
+          day_of_week: number
+          id?: string
+          is_open?: boolean | null
+          open_time?: string | null
+          tenant_id: string
+        }
+        Update: {
+          break_end?: string | null
+          break_start?: string | null
+          close_time?: string | null
+          created_at?: string | null
+          day_of_week?: number
+          id?: string
+          is_open?: boolean | null
+          open_time?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_business_hours_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_encryption_keys: {
+        Row: {
+          created_at: string | null
+          id: string
+          key_encrypted: string
+          key_version: number | null
+          rotated_at: string | null
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key_encrypted: string
+          key_version?: number | null
+          rotated_at?: string | null
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key_encrypted?: string
+          key_version?: number | null
+          rotated_at?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_encryption_keys_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_integrations: {
+        Row: {
+          created_at: string | null
+          credentials_encrypted: string | null
+          id: string
+          integration_type: string
+          is_enabled: boolean | null
+          last_sync_at: string | null
+          settings: Json | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credentials_encrypted?: string | null
+          id?: string
+          integration_type: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          settings?: Json | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credentials_encrypted?: string | null
+          id?: string
+          integration_type?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          settings?: Json | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_integrations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_stylists: {
+        Row: {
+          avatar_url: string | null
+          color: string | null
+          created_at: string | null
+          google_calendar_id: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          tenant_id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          color?: string | null
+          created_at?: string | null
+          google_calendar_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          tenant_id: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          color?: string | null
+          created_at?: string | null
+          google_calendar_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_stylists_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          email: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          max_services: number | null
+          max_stylists: number | null
+          name: string
+          phone: string | null
+          postal_code: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          slug: string
+          subscription_expires_at: string | null
+          subscription_plan: string | null
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          max_services?: number | null
+          max_stylists?: number | null
+          name: string
+          phone?: string | null
+          postal_code?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          slug: string
+          subscription_expires_at?: string | null
+          subscription_plan?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          max_services?: number | null
+          max_stylists?: number | null
+          name?: string
+          phone?: string | null
+          postal_code?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          slug?: string
+          subscription_expires_at?: string | null
+          subscription_plan?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           created_at: string
