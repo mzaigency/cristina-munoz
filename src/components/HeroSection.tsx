@@ -5,9 +5,16 @@ import { motion } from "motion/react";
 interface HeroSectionProps {
   onBookNow: () => void;
   onViewServices: () => void;
+  businessName?: string;
+  tagline?: string;
 }
 
-export const HeroSection = ({ onBookNow, onViewServices }: HeroSectionProps) => {
+export const HeroSection = ({ 
+  onBookNow, 
+  onViewServices, 
+  businessName = import.meta.env.VITE_BUSINESS_NAME,
+  tagline = "Tu peluquería de confianza en Santpedor. Donde la belleza y el estilo se encuentran."
+}: HeroSectionProps) => {
   const scrollToServices = () => {
     const element = document.getElementById("servicios");
     if (element) {
@@ -43,7 +50,7 @@ export const HeroSection = ({ onBookNow, onViewServices }: HeroSectionProps) => 
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="font-bold tracking-tight font-playfair text-white text-5xl md:text-7xl"
           >
-            {import.meta.env.VITE_BUSINESS_NAME}
+            {businessName}
           </motion.h1>
 
           <motion.p 
@@ -52,7 +59,7 @@ export const HeroSection = ({ onBookNow, onViewServices }: HeroSectionProps) => 
             transition={{ duration: 0.6, delay: 0.15, ease: "easeOut" }}
             className="text-base text-white md:text-lg font-normal"
           >
-            Tu peluquería de confianza en Santpedor. Donde la belleza y el estilo se encuentran.
+            {tagline}
           </motion.p>
 
           <motion.div 
