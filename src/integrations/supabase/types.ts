@@ -20,6 +20,7 @@ export type Database = {
           compound_part: string | null
           created_at: string | null
           customer_name: string
+          customer_name_encrypted: string | null
           end_time: string | null
           Fecha: string
           google_calendar_event_id: string | null
@@ -32,6 +33,7 @@ export type Database = {
           status: string
           stylist: string
           Telefono: string
+          telefono_encrypted: string | null
           tenant_id: string | null
           total_duration: number
           updated_at: string | null
@@ -42,6 +44,7 @@ export type Database = {
           compound_part?: string | null
           created_at?: string | null
           customer_name: string
+          customer_name_encrypted?: string | null
           end_time?: string | null
           Fecha: string
           google_calendar_event_id?: string | null
@@ -54,6 +57,7 @@ export type Database = {
           status?: string
           stylist: string
           Telefono: string
+          telefono_encrypted?: string | null
           tenant_id?: string | null
           total_duration: number
           updated_at?: string | null
@@ -64,6 +68,7 @@ export type Database = {
           compound_part?: string | null
           created_at?: string | null
           customer_name?: string
+          customer_name_encrypted?: string | null
           end_time?: string | null
           Fecha?: string
           google_calendar_event_id?: string | null
@@ -76,6 +81,7 @@ export type Database = {
           status?: string
           stylist?: string
           Telefono?: string
+          telefono_encrypted?: string | null
           tenant_id?: string | null
           total_duration?: number
           updated_at?: string | null
@@ -578,6 +584,7 @@ export type Database = {
           created_at: string
           created_by: string
           customer_name: string
+          customer_name_encrypted: string | null
           discount: number | null
           id: string
           notes: string | null
@@ -595,6 +602,7 @@ export type Database = {
           created_at?: string
           created_by: string
           customer_name: string
+          customer_name_encrypted?: string | null
           discount?: number | null
           id?: string
           notes?: string | null
@@ -612,6 +620,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           customer_name?: string
+          customer_name_encrypted?: string | null
           discount?: number | null
           id?: string
           notes?: string | null
@@ -664,7 +673,9 @@ export type Database = {
           id: string
           last_message_at: string
           name: string | null
+          name_encrypted: string | null
           phone_number: string
+          phone_number_encrypted: string | null
           tenant_id: string | null
           unread_count: number
           updated_at: string
@@ -676,7 +687,9 @@ export type Database = {
           id?: string
           last_message_at?: string
           name?: string | null
+          name_encrypted?: string | null
           phone_number: string
+          phone_number_encrypted?: string | null
           tenant_id?: string | null
           unread_count?: number
           updated_at?: string
@@ -688,7 +701,9 @@ export type Database = {
           id?: string
           last_message_at?: string
           name?: string | null
+          name_encrypted?: string | null
           phone_number?: string
+          phone_number_encrypted?: string | null
           tenant_id?: string | null
           unread_count?: number
           updated_at?: string
@@ -707,6 +722,7 @@ export type Database = {
         Row: {
           contact_id: string
           content: string
+          content_encrypted: string | null
           created_at: string
           id: string
           message_type: string
@@ -715,6 +731,7 @@ export type Database = {
         Insert: {
           contact_id: string
           content: string
+          content_encrypted?: string | null
           created_at?: string
           id?: string
           message_type: string
@@ -723,6 +740,7 @@ export type Database = {
         Update: {
           contact_id?: string
           content?: string
+          content_encrypted?: string | null
           created_at?: string
           id?: string
           message_type?: string
