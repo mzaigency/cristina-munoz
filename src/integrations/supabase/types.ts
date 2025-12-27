@@ -17,6 +17,7 @@ export type Database = {
       bookings: {
         Row: {
           calendar_id: string | null
+          color: string | null
           compound_part: string | null
           created_at: string | null
           customer_name: string
@@ -27,6 +28,7 @@ export type Database = {
           Hora: string
           id: string
           is_part_of_compound: boolean | null
+          notes: string | null
           related_booking_id: string | null
           services: Json
           skip_availability_check: boolean
@@ -35,12 +37,14 @@ export type Database = {
           Telefono: string
           telefono_encrypted: string | null
           tenant_id: string | null
+          title: string | null
           total_duration: number
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           calendar_id?: string | null
+          color?: string | null
           compound_part?: string | null
           created_at?: string | null
           customer_name: string
@@ -51,6 +55,7 @@ export type Database = {
           Hora: string
           id?: string
           is_part_of_compound?: boolean | null
+          notes?: string | null
           related_booking_id?: string | null
           services: Json
           skip_availability_check?: boolean
@@ -59,12 +64,14 @@ export type Database = {
           Telefono: string
           telefono_encrypted?: string | null
           tenant_id?: string | null
+          title?: string | null
           total_duration: number
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           calendar_id?: string | null
+          color?: string | null
           compound_part?: string | null
           created_at?: string | null
           customer_name?: string
@@ -75,6 +82,7 @@ export type Database = {
           Hora?: string
           id?: string
           is_part_of_compound?: boolean | null
+          notes?: string | null
           related_booking_id?: string | null
           services?: Json
           skip_availability_check?: boolean
@@ -83,6 +91,7 @@ export type Database = {
           Telefono?: string
           telefono_encrypted?: string | null
           tenant_id?: string | null
+          title?: string | null
           total_duration?: number
           updated_at?: string | null
           user_id?: string | null
