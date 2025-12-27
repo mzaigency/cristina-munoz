@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { format } from "https://esm.sh/date-fns@3.6.0";
 import { z } from 'https://esm.sh/zod@3.22.4';
 
 const corsHeaders = {
@@ -28,7 +27,7 @@ const bookingRequestSchema = z.object({
   Hora: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Invalid time format").optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format").optional(),
   time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Invalid time format").optional(),
-  stylist: z.enum(['cris', 'desi', 'any']),
+  stylist: z.enum(['cris', 'desi', 'any']).or(z.string()),
   services: z.array(serviceSchema).min(1).max(10),
   total_duration: z.number().int().min(1).max(960),
   customer_name: z.string().min(1).max(100).optional(),
@@ -62,55 +61,6 @@ interface BookingRequest {
   tenant_id?: string;
 }
 
-interface GoogleCalendarCredentials {
-  client_id: string;
-  client_secret: string;
-  refresh_token: string;
-}
-
-interface TenantIntegrationSettings {
-  calendar_id_cris?: string;
-  calendar_id_desi?: string;
-  n8n_webhook_url?: string;
-}
-
-// Helper function to get tenant credentials
-async function getTenantCredentials(
-  supabase: any, 
-  tenantId: string, 
-  integrationType: string
-): Promise<{ credentials: any; settings: any } | null> {
-  const { data: integration, error } = await supabase
-    .from('tenant_integrations')
-    .select('credentials_encrypted, settings, is_enabled')
-    .eq('tenant_id', tenantId)
-    .eq('integration_type', integrationType)
-    .eq('is_enabled', true)
-    .maybeSingle();
-
-  if (error || !integration) {
-    console.log(`No ${integrationType} integration found for tenant ${tenantId}`);
-    return null;
-  }
-
-  let credentials = null;
-  if (integration.credentials_encrypted) {
-    const { data: decrypted } = await supabase.rpc('decrypt_sensitive_data', {
-      _ciphertext: integration.credentials_encrypted,
-      _tenant_id: tenantId
-    });
-    if (decrypted) {
-      try {
-        credentials = JSON.parse(decrypted);
-      } catch (e) {
-        console.error('Error parsing credentials:', e);
-      }
-    }
-  }
-
-  return { credentials, settings: integration.settings || {} };
-}
-
 // Helper function to get default tenant ID
 async function getDefaultTenantId(supabase: any): Promise<string | null> {
   const { data: tenant } = await supabase
@@ -121,6 +71,35 @@ async function getDefaultTenantId(supabase: any): Promise<string | null> {
     .maybeSingle();
   
   return tenant?.id || null;
+}
+
+// Helper function to get n8n webhook URL from tenant integrations
+async function getN8nWebhookUrl(supabase: any, tenantId: string): Promise<string | null> {
+  const { data: integration } = await supabase
+    .from('tenant_integrations')
+    .select('settings, is_enabled')
+    .eq('tenant_id', tenantId)
+    .eq('integration_type', 'n8n')
+    .eq('is_enabled', true)
+    .maybeSingle();
+
+  if (integration?.settings?.webhook_url) {
+    return integration.settings.webhook_url;
+  }
+
+  return Deno.env.get('N8N_WEBHOOK_URL') || null;
+}
+
+// Helper function to get stylist color
+async function getStylistColor(supabase: any, tenantId: string, stylistSlug: string): Promise<string> {
+  const { data: stylist } = await supabase
+    .from('tenant_stylists')
+    .select('color')
+    .eq('tenant_id', tenantId)
+    .eq('slug', stylistSlug)
+    .maybeSingle();
+
+  return stylist?.color || '#8B5CF6';
 }
 
 serve(async (req) => {
@@ -170,49 +149,12 @@ serve(async (req) => {
     }
     console.log('Using tenant_id:', tenantId);
 
-    // Get Google Calendar credentials from tenant_integrations
-    let googleCreds: GoogleCalendarCredentials | null = null;
-    let calendarSettings: TenantIntegrationSettings = {};
-    
-    const gcalIntegration = await getTenantCredentials(supabase, tenantId, 'google_calendar');
-    if (gcalIntegration) {
-      googleCreds = gcalIntegration.credentials;
-      calendarSettings = gcalIntegration.settings || {};
-      console.log('Using tenant Google Calendar integration');
-    } else {
-      // Fallback to environment variables
-      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
-      const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-      const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
-      
-      if (clientId && clientSecret && refreshToken) {
-        googleCreds = { client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken };
-        calendarSettings = {
-          calendar_id_cris: Deno.env.get('GOOGLE_CALENDAR_ID_CRIS'),
-          calendar_id_desi: Deno.env.get('GOOGLE_CALENDAR_ID_DESI')
-        };
-        console.log('Using environment Google Calendar credentials (fallback)');
-      }
-    }
-
-    // Get n8n credentials from tenant_integrations
-    let n8nWebhookUrl: string | null = null;
-    const n8nIntegration = await getTenantCredentials(supabase, tenantId, 'n8n');
-    if (n8nIntegration?.settings?.webhook_url) {
-      n8nWebhookUrl = n8nIntegration.settings.webhook_url;
-      console.log('Using tenant n8n webhook URL');
-    } else {
-      n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL') || null;
-      if (n8nWebhookUrl) console.log('Using environment n8n webhook URL (fallback)');
-    }
-
     // Get customer data - either from user profile or from direct input
     let customer_name: string;
     let customer_email: string | null = null;
     let customer_phone: string;
 
     if (bookingData.user_id) {
-      // User booking - get data from profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('full_name, email, phone')
@@ -228,7 +170,6 @@ serve(async (req) => {
       customer_email = profile.email;
       customer_phone = profile.phone;
     } else {
-      // Admin booking - use provided data
       if (!bookingData.customer_name) {
         throw new Error('Customer name is required');
       }
@@ -239,191 +180,54 @@ serve(async (req) => {
     // Determine actual stylist for "any" selection
     let actualStylist = bookingData.stylist;
     
-    if (bookingData.stylist === 'any' && googleCreds) {
-      // Get OAuth2 access token first
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: googleCreds.client_id,
-          client_secret: googleCreds.client_secret,
-          refresh_token: googleCreds.refresh_token,
-          grant_type: 'refresh_token',
-        }),
-      });
+    if (bookingData.stylist === 'any') {
+      // Check availability for each stylist in database
+      const { data: stylists } = await supabase
+        .from('tenant_stylists')
+        .select('slug')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true);
 
-      if (!tokenResponse.ok) {
-        throw new Error('Failed to authenticate with Google Calendar');
-      }
+      if (stylists && stylists.length > 0) {
+        const [startHours, startMinutes] = bookingTime.split(':').map(Number);
+        const startMinutesTotal = startHours * 60 + startMinutes;
+        const endMinutesTotal = startMinutesTotal + bookingData.total_duration;
 
-      const { access_token } = await tokenResponse.json();
+        for (const stylist of stylists) {
+          const { data: existingBookings } = await supabase
+            .from('bookings')
+            .select('Hora, end_time, total_duration')
+            .eq('Fecha', bookingDate)
+            .eq('stylist', stylist.slug)
+            .eq('status', 'confirmed')
+            .eq('tenant_id', tenantId);
 
-      // Calculate time range for the booking
-      const [startHours, startMinutes] = bookingTime.split(':').map(Number);
-      const startMinutesTotal = startHours * 60 + startMinutes;
-      const endMinutesTotal = startMinutesTotal + bookingData.total_duration;
-      
-      // Check Cris calendar
-      const crisCalendarId = calendarSettings.calendar_id_cris;
-      const timeMin = `${bookingDate}T00:00:00Z`;
-      const timeMax = `${bookingDate}T23:59:59Z`;
+          const hasConflict = existingBookings?.some(booking => {
+            const [bStartH, bStartM] = booking.Hora.split(':').map(Number);
+            const bookingStart = bStartH * 60 + bStartM;
+            const bookingEnd = bookingStart + (booking.total_duration || 60);
+            return (startMinutesTotal < bookingEnd && endMinutesTotal > bookingStart);
+          });
 
-      let crisAvailable = false;
-      if (crisCalendarId) {
-        const crisEventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(crisCalendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
-        const crisResponse = await fetch(crisEventsUrl, {
-          headers: { 'Authorization': `Bearer ${access_token}` },
-        });
-        
-        const crisEvents = await crisResponse.json();
-        crisAvailable = !crisEvents.items?.some((event: any) => {
-          if (event.start?.date) {
-            const eventStart = event.start.date;
-            const eventEnd = event.end.date;
-            return bookingDate >= eventStart && bookingDate < eventEnd;
+          if (!hasConflict) {
+            actualStylist = stylist.slug;
+            break;
           }
-          if (!event.start?.dateTime || !event.end?.dateTime) return false;
-          const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 5);
-          const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 5);
-          const [eStartH, eStartM] = startTimeStr.split(':').map(Number);
-          const [eEndH, eEndM] = endTimeStr.split(':').map(Number);
-          const eStart = eStartH * 60 + eStartM;
-          const eEnd = eEndH * 60 + eEndM;
-          return (startMinutesTotal < eEnd && endMinutesTotal > eStart);
-        });
-      }
-
-      // Check Desi calendar
-      const desiCalendarId = calendarSettings.calendar_id_desi;
-      let desiAvailable = false;
-      if (desiCalendarId) {
-        const desiEventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(desiCalendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
-        const desiResponse = await fetch(desiEventsUrl, {
-          headers: { 'Authorization': `Bearer ${access_token}` },
-        });
-        
-        const desiEvents = await desiResponse.json();
-        desiAvailable = !desiEvents.items?.some((event: any) => {
-          if (event.start?.date) {
-            const eventStart = event.start.date;
-            const eventEnd = event.end.date;
-            return bookingDate >= eventStart && bookingDate < eventEnd;
-          }
-          if (!event.start?.dateTime || !event.end?.dateTime) return false;
-          const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 5);
-          const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 5);
-          const [eStartH, eStartM] = startTimeStr.split(':').map(Number);
-          const [eEndH, eEndM] = endTimeStr.split(':').map(Number);
-          const eStart = eStartH * 60 + eStartM;
-          const eEnd = eEndH * 60 + eEndM;
-          return (startMinutesTotal < eEnd && endMinutesTotal > eStart);
-        });
-      }
-      
-      // Assign to available stylist (prefer Cris if both available)
-      if (crisAvailable) {
-        actualStylist = 'cris';
-      } else if (desiAvailable) {
-        actualStylist = 'desi';
-      } else {
-        throw new Error('No stylist available for the selected time');
-      }
-      
-      console.log(`Auto-assigned "any" booking to: ${actualStylist} (Cris available: ${crisAvailable}, Desi available: ${desiAvailable})`);
-    }
-    
-    // Get calendar ID based on actual stylist
-    let calendarId: string | null = null;
-    if (actualStylist === 'cris') {
-      calendarId = calendarSettings.calendar_id_cris || null;
-    } else if (actualStylist === 'desi') {
-      calendarId = calendarSettings.calendar_id_desi || null;
-    }
-
-    // Separate services by type
-    const simpleServices = bookingData.services.filter(s => s.type === 'Simple');
-    const compoundServices = bookingData.services.filter(s => s.type === 'Compuesto');
-
-    // Helper function to create Google Calendar event
-    const createCalendarEvent = async (
-      summary: string,
-      description: string,
-      startTime: string,
-      endTime: string,
-      accessToken: string
-    ) => {
-      if (!calendarId) return null;
-      
-      const event = {
-        summary,
-        description,
-        start: {
-          dateTime: `${bookingDate}T${startTime}`,
-          timeZone: 'Europe/Madrid',
-        },
-        end: {
-          dateTime: `${bookingDate}T${endTime}`,
-          timeZone: 'Europe/Madrid',
-        },
-      };
-
-      const calendarResponse = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(event),
         }
-      );
 
-      if (!calendarResponse.ok) {
-        console.error('Failed to create calendar event:', await calendarResponse.text());
-        throw new Error('Failed to create calendar event');
-      }
-
-      const calendarEvent = await calendarResponse.json();
-      return calendarEvent.id;
-    };
-
-    // Get access token if Google Calendar is configured
-    let accessToken: string | null = null;
-    if (calendarId && googleCreds) {
-      try {
-        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            client_id: googleCreds.client_id,
-            client_secret: googleCreds.client_secret,
-            refresh_token: googleCreds.refresh_token,
-            grant_type: 'refresh_token',
-          }),
-        });
-
-        if (!tokenResponse.ok) {
-          console.error('Failed to get access token:', await tokenResponse.text());
-        } else {
-          const tokenData = await tokenResponse.json();
-          accessToken = tokenData.access_token;
+        if (actualStylist === 'any') {
+          throw new Error('No stylist available for the selected time');
         }
-      } catch (error) {
-        console.error('Error getting access token:', error);
       }
     }
 
+    const normalizedPhone = normalizePhone(customer_phone);
     const [startHours, startMinutes] = bookingTime.split(':').map(Number);
     let currentMinutes = startHours * 60 + startMinutes;
-
-    // Normalize phone for consistent comparison
-    const normalizedPhone = normalizePhone(customer_phone);
     
-    // Skip validations if admin explicitly requests it (custom time mode)
+    // Skip validations if admin explicitly requests it
     if (!bookingData.skipAvailabilityCheck) {
-      // VALIDATION 1: Check if customer already has a booking at this date/time
-      console.log('Checking for duplicate customer booking...');
+      // Check if customer already has a booking at this date/time
       const { data: existingCustomerBooking } = await supabase
         .from('bookings')
         .select('id, customer_name, Hora, Telefono')
@@ -438,25 +242,17 @@ serve(async (req) => {
         );
         
         if (duplicateBooking) {
-          console.error('Duplicate booking detected:', duplicateBooking);
           return new Response(
             JSON.stringify({ 
               error: 'Ya existe una reserva para este cliente en esta fecha y hora',
-              details: { 
-                existing_booking_id: duplicateBooking.id,
-                customer_name: duplicateBooking.customer_name 
-              }
+              details: { existing_booking_id: duplicateBooking.id }
             }),
-            {
-              status: 409,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            }
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
       }
       
-      // VALIDATION 2: Check stylist availability in database
-      console.log('Checking stylist availability in database...');
+      // Check stylist availability in database
       const endMinutesTotal = currentMinutes + bookingData.total_duration;
       
       const { data: stylistBookings } = await supabase
@@ -471,269 +267,210 @@ serve(async (req) => {
         const hasConflict = stylistBookings.some(booking => {
           const [bStartH, bStartM] = booking.Hora.split(':').map(Number);
           const bookingStart = bStartH * 60 + bStartM;
-          const bookingEnd = bookingStart + booking.total_duration;
-          
-          const hasOverlap = (currentMinutes < bookingEnd && endMinutesTotal > bookingStart);
-          
-          if (hasOverlap) {
-            console.log(`Conflict detected with booking ${booking.id} for ${booking.customer_name}: ${booking.Hora} (${booking.total_duration} min)`);
-          }
-          
-          return hasOverlap;
+          const bookingEnd = bookingStart + (booking.total_duration || 60);
+          return (currentMinutes < bookingEnd && endMinutesTotal > bookingStart);
         });
         
         if (hasConflict) {
           return new Response(
             JSON.stringify({ 
-              error: `${actualStylist === 'cris' ? 'Cris' : 'Desi'} no está disponible en este horario`,
-              details: 'Ya existe otra reserva en este intervalo de tiempo'
+              error: `${actualStylist} ya tiene una cita en ese horario`,
+              details: { stylist: actualStylist }
             }),
-            {
-              status: 409,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            }
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
       }
-    } else {
-      console.log('Skipping availability checks (admin override)...');
     }
-    
-    console.log('Validations passed. Creating bookings...');
 
-    const createdBookings = [];
+    // Separate services by type
+    const simpleServices = bookingData.services.filter(s => s.type === 'Simple');
+    const compoundServices = bookingData.services.filter(s => s.type === 'Compuesto');
 
-    // Create bookings for simple services
+    // Helper function to calculate end time
+    const calculateEndTime = (startMinutes: number, durationMinutes: number): string => {
+      const totalMinutes = startMinutes + durationMinutes;
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+    };
+
+    // Get stylist color for the booking
+    const stylistColor = await getStylistColor(supabase, tenantId, actualStylist);
+
+    const createdBookings: any[] = [];
+    let mainBookingId: string | null = null;
+
+    // Process simple services
     if (simpleServices.length > 0) {
       const simpleDuration = simpleServices.reduce((sum, s) => sum + s.duration_part1_active, 0);
-      const endMinutes = currentMinutes + simpleDuration;
-      const endHours = Math.floor(endMinutes / 60);
-      const endMins = endMinutes % 60;
-      const endTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}:00`;
+      const startTime = `${String(Math.floor(currentMinutes / 60)).padStart(2, '0')}:${String(currentMinutes % 60).padStart(2, '0')}:00`;
+      const endTime = calculateEndTime(currentMinutes, simpleDuration);
 
-      let googleEventId: string | null = null;
-      if (accessToken) {
-        try {
-          const serviceNames = simpleServices.map(s => s.name).join(', ');
-          const description = customer_email ? `${customer_email} - ${customer_phone}` : customer_phone;
-          googleEventId = await createCalendarEvent(
-            `${customer_name} - ${serviceNames}`,
-            description,
-            `${bookingTime}:00`,
-            endTime,
-            accessToken
-          );
-        } catch (error) {
-          console.error('Error creating Google Calendar event for simple services:', error);
-        }
-      }
+      const serviceNames = simpleServices.map(s => s.name).join(', ');
 
-      const { data, error } = await supabase
+      const bookingRecord = {
+        tenant_id: tenantId,
+        Fecha: bookingDate,
+        Hora: startTime,
+        end_time: endTime,
+        stylist: actualStylist,
+        customer_name: customer_name,
+        Telefono: customer_phone,
+        services: simpleServices,
+        total_duration: simpleDuration,
+        user_id: bookingData.user_id || null,
+        skip_availability_check: bookingData.skipAvailabilityCheck || false,
+        status: 'confirmed',
+        title: `${customer_name} - ${serviceNames}`,
+        notes: null,
+        color: stylistColor
+      };
+
+      const { data: booking, error: bookingError } = await supabase
         .from('bookings')
-        .insert({
-          customer_name,
-          Telefono: normalizedPhone,
-          Fecha: bookingDate,
-          Hora: bookingTime,
-          end_time: endTime,
-          stylist: actualStylist,
-          services: simpleServices.map(s => ({ name: s.name })),
-          total_duration: simpleDuration,
-          status: 'confirmed',
-          google_calendar_event_id: googleEventId,
-          calendar_id: calendarId,
-          is_part_of_compound: false,
-          user_id: bookingData.user_id || null,
-          skip_availability_check: bookingData.skipAvailabilityCheck || false,
-          tenant_id: tenantId,
-        })
+        .insert(bookingRecord)
         .select()
         .single();
 
-      if (error) {
-        console.error('Error saving simple services booking:', error);
-        throw new Error('Failed to save booking');
-      }
+      if (bookingError) throw bookingError;
 
-      createdBookings.push(data);
-      currentMinutes = endMinutes;
+      createdBookings.push(booking);
+      mainBookingId = booking.id;
+      currentMinutes += simpleDuration;
     }
 
-    // Create bookings for compound services (each gets 2 separate bookings)
+    // Process compound services
     for (const service of compoundServices) {
-      // Part 1: Active work
-      const part1Duration = service.duration_part1_active;
-      const part1EndMinutes = currentMinutes + part1Duration;
-      const part1EndHours = Math.floor(part1EndMinutes / 60);
-      const part1EndMins = part1EndMinutes % 60;
-      const part1EndTime = `${String(part1EndHours).padStart(2, '0')}:${String(part1EndMins).padStart(2, '0')}:00`;
-      const part1StartTime = `${String(Math.floor(currentMinutes / 60)).padStart(2, '0')}:${String(currentMinutes % 60).padStart(2, '0')}:00`;
+      // Part 1
+      const part1Start = `${String(Math.floor(currentMinutes / 60)).padStart(2, '0')}:${String(currentMinutes % 60).padStart(2, '0')}:00`;
+      const part1End = calculateEndTime(currentMinutes, service.duration_part1_active);
 
-      let part1GoogleEventId: string | null = null;
-      if (accessToken) {
-        try {
-          const description = customer_email ? `${customer_email} - ${customer_phone}` : customer_phone;
-          part1GoogleEventId = await createCalendarEvent(
-            `${customer_name} - ${service.name} (Parte 1)`,
-            description,
-            part1StartTime,
-            part1EndTime,
-            accessToken
-          );
-        } catch (error) {
-          console.error('Error creating Google Calendar event for part 1:', error);
-        }
-      }
+      const part1Record = {
+        tenant_id: tenantId,
+        Fecha: bookingDate,
+        Hora: part1Start,
+        end_time: part1End,
+        stylist: actualStylist,
+        customer_name: customer_name,
+        Telefono: customer_phone,
+        services: [service],
+        total_duration: service.duration_part1_active,
+        user_id: bookingData.user_id || null,
+        is_part_of_compound: true,
+        compound_part: 'part1',
+        related_booking_id: mainBookingId,
+        skip_availability_check: bookingData.skipAvailabilityCheck || false,
+        status: 'confirmed',
+        title: `${customer_name} - ${service.name} (Parte 1)`,
+        notes: null,
+        color: stylistColor
+      };
 
-      const { data: part1Data, error: part1Error } = await supabase
+      const { data: part1Booking, error: part1Error } = await supabase
         .from('bookings')
-        .insert({
-          customer_name,
-          Telefono: normalizedPhone,
-          Fecha: bookingDate,
-          Hora: part1StartTime,
-          end_time: part1EndTime,
-          stylist: actualStylist,
-          services: [{ name: `${service.name} - Parte 1` }],
-          total_duration: part1Duration,
-          status: 'confirmed',
-          google_calendar_event_id: part1GoogleEventId,
-          calendar_id: calendarId,
-          is_part_of_compound: true,
-          compound_part: 'part1',
-          user_id: bookingData.user_id || null,
-          skip_availability_check: bookingData.skipAvailabilityCheck || false,
-          tenant_id: tenantId,
-        })
+        .insert(part1Record)
         .select()
         .single();
 
-      if (part1Error) {
-        console.error('Error saving part 1 booking:', part1Error);
-        throw new Error('Failed to save part 1 booking');
-      }
+      if (part1Error) throw part1Error;
 
-      // Move time forward past exposure time
-      currentMinutes = part1EndMinutes + service.duration_exposure_pause;
+      createdBookings.push(part1Booking);
+      if (!mainBookingId) mainBookingId = part1Booking.id;
 
-      // Part 2: Final work (only if there's a part 2 duration)
+      currentMinutes += service.duration_part1_active + service.duration_exposure_pause;
+
+      // Part 2 if exists
       if (service.duration_part2_active > 0) {
-        const part2Duration = service.duration_part2_active;
-        const part2StartMinutes = currentMinutes;
-        const part2EndMinutes = currentMinutes + part2Duration;
-        const part2StartTime = `${String(Math.floor(part2StartMinutes / 60)).padStart(2, '0')}:${String(part2StartMinutes % 60).padStart(2, '0')}:00`;
-        const part2EndTime = `${String(Math.floor(part2EndMinutes / 60)).padStart(2, '0')}:${String(part2EndMinutes % 60).padStart(2, '0')}:00`;
+        const part2Start = `${String(Math.floor(currentMinutes / 60)).padStart(2, '0')}:${String(currentMinutes % 60).padStart(2, '0')}:00`;
+        const part2End = calculateEndTime(currentMinutes, service.duration_part2_active);
 
-        let part2GoogleEventId: string | null = null;
-        if (accessToken) {
-          try {
-            const description = customer_email ? `${customer_email} - ${customer_phone}` : customer_phone;
-            part2GoogleEventId = await createCalendarEvent(
-              `${customer_name} - ${service.name} (Parte 2)`,
-              description,
-              part2StartTime,
-              part2EndTime,
-              accessToken
-            );
-          } catch (error) {
-            console.error('Error creating Google Calendar event for part 2:', error);
-          }
-        }
+        const part2Record = {
+          tenant_id: tenantId,
+          Fecha: bookingDate,
+          Hora: part2Start,
+          end_time: part2End,
+          stylist: actualStylist,
+          customer_name: customer_name,
+          Telefono: customer_phone,
+          services: [service],
+          total_duration: service.duration_part2_active,
+          user_id: bookingData.user_id || null,
+          is_part_of_compound: true,
+          compound_part: 'part2',
+          related_booking_id: part1Booking.id,
+          skip_availability_check: bookingData.skipAvailabilityCheck || false,
+          status: 'confirmed',
+          title: `${customer_name} - ${service.name} (Parte 2)`,
+          notes: null,
+          color: stylistColor
+        };
 
-        const { data: part2Data, error: part2Error } = await supabase
+        const { data: part2Booking, error: part2Error } = await supabase
           .from('bookings')
-          .insert({
-            customer_name,
-            Telefono: normalizedPhone,
-            Fecha: bookingDate,
-            Hora: part2StartTime,
-            end_time: part2EndTime,
-            stylist: actualStylist,
-            services: [{ name: `${service.name} - Parte 2` }],
-            total_duration: part2Duration,
-            status: 'confirmed',
-            google_calendar_event_id: part2GoogleEventId,
-            calendar_id: calendarId,
-            is_part_of_compound: true,
-            compound_part: 'part2',
-            related_booking_id: part1Data.id,
-            user_id: bookingData.user_id || null,
-            skip_availability_check: bookingData.skipAvailabilityCheck || false,
-            tenant_id: tenantId,
-          })
+          .insert(part2Record)
           .select()
           .single();
 
-        if (part2Error) {
-          console.error('Error saving part 2 booking:', part2Error);
-          throw new Error('Failed to save part 2 booking');
-        }
+        if (part2Error) throw part2Error;
 
-        // Update part 1 to reference part 2
-        await supabase
-          .from('bookings')
-          .update({ related_booking_id: part2Data.id })
-          .eq('id', part1Data.id);
-
-        createdBookings.push(part1Data, part2Data);
-        currentMinutes = part2EndMinutes;
-      } else {
-        createdBookings.push(part1Data);
+        createdBookings.push(part2Booking);
+        currentMinutes += service.duration_part2_active;
       }
     }
 
-    console.log('Bookings created successfully:', createdBookings);
+    console.log('Created bookings:', createdBookings.length);
 
-    // Trigger n8n webhook for WhatsApp notification
+    // Trigger n8n webhook
+    const n8nWebhookUrl = await getN8nWebhookUrl(supabase, tenantId);
     if (n8nWebhookUrl) {
       try {
-        // Format date for webhook (dd-mm-yyyy) - parse string directly to avoid timezone issues
-        const [year, month, day] = bookingDate.split('-');
+        const [day, month, year] = [
+          bookingDate.slice(8, 10),
+          bookingDate.slice(5, 7),
+          bookingDate.slice(0, 4)
+        ];
         const formattedDate = `${day}-${month}-${year}`;
-        
-        console.log('Triggering webhook:', n8nWebhookUrl);
+
         await fetch(n8nWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            type: 'new_booking',
             customer_name,
-            Telefono: customer_phone,
-            Fecha: formattedDate,
-            Hora: bookingTime,
+            phone: customer_phone,
+            email: customer_email,
+            date: formattedDate,
+            time: bookingTime.slice(0, 5),
             stylist: actualStylist,
             services: bookingData.services.map(s => s.name),
-            bookings: createdBookings,
-            canal: bookingData.user_id ? 'WEB' : 'CRM',
+            total_duration: bookingData.total_duration,
             tenant_id: tenantId,
-          }),
+            booking_ids: createdBookings.map(b => b.id)
+          })
         });
-        console.log('n8n webhook triggered successfully');
-      } catch (error) {
-        console.error('Error sending webhook:', error);
-        // Don't fail the booking if webhook fails
+        console.log('n8n webhook sent successfully');
+      } catch (webhookError) {
+        console.error('Error sending n8n webhook:', webhookError);
       }
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         bookings: createdBookings,
-        googleEventCreated: createdBookings.some(b => b.google_calendar_event_id !== null)
+        message: 'Booking created successfully',
+        stylist: actualStylist,
+        tenant_id: tenantId
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
-    console.error('Error in create-booking function:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('Error in create-booking:', error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

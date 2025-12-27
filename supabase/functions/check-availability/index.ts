@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { z } from 'https://esm.sh/zod@3.22.4';
 
 const corsHeaders = {
@@ -9,14 +10,39 @@ const corsHeaders = {
 // Validation schema
 const availabilityRequestSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
-  stylist: z.enum(['cris', 'desi', 'any']),
-  totalDuration: z.number().int().min(0).max(960).optional()
+  stylist: z.enum(['cris', 'desi', 'any']).or(z.string()),
+  totalDuration: z.number().int().min(0).max(960).optional(),
+  tenant_id: z.string().uuid().optional()
 });
 
 interface AvailabilityRequest {
-  date: string; // YYYY-MM-DD
-  stylist: string; // 'cris', 'desi', or 'any'
-  totalDuration?: number; // Total duration in minutes (optional, for 'any' validation)
+  date: string;
+  stylist: string;
+  totalDuration?: number;
+  tenant_id?: string;
+}
+
+// Helper to get default tenant ID
+async function getDefaultTenantId(supabase: any): Promise<string | null> {
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle();
+  
+  return tenant?.id || null;
+}
+
+// Helper to get tenant stylists
+async function getTenantStylists(supabase: any, tenantId: string): Promise<string[]> {
+  const { data: stylists } = await supabase
+    .from('tenant_stylists')
+    .select('slug')
+    .eq('tenant_id', tenantId)
+    .eq('is_active', true);
+  
+  return stylists?.map((s: any) => s.slug) || [];
 }
 
 serve(async (req) => {
@@ -36,198 +62,125 @@ serve(async (req) => {
           error: 'Invalid input data', 
           details: validationResult.error.errors 
         }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    const { date, stylist, totalDuration }: AvailabilityRequest = validationResult.data;
-    console.log(`\n>>> Checking availability for ${stylist} on ${date}${totalDuration ? ` (duration: ${totalDuration}min)` : ''}`);
+    const { date, stylist, totalDuration, tenant_id }: AvailabilityRequest = validationResult.data;
+    console.log(`Checking availability for ${stylist} on ${date}${totalDuration ? ` (duration: ${totalDuration}min)` : ''}`);
 
-    const googleClientId = Deno.env.get('GOOGLE_CLIENT_ID');
-    const googleClientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
-    const googleRefreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    if (!googleClientId || !googleClientSecret || !googleRefreshToken) {
-      throw new Error('Missing Google Calendar credentials');
+    // Determine tenant ID
+    let tenantId: string | undefined = tenant_id;
+    if (!tenantId) {
+      const defaultTenant = await getDefaultTenantId(supabase);
+      if (!defaultTenant) {
+        throw new Error('No active tenant found');
+      }
+      tenantId = defaultTenant;
     }
 
-    // Get OAuth2 access token
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: googleClientId,
-        client_secret: googleClientSecret,
-        refresh_token: googleRefreshToken,
-        grant_type: 'refresh_token',
-      }),
-    });
-
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error('Failed to get access token:', errorText);
-      throw new Error('Failed to authenticate with Google Calendar');
+    // Determine which stylists to check
+    let stylistsToCheck: string[] = [];
+    if (stylist === 'any') {
+      stylistsToCheck = await getTenantStylists(supabase, tenantId);
+    } else {
+      stylistsToCheck = [stylist];
     }
 
-    const { access_token } = await tokenResponse.json();
+    console.log(`Checking stylists: ${stylistsToCheck.join(', ')}`);
 
-    // Determine which calendars to check
-    const calendarsToCheck = [];
-    if (stylist === 'cris' || stylist === 'any') {
-      calendarsToCheck.push({
-        id: Deno.env.get('GOOGLE_CALENDAR_ID_CRIS'),
-        name: 'cris'
-      });
-    }
-    if (stylist === 'desi' || stylist === 'any') {
-      calendarsToCheck.push({
-        id: Deno.env.get('GOOGLE_CALENDAR_ID_DESI'),
-        name: 'desi'
-      });
-    }
+    // Fetch bookings from database for each stylist
+    const bookedSlotsByStylists: Record<string, Array<{ Hora: string; total_duration: number }>> = {};
 
-    console.log(`Checking calendars: ${calendarsToCheck.map(c => c.name).join(', ')}`);
+    for (const s of stylistsToCheck) {
+      const { data: bookings, error } = await supabase
+        .from('bookings')
+        .select('Hora, total_duration, title')
+        .eq('Fecha', date)
+        .eq('stylist', s)
+        .eq('status', 'confirmed')
+        .eq('tenant_id', tenantId);
 
-    // Fetch events from each calendar
-    const crisBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
-    const desiBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
-
-    for (const calendar of calendarsToCheck) {
-      // Query Google Calendar API using UTC timestamps
-      // The API will return events with their original timezone information
-      const timeMin = `${date}T00:00:00Z`;
-      const timeMax = `${date}T23:59:59Z`;
-
-      const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id!)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`;
-      
-      console.log(`Fetching from ${calendar.name}: ${eventsUrl}`);
-
-      const eventsResponse = await fetch(eventsUrl, {
-        headers: {
-          'Authorization': `Bearer ${access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!eventsResponse.ok) {
-        const errorText = await eventsResponse.text();
-        console.error(`Failed to fetch events from ${calendar.name}:`, errorText);
+      if (error) {
+        console.error(`Error fetching bookings for ${s}:`, error);
         continue;
       }
 
-      const eventsData = await eventsResponse.json();
-      const events = eventsData.items || [];
-      
-      console.log(`\n${calendar.name.toUpperCase()}: Found ${events.length} event(s)`);
+      const slots: Array<{ Hora: string; total_duration: number }> = [];
 
-      for (const event of events) {
-        // ALL-DAY EVENTS (vacations, blocked periods)
-        if (event.start?.date) {
-          const eventStart = event.start.date; // YYYY-MM-DD
-          const eventEnd = event.end.date;     // YYYY-MM-DD (exclusive)
-          
-          console.log(`  All-day: "${event.summary}" from ${eventStart} to ${eventEnd}`);
-          
-          // Check if our target date is within this all-day event
-          // Remember: end date is exclusive, so "2025-10-23" means up to but not including Oct 23
-          if (date >= eventStart && date < eventEnd) {
-            console.log(`  ✓ BLOCKING ${date} - creating hourly slots`);
-            
-            // Block all business hours (8:00 to 20:00 = 13 slots)
-            for (let hour = 8; hour <= 20; hour++) {
-              const slot = {
-                Hora: `${String(hour).padStart(2, '0')}:00:00`,
-                total_duration: 60
-              };
-
-              if (calendar.name === 'cris') {
-                crisBookedSlots.push(slot);
-              } else {
-                desiBookedSlots.push(slot);
-              }
-            }
-          } else {
-            console.log(`  ✗ Not blocking ${date}`);
+      for (const booking of bookings || []) {
+        // Check if it's a vacation/blocked day
+        const isVacation = booking.title?.includes('🌴 VACACIONES');
+        
+        if (isVacation) {
+          // Block all business hours
+          for (let hour = 8; hour <= 20; hour++) {
+            slots.push({
+              Hora: `${String(hour).padStart(2, '0')}:00:00`,
+              total_duration: 60
+            });
           }
-        }
-        // TIMED EVENTS (regular appointments)
-        else if (event.start?.dateTime && event.end?.dateTime) {
-          const startTimeStr = event.start.dateTime.split('T')[1].substring(0, 8);
-          const endTimeStr = event.end.dateTime.split('T')[1].substring(0, 8);
-          
-          const [startHours, startMinutes] = startTimeStr.split(':').map(Number);
-          const [endHours, endMinutes] = endTimeStr.split(':').map(Number);
-          const durationMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
-
-          const slot = {
-            Hora: startTimeStr,
-            total_duration: durationMinutes
-          };
-
-          if (calendar.name === 'cris') {
-            crisBookedSlots.push(slot);
-          } else {
-            desiBookedSlots.push(slot);
-          }
-          
-          console.log(`  Timed: "${event.summary}" at ${startTimeStr} (${durationMinutes}min)`);
+        } else {
+          slots.push({
+            Hora: booking.Hora,
+            total_duration: booking.total_duration || 60
+          });
         }
       }
+
+      bookedSlotsByStylists[s] = slots;
     }
 
-    console.log(`\nTotal blocked: Cris=${crisBookedSlots.length}, Desi=${desiBookedSlots.length}`);
+    console.log(`Total booked slots by stylist:`, Object.fromEntries(
+      Object.entries(bookedSlotsByStylists).map(([k, v]) => [k, v.length])
+    ));
 
     // Determine final blocked slots based on stylist selection
     let finalBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
     
     if (stylist === 'any') {
-      console.log('Processing "any" stylist');
+      // For "any" stylist, only block slots where ALL stylists are busy
+      const stylistRanges: Record<string, Array<{ start: number; end: number }>> = {};
       
-      const crisRanges = crisBookedSlots.map(slot => {
-        const [hours, minutes] = slot.Hora.split(':').map(Number);
-        const start = hours * 60 + minutes;
-        return { start, end: start + slot.total_duration };
-      });
-      
-      const desiRanges = desiBookedSlots.map(slot => {
-        const [hours, minutes] = slot.Hora.split(':').map(Number);
-        const start = hours * 60 + minutes;
-        return { start, end: start + slot.total_duration };
-      });
+      for (const [s, slots] of Object.entries(bookedSlotsByStylists)) {
+        stylistRanges[s] = slots.map(slot => {
+          const [hours, minutes] = slot.Hora.split(':').map(Number);
+          const start = hours * 60 + minutes;
+          return { start, end: start + slot.total_duration };
+        });
+      }
 
-      // Helper function to check if a stylist has continuous availability
-      const hasContiguousAvailability = (ranges: Array<{ start: number; end: number }>, startMinute: number, durationMinutes: number): boolean => {
+      // Helper function to check if a stylist has availability
+      const hasAvailability = (ranges: Array<{ start: number; end: number }>, startMinute: number, durationMinutes: number): boolean => {
         const endMinute = startMinute + durationMinutes;
-        
-        // Check if any booked range overlaps with the requested time block
         for (const range of ranges) {
-          // Overlap occurs if:
-          // - Range starts before our block ends AND
-          // - Range ends after our block starts
           if (range.start < endMinute && range.end > startMinute) {
-            return false; // There's an overlap, not available
+            return false;
           }
         }
-        
-        return true; // No overlaps, available
+        return true;
       };
 
       if (totalDuration) {
-        // Validate continuous availability for the total duration
-        console.log(`Validating continuous ${totalDuration}min blocks`);
-        
+        // Check continuous availability for the total duration
         const blockedRanges: Array<{ start: number; end: number }> = [];
         
-        // Check every minute of the day as potential start time
         for (let minute = 0; minute < 24 * 60; minute++) {
-          const crisAvailable = hasContiguousAvailability(crisRanges, minute, totalDuration);
-          const desiAvailable = hasContiguousAvailability(desiRanges, minute, totalDuration);
+          let anyAvailable = false;
           
-          // If NEITHER stylist has continuous availability, block this start time
-          if (!crisAvailable && !desiAvailable) {
+          for (const [s, ranges] of Object.entries(stylistRanges)) {
+            if (hasAvailability(ranges, minute, totalDuration)) {
+              anyAvailable = true;
+              break;
+            }
+          }
+          
+          if (!anyAvailable) {
             const lastRange = blockedRanges[blockedRanges.length - 1];
             if (lastRange && lastRange.end === minute) {
               lastRange.end = minute + 1;
@@ -246,65 +199,56 @@ serve(async (req) => {
             total_duration: range.end - range.start
           });
         }
-        
-        console.log(`Blocked ${blockedRanges.length} time ranges (no stylist available for ${totalDuration}min)`);
       } else {
-        // Original logic: block only when BOTH are busy
-        console.log('No duration specified - blocking only when both busy');
+        // Original logic: block only when ALL stylists are busy
+        const allStylistRanges = Object.values(stylistRanges);
         
-        const blockedRanges: Array<{ start: number; end: number }> = [];
-        
-        for (let minute = 0; minute < 24 * 60; minute++) {
-          const crisBusy = crisRanges.some(r => minute >= r.start && minute < r.end);
-          const desiBusy = desiRanges.some(r => minute >= r.start && minute < r.end);
+        if (allStylistRanges.length > 0) {
+          const blockedRanges: Array<{ start: number; end: number }> = [];
           
-          if (crisBusy && desiBusy) {
-            const lastRange = blockedRanges[blockedRanges.length - 1];
-            if (lastRange && lastRange.end === minute) {
-              lastRange.end = minute + 1;
-            } else {
-              blockedRanges.push({ start: minute, end: minute + 1 });
+          for (let minute = 0; minute < 24 * 60; minute++) {
+            const allBusy = allStylistRanges.every(ranges => 
+              ranges.some(r => minute >= r.start && minute < r.end)
+            );
+            
+            if (allBusy) {
+              const lastRange = blockedRanges[blockedRanges.length - 1];
+              if (lastRange && lastRange.end === minute) {
+                lastRange.end = minute + 1;
+              } else {
+                blockedRanges.push({ start: minute, end: minute + 1 });
+              }
             }
           }
-        }
 
-        // Convert ranges back to slots
-        for (const range of blockedRanges) {
-          const hours = Math.floor(range.start / 60);
-          const minutes = range.start % 60;
-          finalBookedSlots.push({
-            Hora: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`,
-            total_duration: range.end - range.start
-          });
+          for (const range of blockedRanges) {
+            const hours = Math.floor(range.start / 60);
+            const minutes = range.start % 60;
+            finalBookedSlots.push({
+              Hora: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`,
+              total_duration: range.end - range.start
+            });
+          }
         }
       }
     } else {
       // For specific stylist, return their booked slots
-      finalBookedSlots = stylist === 'cris' ? crisBookedSlots : desiBookedSlots;
+      finalBookedSlots = bookedSlotsByStylists[stylist] || [];
     }
 
-    console.log(`Returning ${finalBookedSlots.length} blocked slots\n<<<\n`);
+    console.log(`Returning ${finalBookedSlots.length} blocked slots`);
 
     return new Response(
       JSON.stringify({ bookedSlots: finalBookedSlots }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
     console.error('ERROR:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ 
-        error: errorMessage,
-        bookedSlots: [] 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
+      JSON.stringify({ error: errorMessage, bookedSlots: [] }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
