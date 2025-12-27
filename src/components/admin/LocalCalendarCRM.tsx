@@ -63,6 +63,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   const [dragOverTime, setDragOverTime] = useState<string | null>(null);
   const dragRef = useRef<HTMLDivElement | null>(null);
   
+  // Resize state
+  const [resizingBooking, setResizingBooking] = useState<LocalBooking | null>(null);
+  const [resizeStartY, setResizeStartY] = useState<number>(0);
+  const [resizeOriginalDuration, setResizeOriginalDuration] = useState<number>(0);
+  
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<LocalBooking[]>([]);
@@ -516,7 +521,78 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     const top = startMinutesFromStart * PIXELS_PER_MINUTE;
     const height = Math.max(durationMinutes * PIXELS_PER_MINUTE, 40);
 
-    return { top, height };
+    return { top, height, startMinutes: startMinutesFromStart, endMinutes: endMinutesFromStart };
+  };
+
+  // Calculate overlapping bookings layout
+  const calculateOverlapLayout = (stylistBookings: LocalBooking[], dayDate: Date) => {
+    if (!stylistBookings.length) return {};
+    
+    const layout: Record<string, { left: string; width: string; zIndex: number }> = {};
+    
+    // Sort by start time
+    const sorted = [...stylistBookings].sort((a, b) => {
+      const aPos = calculateBookingPosition(a, dayDate);
+      const bPos = calculateBookingPosition(b, dayDate);
+      return aPos.startMinutes - bPos.startMinutes;
+    });
+    
+    // Find overlapping groups
+    const groups: LocalBooking[][] = [];
+    let currentGroup: LocalBooking[] = [];
+    let groupEnd = 0;
+    
+    sorted.forEach(booking => {
+      const pos = calculateBookingPosition(booking, dayDate);
+      
+      if (currentGroup.length === 0 || pos.startMinutes < groupEnd) {
+        currentGroup.push(booking);
+        groupEnd = Math.max(groupEnd, pos.endMinutes);
+      } else {
+        if (currentGroup.length > 0) groups.push([...currentGroup]);
+        currentGroup = [booking];
+        groupEnd = pos.endMinutes;
+      }
+    });
+    if (currentGroup.length > 0) groups.push(currentGroup);
+    
+    // Assign positions within each group
+    groups.forEach(group => {
+      const columns: LocalBooking[][] = [];
+      
+      group.forEach(booking => {
+        const pos = calculateBookingPosition(booking, dayDate);
+        let placed = false;
+        
+        for (let i = 0; i < columns.length; i++) {
+          const lastInColumn = columns[i][columns[i].length - 1];
+          const lastPos = calculateBookingPosition(lastInColumn, dayDate);
+          
+          if (pos.startMinutes >= lastPos.endMinutes) {
+            columns[i].push(booking);
+            placed = true;
+            break;
+          }
+        }
+        
+        if (!placed) {
+          columns.push([booking]);
+        }
+      });
+      
+      const totalColumns = columns.length;
+      columns.forEach((column, colIndex) => {
+        column.forEach((booking, idx) => {
+          layout[booking.id] = {
+            left: `${(colIndex / totalColumns) * 100}%`,
+            width: `${(1 / totalColumns) * 100 - 1}%`,
+            zIndex: colIndex + 1
+          };
+        });
+      });
+    });
+    
+    return layout;
   };
 
   // Drag & Drop handlers
@@ -547,8 +623,6 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     const newTime = `${String(targetHour).padStart(2, "0")}:${String(targetMinute).padStart(2, "0")}`;
     
     // Calculate new end time
-    const [, endM] = (draggedBooking.end_time || draggedBooking.Hora).split(":").map(Number);
-    const [startH, startM] = draggedBooking.Hora.split(":").map(Number);
     const durationMinutes = draggedBooking.total_duration;
     const newEndMinutes = targetHour * 60 + targetMinute + durationMinutes;
     const newEndHour = Math.floor(newEndMinutes / 60);
@@ -592,6 +666,79 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     setDragOverStylist(null);
     setDragOverTime(null);
   };
+
+  // Resize handlers
+  const handleResizeStart = (e: React.MouseEvent, booking: LocalBooking) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingBooking(booking);
+    setResizeStartY(e.clientY);
+    setResizeOriginalDuration(booking.total_duration);
+  };
+
+  useEffect(() => {
+    if (!resizingBooking) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - resizeStartY;
+      const deltaMinutes = Math.round(deltaY / PIXELS_PER_MINUTE / 15) * 15; // Snap to 15min
+      const newDuration = Math.max(15, resizeOriginalDuration + deltaMinutes);
+      
+      // Update locally for visual feedback
+      setBookings(prev => prev.map(b => 
+        b.id === resizingBooking.id 
+          ? { ...b, total_duration: newDuration }
+          : b
+      ));
+    };
+
+    const handleMouseUp = async () => {
+      if (!resizingBooking) return;
+      
+      const booking = bookings.find(b => b.id === resizingBooking.id);
+      if (!booking) return;
+
+      const [startH, startM] = booking.Hora.split(":").map(Number);
+      const newEndMinutes = startH * 60 + startM + booking.total_duration;
+      const newEndHour = Math.floor(newEndMinutes / 60);
+      const newEndMin = newEndMinutes % 60;
+      const newEndTime = `${String(newEndHour).padStart(2, "0")}:${String(newEndMin).padStart(2, "0")}`;
+
+      try {
+        const { error } = await supabase
+          .from("bookings")
+          .update({
+            total_duration: booking.total_duration,
+            end_time: newEndTime
+          })
+          .eq("id", booking.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Duración actualizada",
+          description: `${booking.customer_name}: ${booking.total_duration} minutos`
+        });
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "No se pudo actualizar",
+          variant: "destructive"
+        });
+        fetchBookings();
+      }
+      
+      setResizingBooking(null);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [resizingBooking, resizeStartY, resizeOriginalDuration, bookings]);
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const groupedBookings = groupBookingsByDate(bookings);
@@ -865,118 +1012,151 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                   );
                                 })}
                                 
-                                {/* Render bookings - iOS style */}
-                                {bookingsByStylist[stylist.slug]?.map(booking => {
-                                  const pos = calculateBookingPosition(booking, day);
-                                  const isCompleted = booking.notes?.includes("[✓ COMPLETADA]");
-                                  const isBlocked = booking.title?.includes("🔒 BLOQUEADO") || booking.title?.includes("🌴 VACACIONES");
-                                  const isHighlighted = highlightedBookingId === booking.id;
-                                  const isDragging = draggedBooking?.id === booking.id;
+                                {/* Render bookings - iOS style with overlap handling */}
+                                {(() => {
+                                  const stylistBookings = bookingsByStylist[stylist.slug] || [];
+                                  const overlapLayout = calculateOverlapLayout(stylistBookings, day);
                                   
-                                  // Get services
-                                  const servicesList = Array.isArray(booking.services) 
-                                    ? booking.services.map((s: any) => s.name || s).filter(Boolean)
-                                    : [];
-                                  const servicesText = servicesList.join(" • ") || "Sin servicios";
+                                  return stylistBookings.map(booking => {
+                                    const pos = calculateBookingPosition(booking, day);
+                                    const isCompleted = booking.notes?.includes("[✓ COMPLETADA]");
+                                    const isBlocked = booking.title?.includes("🔒 BLOQUEADO") || booking.title?.includes("🌴 VACACIONES");
+                                    const isHighlighted = highlightedBookingId === booking.id;
+                                    const isDragging = draggedBooking?.id === booking.id;
+                                    const isResizing = resizingBooking?.id === booking.id;
+                                    const layout = overlapLayout[booking.id] || { left: "0%", width: "100%", zIndex: 1 };
+                                    
+                                    // Get services - compact display
+                                    const servicesList = Array.isArray(booking.services) 
+                                      ? booking.services.map((s: any) => s.name || s).filter(Boolean)
+                                      : [];
+                                    const firstService = servicesList[0] || "Sin servicio";
 
-                                  const bookingColor = isBlocked ? "#EF4444" : getStylistColor(booking.stylist);
+                                    const bookingColor = isBlocked ? "#EF4444" : getStylistColor(booking.stylist);
+                                    const isCompact = pos.height < 60;
 
-                                  return (
-                                    <div
-                                      key={booking.id}
-                                      data-booking-id={booking.id}
-                                      draggable={!isBlocked}
-                                      onDragStart={(e) => handleDragStart(e, booking)}
-                                      onDragEnd={handleDragEnd}
-                                      className={cn(
-                                        "absolute left-1 right-1 rounded-xl overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-200",
-                                        "shadow-sm hover:shadow-lg hover:scale-[1.02] hover:z-20",
-                                        isCompleted && "opacity-70",
-                                        isHighlighted && "ring-2 ring-primary ring-offset-2 animate-pulse",
-                                        isDragging && "opacity-50 scale-95"
-                                      )}
-                                      style={{
-                                        top: pos.top,
-                                        height: pos.height,
-                                        backgroundColor: isBlocked ? "#FEE2E2" : `${bookingColor}12`,
-                                        border: `1px solid ${isBlocked ? "#FECACA" : `${bookingColor}30`}`,
-                                      }}
-                                      onClick={() => {
-                                        if (!isBlocked) {
-                                          setSelectedBooking(booking);
-                                          setIsEditDialogOpen(true);
-                                        }
-                                      }}
-                                    >
-                                      {/* Left accent bar */}
-                                      <div 
-                                        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
-                                        style={{ backgroundColor: bookingColor }}
-                                      />
-                                      
-                                      <div className="h-full flex flex-col p-2 pl-3">
-                                        {/* Header with name and drag handle */}
-                                        <div className="flex items-start justify-between gap-1">
-                                          <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-sm truncate text-foreground leading-tight">
-                                              {isCompleted && <Check className="inline h-3 w-3 mr-1 text-green-600" />}
-                                              {booking.customer_name}
-                                            </p>
-                                          </div>
-                                          {!isBlocked && (
-                                            <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0 cursor-grab" />
+                                    return (
+                                      <div
+                                        key={booking.id}
+                                        data-booking-id={booking.id}
+                                        draggable={!isBlocked && !isResizing}
+                                        onDragStart={(e) => handleDragStart(e, booking)}
+                                        onDragEnd={handleDragEnd}
+                                        className={cn(
+                                          "absolute rounded-lg overflow-hidden transition-all duration-150",
+                                          "shadow-sm hover:shadow-lg hover:z-30",
+                                          !isBlocked && "cursor-grab active:cursor-grabbing",
+                                          isCompleted && "opacity-70",
+                                          isHighlighted && "ring-2 ring-primary ring-offset-1 animate-pulse",
+                                          isDragging && "opacity-50 scale-95",
+                                          isResizing && "z-40 ring-2 ring-primary"
+                                        )}
+                                        style={{
+                                          top: pos.top,
+                                          height: pos.height,
+                                          left: `calc(${layout.left} + 2px)`,
+                                          width: `calc(${layout.width} - 4px)`,
+                                          zIndex: layout.zIndex,
+                                          backgroundColor: isBlocked ? "#FEE2E2" : `${bookingColor}15`,
+                                          borderLeft: `3px solid ${bookingColor}`,
+                                        }}
+                                        onClick={() => {
+                                          if (!isBlocked && !isResizing) {
+                                            setSelectedBooking(booking);
+                                            setIsEditDialogOpen(true);
+                                          }
+                                        }}
+                                      >
+                                        {/* Content - always visible, adaptive layout */}
+                                        <div className={cn(
+                                          "h-full flex flex-col px-2 py-1",
+                                          isCompact ? "justify-center" : "justify-between"
+                                        )}>
+                                          {isCompact ? (
+                                            // Ultra compact: single line with all info
+                                            <div className="flex items-center gap-1 min-w-0">
+                                              {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
+                                              <span className="font-semibold text-xs truncate text-foreground">
+                                                {booking.customer_name}
+                                              </span>
+                                              <span className="text-[10px] truncate" style={{ color: bookingColor }}>
+                                                · {firstService}
+                                              </span>
+                                            </div>
+                                          ) : (
+                                            // Normal/expanded layout
+                                            <>
+                                              <div className="min-w-0">
+                                                <div className="flex items-center gap-1">
+                                                  {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
+                                                  <p className="font-semibold text-sm truncate text-foreground leading-tight">
+                                                    {booking.customer_name}
+                                                  </p>
+                                                  {!isBlocked && (
+                                                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 ml-auto" />
+                                                  )}
+                                                </div>
+                                                <p 
+                                                  className="text-xs font-medium truncate"
+                                                  style={{ color: bookingColor }}
+                                                >
+                                                  {isBlocked ? booking.title : firstService}
+                                                  {servicesList.length > 1 && ` +${servicesList.length - 1}`}
+                                                </p>
+                                                {pos.height >= 80 && (
+                                                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                    {booking.Hora.slice(0, 5)} - {booking.end_time?.slice(0, 5) || ""} · {booking.total_duration}min
+                                                  </p>
+                                                )}
+                                              </div>
+                                              
+                                              {/* Actions */}
+                                              {!isBlocked && pos.height >= 100 && (
+                                                <div className="flex gap-1 mt-1">
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleMarkCompleted(booking);
+                                                    }}
+                                                    className={cn(
+                                                      "p-1 rounded transition-colors",
+                                                      isCompleted 
+                                                        ? "bg-green-100 text-green-600" 
+                                                        : "bg-muted/50 text-muted-foreground hover:bg-green-50 hover:text-green-600"
+                                                    )}
+                                                    title={isCompleted ? "Desmarcar" : "Marcar completada"}
+                                                  >
+                                                    <Check className="h-3 w-3" />
+                                                  </button>
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleDeleteBooking(booking);
+                                                    }}
+                                                    className="p-1 rounded bg-muted/50 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                                                    title="Eliminar"
+                                                  >
+                                                    <Trash2 className="h-3 w-3" />
+                                                  </button>
+                                                </div>
+                                              )}
+                                            </>
                                           )}
                                         </div>
                                         
-                                        {/* Service - Always visible */}
-                                        <p 
-                                          className="text-xs font-medium truncate mt-0.5"
-                                          style={{ color: bookingColor }}
-                                        >
-                                          {isBlocked ? booking.title : servicesText}
-                                        </p>
-                                        
-                                        {/* Time info */}
-                                        {pos.height >= 60 && (
-                                          <p className="text-[11px] text-muted-foreground mt-1">
-                                            {booking.Hora.slice(0, 5)} - {booking.end_time?.slice(0, 5) || ""} · {booking.total_duration}min
-                                          </p>
-                                        )}
-                                        
-                                        {/* Actions at bottom */}
-                                        {!isBlocked && pos.height >= 80 && (
-                                          <div className="flex gap-1 mt-auto pt-1">
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleMarkCompleted(booking);
-                                              }}
-                                              className={cn(
-                                                "p-1.5 rounded-lg transition-colors",
-                                                isCompleted 
-                                                  ? "bg-green-100 text-green-600" 
-                                                  : "bg-muted/50 text-muted-foreground hover:bg-green-50 hover:text-green-600"
-                                              )}
-                                              title={isCompleted ? "Desmarcar" : "Marcar completada"}
-                                            >
-                                              <Check className="h-3.5 w-3.5" />
-                                            </button>
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteBooking(booking);
-                                              }}
-                                              className="p-1.5 rounded-lg bg-muted/50 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                                              title="Eliminar"
-                                            >
-                                              <Trash2 className="h-3.5 w-3.5" />
-                                            </button>
+                                        {/* Resize handle */}
+                                        {!isBlocked && (
+                                          <div
+                                            className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center hover:bg-muted/50 group"
+                                            onMouseDown={(e) => handleResizeStart(e, booking)}
+                                          >
+                                            <div className="w-8 h-1 rounded-full bg-muted-foreground/30 group-hover:bg-primary/50 transition-colors" />
                                           </div>
                                         )}
                                       </div>
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  });
+                                })()}
                               </div>
                             </div>
                           ))}
