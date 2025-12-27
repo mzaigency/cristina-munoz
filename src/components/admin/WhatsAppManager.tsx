@@ -27,7 +27,11 @@ interface Message {
   content: string;
   created_at: string;
 }
-export const WhatsAppManager = () => {
+interface WhatsAppManagerProps {
+  tenantId: string;
+}
+
+export const WhatsAppManager = ({ tenantId }: WhatsAppManagerProps) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -54,7 +58,8 @@ export const WhatsAppManager = () => {
     const contactsChannel = supabase.channel('whatsapp-contacts-changes').on('postgres_changes', {
       event: '*',
       schema: 'public',
-      table: 'whatsapp_contacts'
+      table: 'whatsapp_contacts',
+      filter: `tenant_id=eq.${tenantId}`
     }, () => {
       fetchContacts();
     }).subscribe();
@@ -89,7 +94,7 @@ export const WhatsAppManager = () => {
       const {
         data,
         error
-      } = await supabase.from('whatsapp_contacts').select('*').order('last_message_at', {
+      } = await supabase.from('whatsapp_contacts').select('*').eq('tenant_id', tenantId).order('last_message_at', {
         ascending: false
       });
       if (error) throw error;

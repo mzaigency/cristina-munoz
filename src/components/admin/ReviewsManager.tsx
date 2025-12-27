@@ -34,7 +34,11 @@ interface Review {
 
 type FilterType = "all" | "month" | "stars";
 
-export function ReviewsManager() {
+interface ReviewsManagerProps {
+  tenantId: string;
+}
+
+export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [filteredReviews, setFilteredReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +50,7 @@ export function ReviewsManager() {
 
   useEffect(() => {
     fetchReviews();
-  }, []);
+  }, [tenantId]);
 
   useEffect(() => {
     applyFilters();
@@ -57,6 +61,7 @@ export function ReviewsManager() {
       const { data, error } = await supabase
         .from("reviews")
         .select("*")
+        .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

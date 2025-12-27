@@ -39,7 +39,11 @@ export interface DaySummary {
   isClosed: boolean;
 }
 
-export const CashRegisterManager = () => {
+interface CashRegisterManagerProps {
+  tenantId: string;
+}
+
+export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [daySummary, setDaySummary] = useState<DaySummary>({
@@ -65,6 +69,7 @@ export const CashRegisterManager = () => {
           event: "*",
           schema: "public",
           table: "transactions",
+          filter: `tenant_id=eq.${tenantId}`,
         },
         () => {
           fetchTodayData();
@@ -75,17 +80,18 @@ export const CashRegisterManager = () => {
     return () => {
       supabase.removeChannel(transactionsChannel);
     };
-  }, []);
+  }, [tenantId]);
 
   const fetchTodayData = async () => {
     try {
       setLoading(true);
       const today = format(new Date(), "yyyy-MM-dd");
 
-      // Fetch today's transactions
+      // Fetch today's transactions for this tenant
       const { data: transactionsData, error: transactionsError } = await supabase
         .from("transactions")
         .select("*")
+        .eq("tenant_id", tenantId)
         .gte("created_at", `${today}T00:00:00`)
         .lte("created_at", `${today}T23:59:59`)
         .order("created_at", { ascending: false });
@@ -108,6 +114,7 @@ export const CashRegisterManager = () => {
       const { data: registerData } = await supabase
         .from("cash_register")
         .select("closed_at")
+        .eq("tenant_id", tenantId)
         .eq("date", today)
         .maybeSingle();
 
