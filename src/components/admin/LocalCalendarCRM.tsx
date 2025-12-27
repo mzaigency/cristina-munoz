@@ -1012,6 +1012,30 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                   );
                                 })}
                                 
+                                {/* Current time indicator - only show on today */}
+                                {isSameDay(day, new Date()) && (() => {
+                                  const now = currentTime;
+                                  const currentHour = now.getHours();
+                                  const currentMinute = now.getMinutes();
+                                  
+                                  // Check if current time is within schedule
+                                  if (currentHour >= schedule.startHour && currentHour < schedule.endHour) {
+                                    const minutesFromStart = (currentHour - schedule.startHour) * 60 + currentMinute;
+                                    const topPosition = minutesFromStart * PIXELS_PER_MINUTE;
+                                    
+                                    return (
+                                      <div 
+                                        className="absolute left-0 right-0 z-50 pointer-events-none flex items-center"
+                                        style={{ top: topPosition }}
+                                      >
+                                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 -ml-1 shadow-sm" />
+                                        <div className="flex-1 h-0.5 bg-red-500 shadow-sm" />
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                                
                                 {/* Render bookings - iOS style with overlap handling */}
                                 {(() => {
                                   const stylistBookings = bookingsByStylist[stylist.slug] || [];
