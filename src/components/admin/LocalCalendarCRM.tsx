@@ -1073,7 +1073,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                           isCompact ? "justify-center" : "justify-between"
                                         )}>
                                           {isCompact ? (
-                                            // Ultra compact: single line with all info
+                                            // Ultra compact: single line with all info + actions
                                             <div className="flex items-center gap-1 min-w-0">
                                               {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
                                               <span className="font-semibold text-xs truncate text-foreground">
@@ -1082,6 +1082,35 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                               <span className="text-[10px] truncate" style={{ color: bookingColor }}>
                                                 · {firstService}
                                               </span>
+                                              {!isBlocked && (
+                                                <div className="flex gap-0.5 ml-auto shrink-0">
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleMarkCompleted(booking);
+                                                    }}
+                                                    className={cn(
+                                                      "p-0.5 rounded transition-colors",
+                                                      isCompleted 
+                                                        ? "bg-green-100 text-green-600" 
+                                                        : "text-muted-foreground hover:text-green-600"
+                                                    )}
+                                                    title={isCompleted ? "Desmarcar" : "Marcar completada"}
+                                                  >
+                                                    <Check className="h-3 w-3" />
+                                                  </button>
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleDeleteBooking(booking);
+                                                    }}
+                                                    className="p-0.5 rounded text-muted-foreground hover:text-red-600 transition-colors"
+                                                    title="Eliminar"
+                                                  >
+                                                    <Trash2 className="h-3 w-3" />
+                                                  </button>
+                                                </div>
+                                              )}
                                             </div>
                                           ) : (
                                             // Normal/expanded layout
@@ -1110,8 +1139,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                                 )}
                                               </div>
                                               
-                                              {/* Actions */}
-                                              {!isBlocked && pos.height >= 100 && (
+                                              {/* Actions - always visible */}
+                                              {!isBlocked && (
                                                 <div className="flex gap-1 mt-1">
                                                   <button
                                                     onClick={(e) => {
