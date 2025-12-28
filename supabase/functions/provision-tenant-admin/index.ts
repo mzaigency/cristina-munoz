@@ -191,17 +191,26 @@ serve(async (req) => {
       { onConflict: "id" }
     );
 
-    // Assign role + link to tenant
-    const { error: roleError } = await adminClient.from("user_roles").insert({
-      user_id: userId,
-      role: "admin",
-    });
+    // Assign role (only if user doesn't already have admin role)
+    const { data: existingRole } = await adminClient
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
 
-    if (roleError) {
-      return new Response(JSON.stringify({ success: false, error: roleError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!existingRole) {
+      const { error: roleError } = await adminClient.from("user_roles").insert({
+        user_id: userId,
+        role: "admin",
       });
+
+      if (roleError) {
+        return new Response(JSON.stringify({ success: false, error: roleError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const { error: tenantAdminError } = await adminClient
