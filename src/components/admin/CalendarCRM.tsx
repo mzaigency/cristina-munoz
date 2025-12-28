@@ -17,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, addMonths, endOfDay, startOfDay, differenceInMinutes } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { AdminBookingFlow } from "./AdminBookingFlow";
 interface CalendarEvent {
   id: string;
@@ -39,6 +40,9 @@ interface CalendarEvent {
 }
 
 export const CalendarCRM = () => {
+  const isMobile = useIsMobile();
+  const hourRowHeight = isMobile ? 80 : 104;
+
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -734,28 +738,22 @@ export const CalendarCRM = () => {
   const calculateEventPosition = (event: CalendarEvent, dayDate: Date) => {
     const schedule = getScheduleForDay(dayDate);
     if (!event.start?.dateTime || !event.end?.dateTime) return null;
+
     try {
       const startTime = parseISO(event.start.dateTime);
       const endTime = parseISO(event.end.dateTime);
-      const startHour = startTime.getHours();
-      const startMinute = startTime.getMinutes();
-      const endHour = endTime.getHours();
-      const endMinute = endTime.getMinutes();
 
-      // Calculate position from schedule start
-      const startMinutesFromStart = (startHour - schedule.startHour) * 60 + startMinute;
-      const endMinutesFromStart = (endHour - schedule.startHour) * 60 + endMinute;
+      const startMinutesFromStart =
+        (startTime.getHours() - schedule.startHour) * 60 + startTime.getMinutes();
+      const endMinutesFromStart =
+        (endTime.getHours() - schedule.startHour) * 60 + endTime.getMinutes();
       const durationMinutes = endMinutesFromStart - startMinutesFromStart;
 
-      // Each hour is 80px on mobile, 104px on desktop
-      const isMobile = window.innerWidth < 768;
-      const pixelsPerMinute = isMobile ? 80 / 60 : 104 / 60;
-      const top = startMinutesFromStart * pixelsPerMinute;
-      const height = durationMinutes * pixelsPerMinute;
-      return {
-        top,
-        height
-      };
+      // Use the same hour row height as the UI to prevent 1px drift
+      const top = (startMinutesFromStart / 60) * hourRowHeight;
+      const height = (durationMinutes / 60) * hourRowHeight;
+
+      return { top, height };
     } catch (error) {
       console.error("Error calculating event position:", error);
       return null;
@@ -961,8 +959,8 @@ export const CalendarCRM = () => {
                         <div className="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1 md:gap-3 min-w-[320px]">
                           {/* Hours column */}
                           <div className="relative">
-                            {schedule.hours.map(hour => <div key={hour} className="h-[80px] md:h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/0.3)] flex items-start">
-                                <span className="text-[10px] md:text-sm font-medium text-muted-foreground -translate-y-2">
+                            {schedule.hours.map(hour => <div key={hour} className="h-[80px] md:h-[104px] border-t border-border/30 flex items-start pt-1">
+                                <span className="text-[10px] md:text-sm font-medium text-muted-foreground">
                                   {hour.toString().padStart(2, "0")}:00
                                 </span>
                               </div>)}
@@ -971,19 +969,17 @@ export const CalendarCRM = () => {
                           {/* Cris column */}
                           <div className="relative border-l border-border/30">
                             {/* Filas de la cuadrícula */}
-                            {schedule.hours.map(hour => <div key={hour} className="h-[80px] md:h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/1.5)]"></div>)}
+                            {schedule.hours.map(hour => <div key={hour} className="h-[80px] md:h-[104px] border-t border-border/30"></div>)}
 
                             {/* Zona de Descanso */}
                             {(() => {
                       const dayOfWeek = day.getDay();
                       const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
                       if (isTuesdayToFriday) {
-                        const isMobile = window.innerWidth < 768;
-                        const pixelsPerMinute = isMobile ? 80 / 60 : 104 / 60;
                         const breakStartMinutes = (12 - schedule.startHour) * 60 + 30; // Empieza a las 12:30
                         const breakDurationMinutes = 150; // 2.5 horas de duración (acaba a las 15:00)
-                        const top = breakStartMinutes * pixelsPerMinute;
-                        const height = breakDurationMinutes * pixelsPerMinute;
+                        const top = (breakStartMinutes / 60) * hourRowHeight;
+                        const height = (breakDurationMinutes / 60) * hourRowHeight;
                         return <div className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none" style={{
                           top: `${top}px`,
                           height: `${height}px`
@@ -1052,19 +1048,17 @@ export const CalendarCRM = () => {
                           {/* Desi column */}
                           <div className="relative border-l border-border/30">
                             {/* Filas de la cuadrícula */}
-                            {schedule.hours.map(hour => <div key={hour} className="h-[80px] md:h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/1.5)]"></div>)}
+                            {schedule.hours.map(hour => <div key={hour} className="h-[80px] md:h-[104px] border-t border-border/30"></div>)}
 
                             {/* Zona de Descanso */}
                             {(() => {
                       const dayOfWeek = day.getDay();
                       const isTuesdayToFriday = dayOfWeek >= 2 && dayOfWeek <= 5;
                       if (isTuesdayToFriday) {
-                        const isMobile = window.innerWidth < 768;
-                        const pixelsPerMinute = isMobile ? 80 / 60 : 104 / 60;
                         const breakStartMinutes = (12 - schedule.startHour) * 60 + 30; // Empieza a las 12:30
                         const breakDurationMinutes = 150; // 2.5 horas de duración (acaba a las 15:00)
-                        const top = breakStartMinutes * pixelsPerMinute;
-                        const height = breakDurationMinutes * pixelsPerMinute;
+                        const top = (breakStartMinutes / 60) * hourRowHeight;
+                        const height = (breakDurationMinutes / 60) * hourRowHeight;
                         return <div className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none" style={{
                           top: `${top}px`,
                           height: `${height}px`
