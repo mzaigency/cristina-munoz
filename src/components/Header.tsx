@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 interface HeaderProps {
   onNavigate: (section: string) => void;
   activeSection: string;
@@ -20,6 +21,7 @@ export const Header = ({
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { unreadCount } = useUnreadMessages();
   useEffect(() => {
     supabase.auth.getSession().then(({
       data: {
@@ -252,9 +254,14 @@ export const Header = ({
                   <Calendar className="h-4 w-4 mr-2" />
                   Tus Citas
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleMessagesClick}>
+                <DropdownMenuItem onClick={handleMessagesClick} className="relative">
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Mensajes
+                  {unreadCount > 0 && (
+                    <span className="absolute right-2 min-w-[20px] h-5 flex items-center justify-center bg-destructive text-destructive-foreground text-xs font-bold rounded-full px-1.5">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </DropdownMenuItem>
                 {isAdmin && <>
                     <DropdownMenuSeparator />

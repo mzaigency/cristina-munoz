@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Send, MessageCircle, CheckCheck, Check } from 'lucide-react';
+import { Send, MessageCircle, CheckCheck, Check, CalendarCheck, Bell, XCircle, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -19,6 +19,38 @@ interface ChatWindowProps {
   role: 'user' | 'salon';
 }
 
+const getMessageIcon = (type: string) => {
+  switch (type) {
+    case 'booking_confirmation':
+      return <CalendarCheck className="h-4 w-4" />;
+    case 'booking_reminder':
+      return <Bell className="h-4 w-4" />;
+    case 'booking_cancelled':
+    case 'booking_cancellation':
+      return <XCircle className="h-4 w-4" />;
+    case 'review_request':
+      return <Star className="h-4 w-4" />;
+    default:
+      return null;
+  }
+};
+
+const getMessageLabel = (type: string) => {
+  switch (type) {
+    case 'booking_confirmation':
+      return 'Cita confirmada';
+    case 'booking_reminder':
+      return 'Recordatorio';
+    case 'booking_cancelled':
+    case 'booking_cancellation':
+      return 'Cita cancelada';
+    case 'review_request':
+      return 'Valoración';
+    default:
+      return null;
+  }
+};
+
 export function ChatWindow({
   conversation,
   messages,
@@ -34,7 +66,10 @@ export function ChatWindow({
   useEffect(() => {
     // Scroll to bottom on new messages
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
     }
   }, [messages]);
 
@@ -55,11 +90,13 @@ export function ChatWindow({
 
   if (!conversation) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
-        <MessageCircle className="h-16 w-16 mb-4 opacity-30" />
-        <h3 className="text-lg font-medium mb-2">Selecciona una conversación</h3>
-        <p className="text-sm max-w-sm">
-          Elige una conversación de la lista para ver los mensajes
+      <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gradient-to-b from-muted/20 to-muted/5">
+        <div className="w-24 h-24 rounded-full bg-muted/50 flex items-center justify-center mb-6">
+          <MessageCircle className="h-12 w-12 text-muted-foreground/40" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2 text-foreground">Mensajes</h3>
+        <p className="text-sm text-muted-foreground max-w-xs">
+          Selecciona una conversación para ver los mensajes
         </p>
       </div>
     );
@@ -73,109 +110,146 @@ export function ChatWindow({
   const avatarUrl = role === 'user' ? conversation.tenant?.logo_url : null;
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b bg-background/95 backdrop-blur">
-        <Avatar>
+    <div className="flex flex-col h-full bg-gradient-to-b from-muted/10 to-background">
+      {/* Header estilo iOS */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b bg-background/80 backdrop-blur-xl sticky top-0 z-10">
+        <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
           <AvatarImage src={avatarUrl || undefined} />
-          <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-semibold">
+            {displayName.charAt(0).toUpperCase()}
+          </AvatarFallback>
         </Avatar>
-        <div>
-          <h2 className="font-semibold">{displayName}</h2>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-semibold text-[15px] truncate">{displayName}</h2>
           {role === 'user' && conversation.tenant?.slug && (
-            <p className="text-xs text-muted-foreground">@{conversation.tenant.slug}</p>
+            <p className="text-xs text-muted-foreground">En línea</p>
           )}
         </div>
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className={`flex gap-2 ${i % 2 === 0 ? 'justify-end' : ''}`}>
-                <Skeleton className="h-16 w-48 rounded-2xl" />
+      {/* Messages area */}
+      <ScrollArea className="flex-1" ref={scrollRef}>
+        <div className="p-4 space-y-3">
+          {loading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className={`flex gap-2 ${i % 2 === 0 ? 'justify-end' : ''}`}>
+                  <Skeleton className="h-12 w-48 rounded-2xl" />
+                </div>
+              ))}
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
               </div>
-            ))}
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-            <p>No hay mensajes aún</p>
-            <p className="text-sm">¡Envía el primer mensaje!</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {messages.map((message, index) => {
-              const isOwn =
-                (role === 'user' && message.sender_type === 'user') ||
-                (role === 'salon' && message.sender_type === 'salon');
+              <p className="font-medium text-foreground mb-1">Inicia la conversación</p>
+              <p className="text-sm text-muted-foreground">Envía un mensaje para comenzar</p>
+            </div>
+          ) : (
+            <>
+              {messages.map((message, index) => {
+                const isOwn =
+                  (role === 'user' && message.sender_type === 'user') ||
+                  (role === 'salon' && message.sender_type === 'salon');
 
-              const showDate =
-                index === 0 ||
-                format(new Date(messages[index - 1].created_at), 'yyyy-MM-dd') !==
-                  format(new Date(message.created_at), 'yyyy-MM-dd');
+                const showDate =
+                  index === 0 ||
+                  format(new Date(messages[index - 1].created_at), 'yyyy-MM-dd') !==
+                    format(new Date(message.created_at), 'yyyy-MM-dd');
 
-              return (
-                <div key={message.id}>
-                  {showDate && (
-                    <div className="flex justify-center my-4">
-                      <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
-                        {format(new Date(message.created_at), "d 'de' MMMM", { locale: es })}
-                      </span>
-                    </div>
-                  )}
+                const isSystemMessage = message.message_type !== 'text';
+                const messageIcon = getMessageIcon(message.message_type);
+                const messageLabel = getMessageLabel(message.message_type);
 
-                  <div className={cn('flex gap-2', isOwn ? 'justify-end' : 'justify-start')}>
-                    <div
-                      className={cn(
-                        'max-w-[75%] rounded-2xl px-4 py-2',
-                        isOwn
-                          ? 'bg-primary text-primary-foreground rounded-br-md'
-                          : 'bg-muted rounded-bl-md',
-                        message.message_type !== 'text' && 'border-l-4 border-primary/50'
-                      )}
-                    >
-                      {message.message_type !== 'text' && (
-                        <p className="text-xs font-medium opacity-70 mb-1">
-                          {message.message_type === 'booking_confirmation' && '✅ Confirmación de cita'}
-                          {message.message_type === 'booking_reminder' && '🔔 Recordatorio'}
-                          {message.message_type === 'booking_cancelled' && '❌ Cancelación'}
-                        </p>
-                      )}
-                      <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                      <div className={cn('flex items-center gap-1 mt-1', isOwn ? 'justify-end' : '')}>
-                        <span className="text-[10px] opacity-60">
-                          {format(new Date(message.created_at), 'HH:mm')}
+                return (
+                  <div key={message.id}>
+                    {showDate && (
+                      <div className="flex justify-center my-6">
+                        <span className="text-xs font-medium text-muted-foreground bg-muted/80 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-sm">
+                          {format(new Date(message.created_at), "EEEE, d 'de' MMMM", { locale: es })}
                         </span>
-                        {isOwn && (
-                          message.is_read ? (
-                            <CheckCheck className="h-3 w-3 opacity-60" />
-                          ) : (
-                            <Check className="h-3 w-3 opacity-60" />
-                          )
+                      </div>
+                    )}
+
+                    <div className={cn(
+                      'flex gap-2 mb-1',
+                      isOwn ? 'justify-end' : 'justify-start'
+                    )}>
+                      <div
+                        className={cn(
+                          'max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm',
+                          isOwn
+                            ? 'bg-primary text-primary-foreground rounded-br-md'
+                            : 'bg-card border border-border/50 rounded-bl-md',
+                          isSystemMessage && !isOwn && 'bg-muted/80 border-primary/20'
                         )}
+                      >
+                        {isSystemMessage && messageLabel && (
+                          <div className={cn(
+                            'flex items-center gap-1.5 text-xs font-semibold mb-1.5',
+                            isOwn ? 'text-primary-foreground/80' : 'text-primary'
+                          )}>
+                            {messageIcon}
+                            {messageLabel}
+                          </div>
+                        )}
+                        
+                        <p className={cn(
+                          'text-[15px] leading-relaxed whitespace-pre-wrap break-words',
+                          isOwn ? 'text-primary-foreground' : 'text-foreground'
+                        )}>
+                          {message.content}
+                        </p>
+                        
+                        <div className={cn(
+                          'flex items-center gap-1 mt-1',
+                          isOwn ? 'justify-end' : ''
+                        )}>
+                          <span className={cn(
+                            'text-[10px]',
+                            isOwn ? 'text-primary-foreground/60' : 'text-muted-foreground'
+                          )}>
+                            {format(new Date(message.created_at), 'HH:mm')}
+                          </span>
+                          {isOwn && (
+                            message.is_read ? (
+                              <CheckCheck className={cn(
+                                'h-3.5 w-3.5',
+                                isOwn ? 'text-primary-foreground/60' : 'text-primary'
+                              )} />
+                            ) : (
+                              <Check className="h-3.5 w-3.5 text-primary-foreground/60" />
+                            )
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </>
+          )}
+        </div>
       </ScrollArea>
 
-      {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t bg-background">
-        <div className="flex gap-2">
+      {/* Input estilo iOS */}
+      <form onSubmit={handleSubmit} className="p-3 border-t bg-background/80 backdrop-blur-xl">
+        <div className="flex gap-2 items-center">
           <Input
             ref={inputRef}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Escribe un mensaje..."
-            className="flex-1"
+            placeholder="Mensaje"
+            className="flex-1 rounded-full bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/50 px-4 h-11"
           />
-          <Button type="submit" size="icon" disabled={!newMessage.trim()}>
-            <Send className="h-4 w-4" />
+          <Button 
+            type="submit" 
+            size="icon" 
+            disabled={!newMessage.trim()}
+            className="h-11 w-11 rounded-full shrink-0 shadow-lg shadow-primary/20 disabled:shadow-none transition-all"
+          >
+            <Send className="h-5 w-5" />
           </Button>
         </div>
       </form>

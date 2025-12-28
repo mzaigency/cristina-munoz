@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Phone, User, LogOut, Shield, Calendar } from "lucide-react";
+import { Menu, X, Phone, User, LogOut, Shield, Calendar, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 
 interface Tenant {
   id: string;
@@ -33,6 +34,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+  const { unreadCount } = useUnreadMessages();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -108,6 +110,10 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
 
   const handleProfileClick = () => {
     navigate("/perfil");
+  };
+
+  const handleMessagesClick = () => {
+    navigate("/mensajes");
   };
 
   const handleAdminClick = () => {
@@ -218,6 +224,15 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                   <DropdownMenuItem onClick={handleMyBookingsClick}>
                     <Calendar className="h-4 w-4 mr-2" />
                     Tus Citas
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleMessagesClick} className="relative">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Mensajes
+                    {unreadCount > 0 && (
+                      <span className="absolute right-2 min-w-[20px] h-5 flex items-center justify-center bg-destructive text-destructive-foreground text-xs font-bold rounded-full px-1.5">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                   </DropdownMenuItem>
                   {isAdmin && (
                     <>
