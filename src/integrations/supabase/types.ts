@@ -296,6 +296,88 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          created_at: string
+          created_by: string
+          customer_name: string
+          discount: number | null
+          fiscal_address: string | null
+          fiscal_name: string | null
+          id: string
+          invoice_number: string
+          items: Json
+          nif: string | null
+          payment_method: string
+          stylist_name: string | null
+          subtotal: number
+          tenant_id: string
+          tip_amount: number | null
+          total: number
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          customer_name: string
+          discount?: number | null
+          fiscal_address?: string | null
+          fiscal_name?: string | null
+          id?: string
+          invoice_number: string
+          items: Json
+          nif?: string | null
+          payment_method: string
+          stylist_name?: string | null
+          subtotal: number
+          tenant_id: string
+          tip_amount?: number | null
+          total: number
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          customer_name?: string
+          discount?: number | null
+          fiscal_address?: string | null
+          fiscal_name?: string | null
+          id?: string
+          invoice_number?: string
+          items?: Json
+          nif?: string | null
+          payment_method?: string
+          stylist_name?: string | null
+          subtotal?: number
+          tenant_id?: string
+          tip_amount?: number | null
+          total?: number
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions_decrypted"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       password_reset_tokens: {
         Row: {
           created_at: string | null
