@@ -725,6 +725,7 @@ export type Database = {
           timezone: string | null
           updated_at: string | null
           whatsapp_number: string | null
+          whatsapp_sender_id: string | null
         }
         Insert: {
           address?: string | null
@@ -762,6 +763,7 @@ export type Database = {
           timezone?: string | null
           updated_at?: string | null
           whatsapp_number?: string | null
+          whatsapp_sender_id?: string | null
         }
         Update: {
           address?: string | null
@@ -799,6 +801,7 @@ export type Database = {
           timezone?: string | null
           updated_at?: string | null
           whatsapp_number?: string | null
+          whatsapp_sender_id?: string | null
         }
         Relationships: []
       }
@@ -1124,6 +1127,7 @@ export type Database = {
           tenant_id: string | null
           timezone: string | null
           whatsapp_number: string | null
+          whatsapp_sender_id: string | null
         }
         Insert: {
           email?: string | null
@@ -1134,6 +1138,7 @@ export type Database = {
           tenant_id?: string | null
           timezone?: string | null
           whatsapp_number?: string | null
+          whatsapp_sender_id?: string | null
         }
         Update: {
           email?: string | null
@@ -1144,6 +1149,7 @@ export type Database = {
           tenant_id?: string | null
           timezone?: string | null
           whatsapp_number?: string | null
+          whatsapp_sender_id?: string | null
         }
         Relationships: []
       }
