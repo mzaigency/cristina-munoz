@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Send, MessageCircle, CheckCheck, Check, CalendarCheck, Bell, XCircle, Star } from 'lucide-react';
+import { Send, MessageCircle, CheckCheck, Check, CalendarCheck, Bell, XCircle, Star, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Message, Conversation } from '@/hooks/useConversations';
+import { StoryReplyPreview } from './StoryReplyPreview';
 import { cn } from '@/lib/utils';
 
 interface ChatWindowProps {
@@ -30,6 +31,8 @@ const getMessageIcon = (type: string) => {
       return <XCircle className="h-4 w-4" />;
     case 'review_request':
       return <Star className="h-4 w-4" />;
+    case 'story_reply':
+      return <Camera className="h-4 w-4" />;
     default:
       return null;
   }
@@ -46,6 +49,8 @@ const getMessageLabel = (type: string) => {
       return 'Cita cancelada';
     case 'review_request':
       return 'Valoración';
+    case 'story_reply':
+      return null; // Don't show label, preview handles it
     default:
       return null;
   }
@@ -159,7 +164,9 @@ export function ChatWindow({
                   format(new Date(messages[index - 1].created_at), 'yyyy-MM-dd') !==
                     format(new Date(message.created_at), 'yyyy-MM-dd');
 
-                const isSystemMessage = message.message_type !== 'text';
+                const isSystemMessage = message.message_type !== 'text' && message.message_type !== 'story_reply';
+                const isStoryReply = message.message_type === 'story_reply';
+                const storyId = isStoryReply && message.metadata?.story_id ? message.metadata.story_id : null;
                 const messageIcon = getMessageIcon(message.message_type);
                 const messageLabel = getMessageLabel(message.message_type);
 
@@ -186,6 +193,11 @@ export function ChatWindow({
                           isSystemMessage && !isOwn && 'bg-muted/80 border-primary/20'
                         )}
                       >
+                        {/* Story reply preview */}
+                        {isStoryReply && storyId && (
+                          <StoryReplyPreview storyId={storyId} isOwn={isOwn} />
+                        )}
+
                         {isSystemMessage && messageLabel && (
                           <div className={cn(
                             'flex items-center gap-1.5 text-xs font-semibold mb-1.5',
