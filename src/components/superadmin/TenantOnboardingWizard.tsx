@@ -866,7 +866,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                       <Label htmlFor="name">Nombre del negocio *</Label>
                       <Input
                         id="name"
-                        placeholder="Peluquería Cristina"
+                        placeholder="Salón GlowUp"
                         value={basicInfo.name}
                         onChange={(e) => setBasicInfo({ 
                           ...basicInfo, 
@@ -881,7 +881,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                         <span className="text-sm text-muted-foreground">/salon/</span>
                         <Input
                           id="slug"
-                          placeholder="peluqueria-cristina"
+                          placeholder="salon-glowup"
                           value={basicInfo.slug}
                           onChange={(e) => setBasicInfo({ ...basicInfo, slug: e.target.value })}
                         />

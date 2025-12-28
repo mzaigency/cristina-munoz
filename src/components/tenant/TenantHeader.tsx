@@ -155,7 +155,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 </Link>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Volver a SalonHub</p>
+                <p>Volver a GlowUp</p>
               </TooltipContent>
             </Tooltip>
 
@@ -313,7 +313,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Home className="h-4 w-4" />
-                Volver a SalonHub
+                Volver a GlowUp
               </Link>
               <div className="border-t my-2" />
               {navItems.map((item) => (

@@ -312,7 +312,7 @@ export default function Subscription() {
                   ¿Tienes alguna pregunta sobre tu suscripción?
                 </p>
                 <Button variant="link" asChild>
-                  <a href="mailto:soporte@salonhub.es">
+                  <a href="mailto:soporte@glowup.app">
                     Contactar con soporte
                   </a>
                 </Button>

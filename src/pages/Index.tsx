@@ -30,7 +30,7 @@ interface TenantWithStats {
   reviewCount: number;
 }
 
-const STORAGE_KEY = "salonhub_recent_searches";
+const STORAGE_KEY = "glowup_recent_searches";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -121,9 +121,9 @@ const Index = () => {
   return (
     <AppLayout>
       <SEO
-        title="SalonHub | Encuentra y Reserva en los Mejores Salones"
-        description="Descubre los mejores salones de belleza cerca de ti. Reserva cita online en peluquerías, spas y centros de estética."
-        keywords="salones de belleza, peluquerías, reserva online, spa, estética, barbería"
+        title="GlowUp | Descubre y Reserva en los Mejores Salones de Belleza"
+        description="La red social de belleza. Descubre los mejores salones cerca de ti, conecta con profesionales y reserva cita online."
+        keywords="red social belleza, salones de belleza, peluquerías, reserva online, spa, estética, GlowUp"
         canonicalUrl="/"
       />
 
