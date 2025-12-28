@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, PanInfo } from "motion/react";
 import { 
   X, Camera, Image as ImageIcon, Type, Check, 
-  Sparkles, Sun, Moon, Contrast, Droplets,
-  RotateCcw, Send, Palette
+  Sparkles, RotateCcw, Send, Palette, ChevronLeft,
+  ChevronRight, Trash2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ interface StoryCreatorProps {
 }
 
 type StoryType = "work" | "promo" | "behind_scenes";
+type Step = "capture" | "edit" | "publish";
 
 interface TextOverlay {
   text: string;
@@ -26,36 +27,48 @@ interface TextOverlay {
 }
 
 const FILTERS = [
-  { id: "none", name: "Original", filter: "" },
-  { id: "bright", name: "Brillo", filter: "brightness(1.2) contrast(1.1)" },
-  { id: "warm", name: "Cálido", filter: "sepia(0.3) saturate(1.3)" },
-  { id: "cool", name: "Frío", filter: "hue-rotate(-20deg) saturate(1.1)" },
-  { id: "bw", name: "B&N", filter: "grayscale(1)" },
-  { id: "vintage", name: "Vintage", filter: "sepia(0.4) contrast(1.1) brightness(0.9)" },
-  { id: "vivid", name: "Vívido", filter: "saturate(1.5) contrast(1.1)" },
-  { id: "fade", name: "Fade", filter: "contrast(0.9) brightness(1.1) saturate(0.8)" },
+  { id: "none", name: "Original", filter: "", icon: "✨" },
+  { id: "bright", name: "Brillo", filter: "brightness(1.2) contrast(1.1)", icon: "☀️" },
+  { id: "warm", name: "Cálido", filter: "sepia(0.3) saturate(1.3)", icon: "🔥" },
+  { id: "cool", name: "Frío", filter: "hue-rotate(-20deg) saturate(1.1)", icon: "❄️" },
+  { id: "bw", name: "B&N", filter: "grayscale(1)", icon: "🖤" },
+  { id: "vintage", name: "Vintage", filter: "sepia(0.4) contrast(1.1) brightness(0.9)", icon: "📷" },
+  { id: "vivid", name: "Vívido", filter: "saturate(1.5) contrast(1.1)", icon: "🌈" },
+  { id: "fade", name: "Fade", filter: "contrast(0.9) brightness(1.1) saturate(0.8)", icon: "🌫️" },
 ];
 
 const FONTS = [
-  { id: "sans", name: "Moderna", class: "font-sans" },
-  { id: "serif", name: "Elegante", class: "font-serif" },
-  { id: "mono", name: "Técnica", class: "font-mono" },
-  { id: "display", name: "Display", class: "font-display" },
+  { id: "sans", name: "Moderna", class: "font-sans", preview: "Aa" },
+  { id: "serif", name: "Elegante", class: "font-serif", preview: "Aa" },
+  { id: "mono", name: "Técnica", class: "font-mono", preview: "Aa" },
+  { id: "display", name: "Display", class: "font-display", preview: "Aa" },
 ];
 
 const TEXT_COLORS = [
-  "#FFFFFF", "#000000", "#FF6B6B", "#4ECDC4", 
-  "#FFE66D", "#95E1D3", "#F38181", "#AA96DA"
+  { color: "#FFFFFF", name: "Blanco" },
+  { color: "#000000", name: "Negro" },
+  { color: "#FF6B6B", name: "Coral" },
+  { color: "#4ECDC4", name: "Turquesa" },
+  { color: "#FFE66D", name: "Amarillo" },
+  { color: "#95E1D3", name: "Menta" },
+  { color: "#F38181", name: "Rosa" },
+  { color: "#AA96DA", name: "Lavanda" },
 ];
 
-const STORY_TYPES: { id: StoryType; label: string; icon: React.ReactNode }[] = [
-  { id: "work", label: "Trabajo", icon: <Sparkles className="w-4 h-4" /> },
-  { id: "promo", label: "Promo", icon: <Palette className="w-4 h-4" /> },
-  { id: "behind_scenes", label: "Detrás", icon: <Camera className="w-4 h-4" /> },
+const STORY_TYPES: { id: StoryType; label: string; icon: React.ReactNode; desc: string }[] = [
+  { id: "work", label: "Trabajo", icon: <Sparkles className="w-5 h-5" />, desc: "Muestra tus mejores trabajos" },
+  { id: "promo", label: "Promo", icon: <Palette className="w-5 h-5" />, desc: "Ofertas y promociones" },
+  { id: "behind_scenes", label: "Detrás", icon: <Camera className="w-5 h-5" />, desc: "El día a día del salón" },
+];
+
+const STEPS: { id: Step; label: string; num: number }[] = [
+  { id: "capture", label: "Foto", num: 1 },
+  { id: "edit", label: "Editar", num: 2 },
+  { id: "publish", label: "Publicar", num: 3 },
 ];
 
 export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCreatorProps) {
-  const [step, setStep] = useState<"capture" | "edit" | "publish">("capture");
+  const [step, setStep] = useState<Step>("capture");
   const [imageData, setImageData] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState("none");
   const [caption, setCaption] = useState("");
@@ -66,10 +79,13 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
   const [currentText, setCurrentText] = useState("");
   const [currentFont, setCurrentFont] = useState("sans");
   const [currentTextColor, setCurrentTextColor] = useState("#FFFFFF");
+  const [filterIndex, setFilterIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
 
   // Reset state when closing
   useEffect(() => {
@@ -77,23 +93,118 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
       setStep("capture");
       setImageData(null);
       setSelectedFilter("none");
+      setFilterIndex(0);
       setCaption("");
       setStoryType("work");
       setTextOverlay(null);
       setShowTextEditor(false);
+      setCurrentText("");
     }
   }, [isOpen]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape to close or go back
+      if (e.key === "Escape") {
+        if (showTextEditor) {
+          setShowTextEditor(false);
+        } else if (step === "publish") {
+          setStep("edit");
+        } else if (step === "edit") {
+          setStep("capture");
+          setImageData(null);
+        } else {
+          onClose();
+        }
+      }
+
+      // Arrow keys for filter navigation in edit mode
+      if (step === "edit" && !showTextEditor) {
+        if (e.key === "ArrowLeft") {
+          setFilterIndex((prev) => {
+            const newIndex = prev > 0 ? prev - 1 : FILTERS.length - 1;
+            setSelectedFilter(FILTERS[newIndex].id);
+            return newIndex;
+          });
+        } else if (e.key === "ArrowRight") {
+          setFilterIndex((prev) => {
+            const newIndex = prev < FILTERS.length - 1 ? prev + 1 : 0;
+            setSelectedFilter(FILTERS[newIndex].id);
+            return newIndex;
+          });
+        }
+      }
+
+      // Enter to proceed
+      if (e.key === "Enter" && !e.shiftKey) {
+        if (showTextEditor && currentText.trim()) {
+          e.preventDefault();
+          addTextOverlay();
+        } else if (step === "edit" && !showTextEditor) {
+          setStep("publish");
+        } else if (step === "publish" && !isUploading) {
+          handlePublish();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, step, showTextEditor, currentText, isUploading]);
+
+  // Focus text input when text editor opens
+  useEffect(() => {
+    if (showTextEditor && textInputRef.current) {
+      textInputRef.current.focus();
+    }
+  }, [showTextEditor]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("La imagen es demasiado grande. Máximo 10MB.");
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         setImageData(event.target?.result as string);
         setStep("edit");
+        toast.success("¡Imagen cargada! Ahora puedes editarla.");
+      };
+      reader.onerror = () => {
+        toast.error("Error al cargar la imagen");
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Swipe gesture to change filters
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (step !== "edit" || showTextEditor) return;
+
+    const threshold = 50;
+    if (info.offset.x > threshold) {
+      // Swipe right - previous filter
+      setFilterIndex((prev) => {
+        const newIndex = prev > 0 ? prev - 1 : FILTERS.length - 1;
+        setSelectedFilter(FILTERS[newIndex].id);
+        return newIndex;
+      });
+    } else if (info.offset.x < -threshold) {
+      // Swipe left - next filter
+      setFilterIndex((prev) => {
+        const newIndex = prev < FILTERS.length - 1 ? prev + 1 : 0;
+        setSelectedFilter(FILTERS[newIndex].id);
+        return newIndex;
+      });
+    }
+    setIsDragging(false);
   };
 
   const applyFilterToCanvas = useCallback(async (): Promise<Blob | null> => {
@@ -108,7 +219,6 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
     
     return new Promise((resolve) => {
       img.onload = () => {
-        // Set canvas size to match image aspect ratio
         const maxWidth = 1080;
         const maxHeight = 1920;
         let width = img.width;
@@ -126,12 +236,10 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
         canvas.width = width;
         canvas.height = height;
 
-        // Apply filter
         const filter = FILTERS.find(f => f.id === selectedFilter);
         ctx.filter = filter?.filter || "none";
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Add text overlay if exists
         if (textOverlay) {
           ctx.filter = "none";
           const font = FONTS.find(f => f.id === textOverlay.font);
@@ -156,17 +264,14 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
 
     setIsUploading(true);
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No autenticado");
 
-      // Apply filter and get blob
       const blob = await applyFilterToCanvas();
       if (!blob) throw new Error("Error procesando imagen");
 
-      // Upload to storage
       const fileName = `${tenantId}/${Date.now()}.jpg`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("story-images")
         .upload(fileName, blob, {
           contentType: "image/jpeg",
@@ -174,9 +279,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
         });
 
       if (uploadError) {
-        // If bucket doesn't exist, use a placeholder URL for now
         console.error("Storage error:", uploadError);
-        // For demo purposes, we'll use the base64 directly
         const { error: storyError } = await supabase
           .from("salon_stories")
           .insert({
@@ -189,12 +292,10 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
 
         if (storyError) throw storyError;
       } else {
-        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from("story-images")
           .getPublicUrl(fileName);
 
-        // Create story record
         const { error: storyError } = await supabase
           .from("salon_stories")
           .insert({
@@ -208,7 +309,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
         if (storyError) throw storyError;
       }
 
-      toast.success("¡Story publicada!");
+      toast.success("¡Story publicada con éxito!");
       onSuccess();
       onClose();
     } catch (error) {
@@ -229,10 +330,27 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
       });
       setShowTextEditor(false);
       setCurrentText("");
+      toast.success("Texto añadido");
+    }
+  };
+
+  const goBack = () => {
+    if (step === "publish") {
+      setStep("edit");
+    } else if (step === "edit") {
+      setStep("capture");
+      setImageData(null);
+      setSelectedFilter("none");
+      setFilterIndex(0);
+      setTextOverlay(null);
+    } else {
+      onClose();
     }
   };
 
   if (!isOpen) return null;
+
+  const currentStepIndex = STEPS.findIndex(s => s.id === step);
 
   return (
     <AnimatePresence>
@@ -240,7 +358,10 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black"
+        className="fixed inset-0 z-50 bg-black flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Crear nueva story"
       >
         {/* Hidden inputs */}
         <input
@@ -249,6 +370,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
           accept="image/*"
           className="hidden"
           onChange={handleFileSelect}
+          aria-hidden="true"
         />
         <input
           ref={cameraInputRef}
@@ -257,99 +379,425 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
           capture="environment"
           className="hidden"
           onChange={handleFileSelect}
+          aria-hidden="true"
         />
-        <canvas ref={canvasRef} className="hidden" />
+        <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
 
-        {/* Header */}
-        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 safe-area-top">
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-          >
-            <X className="w-6 h-6 text-white" />
-          </button>
-          <span className="text-white font-semibold">
-            {step === "capture" && "Nueva Story"}
-            {step === "edit" && "Editar"}
-            {step === "publish" && "Publicar"}
-          </span>
-          <div className="w-10" />
-        </div>
+        {/* Header with progress */}
+        <header className="relative z-20 safe-area-top">
+          {/* Progress bar */}
+          <div className="flex gap-1 px-4 pt-4 pb-2">
+            {STEPS.map((s, i) => (
+              <div
+                key={s.id}
+                className={cn(
+                  "flex-1 h-1 rounded-full transition-all duration-300",
+                  i <= currentStepIndex ? "bg-white" : "bg-white/20"
+                )}
+              />
+            ))}
+          </div>
 
-        {/* Step: Capture */}
-        {step === "capture" && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center h-full gap-8 px-8"
-          >
+          {/* Navigation */}
+          <div className="flex items-center justify-between px-4 py-2">
+            <button
+              onClick={goBack}
+              className="flex items-center gap-1 p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors"
+              aria-label={step === "capture" ? "Cerrar" : "Volver"}
+            >
+              {step === "capture" ? (
+                <X className="w-6 h-6 text-white" />
+              ) : (
+                <ChevronLeft className="w-6 h-6 text-white" />
+              )}
+            </button>
+
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-white mb-2">
-                Comparte tu trabajo
-              </h2>
-              <p className="text-white/60">
-                Sube una foto de tu último trabajo o promoción
+              <span className="text-white font-semibold text-lg">
+                {STEPS.find(s => s.id === step)?.label}
+              </span>
+              <p className="text-white/50 text-xs">
+                Paso {currentStepIndex + 1} de {STEPS.length}
               </p>
             </div>
 
-            <div className="flex gap-6">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => cameraInputRef.current?.click()}
-                className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white/10 hover:bg-white/20 transition-colors"
+            {/* Right action */}
+            {step === "edit" && !showTextEditor && (
+              <button
+                onClick={() => setStep("publish")}
+                className="flex items-center gap-1 px-4 py-2 rounded-full bg-white text-black font-medium text-sm"
+                aria-label="Continuar a publicar"
               >
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center">
-                  <Camera className="w-8 h-8 text-white" />
+                Siguiente
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+            {step !== "edit" && <div className="w-20" />}
+          </div>
+        </header>
+
+        {/* Step: Capture */}
+        {step === "capture" && (
+          <motion.main
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex-1 flex flex-col items-center justify-center gap-8 px-6"
+          >
+            <div className="text-center max-w-sm">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-rose-500 via-purple-500 to-blue-500 flex items-center justify-center">
+                <Camera className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-3">
+                Comparte tu trabajo
+              </h2>
+              <p className="text-white/60 text-base">
+                Sube una foto de tu último trabajo, una promoción o el día a día de tu salón
+              </p>
+            </div>
+
+            <div className="flex gap-4 w-full max-w-xs">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => cameraInputRef.current?.click()}
+                className="flex-1 flex flex-col items-center gap-3 p-5 rounded-2xl bg-gradient-to-br from-rose-500/20 to-purple-600/20 border border-white/10 hover:border-white/30 transition-all"
+                aria-label="Abrir cámara"
+              >
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center shadow-lg shadow-rose-500/30">
+                  <Camera className="w-7 h-7 text-white" />
                 </div>
                 <span className="text-white font-medium">Cámara</span>
               </motion.button>
 
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white/10 hover:bg-white/20 transition-colors"
+                className="flex-1 flex flex-col items-center gap-3 p-5 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-white/10 hover:border-white/30 transition-all"
+                aria-label="Abrir galería"
               >
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                  <ImageIcon className="w-8 h-8 text-white" />
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <ImageIcon className="w-7 h-7 text-white" />
                 </div>
                 <span className="text-white font-medium">Galería</span>
               </motion.button>
             </div>
-          </motion.div>
+
+            {/* Tips */}
+            <div className="text-center text-white/40 text-sm max-w-xs">
+              <p>💡 Consejo: Las fotos verticales funcionan mejor para las stories</p>
+            </div>
+          </motion.main>
         )}
 
         {/* Step: Edit */}
         {step === "edit" && imageData && (
-          <motion.div
+          <motion.main
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex flex-col h-full"
+            className="flex-1 flex flex-col min-h-0"
           >
-            {/* Image Preview */}
-            <div className="flex-1 relative flex items-center justify-center p-4 pt-20">
+            {/* Image Preview with swipe gestures */}
+            <motion.div 
+              className="flex-1 relative flex items-center justify-center p-4 min-h-0"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.1}
+              onDragStart={() => setIsDragging(true)}
+              onDragEnd={handleDragEnd}
+            >
               <div className="relative max-w-full max-h-full">
+                <motion.img
+                  key={selectedFilter}
+                  initial={{ opacity: 0.8, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  src={imageData}
+                  alt="Vista previa de la imagen"
+                  className="max-w-full max-h-[55vh] rounded-2xl object-contain shadow-2xl"
+                  style={{
+                    filter: FILTERS.find(f => f.id === selectedFilter)?.filter || "none"
+                  }}
+                  draggable={false}
+                />
+                
+                {/* Filter name indicator */}
+                <AnimatePresence>
+                  {isDragging && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/70 backdrop-blur-sm rounded-full"
+                    >
+                      <span className="text-white font-medium">
+                        {FILTERS[filterIndex].icon} {FILTERS[filterIndex].name}
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Text Overlay Preview */}
+                {textOverlay && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  >
+                    <span
+                      className={cn(
+                        "text-3xl font-bold drop-shadow-lg px-4 text-center",
+                        FONTS.find(f => f.id === textOverlay.font)?.class
+                      )}
+                      style={{ color: textOverlay.color }}
+                    >
+                      {textOverlay.text}
+                    </span>
+                  </motion.div>
+                )}
+
+                {/* Swipe hint */}
+                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-white/40 text-xs">
+                  <ChevronLeft className="w-3 h-3" />
+                  <span>Desliza para cambiar filtro</span>
+                  <ChevronRight className="w-3 h-3" />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Text Editor Modal */}
+            <AnimatePresence>
+              {showTextEditor && (
+                <motion.div
+                  initial={{ opacity: 0, y: 100 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 100 }}
+                  className="absolute inset-x-0 bottom-0 bg-black/95 backdrop-blur-xl rounded-t-3xl p-6 safe-area-bottom z-30"
+                >
+                  {/* Handle bar */}
+                  <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+                  
+                  <div className="space-y-5">
+                    <div>
+                      <label className="text-white/60 text-sm mb-2 block">Tu texto</label>
+                      <input
+                        ref={textInputRef}
+                        type="text"
+                        value={currentText}
+                        onChange={(e) => setCurrentText(e.target.value)}
+                        placeholder="Escribe tu texto..."
+                        maxLength={50}
+                        className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white text-lg placeholder:text-white/40 focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all"
+                        aria-label="Texto para añadir a la imagen"
+                      />
+                      <p className="text-white/40 text-xs mt-1 text-right">{currentText.length}/50</p>
+                    </div>
+
+                    {/* Font selector */}
+                    <div>
+                      <label className="text-white/60 text-sm mb-2 block">Fuente</label>
+                      <div className="flex gap-2">
+                        {FONTS.map((font) => (
+                          <button
+                            key={font.id}
+                            onClick={() => setCurrentFont(font.id)}
+                            className={cn(
+                              "flex-1 flex flex-col items-center gap-1 py-3 rounded-xl transition-all",
+                              font.class,
+                              currentFont === font.id
+                                ? "bg-white text-black"
+                                : "bg-white/10 text-white hover:bg-white/20"
+                            )}
+                            aria-label={`Fuente ${font.name}`}
+                            aria-pressed={currentFont === font.id}
+                          >
+                            <span className="text-xl font-bold">{font.preview}</span>
+                            <span className="text-xs">{font.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Color selector */}
+                    <div>
+                      <label className="text-white/60 text-sm mb-2 block">Color</label>
+                      <div className="flex gap-3 justify-center flex-wrap">
+                        {TEXT_COLORS.map(({ color, name }) => (
+                          <button
+                            key={color}
+                            onClick={() => setCurrentTextColor(color)}
+                            className={cn(
+                              "w-10 h-10 rounded-full border-2 transition-all shadow-lg",
+                              currentTextColor === color
+                                ? "border-white scale-110 ring-2 ring-white/30"
+                                : "border-transparent hover:scale-105"
+                            )}
+                            style={{ background: color }}
+                            aria-label={`Color ${name}`}
+                            aria-pressed={currentTextColor === color}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Preview */}
+                    {currentText && (
+                      <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <p className="text-white/60 text-xs mb-2">Vista previa:</p>
+                        <p
+                          className={cn("text-2xl font-bold text-center", FONTS.find(f => f.id === currentFont)?.class)}
+                          style={{ color: currentTextColor }}
+                        >
+                          {currentText}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        onClick={() => {
+                          setShowTextEditor(false);
+                          setCurrentText("");
+                        }}
+                        className="flex-1 py-4 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={addTextOverlay}
+                        disabled={!currentText.trim()}
+                        className="flex-1 py-4 rounded-xl bg-white text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        Añadir texto
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Editing Tools */}
+            {!showTextEditor && (
+              <div className="p-4 space-y-4 safe-area-bottom bg-gradient-to-t from-black via-black/80 to-transparent pt-8">
+                {/* Quick actions */}
+                <div className="flex justify-center gap-3">
+                  <button
+                    onClick={() => setShowTextEditor(true)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 rounded-full transition-all",
+                      textOverlay ? "bg-white/20 text-white" : "bg-white/10 text-white hover:bg-white/20"
+                    )}
+                    aria-label="Añadir texto"
+                  >
+                    <Type className="w-5 h-5" />
+                    <span className="text-sm font-medium">Texto</span>
+                  </button>
+
+                  {textOverlay && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      onClick={() => {
+                        setTextOverlay(null);
+                        toast("Texto eliminado");
+                      }}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all"
+                      aria-label="Eliminar texto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">Quitar</span>
+                    </motion.button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setSelectedFilter("none");
+                      setFilterIndex(0);
+                      setTextOverlay(null);
+                      toast("Cambios descartados");
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"
+                    aria-label="Reiniciar edición"
+                  >
+                    <RotateCcw className="w-5 h-5" />
+                    <span className="text-sm font-medium">Reset</span>
+                  </button>
+                </div>
+
+                {/* Filters carousel */}
+                <div>
+                  <p className="text-white/60 text-xs mb-2 px-2">Filtros</p>
+                  <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+                    <div className="flex gap-3" role="radiogroup" aria-label="Filtros de imagen">
+                      {FILTERS.map((filter, index) => (
+                        <button
+                          key={filter.id}
+                          onClick={() => {
+                            setSelectedFilter(filter.id);
+                            setFilterIndex(index);
+                          }}
+                          className={cn(
+                            "flex flex-col items-center gap-2 shrink-0 transition-all",
+                            selectedFilter === filter.id && "scale-105"
+                          )}
+                          role="radio"
+                          aria-checked={selectedFilter === filter.id}
+                          aria-label={`Filtro ${filter.name}`}
+                        >
+                          <div
+                            className={cn(
+                              "w-16 h-16 rounded-xl overflow-hidden border-2 transition-all shadow-lg",
+                              selectedFilter === filter.id
+                                ? "border-white ring-2 ring-white/30"
+                                : "border-transparent hover:border-white/30"
+                            )}
+                          >
+                            <img
+                              src={imageData}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              style={{ filter: filter.filter }}
+                              draggable={false}
+                            />
+                          </div>
+                          <span className={cn(
+                            "text-xs transition-colors",
+                            selectedFilter === filter.id ? "text-white font-medium" : "text-white/60"
+                          )}>
+                            {filter.icon} {filter.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.main>
+        )}
+
+        {/* Step: Publish */}
+        {step === "publish" && imageData && (
+          <motion.main
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex-1 flex flex-col min-h-0"
+          >
+            {/* Preview */}
+            <div className="flex-1 relative flex items-center justify-center p-4 min-h-0">
+              <div className="relative">
                 <img
                   src={imageData}
-                  alt="Preview"
-                  className="max-w-full max-h-[60vh] rounded-xl object-contain"
+                  alt="Vista previa final"
+                  className="max-w-full max-h-[40vh] rounded-2xl object-contain shadow-2xl"
                   style={{
                     filter: FILTERS.find(f => f.id === selectedFilter)?.filter || "none"
                   }}
                 />
-                
-                {/* Text Overlay Preview */}
                 {textOverlay && (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    style={{
-                      top: `${(textOverlay.position.y - 0.5) * 100}%`,
-                    }}
-                  >
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <span
                       className={cn(
-                        "text-3xl font-bold drop-shadow-lg",
+                        "text-2xl font-bold drop-shadow-lg px-4 text-center",
                         FONTS.find(f => f.id === textOverlay.font)?.class
                       )}
                       style={{ color: textOverlay.color }}
@@ -361,229 +809,66 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
               </div>
             </div>
 
-            {/* Text Editor Modal */}
-            <AnimatePresence>
-              {showTextEditor && (
-                <motion.div
-                  initial={{ opacity: 0, y: 100 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 100 }}
-                  className="absolute inset-x-0 bottom-0 bg-black/90 backdrop-blur-xl rounded-t-3xl p-6 safe-area-bottom z-30"
-                >
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      value={currentText}
-                      onChange={(e) => setCurrentText(e.target.value)}
-                      placeholder="Escribe tu texto..."
-                      className="w-full bg-white/10 border-none rounded-xl px-4 py-3 text-white placeholder:text-white/50 focus:ring-2 focus:ring-white/30"
-                      autoFocus
-                    />
-
-                    {/* Font selector */}
-                    <div className="flex gap-2 overflow-x-auto pb-2">
-                      {FONTS.map((font) => (
-                        <button
-                          key={font.id}
-                          onClick={() => setCurrentFont(font.id)}
-                          className={cn(
-                            "px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors",
-                            font.class,
-                            currentFont === font.id
-                              ? "bg-white text-black"
-                              : "bg-white/10 text-white"
-                          )}
-                        >
-                          {font.name}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Color selector */}
-                    <div className="flex gap-2 justify-center">
-                      {TEXT_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => setCurrentTextColor(color)}
-                          className={cn(
-                            "w-8 h-8 rounded-full border-2 transition-transform",
-                            currentTextColor === color
-                              ? "border-white scale-110"
-                              : "border-transparent"
-                          )}
-                          style={{ background: color }}
-                        />
-                      ))}
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setShowTextEditor(false)}
-                        className="flex-1 py-3 rounded-xl bg-white/10 text-white font-medium"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={addTextOverlay}
-                        className="flex-1 py-3 rounded-xl bg-white text-black font-medium"
-                      >
-                        Añadir
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Editing Tools */}
-            {!showTextEditor && (
-              <div className="p-4 space-y-4 safe-area-bottom">
-                {/* Quick actions */}
-                <div className="flex justify-center gap-4">
-                  <button
-                    onClick={() => setShowTextEditor(true)}
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-                  >
-                    <Type className="w-5 h-5 text-white" />
-                    <span className="text-xs text-white/80">Texto</span>
-                  </button>
-                  {textOverlay && (
-                    <button
-                      onClick={() => setTextOverlay(null)}
-                      className="flex flex-col items-center gap-1 p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-                    >
-                      <RotateCcw className="w-5 h-5 text-white" />
-                      <span className="text-xs text-white/80">Quitar</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Filters */}
-                <div className="overflow-x-auto scrollbar-hide">
-                  <div className="flex gap-3 px-2">
-                    {FILTERS.map((filter) => (
-                      <button
-                        key={filter.id}
-                        onClick={() => setSelectedFilter(filter.id)}
-                        className={cn(
-                          "flex flex-col items-center gap-2 shrink-0 transition-all",
-                          selectedFilter === filter.id && "scale-105"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors",
-                            selectedFilter === filter.id
-                              ? "border-white"
-                              : "border-transparent"
-                          )}
-                        >
-                          <img
-                            src={imageData}
-                            alt={filter.name}
-                            className="w-full h-full object-cover"
-                            style={{ filter: filter.filter }}
-                          />
-                        </div>
-                        <span className="text-xs text-white/80">{filter.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Next button */}
-                <button
-                  onClick={() => setStep("publish")}
-                  className="w-full py-4 rounded-2xl bg-white text-black font-semibold flex items-center justify-center gap-2"
-                >
-                  Siguiente
-                  <Check className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* Step: Publish */}
-        {step === "publish" && imageData && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col h-full"
-          >
-            {/* Preview */}
-            <div className="flex-1 relative flex items-center justify-center p-4 pt-20">
-              <img
-                src={imageData}
-                alt="Preview"
-                className="max-w-full max-h-[50vh] rounded-xl object-contain"
-                style={{
-                  filter: FILTERS.find(f => f.id === selectedFilter)?.filter || "none"
-                }}
-              />
-              {textOverlay && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span
-                    className={cn(
-                      "text-3xl font-bold drop-shadow-lg",
-                      FONTS.find(f => f.id === textOverlay.font)?.class
-                    )}
-                    style={{ color: textOverlay.color }}
-                  >
-                    {textOverlay.text}
-                  </span>
-                </div>
-              )}
-            </div>
-
             {/* Publish form */}
-            <div className="p-4 space-y-4 safe-area-bottom">
+            <div className="p-4 space-y-5 safe-area-bottom bg-gradient-to-t from-black via-black/80 to-transparent pt-6">
               {/* Story type */}
               <div>
-                <label className="text-white/60 text-sm mb-2 block">Tipo de story</label>
-                <div className="flex gap-2">
+                <label className="text-white/60 text-sm mb-3 block">Tipo de story</label>
+                <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Tipo de story">
                   {STORY_TYPES.map((type) => (
                     <button
                       key={type.id}
                       onClick={() => setStoryType(type.id)}
                       className={cn(
-                        "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-colors",
+                        "flex flex-col items-center gap-2 py-4 px-2 rounded-xl transition-all",
                         storyType === type.id
                           ? "bg-white text-black"
-                          : "bg-white/10 text-white"
+                          : "bg-white/10 text-white hover:bg-white/20"
                       )}
+                      role="radio"
+                      aria-checked={storyType === type.id}
+                      aria-label={`${type.label}: ${type.desc}`}
                     >
                       {type.icon}
                       <span className="text-sm font-medium">{type.label}</span>
                     </button>
                   ))}
                 </div>
+                <p className="text-white/40 text-xs mt-2 text-center">
+                  {STORY_TYPES.find(t => t.id === storyType)?.desc}
+                </p>
               </div>
 
               {/* Caption */}
               <div>
-                <label className="text-white/60 text-sm mb-2 block">Descripción (opcional)</label>
+                <label htmlFor="caption" className="text-white/60 text-sm mb-2 block">
+                  Descripción (opcional)
+                </label>
                 <textarea
+                  id="caption"
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
-                  placeholder="Añade una descripción..."
+                  placeholder="Añade una descripción para tu story..."
                   rows={2}
-                  className="w-full bg-white/10 border-none rounded-xl px-4 py-3 text-white placeholder:text-white/50 focus:ring-2 focus:ring-white/30 resize-none"
+                  maxLength={150}
+                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/40 focus:ring-2 focus:ring-white/30 focus:border-transparent resize-none transition-all"
                 />
+                <p className="text-white/40 text-xs mt-1 text-right">{caption.length}/150</p>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setStep("edit")}
-                  className="flex-1 py-4 rounded-2xl bg-white/10 text-white font-medium"
+                  className="flex-1 py-4 rounded-2xl bg-white/10 text-white font-medium hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
                 >
-                  Atrás
+                  <ChevronLeft className="w-5 h-5" />
+                  Editar
                 </button>
                 <button
                   onClick={handlePublish}
                   disabled={isUploading}
-                  className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-rose-500 via-purple-500 to-blue-500 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-rose-500 via-purple-500 to-blue-500 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all"
                 >
                   {isUploading ? (
                     <>
@@ -593,13 +878,13 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                   ) : (
                     <>
                       <Send className="w-5 h-5" />
-                      Publicar
+                      Publicar Story
                     </>
                   )}
                 </button>
               </div>
             </div>
-          </motion.div>
+          </motion.main>
         )}
       </motion.div>
     </AnimatePresence>
