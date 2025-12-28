@@ -3,7 +3,25 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, Home, Calendar, Star, MessageCircle, BarChart3, Wallet, ExternalLink, Settings, Scissors, Users, Clock, ImageIcon, CreditCard, Package } from "lucide-react";
+import { 
+  LogOut, 
+  Loader2, 
+  Home, 
+  Calendar, 
+  Star, 
+  MessageCircle, 
+  BarChart3, 
+  Wallet, 
+  ExternalLink, 
+  Settings, 
+  Scissors, 
+  Users, 
+  Clock, 
+  ImageIcon, 
+  CreditCard, 
+  Package,
+  ChevronDown
+} from "lucide-react";
 import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
@@ -15,7 +33,13 @@ import { StylistsManager } from "@/components/admin/StylistsManager";
 import { BusinessHoursManager } from "@/components/admin/BusinessHoursManager";
 import { StoriesAnalytics } from "@/components/admin/StoriesAnalytics";
 import { ProductsManager } from "@/components/admin/ProductsManager";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Tenant {
   id: string;
@@ -32,10 +56,20 @@ interface Stylist {
   color: string;
 }
 
+type TabValue = "calendar" | "cash" | "reviews" | "messages" | "stories" | "security" | "products" | "services" | "stylists" | "hours" | "subscription" | "settings";
+
+interface NavItem {
+  value: TabValue;
+  label: string;
+  icon: React.ReactNode;
+  badge?: number;
+  group: "main" | "config";
+}
+
 export default function TenantAdmin() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
-  const [activeTab, setActiveTab] = useState("calendar");
+  const [activeTab, setActiveTab] = useState<TabValue>("calendar");
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
   const [messagesUnreadCount, setMessagesUnreadCount] = useState(0);
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -45,6 +79,24 @@ export default function TenantAdmin() {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
+
+  const navItems: NavItem[] = [
+    { value: "calendar", label: "Agenda", icon: <Calendar className="h-4 w-4" />, group: "main" },
+    { value: "cash", label: "Caja", icon: <Wallet className="h-4 w-4" />, group: "main" },
+    { value: "reviews", label: "Reseñas", icon: <Star className="h-4 w-4" />, badge: pendingReviewsCount, group: "main" },
+    { value: "messages", label: "Mensajes", icon: <MessageCircle className="h-4 w-4" />, badge: messagesUnreadCount, group: "main" },
+    { value: "stories", label: "Stories", icon: <ImageIcon className="h-4 w-4" />, group: "main" },
+    { value: "security", label: "Estadísticas", icon: <BarChart3 className="h-4 w-4" />, group: "main" },
+    { value: "products", label: "Productos", icon: <Package className="h-4 w-4" />, group: "config" },
+    { value: "services", label: "Servicios", icon: <Scissors className="h-4 w-4" />, group: "config" },
+    { value: "stylists", label: "Equipo", icon: <Users className="h-4 w-4" />, group: "config" },
+    { value: "hours", label: "Horarios", icon: <Clock className="h-4 w-4" />, group: "config" },
+    { value: "subscription", label: "Suscripción", icon: <CreditCard className="h-4 w-4" />, group: "config" },
+    { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" />, group: "config" },
+  ];
+
+  const mainItems = navItems.filter(item => item.group === "main");
+  const configItems = navItems.filter(item => item.group === "config");
 
   useEffect(() => {
     checkAuth();
@@ -159,7 +211,6 @@ export default function TenantAdmin() {
 
     setUserEmail(session.user.email || "");
 
-    // Get tenant by slug
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
       .select("*")
@@ -179,10 +230,8 @@ export default function TenantAdmin() {
 
     setTenant(tenantData);
 
-    // Check if user has access to this tenant
     const userId = session.user.id;
 
-    // Check if superadmin
     const { data: superadminRole } = await supabase
       .from("user_roles")
       .select("role")
@@ -196,7 +245,6 @@ export default function TenantAdmin() {
       return;
     }
 
-    // Check if tenant admin
     const { data: adminData } = await supabase
       .from("tenant_admins")
       .select("id")
@@ -210,7 +258,6 @@ export default function TenantAdmin() {
       return;
     }
 
-    // Check if tenant stylist
     const { data: stylistData } = await supabase
       .from("tenant_stylists")
       .select("id")
@@ -224,7 +271,6 @@ export default function TenantAdmin() {
       return;
     }
 
-    // No access
     toast({
       title: "Acceso denegado",
       description: "No tienes permisos para acceder a este panel",
@@ -249,6 +295,44 @@ export default function TenantAdmin() {
     navigate("/auth", { replace: true });
   };
 
+  const renderContent = () => {
+    if (!tenant) return null;
+    
+    switch (activeTab) {
+      case "calendar":
+        return <LocalCalendarCRM tenantId={tenant.id} stylists={stylists} />;
+      case "cash":
+        return <CashRegisterManager tenantId={tenant.id} />;
+      case "reviews":
+        return <ReviewsManager tenantId={tenant.id} />;
+      case "messages":
+        return <MessagesManager tenantId={tenant.id} />;
+      case "stories":
+        return <StoriesAnalytics tenantId={tenant.id} />;
+      case "security":
+        return <SecurityMonitor tenantId={tenant.id} />;
+      case "products":
+        return <ProductsManager tenantId={tenant.id} />;
+      case "services":
+        return <ServicesManager tenantId={tenant.id} />;
+      case "stylists":
+        return <StylistsManager tenantId={tenant.id} />;
+      case "hours":
+        return <BusinessHoursManager tenantId={tenant.id} />;
+      case "subscription":
+        return (
+          <div className="text-center py-12 text-muted-foreground">
+            <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Gestión de suscripción próximamente</p>
+          </div>
+        );
+      case "settings":
+        return <TenantSettings tenantId={tenant.id} tenantSlug={tenant.slug} />;
+      default:
+        return null;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -261,189 +345,107 @@ export default function TenantAdmin() {
     return null;
   }
 
+  const activeItem = navItems.find(item => item.value === activeTab);
+  const isConfigTab = configItems.some(item => item.value === activeTab);
+
   return (
-    <div className="min-h-screen bg-muted/30 p-3 md:p-6">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-4 md:mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
+    <div className="min-h-screen bg-muted/30">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="mx-auto max-w-7xl px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            {/* Logo and Name */}
             <div className="flex items-center gap-3">
               {tenant.logo_url && (
-                <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-10 rounded-full object-cover" />
+                <img src={tenant.logo_url} alt={tenant.name} className="h-8 w-8 rounded-full object-cover" />
               )}
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">{tenant.name}</h1>
-                <p className="text-sm md:text-base text-muted-foreground">Panel de Administración</p>
+              <div className="hidden sm:block">
+                <h1 className="text-lg font-semibold text-foreground leading-tight">{tenant.name}</h1>
+                <p className="text-xs text-muted-foreground">{userEmail}</p>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">Bienvenida, {userEmail}</p>
-          </div>
-          <div className="flex gap-2 w-full md:w-auto">
-            <Button 
-              onClick={() => navigate(`/salon/${slug}`)} 
-              variant="outline" 
-              className="flex-1 md:flex-initial" 
-              size="sm"
-            >
-              <ExternalLink className="mr-1 md:mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Ver Landing</span>
-              <span className="sm:hidden">Ver</span>
-            </Button>
-            <Button onClick={() => navigate("/")} variant="outline" className="flex-1 md:flex-initial" size="sm">
-              <Home className="mr-1 md:mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Inicio</span>
-            </Button>
-            <Button onClick={handleSignOut} variant="outline" className="flex-1 md:flex-initial" size="sm">
-              <LogOut className="mr-1 md:mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Salir</span>
-            </Button>
-          </div>
-        </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="inline-flex h-12 items-center justify-center gap-1 rounded-lg bg-transparent p-0 border-b w-full max-w-none overflow-x-auto">
-            <TabsTrigger
-              value="calendar"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-            >
-              <Calendar className="h-4 w-4" />
-              <span className="hidden md:inline">Calendario</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="cash"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-            >
-              <Wallet className="h-4 w-4" />
-              <span className="hidden md:inline">Caja</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="reviews"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
-            >
-              <Star className="h-4 w-4" />
-              <span className="hidden md:inline">Reseñas</span>
-              {pendingReviewsCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 md:relative md:top-0 md:right-0 md:ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
-                  {pendingReviewsCount > 99 ? "99+" : pendingReviewsCount}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="messages"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span className="hidden md:inline">Mensajes</span>
-              {messagesUnreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 md:relative md:top-0 md:right-0 md:ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
-                  {messagesUnreadCount > 99 ? "99+" : messagesUnreadCount}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="stories"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-            >
-              <ImageIcon className="h-4 w-4" />
-              <span className="hidden md:inline">Stories</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="security"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-            >
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden md:inline">Estadísticas</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="products"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-            >
-              <Package className="h-4 w-4" />
-              <span className="hidden md:inline">Productos</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="services"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-            >
-              <Scissors className="h-4 w-4" />
-              <span className="hidden md:inline">Servicios</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="stylists"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-            >
-              <Users className="h-4 w-4" />
-              <span className="hidden md:inline">Estilistas</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="hours"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-            >
-              <Clock className="h-4 w-4" />
-              <span className="hidden md:inline">Horarios</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="subscription"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-            >
-              <CreditCard className="h-4 w-4" />
-              <span className="hidden md:inline">Suscripción</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="settings"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden md:inline">Ajustes</span>
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="calendar" className="mt-6">
-            <LocalCalendarCRM tenantId={tenant.id} stylists={stylists} />
-          </TabsContent>
-          <TabsContent value="cash" className="mt-6">
-            <CashRegisterManager tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="reviews" className="mt-6">
-            <ReviewsManager tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="messages" className="mt-6">
-            <MessagesManager tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="stories" className="mt-6">
-            <StoriesAnalytics tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="security" className="mt-6">
-            <SecurityMonitor tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="products" className="mt-6">
-            <ProductsManager tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="services" className="mt-6">
-            <ServicesManager tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="stylists" className="mt-6">
-            <StylistsManager tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="hours" className="mt-6">
-            <BusinessHoursManager tenantId={tenant.id} />
-          </TabsContent>
-          <TabsContent value="subscription" className="mt-6">
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Gestiona tu Suscripción</h3>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                Consulta el estado de tu plan, actualiza tu método de pago o cambia de plan.
-              </p>
-              <Button onClick={() => navigate("/subscription")}>
-                <CreditCard className="mr-2 h-4 w-4" />
-                Ir al Portal de Suscripción
+            {/* Navigation */}
+            <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+              {mainItems.map((item) => (
+                <Button
+                  key={item.value}
+                  variant={activeTab === item.value ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveTab(item.value)}
+                  className="relative gap-1.5 shrink-0"
+                >
+                  {item.icon}
+                  <span className="hidden md:inline">{item.label}</span>
+                  {item.badge && item.badge > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
+                </Button>
+              ))}
+              
+              {/* Config Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant={isConfigTab ? "default" : "ghost"} 
+                    size="sm" 
+                    className="gap-1.5 shrink-0"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span className="hidden md:inline">Configuración</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {configItems.map((item, index) => (
+                    <div key={item.value}>
+                      {index === 4 && <DropdownMenuSeparator />}
+                      <DropdownMenuItem 
+                        onClick={() => setActiveTab(item.value)}
+                        className={activeTab === item.value ? "bg-accent" : ""}
+                      >
+                        {item.icon}
+                        <span className="ml-2">{item.label}</span>
+                      </DropdownMenuItem>
+                    </div>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </nav>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1">
+              <Button 
+                onClick={() => navigate(`/salon/${slug}`)} 
+                variant="ghost" 
+                size="icon"
+                title="Ver landing"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+              <Button onClick={() => navigate("/")} variant="ghost" size="icon" title="Inicio">
+                <Home className="h-4 w-4" />
+              </Button>
+              <Button onClick={handleSignOut} variant="ghost" size="icon" title="Cerrar sesión">
+                <LogOut className="h-4 w-4" />
               </Button>
             </div>
-          </TabsContent>
-          <TabsContent value="settings" className="mt-6">
-            <TenantSettings tenantId={tenant.id} tenantSlug={tenant.slug} />
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="mx-auto max-w-7xl px-4 py-6">
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            {activeItem?.icon}
+            {activeItem?.label}
+          </h2>
+        </div>
+        {renderContent()}
+      </main>
     </div>
   );
 }
