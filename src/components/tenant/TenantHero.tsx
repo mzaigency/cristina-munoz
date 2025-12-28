@@ -115,7 +115,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight mb-4 text-white"
-            style={{ fontFamily: 'var(--font-heading, "SF Pro Display", system-ui, sans-serif)' }}
+            style={{ fontFamily: 'var(--tenant-font-heading, "SF Pro Display", system-ui, sans-serif)' }}
           >
             {tenant.name}
           </motion.h1>
