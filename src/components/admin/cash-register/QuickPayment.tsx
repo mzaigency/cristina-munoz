@@ -22,8 +22,11 @@ import {
   PenLine,
   Mail,
   Receipt,
-  Sparkles
+  Sparkles,
+  FileText,
+  Download
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -116,6 +119,15 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   
   const [activeCategory, setActiveCategory] = useState<string>("all");
   
+  // Invoice data
+  const [wantsInvoice, setWantsInvoice] = useState(false);
+  const [invoiceData, setInvoiceData] = useState({
+    fiscalName: "",
+    nif: "",
+    fiscalAddress: ""
+  });
+  const [tenantData, setTenantData] = useState<any>(null);
+  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -124,17 +136,20 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
   const fetchData = async () => {
     try {
-      const [servicesRes, stylistsRes, productsRes] = await Promise.all([
+      const [servicesRes, stylistsRes, productsRes, tenantRes] = await Promise.all([
         supabase.from("services").select("id, name, price, category")
           .eq("tenant_id", tenantId).order("category").order("name"),
         supabase.from("tenant_stylists").select("id, name, slug, color")
           .eq("tenant_id", tenantId).eq("is_active", true).order("name"),
         supabase.from("products").select("id, name, price, category, stock")
-          .eq("tenant_id", tenantId).eq("is_active", true).order("name")
+          .eq("tenant_id", tenantId).eq("is_active", true).order("name"),
+        supabase.from("tenants").select("name, logo_url, address, city, postal_code, phone, email")
+          .eq("id", tenantId).single()
       ]);
       if (servicesRes.data) setServices(servicesRes.data);
       if (stylistsRes.data) setStylists(stylistsRes.data);
       if (productsRes.data) setProducts(productsRes.data as Product[]);
+      if (tenantRes.data) setTenantData(tenantRes.data);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -238,6 +253,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     setTipAmount("");
     setShowDiscount(false);
     setShowTip(false);
+    setWantsInvoice(false);
+    setInvoiceData({ fiscalName: "", nif: "", fiscalAddress: "" });
   };
 
   const handleSubmit = async () => {
@@ -357,114 +374,106 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     }
   };
 
-  const generateInvoice = async () => {
-    const email = getEmailToUse();
-    if (!lastTransaction) return;
-
-    try {
-      setSendingEmail(true);
-      
-      // Generate invoice number
-      const invoiceNumber = `FAC-${Date.now().toString(36).toUpperCase()}`;
-      const invoiceDate = new Date().toLocaleDateString("es-ES", { 
-        day: "numeric", month: "long", year: "numeric" 
-      });
-
-      if (email) {
-        // Send invoice by email
-        const { error } = await supabase.functions.invoke("send-ticket", {
-          body: {
-            type: "invoice",
-            invoiceNumber,
-            customerEmail: email,
-            customerName: lastTransaction.customer_name,
-            tenantId,
-            items: lastTransaction.items,
-            subtotal: lastTransaction.subtotal,
-            discount: lastTransaction.discount,
-            discountReason: lastTransaction.discount_reason,
-            tip: lastTransaction.tip_amount,
-            total: lastTransaction.grandTotal,
-            paymentMethod: lastTransaction.payment_method,
-            stylistName: lastTransaction.stylistName,
-            date: invoiceDate
-          }
-        });
-
-        if (error) throw error;
-        toast({ title: "Factura enviada por email 📄" });
-      } else {
-        // Open invoice in new window for printing
-        const invoiceWindow = window.open("", "_blank");
-        if (invoiceWindow) {
-          const invoiceHtml = generateInvoiceHtml(invoiceNumber, invoiceDate);
-          invoiceWindow.document.write(invoiceHtml);
-          invoiceWindow.document.close();
-          invoiceWindow.print();
-        }
-        toast({ title: "Factura generada 📄" });
-      }
-      
-      setShowSuccess(false);
-    } catch (error) {
-      console.error("Error generating invoice:", error);
-      toast({ title: "Error al generar factura", variant: "destructive" });
-    } finally {
-      setSendingEmail(false);
-    }
-  };
-
-  const generateInvoiceHtml = (invoiceNumber: string, invoiceDate: string) => {
-    if (!lastTransaction) return "";
+  const downloadInvoicePdf = () => {
+    if (!lastTransaction || !tenantData) return;
     
+    const invoiceNumber = `FAC-${Date.now().toString(36).toUpperCase()}`;
+    const invoiceDate = new Date().toLocaleDateString("es-ES", { 
+      day: "numeric", month: "long", year: "numeric" 
+    });
+
     const itemsHtml = lastTransaction.items.map((item: any) => `
       <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price)}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.total)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">${item.name}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: center;">${item.quantity}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: right;">${formatCurrency(item.price)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: right;">${formatCurrency(item.total)}</td>
       </tr>
     `).join("");
 
-    return `
+    const invoiceHtml = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
         <title>Factura ${invoiceNumber}</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-          .header { display: flex; justify-content: space-between; margin-bottom: 40px; }
-          .invoice-title { font-size: 32px; font-weight: bold; color: #333; }
-          .invoice-number { color: #666; margin-top: 8px; }
-          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          th { background: #f5f5f5; padding: 12px; text-align: left; font-weight: 600; }
-          th:last-child, th:nth-child(3), th:nth-child(2) { text-align: right; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #333; }
+          .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #333; }
+          .business-info { flex: 1; }
+          .business-name { font-size: 28px; font-weight: bold; margin-bottom: 8px; }
+          .business-details { color: #666; font-size: 14px; line-height: 1.6; }
+          .invoice-badge { background: #333; color: white; padding: 20px 30px; text-align: center; }
+          .invoice-badge h2 { font-size: 24px; margin-bottom: 4px; }
+          .invoice-badge p { font-size: 14px; opacity: 0.9; }
+          .parties { display: flex; gap: 40px; margin-bottom: 30px; }
+          .party { flex: 1; padding: 20px; background: #f8f8f8; border-radius: 8px; }
+          .party-title { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 8px; font-weight: 600; }
+          .party-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+          .party-details { font-size: 14px; color: #666; line-height: 1.5; }
+          table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+          thead { background: #333; color: white; }
+          th { padding: 14px 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+          th:nth-child(2), th:nth-child(3), th:nth-child(4) { text-align: right; }
           th:nth-child(2) { text-align: center; }
-          .totals { margin-top: 20px; text-align: right; }
-          .totals div { margin: 8px 0; }
-          .total-final { font-size: 24px; font-weight: bold; color: #333; margin-top: 16px; padding-top: 16px; border-top: 2px solid #333; }
-          @media print { body { padding: 20px; } }
+          tbody tr:hover { background: #fafafa; }
+          .totals { margin-top: 20px; display: flex; justify-content: flex-end; }
+          .totals-box { width: 280px; }
+          .totals-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+          .totals-row.discount { color: #f97316; }
+          .totals-row.tip { color: #ec4899; }
+          .totals-row.final { border-top: 3px solid #333; border-bottom: none; padding-top: 16px; margin-top: 8px; font-size: 20px; font-weight: bold; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; color: #888; font-size: 12px; }
+          @media print { 
+            body { padding: 20px; } 
+            .invoice-badge { background: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            thead { background: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div>
-            <div class="invoice-title">FACTURA</div>
-            <div class="invoice-number">Nº ${invoiceNumber}</div>
-            <div style="color: #666; margin-top: 4px;">Fecha: ${invoiceDate}</div>
+        <div class="invoice-header">
+          <div class="business-info">
+            ${tenantData.logo_url ? `<img src="${tenantData.logo_url}" alt="${tenantData.name}" style="height: 60px; margin-bottom: 12px; border-radius: 8px;">` : ""}
+            <div class="business-name">${tenantData.name}</div>
+            <div class="business-details">
+              ${tenantData.address || ""}${tenantData.city ? `, ${tenantData.city}` : ""}${tenantData.postal_code ? ` ${tenantData.postal_code}` : ""}<br>
+              ${tenantData.phone ? `Tel: ${tenantData.phone}` : ""}${tenantData.email ? ` · ${tenantData.email}` : ""}
+            </div>
+          </div>
+          <div class="invoice-badge">
+            <h2>FACTURA</h2>
+            <p>${invoiceNumber}</p>
           </div>
         </div>
         
-        <div style="margin-bottom: 30px;">
-          <strong>Cliente:</strong> ${lastTransaction.customer_name}
+        <div class="parties">
+          <div class="party">
+            <div class="party-title">Datos del emisor</div>
+            <div class="party-name">${tenantData.name}</div>
+            <div class="party-details">
+              ${tenantData.address || ""}${tenantData.city ? `<br>${tenantData.city}` : ""}${tenantData.postal_code ? ` ${tenantData.postal_code}` : ""}<br>
+              ${tenantData.phone ? `Tel: ${tenantData.phone}` : ""}
+            </div>
+          </div>
+          <div class="party">
+            <div class="party-title">Datos del cliente</div>
+            <div class="party-name">${lastTransaction.invoiceData?.fiscalName || lastTransaction.customer_name}</div>
+            <div class="party-details">
+              ${lastTransaction.invoiceData?.nif ? `NIF: ${lastTransaction.invoiceData.nif}<br>` : ""}
+              ${lastTransaction.invoiceData?.fiscalAddress || ""}
+            </div>
+          </div>
         </div>
+
+        <p style="margin-bottom: 10px; color: #666; font-size: 14px;">Fecha: ${invoiceDate}</p>
         
         <table>
           <thead>
             <tr>
               <th>Concepto</th>
-              <th>Cantidad</th>
+              <th>Cant.</th>
               <th>Precio</th>
               <th>Total</th>
             </tr>
@@ -475,19 +484,48 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         </table>
         
         <div class="totals">
-          <div>Subtotal: ${formatCurrency(lastTransaction.subtotal)}</div>
-          ${lastTransaction.discount > 0 ? `<div style="color: #f97316;">Descuento: -${formatCurrency(lastTransaction.discount)}</div>` : ""}
-          ${lastTransaction.tip_amount > 0 ? `<div style="color: #ec4899;">Propina: +${formatCurrency(lastTransaction.tip_amount)}</div>` : ""}
-          <div class="total-final">TOTAL: ${formatCurrency(lastTransaction.grandTotal)}</div>
+          <div class="totals-box">
+            <div class="totals-row">
+              <span>Subtotal</span>
+              <span>${formatCurrency(lastTransaction.subtotal)}</span>
+            </div>
+            ${lastTransaction.discount > 0 ? `
+              <div class="totals-row discount">
+                <span>Descuento</span>
+                <span>-${formatCurrency(lastTransaction.discount)}</span>
+              </div>
+            ` : ""}
+            ${lastTransaction.tip_amount > 0 ? `
+              <div class="totals-row tip">
+                <span>Propina</span>
+                <span>+${formatCurrency(lastTransaction.tip_amount)}</span>
+              </div>
+            ` : ""}
+            <div class="totals-row final">
+              <span>TOTAL</span>
+              <span>${formatCurrency(lastTransaction.grandTotal)}</span>
+            </div>
+          </div>
         </div>
         
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #888; font-size: 14px;">
-          Atendido por: ${lastTransaction.stylistName}<br>
-          Método de pago: ${lastTransaction.payment_method === "cash" ? "Efectivo" : lastTransaction.payment_method === "card" ? "Tarjeta" : "Mixto"}
+        <div class="footer">
+          <div>Atendido por: ${lastTransaction.stylistName}</div>
+          <div>Pago: ${lastTransaction.payment_method === "cash" ? "Efectivo" : lastTransaction.payment_method === "card" ? "Tarjeta" : "Mixto"}</div>
         </div>
       </body>
       </html>
     `;
+
+    // Open in new window and trigger print
+    const invoiceWindow = window.open("", "_blank");
+    if (invoiceWindow) {
+      invoiceWindow.document.write(invoiceHtml);
+      invoiceWindow.document.close();
+      invoiceWindow.print();
+    }
+    
+    toast({ title: "Factura generada 📄" });
+    setShowSuccess(false);
   };
 
   return (
@@ -809,14 +847,6 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             </div>
           )}
 
-          {/* Email for ticket */}
-          <Input 
-            type="email"
-            value={customerEmail} 
-            onChange={(e) => setCustomerEmail(e.target.value)} 
-            placeholder="Email para ticket (opcional)"
-            className="text-center text-sm"
-          />
 
           <Button 
             onClick={handleSubmit} 
@@ -863,7 +893,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
       {/* Success Dialog */}
       <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
-        <DialogContent className="max-w-sm text-center">
+        <DialogContent className="max-w-sm">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -871,53 +901,103 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           >
             <CheckCircle2 className="h-10 w-10 text-green-600" />
           </motion.div>
-          <DialogHeader>
+          <DialogHeader className="text-center">
             <DialogTitle className="text-2xl">¡Cobro realizado!</DialogTitle>
           </DialogHeader>
-          <p className="text-3xl font-bold text-primary">
+          <p className="text-3xl font-bold text-primary text-center">
             {lastTransaction && formatCurrency(lastTransaction.grandTotal)}
           </p>
           
-          <div className="mt-4 space-y-2">
-            {/* Email Input if not provided */}
-            {!lastTransaction?.customerEmail && (
-              <Input 
-                type="email"
-                placeholder="Email para enviar ticket"
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                className="text-center"
+          <div className="mt-4 space-y-3">
+            {/* Invoice checkbox */}
+            <div className="flex items-center space-x-2 p-3 rounded-lg bg-muted/50">
+              <Checkbox 
+                id="wants-invoice" 
+                checked={wantsInvoice}
+                onCheckedChange={(checked) => setWantsInvoice(checked === true)}
               />
-            )}
-            
-            {/* Ticket/Invoice Actions */}
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                onClick={sendTicketEmail} 
-                disabled={sendingEmail || (!customerEmail && !lastTransaction?.customerEmail)}
-                variant="outline"
-                className="gap-1"
+              <label 
+                htmlFor="wants-invoice" 
+                className="text-sm font-medium cursor-pointer flex items-center gap-2"
               >
-                {sendingEmail ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Mail className="h-4 w-4" />
-                )}
-                Ticket
-              </Button>
-              <Button 
-                onClick={generateInvoice} 
-                disabled={sendingEmail}
-                variant="outline"
-                className="gap-1"
-              >
-                <Receipt className="h-4 w-4" />
-                Factura
-              </Button>
+                <FileText className="h-4 w-4" />
+                Necesita factura
+              </label>
             </div>
+
+            {/* Invoice data form */}
+            <AnimatePresence>
+              {wantsInvoice && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="space-y-2 overflow-hidden"
+                >
+                  <Input 
+                    placeholder="Nombre fiscal / Razón social"
+                    value={invoiceData.fiscalName}
+                    onChange={(e) => setInvoiceData(prev => ({ ...prev, fiscalName: e.target.value }))}
+                    className="text-sm"
+                  />
+                  <Input 
+                    placeholder="NIF / CIF"
+                    value={invoiceData.nif}
+                    onChange={(e) => setInvoiceData(prev => ({ ...prev, nif: e.target.value }))}
+                    className="text-sm"
+                  />
+                  <Input 
+                    placeholder="Dirección fiscal"
+                    value={invoiceData.fiscalAddress}
+                    onChange={(e) => setInvoiceData(prev => ({ ...prev, fiscalAddress: e.target.value }))}
+                    className="text-sm"
+                  />
+                  <Button 
+                    onClick={() => {
+                      // Store invoice data in lastTransaction
+                      setLastTransaction((prev: any) => ({ ...prev, invoiceData }));
+                      downloadInvoicePdf();
+                    }}
+                    disabled={!invoiceData.fiscalName || !invoiceData.nif}
+                    className="w-full gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Descargar factura
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Email ticket option */}
+            {!wantsInvoice && (
+              <div className="space-y-2">
+                <Input 
+                  type="email"
+                  placeholder="Email para ticket (opcional)"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="text-center text-sm"
+                />
+                {(customerEmail || lastTransaction?.customerEmail) && (
+                  <Button 
+                    onClick={sendTicketEmail} 
+                    disabled={sendingEmail}
+                    variant="outline"
+                    className="w-full gap-2"
+                  >
+                    {sendingEmail ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Mail className="h-4 w-4" />
+                    )}
+                    Enviar ticket por email
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
           
-          <Button onClick={() => setShowSuccess(false)} className="w-full mt-2">
+          <Button onClick={() => setShowSuccess(false)} variant="outline" className="w-full mt-2">
             Nuevo cobro
           </Button>
         </DialogContent>
