@@ -14,6 +14,9 @@ import { TenantGallerySection } from "@/components/tenant/TenantGallerySection";
 import { TenantWhatsAppSection } from "@/components/tenant/TenantWhatsAppSection";
 import { TenantLocationSection } from "@/components/tenant/TenantLocationSection";
 import { TenantThemeProvider } from "@/components/tenant/TenantThemeProvider";
+import { TenantAdminBar } from "@/components/tenant/TenantAdminBar";
+import { TenantEditPanel } from "@/components/tenant/TenantEditPanel";
+import { useTenantAccess } from "@/hooks/useTenantAccess";
 
 interface Tenant {
   id: string;
@@ -37,18 +40,6 @@ interface Tenant {
   google_maps_url: string | null;
 }
 
-const SectionSkeleton = () => (
-  <div className="min-h-[50vh] flex items-center justify-center">
-    <div 
-      className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full"
-      style={{
-        animation: 'spin 1s linear infinite',
-        willChange: 'transform'
-      }}
-    />
-  </div>
-);
-
 const TenantLanding = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
@@ -57,7 +48,9 @@ const TenantLanding = () => {
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("inicio");
   const [isPreview, setIsPreview] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
+  const { isAdmin, isStylist, hasAccess } = useTenantAccess(tenant?.id);
   const previewToken = searchParams.get("preview");
 
   useEffect(() => {
@@ -239,6 +232,25 @@ const TenantLanding = () => {
         </main>
 
         <InstallPWA />
+
+        {/* Admin Bar - Visible for admins and stylists */}
+        {hasAccess && (
+          <TenantAdminBar
+            tenantSlug={tenant.slug}
+            isAdmin={isAdmin}
+            isEditMode={isEditMode}
+            onToggleEditMode={() => setIsEditMode(!isEditMode)}
+          />
+        )}
+
+        {/* Edit Panel - Only for admins in edit mode */}
+        {isAdmin && isEditMode && (
+          <TenantEditPanel
+            tenant={tenant}
+            onClose={() => setIsEditMode(false)}
+            onSave={(updatedTenant) => setTenant(updatedTenant)}
+          />
+        )}
       </div>
     </TenantThemeProvider>
   );
