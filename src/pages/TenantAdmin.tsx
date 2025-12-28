@@ -3,12 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, BarChart3, Wallet, ExternalLink } from "lucide-react";
+import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, BarChart3, Wallet, ExternalLink, Settings, Scissors } from "lucide-react";
 import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
 import { WhatsAppManager } from "@/components/admin/WhatsAppManager";
 import { CashRegisterManager } from "@/components/admin/CashRegisterManager";
+import { TenantSettings } from "@/components/admin/TenantSettings";
+import { ServicesManager } from "@/components/admin/ServicesManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Tenant {
@@ -340,6 +342,20 @@ export default function TenantAdmin() {
               <BarChart3 className="h-4 w-4" />
               <span className="hidden md:inline">Estadísticas</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="services"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              <Scissors className="h-4 w-4" />
+              <span className="hidden md:inline">Servicios</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              <Settings className="h-4 w-4" />
+              <span className="hidden md:inline">Ajustes</span>
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="calendar" className="mt-6">
             <LocalCalendarCRM tenantId={tenant.id} stylists={stylists} />
@@ -355,6 +371,12 @@ export default function TenantAdmin() {
           </TabsContent>
           <TabsContent value="security" className="mt-6">
             <SecurityMonitor tenantId={tenant.id} />
+          </TabsContent>
+          <TabsContent value="services" className="mt-6">
+            <ServicesManager tenantId={tenant.id} />
+          </TabsContent>
+          <TabsContent value="settings" className="mt-6">
+            <TenantSettings tenantId={tenant.id} tenantSlug={tenant.slug} />
           </TabsContent>
         </Tabs>
       </div>
