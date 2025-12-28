@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, BarChart3, Wallet, ExternalLink, Settings, Scissors } from "lucide-react";
+import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, BarChart3, Wallet, ExternalLink, Settings, Scissors, Users, Clock } from "lucide-react";
 import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
@@ -11,6 +11,8 @@ import { WhatsAppManager } from "@/components/admin/WhatsAppManager";
 import { CashRegisterManager } from "@/components/admin/CashRegisterManager";
 import { TenantSettings } from "@/components/admin/TenantSettings";
 import { ServicesManager } from "@/components/admin/ServicesManager";
+import { StylistsManager } from "@/components/admin/StylistsManager";
+import { BusinessHoursManager } from "@/components/admin/BusinessHoursManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Tenant {
@@ -350,6 +352,20 @@ export default function TenantAdmin() {
               <span className="hidden md:inline">Servicios</span>
             </TabsTrigger>
             <TabsTrigger
+              value="stylists"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              <Users className="h-4 w-4" />
+              <span className="hidden md:inline">Estilistas</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="hours"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              <Clock className="h-4 w-4" />
+              <span className="hidden md:inline">Horarios</span>
+            </TabsTrigger>
+            <TabsTrigger
               value="settings"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
@@ -374,6 +390,12 @@ export default function TenantAdmin() {
           </TabsContent>
           <TabsContent value="services" className="mt-6">
             <ServicesManager tenantId={tenant.id} />
+          </TabsContent>
+          <TabsContent value="stylists" className="mt-6">
+            <StylistsManager tenantId={tenant.id} />
+          </TabsContent>
+          <TabsContent value="hours" className="mt-6">
+            <BusinessHoursManager tenantId={tenant.id} />
           </TabsContent>
           <TabsContent value="settings" className="mt-6">
             <TenantSettings tenantId={tenant.id} tenantSlug={tenant.slug} />
