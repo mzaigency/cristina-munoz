@@ -30,6 +30,8 @@ export type Database = {
           id: string
           is_part_of_compound: boolean | null
           notes: string | null
+          recurrence_group_id: string | null
+          recurrence_pattern: Json | null
           related_booking_id: string | null
           services: Json
           skip_availability_check: boolean
@@ -58,6 +60,8 @@ export type Database = {
           id?: string
           is_part_of_compound?: boolean | null
           notes?: string | null
+          recurrence_group_id?: string | null
+          recurrence_pattern?: Json | null
           related_booking_id?: string | null
           services: Json
           skip_availability_check?: boolean
@@ -86,6 +90,8 @@ export type Database = {
           id?: string
           is_part_of_compound?: boolean | null
           notes?: string | null
+          recurrence_group_id?: string | null
+          recurrence_pattern?: Json | null
           related_booking_id?: string | null
           services?: Json
           skip_availability_check?: boolean
