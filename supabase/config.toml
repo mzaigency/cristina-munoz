@@ -48,3 +48,6 @@ verify_jwt = false
 [functions.get-whatsapp-credentials]
 verify_jwt = false
 
+[functions.send-whatsapp-notification]
+verify_jwt = false
+
