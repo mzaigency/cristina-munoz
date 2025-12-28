@@ -146,18 +146,19 @@ serve(async (req) => {
           );
         }
 
-        // Check if user is already linked to another tenant
+        // Check if user is already admin of THIS specific tenant
         const { data: existingTenantAdmin } = await adminClient
           .from("tenant_admins")
           .select("tenant_id")
           .eq("user_id", existingUserId)
+          .eq("tenant_id", tenantId)
           .maybeSingle();
 
         if (existingTenantAdmin) {
           return new Response(
             JSON.stringify({ 
               success: false, 
-              error: "Este usuario ya es administrador de otro salón. Usa un email diferente." 
+              error: "Este usuario ya es administrador de este salón." 
             }),
             { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
