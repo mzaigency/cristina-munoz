@@ -26,6 +26,7 @@ interface TenantData {
   address: string | null;
   city: string | null;
   postal_code: string | null;
+  whatsapp_sender_id: string | null;
 }
 
 export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) => {
@@ -43,7 +44,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
     try {
       const { data, error } = await supabase
         .from("tenants")
-        .select("name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code")
+        .select("name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code, whatsapp_sender_id")
         .eq("id", tenantId)
         .single();
 
@@ -118,6 +119,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
           address: tenant.address,
           city: tenant.city,
           postal_code: tenant.postal_code,
+          whatsapp_sender_id: tenant.whatsapp_sender_id,
         })
         .eq("id", tenantId);
 
@@ -444,6 +446,30 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   onChange={(e) => setTenant({ ...tenant, postal_code: e.target.value })}
                   placeholder="28001"
                 />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* WhatsApp Sender ID */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Configuración WhatsApp</CardTitle>
+            <CardDescription>ID del remitente para envíos automatizados de WhatsApp</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="whatsapp_sender_id">WhatsApp Sender ID</Label>
+                <Input
+                  id="whatsapp_sender_id"
+                  value={tenant.whatsapp_sender_id || ""}
+                  onChange={(e) => setTenant({ ...tenant, whatsapp_sender_id: e.target.value })}
+                  placeholder="Ej: 123456789012345"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Este ID se usa para identificar tu número en los flujos de n8n
+                </p>
               </div>
             </div>
           </CardContent>
