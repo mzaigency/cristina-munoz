@@ -34,14 +34,6 @@ const categoryIcons: Record<string, any> = {
   "default": Scissors,
 };
 
-// Default images for categories (fallback)
-const defaultCategoryImages: Record<string, string> = {
-  "Corte": "/assets/corte.jpg",
-  "Coloración": "/assets/coloracion.jpg",
-  "Peinados y Tratamientos": "/assets/peinados-tratamientos.jpg",
-  "Depilación y Maquillaje": "/assets/depilacion-maquillaje.jpg",
-};
-
 const formatDuration = (minutes: number): string => {
   if (minutes < 60) return `${minutes} min`;
   const hours = Math.floor(minutes / 60);
@@ -93,8 +85,7 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
 
   const getCategoryImage = (category: string): string | null => {
     const customImage = categoryImages.find(ci => ci.category === category)?.image_url;
-    if (customImage) return customImage;
-    return defaultCategoryImages[category] || null;
+    return customImage || null;
   };
 
   // Group services by category

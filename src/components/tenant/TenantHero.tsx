@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 
 interface Tenant {
@@ -23,128 +23,116 @@ interface TenantHeroProps {
 export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
   const hasHeroImage = !!tenant.hero_image_url;
 
-  // Dynamic tagline
+  // Dynamic tagline - shorter for iOS style
   const tagline = tenant.tagline || 
-    `Tu peluquería de confianza${tenant.city ? ` en ${tenant.city}` : ''}. Donde la belleza y el estilo se encuentran.`;
+    `Belleza y estilo${tenant.city ? ` en ${tenant.city}` : ''}`;
 
   return (
-    <section 
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10"
-    >
-      {/* Hero Image Background */}
+    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-background">
+      {/* Hero Image Background - iOS style with blur overlay */}
       {hasHeroImage && (
-        <>
-          <div className="absolute inset-0 z-0">
-            <img 
-              src={tenant.hero_image_url!} 
-              alt={`${tenant.name} - Peluquería profesional`}
-              className="w-full h-full object-cover"
-              loading="eager"
-              fetchPriority="high"
-            />
-            <div className="absolute inset-0 bg-black/60" />
-          </div>
-          <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/20 via-transparent to-black/40 pointer-events-none" />
-        </>
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={tenant.hero_image_url!} 
+            alt={`${tenant.name}`}
+            className="w-full h-full object-cover scale-105"
+            loading="eager"
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+        </div>
       )}
 
-      {/* Background Pattern (when no hero image) */}
+      {/* Minimal gradient background when no image */}
       {!hasHeroImage && (
-        <div 
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `radial-gradient(hsl(var(--primary)) 1px, transparent 1px)`,
-            backgroundSize: '20px 20px'
-          }}
-        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-muted/30" />
       )}
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl mx-auto text-center">
-          {/* Logo */}
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="max-w-2xl mx-auto text-center">
+          {/* Logo - Minimal circular style */}
           {tenant.logo_url && (
-            <motion.img 
-              src={tenant.logo_url} 
-              alt={`Logo de ${tenant.name}`}
-              className="h-20 md:h-24 mx-auto mb-6"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="mb-8"
+            >
+              <img 
+                src={tenant.logo_url} 
+                alt={`${tenant.name}`}
+                className="h-16 md:h-20 mx-auto"
+              />
+            </motion.div>
           )}
 
-          {/* Title */}
+          {/* Title - iOS typography */}
           <motion.h1 
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className={`text-4xl md:text-6xl lg:text-7xl font-bold mb-6 ${
-              hasHeroImage ? 'text-white' : 'text-primary'
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className={`text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight mb-4 ${
+              hasHeroImage ? 'text-white' : 'text-foreground'
             }`}
-            style={{ 
-              fontFamily: 'var(--font-heading, "Playfair Display", serif)',
-              transform: `scale(var(--heading-scale, 1))`
-            }}
+            style={{ fontFamily: 'var(--font-heading, "SF Pro Display", system-ui, sans-serif)' }}
           >
             {tenant.name}
           </motion.h1>
 
-          {/* Tagline */}
+          {/* Tagline - Subtle and elegant */}
           <motion.p 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15, ease: "easeOut" }}
-            className={`text-lg md:text-xl mb-8 max-w-2xl mx-auto ${
-              hasHeroImage ? 'text-white/90' : 'text-muted-foreground'
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className={`text-base md:text-lg mb-10 font-normal ${
+              hasHeroImage ? 'text-white/80' : 'text-muted-foreground'
             }`}
-            style={{ fontFamily: 'var(--font-body, "Inter", sans-serif)' }}
           >
             {tagline}
           </motion.p>
 
-          {/* Location */}
-          {(tenant.city || tenant.address) && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.25 }}
-              className={`flex items-center justify-center gap-2 mb-8 ${
-                hasHeroImage ? 'text-white/80' : 'text-muted-foreground'
-              }`}
-              style={{ fontFamily: 'var(--font-body, "Inter", sans-serif)' }}
-            >
-              <MapPin className={`h-5 w-5 ${hasHeroImage ? 'text-white' : 'text-primary'}`} />
-              <span>{tenant.address ? `${tenant.address}, ` : ''}{tenant.city}</span>
-            </motion.div>
-          )}
-
-          {/* CTA Button */}
+          {/* CTA Button - iOS pill style */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.35, ease: "easeOut" }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <Button
               size="lg"
               onClick={onBookNow}
-              className="text-lg px-8 py-6 hover:scale-105 transition-transform bg-primary text-primary-foreground"
-              style={{ 
-                fontFamily: 'var(--font-body, "Inter", sans-serif)',
-                borderRadius: 'var(--button-radius, 9999px)'
-              }}
+              className={`text-base font-medium px-8 py-6 rounded-full transition-all duration-300 ${
+                hasHeroImage 
+                  ? 'bg-white/95 text-black hover:bg-white shadow-lg shadow-black/20' 
+                  : 'bg-primary text-primary-foreground hover:opacity-90'
+              }`}
             >
-              <Calendar className="mr-2 h-5 w-5" />
-              Reservar Cita
+              Reservar cita
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </motion.div>
+
+          {/* Location pill - iOS style */}
+          {tenant.city && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="mt-8"
+            >
+              <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
+                hasHeroImage 
+                  ? 'bg-white/10 text-white/90 backdrop-blur-md border border-white/10' 
+                  : 'bg-muted text-muted-foreground'
+              }`}>
+                {tenant.city}
+              </span>
+            </motion.div>
+          )}
         </div>
       </div>
 
-      {/* Decorative gradient at bottom */}
-      <div 
-        className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none bg-gradient-to-t from-background to-transparent"
-      />
+      {/* Subtle fade to content */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none bg-gradient-to-t from-background to-transparent" />
     </section>
   );
 };
