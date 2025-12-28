@@ -3,11 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, Home, Calendar, Star, MessageSquare, BarChart3, Wallet, ExternalLink, Settings, Scissors, Users, Clock } from "lucide-react";
+import { LogOut, Loader2, Home, Calendar, Star, MessageCircle, BarChart3, Wallet, ExternalLink, Settings, Scissors, Users, Clock } from "lucide-react";
 import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
-import { WhatsAppManager } from "@/components/admin/WhatsAppManager";
+import { MessagesManager } from "@/components/admin/MessagesManager";
 import { CashRegisterManager } from "@/components/admin/CashRegisterManager";
 import { TenantSettings } from "@/components/admin/TenantSettings";
 import { ServicesManager } from "@/components/admin/ServicesManager";
@@ -35,7 +35,7 @@ export default function TenantAdmin() {
   const [userEmail, setUserEmail] = useState("");
   const [activeTab, setActiveTab] = useState("calendar");
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
-  const [whatsappUnreadCount, setWhatsappUnreadCount] = useState(0);
+  const [messagesUnreadCount, setMessagesUnreadCount] = useState(0);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [hasAccess, setHasAccess] = useState(false);
@@ -51,7 +51,7 @@ export default function TenantAdmin() {
   useEffect(() => {
     if (tenant?.id) {
       fetchPendingReviews();
-      fetchWhatsAppUnreadCount();
+      fetchMessagesUnreadCount();
       fetchStylists();
 
       const reviewsChannel = supabase
@@ -68,23 +68,23 @@ export default function TenantAdmin() {
         )
         .subscribe();
 
-      const whatsappChannel = supabase
-        .channel("whatsapp-unread-count")
+      const messagesChannel = supabase
+        .channel("messages-unread-count")
         .on(
           "postgres_changes",
           {
             event: "*",
             schema: "public",
-            table: "whatsapp_contacts",
+            table: "conversations",
             filter: `tenant_id=eq.${tenant.id}`
           },
-          () => fetchWhatsAppUnreadCount()
+          () => fetchMessagesUnreadCount()
         )
         .subscribe();
 
       return () => {
         supabase.removeChannel(reviewsChannel);
-        supabase.removeChannel(whatsappChannel);
+        supabase.removeChannel(messagesChannel);
       };
     }
   }, [tenant?.id]);
@@ -124,21 +124,21 @@ export default function TenantAdmin() {
     }
   };
 
-  const fetchWhatsAppUnreadCount = async () => {
+  const fetchMessagesUnreadCount = async () => {
     if (!tenant?.id) return;
     
     try {
       const { data, error } = await supabase
-        .from("whatsapp_contacts")
-        .select("unread_count")
+        .from("conversations")
+        .select("unread_count_salon")
         .eq("tenant_id", tenant.id);
 
       if (error) throw error;
 
-      const totalUnread = data?.reduce((sum, contact) => sum + (contact.unread_count || 0), 0) || 0;
-      setWhatsappUnreadCount(totalUnread);
+      const totalUnread = data?.reduce((sum, conv) => sum + (conv.unread_count_salon || 0), 0) || 0;
+      setMessagesUnreadCount(totalUnread);
     } catch (error) {
-      console.error("Error fetching WhatsApp unread count:", error);
+      console.error("Error fetching messages unread count:", error);
     }
   };
 
@@ -326,14 +326,14 @@ export default function TenantAdmin() {
               )}
             </TabsTrigger>
             <TabsTrigger
-              value="whatsapp"
+              value="messages"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none relative"
             >
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden md:inline">WhatsApp</span>
-              {whatsappUnreadCount > 0 && (
+              <MessageCircle className="h-4 w-4" />
+              <span className="hidden md:inline">Mensajes</span>
+              {messagesUnreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 md:relative md:top-0 md:right-0 md:ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
-                  {whatsappUnreadCount > 99 ? "99+" : whatsappUnreadCount}
+                  {messagesUnreadCount > 99 ? "99+" : messagesUnreadCount}
                 </span>
               )}
             </TabsTrigger>
@@ -382,8 +382,8 @@ export default function TenantAdmin() {
           <TabsContent value="reviews" className="mt-6">
             <ReviewsManager tenantId={tenant.id} />
           </TabsContent>
-          <TabsContent value="whatsapp" className="mt-6">
-            <WhatsAppManager tenantId={tenant.id} />
+          <TabsContent value="messages" className="mt-6">
+            <MessagesManager tenantId={tenant.id} />
           </TabsContent>
           <TabsContent value="security" className="mt-6">
             <SecurityMonitor tenantId={tenant.id} />
