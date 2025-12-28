@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Star, Quote } from "lucide-react";
+import { Star, Quote, User } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,13 +10,33 @@ interface Review {
   rating: number;
   comment: string | null;
   created_at: string;
+  user_id: string;
+  profile?: {
+    full_name: string | null;
+  } | null;
 }
 
 interface TenantReviewsSectionProps {
   tenantId: string;
   tenantName?: string;
-  primaryColor?: string; // kept for backwards compatibility but not used
+  primaryColor?: string;
 }
+
+// Helper to get display name (first name only for privacy)
+const getDisplayName = (fullName: string | null | undefined): string => {
+  if (!fullName) return "Cliente";
+  const firstName = fullName.trim().split(" ")[0];
+  // Only show first name, max 15 chars
+  return firstName.slice(0, 15);
+};
+
+// Helper to get initials for avatar
+const getInitials = (fullName: string | null | undefined): string => {
+  if (!fullName) return "C";
+  const parts = fullName.trim().split(" ");
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
 
 export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSectionProps) => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -26,21 +46,44 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
   useEffect(() => {
     const fetchReviews = async () => {
       try {
+        // Fetch reviews with user profiles
         const { data, error } = await supabase
           .from("reviews")
-          .select("id, rating, comment, created_at")
+          .select(`
+            id, 
+            rating, 
+            comment, 
+            created_at, 
+            user_id
+          `)
           .eq("tenant_id", tenantId)
           .eq("approved", true)
           .order("created_at", { ascending: false })
           .limit(6);
 
         if (error) throw error;
-        
-        setReviews(data || []);
-        
+
+        // Fetch profiles for the reviews
         if (data && data.length > 0) {
+          const userIds = [...new Set(data.map(r => r.user_id))];
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", userIds);
+
+          const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+          
+          const reviewsWithProfiles = data.map(review => ({
+            ...review,
+            profile: profileMap.get(review.user_id) || null
+          }));
+
+          setReviews(reviewsWithProfiles);
+          
           const avg = data.reduce((sum, r) => sum + r.rating, 0) / data.length;
           setAverageRating(Math.round(avg * 10) / 10);
+        } else {
+          setReviews([]);
         }
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -112,7 +155,22 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
           {reviews.map((review, idx) => (
             <ScrollReveal key={review.id} delay={idx * 100}>
               <div className="bg-card rounded-xl p-6 shadow-lg h-full flex flex-col">
-                <Quote className="h-8 w-8 mb-4 text-primary opacity-20" />
+                {/* Header with avatar and name */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
+                    {getInitials(review.profile?.full_name)}
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {getDisplayName(review.profile?.full_name)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(review.created_at)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Stars */}
                 <div className="flex mb-3">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
@@ -122,12 +180,13 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
                     />
                   ))}
                 </div>
+
+                {/* Comment */}
                 {review.comment && (
-                  <p className="text-muted-foreground flex-1 italic">"{review.comment}"</p>
+                  <p className="text-muted-foreground flex-1 italic text-sm leading-relaxed">
+                    "{review.comment}"
+                  </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-4">
-                  {formatDate(review.created_at)}
-                </p>
               </div>
             </ScrollReveal>
           ))}

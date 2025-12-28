@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
@@ -9,6 +9,7 @@ import { TenantHero } from "@/components/tenant/TenantHero";
 import { TenantHeader } from "@/components/tenant/TenantHeader";
 import { TenantFooter } from "@/components/tenant/TenantFooter";
 import { TenantReviewsSection } from "@/components/tenant/TenantReviewsSection";
+import { TenantReviewForm } from "@/components/tenant/TenantReviewForm";
 import { TenantGallerySection } from "@/components/tenant/TenantGallerySection";
 import { TenantLocationSection } from "@/components/tenant/TenantLocationSection";
 import { TenantThemeProvider } from "@/components/tenant/TenantThemeProvider";
@@ -51,9 +52,15 @@ const TenantLanding = () => {
   const [activeSection, setActiveSection] = useState("inicio");
   const [isPreview, setIsPreview] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [reviewsKey, setReviewsKey] = useState(0);
 
   const { isAdmin, isStylist, hasAccess } = useTenantAccess(tenant?.id);
   const previewToken = searchParams.get("preview");
+
+  const handleReviewSubmitted = useCallback(() => {
+    // Refresh reviews section
+    setReviewsKey(prev => prev + 1);
+  }, []);
 
   useEffect(() => {
     if (slug) {
@@ -204,13 +211,19 @@ const TenantLanding = () => {
           {/* Reviews Section - Tenant specific */}
           <div id="resenas">
             <TenantReviewsSection
+              key={reviewsKey}
               tenantId={tenant.id}
               tenantName={tenant.name}
               primaryColor={primaryColor}
             />
           </div>
 
-          {/* Location Section - Tenant specific */}
+          {/* Review Form - For logged in users */}
+          <TenantReviewForm
+            tenantId={tenant.id}
+            tenantName={tenant.name}
+            onReviewSubmitted={handleReviewSubmitted}
+          />
           <TenantLocationSection
             tenantName={tenant.name}
             address={tenant.address}
