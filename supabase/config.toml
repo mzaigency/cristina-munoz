@@ -35,3 +35,7 @@ verify_jwt = true
 
 [functions.send-tenant-welcome]
 verify_jwt = false
+
+[functions.provision-tenant-admin]
+verify_jwt = true
+

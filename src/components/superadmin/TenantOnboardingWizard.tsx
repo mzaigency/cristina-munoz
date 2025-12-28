@@ -432,7 +432,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         .single();
 
       if (tenantError) {
-        if (tenantError.code === '23505') {
+        if (tenantError.code === "23505") {
           throw new Error(`El slug "${basicInfo.slug}" ya existe. Por favor, elige otro.`);
         }
         throw tenantError;
@@ -440,70 +440,36 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
       const tenantId = tenant.id;
 
-      // 2. Create admin user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: adminInfo.email,
-        password: adminPassword,
-        options: {
-          data: {
-            full_name: adminInfo.name || basicInfo.name,
+      // 2. Create tenant admin WITHOUT changing the current session
+      const { data: adminProvision, error: adminProvisionError } =
+        await supabase.functions.invoke("provision-tenant-admin", {
+          body: {
+            tenantId,
+            tenantName: basicInfo.name,
+            tenantSlug: basicInfo.slug.toLowerCase().replace(/\s+/g, "-"),
+            email: adminInfo.email,
+            name: adminInfo.name || basicInfo.name,
+            password: adminPassword,
+            sendWelcomeEmail: adminInfo.sendWelcomeEmail,
           },
-        },
-      });
+        });
 
-      if (authError) throw authError;
+      if (adminProvisionError) throw adminProvisionError;
+      if (!adminProvision?.success) {
+        throw new Error(adminProvision?.error || "No se pudo crear el administrador");
+      }
 
-      if (authData.user) {
-        // 3. Assign admin role
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({
-            user_id: authData.user.id,
-            role: 'admin',
-          });
-
-        if (roleError) console.error("Error assigning role:", roleError);
-
-        // 4. Link admin to tenant
-        const { error: adminError } = await supabase
-          .from("tenant_admins")
-          .insert({
-            tenant_id: tenantId,
-            user_id: authData.user.id,
-            is_owner: true,
-          });
-
-        if (adminError) console.error("Error linking admin:", adminError);
-
-        // 5. Send welcome email with credentials
-        if (adminInfo.sendWelcomeEmail) {
-          try {
-            await supabase.functions.invoke('send-tenant-welcome', {
-              body: {
-                email: adminInfo.email,
-                name: adminInfo.name || basicInfo.name,
-                tenantName: basicInfo.name,
-                tenantSlug: basicInfo.slug,
-                password: adminPassword,
-              },
-            });
-          } catch (emailError) {
-            console.error("Error sending welcome email:", emailError);
-            // Show password in toast if email fails
-            toast({
-              title: "Email no enviado",
-              description: `Credenciales: ${adminInfo.email} / ${adminPassword}`,
-              duration: 30000,
-            });
-          }
-        } else {
-          // Show password in toast
-          toast({
-            title: "Credenciales del administrador",
-            description: `Email: ${adminInfo.email} | Contraseña: ${adminPassword}`,
-            duration: 30000,
-          });
-        }
+      if (adminInfo.sendWelcomeEmail && adminProvision?.emailSent) {
+        toast({
+          title: "Administrador creado",
+          description: `Email enviado a ${adminInfo.email} con las credenciales`,
+        });
+      } else {
+        toast({
+          title: adminProvision?.emailSent ? "Administrador creado" : "Administrador creado (email no enviado)",
+          description: `Credenciales: ${adminInfo.email} / ${adminPassword}`,
+          duration: 30000,
+        });
       }
 
       // 6. Create stylists
