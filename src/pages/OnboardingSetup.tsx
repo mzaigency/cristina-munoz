@@ -48,59 +48,20 @@ import {
   StylistsStep,
   TypographyStep,
   ImagesStep,
+  AIGenerationStep,
   colorPresets,
   dayNames,
   StepProps,
-  BrandingData,
   ServiceForm,
 } from "@/components/onboarding";
 
-// Step 1: Branding with AI
-function BrandingStep({ onNext, tenantId, tenantName, loading, setLoading }: StepProps) {
+// Step: Colors only (AI generation moved to end)
+function ColorsStep({ onNext, tenantId, loading, setLoading }: StepProps) {
   const [selectedColor, setSelectedColor] = useState(colorPresets[0]);
   const [useCustomColor, setUseCustomColor] = useState(false);
   const [customPrimary, setCustomPrimary] = useState("#8B5CF6");
   const [customSecondary, setCustomSecondary] = useState("#D946EF");
-  const [tagline, setTagline] = useState("");
-  const [description, setDescription] = useState("");
-  const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>([]);
-  const [generatingAI, setGeneratingAI] = useState(false);
-  const [aiGenerated, setAiGenerated] = useState(false);
   const { toast } = useToast();
-
-  const generateWithAI = async () => {
-    setGeneratingAI(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-tenant-branding", {
-        body: {
-          name: tenantName || "Mi Salón",
-          tenantId,
-        },
-      });
-
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Error al generar");
-
-      const branding = data.branding as BrandingData;
-      setTagline(branding.tagline || "");
-      setDescription(branding.description || "");
-      setFaqs(branding.faqs || []);
-      setAiGenerated(true);
-
-      toast({
-        title: "¡Contenido generado!",
-        description: "Puedes editar el texto si lo deseas",
-      });
-    } catch (error: unknown) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al generar contenido",
-        variant: "destructive",
-      });
-    } finally {
-      setGeneratingAI(false);
-    }
-  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -113,9 +74,6 @@ function BrandingStep({ onNext, tenantId, tenantName, loading, setLoading }: Ste
         .update({
           primary_color: primaryColor,
           secondary_color: secondaryColor,
-          tagline: tagline || null,
-          description: description || null,
-          features: faqs.length > 0 ? { faqs } : null,
         })
         .eq("id", tenantId);
 
@@ -137,38 +95,17 @@ function BrandingStep({ onNext, tenantId, tenantName, loading, setLoading }: Ste
       <div>
         <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
           <Palette className="h-5 w-5 text-primary" />
-          Personaliza tu marca
+          Paleta de colores
         </h3>
         <p className="text-sm text-muted-foreground">
-          Elige colores y deja que la IA genere el contenido
+          Elige los colores que representan tu marca
         </p>
       </div>
-
-      {/* AI Generation Button */}
-      <Button
-        type="button"
-        variant="outline"
-        onClick={generateWithAI}
-        disabled={generatingAI}
-        className="w-full h-12 rounded-xl border-dashed border-primary/50 text-primary hover:bg-primary/5"
-      >
-        {generatingAI ? (
-          <>
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Generando con IA...
-          </>
-        ) : (
-          <>
-            {aiGenerated ? <RefreshCw className="h-4 w-4 mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-            {aiGenerated ? "Regenerar contenido con IA" : "Generar eslogan y descripción con IA"}
-          </>
-        )}
-      </Button>
 
       {/* Color Selection */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Paleta de colores</Label>
+          <Label className="text-sm font-medium">Selecciona una paleta</Label>
           <button
             type="button"
             onClick={() => setUseCustomColor(!useCustomColor)}
@@ -248,54 +185,6 @@ function BrandingStep({ onNext, tenantId, tenantName, loading, setLoading }: Ste
           </div>
         )}
       </div>
-
-      {/* Tagline & Description */}
-      <div className="space-y-4">
-        <div>
-          <Label>Eslogan</Label>
-          <Input
-            placeholder="Tu belleza, nuestra pasión"
-            value={tagline}
-            onChange={(e) => setTagline(e.target.value)}
-            className="h-12 rounded-xl mt-2"
-          />
-        </div>
-
-        <div>
-          <Label>Descripción</Label>
-          <Textarea
-            placeholder="Describe brevemente tu salón..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="rounded-xl mt-2 min-h-[80px]"
-          />
-        </div>
-      </div>
-
-      {/* FAQs generated by AI */}
-      {faqs.length > 0 && (
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            Preguntas frecuentes generadas
-          </Label>
-          <Accordion type="single" collapsible className="w-full">
-            {faqs.map((faq, index) => (
-              <AccordionItem key={index} value={`faq-${index}`} className="border rounded-xl px-4 mb-2">
-                <AccordionTrigger className="text-sm text-left hover:no-underline">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-          <p className="text-xs text-muted-foreground">
-            Estas FAQs se mostrarán en tu landing page
-          </p>
-        </div>
-      )}
 
       <Button 
         onClick={handleSave} 
@@ -948,7 +837,7 @@ export default function OnboardingSetup() {
   // Define all steps with their icons
   const steps = [
     { title: "Negocio", icon: Building2 },
-    { title: "Marca", icon: Palette },
+    { title: "Colores", icon: Palette },
     { title: "Tipografía", icon: Type },
     { title: "Imágenes", icon: Image },
     { title: "Ubicación", icon: MapPin },
@@ -957,6 +846,7 @@ export default function OnboardingSetup() {
     { title: "Horarios", icon: Clock },
     { title: "Servicios", icon: Scissors },
     { title: "Equipo", icon: Users },
+    { title: "IA", icon: Sparkles },
     { title: "¡Listo!", icon: PartyPopper },
   ];
 
@@ -1114,7 +1004,7 @@ export default function OnboardingSetup() {
       case 0:
         return <BusinessTypeStep {...stepProps} tenantName={tenantName} setTenantName={setTenantName} />;
       case 1:
-        return <BrandingStep {...stepProps} />;
+        return <ColorsStep {...stepProps} />;
       case 2:
         return <TypographyStep {...stepProps} />;
       case 3:
@@ -1132,6 +1022,8 @@ export default function OnboardingSetup() {
       case 9:
         return <StylistsStep {...stepProps} />;
       case 10:
+        return <AIGenerationStep {...stepProps} />;
+      case 11:
         return tenantSlug ? <SuccessStep tenantSlug={tenantSlug} /> : null;
       default:
         return null;
