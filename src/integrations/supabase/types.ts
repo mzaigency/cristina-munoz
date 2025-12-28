@@ -288,6 +288,42 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_n8n_config"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
       password_reset_tokens: {
         Row: {
           created_at: string | null
@@ -783,6 +819,7 @@ export type Database = {
       tenants: {
         Row: {
           address: string | null
+          average_price: number | null
           button_style: string | null
           city: string | null
           country: string | null
@@ -797,6 +834,7 @@ export type Database = {
           google_maps_url: string | null
           heading_size: string | null
           hero_image_url: string | null
+          hero_images: Json | null
           id: string
           instagram_url: string | null
           is_active: boolean | null
@@ -821,6 +859,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          average_price?: number | null
           button_style?: string | null
           city?: string | null
           country?: string | null
@@ -835,6 +874,7 @@ export type Database = {
           google_maps_url?: string | null
           heading_size?: string | null
           hero_image_url?: string | null
+          hero_images?: Json | null
           id?: string
           instagram_url?: string | null
           is_active?: boolean | null
@@ -859,6 +899,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          average_price?: number | null
           button_style?: string | null
           city?: string | null
           country?: string | null
@@ -873,6 +914,7 @@ export type Database = {
           google_maps_url?: string | null
           heading_size?: string | null
           hero_image_url?: string | null
+          hero_images?: Json | null
           id?: string
           instagram_url?: string | null
           is_active?: boolean | null
