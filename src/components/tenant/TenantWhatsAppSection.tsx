@@ -6,14 +6,13 @@ interface TenantWhatsAppSectionProps {
   tenantName: string;
   whatsappNumber?: string | null;
   phone?: string | null;
-  primaryColor?: string;
+  primaryColor?: string; // kept for backwards compatibility but not used
 }
 
 export const TenantWhatsAppSection = ({ 
   tenantName, 
   whatsappNumber, 
   phone, 
-  primaryColor = "#8B5CF6" 
 }: TenantWhatsAppSectionProps) => {
   // Use whatsapp number or fallback to phone
   const contactNumber = whatsappNumber || phone;
@@ -27,22 +26,13 @@ export const TenantWhatsAppSection = ({
   const whatsappUrl = `https://wa.me/${cleanNumber}?text=Hola, me gustaría pedir información sobre ${tenantName}`;
 
   return (
-    <section className="py-16 relative overflow-hidden">
-      <div 
-        className="absolute inset-0"
-        style={{ 
-          background: `linear-gradient(135deg, ${primaryColor}15 0%, ${primaryColor}05 100%)` 
-        }}
-      />
+    <section className="py-16 relative overflow-hidden bg-primary/5">
       <div className="container mx-auto px-4 relative z-10">
         <ScrollReveal>
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-2xl bg-card shadow-xl">
             <div className="flex items-center gap-4">
-              <div 
-                className="p-4 rounded-full"
-                style={{ backgroundColor: `${primaryColor}20` }}
-              >
-                <MessageCircle className="h-8 w-8" style={{ color: primaryColor }} />
+              <div className="p-4 rounded-full bg-primary/20">
+                <MessageCircle className="h-8 w-8 text-primary" />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-foreground">
@@ -55,8 +45,7 @@ export const TenantWhatsAppSection = ({
             </div>
             <Button 
               size="lg" 
-              className="gap-2 text-white"
-              style={{ backgroundColor: "#25D366" }}
+              className="gap-2 bg-[#25D366] hover:bg-[#20BD5C] text-white"
               asChild
             >
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">

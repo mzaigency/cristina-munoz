@@ -15,10 +15,10 @@ interface GalleryImage {
 interface TenantGallerySectionProps {
   tenantId: string;
   tenantName?: string;
-  primaryColor?: string;
+  primaryColor?: string; // kept for backwards compatibility but not used
 }
 
-export const TenantGallerySection = ({ tenantId, tenantName, primaryColor = "#8B5CF6" }: TenantGallerySectionProps) => {
+export const TenantGallerySection = ({ tenantId, tenantName }: TenantGallerySectionProps) => {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -100,7 +100,7 @@ export const TenantGallerySection = ({ tenantId, tenantName, primaryColor = "#8B
           {images.map((image, idx) => (
             <ScrollReveal key={image.id} delay={idx * 50}>
               <div
-                className="relative aspect-square rounded-xl overflow-hidden cursor-pointer group"
+                className="relative aspect-square rounded-xl overflow-hidden cursor-pointer group ring-2 ring-transparent hover:ring-primary transition-all"
                 onClick={() => setSelectedIndex(idx)}
               >
                 <img

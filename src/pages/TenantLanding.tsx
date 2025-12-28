@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
@@ -13,6 +13,7 @@ import { TenantReviewsSection } from "@/components/tenant/TenantReviewsSection";
 import { TenantGallerySection } from "@/components/tenant/TenantGallerySection";
 import { TenantWhatsAppSection } from "@/components/tenant/TenantWhatsAppSection";
 import { TenantLocationSection } from "@/components/tenant/TenantLocationSection";
+import { TenantThemeProvider } from "@/components/tenant/TenantThemeProvider";
 
 interface Tenant {
   id: string;
@@ -140,101 +141,106 @@ const TenantLanding = () => {
   const primaryColor = tenant.primary_color || "#8B5CF6";
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* Preview Banner */}
-      {isPreview && (
-        <div className="fixed top-0 left-0 right-0 z-[100] bg-yellow-500 text-yellow-900 text-center py-2 text-sm font-medium">
-          Vista previa - Esta página no está publicada
-          <meta name="robots" content="noindex, nofollow" />
-        </div>
-      )}
+    <TenantThemeProvider 
+      primaryColor={primaryColor} 
+      secondaryColor={tenant.secondary_color || "#D946EF"}
+    >
+      <div className="min-h-screen bg-background overflow-x-hidden">
+        {/* Preview Banner */}
+        {isPreview && (
+          <div className="fixed top-0 left-0 right-0 z-[100] bg-yellow-500 text-yellow-900 text-center py-2 text-sm font-medium">
+            Vista previa - Esta página no está publicada
+            <meta name="robots" content="noindex, nofollow" />
+          </div>
+        )}
 
-      <SEO
-        title={seoTitle}
-        description={seoDescription}
-        keywords={seoKeywords}
-        canonicalUrl={`/salon/${tenant.slug}`}
-      />
-      
-      <TenantHeader 
-        tenant={tenant} 
-        onNavigate={scrollToSection} 
-        activeSection={activeSection} 
-      />
-
-      <main className={isPreview ? "pt-10" : ""}>
-        {/* Hero Section */}
-        <div id="inicio">
-          <TenantHero 
-            tenant={tenant}
-            onBookNow={handleBookNow}
-          />
-        </div>
-
-        {/* Services Section - Tenant specific */}
-        <div id="servicios">
-          <TenantServicesSection 
-            tenantId={tenant.id} 
-            tenantName={tenant.name} 
-          />
-        </div>
-
-        {/* Booking Section */}
-        <div id="reserva">
-          <TenantBookingFlow 
-            tenantId={tenant.id} 
-            tenantName={tenant.name} 
-          />
-        </div>
-
-        {/* WhatsApp CTA - Tenant specific */}
-        <TenantWhatsAppSection
-          tenantName={tenant.name}
-          whatsappNumber={tenant.whatsapp_number}
-          phone={tenant.phone}
-          primaryColor={primaryColor}
+        <SEO
+          title={seoTitle}
+          description={seoDescription}
+          keywords={seoKeywords}
+          canonicalUrl={`/salon/${tenant.slug}`}
+        />
+        
+        <TenantHeader 
+          tenant={tenant} 
+          onNavigate={scrollToSection} 
+          activeSection={activeSection} 
         />
 
-        {/* Gallery Section - Tenant specific */}
-        <div id="galeria">
-          <TenantGallerySection
-            tenantId={tenant.id}
+        <main className={isPreview ? "pt-10" : ""}>
+          {/* Hero Section */}
+          <div id="inicio">
+            <TenantHero 
+              tenant={tenant}
+              onBookNow={handleBookNow}
+            />
+          </div>
+
+          {/* Services Section - Tenant specific */}
+          <div id="servicios">
+            <TenantServicesSection 
+              tenantId={tenant.id} 
+              tenantName={tenant.name} 
+            />
+          </div>
+
+          {/* Booking Section */}
+          <div id="reserva">
+            <TenantBookingFlow 
+              tenantId={tenant.id} 
+              tenantName={tenant.name} 
+            />
+          </div>
+
+          {/* WhatsApp CTA - Tenant specific */}
+          <TenantWhatsAppSection
             tenantName={tenant.name}
+            whatsappNumber={tenant.whatsapp_number}
+            phone={tenant.phone}
             primaryColor={primaryColor}
           />
-        </div>
 
-        {/* Reviews Section - Tenant specific */}
-        <div id="resenas">
-          <TenantReviewsSection
-            tenantId={tenant.id}
+          {/* Gallery Section - Tenant specific */}
+          <div id="galeria">
+            <TenantGallerySection
+              tenantId={tenant.id}
+              tenantName={tenant.name}
+              primaryColor={primaryColor}
+            />
+          </div>
+
+          {/* Reviews Section - Tenant specific */}
+          <div id="resenas">
+            <TenantReviewsSection
+              tenantId={tenant.id}
+              tenantName={tenant.name}
+              primaryColor={primaryColor}
+            />
+          </div>
+
+          {/* Location Section - Tenant specific */}
+          <TenantLocationSection
             tenantName={tenant.name}
+            address={tenant.address}
+            city={tenant.city}
+            postalCode={tenant.postal_code}
+            phone={tenant.phone}
+            email={tenant.email}
+            instagramUrl={tenant.instagram_url}
+            facebookUrl={tenant.facebook_url}
+            googleMapsUrl={tenant.google_maps_url}
             primaryColor={primaryColor}
           />
-        </div>
 
-        {/* Location Section - Tenant specific */}
-        <TenantLocationSection
-          tenantName={tenant.name}
-          address={tenant.address}
-          city={tenant.city}
-          postalCode={tenant.postal_code}
-          phone={tenant.phone}
-          email={tenant.email}
-          instagramUrl={tenant.instagram_url}
-          facebookUrl={tenant.facebook_url}
-          googleMapsUrl={tenant.google_maps_url}
-          primaryColor={primaryColor}
-        />
+          {/* Footer - Tenant specific */}
+          <div id="contacto">
+            <TenantFooter tenant={tenant} />
+          </div>
+        </main>
 
-        {/* Footer - Tenant specific */}
-        <div id="contacto">
-          <TenantFooter tenant={tenant} />
-        </div>
-      </main>
-
-      <InstallPWA />
-    </div>
+        <InstallPWA />
+      </div>
+    </TenantThemeProvider>
   );
 };
 

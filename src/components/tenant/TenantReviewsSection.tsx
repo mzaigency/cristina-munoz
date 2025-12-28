@@ -15,10 +15,10 @@ interface Review {
 interface TenantReviewsSectionProps {
   tenantId: string;
   tenantName?: string;
-  primaryColor?: string;
+  primaryColor?: string; // kept for backwards compatibility but not used
 }
 
-export const TenantReviewsSection = ({ tenantId, tenantName, primaryColor = "#8B5CF6" }: TenantReviewsSectionProps) => {
+export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSectionProps) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [averageRating, setAverageRating] = useState(0);
@@ -96,13 +96,12 @@ export const TenantReviewsSection = ({ tenantId, tenantName, primaryColor = "#8B
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className="h-6 w-6"
-                  fill={star <= Math.round(averageRating) ? primaryColor : "transparent"}
-                  stroke={primaryColor}
+                  className="h-6 w-6 text-primary"
+                  fill={star <= Math.round(averageRating) ? "currentColor" : "transparent"}
                 />
               ))}
             </div>
-            <span className="text-lg font-semibold" style={{ color: primaryColor }}>
+            <span className="text-lg font-semibold text-primary">
               {averageRating} / 5
             </span>
             <span className="text-muted-foreground">({reviews.length} reseñas)</span>
@@ -113,14 +112,13 @@ export const TenantReviewsSection = ({ tenantId, tenantName, primaryColor = "#8B
           {reviews.map((review, idx) => (
             <ScrollReveal key={review.id} delay={idx * 100}>
               <div className="bg-card rounded-xl p-6 shadow-lg h-full flex flex-col">
-                <Quote className="h-8 w-8 mb-4 opacity-20" style={{ color: primaryColor }} />
+                <Quote className="h-8 w-8 mb-4 text-primary opacity-20" />
                 <div className="flex mb-3">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
-                      className="h-4 w-4"
-                      fill={star <= review.rating ? primaryColor : "transparent"}
-                      stroke={primaryColor}
+                      className="h-4 w-4 text-primary"
+                      fill={star <= review.rating ? "currentColor" : "transparent"}
                     />
                   ))}
                 </div>

@@ -13,7 +13,7 @@ interface TenantLocationSectionProps {
   instagramUrl?: string | null;
   facebookUrl?: string | null;
   googleMapsUrl?: string | null;
-  primaryColor?: string;
+  primaryColor?: string; // kept for backwards compatibility but not used
 }
 
 export const TenantLocationSection = ({
@@ -26,7 +26,6 @@ export const TenantLocationSection = ({
   instagramUrl,
   facebookUrl,
   googleMapsUrl,
-  primaryColor = "#8B5CF6",
 }: TenantLocationSectionProps) => {
   const fullAddress = [address, city, postalCode].filter(Boolean).join(", ");
   const mapsSearchUrl = googleMapsUrl || 
@@ -48,17 +47,14 @@ export const TenantLocationSection = ({
           {/* Contact Info */}
           <ScrollReveal>
             <div className="bg-card rounded-2xl p-8 shadow-lg h-full">
-              <h3 
-                className="text-2xl font-bold mb-6"
-                style={{ color: primaryColor }}
-              >
+              <h3 className="text-2xl font-bold mb-6 text-primary">
                 {tenantName}
               </h3>
               
               <div className="space-y-4">
                 {fullAddress && (
                   <div className="flex items-start gap-4">
-                    <MapPin className="h-5 w-5 mt-1 flex-shrink-0" style={{ color: primaryColor }} />
+                    <MapPin className="h-5 w-5 mt-1 flex-shrink-0 text-primary" />
                     <div>
                       <p className="font-medium">Dirección</p>
                       <p className="text-muted-foreground">{fullAddress}</p>
@@ -67,8 +63,7 @@ export const TenantLocationSection = ({
                           href={mapsSearchUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm hover:underline inline-flex items-center gap-1 mt-1"
-                          style={{ color: primaryColor }}
+                          className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-1"
                         >
                           Ver en Google Maps
                           <ExternalLink className="h-3 w-3" />
@@ -80,7 +75,7 @@ export const TenantLocationSection = ({
 
                 {phone && (
                   <div className="flex items-start gap-4">
-                    <Phone className="h-5 w-5 mt-1 flex-shrink-0" style={{ color: primaryColor }} />
+                    <Phone className="h-5 w-5 mt-1 flex-shrink-0 text-primary" />
                     <div>
                       <p className="font-medium">Teléfono</p>
                       <a 
@@ -95,7 +90,7 @@ export const TenantLocationSection = ({
 
                 {email && (
                   <div className="flex items-start gap-4">
-                    <Mail className="h-5 w-5 mt-1 flex-shrink-0" style={{ color: primaryColor }} />
+                    <Mail className="h-5 w-5 mt-1 flex-shrink-0 text-primary" />
                     <div>
                       <p className="font-medium">Email</p>
                       <a 
