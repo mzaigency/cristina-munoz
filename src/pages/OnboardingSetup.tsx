@@ -41,6 +41,7 @@ import { Label } from "@/components/ui/label";
 import confetti from "canvas-confetti";
 
 import {
+  BusinessTypeStep,
   LocationStep,
   ContactStep,
   SocialStep,
@@ -946,6 +947,7 @@ export default function OnboardingSetup() {
 
   // Define all steps with their icons
   const steps = [
+    { title: "Negocio", icon: Building2 },
     { title: "Marca", icon: Palette },
     { title: "Tipografía", icon: Type },
     { title: "Imágenes", icon: Image },
@@ -1110,24 +1112,26 @@ export default function OnboardingSetup() {
 
     switch (step) {
       case 0:
-        return <BrandingStep {...stepProps} />;
+        return <BusinessTypeStep {...stepProps} tenantName={tenantName} setTenantName={setTenantName} />;
       case 1:
-        return <TypographyStep {...stepProps} />;
+        return <BrandingStep {...stepProps} />;
       case 2:
-        return <ImagesStep {...stepProps} />;
+        return <TypographyStep {...stepProps} />;
       case 3:
-        return <LocationStep {...stepProps} />;
+        return <ImagesStep {...stepProps} />;
       case 4:
-        return <ContactStep {...stepProps} />;
+        return <LocationStep {...stepProps} />;
       case 5:
-        return <SocialStep {...stepProps} />;
+        return <ContactStep {...stepProps} />;
       case 6:
-        return <HoursStep {...stepProps} />;
+        return <SocialStep {...stepProps} />;
       case 7:
-        return <ServicesStep {...stepProps} />;
+        return <HoursStep {...stepProps} />;
       case 8:
-        return <StylistsStep {...stepProps} />;
+        return <ServicesStep {...stepProps} />;
       case 9:
+        return <StylistsStep {...stepProps} />;
+      case 10:
         return tenantSlug ? <SuccessStep tenantSlug={tenantSlug} /> : null;
       default:
         return null;

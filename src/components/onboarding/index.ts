@@ -1,3 +1,4 @@
+export { BusinessTypeStep } from "./BusinessTypeStep";
 export { LocationStep } from "./LocationStep";
 export { ContactStep } from "./ContactStep";
 export { SocialStep } from "./SocialStep";
