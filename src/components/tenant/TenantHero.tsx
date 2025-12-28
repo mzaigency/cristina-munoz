@@ -21,8 +21,6 @@ interface TenantHeroProps {
 }
 
 export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
-  const primaryColor = tenant.primary_color || '#8B5CF6';
-  const secondaryColor = tenant.secondary_color || '#D946EF';
   const hasHeroImage = !!tenant.hero_image_url;
 
   // Dynamic tagline
@@ -31,12 +29,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
 
   return (
     <section 
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
-      style={{
-        background: hasHeroImage 
-          ? undefined
-          : `linear-gradient(135deg, ${primaryColor}15 0%, ${secondaryColor}15 100%)`
-      }}
+      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10"
     >
       {/* Hero Image Background */}
       {hasHeroImage && (
@@ -58,9 +51,9 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
       {/* Background Pattern (when no hero image) */}
       {!hasHeroImage && (
         <div 
-          className="absolute inset-0 opacity-5"
+          className="absolute inset-0 opacity-10"
           style={{
-            backgroundImage: `radial-gradient(${primaryColor} 1px, transparent 1px)`,
+            backgroundImage: `radial-gradient(hsl(var(--primary)) 1px, transparent 1px)`,
             backgroundSize: '20px 20px'
           }}
         />
@@ -86,9 +79,8 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
             className={`text-4xl md:text-6xl lg:text-7xl font-bold mb-6 ${
-              hasHeroImage ? 'text-white' : ''
+              hasHeroImage ? 'text-white' : 'text-primary'
             }`}
-            style={{ color: hasHeroImage ? undefined : primaryColor }}
           >
             {tenant.name}
           </motion.h1>
@@ -115,7 +107,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
                 hasHeroImage ? 'text-white/80' : 'text-muted-foreground'
               }`}
             >
-              <MapPin className="h-5 w-5" style={{ color: hasHeroImage ? 'white' : primaryColor }} />
+              <MapPin className={`h-5 w-5 ${hasHeroImage ? 'text-white' : 'text-primary'}`} />
               <span>{tenant.address ? `${tenant.address}, ` : ''}{tenant.city}</span>
             </motion.div>
           )}
@@ -130,11 +122,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             <Button
               size="lg"
               onClick={onBookNow}
-              className="text-lg px-8 py-6 rounded-full hover:scale-105 transition-transform"
-              style={{ 
-                backgroundColor: primaryColor,
-                color: 'white'
-              }}
+              className="text-lg px-8 py-6 rounded-full hover:scale-105 transition-transform bg-primary text-primary-foreground"
             >
               <Calendar className="mr-2 h-5 w-5" />
               Reservar Cita
@@ -145,10 +133,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
 
       {/* Decorative gradient at bottom */}
       <div 
-        className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-        style={{
-          background: `linear-gradient(to top, hsl(var(--background)), transparent)`
-        }}
+        className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none bg-gradient-to-t from-background to-transparent"
       />
     </section>
   );
