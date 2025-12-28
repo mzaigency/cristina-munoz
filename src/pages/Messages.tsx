@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, ArrowLeft } from 'lucide-react';
+import { MessageCircle, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
@@ -63,24 +63,33 @@ export default function Messages() {
     );
   }
 
-  // Mobile layout
+  // Mobile layout - iOS style
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-background border-b">
-          <div className="flex items-center gap-3 p-4">
+        {/* Header iOS style */}
+        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
+          <div className="flex items-center h-14 px-2">
             {selectedConversation ? (
-              <Button variant="ghost" size="icon" onClick={handleBack}>
-                <ArrowLeft className="h-5 w-5" />
+              <Button 
+                variant="ghost" 
+                onClick={handleBack}
+                className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
+              >
+                <ChevronLeft className="h-6 w-6" />
+                <span className="text-[17px]">Atrás</span>
               </Button>
             ) : (
-              <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-                <ArrowLeft className="h-5 w-5" />
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate(-1)}
+                className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
+              >
+                <ChevronLeft className="h-6 w-6" />
+                <span className="text-[17px]">Atrás</span>
               </Button>
             )}
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
+            <h1 className="flex-1 text-center text-[17px] font-semibold truncate pr-10">
               {selectedConversation
                 ? selectedConversation.tenant?.name || 'Chat'
                 : 'Mensajes'}
@@ -89,7 +98,7 @@ export default function Messages() {
         </div>
 
         {/* Content */}
-        <div className="h-[calc(100vh-65px)]">
+        <div className="h-[calc(100vh-56px-env(safe-area-inset-top))]">
           {selectedConversation ? (
             <ChatWindow
               conversation={selectedConversation}
@@ -113,28 +122,36 @@ export default function Messages() {
     );
   }
 
-  // Desktop layout
+  // Desktop layout - iOS inspired
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b">
-        <div className="container mx-auto flex items-center gap-3 p-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className="container mx-auto flex items-center h-16 px-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(-1)}
+            className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
+          >
+            <ChevronLeft className="h-6 w-6" />
+            <span>Atrás</span>
           </Button>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
+          <h1 className="flex-1 text-center text-lg font-semibold">
             Mensajes
           </h1>
+          <div className="w-16" /> {/* Spacer for centering */}
         </div>
       </div>
 
       {/* Content */}
-      <div className="container mx-auto py-6">
-        <div className="bg-card rounded-lg border shadow-sm overflow-hidden h-[calc(100vh-150px)]">
-          <div className="grid md:grid-cols-[350px_1fr] h-full">
+      <div className="container mx-auto py-6 px-4">
+        <div className="bg-background rounded-2xl border border-border/50 shadow-lg overflow-hidden h-[calc(100vh-120px)]">
+          <div className="grid md:grid-cols-[380px_1fr] h-full">
             {/* Conversation list */}
-            <div className="border-r">
+            <div className="border-r border-border/50 bg-background">
+              <div className="p-4 border-b border-border/30">
+                <h2 className="text-xl font-bold">Chats</h2>
+              </div>
               <ConversationList
                 conversations={conversations}
                 loading={loadingConversations}
