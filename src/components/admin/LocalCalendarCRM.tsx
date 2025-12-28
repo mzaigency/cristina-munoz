@@ -1149,8 +1149,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                               <span className="text-[10px] truncate" style={{ color: bookingColor }}>
                                                 · {firstService}
                                               </span>
-                                              {!isBlocked && (
-                                                <div className="flex gap-0.5 ml-auto shrink-0">
+                                              <div className="flex gap-0.5 ml-auto shrink-0">
+                                                {!isBlocked && (
                                                   <button
                                                     onClick={(e) => {
                                                       e.stopPropagation();
@@ -1166,18 +1166,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                                   >
                                                     <Check className="h-3 w-3" />
                                                   </button>
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleDeleteBooking(booking);
-                                                    }}
-                                                    className="p-0.5 rounded text-muted-foreground hover:text-red-600 transition-colors"
-                                                    title="Eliminar"
-                                                  >
-                                                    <Trash2 className="h-3 w-3" />
-                                                  </button>
-                                                </div>
-                                              )}
+                                                )}
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteBooking(booking);
+                                                  }}
+                                                  className="p-0.5 rounded text-muted-foreground hover:text-red-600 transition-colors"
+                                                  title={isBlocked ? "Eliminar bloqueo" : "Eliminar"}
+                                                >
+                                                  <Trash2 className="h-3 w-3" />
+                                                </button>
+                                              </div>
                                             </div>
                                           ) : (
                                             // Normal/expanded layout
@@ -1207,8 +1207,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                               </div>
                                               
                                               {/* Actions - always visible */}
-                                              {!isBlocked && (
-                                                <div className="flex gap-1 mt-1">
+                                              <div className="flex gap-1 mt-1">
+                                                {!isBlocked && (
                                                   <button
                                                     onClick={(e) => {
                                                       e.stopPropagation();
@@ -1224,18 +1224,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                                   >
                                                     <Check className="h-3 w-3" />
                                                   </button>
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleDeleteBooking(booking);
-                                                    }}
-                                                    className="p-1 rounded bg-muted/50 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                                                    title="Eliminar"
-                                                  >
-                                                    <Trash2 className="h-3 w-3" />
-                                                  </button>
-                                                </div>
-                                              )}
+                                                )}
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteBooking(booking);
+                                                  }}
+                                                  className="p-1 rounded bg-muted/50 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                                                  title={isBlocked ? "Eliminar bloqueo" : "Eliminar"}
+                                                >
+                                                  <Trash2 className="h-3 w-3" />
+                                                </button>
+                                              </div>
                                             </>
                                           )}
                                         </div>
