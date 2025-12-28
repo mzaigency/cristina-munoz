@@ -23,22 +23,101 @@ async function getTenantIdFromContact(supabase: any, contactId: string): Promise
   return data?.tenant_id || null;
 }
 
-async function getN8nCredentials(supabase: any, tenantId: string) {
-  const { data } = await supabase
+async function getWhatsAppCredentials(supabase: any, tenantId: string) {
+  // Get WhatsApp integration settings
+  const { data: integration, error: integrationError } = await supabase
     .from('tenant_integrations')
-    .select('settings, is_enabled')
+    .select('settings, credentials_encrypted, is_enabled')
     .eq('tenant_id', tenantId)
-    .eq('integration_type', 'n8n_webhooks')
+    .eq('integration_type', 'whatsapp')
     .single();
 
-  if (!data || !data.is_enabled) {
-    // Fallback to environment variables
-    return {
-      n8n_send_whatsapp_webhook: Deno.env.get('N8N_SEND_WHATSAPP_MESSAGE_WEBHOOK'),
-    };
+  if (integrationError || !integration) {
+    console.error('Error fetching WhatsApp integration:', integrationError);
+    return null;
   }
 
-  return data.settings || {};
+  if (!integration.is_enabled) {
+    console.log('WhatsApp integration is not enabled for tenant:', tenantId);
+    return null;
+  }
+
+  // Decrypt the API token
+  let apiToken = null;
+  if (integration.credentials_encrypted) {
+    const { data: decryptedToken, error: decryptError } = await supabase
+      .rpc('decrypt_sensitive_data', {
+        _ciphertext: integration.credentials_encrypted,
+        _tenant_id: tenantId
+      });
+
+    if (decryptError) {
+      console.error('Error decrypting WhatsApp token:', decryptError);
+      return null;
+    }
+    apiToken = decryptedToken;
+  }
+
+  return {
+    apiToken,
+    senderId: integration.settings?.sender_id || null,
+    phoneNumber: integration.settings?.phone_number || null,
+  };
+}
+
+async function sendWhatsAppMessage(credentials: any, phoneNumber: string, message: string) {
+  const { apiToken, senderId } = credentials;
+
+  if (!apiToken || !senderId) {
+    throw new Error('Missing WhatsApp API credentials');
+  }
+
+  // Format phone number (remove spaces, dashes, etc.)
+  const formattedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+  
+  // Ensure phone has country code
+  let cleanPhone = formattedPhone;
+  if (!cleanPhone.startsWith('+')) {
+    // Assume Spanish number if no country code
+    if (cleanPhone.startsWith('6') || cleanPhone.startsWith('7') || cleanPhone.startsWith('9')) {
+      cleanPhone = '34' + cleanPhone;
+    }
+  } else {
+    cleanPhone = cleanPhone.substring(1); // Remove + sign
+  }
+
+  console.log(`Sending WhatsApp message to ${cleanPhone} via Meta API`);
+
+  const response = await fetch(
+    `https://graph.facebook.com/v21.0/${senderId}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanPhone,
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: message,
+        },
+      }),
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    console.error('WhatsApp API error:', JSON.stringify(result));
+    throw new Error(result.error?.message || 'Failed to send WhatsApp message');
+  }
+
+  console.log('WhatsApp message sent successfully:', result.messages?.[0]?.id);
+  return result;
 }
 
 serve(async (req) => {
@@ -63,7 +142,7 @@ serve(async (req) => {
     }
 
     if (!tenantId) {
-      console.warn('No tenant_id found for contact, using default credentials');
+      throw new Error('No tenant_id found for contact');
     }
 
     // Get contact info
@@ -78,34 +157,18 @@ serve(async (req) => {
       throw new Error('Contact not found');
     }
 
-    // Get n8n credentials for this tenant
-    const n8nCredentials = await getN8nCredentials(supabase, contact.tenant_id || tenantId);
-    const n8nWebhook = n8nCredentials.n8n_send_whatsapp_webhook;
+    // Use contact's tenant_id if available
+    const effectiveTenantId = contact.tenant_id || tenantId;
 
-    if (!n8nWebhook) {
-      throw new Error('n8n WhatsApp webhook not configured for this tenant');
+    // Get WhatsApp credentials for this tenant
+    const credentials = await getWhatsAppCredentials(supabase, effectiveTenantId);
+
+    if (!credentials || !credentials.apiToken) {
+      throw new Error('WhatsApp integration not configured or API token missing for this tenant');
     }
 
-    // Send message via n8n webhook
-    console.log('Calling n8n webhook to send WhatsApp message');
-    const n8nResponse = await fetch(n8nWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phone_number: contact.phone_number,
-        message: message_content,
-        contact_name: contact.name,
-        is_manual: true,
-        tenant_id: contact.tenant_id,
-      }),
-    });
-
-    if (!n8nResponse.ok) {
-      console.error('n8n webhook error:', await n8nResponse.text());
-      throw new Error('Failed to send WhatsApp message via n8n');
-    }
-
-    console.log('WhatsApp message sent via n8n successfully');
+    // Send message via Meta API
+    await sendWhatsAppMessage(credentials, contact.phone_number, message_content);
 
     // Save message to database with tenant_id
     const { error: messageError } = await supabase
@@ -114,7 +177,7 @@ serve(async (req) => {
         contact_id,
         message_type: 'assistant',
         content: message_content,
-        tenant_id: contact.tenant_id,
+        tenant_id: effectiveTenantId,
       });
 
     if (messageError) {
@@ -133,13 +196,13 @@ serve(async (req) => {
       throw updateError;
     }
 
-    console.log('Manual message saved successfully');
+    console.log('Manual message sent and saved successfully');
 
     return new Response(
       JSON.stringify({ 
         success: true,
         message: 'Manual message sent successfully',
-        tenant_id: contact.tenant_id,
+        tenant_id: effectiveTenantId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
