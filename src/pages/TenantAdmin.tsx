@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, Home, Calendar, Star, MessageCircle, BarChart3, Wallet, ExternalLink, Settings, Scissors, Users, Clock, ImageIcon } from "lucide-react";
+import { LogOut, Loader2, Home, Calendar, Star, MessageCircle, BarChart3, Wallet, ExternalLink, Settings, Scissors, Users, Clock, ImageIcon, CreditCard } from "lucide-react";
 import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
@@ -374,6 +374,13 @@ export default function TenantAdmin() {
               <span className="hidden md:inline">Horarios</span>
             </TabsTrigger>
             <TabsTrigger
+              value="subscription"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden md:inline">Suscripción</span>
+            </TabsTrigger>
+            <TabsTrigger
               value="settings"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
@@ -407,6 +414,19 @@ export default function TenantAdmin() {
           </TabsContent>
           <TabsContent value="hours" className="mt-6">
             <BusinessHoursManager tenantId={tenant.id} />
+          </TabsContent>
+          <TabsContent value="subscription" className="mt-6">
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Gestiona tu Suscripción</h3>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                Consulta el estado de tu plan, actualiza tu método de pago o cambia de plan.
+              </p>
+              <Button onClick={() => navigate("/subscription")}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                Ir al Portal de Suscripción
+              </Button>
+            </div>
           </TabsContent>
           <TabsContent value="settings" className="mt-6">
             <TenantSettings tenantId={tenant.id} tenantSlug={tenant.slug} />
