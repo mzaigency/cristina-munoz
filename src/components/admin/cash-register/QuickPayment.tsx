@@ -315,8 +315,11 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     }
   };
 
+  const getEmailToUse = () => customerEmail || lastTransaction?.customerEmail || "";
+
   const sendTicketEmail = async () => {
-    if (!lastTransaction || !lastTransaction.customerEmail) {
+    const email = getEmailToUse();
+    if (!lastTransaction || !email) {
       toast({ title: "Introduce un email", variant: "destructive" });
       return;
     }
@@ -325,7 +328,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       setSendingEmail(true);
       const { data, error } = await supabase.functions.invoke("send-ticket", {
         body: {
-          customerEmail: lastTransaction.customerEmail,
+          type: "ticket",
+          customerEmail: email,
           customerName: lastTransaction.customer_name,
           tenantId,
           items: lastTransaction.items,
@@ -351,6 +355,139 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     } finally {
       setSendingEmail(false);
     }
+  };
+
+  const generateInvoice = async () => {
+    const email = getEmailToUse();
+    if (!lastTransaction) return;
+
+    try {
+      setSendingEmail(true);
+      
+      // Generate invoice number
+      const invoiceNumber = `FAC-${Date.now().toString(36).toUpperCase()}`;
+      const invoiceDate = new Date().toLocaleDateString("es-ES", { 
+        day: "numeric", month: "long", year: "numeric" 
+      });
+
+      if (email) {
+        // Send invoice by email
+        const { error } = await supabase.functions.invoke("send-ticket", {
+          body: {
+            type: "invoice",
+            invoiceNumber,
+            customerEmail: email,
+            customerName: lastTransaction.customer_name,
+            tenantId,
+            items: lastTransaction.items,
+            subtotal: lastTransaction.subtotal,
+            discount: lastTransaction.discount,
+            discountReason: lastTransaction.discount_reason,
+            tip: lastTransaction.tip_amount,
+            total: lastTransaction.grandTotal,
+            paymentMethod: lastTransaction.payment_method,
+            stylistName: lastTransaction.stylistName,
+            date: invoiceDate
+          }
+        });
+
+        if (error) throw error;
+        toast({ title: "Factura enviada por email 📄" });
+      } else {
+        // Open invoice in new window for printing
+        const invoiceWindow = window.open("", "_blank");
+        if (invoiceWindow) {
+          const invoiceHtml = generateInvoiceHtml(invoiceNumber, invoiceDate);
+          invoiceWindow.document.write(invoiceHtml);
+          invoiceWindow.document.close();
+          invoiceWindow.print();
+        }
+        toast({ title: "Factura generada 📄" });
+      }
+      
+      setShowSuccess(false);
+    } catch (error) {
+      console.error("Error generating invoice:", error);
+      toast({ title: "Error al generar factura", variant: "destructive" });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const generateInvoiceHtml = (invoiceNumber: string, invoiceDate: string) => {
+    if (!lastTransaction) return "";
+    
+    const itemsHtml = lastTransaction.items.map((item: any) => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price)}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.total)}</td>
+      </tr>
+    `).join("");
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Factura ${invoiceNumber}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+          .header { display: flex; justify-content: space-between; margin-bottom: 40px; }
+          .invoice-title { font-size: 32px; font-weight: bold; color: #333; }
+          .invoice-number { color: #666; margin-top: 8px; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th { background: #f5f5f5; padding: 12px; text-align: left; font-weight: 600; }
+          th:last-child, th:nth-child(3), th:nth-child(2) { text-align: right; }
+          th:nth-child(2) { text-align: center; }
+          .totals { margin-top: 20px; text-align: right; }
+          .totals div { margin: 8px 0; }
+          .total-final { font-size: 24px; font-weight: bold; color: #333; margin-top: 16px; padding-top: 16px; border-top: 2px solid #333; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="invoice-title">FACTURA</div>
+            <div class="invoice-number">Nº ${invoiceNumber}</div>
+            <div style="color: #666; margin-top: 4px;">Fecha: ${invoiceDate}</div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 30px;">
+          <strong>Cliente:</strong> ${lastTransaction.customer_name}
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Cantidad</th>
+              <th>Precio</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+        
+        <div class="totals">
+          <div>Subtotal: ${formatCurrency(lastTransaction.subtotal)}</div>
+          ${lastTransaction.discount > 0 ? `<div style="color: #f97316;">Descuento: -${formatCurrency(lastTransaction.discount)}</div>` : ""}
+          ${lastTransaction.tip_amount > 0 ? `<div style="color: #ec4899;">Propina: +${formatCurrency(lastTransaction.tip_amount)}</div>` : ""}
+          <div class="total-final">TOTAL: ${formatCurrency(lastTransaction.grandTotal)}</div>
+        </div>
+        
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #888; font-size: 14px;">
+          Atendido por: ${lastTransaction.stylistName}<br>
+          Método de pago: ${lastTransaction.payment_method === "cash" ? "Efectivo" : lastTransaction.payment_method === "card" ? "Tarjeta" : "Mixto"}
+        </div>
+      </body>
+      </html>
+    `;
   };
 
   return (
@@ -451,12 +588,19 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       {/* Right: Cart & Payment */}
       <div className="w-full lg:w-80 flex flex-col bg-background rounded-2xl border shadow-sm">
         {/* Customer Input */}
-        <div className="p-4 border-b">
+        <div className="p-4 border-b space-y-2">
           <Input 
             value={customerName} 
             onChange={(e) => setCustomerName(e.target.value)} 
             placeholder="Nombre cliente"
             className="bg-muted/50 border-0 text-center font-medium"
+          />
+          <Input 
+            type="email"
+            value={customerEmail} 
+            onChange={(e) => setCustomerEmail(e.target.value)} 
+            placeholder="Email (opcional)"
+            className="bg-muted/50 border-0 text-center text-sm"
           />
         </div>
 
@@ -734,23 +878,44 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             {lastTransaction && formatCurrency(lastTransaction.grandTotal)}
           </p>
           
-          {lastTransaction?.customerEmail && (
-            <div className="mt-4">
+          <div className="mt-4 space-y-2">
+            {/* Email Input if not provided */}
+            {!lastTransaction?.customerEmail && (
+              <Input 
+                type="email"
+                placeholder="Email para enviar ticket"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                className="text-center"
+              />
+            )}
+            
+            {/* Ticket/Invoice Actions */}
+            <div className="grid grid-cols-2 gap-2">
               <Button 
                 onClick={sendTicketEmail} 
-                disabled={sendingEmail}
-                className="w-full gap-2"
+                disabled={sendingEmail || (!customerEmail && !lastTransaction?.customerEmail)}
                 variant="outline"
+                className="gap-1"
               >
                 {sendingEmail ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Mail className="h-4 w-4" />
                 )}
-                Enviar ticket por email
+                Ticket
+              </Button>
+              <Button 
+                onClick={generateInvoice} 
+                disabled={sendingEmail}
+                variant="outline"
+                className="gap-1"
+              >
+                <Receipt className="h-4 w-4" />
+                Factura
               </Button>
             </div>
-          )}
+          </div>
           
           <Button onClick={() => setShowSuccess(false)} className="w-full mt-2">
             Nuevo cobro
