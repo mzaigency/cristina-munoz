@@ -350,6 +350,50 @@ export type Database = {
           },
         ]
       }
+      tenant_ai_generations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          generation_type: string
+          id: string
+          is_active: boolean | null
+          model: string
+          output: Json
+          prompt: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          generation_type: string
+          id?: string
+          is_active?: boolean | null
+          model?: string
+          output: Json
+          prompt: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          generation_type?: string
+          id?: string
+          is_active?: boolean | null
+          model?: string
+          output?: Json
+          prompt?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_ai_generations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_business_hours: {
         Row: {
           break_end: string | null
@@ -577,6 +621,8 @@ export type Database = {
           name: string
           phone: string | null
           postal_code: string | null
+          preview_expires_at: string | null
+          preview_token: string | null
           primary_color: string | null
           secondary_color: string | null
           slug: string
@@ -604,6 +650,8 @@ export type Database = {
           name: string
           phone?: string | null
           postal_code?: string | null
+          preview_expires_at?: string | null
+          preview_token?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug: string
@@ -631,6 +679,8 @@ export type Database = {
           name?: string
           phone?: string | null
           postal_code?: string | null
+          preview_expires_at?: string | null
+          preview_token?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string

@@ -39,3 +39,6 @@ verify_jwt = false
 [functions.provision-tenant-admin]
 verify_jwt = true
 
+[functions.generate-tenant-branding]
+verify_jwt = true
+
