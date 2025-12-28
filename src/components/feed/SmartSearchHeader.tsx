@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from "react";
-import { Search, Mic, X, MapPin, Clock, Sparkles } from "lucide-react";
+import { useState, useRef } from "react";
+import { Search, Mic, X, MapPin, Clock, Sparkles, Building2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 interface SmartSearchHeaderProps {
   searchQuery: string;
@@ -67,11 +68,17 @@ export function SmartSearchHeader({
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center mb-4"
+            className="flex items-center justify-between mb-4"
           >
             <h1 className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
               GlowUp
             </h1>
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+              <Link to="/para-negocios">
+                <Building2 className="h-4 w-4 mr-2" />
+                Para negocios
+              </Link>
+            </Button>
           </motion.div>
 
           {/* Search Container */}

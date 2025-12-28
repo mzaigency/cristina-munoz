@@ -30,6 +30,11 @@ interface TenantWithStats {
   average_price: number | null;
   avgRating: number | null;
   reviewCount: number;
+  features: {
+    business_type?: string;
+    business_type_label?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 const STORAGE_KEY = "glowup_recent_searches";
@@ -82,7 +87,7 @@ const Index = () => {
     queryFn: async () => {
       const { data: tenants, error: tenantsError } = await supabase
         .from("tenants")
-        .select("id, name, slug, logo_url, hero_image_url, primary_color, city, address, description, tagline, average_price")
+        .select("id, name, slug, logo_url, hero_image_url, primary_color, city, address, description, tagline, average_price, features")
         .eq("is_active", true)
         .order("name");
 
@@ -110,6 +115,7 @@ const Index = () => {
         const stats = statsMap.get(tenant.id);
         return {
           ...tenant,
+          features: tenant.features as TenantWithStats['features'],
           avgRating: stats ? stats.sum / stats.count : null,
           reviewCount: stats?.count || 0,
         };
@@ -129,8 +135,11 @@ const Index = () => {
       salon.description?.toLowerCase().includes(query);
 
     const matchesFavorites = !showFavoritesOnly || favorites.includes(salon.id);
+    
+    // Filter by business type category
+    const matchesCategory = !selectedCategory || salon.features?.business_type === selectedCategory;
 
-    return matchesSearch && matchesFavorites;
+    return matchesSearch && matchesFavorites && matchesCategory;
   });
 
   return (
@@ -238,8 +247,6 @@ const Index = () => {
           )}
         </AnimatePresence>
 
-        {/* Join Network Section */}
-        <JoinNetworkSection />
       </div>
 
       {/* Premium FAB */}

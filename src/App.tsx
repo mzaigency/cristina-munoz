@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import BusinessOnboarding from "./pages/BusinessOnboarding";
 import OnboardingSetup from "./pages/OnboardingSetup";
 import Subscription from "./pages/Subscription";
+import ForBusiness from "./pages/ForBusiness";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/onboarding" element={<BusinessOnboarding />} />
             <Route path="/onboarding/setup" element={<OnboardingSetup />} />
             <Route path="/subscription" element={<Subscription />} />
+            <Route path="/para-negocios" element={<ForBusiness />} />
             <Route path="/privacidad" element={<PrivacyPolicy />} />
             <Route path="/terminos" element={<TermsOfUse />} />
             <Route path="*" element={<NotFound />} />
