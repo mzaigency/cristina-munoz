@@ -376,13 +376,38 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     }
   };
 
-  const downloadInvoicePdf = () => {
+  const downloadInvoicePdf = async () => {
     if (!lastTransaction || !tenantData) return;
     
     const invoiceNumber = `FAC-${Date.now().toString(36).toUpperCase()}`;
     const invoiceDate = new Date().toLocaleDateString("es-ES", { 
       day: "numeric", month: "long", year: "numeric" 
     });
+
+    // Save invoice to database
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("invoices").insert({
+          tenant_id: tenantId,
+          invoice_number: invoiceNumber,
+          customer_name: lastTransaction.customer_name,
+          fiscal_name: lastTransaction.invoiceData?.fiscalName || null,
+          nif: lastTransaction.invoiceData?.nif || null,
+          fiscal_address: lastTransaction.invoiceData?.fiscalAddress || null,
+          items: lastTransaction.items,
+          subtotal: lastTransaction.subtotal,
+          discount: lastTransaction.discount || 0,
+          tip_amount: lastTransaction.tip_amount || 0,
+          total: lastTransaction.grandTotal,
+          payment_method: lastTransaction.payment_method,
+          stylist_name: lastTransaction.stylistName,
+          created_by: user.id
+        });
+      }
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+    }
 
     const itemsHtml = lastTransaction.items.map((item: any) => `
       <tr>

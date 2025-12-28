@@ -3,13 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Receipt, History, BarChart3, Lock } from "lucide-react";
+import { Loader2, Receipt, History, BarChart3, Lock, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { QuickPayment } from "./cash-register/QuickPayment";
 import { TransactionHistory } from "./cash-register/TransactionHistory";
 import { CashRegisterStats } from "./cash-register/CashRegisterStats";
 import { DailySummary } from "./cash-register/DailySummary";
+import { InvoiceHistory } from "./cash-register/InvoiceHistory";
 
 export interface Transaction {
   id: string;
@@ -175,7 +176,7 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
       <Card>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <CardHeader className="pb-0">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="payment" className="gap-2">
                 <Receipt className="h-4 w-4" />
                 <span className="hidden sm:inline">Cobrar</span>
@@ -184,9 +185,13 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
                 <History className="h-4 w-4" />
                 <span className="hidden sm:inline">Historial</span>
               </TabsTrigger>
+              <TabsTrigger value="invoices" className="gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Facturas</span>
+              </TabsTrigger>
               <TabsTrigger value="stats" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Estadísticas</span>
+                <span className="hidden sm:inline">Stats</span>
               </TabsTrigger>
             </TabsList>
           </CardHeader>
@@ -207,6 +212,9 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
                 transactions={transactions}
                 onUpdate={fetchTodayData}
               />
+            </TabsContent>
+            <TabsContent value="invoices" className="mt-0">
+              <InvoiceHistory tenantId={tenantId} />
             </TabsContent>
             <TabsContent value="stats" className="mt-0">
               <CashRegisterStats />
