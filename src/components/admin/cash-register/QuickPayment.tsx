@@ -317,7 +317,9 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         stylistName: selectedStylist?.name || "Estilista",
         items: servicesData,
         grandTotal,
-        customerEmail
+        customerEmail,
+        wantsInvoice,
+        invoiceData
       });
       
       setShowSuccess(true);
@@ -847,10 +849,56 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             </div>
           )}
 
+          {/* Invoice checkbox - VISIBLE IN CART */}
+          <div className="flex items-center space-x-2 p-3 rounded-lg bg-muted/50 border">
+            <Checkbox 
+              id="wants-invoice-cart" 
+              checked={wantsInvoice}
+              onCheckedChange={(checked) => setWantsInvoice(checked === true)}
+            />
+            <label 
+              htmlFor="wants-invoice-cart" 
+              className="text-sm font-medium cursor-pointer flex items-center gap-2 flex-1"
+            >
+              <FileText className="h-4 w-4" />
+              Generar factura
+            </label>
+          </div>
+
+          {/* Invoice data form - VISIBLE IN CART */}
+          <AnimatePresence>
+            {wantsInvoice && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="space-y-2 overflow-hidden"
+              >
+                <Input 
+                  placeholder="Nombre fiscal / Razón social *"
+                  value={invoiceData.fiscalName}
+                  onChange={(e) => setInvoiceData(prev => ({ ...prev, fiscalName: e.target.value }))}
+                  className="text-sm"
+                />
+                <Input 
+                  placeholder="NIF / CIF *"
+                  value={invoiceData.nif}
+                  onChange={(e) => setInvoiceData(prev => ({ ...prev, nif: e.target.value }))}
+                  className="text-sm"
+                />
+                <Input 
+                  placeholder="Dirección fiscal"
+                  value={invoiceData.fiscalAddress}
+                  onChange={(e) => setInvoiceData(prev => ({ ...prev, fiscalAddress: e.target.value }))}
+                  className="text-sm"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <Button 
             onClick={handleSubmit} 
-            disabled={loading || selectedItems.length === 0 || !selectedStylistId} 
+            disabled={loading || selectedItems.length === 0 || !selectedStylistId || (wantsInvoice && (!invoiceData.fiscalName || !invoiceData.nif))} 
             className="w-full h-14 text-lg font-bold gap-2"
           >
             {loading ? (
@@ -909,92 +957,42 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           </p>
           
           <div className="mt-4 space-y-3">
-            {/* Invoice checkbox */}
-            <div className="flex items-center space-x-2 p-3 rounded-lg bg-muted/50">
-              <Checkbox 
-                id="wants-invoice" 
-                checked={wantsInvoice}
-                onCheckedChange={(checked) => setWantsInvoice(checked === true)}
-              />
-              <label 
-                htmlFor="wants-invoice" 
-                className="text-sm font-medium cursor-pointer flex items-center gap-2"
+            {/* Show invoice download button if invoice was requested */}
+            {lastTransaction?.wantsInvoice && (
+              <Button 
+                onClick={downloadInvoicePdf}
+                className="w-full gap-2"
               >
-                <FileText className="h-4 w-4" />
-                Necesita factura
-              </label>
-            </div>
-
-            {/* Invoice data form */}
-            <AnimatePresence>
-              {wantsInvoice && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="space-y-2 overflow-hidden"
-                >
-                  <Input 
-                    placeholder="Nombre fiscal / Razón social"
-                    value={invoiceData.fiscalName}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, fiscalName: e.target.value }))}
-                    className="text-sm"
-                  />
-                  <Input 
-                    placeholder="NIF / CIF"
-                    value={invoiceData.nif}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, nif: e.target.value }))}
-                    className="text-sm"
-                  />
-                  <Input 
-                    placeholder="Dirección fiscal"
-                    value={invoiceData.fiscalAddress}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, fiscalAddress: e.target.value }))}
-                    className="text-sm"
-                  />
-                  <Button 
-                    onClick={() => {
-                      // Store invoice data in lastTransaction
-                      setLastTransaction((prev: any) => ({ ...prev, invoiceData }));
-                      downloadInvoicePdf();
-                    }}
-                    disabled={!invoiceData.fiscalName || !invoiceData.nif}
-                    className="w-full gap-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    Descargar factura
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                <Download className="h-4 w-4" />
+                Descargar factura
+              </Button>
+            )}
 
             {/* Email ticket option */}
-            {!wantsInvoice && (
-              <div className="space-y-2">
-                <Input 
-                  type="email"
-                  placeholder="Email para ticket (opcional)"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  className="text-center text-sm"
-                />
-                {(customerEmail || lastTransaction?.customerEmail) && (
-                  <Button 
-                    onClick={sendTicketEmail} 
-                    disabled={sendingEmail}
-                    variant="outline"
-                    className="w-full gap-2"
-                  >
-                    {sendingEmail ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Mail className="h-4 w-4" />
-                    )}
-                    Enviar ticket por email
-                  </Button>
-                )}
-              </div>
-            )}
+            <div className="space-y-2">
+              <Input 
+                type="email"
+                placeholder="Email para ticket (opcional)"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                className="text-center text-sm"
+              />
+              {(customerEmail || lastTransaction?.customerEmail) && (
+                <Button 
+                  onClick={sendTicketEmail} 
+                  disabled={sendingEmail}
+                  variant="outline"
+                  className="w-full gap-2"
+                >
+                  {sendingEmail ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4" />
+                  )}
+                  Enviar ticket por email
+                </Button>
+              )}
+            </div>
           </div>
           
           <Button onClick={() => setShowSuccess(false)} variant="outline" className="w-full mt-2">
