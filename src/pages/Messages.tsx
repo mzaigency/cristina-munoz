@@ -185,18 +185,18 @@ export default function Messages() {
 
         {/* Content */}
         <main className="container mx-auto py-6 px-4" role="main" aria-label="Centro de mensajes">
-          <div className="bg-background rounded-2xl border border-border/50 shadow-lg overflow-hidden h-[calc(100vh-120px)]">
+          <div className="bg-background rounded-2xl border border-border/50 shadow-lg overflow-hidden" style={{ height: 'calc(100vh - 120px)' }}>
             <div className="grid md:grid-cols-[380px_1fr] h-full">
               {/* Conversation list */}
               <nav 
-                className="border-r border-border/50 bg-background flex flex-col" 
+                className="border-r border-border/50 bg-background flex flex-col h-full overflow-hidden" 
                 role="navigation" 
                 aria-label="Lista de conversaciones"
               >
-                <div className="p-4 border-b border-border/30">
+                <div className="p-4 border-b border-border/30 shrink-0">
                   <h2 className="text-xl font-bold" id="chats-heading">Chats</h2>
                 </div>
-                <div className="flex-1 min-h-0" aria-labelledby="chats-heading">
+                <div className="flex-1 overflow-hidden" aria-labelledby="chats-heading">
                   <ConversationList
                     conversations={conversations}
                     loading={loadingConversations}
@@ -210,7 +210,7 @@ export default function Messages() {
               {/* Chat window */}
               <section 
                 id="chat-content" 
-                className="flex flex-col" 
+                className="flex flex-col h-full overflow-hidden" 
                 role="region" 
                 aria-label={selectedConversation ? `Chat con ${selectedConversation.tenant?.name || 'salón'}` : 'Selecciona una conversación'}
               >

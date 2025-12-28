@@ -110,9 +110,9 @@ export function ChatWindow({
   const avatarUrl = role === 'user' ? conversation.tenant?.logo_url : null;
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-muted/10 to-background">
+    <div className="flex flex-col h-full overflow-hidden bg-gradient-to-b from-muted/10 to-background">
       {/* Header estilo iOS */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b bg-background/80 backdrop-blur-xl sticky top-0 z-10">
+      <div className="flex items-center gap-3 px-4 py-3 border-b bg-background/80 backdrop-blur-xl shrink-0">
         <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
           <AvatarImage src={avatarUrl || undefined} />
           <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-semibold">
@@ -127,9 +127,10 @@ export function ChatWindow({
         </div>
       </div>
 
-      {/* Messages area */}
-      <ScrollArea className="flex-1" ref={scrollRef}>
-        <div className="p-4 space-y-3">
+      {/* Messages area - scrollable */}
+      <div className="flex-1 overflow-hidden min-h-0">
+        <ScrollArea className="h-full" ref={scrollRef}>
+          <div className="p-4 space-y-3">
           {loading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -230,11 +231,12 @@ export function ChatWindow({
               })}
             </>
           )}
-        </div>
-      </ScrollArea>
+          </div>
+        </ScrollArea>
+      </div>
 
-      {/* Input estilo iOS */}
-      <form onSubmit={handleSubmit} className="p-3 border-t bg-background/80 backdrop-blur-xl">
+      {/* Input estilo iOS - siempre visible */}
+      <form onSubmit={handleSubmit} className="p-3 border-t bg-background shrink-0">
         <div className="flex gap-2 items-center">
           <Input
             ref={inputRef}
