@@ -153,19 +153,49 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Calcular la fecha de mañana
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
+    // Parsear body para modo de prueba
+    let testMode = false;
+    let testPhone = '';
+    let testTenantId = '';
+    let testDate = '';
 
-    console.log(`[Reminders] Starting daily reminders for appointments on ${tomorrowStr}`);
+    try {
+      const body = await req.json();
+      testMode = body.test_mode === true;
+      testPhone = body.test_phone || '';
+      testTenantId = body.tenant_id || '';
+      testDate = body.date || '';
+    } catch {
+      // No hay body, modo normal
+    }
 
-    // Obtener todos los tenants activos
-    const { data: tenants, error: tenantsError } = await supabaseClient
+    // Calcular la fecha objetivo
+    let targetDateStr: string;
+    if (testDate) {
+      targetDateStr = testDate;
+    } else {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      targetDateStr = tomorrow.toISOString().split('T')[0];
+    }
+
+    console.log(`[Reminders] Starting ${testMode ? 'TEST MODE' : 'daily'} reminders for appointments on ${targetDateStr}`);
+    if (testMode) {
+      console.log(`[Reminders] Test phone: ${testPhone}, Tenant: ${testTenantId}`);
+    }
+
+    // Obtener tenants (solo uno si es modo test con tenant específico)
+    let tenantsQuery = supabaseClient
       .from('tenants')
       .select('id, name')
       .eq('is_active', true);
+    
+    if (testMode && testTenantId) {
+      tenantsQuery = tenantsQuery.eq('id', testTenantId);
+    }
+
+    const { data: tenants, error: tenantsError } = await tenantsQuery;
 
     if (tenantsError) {
       console.error('[Reminders] Error fetching tenants:', tenantsError);
@@ -188,12 +218,32 @@ serve(async (req) => {
         continue;
       }
 
-      // Obtener citas de mañana para este tenant
+      // En modo test con teléfono específico, enviar directamente sin buscar citas
+      if (testMode && testPhone) {
+        console.log(`[Reminders] TEST MODE: Sending test reminder to ${testPhone}`);
+        
+        const success = await sendReminderWhatsApp(
+          credentials,
+          testPhone,
+          "10:00", // Hora de prueba
+          tenant.name
+        );
+
+        results.push({ 
+          tenant: tenant.name, 
+          sent: success ? 1 : 0, 
+          failed: success ? 0 : 1, 
+          skipped: 0 
+        });
+        continue;
+      }
+
+      // Obtener citas para la fecha objetivo
       const { data: bookings, error: bookingsError } = await supabaseClient
         .from('bookings')
         .select('id, customer_name, "Telefono", "Hora"')
         .eq('tenant_id', tenant.id)
-        .eq('Fecha', tomorrowStr)
+        .eq('Fecha', targetDateStr)
         .eq('status', 'confirmed');
 
       if (bookingsError) {
@@ -202,7 +252,7 @@ serve(async (req) => {
         continue;
       }
 
-      console.log(`[Reminders] Found ${bookings?.length || 0} bookings for ${tenant.name} on ${tomorrowStr}`);
+      console.log(`[Reminders] Found ${bookings?.length || 0} bookings for ${tenant.name} on ${targetDateStr}`);
 
       let sent = 0;
       let failed = 0;
@@ -239,12 +289,13 @@ serve(async (req) => {
     const totalSent = results.reduce((acc, r) => acc + r.sent, 0);
     const totalFailed = results.reduce((acc, r) => acc + r.failed, 0);
 
-    console.log(`[Reminders] Daily reminders completed. Total: ${totalSent} sent, ${totalFailed} failed`);
+    console.log(`[Reminders] ${testMode ? 'Test' : 'Daily'} reminders completed. Total: ${totalSent} sent, ${totalFailed} failed`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        date: tomorrowStr,
+        test_mode: testMode,
+        date: targetDateStr,
         results,
         totals: { sent: totalSent, failed: totalFailed }
       }),
