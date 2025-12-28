@@ -102,7 +102,7 @@ async function sendReminderWhatsApp(
     to: formattedPhone,
     type: "template",
     template: {
-      name: "recordatorio",
+      name: "recordatiorio",
       language: { code: "es" },
       components: [
         {
