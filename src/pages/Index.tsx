@@ -1,55 +1,72 @@
 import { SEO } from "@/components/SEO";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Scissors } from "lucide-react";
+import { Plus, Heart, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
-import { SearchHeader } from "@/components/feed/SearchHeader";
-import { FilterChips } from "@/components/feed/FilterChips";
-import { SalonCard } from "@/components/feed/SalonCard";
+import { motion, AnimatePresence } from "motion/react";
+import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
+import { CategoryPills } from "@/components/feed/CategoryPills";
+import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
+import { PremiumSkeleton } from "@/components/feed/PremiumSkeleton";
+import { EmptyState } from "@/components/feed/EmptyState";
 import { AppLayout } from "@/components/navigation/AppLayout";
+import { useFavorites } from "@/hooks/useFavorites";
 
-interface Tenant {
+interface TenantWithStats {
   id: string;
   name: string;
   slug: string;
   logo_url: string | null;
+  hero_image_url: string | null;
   primary_color: string | null;
   city: string | null;
   address: string | null;
   description: string | null;
   tagline: string | null;
-}
-
-interface TenantWithStats extends Tenant {
+  average_price: number | null;
   avgRating: number | null;
   reviewCount: number;
 }
 
-const CATEGORIES = ["Peluquería", "Barbería", "Spa", "Uñas", "Estética"];
-
-const SalonCardSkeleton = () => (
-  <div className="ios-card overflow-hidden">
-    <Skeleton className="h-36 w-full rounded-none" />
-    <div className="p-4">
-      <Skeleton className="h-5 w-3/4 mb-2" />
-      <Skeleton className="h-3 w-1/2 mb-3" />
-      <Skeleton className="h-4 w-2/3" />
-    </div>
-  </div>
-);
+const STORAGE_KEY = "salonhub_recent_searches";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const { favorites, isAuthenticated } = useFavorites();
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      setRecentSearches(JSON.parse(stored));
+    }
+  }, []);
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    // Save to recent searches when user submits (not on every keystroke)
+    if (value.length > 2 && !recentSearches.includes(value)) {
+      const updated = [value, ...recentSearches.slice(0, 4)];
+      setRecentSearches(updated);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    }
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    localStorage.removeItem(STORAGE_KEY);
+  };
 
   const { data: salons, isLoading } = useQuery({
-    queryKey: ["salons-hub"],
+    queryKey: ["salons-premium-hub"],
     queryFn: async () => {
       const { data: tenants, error: tenantsError } = await supabase
         .from("tenants")
-        .select("id, name, slug, logo_url, primary_color, city, address, description, tagline")
+        .select("id, name, slug, logo_url, hero_image_url, primary_color, city, address, description, tagline, average_price")
         .eq("is_active", true)
         .order("name");
 
@@ -92,98 +109,114 @@ const Index = () => {
       salon.name.toLowerCase().includes(query) ||
       salon.city?.toLowerCase().includes(query) ||
       salon.address?.toLowerCase().includes(query) ||
+      salon.tagline?.toLowerCase().includes(query) ||
       salon.description?.toLowerCase().includes(query);
 
-    // For now, category filter is a placeholder since tenants don't have categories yet
-    return matchesSearch;
+    const matchesFavorites = !showFavoritesOnly || favorites.includes(salon.id);
+
+    return matchesSearch && matchesFavorites;
   });
 
   return (
     <AppLayout>
       <SEO
-        title="Encuentra tu Salón de Belleza | Reserva Online"
-        description="Descubre los mejores salones de belleza cerca de ti. Reserva cita online en peluquerías profesionales."
-        keywords="salones de belleza, peluquerías, reserva online, corte de pelo"
+        title="SalonHub | Encuentra y Reserva en los Mejores Salones"
+        description="Descubre los mejores salones de belleza cerca de ti. Reserva cita online en peluquerías, spas y centros de estética."
+        keywords="salones de belleza, peluquerías, reserva online, spa, estética, barbería"
         canonicalUrl="/"
       />
 
-      {/* Header with Search */}
-      <SearchHeader
+      {/* Smart Search Header */}
+      <SmartSearchHeader
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
+        recentSearches={recentSearches}
+        onRecentSearchClick={(search) => setSearchQuery(search)}
+        onClearRecents={clearRecentSearches}
       />
 
       {/* Main Content */}
-      <div className="px-4 py-4">
-        {/* Welcome Section */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground mb-1">
-            Encuentra tu salón
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            Descubre los mejores profesionales cerca de ti
-          </p>
-        </div>
+      <div className="px-4 py-6 pb-24">
+        {/* Section Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-5"
+        >
+          <div>
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              {searchQuery ? "Resultados" : "Destacados"}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {filteredSalons?.length || 0} salones disponibles
+            </p>
+          </div>
 
-        {/* Category Filters */}
+          {isAuthenticated && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+                showFavoritesOnly
+                  ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Heart className={`h-4 w-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
+              Favoritos
+            </motion.button>
+          )}
+        </motion.div>
+
+        {/* Category Pills */}
         <div className="mb-6">
-          <FilterChips
-            categories={CATEGORIES}
+          <CategoryPills
             selected={selectedCategory}
             onSelect={setSelectedCategory}
           />
         </div>
 
-        {/* Results Count */}
-        {filteredSalons && (
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-medium text-muted-foreground">
-              {searchQuery ? "Resultados" : "Destacados"}
-            </h2>
-            <span className="text-xs text-muted-foreground">
-              {filteredSalons.length} {filteredSalons.length === 1 ? "salón" : "salones"}
-            </span>
-          </div>
-        )}
-
         {/* Salons Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <SalonCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : filteredSalons && filteredSalons.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredSalons.map((salon, index) => (
-              <SalonCard key={salon.id} salon={salon} index={index} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
-              <Scissors className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              {searchQuery ? "No se encontraron salones" : "Aún no hay salones"}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {searchQuery
-                ? "Prueba con otra búsqueda"
-                : "Pronto aparecerán nuevos salones aquí"}
-            </p>
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <PremiumSkeleton />
+          ) : filteredSalons && filteredSalons.length > 0 ? (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+            >
+              {filteredSalons.map((salon, index) => (
+                <PremiumSalonCard key={salon.id} salon={salon} index={index} />
+              ))}
+            </motion.div>
+          ) : (
+            <EmptyState
+              type={searchQuery ? "no-results" : "empty"}
+              searchQuery={searchQuery}
+              onClearSearch={() => setSearchQuery("")}
+            />
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* FAB for Quick Booking */}
-      <Link
-        to="/buscar"
-        className="ios-fab"
-        aria-label="Nueva reserva"
+      {/* Premium FAB */}
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
       >
-        <Plus className="h-6 w-6" />
-      </Link>
+        <Link
+          to="/buscar"
+          className="fixed bottom-24 right-4 h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-accent text-white shadow-xl shadow-primary/40 flex items-center justify-center z-40 active:scale-95 transition-transform"
+          aria-label="Nueva reserva"
+        >
+          <Plus className="h-7 w-7" strokeWidth={2.5} />
+        </Link>
+      </motion.div>
     </AppLayout>
   );
 };

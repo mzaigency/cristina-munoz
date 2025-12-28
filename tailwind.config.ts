@@ -67,8 +67,8 @@ export default {
         },
       },
       fontFamily: {
-        'playfair': ['Playfair Display', 'serif'],
-        'montserrat': ['Montserrat', 'sans-serif'],
+        'sans': ['Plus Jakarta Sans', 'DM Sans', 'system-ui', 'sans-serif'],
+        'display': ['Plus Jakarta Sans', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
