@@ -39,7 +39,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             loading="eager"
             fetchPriority="high"
           />
-          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/60" />
         </div>
       )}
 
