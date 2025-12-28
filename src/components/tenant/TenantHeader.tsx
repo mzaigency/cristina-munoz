@@ -1,10 +1,21 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Phone } from "lucide-react";
+import { Menu, X, Phone, User, LogOut, Shield, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 interface Tenant {
   id: string;
   name: string;
+  slug: string;
   logo_url: string | null;
   primary_color: string | null;
   phone: string | null;
@@ -19,6 +30,9 @@ interface TenantHeaderProps {
 export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,10 +40,39 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Check initial state
+    handleScroll();
     
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        checkAdminRole(session.user.id);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        checkAdminRole(session.user.id);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const checkAdminRole = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["admin", "stylist"]);
+    setIsAdmin(data && data.length > 0);
+  };
 
   const navItems = [
     { id: "inicio", label: "Inicio" },
@@ -42,6 +85,33 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
   const handleNavClick = (sectionId: string) => {
     onNavigate(sectionId);
     setIsMenuOpen(false);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Error during sign out:", error);
+    } finally {
+      setUser(null);
+      setIsAdmin(false);
+    }
+  };
+
+  const handleUserIconClick = () => {
+    navigate("/auth");
+  };
+
+  const handleMyBookingsClick = () => {
+    navigate("/mis-citas");
+  };
+
+  const handleProfileClick = () => {
+    navigate("/perfil");
+  };
+
+  const handleAdminClick = () => {
+    navigate(`/admin/${tenant.slug}`);
   };
 
   return (
@@ -71,7 +141,8 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                   isScrolled ? "" : "text-white drop-shadow-md"
                 }`}
                 style={{ 
-                  color: isScrolled ? (tenant.primary_color || 'hsl(var(--primary))') : undefined 
+                  color: isScrolled ? (tenant.primary_color || 'hsl(var(--primary))') : undefined,
+                  fontFamily: 'var(--font-heading)'
                 }}
               >
                 {tenant.name}
@@ -103,8 +174,8 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
             ))}
           </nav>
 
-          {/* Phone & Mobile Menu */}
-          <div className="flex items-center gap-4">
+          {/* Phone, Account & Mobile Menu */}
+          <div className="flex items-center gap-3">
             {tenant.phone && (
               <a 
                 href={`tel:${tenant.phone}`}
@@ -118,6 +189,63 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 <Phone className="h-4 w-4" />
                 {tenant.phone}
               </a>
+            )}
+
+            {/* Account Menu */}
+            {user ? (
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={`h-9 w-9 transition-colors duration-300 ${
+                      isScrolled ? "text-foreground" : "text-white hover:text-white/80 hover:bg-white/20"
+                    }`}
+                  >
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  align="end" 
+                  className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-border z-[100]"
+                >
+                  <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleProfileClick}>
+                    <User className="h-4 w-4 mr-2" />
+                    Mi Perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleMyBookingsClick}>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Tus Citas
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleAdminClick}>
+                        <Shield className="h-4 w-4 mr-2" />
+                        Panel Admin
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Cerrar Sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleUserIconClick} 
+                className={`h-9 w-9 transition-colors duration-300 ${
+                  isScrolled ? "text-foreground" : "text-white hover:text-white/80 hover:bg-white/20"
+                }`}
+              >
+                <User className="h-5 w-5" />
+              </Button>
             )}
 
             <Button
