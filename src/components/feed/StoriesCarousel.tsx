@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "motion/react";
-import { X, ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Play, Pause, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
+import { StoryCreator } from "./StoryCreator";
 
 interface Story {
   id: string;
@@ -33,7 +35,11 @@ export function StoriesCarousel() {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [showCreator, setShowCreator] = useState(false);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
+  
+  const { tenantId, tenant, loading: tenantLoading } = useCurrentUserTenant();
+  const queryClient = useQueryClient();
 
   const { data: storyGroups = [], isLoading } = useQuery({
     queryKey: ["salon-stories"],
@@ -136,7 +142,11 @@ export function StoriesCarousel() {
     }
   };
 
-  if (isLoading) {
+  const handleStoryCreated = () => {
+    queryClient.invalidateQueries({ queryKey: ["salon-stories"] });
+  };
+
+  if (isLoading || tenantLoading) {
     return (
       <div className="flex gap-4 overflow-x-auto pb-2 px-4 scrollbar-hide">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -149,15 +159,63 @@ export function StoriesCarousel() {
     );
   }
 
-  if (storyGroups.length === 0) {
+  // Show carousel if there are stories OR if user can create stories
+  const canCreateStory = !!tenantId;
+  
+  if (storyGroups.length === 0 && !canCreateStory) {
     return null;
   }
 
   return (
     <>
+      {/* Story Creator Modal */}
+      {canCreateStory && (
+        <StoryCreator
+          isOpen={showCreator}
+          onClose={() => setShowCreator(false)}
+          tenantId={tenantId}
+          onSuccess={handleStoryCreated}
+        />
+      )}
+
       {/* Stories Carousel */}
       <div className="relative">
         <div className="flex gap-4 overflow-x-auto pb-2 px-4 scrollbar-hide">
+          {/* Add Story Button for admins/stylists */}
+          {canCreateStory && tenant && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={() => setShowCreator(true)}
+              className="flex flex-col items-center gap-2 shrink-0"
+            >
+              <div className="relative w-16 h-16 rounded-full bg-secondary p-0.5">
+                <div className="w-full h-full rounded-full bg-background p-0.5 relative">
+                  {tenant.logo_url ? (
+                    <img
+                      src={tenant.logo_url}
+                      alt={tenant.name}
+                      className="w-full h-full rounded-full object-cover opacity-70"
+                    />
+                  ) : (
+                    <div
+                      className="w-full h-full rounded-full flex items-center justify-center text-white text-sm font-bold opacity-70"
+                      style={{ background: tenant.primary_color || "#6366f1" }}
+                    >
+                      {tenant.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  {/* Plus icon overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                      <Plus className="w-4 h-4 text-primary-foreground" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">Tu story</span>
+            </motion.button>
+          )}
           {storyGroups.map((group, index) => {
             const initials = group.tenant.name
               .split(" ")
