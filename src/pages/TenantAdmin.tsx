@@ -86,13 +86,12 @@ export default function TenantAdmin() {
     { value: "reviews", label: "Reseñas", icon: <Star className="h-4 w-4" />, badge: pendingReviewsCount, group: "main" },
     { value: "messages", label: "Mensajes", icon: <MessageCircle className="h-4 w-4" />, badge: messagesUnreadCount, group: "main" },
     { value: "stories", label: "Stories", icon: <ImageIcon className="h-4 w-4" />, group: "main" },
-    { value: "security", label: "Estadísticas", icon: <BarChart3 className="h-4 w-4" />, group: "main" },
-    { value: "products", label: "Productos", icon: <Package className="h-4 w-4" />, group: "config" },
-    { value: "services", label: "Servicios", icon: <Scissors className="h-4 w-4" />, group: "config" },
-    { value: "stylists", label: "Equipo", icon: <Users className="h-4 w-4" />, group: "config" },
-    { value: "hours", label: "Horarios", icon: <Clock className="h-4 w-4" />, group: "config" },
-    { value: "subscription", label: "Suscripción", icon: <CreditCard className="h-4 w-4" />, group: "config" },
-    { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" />, group: "config" },
+    { value: "security", label: "Stats", icon: <BarChart3 className="h-4 w-4" />, group: "main" },
+    { value: "products", label: "Productos", icon: <Package className="h-4 w-4" />, group: "main" },
+    { value: "services", label: "Servicios", icon: <Scissors className="h-4 w-4" />, group: "main" },
+    { value: "stylists", label: "Equipo", icon: <Users className="h-4 w-4" />, group: "main" },
+    { value: "hours", label: "Horarios", icon: <Clock className="h-4 w-4" />, group: "main" },
+    { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" />, group: "main" },
   ];
 
   const mainItems = navItems.filter(item => item.group === "main");

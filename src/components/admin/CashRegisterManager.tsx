@@ -199,7 +199,7 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
                   <p className="text-sm">No se pueden registrar más cobros hoy</p>
                 </div>
               ) : (
-                <QuickPayment onTransactionCreated={handleTransactionCreated} />
+                <QuickPayment onTransactionCreated={handleTransactionCreated} tenantId={tenantId} />
               )}
             </TabsContent>
             <TabsContent value="history" className="mt-0">
