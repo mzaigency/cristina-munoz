@@ -2,7 +2,7 @@ import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Heart, TrendingUp } from "lucide-react";
+import { Plus, Heart, TrendingUp, Wand2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
@@ -14,6 +14,8 @@ import { StoriesCarousel } from "@/components/feed/StoriesCarousel";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { useFavorites } from "@/hooks/useFavorites";
 import { JoinNetworkSection } from "@/components/feed/JoinNetworkSection";
+import { Button } from "@/components/ui/button";
+
 interface TenantWithStats {
   id: string;
   name: string;
@@ -37,7 +39,20 @@ const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const { favorites, isAuthenticated } = useFavorites();
+
+  // Check if current user is superadmin
+  useEffect(() => {
+    const checkSuperadmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.rpc('is_superadmin');
+        setIsSuperadmin(data === true);
+      }
+    };
+    checkSuperadmin();
+  }, []);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -140,6 +155,21 @@ const Index = () => {
       <div className="py-4 border-b border-border/30">
         <StoriesCarousel />
       </div>
+
+      {/* Superadmin Wizard Test Button */}
+      {isSuperadmin && (
+        <div className="px-4 pt-4">
+          <Link to="/onboarding">
+            <Button 
+              variant="outline" 
+              className="w-full h-12 rounded-xl border-dashed border-primary/50 text-primary hover:bg-primary/5"
+            >
+              <Wand2 className="h-4 w-4 mr-2" />
+              Probar Wizard de Onboarding (Superadmin)
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="px-4 py-6 pb-24">
