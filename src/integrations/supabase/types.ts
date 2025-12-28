@@ -426,6 +426,60 @@ export type Database = {
           },
         ]
       }
+      salon_stories: {
+        Row: {
+          caption: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          image_url: string
+          is_active: boolean | null
+          story_type: string
+          tenant_id: string
+          views_count: number | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          story_type?: string
+          tenant_id: string
+          views_count?: number | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          story_type?: string
+          tenant_id?: string
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salon_stories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salon_stories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_n8n_config"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
       services: {
         Row: {
           category: string | null
@@ -480,6 +534,35 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants_n8n_config"
             referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      story_views: {
+        Row: {
+          id: string
+          story_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "salon_stories"
+            referencedColumns: ["id"]
           },
         ]
       }
