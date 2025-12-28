@@ -20,7 +20,13 @@ import {
   Layers,
   Sparkles,
   RefreshCw,
-  Paintbrush
+  Paintbrush,
+  MapPin,
+  Phone,
+  Share2,
+  Users,
+  Type,
+  Image
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import {
@@ -34,37 +40,19 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import confetti from "canvas-confetti";
 
-interface BrandingData {
-  tagline: string;
-  description: string;
-  faqs: Array<{ question: string; answer: string }>;
-}
-
-interface StepProps {
-  onNext: () => void;
-  onPrev?: () => void;
-  tenantId: string;
-  tenantName?: string;
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
-}
-
-const colorPresets = [
-  { primary: "#8B5CF6", secondary: "#D946EF", name: "Violeta", gradient: "from-violet-500 to-fuchsia-500" },
-  { primary: "#3B82F6", secondary: "#06B6D4", name: "Océano", gradient: "from-blue-500 to-cyan-500" },
-  { primary: "#10B981", secondary: "#34D399", name: "Esmeralda", gradient: "from-emerald-500 to-green-400" },
-  { primary: "#F59E0B", secondary: "#FBBF24", name: "Ámbar", gradient: "from-amber-500 to-yellow-400" },
-  { primary: "#EF4444", secondary: "#F87171", name: "Coral", gradient: "from-red-500 to-rose-400" },
-  { primary: "#EC4899", secondary: "#F472B6", name: "Rosa", gradient: "from-pink-500 to-rose-400" },
-  { primary: "#1F2937", secondary: "#6B7280", name: "Elegante", gradient: "from-gray-800 to-gray-500" },
-  { primary: "#7C3AED", secondary: "#A78BFA", name: "Púrpura", gradient: "from-purple-600 to-violet-400" },
-  { primary: "#0EA5E9", secondary: "#38BDF8", name: "Cielo", gradient: "from-sky-500 to-sky-400" },
-  { primary: "#14B8A6", secondary: "#5EEAD4", name: "Turquesa", gradient: "from-teal-500 to-teal-300" },
-  { primary: "#F97316", secondary: "#FB923C", name: "Naranja", gradient: "from-orange-500 to-orange-400" },
-  { primary: "#8B5CF6", secondary: "#EC4899", name: "Aurora", gradient: "from-violet-500 to-pink-500" },
-];
-
-const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+import {
+  LocationStep,
+  ContactStep,
+  SocialStep,
+  StylistsStep,
+  TypographyStep,
+  ImagesStep,
+  colorPresets,
+  dayNames,
+  StepProps,
+  BrandingData,
+  ServiceForm,
+} from "@/components/onboarding";
 
 // Step 1: Branding with AI
 function BrandingStep({ onNext, tenantId, tenantName, loading, setLoading }: StepProps) {
@@ -321,12 +309,12 @@ function BrandingStep({ onNext, tenantId, tenantName, loading, setLoading }: Ste
   );
 }
 
-// Step 2: Business Hours with shifts support
+// Step: Business Hours with shifts support
 function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps) {
   const [hours, setHours] = useState(
     dayNames.map((_, index) => ({
       day_of_week: index,
-      is_open: index !== 0, // Sunday closed by default
+      is_open: index !== 0,
       morning_start: "09:00",
       morning_end: "14:00",
       afternoon_start: "16:00",
@@ -397,7 +385,6 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Delete existing hours and insert new ones
       await supabase
         .from("tenant_business_hours")
         .delete()
@@ -438,11 +425,10 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
           Horarios de apertura
         </h3>
         <p className="text-sm text-muted-foreground">
-          Configura tus turnos de trabajo. Puedes tener turno de mañana y tarde.
+          Configura tus turnos de trabajo
         </p>
       </div>
 
-      {/* Copy mode indicator */}
       {copyFromDay !== null && (
         <div className="bg-primary/10 border border-primary/20 rounded-xl p-3">
           <p className="text-sm text-primary font-medium text-center">
@@ -519,7 +505,6 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
             
             {day.is_open && (
               <div className="space-y-3">
-                {/* Morning shift */}
                 <div className="bg-secondary/30 rounded-lg p-3">
                   <Label className="text-xs text-muted-foreground font-medium mb-2 block">
                     🌅 Turno mañana
@@ -546,7 +531,6 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
                   </div>
                 </div>
 
-                {/* Toggle afternoon shift */}
                 <div className="flex items-center justify-between">
                   <Label className="text-sm text-muted-foreground">¿Turno de tarde?</Label>
                   <Switch
@@ -555,7 +539,6 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
                   />
                 </div>
 
-                {/* Afternoon shift */}
                 {day.has_afternoon && (
                   <div className="bg-secondary/30 rounded-lg p-3">
                     <Label className="text-xs text-muted-foreground font-medium mb-2 block">
@@ -604,17 +587,7 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
   );
 }
 
-// Step 3: Services with simple/compound support
-interface ServiceForm {
-  name: string;
-  price: string;
-  type: "simple" | "compound";
-  duration: number;
-  duration_part1_active: number;
-  duration_exposure_pause: number;
-  duration_part2_active: number;
-}
-
+// Step: Services
 function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps) {
   const [services, setServices] = useState<ServiceForm[]>([
     { 
@@ -703,11 +676,10 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
           Añade tus servicios
         </h3>
         <p className="text-sm text-muted-foreground">
-          Puedes añadir servicios simples o compuestos. Después podrás añadir más desde el panel.
+          Servicios simples o compuestos. Podrás añadir más después.
         </p>
       </div>
 
-      {/* Compound service explanation */}
       <button
         type="button"
         onClick={() => setShowCompoundHelp(!showCompoundHelp)}
@@ -728,26 +700,17 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
               <ol className="space-y-2 text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">1</span>
-                  <div>
-                    <strong className="text-foreground">Fase activa 1:</strong> Tiempo que trabajas con el cliente (ej: aplicar tinte)
-                  </div>
+                  <strong className="text-foreground">Fase activa 1:</strong> Aplicar el producto
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="bg-secondary text-secondary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">2</span>
-                  <div>
-                    <strong className="text-foreground">Pausa/Exposición:</strong> Tiempo de espera donde puedes atender a otro cliente (ej: esperar que actúe el tinte)
-                  </div>
+                  <strong className="text-foreground">Pausa:</strong> Tiempo de exposición
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">3</span>
-                  <div>
-                    <strong className="text-foreground">Fase activa 2:</strong> Tiempo final de trabajo (ej: lavar y peinar)
-                  </div>
+                  <strong className="text-foreground">Fase activa 2:</strong> Lavar y peinar
                 </li>
               </ol>
-              <p className="mt-3 text-xs text-muted-foreground italic">
-                Ejemplos: Tintes, mechas, permanentes, tratamientos con tiempo de exposición...
-              </p>
             </div>
           </div>
         </div>
@@ -774,13 +737,12 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
             
             <div className="space-y-4">
               <Input
-                placeholder="Nombre del servicio (ej: Corte de pelo)"
+                placeholder="Nombre del servicio"
                 value={service.name}
                 onChange={(e) => updateService(index, "name", e.target.value)}
                 className="h-11 rounded-xl"
               />
 
-              {/* Service type selector */}
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -811,13 +773,10 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
                 </button>
               </div>
 
-              {/* Duration fields based on type */}
               {service.type === "simple" ? (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      Duración (min)
-                    </Label>
+                    <Label className="text-xs text-muted-foreground">Duración (min)</Label>
                     <Input
                       type="number"
                       min={5}
@@ -842,64 +801,47 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* Compound service phases */}
-                  <div className="bg-secondary/30 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">1</span>
-                      <Label className="text-xs font-medium text-foreground">Fase activa 1</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Fase 1</Label>
+                      <Input
+                        type="number"
+                        min={5}
+                        step={5}
+                        value={service.duration_part1_active}
+                        onChange={(e) => updateService(index, "duration_part1_active", parseInt(e.target.value) || 15)}
+                        className="h-9 rounded-lg mt-1"
+                      />
                     </div>
-                    <Input
-                      type="number"
-                      min={5}
-                      step={5}
-                      value={service.duration_part1_active}
-                      onChange={(e) => updateService(index, "duration_part1_active", parseInt(e.target.value) || 15)}
-                      className="h-9 rounded-lg"
-                      placeholder="Ej: 15 min"
-                    />
-                  </div>
-
-                  <div className="bg-secondary/30 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-secondary text-secondary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center border">2</span>
-                      <Label className="text-xs font-medium text-foreground">Pausa / Exposición</Label>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Pausa</Label>
+                      <Input
+                        type="number"
+                        min={5}
+                        step={5}
+                        value={service.duration_exposure_pause}
+                        onChange={(e) => updateService(index, "duration_exposure_pause", parseInt(e.target.value) || 30)}
+                        className="h-9 rounded-lg mt-1"
+                      />
                     </div>
-                    <Input
-                      type="number"
-                      min={5}
-                      step={5}
-                      value={service.duration_exposure_pause}
-                      onChange={(e) => updateService(index, "duration_exposure_pause", parseInt(e.target.value) || 30)}
-                      className="h-9 rounded-lg"
-                      placeholder="Ej: 30 min"
-                    />
-                  </div>
-
-                  <div className="bg-secondary/30 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
-                      <Label className="text-xs font-medium text-foreground">Fase activa 2</Label>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Fase 2</Label>
+                      <Input
+                        type="number"
+                        min={5}
+                        step={5}
+                        value={service.duration_part2_active}
+                        onChange={(e) => updateService(index, "duration_part2_active", parseInt(e.target.value) || 15)}
+                        className="h-9 rounded-lg mt-1"
+                      />
                     </div>
-                    <Input
-                      type="number"
-                      min={5}
-                      step={5}
-                      value={service.duration_part2_active}
-                      onChange={(e) => updateService(index, "duration_part2_active", parseInt(e.target.value) || 15)}
-                      className="h-9 rounded-lg"
-                      placeholder="Ej: 15 min"
-                    />
                   </div>
-
-                  {/* Total duration display */}
                   <div className="flex items-center justify-between text-sm bg-primary/10 rounded-lg p-2">
-                    <span className="text-muted-foreground">Duración total:</span>
+                    <span className="text-muted-foreground">Total:</span>
                     <span className="font-medium text-primary">
                       {service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active} min
                     </span>
                   </div>
-
-                  {/* Price field */}
                   <div>
                     <Label className="text-xs text-muted-foreground">Precio (€)</Label>
                     <Input
@@ -934,8 +876,8 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
         </Button>
         <Button onClick={handleSave} className="flex-1 h-12 rounded-xl" disabled={loading}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-          Finalizar
-          <Check className="h-4 w-4 ml-2" />
+          Continuar
+          <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>
     </div>
@@ -1002,6 +944,22 @@ export default function OnboardingSetup() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
+  // Define all steps with their icons
+  const steps = [
+    { title: "Marca", icon: Palette },
+    { title: "Tipografía", icon: Type },
+    { title: "Imágenes", icon: Image },
+    { title: "Ubicación", icon: MapPin },
+    { title: "Contacto", icon: Phone },
+    { title: "Redes", icon: Share2 },
+    { title: "Horarios", icon: Clock },
+    { title: "Servicios", icon: Scissors },
+    { title: "Equipo", icon: Users },
+    { title: "¡Listo!", icon: PartyPopper },
+  ];
+
+  const totalSteps = steps.length - 1; // Exclude success step from count
+
   useEffect(() => {
     const initSetup = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -1013,7 +971,6 @@ export default function OnboardingSetup() {
 
       const isDemo = searchParams.get("demo") === "true";
       
-      // Check if superadmin for demo mode
       if (isDemo) {
         const { data: isSuperadmin } = await supabase.rpc('is_superadmin');
         if (!isSuperadmin) {
@@ -1026,7 +983,6 @@ export default function OnboardingSetup() {
           return;
         }
         
-        // Create a demo tenant for superadmin
         try {
           const demoSlug = `demo-${Date.now()}`;
           const { data, error } = await supabase.functions.invoke("provision-business", {
@@ -1063,7 +1019,6 @@ export default function OnboardingSetup() {
         }
       }
 
-      // Check if user already has a tenant
       const { data: existingAdmin } = await supabase
         .from("tenant_admins")
         .select("tenant_id, tenants(id, slug, name)")
@@ -1071,14 +1026,12 @@ export default function OnboardingSetup() {
         .maybeSingle();
 
       if (existingAdmin?.tenant_id) {
-        // User already has a tenant, go to success
         setTenantId(existingAdmin.tenant_id);
         const tenant = existingAdmin.tenants as unknown as { slug: string; name: string };
         setTenantSlug(tenant?.slug || "");
         setTenantName(tenant?.name || "Mi Salón");
-        setStep(3); // Go to success
+        setStep(totalSteps);
       } else {
-        // Need to provision the business
         const sessionId = searchParams.get("session_id");
         if (!sessionId) {
           navigate("/onboarding");
@@ -1086,7 +1039,6 @@ export default function OnboardingSetup() {
         }
 
         try {
-          // Get stored business info and provision
           const businessName = localStorage.getItem("onboarding_business_name") || "Mi Salón";
           const businessSlug = localStorage.getItem("onboarding_business_slug") || `salon-${Date.now()}`;
           
@@ -1106,7 +1058,6 @@ export default function OnboardingSetup() {
           setTenantSlug(data.tenant.slug);
           setTenantName(data.tenant.name || businessName);
 
-          // Clear stored data
           localStorage.removeItem("onboarding_business_name");
           localStorage.removeItem("onboarding_business_slug");
           localStorage.removeItem("onboarding_plan");
@@ -1130,7 +1081,7 @@ export default function OnboardingSetup() {
     };
 
     initSetup();
-  }, [navigate, searchParams, toast]);
+  }, [navigate, searchParams, toast, totalSteps]);
 
   if (initializing) {
     return (
@@ -1145,12 +1096,43 @@ export default function OnboardingSetup() {
     );
   }
 
-  const steps = [
-    { title: "Marca", icon: Palette },
-    { title: "Horarios", icon: Clock },
-    { title: "Servicios", icon: Scissors },
-    { title: "¡Listo!", icon: PartyPopper },
-  ];
+  const renderStep = () => {
+    if (!tenantId) return null;
+
+    const stepProps: StepProps = {
+      onNext: () => setStep(step + 1),
+      onPrev: step > 0 ? () => setStep(step - 1) : undefined,
+      tenantId,
+      tenantName,
+      loading,
+      setLoading,
+    };
+
+    switch (step) {
+      case 0:
+        return <BrandingStep {...stepProps} />;
+      case 1:
+        return <TypographyStep {...stepProps} />;
+      case 2:
+        return <ImagesStep {...stepProps} />;
+      case 3:
+        return <LocationStep {...stepProps} />;
+      case 4:
+        return <ContactStep {...stepProps} />;
+      case 5:
+        return <SocialStep {...stepProps} />;
+      case 6:
+        return <HoursStep {...stepProps} />;
+      case 7:
+        return <ServicesStep {...stepProps} />;
+      case 8:
+        return <StylistsStep {...stepProps} />;
+      case 9:
+        return tenantSlug ? <SuccessStep tenantSlug={tenantSlug} /> : null;
+      default:
+        return null;
+    }
+  };
 
   return (
     <AppLayout hideNavigation>
@@ -1164,19 +1146,26 @@ export default function OnboardingSetup() {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 safe-area-top">
         <div className="px-4 py-3 flex items-center gap-3">
-          {step < 3 && (
+          {step < totalSteps && (
             <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
           )}
-          <h1 className="font-semibold text-foreground">Configura tu salón</h1>
+          <div className="flex-1">
+            <h1 className="font-semibold text-foreground">Configura tu salón</h1>
+            {step < totalSteps && (
+              <p className="text-xs text-muted-foreground">
+                Paso {step + 1} de {totalSteps}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Progress */}
-        {step < 3 && (
+        {step < totalSteps && (
           <div className="px-4 pb-3">
-            <div className="flex gap-2">
-              {steps.slice(0, 3).map((s, index) => (
+            <div className="flex gap-1">
+              {steps.slice(0, totalSteps).map((_, index) => (
                 <div
                   key={index}
                   className={`h-1 flex-1 rounded-full transition-colors ${
@@ -1185,17 +1174,14 @@ export default function OnboardingSetup() {
                 />
               ))}
             </div>
-            <div className="flex justify-between mt-2">
-              {steps.slice(0, 3).map((s, index) => (
-                <span
-                  key={index}
-                  className={`text-xs ${
-                    index === step ? "text-primary font-medium" : "text-muted-foreground"
-                  }`}
-                >
-                  {s.title}
-                </span>
-              ))}
+            <div className="flex items-center justify-center mt-2 gap-1">
+              {(() => {
+                const StepIcon = steps[step].icon;
+                return <StepIcon className="h-4 w-4 text-primary" />;
+              })()}
+              <span className="text-sm font-medium text-primary">
+                {steps[step].title}
+              </span>
             </div>
           </div>
         )}
@@ -1210,36 +1196,7 @@ export default function OnboardingSetup() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              {step === 0 && tenantId && (
-                <BrandingStep
-                  onNext={() => setStep(1)}
-                  tenantId={tenantId}
-                  tenantName={tenantName}
-                  loading={loading}
-                  setLoading={setLoading}
-                />
-              )}
-              {step === 1 && tenantId && (
-                <HoursStep
-                  onNext={() => setStep(2)}
-                  onPrev={() => setStep(0)}
-                  tenantId={tenantId}
-                  loading={loading}
-                  setLoading={setLoading}
-                />
-              )}
-              {step === 2 && tenantId && (
-                <ServicesStep
-                  onNext={() => setStep(3)}
-                  onPrev={() => setStep(1)}
-                  tenantId={tenantId}
-                  loading={loading}
-                  setLoading={setLoading}
-                />
-              )}
-              {step === 3 && tenantSlug && (
-                <SuccessStep tenantSlug={tenantSlug} />
-              )}
+              {renderStep()}
             </motion.div>
           </AnimatePresence>
         </div>
