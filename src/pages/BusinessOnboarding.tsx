@@ -150,8 +150,8 @@ export default function BusinessOnboarding() {
   return (
     <AppLayout hideNavigation>
       <SEO
-        title="Únete a SalonHub - Crea tu Landing Page Profesional"
-        description="Digitaliza tu negocio con nuestra plataforma todo-en-uno. Landing page profesional y sistema de reservas."
+        title="Únete a GlowUp - Crea tu Perfil Profesional"
+        description="Digitaliza tu negocio con GlowUp. Perfil profesional, sistema de reservas y conexión directa con clientes."
         canonicalUrl="/onboarding"
       />
 
@@ -161,7 +161,7 @@ export default function BusinessOnboarding() {
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-semibold text-foreground">Unirse a SalonHub</h1>
+          <h1 className="font-semibold text-foreground">Unirse a GlowUp</h1>
         </div>
       </div>
 
@@ -178,7 +178,7 @@ export default function BusinessOnboarding() {
               <span className="text-sm font-medium">30 días gratis de prueba</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Digitaliza tu salón en minutos
+              Haz crecer tu negocio con GlowUp
             </h2>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">
               Crea tu landing page profesional y empieza a recibir reservas online hoy mismo.
@@ -351,7 +351,7 @@ export default function BusinessOnboarding() {
                               <FormLabel>URL de tu salón</FormLabel>
                               <FormControl>
                                 <div className="flex items-center">
-                                  <span className="text-sm text-muted-foreground mr-2">salonhub.app/salon/</span>
+                                  <span className="text-sm text-muted-foreground mr-2">glowup.app/</span>
                                   <Input 
                                     placeholder="mi-salon" 
                                     {...field}

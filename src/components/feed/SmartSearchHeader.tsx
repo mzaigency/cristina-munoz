@@ -70,7 +70,7 @@ export function SmartSearchHeader({
             className="flex items-center justify-center mb-4"
           >
             <h1 className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              SalonHub
+              GlowUp
             </h1>
           </motion.div>
 

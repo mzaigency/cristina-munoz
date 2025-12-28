@@ -589,8 +589,8 @@ export default function OnboardingSetup() {
   return (
     <AppLayout hideNavigation>
       <SEO
-        title="Configura tu Salón - SalonHub"
-        description="Personaliza tu landing page profesional"
+        title="Configura tu Perfil - GlowUp"
+        description="Personaliza tu perfil profesional en GlowUp"
         canonicalUrl="/onboarding/setup"
         noindex
       />

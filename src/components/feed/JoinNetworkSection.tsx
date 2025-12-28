@@ -28,12 +28,12 @@ export const JoinNetworkSection = () => {
             <span className="text-sm font-medium">1 mes gratis de prueba</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Únete a nuestra red de{" "}
-            <span className="text-gradient">profesionales</span>
+            Únete a la comunidad{" "}
+            <span className="text-gradient">GlowUp</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Digitaliza tu negocio con nuestra plataforma todo-en-uno. 
-            Crea tu landing page profesional y empieza a recibir reservas online.
+            Haz crecer tu negocio con nuestra plataforma. 
+            Conecta con nuevos clientes y gestiona tus reservas desde un solo lugar.
           </p>
         </motion.div>
 
