@@ -10,6 +10,7 @@ import { CategoryPills } from "@/components/feed/CategoryPills";
 import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { PremiumSkeleton } from "@/components/feed/PremiumSkeleton";
 import { EmptyState } from "@/components/feed/EmptyState";
+import { StoriesCarousel } from "@/components/feed/StoriesCarousel";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { useFavorites } from "@/hooks/useFavorites";
 
@@ -134,6 +135,11 @@ const Index = () => {
         onRecentSearchClick={(search) => setSearchQuery(search)}
         onClearRecents={clearRecentSearches}
       />
+
+      {/* Stories Carousel */}
+      <div className="py-4 border-b border-border/30">
+        <StoriesCarousel />
+      </div>
 
       {/* Main Content */}
       <div className="px-4 py-6 pb-24">
