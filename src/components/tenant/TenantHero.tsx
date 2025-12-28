@@ -91,7 +91,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             {tagline}
           </motion.p>
 
-          {/* CTA Button - iOS pill style */}
+          {/* CTA Button - Using salon primary color */}
           <motion.div 
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -100,34 +100,12 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             <Button
               size="lg"
               onClick={onBookNow}
-              className={`text-base font-medium px-8 py-6 rounded-full transition-all duration-300 ${
-                hasHeroImage 
-                  ? 'bg-white/95 text-black hover:bg-white shadow-lg shadow-black/20' 
-                  : 'bg-primary text-primary-foreground hover:opacity-90'
-              }`}
+              className="text-base font-medium px-8 py-6 rounded-full transition-all duration-300 bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20"
             >
               Reservar cita
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </motion.div>
-
-          {/* Location pill - iOS style */}
-          {tenant.city && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="mt-8"
-            >
-              <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
-                hasHeroImage 
-                  ? 'bg-white/10 text-white/90 backdrop-blur-md border border-white/10' 
-                  : 'bg-muted text-muted-foreground'
-              }`}>
-                {tenant.city}
-              </span>
-            </motion.div>
-          )}
         </div>
       </div>
 
