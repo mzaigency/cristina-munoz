@@ -15,7 +15,9 @@ import {
   Clock, 
   Scissors, 
   PartyPopper,
-  Building2
+  Building2,
+  HelpCircle,
+  Layers
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { motion, AnimatePresence } from "motion/react";
@@ -151,18 +153,21 @@ function BrandingStep({ onNext, tenantId, loading, setLoading }: StepProps) {
   );
 }
 
-// Step 2: Business Hours
+// Step 2: Business Hours with shifts support
 function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps) {
   const [hours, setHours] = useState(
     dayNames.map((_, index) => ({
       day_of_week: index,
       is_open: index !== 0, // Sunday closed by default
-      open_time: "09:00",
-      close_time: "20:00",
-      break_start: "14:00",
-      break_end: "16:00",
+      morning_start: "09:00",
+      morning_end: "14:00",
+      afternoon_start: "16:00",
+      afternoon_end: "20:00",
+      has_afternoon: true,
     }))
   );
+  const [selectedDaysToCopy, setSelectedDaysToCopy] = useState<number[]>([]);
+  const [copyFromDay, setCopyFromDay] = useState<number | null>(null);
   const { toast } = useToast();
 
   const handleToggleDay = (index: number) => {
@@ -171,10 +176,54 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
     setHours(newHours);
   };
 
+  const handleToggleAfternoon = (index: number) => {
+    const newHours = [...hours];
+    newHours[index].has_afternoon = !newHours[index].has_afternoon;
+    setHours(newHours);
+  };
+
   const handleTimeChange = (index: number, field: string, value: string) => {
     const newHours = [...hours];
     newHours[index] = { ...newHours[index], [field]: value };
     setHours(newHours);
+  };
+
+  const handleCopyToSelectedDays = (sourceIndex: number) => {
+    if (selectedDaysToCopy.length === 0) {
+      setCopyFromDay(copyFromDay === sourceIndex ? null : sourceIndex);
+      return;
+    }
+    
+    const sourceDay = hours[sourceIndex];
+    const newHours = [...hours];
+    selectedDaysToCopy.forEach((targetIndex) => {
+      if (targetIndex !== sourceIndex) {
+        newHours[targetIndex] = {
+          ...newHours[targetIndex],
+          is_open: sourceDay.is_open,
+          morning_start: sourceDay.morning_start,
+          morning_end: sourceDay.morning_end,
+          afternoon_start: sourceDay.afternoon_start,
+          afternoon_end: sourceDay.afternoon_end,
+          has_afternoon: sourceDay.has_afternoon,
+        };
+      }
+    });
+    setHours(newHours);
+    setSelectedDaysToCopy([]);
+    setCopyFromDay(null);
+    toast({
+      title: "Horarios copiados",
+      description: `Se han copiado los horarios a ${selectedDaysToCopy.length} día(s)`,
+    });
+  };
+
+  const toggleDaySelection = (index: number) => {
+    if (selectedDaysToCopy.includes(index)) {
+      setSelectedDaysToCopy(selectedDaysToCopy.filter(i => i !== index));
+    } else {
+      setSelectedDaysToCopy([...selectedDaysToCopy, index]);
+    }
   };
 
   const handleSave = async () => {
@@ -193,10 +242,10 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
             tenant_id: tenantId,
             day_of_week: h.day_of_week,
             is_open: h.is_open,
-            open_time: h.is_open ? h.open_time : null,
-            close_time: h.is_open ? h.close_time : null,
-            break_start: h.is_open ? h.break_start : null,
-            break_end: h.is_open ? h.break_end : null,
+            open_time: h.is_open ? h.morning_start : null,
+            close_time: h.is_open ? (h.has_afternoon ? h.afternoon_end : h.morning_end) : null,
+            break_start: h.is_open && h.has_afternoon ? h.morning_end : null,
+            break_end: h.is_open && h.has_afternoon ? h.afternoon_start : null,
           }))
         );
 
@@ -221,18 +270,79 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
           Horarios de apertura
         </h3>
         <p className="text-sm text-muted-foreground">
-          Configura cuándo está abierto tu salón
+          Configura tus turnos de trabajo. Puedes tener turno de mañana y tarde.
         </p>
       </div>
+
+      {/* Copy mode indicator */}
+      {copyFromDay !== null && (
+        <div className="bg-primary/10 border border-primary/20 rounded-xl p-3">
+          <p className="text-sm text-primary font-medium text-center">
+            Selecciona los días donde copiar el horario de {dayNames[copyFromDay]}
+          </p>
+          <div className="flex flex-wrap gap-2 justify-center mt-2">
+            {dayNames.map((day, index) => (
+              index !== copyFromDay && (
+                <button
+                  key={index}
+                  onClick={() => toggleDaySelection(index)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    selectedDaysToCopy.includes(index)
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  {day.slice(0, 3)}
+                </button>
+              )
+            ))}
+          </div>
+          <div className="flex gap-2 mt-3 justify-center">
+            <Button
+              size="sm"
+              onClick={() => handleCopyToSelectedDays(copyFromDay)}
+              disabled={selectedDaysToCopy.length === 0}
+              className="rounded-lg"
+            >
+              Copiar a {selectedDaysToCopy.length} día(s)
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setCopyFromDay(null);
+                setSelectedDaysToCopy([]);
+              }}
+              className="rounded-lg"
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         {hours.map((day, index) => (
           <div 
             key={index} 
-            className={`ios-card p-4 ${!day.is_open ? "opacity-60" : ""}`}
+            className={`ios-card p-4 transition-all ${
+              !day.is_open ? "opacity-60" : ""
+            } ${copyFromDay === index ? "ring-2 ring-primary" : ""}`}
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium text-foreground">{dayNames[index]}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-foreground">{dayNames[index]}</span>
+                {day.is_open && copyFromDay === null && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCopyFromDay(index)}
+                    className="text-xs h-6 px-2 text-muted-foreground hover:text-primary"
+                  >
+                    Copiar a...
+                  </Button>
+                )}
+              </div>
               <Switch
                 checked={day.is_open}
                 onCheckedChange={() => handleToggleDay(index)}
@@ -240,25 +350,71 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
             </div>
             
             {day.is_open && (
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Apertura</Label>
-                  <Input
-                    type="time"
-                    value={day.open_time}
-                    onChange={(e) => handleTimeChange(index, "open_time", e.target.value)}
-                    className="h-10 rounded-lg mt-1"
+              <div className="space-y-3">
+                {/* Morning shift */}
+                <div className="bg-secondary/30 rounded-lg p-3">
+                  <Label className="text-xs text-muted-foreground font-medium mb-2 block">
+                    🌅 Turno mañana
+                  </Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Entrada</Label>
+                      <Input
+                        type="time"
+                        value={day.morning_start}
+                        onChange={(e) => handleTimeChange(index, "morning_start", e.target.value)}
+                        className="h-9 rounded-lg mt-1 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Salida</Label>
+                      <Input
+                        type="time"
+                        value={day.morning_end}
+                        onChange={(e) => handleTimeChange(index, "morning_end", e.target.value)}
+                        className="h-9 rounded-lg mt-1 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Toggle afternoon shift */}
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm text-muted-foreground">¿Turno de tarde?</Label>
+                  <Switch
+                    checked={day.has_afternoon}
+                    onCheckedChange={() => handleToggleAfternoon(index)}
                   />
                 </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Cierre</Label>
-                  <Input
-                    type="time"
-                    value={day.close_time}
-                    onChange={(e) => handleTimeChange(index, "close_time", e.target.value)}
-                    className="h-10 rounded-lg mt-1"
-                  />
-                </div>
+
+                {/* Afternoon shift */}
+                {day.has_afternoon && (
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <Label className="text-xs text-muted-foreground font-medium mb-2 block">
+                      🌇 Turno tarde
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Entrada</Label>
+                        <Input
+                          type="time"
+                          value={day.afternoon_start}
+                          onChange={(e) => handleTimeChange(index, "afternoon_start", e.target.value)}
+                          className="h-9 rounded-lg mt-1 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Salida</Label>
+                        <Input
+                          type="time"
+                          value={day.afternoon_end}
+                          onChange={(e) => handleTimeChange(index, "afternoon_end", e.target.value)}
+                          className="h-9 rounded-lg mt-1 text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -280,15 +436,45 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
   );
 }
 
-// Step 3: Services
+// Step 3: Services with simple/compound support
+interface ServiceForm {
+  name: string;
+  price: string;
+  type: "simple" | "compound";
+  duration: number;
+  duration_part1_active: number;
+  duration_exposure_pause: number;
+  duration_part2_active: number;
+}
+
 function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps) {
-  const [services, setServices] = useState([
-    { name: "", duration: 30, price: "" },
+  const [services, setServices] = useState<ServiceForm[]>([
+    { 
+      name: "", 
+      price: "", 
+      type: "simple", 
+      duration: 30,
+      duration_part1_active: 15,
+      duration_exposure_pause: 30,
+      duration_part2_active: 15,
+    },
   ]);
+  const [showCompoundHelp, setShowCompoundHelp] = useState(false);
   const { toast } = useToast();
 
   const addService = () => {
-    setServices([...services, { name: "", duration: 30, price: "" }]);
+    setServices([
+      ...services, 
+      { 
+        name: "", 
+        price: "", 
+        type: "simple", 
+        duration: 30,
+        duration_part1_active: 15,
+        duration_exposure_pause: 30,
+        duration_part2_active: 15,
+      }
+    ]);
   };
 
   const removeService = (index: number) => {
@@ -297,7 +483,7 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
     }
   };
 
-  const updateService = (index: number, field: string, value: string | number) => {
+  const updateService = (index: number, field: keyof ServiceForm, value: string | number) => {
     const newServices = [...services];
     newServices[index] = { ...newServices[index], [field]: value };
     setServices(newServices);
@@ -307,7 +493,6 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
     const validServices = services.filter((s) => s.name.trim());
     
     if (validServices.length === 0) {
-      // Skip if no services added
       onNext();
       return;
     }
@@ -320,9 +505,11 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
           validServices.map((s) => ({
             tenant_id: tenantId,
             name: s.name.trim(),
-            duration_part1_active: s.duration,
+            type: s.type,
+            duration_part1_active: s.type === "simple" ? s.duration : s.duration_part1_active,
+            duration_exposure_pause: s.type === "compound" ? s.duration_exposure_pause : 0,
+            duration_part2_active: s.type === "compound" ? s.duration_part2_active : 0,
             price: s.price ? parseFloat(s.price) : null,
-            type: "simple",
             category: "General",
           }))
         );
@@ -348,9 +535,55 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
           Añade tus servicios
         </h3>
         <p className="text-sm text-muted-foreground">
-          Puedes añadir más servicios después desde el panel de administración
+          Puedes añadir servicios simples o compuestos. Después podrás añadir más desde el panel.
         </p>
       </div>
+
+      {/* Compound service explanation */}
+      <button
+        type="button"
+        onClick={() => setShowCompoundHelp(!showCompoundHelp)}
+        className="flex items-center gap-2 text-sm text-primary hover:underline"
+      >
+        <HelpCircle className="h-4 w-4" />
+        ¿Qué es un servicio compuesto?
+      </button>
+      
+      {showCompoundHelp && (
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-sm space-y-3">
+          <div className="flex items-start gap-3">
+            <Layers className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-foreground mb-2">
+                Un servicio compuesto tiene 3 fases:
+              </p>
+              <ol className="space-y-2 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">1</span>
+                  <div>
+                    <strong className="text-foreground">Fase activa 1:</strong> Tiempo que trabajas con el cliente (ej: aplicar tinte)
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-secondary text-secondary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">2</span>
+                  <div>
+                    <strong className="text-foreground">Pausa/Exposición:</strong> Tiempo de espera donde puedes atender a otro cliente (ej: esperar que actúe el tinte)
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">3</span>
+                  <div>
+                    <strong className="text-foreground">Fase activa 2:</strong> Tiempo final de trabajo (ej: lavar y peinar)
+                  </div>
+                </li>
+              </ol>
+              <p className="mt-3 text-xs text-muted-foreground italic">
+                Ejemplos: Tintes, mechas, permanentes, tratamientos con tiempo de exposición...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         {services.map((service, index) => (
@@ -371,38 +604,148 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
               )}
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Input
                 placeholder="Nombre del servicio (ej: Corte de pelo)"
                 value={service.name}
                 onChange={(e) => updateService(index, "name", e.target.value)}
                 className="h-11 rounded-xl"
               />
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Duración (min)</Label>
-                  <Input
-                    type="number"
-                    min={5}
-                    step={5}
-                    value={service.duration}
-                    onChange={(e) => updateService(index, "duration", parseInt(e.target.value) || 30)}
-                    className="h-10 rounded-lg mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Precio (€)</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    step={0.5}
-                    placeholder="Opcional"
-                    value={service.price}
-                    onChange={(e) => updateService(index, "price", e.target.value)}
-                    className="h-10 rounded-lg mt-1"
-                  />
-                </div>
+
+              {/* Service type selector */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => updateService(index, "type", "simple")}
+                  className={`p-3 rounded-xl border-2 transition-all text-left ${
+                    service.type === "simple"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <p className="font-medium text-sm text-foreground">Simple</p>
+                  <p className="text-xs text-muted-foreground">Un solo tiempo</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateService(index, "type", "compound")}
+                  className={`p-3 rounded-xl border-2 transition-all text-left ${
+                    service.type === "compound"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    <p className="font-medium text-sm text-foreground">Compuesto</p>
+                    <Layers className="h-3 w-3 text-primary" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">3 fases</p>
+                </button>
               </div>
+
+              {/* Duration fields based on type */}
+              {service.type === "simple" ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                      Duración (min)
+                    </Label>
+                    <Input
+                      type="number"
+                      min={5}
+                      step={5}
+                      value={service.duration}
+                      onChange={(e) => updateService(index, "duration", parseInt(e.target.value) || 30)}
+                      className="h-10 rounded-lg mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Precio (€)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      placeholder="Opcional"
+                      value={service.price}
+                      onChange={(e) => updateService(index, "price", e.target.value)}
+                      className="h-10 rounded-lg mt-1"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Compound service phases */}
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">1</span>
+                      <Label className="text-xs font-medium text-foreground">Fase activa 1</Label>
+                    </div>
+                    <Input
+                      type="number"
+                      min={5}
+                      step={5}
+                      value={service.duration_part1_active}
+                      onChange={(e) => updateService(index, "duration_part1_active", parseInt(e.target.value) || 15)}
+                      className="h-9 rounded-lg"
+                      placeholder="Ej: 15 min"
+                    />
+                  </div>
+
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-secondary text-secondary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center border">2</span>
+                      <Label className="text-xs font-medium text-foreground">Pausa / Exposición</Label>
+                    </div>
+                    <Input
+                      type="number"
+                      min={5}
+                      step={5}
+                      value={service.duration_exposure_pause}
+                      onChange={(e) => updateService(index, "duration_exposure_pause", parseInt(e.target.value) || 30)}
+                      className="h-9 rounded-lg"
+                      placeholder="Ej: 30 min"
+                    />
+                  </div>
+
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                      <Label className="text-xs font-medium text-foreground">Fase activa 2</Label>
+                    </div>
+                    <Input
+                      type="number"
+                      min={5}
+                      step={5}
+                      value={service.duration_part2_active}
+                      onChange={(e) => updateService(index, "duration_part2_active", parseInt(e.target.value) || 15)}
+                      className="h-9 rounded-lg"
+                      placeholder="Ej: 15 min"
+                    />
+                  </div>
+
+                  {/* Total duration display */}
+                  <div className="flex items-center justify-between text-sm bg-primary/10 rounded-lg p-2">
+                    <span className="text-muted-foreground">Duración total:</span>
+                    <span className="font-medium text-primary">
+                      {service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active} min
+                    </span>
+                  </div>
+
+                  {/* Price field */}
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Precio (€)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      placeholder="Opcional"
+                      value={service.price}
+                      onChange={(e) => updateService(index, "price", e.target.value)}
+                      className="h-10 rounded-lg mt-1"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ))}
