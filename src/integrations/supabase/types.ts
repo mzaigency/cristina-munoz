@@ -326,6 +326,62 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          barcode: string | null
+          category: string | null
+          cost: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          min_stock: number | null
+          name: string
+          price: number
+          stock: number | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          barcode?: string | null
+          category?: string | null
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_stock?: number | null
+          name: string
+          price?: number
+          stock?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          barcode?: string | null
+          category?: string | null
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_stock?: number | null
+          name?: string
+          price?: number
+          stock?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -513,6 +569,51 @@ export type Database = {
             columns: ["story_id"]
             isOneToOne: false
             referencedRelation: "salon_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stylist_commissions: {
+        Row: {
+          commission_percentage: number | null
+          created_at: string | null
+          effective_from: string | null
+          id: string
+          stylist_id: string | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          commission_percentage?: number | null
+          created_at?: string | null
+          effective_from?: string | null
+          id?: string
+          stylist_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          commission_percentage?: number | null
+          created_at?: string | null
+          effective_from?: string | null
+          id?: string
+          stylist_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_commissions_stylist_id_fkey"
+            columns: ["stylist_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_stylists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stylist_commissions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -937,6 +1038,7 @@ export type Database = {
           notes: string | null
           payment_details: Json | null
           payment_method: string
+          products: Json | null
           services: Json
           stylist: string
           stylist_id: string | null
@@ -960,6 +1062,7 @@ export type Database = {
           notes?: string | null
           payment_details?: Json | null
           payment_method: string
+          products?: Json | null
           services: Json
           stylist: string
           stylist_id?: string | null
@@ -983,6 +1086,7 @@ export type Database = {
           notes?: string | null
           payment_details?: Json | null
           payment_method?: string
+          products?: Json | null
           services?: Json
           stylist?: string
           stylist_id?: string | null
