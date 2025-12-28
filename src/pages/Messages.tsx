@@ -95,7 +95,7 @@ export default function Messages() {
             ) : (
               <Button 
                 variant="ghost" 
-                onClick={() => navigate(-1)}
+                onClick={() => navigate('/')}
                 className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
               >
                 <ChevronLeft className="h-6 w-6" />
