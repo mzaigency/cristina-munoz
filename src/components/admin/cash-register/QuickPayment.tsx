@@ -227,11 +227,11 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
         paymentDetails.change = getChange();
       }
 
-      const { error } = await supabase.from("transactions").insert({
+      const transactionData = {
         stylist: selectedStylist?.slug || "unknown",
         stylist_id: selectedStylistId,
         customer_name: customerName.trim() || "Cliente",
-        services: servicesData as unknown as Record<string, unknown>,
+        services: servicesData,
         subtotal,
         discount: discountAmount,
         discount_type: discountType,
@@ -239,10 +239,12 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
         total,
         tip_amount: tip,
         payment_method: paymentMethod,
-        payment_details: paymentDetails as unknown as Record<string, unknown>,
+        payment_details: paymentDetails,
         notes: notes.trim() || null,
         created_by: user.id,
-      });
+      };
+
+      const { error } = await supabase.from("transactions").insert(transactionData as never);
 
       if (error) throw error;
       clearAll();
