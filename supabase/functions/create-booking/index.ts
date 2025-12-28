@@ -502,6 +502,50 @@ serve(async (req) => {
 
     console.log('Created bookings:', createdBookings.length);
 
+    // Send WhatsApp confirmation via Meta Cloud API
+    if (customer_phone && customer_phone.length >= 9) {
+      try {
+        const serviceNames = bookingData.services.map(s => s.name).join(', ');
+        const [day, month, year] = [
+          bookingDate.slice(8, 10),
+          bookingDate.slice(5, 7),
+          bookingDate.slice(0, 4)
+        ];
+        const formattedDate = `${day}/${month}/${year}`;
+        
+        const response = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-notification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenant_id: tenantId,
+            to: customer_phone,
+            template_name: 'reserva_confirmada',
+            template_language: 'es',
+            template_components: [
+              {
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: customer_name },
+                  { type: 'text', text: formattedDate },
+                  { type: 'text', text: bookingTime.slice(0, 5) },
+                  { type: 'text', text: serviceNames },
+                ]
+              }
+            ]
+          })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          console.log('WhatsApp confirmation sent successfully');
+        } else {
+          console.log('WhatsApp not sent (integration may not be configured):', result.error);
+        }
+      } catch (whatsappError) {
+        console.error('Error sending WhatsApp confirmation:', whatsappError);
+      }
+    }
+
     // Trigger n8n webhook (only for the first booking to avoid spam)
     const n8nWebhookUrl = await getN8nWebhookUrl(supabase, tenantId);
     if (n8nWebhookUrl) {
