@@ -156,7 +156,7 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
 
             return (
               <ScrollReveal key={category} delay={idx * 80}>
-                <div className="rounded-2xl overflow-hidden bg-card border border-border/40">
+                <div className="rounded-2xl overflow-hidden bg-card border border-primary/20 shadow-sm">
                   {/* Category Header */}
                   {categoryImage ? (
                     <div className="relative h-32 sm:h-40">
@@ -168,8 +168,8 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                       <div className="absolute bottom-4 left-4 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
-                          <Icon className="h-5 w-5 text-white" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/80 backdrop-blur-md">
+                          <Icon className="h-5 w-5 text-primary-foreground" />
                         </div>
                         <h3 className="text-xl font-semibold text-white tracking-tight">
                           {category}
@@ -177,10 +177,10 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
                       </div>
                     </div>
                   ) : (
-                    <div className="px-5 py-4 border-b border-border/30 bg-muted/20">
+                    <div className="px-5 py-4 border-b border-primary/10 bg-primary/5">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                          <Icon className="h-5 w-5 text-primary" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+                          <Icon className="h-5 w-5 text-primary-foreground" />
                         </div>
                         <h3 className="text-xl font-semibold text-foreground tracking-tight">
                           {category}
@@ -189,8 +189,8 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
                     </div>
                   )}
 
-                  {/* Services List - iOS style */}
-                  <div className="divide-y divide-border/30">
+                  {/* Services List - iOS style with brand accent */}
+                  <div className="divide-y divide-border/20">
                     {categoryServices.map((service, serviceIdx) => {
                       const totalDuration =
                         service.duration_part1_active +
@@ -200,12 +200,15 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
                       return (
                         <div
                           key={service.id}
-                          className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/30 transition-colors"
+                          className="flex items-center justify-between px-5 py-3.5 hover:bg-primary/5 transition-colors group"
                         >
-                          <span className="font-medium text-foreground text-[15px]">
-                            {service.name}
-                          </span>
-                          <span className="text-sm text-muted-foreground tabular-nums">
+                          <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary/60 group-hover:bg-primary transition-colors" />
+                            <span className="font-medium text-foreground text-[15px]">
+                              {service.name}
+                            </span>
+                          </div>
+                          <span className="text-sm text-primary/80 font-medium tabular-nums">
                             {formatDuration(totalDuration)}
                           </span>
                         </div>
