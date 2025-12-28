@@ -21,7 +21,8 @@ import {
   User,
   X,
   Plus,
-  Minus
+  Minus,
+  Package
 } from "lucide-react";
 import {
   Select,
@@ -54,6 +55,15 @@ interface Stylist {
 
 interface SelectedService extends Service {
   quantity: number;
+  type: "service" | "product";
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  category: string | null;
+  stock: number;
 }
 
 interface QuickPaymentProps {
@@ -66,6 +76,7 @@ type DiscountType = "percentage" | "fixed" | null;
 export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
   const [loading, setLoading] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
   const [selectedStylistId, setSelectedStylistId] = useState<string>("");
@@ -112,14 +123,17 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
       }
       
       if (tenantId) {
-        const [servicesRes, stylistsRes] = await Promise.all([
+        const [servicesRes, stylistsRes, productsRes] = await Promise.all([
           supabase.from("services").select("id, name, price, category, duration_part1_active")
             .eq("tenant_id", tenantId).order("category").order("name"),
           supabase.from("tenant_stylists").select("id, name, slug, color")
+            .eq("tenant_id", tenantId).eq("is_active", true).order("name"),
+          supabase.from("products").select("id, name, price, category, stock")
             .eq("tenant_id", tenantId).eq("is_active", true).order("name")
         ]);
         if (servicesRes.data) setServices(servicesRes.data);
         if (stylistsRes.data) setStylists(stylistsRes.data);
+        if (productsRes.data) setProducts(productsRes.data as Product[]);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -157,7 +171,7 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
     if (existing) {
       setSelectedServices(selectedServices.filter(s => s.id !== service.id));
     } else {
-      setSelectedServices([...selectedServices, { ...service, quantity: 1 }]);
+      setSelectedServices([...selectedServices, { ...service, quantity: 1, type: "service" as const }]);
     }
   };
 
