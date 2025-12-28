@@ -125,35 +125,35 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
   }
 
   return (
-    <section className="py-20 bg-muted/30">
+    <section className="py-16 md:py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="mb-12 text-center">
+        <div className="mb-8 md:mb-12 text-center">
           <SmoothTitle>
-            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+            <h2 className="mb-3 text-2xl font-bold text-foreground sm:text-3xl md:text-4xl">
               Lo Que Dicen Nuestros Clientes
             </h2>
           </SmoothTitle>
           <div className="line-accent mx-auto mb-4" />
-          <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className="h-6 w-6 text-primary"
+                  className="h-5 w-5 sm:h-6 sm:w-6 text-primary"
                   fill={star <= Math.round(averageRating) ? "currentColor" : "transparent"}
                 />
               ))}
             </div>
-            <span className="text-lg font-semibold text-primary">
+            <span className="text-base sm:text-lg font-semibold text-primary">
               {averageRating} / 5
             </span>
-            <span className="text-muted-foreground">({reviews.length} reseñas)</span>
+            <span className="text-sm sm:text-base text-muted-foreground">({reviews.length} reseñas)</span>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
           {reviews.map((review, idx) => (
-            <ScrollReveal key={review.id} delay={idx * 100}>
+            <ScrollReveal key={review.id} delay={idx * 80}>
               <div className="bg-card rounded-xl p-6 shadow-lg h-full flex flex-col">
                 {/* Header with avatar and name */}
                 <div className="flex items-center gap-3 mb-4">

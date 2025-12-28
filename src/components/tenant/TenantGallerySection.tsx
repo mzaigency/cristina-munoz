@@ -81,22 +81,22 @@ export const TenantGallerySection = ({ tenantId, tenantName }: TenantGallerySect
   }
 
   return (
-    <section className="py-20 bg-background">
+    <section className="py-16 md:py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="mb-12 text-center">
+        <div className="mb-8 md:mb-12 text-center">
           <SmoothTitle>
-            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+            <h2 className="mb-3 text-2xl font-bold text-foreground sm:text-3xl md:text-4xl">
               Nuestros Trabajos
             </h2>
           </SmoothTitle>
           <div className="line-accent mx-auto mb-4" />
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
             Descubre algunos de nuestros mejores trabajos
             {tenantName && ` en ${tenantName}`}
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           {images.map((image, idx) => (
             <ScrollReveal key={image.id} delay={idx * 50}>
               <div
