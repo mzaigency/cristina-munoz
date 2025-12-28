@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -17,6 +17,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import TenantLanding from "./pages/TenantLanding";
 import Messages from "./pages/Messages";
+import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +30,8 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
-          <Route path="/" element={<Navigate to="/salon/cristina-munoz" replace />} />
+          <Route path="/" element={<Index />} />
+          <Route path="/buscar" element={<Search />} />
           <Route path="/sobre-nosotras" element={<About />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />
@@ -42,7 +44,6 @@ const App = () => (
           <Route path="/terminos-uso" element={<TermsOfService />} />
           <Route path="/mensajes" element={<Messages />} />
           <Route path="/salon/:slug" element={<TenantLanding />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
