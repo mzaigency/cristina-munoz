@@ -503,15 +503,15 @@ serve(async (req) => {
     console.log('Created bookings:', createdBookings.length);
 
     // Send WhatsApp confirmation via Meta Cloud API
+    // Template: reserva_confirmada -> {{1}}=nombre, {{2}}=fecha a las hora
     if (customer_phone && customer_phone.length >= 9) {
       try {
-        const serviceNames = bookingData.services.map(s => s.name).join(', ');
         const [day, month, year] = [
           bookingDate.slice(8, 10),
           bookingDate.slice(5, 7),
           bookingDate.slice(0, 4)
         ];
-        const formattedDate = `${day}/${month}/${year}`;
+        const formattedDateTime = `${day}/${month}/${year} a las ${bookingTime.slice(0, 5)}`;
         
         const response = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-notification`, {
           method: 'POST',
@@ -526,9 +526,7 @@ serve(async (req) => {
                 type: 'body',
                 parameters: [
                   { type: 'text', text: customer_name },
-                  { type: 'text', text: formattedDate },
-                  { type: 'text', text: bookingTime.slice(0, 5) },
-                  { type: 'text', text: serviceNames },
+                  { type: 'text', text: formattedDateTime },
                 ]
               }
             ]

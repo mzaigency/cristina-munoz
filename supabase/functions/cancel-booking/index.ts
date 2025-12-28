@@ -177,15 +177,14 @@ serve(async (req) => {
     console.log('Booking(s) cancelled successfully');
 
     // Send WhatsApp cancellation via Meta Cloud API
+    // Template: cita_cancelada -> {{1}}=fecha, {{2}}=hora
     for (const booking of bookings) {
       if (booking.Telefono && booking.Telefono.length >= 9) {
         try {
-          const serviceNames = Array.isArray(booking.services) 
-            ? booking.services.map((s: any) => s.name).join(', ')
-            : 'Servicio';
           const dateStr = booking.Fecha.toString();
           const [year, month, day] = dateStr.split('-');
           const formattedDate = `${day}/${month}/${year}`;
+          const formattedTime = booking.Hora.slice(0, 5);
           
           const response = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-notification`, {
             method: 'POST',
@@ -199,9 +198,8 @@ serve(async (req) => {
                 {
                   type: 'body',
                   parameters: [
-                    { type: 'text', text: booking.customer_name },
                     { type: 'text', text: formattedDate },
-                    { type: 'text', text: booking.Hora.slice(0, 5) },
+                    { type: 'text', text: formattedTime },
                   ]
                 }
               ]
