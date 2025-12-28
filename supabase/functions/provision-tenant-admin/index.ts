@@ -79,6 +79,10 @@ serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
+    let userId: string;
+    let isExistingUser = false;
+
+    // Try to create the user
     const { data: created, error: createUserError } =
       await adminClient.auth.admin.createUser({
         email,
@@ -87,16 +91,60 @@ serve(async (req) => {
         user_metadata: { full_name: name || tenantName },
       });
 
-    if (createUserError || !created?.user?.id) {
-      const msg = createUserError?.message || "No se pudo crear el usuario";
-      const status = msg.toLowerCase().includes("already") ? 409 : 500;
-      return new Response(JSON.stringify({ success: false, error: msg }), {
-        status,
+    if (createUserError) {
+      // If user already exists, try to find them and link to tenant
+      if (createUserError.message.toLowerCase().includes("already")) {
+        const { data: existingUsers, error: listError } = 
+          await adminClient.auth.admin.listUsers();
+        
+        if (listError) {
+          return new Response(JSON.stringify({ success: false, error: listError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const existingUser = existingUsers.users.find(u => u.email === email);
+        if (!existingUser) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Usuario existe pero no se pudo encontrar" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Check if user is already linked to another tenant
+        const { data: existingTenantAdmin } = await adminClient
+          .from("tenant_admins")
+          .select("tenant_id")
+          .eq("user_id", existingUser.id)
+          .maybeSingle();
+
+        if (existingTenantAdmin) {
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: "Este usuario ya es administrador de otro salón. Usa un email diferente." 
+            }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        userId = existingUser.id;
+        isExistingUser = true;
+      } else {
+        return new Response(JSON.stringify({ success: false, error: createUserError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else if (!created?.user?.id) {
+      return new Response(JSON.stringify({ success: false, error: "No se pudo crear el usuario" }), {
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    } else {
+      userId = created.user.id;
     }
-
-    const userId = created.user.id;
 
     // Ensure profile exists
     await adminClient.from("profiles").upsert(
@@ -132,11 +180,11 @@ serve(async (req) => {
       );
     }
 
-    // Send welcome email (optional)
+    // Send welcome email (optional) - only for new users
     let emailSent = false;
     let emailError: string | null = null;
 
-    if (sendWelcomeEmail) {
+    if (sendWelcomeEmail && !isExistingUser) {
       const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
       if (!RESEND_API_KEY) {
         emailError = "RESEND_API_KEY no configurada";
@@ -183,6 +231,10 @@ serve(async (req) => {
         userId,
         emailSent,
         emailError,
+        isExistingUser,
+        message: isExistingUser 
+          ? "Usuario existente vinculado al tenant (usa su contraseña actual)" 
+          : "Usuario creado exitosamente",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
