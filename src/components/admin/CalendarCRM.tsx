@@ -1007,7 +1007,7 @@ export const CalendarCRM = () => {
                         const isHighlighted = highlightedBookingId === event.id;
                         return <div key={event.id} data-event-id={event.id} className={`absolute group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30" : ""}`} style={{
                           top: `${position.top}px`,
-                          height: `${Math.max(position.height, 40)}px`,
+                          height: `${position.height}px`,
                           left: `${leftPercentage}%`,
                           width: `${widthPercentage - 2}%`
                         }}>
@@ -1086,7 +1086,7 @@ export const CalendarCRM = () => {
                         const isHighlighted = highlightedBookingId === event.id;
                         return <div key={event.id} data-event-id={event.id} className={`absolute group bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30" : ""}`} style={{
                           top: `${position.top}px`,
-                          height: `${Math.max(position.height, 40)}px`,
+                          height: `${position.height}px`,
                           left: `${leftPercentage}%`,
                           width: `${widthPercentage - 2}%`
                         }}>
