@@ -7,12 +7,12 @@ import { Footer } from "@/components/Footer";
 import { HeroSection } from "@/components/HeroSection";
 import { InstallPWA } from "@/components/InstallPWA";
 import { Loader2 } from "lucide-react";
+import { TenantServicesSection } from "@/components/tenant/TenantServicesSection";
+import { TenantBookingFlow } from "@/components/tenant/TenantBookingFlow";
 
-// Lazy load below-the-fold components - same as Index
-const ServicesSection = lazy(() => import("@/components/ServicesSection").then(m => ({ default: m.ServicesSection })));
+// Lazy load below-the-fold components
 const GallerySection = lazy(() => import("@/components/GallerySection").then(m => ({ default: m.GallerySection })));
 const ReviewsSection = lazy(() => import("@/components/ReviewsSection").then(m => ({ default: m.ReviewsSection })));
-const BookingFlow = lazy(() => import("@/components/booking/BookingFlow").then(m => ({ default: m.BookingFlow })));
 const WhatsAppSection = lazy(() => import("@/components/WhatsAppSection").then(m => ({ default: m.WhatsAppSection })));
 const LocationSection = lazy(() => import("@/components/LocationSection").then(m => ({ default: m.LocationSection })));
 
@@ -132,11 +132,11 @@ const TenantLanding = () => {
 
         <Suspense fallback={<SectionSkeleton />}>
           <div id="servicios">
-            <ServicesSection />
+            <TenantServicesSection tenantId={tenant.id} tenantName={tenant.name} />
           </div>
 
           <div id="reserva">
-            <BookingFlow />
+            <TenantBookingFlow tenantId={tenant.id} tenantName={tenant.name} />
           </div>
 
           <WhatsAppSection />

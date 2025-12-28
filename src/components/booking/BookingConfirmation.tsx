@@ -12,6 +12,7 @@ interface BookingConfirmationProps {
   totalDuration: number;
   onConfirm: (name: string, phone: string) => void;
   onBack: () => void;
+  tenantId?: string;
 }
 
 interface UserProfile {
@@ -25,6 +26,7 @@ export const BookingConfirmation = ({
   totalDuration,
   onConfirm,
   onBack,
+  tenantId,
 }: BookingConfirmationProps) => {
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -105,6 +107,7 @@ export const BookingConfirmation = ({
           })),
           total_duration: totalDuration,
           user_id: session?.user?.id || null,
+          tenant_id: tenantId,
         },
       });
 
