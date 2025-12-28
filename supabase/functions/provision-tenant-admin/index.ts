@@ -92,22 +92,56 @@ serve(async (req) => {
       });
 
     if (createUserError) {
-      // If user already exists, try to find them and link to tenant
+      // If user already exists, try to find them via profiles table
       if (createUserError.message.toLowerCase().includes("already")) {
-        const { data: existingUsers, error: listError } = 
-          await adminClient.auth.admin.listUsers();
+        console.log("User already exists, looking up by email in profiles...");
         
-        if (listError) {
-          return new Response(JSON.stringify({ success: false, error: listError.message }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+        // Look up user by email in profiles table (more reliable than listUsers pagination)
+        const { data: existingProfile, error: profileLookupError } = await adminClient
+          .from("profiles")
+          .select("id")
+          .eq("email", email)
+          .maybeSingle();
+
+        let existingUserId: string | null = null;
+
+        if (existingProfile?.id) {
+          existingUserId = existingProfile.id;
+          console.log("Found user via profiles table:", existingUserId);
+        } else {
+          // Fallback: try listUsers with pagination
+          console.log("Not found in profiles, trying listUsers with pagination...");
+          let page = 1;
+          const perPage = 100;
+          let found = false;
+          
+          while (!found && page <= 10) { // Max 1000 users search
+            const { data: usersPage, error: listError } = 
+              await adminClient.auth.admin.listUsers({ page, perPage });
+            
+            if (listError) {
+              console.error("listUsers error:", listError);
+              break;
+            }
+            
+            const foundUser = usersPage.users.find(u => u.email === email);
+            if (foundUser) {
+              existingUserId = foundUser.id;
+              found = true;
+              console.log("Found user via listUsers:", existingUserId);
+            }
+            
+            if (usersPage.users.length < perPage) break; // No more pages
+            page++;
+          }
         }
 
-        const existingUser = existingUsers.users.find(u => u.email === email);
-        if (!existingUser) {
+        if (!existingUserId) {
           return new Response(
-            JSON.stringify({ success: false, error: "Usuario existe pero no se pudo encontrar" }),
+            JSON.stringify({ 
+              success: false, 
+              error: "El email ya está registrado en auth pero no se encontró el usuario. Contacta soporte." 
+            }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
@@ -116,7 +150,7 @@ serve(async (req) => {
         const { data: existingTenantAdmin } = await adminClient
           .from("tenant_admins")
           .select("tenant_id")
-          .eq("user_id", existingUser.id)
+          .eq("user_id", existingUserId)
           .maybeSingle();
 
         if (existingTenantAdmin) {
@@ -129,7 +163,7 @@ serve(async (req) => {
           );
         }
 
-        userId = existingUser.id;
+        userId = existingUserId;
         isExistingUser = true;
       } else {
         return new Response(JSON.stringify({ success: false, error: createUserError.message }), {
