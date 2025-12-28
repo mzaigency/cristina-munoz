@@ -41,6 +41,11 @@ interface Tenant {
   font_body?: string | null;
   heading_size?: string | null;
   button_style?: string | null;
+  features?: {
+    business_type?: string;
+    business_type_label?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 const TenantLanding = () => {

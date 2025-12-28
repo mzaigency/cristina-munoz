@@ -1,7 +1,28 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Scissors, Sparkles, Heart, Leaf, Users, Palette } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
+
+// Business type icons mapping
+const businessTypeIcons: Record<string, React.ElementType> = {
+  peluqueria: Scissors,
+  barberia: Scissors,
+  salon_belleza: Sparkles,
+  estetica: Heart,
+  spa: Leaf,
+  unas: Palette,
+  multiservicios: Users,
+};
+
+const businessTypeColors: Record<string, string> = {
+  peluqueria: "from-purple-500 to-pink-500",
+  barberia: "from-amber-600 to-orange-500",
+  salon_belleza: "from-rose-400 to-pink-500",
+  estetica: "from-teal-400 to-cyan-500",
+  spa: "from-green-400 to-emerald-500",
+  unas: "from-fuchsia-400 to-purple-500",
+  multiservicios: "from-indigo-400 to-violet-500",
+};
 
 interface Tenant {
   id: string;
@@ -14,6 +35,11 @@ interface Tenant {
   description: string | null;
   hero_image_url: string | null;
   logo_url: string | null;
+  features?: {
+    business_type?: string;
+    business_type_label?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 interface TenantHeroProps {
@@ -24,6 +50,12 @@ interface TenantHeroProps {
 export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
   const hasHeroImage = !!tenant.hero_image_url;
   const containerRef = useRef<HTMLElement>(null);
+
+  // Get business type info
+  const businessType = tenant.features?.business_type;
+  const businessTypeLabel = tenant.features?.business_type_label;
+  const BusinessTypeIcon = businessType ? businessTypeIcons[businessType] : null;
+  const businessTypeGradient = businessType ? businessTypeColors[businessType] : null;
 
   // Parallax scroll effect
   const { scrollYProgress } = useScroll({
@@ -101,6 +133,21 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
                 alt={`${tenant.name}`}
                 className="h-16 md:h-20 mx-auto"
               />
+            </motion.div>
+          )}
+
+          {/* Business Type Badge */}
+          {businessTypeLabel && BusinessTypeIcon && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="flex justify-center mb-6"
+            >
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${businessTypeGradient || 'from-primary to-primary/80'} text-white text-sm font-medium shadow-lg`}>
+                <BusinessTypeIcon className="w-4 h-4" />
+                <span>{businessTypeLabel}</span>
+              </div>
             </motion.div>
           )}
 
