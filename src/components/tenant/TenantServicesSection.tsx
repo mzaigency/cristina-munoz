@@ -136,102 +136,81 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="mb-16 text-center">
+        <div className="mb-12 text-center">
           <SmoothTitle>
-            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+            <h2 className="mb-3 text-3xl font-semibold text-foreground md:text-4xl tracking-tight">
               Nuestros Servicios
             </h2>
           </SmoothTitle>
-          <div className="line-accent mx-auto mb-4" />
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base text-muted-foreground max-w-xl mx-auto">
             Descubre nuestra amplia gama de servicios profesionales
             {tenantName && ` en ${tenantName}`}
           </p>
         </div>
 
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4 max-w-3xl mx-auto">
           {categories.map((category, idx) => {
             const Icon = categoryIcons[category] || categoryIcons.default;
             const categoryServices = groupedServices[category];
-            const isReversed = idx % 2 !== 0;
+            const categoryImage = getCategoryImage(category);
 
             return (
-              <ScrollReveal key={category} delay={idx * 100}>
-                <div
-                  className={`rounded-2xl overflow-hidden shadow-2xl shadow-black/15 bg-card flex ${
-                    isReversed ? "flex-row-reverse" : ""
-                  }`}
-                >
-                  {/* Primary color border */}
-                  <div
-                    className={`hidden lg:block w-1.5 bg-primary flex-shrink-0 ${
-                      isReversed ? "order-last" : "order-first"
-                    }`}
-                  />
-
-              <div className="flex-1">
-                {/* Category Header with Image */}
-                <div className="relative">
-                  {getCategoryImage(category) && (
-                    <div className="relative h-48 lg:h-64 overflow-hidden">
+              <ScrollReveal key={category} delay={idx * 80}>
+                <div className="rounded-2xl overflow-hidden bg-card border border-border/40">
+                  {/* Category Header */}
+                  {categoryImage ? (
+                    <div className="relative h-32 sm:h-40">
                       <img
-                        src={getCategoryImage(category)!}
+                        src={categoryImage}
                         alt={category}
                         className="w-full h-full object-cover"
                         loading="lazy"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
-                      <div className="absolute top-4 left-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary shadow-lg shadow-primary/30">
-                          <Icon className="h-6 w-6 text-primary-foreground" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                      <div className="absolute bottom-4 left-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md">
+                          <Icon className="h-5 w-5 text-white" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white uppercase tracking-wide drop-shadow-lg">
+                        <h3 className="text-xl font-semibold text-white tracking-tight">
                           {category}
                         </h3>
                       </div>
                     </div>
-                  )}
-                  {!getCategoryImage(category) && (
-                    <div className="p-6 border-b border-border/30 bg-muted/30">
+                  ) : (
+                    <div className="px-5 py-4 border-b border-border/30 bg-muted/20">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary shadow-lg shadow-primary/30">
-                          <Icon className="h-6 w-6 text-primary-foreground" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                          <Icon className="h-5 w-5 text-primary" />
                         </div>
-                        <h3 className="text-2xl font-bold text-foreground uppercase tracking-wide">
+                        <h3 className="text-xl font-semibold text-foreground tracking-tight">
                           {category}
                         </h3>
                       </div>
                     </div>
                   )}
-                </div>
 
-                    {/* Services List */}
-                    <div className="p-6 lg:p-8">
-                      <div className="grid gap-3 md:grid-cols-2">
-                        {categoryServices.map((service) => {
-                          const totalDuration =
-                            service.duration_part1_active +
-                            service.duration_exposure_pause +
-                            service.duration_part2_active;
+                  {/* Services List - iOS style */}
+                  <div className="divide-y divide-border/30">
+                    {categoryServices.map((service, serviceIdx) => {
+                      const totalDuration =
+                        service.duration_part1_active +
+                        service.duration_exposure_pause +
+                        service.duration_part2_active;
 
-                          return (
-                            <div
-                              key={service.id}
-                              className="flex items-center justify-between py-3 border-l-4 border-primary pl-4 hover:bg-accent/50 transition-colors rounded-r-md"
-                            >
-                              <div>
-                                <p className="font-semibold text-foreground">
-                                  {service.name}
-                                </p>
-                                <p className="text-sm text-muted-foreground uppercase tracking-wide">
-                                  {formatDuration(totalDuration)}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                      return (
+                        <div
+                          key={service.id}
+                          className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/30 transition-colors"
+                        >
+                          <span className="font-medium text-foreground text-[15px]">
+                            {service.name}
+                          </span>
+                          <span className="text-sm text-muted-foreground tabular-nums">
+                            {formatDuration(totalDuration)}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </ScrollReveal>
