@@ -135,6 +135,10 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     address: "",
     city: "",
     postalCode: "",
+    instagramUrl: "",
+    facebookUrl: "",
+    whatsappNumber: "",
+    googleMapsUrl: "",
   });
 
   // Step 2: Customization
@@ -198,7 +202,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
   const resetForm = () => {
     setCurrentStep(1);
-    setBasicInfo({ name: "", slug: "", email: "", phone: "", address: "", city: "", postalCode: "" });
+    setBasicInfo({ name: "", slug: "", email: "", phone: "", address: "", city: "", postalCode: "", instagramUrl: "", facebookUrl: "", whatsappNumber: "", googleMapsUrl: "" });
     setCustomization({ tagline: "", description: "", primaryColor: "#8B5CF6", secondaryColor: "#EC4899", logoUrl: "", heroImageUrl: "", seoTitle: "", seoDescription: "", faqs: [], brandTone: "" });
     setAdminInfo({ email: "", name: "", sendWelcomeEmail: true });
     setStylists([{ name: "", slug: "", color: COLORS[0], calendarId: "" }]);
@@ -539,6 +543,10 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           secondary_color: customization.secondaryColor,
           logo_url: customization.logoUrl || null,
           hero_image_url: customization.heroImageUrl || null,
+          instagram_url: basicInfo.instagramUrl || null,
+          facebook_url: basicInfo.facebookUrl || null,
+          whatsapp_number: basicInfo.whatsappNumber || null,
+          google_maps_url: basicInfo.googleMapsUrl || null,
         })
         .select()
         .single();
@@ -1323,18 +1331,49 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Simple">Simple</SelectItem>
-                            <SelectItem value="Compuesto">Compuesto</SelectItem>
+                            <SelectItem value="Compuesto">Compuesto (3 fases)</SelectItem>
                           </SelectContent>
                         </Select>
                         <Input
                           type="number"
                           min={5}
                           step={5}
-                          placeholder="Duración (min)"
+                          placeholder={service.type === "Compuesto" ? "Fase 1 (min)" : "Duración (min)"}
                           value={service.durationPart1}
                           onChange={(e) => updateService(index, "durationPart1", parseInt(e.target.value) || 0)}
                         />
                       </div>
+                      {/* Show extra duration fields for compound services */}
+                      {service.type === "Compuesto" && (
+                        <div className="grid gap-2 md:grid-cols-2 pt-2 border-t border-dashed">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Pausa/Exposición (min)</Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              step={5}
+                              placeholder="Tiempo de espera"
+                              value={service.durationPause}
+                              onChange={(e) => updateService(index, "durationPause", parseInt(e.target.value) || 0)}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Fase 2 - Finalización (min)</Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              step={5}
+                              placeholder="Duración fase 2"
+                              value={service.durationPart2}
+                              onChange={(e) => updateService(index, "durationPart2", parseInt(e.target.value) || 0)}
+                            />
+                          </div>
+                          <div className="md:col-span-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                            Total: {service.durationPart1 + service.durationPause + service.durationPart2} min 
+                            (Fase 1: {service.durationPart1}min → Pausa: {service.durationPause}min → Fase 2: {service.durationPart2}min)
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   <Button variant="outline" onClick={addService} className="w-full gap-2" size="sm">
