@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Image, Palette, Type, Save, ExternalLink } from "lucide-react";
-import { WhatsAppIntegration } from "./WhatsAppIntegration";
 
 interface TenantSettingsProps {
   tenantId: string;
@@ -450,10 +449,6 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
           </CardContent>
         </Card>
 
-        {/* WhatsApp Integration - Full WABA Configuration */}
-        <div className="md:col-span-2">
-          <WhatsAppIntegration tenantId={tenantId} />
-        </div>
       </div>
     </div>
   );
