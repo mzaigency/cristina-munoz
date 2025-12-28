@@ -2,14 +2,11 @@ import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Clock, User, Phone, Loader2, Trash2 } from "lucide-react";
+import { Calendar, Loader2, Trash2, CalendarPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,12 +17,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { AppLayout } from "@/components/navigation/AppLayout";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { BookingCard } from "@/components/bookings/BookingCard";
 
 type Booking = {
   id: string;
@@ -34,14 +28,20 @@ type Booking = {
   Fecha: string;
   Hora: string;
   stylist: string;
-  services: any; // JSONB field
+  services: any;
   total_duration: number;
   status: string;
 };
 
+const TABS = [
+  { value: "upcoming", label: "Próximas" },
+  { value: "history", label: "Historial" },
+];
+
 export default function MyBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("upcoming");
   const [dateToCancel, setDateToCancel] = useState<string | null>(null);
   const [cancelingDate, setCancelingDate] = useState<string | null>(null);
   const { toast } = useToast();
@@ -65,9 +65,7 @@ export default function MyBookings() {
   const loadBookings = async () => {
     try {
       const { data, error } = await supabase.rpc('get_my_bookings');
-
       if (error) throw error;
-
       setBookings(data || []);
     } catch (error) {
       console.error('Error loading bookings:', error);
@@ -81,7 +79,6 @@ export default function MyBookings() {
     }
   };
 
-
   const handleCancelAllBookingsForDate = async () => {
     if (!dateToCancel) return;
 
@@ -90,7 +87,6 @@ export default function MyBookings() {
       const bookingsForDate = bookings.filter(b => b.Fecha === dateToCancel);
       const bookingIds = bookingsForDate.map(b => b.id);
       
-      // Cancelar todas las citas de ese día de una sola vez
       const { error: functionError } = await supabase.functions.invoke('cancel-booking', {
         body: { bookingIds, user: 'client' }
       });
@@ -99,15 +95,15 @@ export default function MyBookings() {
 
       toast({
         title: "Citas canceladas",
-        description: `Todas las citas del ${format(new Date(dateToCancel), "dd-MM-yyyy")} han sido canceladas correctamente`,
+        description: `Todas las citas del ${format(new Date(dateToCancel), "dd-MM-yyyy")} han sido canceladas`,
       });
 
       await loadBookings();
     } catch (error) {
-      console.error('Error canceling bookings for date:', error);
+      console.error('Error canceling bookings:', error);
       toast({
         title: "Error",
-        description: "No se pudieron cancelar las citas. Por favor, contacta con nosotras.",
+        description: "No se pudieron cancelar las citas",
         variant: "destructive",
       });
     } finally {
@@ -116,179 +112,140 @@ export default function MyBookings() {
     }
   };
 
-  const getStylistName = (stylist: string) => {
-    if (stylist === 'cris') return 'Cristina';
-    if (stylist === 'desi') return 'Desi';
-    return stylist;
-  };
+  const today = new Date().toISOString().split('T')[0];
+  const upcomingBookings = bookings.filter(b => b.Fecha >= today);
+  const pastBookings = bookings.filter(b => b.Fecha < today);
+  const displayedBookings = activeTab === "upcoming" ? upcomingBookings : pastBookings;
 
-  // Agrupar citas por fecha
-  const groupBookingsByDate = () => {
-    const grouped: { [key: string]: Booking[] } = {};
-    
-    bookings.forEach(booking => {
-      if (!grouped[booking.Fecha]) {
-        grouped[booking.Fecha] = [];
-      }
-      grouped[booking.Fecha].push(booking);
-    });
+  // Group by date
+  const groupedBookings = displayedBookings.reduce((acc, booking) => {
+    if (!acc[booking.Fecha]) acc[booking.Fecha] = [];
+    acc[booking.Fecha].push(booking);
+    return acc;
+  }, {} as Record<string, Booking[]>);
 
-    // Ordenar fechas de más reciente a más antigua
-    return Object.entries(grouped).sort((a, b) => 
-      new Date(b[0]).getTime() - new Date(a[0]).getTime()
-    );
-  };
+  const sortedDates = Object.keys(groupedBookings).sort((a, b) => 
+    activeTab === "upcoming" 
+      ? new Date(a).getTime() - new Date(b).getTime()
+      : new Date(b).getTime() - new Date(a).getTime()
+  );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <AppLayout>
         <SEO 
-          title="Mis Citas - Cristina Muñoz Peluquería"
-          description="Consulta y gestiona tus reservas en Cristina Muñoz Peluquería. Ve tus próximas citas y el historial de servicios."
+          title="Mis Citas"
+          description="Gestiona tus reservas"
           canonicalUrl="/mis-citas"
           noindex={true}
         />
-        <Header onNavigate={() => {}} activeSection="" />
-        <div className="container mx-auto px-4 py-20 flex justify-center items-center">
+        <div className="flex items-center justify-center h-[60vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <AppLayout>
       <SEO 
-        title="Mis Citas - Cristina Muñoz Peluquería"
-        description="Consulta y gestiona tus reservas en Cristina Muñoz Peluquería. Ve tus próximas citas y el historial de servicios."
+        title="Mis Citas"
+        description="Gestiona tus reservas"
         canonicalUrl="/mis-citas"
         noindex={true}
       />
-      <Header onNavigate={() => {}} activeSection="" />
       
-      <main className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Tus Citas</h1>
-            <p className="text-muted-foreground">
-              Aquí puedes ver y gestionar tus próximas citas
-            </p>
-          </div>
-
-          {bookings.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground mb-4">No tienes citas programadas</p>
-                <Button onClick={() => navigate("/#reserva")}>
-                  Reservar una cita
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <Accordion type="single" collapsible className="space-y-4">
-              {groupBookingsByDate().map(([date, dateBookings]) => (
-                <AccordionItem key={date} value={date} className="border rounded-lg">
-                  <AccordionTrigger className="px-6 hover:no-underline">
-                    <div className="flex items-center justify-between w-full pr-4">
-                      <div className="flex items-center gap-3">
-                        <Calendar className="h-5 w-5 text-primary" />
-                        <div className="text-left">
-                          <p className="font-semibold text-lg">
-                            {format(new Date(date), "dd-MM-yyyy")}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {dateBookings.length} {dateBookings.length === 1 ? 'cita' : 'citas'}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDateToCancel(date);
-                        }}
-                        disabled={cancelingDate === date}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        {cancelingDate === date ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Cancelando...
-                          </>
-                        ) : (
-                          <>
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Cancelar día
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-4">
-                    <div className="space-y-3 pt-2">
-                      {dateBookings.map((booking) => (
-                        <Card key={booking.id} className="hover:shadow-md transition-shadow">
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">{booking.Hora}</span>
-                              <span className="text-sm text-muted-foreground">
-                                ({booking.total_duration} min)
-                              </span>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2 text-sm">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">Peluquera:</span>
-                                <span>{getStylistName(booking.stylist)}</span>
-                              </div>
-                              
-                              <div>
-                                <p className="text-sm font-medium mb-1">Servicios:</p>
-                                <ul className="list-disc list-inside space-y-1">
-                                  {Array.isArray(booking.services) && booking.services.map((service: any, idx: number) => (
-                                    <li key={idx} className="text-sm text-muted-foreground">
-                                      {service.name}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          )}
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 safe-area-top">
+        <div className="px-4 py-4">
+          <h1 className="text-2xl font-bold text-foreground mb-4">Mis Citas</h1>
+          <SegmentedControl
+            options={TABS}
+            value={activeTab}
+            onChange={setActiveTab}
+          />
         </div>
-      </main>
+      </div>
+
+      {/* Content */}
+      <div className="px-4 py-4">
+        {displayedBookings.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
+              <Calendar className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              {activeTab === "upcoming" ? "No tienes citas próximas" : "No hay historial"}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              {activeTab === "upcoming" && "Reserva tu primera cita ahora"}
+            </p>
+            {activeTab === "upcoming" && (
+              <Button onClick={() => navigate("/")}>
+                <CalendarPlus className="h-4 w-4 mr-2" />
+                Reservar cita
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {sortedDates.map((date) => (
+              <div key={date}>
+                {/* Date Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {format(new Date(date), "EEEE, d 'de' MMMM", { locale: es })}
+                  </h3>
+                  {activeTab === "upcoming" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDateToCancel(date)}
+                      disabled={cancelingDate === date}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-2"
+                    >
+                      {cancelingDate === date ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          <span className="text-xs">Cancelar</span>
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+
+                {/* Bookings for date */}
+                <div className="space-y-3">
+                  {groupedBookings[date].map((booking) => (
+                    <BookingCard key={booking.id} booking={booking} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <AlertDialog open={!!dateToCancel} onOpenChange={() => setDateToCancel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Cancelar todas las citas del día?</AlertDialogTitle>
+            <AlertDialogTitle>¿Cancelar citas?</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás segura de que quieres cancelar todas las citas del{" "}
-              {dateToCancel && format(new Date(dateToCancel), "dd-MM-yyyy")}? 
-              Esta acción no se puede deshacer y se eliminarán todas las citas de ese día.
+              Vas a cancelar todas las citas del{" "}
+              {dateToCancel && format(new Date(dateToCancel), "d 'de' MMMM", { locale: es })}. 
+              Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>No, mantener citas</AlertDialogCancel>
+            <AlertDialogCancel>No, mantener</AlertDialogCancel>
             <AlertDialogAction onClick={handleCancelAllBookingsForDate}>
-              Sí, cancelar todas
+              Sí, cancelar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

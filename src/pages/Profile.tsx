@@ -4,20 +4,18 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Settings } from "lucide-react";
+import { AppLayout } from "@/components/navigation/AppLayout";
 
 const profileSchema = z.object({
-  full_name: z.string().trim().min(1, "El nombre es requerido").max(100, "El nombre debe tener menos de 100 caracteres"),
-  email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
-  phone: z.string().trim().min(9, "El teléfono debe tener al menos 9 dígitos").max(15, "El teléfono debe tener menos de 15 dígitos"),
+  full_name: z.string().trim().min(1, "El nombre es requerido").max(100),
+  email: z.string().trim().email("Email inválido").max(255),
+  phone: z.string().trim().min(9, "Mínimo 9 dígitos").max(15),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -25,22 +23,17 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      full_name: "",
-      email: "",
-      phone: "",
-    },
+    defaultValues: { full_name: "", email: "", phone: "" },
   });
 
   useEffect(() => {
     const checkAuthAndLoadProfile = async () => {
-      window.scrollTo(0, 0);
-      
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
@@ -100,12 +93,13 @@ export default function Profile() {
 
       toast({
         title: "Perfil actualizado",
-        description: "Tu información ha sido guardada correctamente",
+        description: "Tu información ha sido guardada",
       });
+      setIsEditing(false);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Ocurrió un error al actualizar tu perfil",
+        description: error.message || "Error al actualizar",
         variant: "destructive",
       });
     } finally {
@@ -113,127 +107,205 @@ export default function Profile() {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   if (initialLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header onNavigate={() => {}} activeSection="" />
-        <main className="container mx-auto px-4 py-20">
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        </main>
-      </div>
+      <AppLayout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
     );
   }
 
+  const profileData = form.getValues();
+
   return (
-    <div className="min-h-screen bg-background">
+    <AppLayout>
       <SEO 
-        title="Mi Perfil - Cristina Muñoz Peluquería"
-        description="Actualiza tu información personal y preferencias en Cristina Muñoz Peluquería."
+        title="Mi Perfil"
+        description="Gestiona tu información personal"
         canonicalUrl="/perfil"
         noindex={true}
       />
-      <Header onNavigate={() => {}} activeSection="" />
       
-      <main className="container mx-auto px-4 py-20">
-        <div className="max-w-2xl mx-auto animate-fade-in">
-          <Card className="scroll-reveal visible">
-            <CardHeader className="text-center">
-              <CardTitle>Mi Perfil</CardTitle>
-              <CardDescription>
-                Actualiza tu información personal
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="full_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nombre completo</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="text" 
-                            placeholder="Tu nombre completo" 
-                            {...field}
-                            disabled={loading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="email" 
-                            placeholder="tu@email.com" 
-                            {...field}
-                            disabled={loading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Teléfono</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="tel" 
-                            placeholder="600 000 000" 
-                            {...field}
-                            disabled={loading}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex gap-4 pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => navigate("/")}
-                      disabled={loading}
-                      className="flex-1"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={loading} className="flex-1">
-                      {loading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Guardando...
-                        </>
-                      ) : (
-                        "Guardar cambios"
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+      {/* Header */}
+      <div className="bg-gradient-to-b from-primary/10 to-background pt-8 pb-6 px-4 safe-area-top">
+        <div className="flex flex-col items-center">
+          {/* Avatar */}
+          <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <User className="h-12 w-12 text-primary" />
+          </div>
+          
+          <h1 className="text-xl font-bold text-foreground">
+            {profileData.full_name || "Usuario"}
+          </h1>
+          <p className="text-sm text-muted-foreground">{profileData.email}</p>
         </div>
-      </main>
+      </div>
 
-      <Footer />
-    </div>
+      {/* Content */}
+      <div className="px-4 py-6">
+        {isEditing ? (
+          /* Edit Mode */
+          <div className="ios-card p-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="full_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre completo</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="text" 
+                          placeholder="Tu nombre" 
+                          {...field}
+                          disabled={loading}
+                          className="h-12 rounded-xl"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="email" 
+                          placeholder="tu@email.com" 
+                          {...field}
+                          disabled={loading}
+                          className="h-12 rounded-xl"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teléfono</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="tel" 
+                          placeholder="600 000 000" 
+                          {...field}
+                          disabled={loading}
+                          className="h-12 rounded-xl"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex gap-3 pt-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsEditing(false)}
+                    disabled={loading}
+                    className="flex-1 h-12 rounded-xl"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={loading} 
+                    className="flex-1 h-12 rounded-xl"
+                  >
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Guardar"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        ) : (
+          /* View Mode */
+          <div className="space-y-4">
+            {/* Personal Info Section */}
+            <div className="ios-card overflow-hidden">
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
+              >
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Información personal</p>
+                  <p className="text-xs text-muted-foreground">Nombre, email, teléfono</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+              </button>
+            </div>
+
+            {/* Quick Links */}
+            <div className="ios-card overflow-hidden divide-y divide-border/50">
+              <button 
+                onClick={() => navigate("/mis-citas")}
+                className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
+              >
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                  <Calendar className="h-5 w-5 text-accent" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Mis citas</p>
+                  <p className="text-xs text-muted-foreground">Ver historial de reservas</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+              </button>
+
+              <button 
+                onClick={() => navigate("/valoracion")}
+                className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
+              >
+                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
+                  <Star className="h-5 w-5 text-warning" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Valoraciones</p>
+                  <p className="text-xs text-muted-foreground">Dejar una reseña</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+              </button>
+            </div>
+
+            {/* Logout */}
+            <div className="ios-card overflow-hidden">
+              <button 
+                onClick={handleLogout}
+                className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
+              >
+                <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+                  <LogOut className="h-5 w-5 text-destructive" />
+                </div>
+                <p className="text-sm font-medium text-destructive">Cerrar sesión</p>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </AppLayout>
   );
 }
