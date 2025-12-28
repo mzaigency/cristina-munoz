@@ -354,7 +354,7 @@ export default function TenantAdmin() {
             <WhatsAppManager tenantId={tenant.id} />
           </TabsContent>
           <TabsContent value="security" className="mt-6">
-            <SecurityMonitor />
+            <SecurityMonitor tenantId={tenant.id} />
           </TabsContent>
         </Tabs>
       </div>
