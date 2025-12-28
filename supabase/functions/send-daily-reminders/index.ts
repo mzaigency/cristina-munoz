@@ -6,141 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface WhatsAppCredentials {
-  apiToken: string;
-  senderId: string;
-  phoneNumber: string;
-}
-
-async function getWhatsAppCredentials(
-  supabaseClient: any,
-  tenantId: string
-): Promise<WhatsAppCredentials | null> {
-  console.log(`[Reminders] Getting WhatsApp credentials for tenant: ${tenantId}`);
-
-  const { data: integration, error } = await supabaseClient
-    .from('tenant_integrations')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .eq('integration_type', 'whatsapp')
-    .eq('is_enabled', true)
-    .single();
-
-  if (error || !integration) {
-    console.log(`[Reminders] No WhatsApp integration found for tenant ${tenantId}`);
-    return null;
-  }
-
-  const settings = integration.settings as any;
-  
-  // Decrypt credentials
-  let apiToken = '';
-  if (integration.credentials_encrypted) {
-    const { data: decryptedToken, error: decryptError } = await supabaseClient
-      .rpc('decrypt_sensitive_data', {
-        _ciphertext: integration.credentials_encrypted,
-        _tenant_id: tenantId
-      });
-
-    if (decryptError) {
-      console.error(`[Reminders] Error decrypting credentials:`, decryptError);
-      return null;
-    }
-    apiToken = decryptedToken;
-  }
-
-  if (!apiToken || !settings?.sender_id) {
-    console.log(`[Reminders] Missing credentials for tenant ${tenantId}`);
-    return null;
-  }
-
-  return {
-    apiToken,
-    senderId: settings.sender_id,
-    phoneNumber: settings.phone_number || ''
-  };
-}
-
-function formatPhoneForWhatsApp(phone: string): string {
-  let cleaned = phone.replace(/[\s\-\(\)\.]/g, '');
-  
-  if (cleaned.startsWith('+')) {
-    cleaned = cleaned.substring(1);
-  }
-  
-  if (cleaned.startsWith('34') && cleaned.length === 11) {
-    return cleaned;
-  }
-  
-  if (cleaned.length === 9 && /^[6789]/.test(cleaned)) {
-    return '34' + cleaned;
-  }
-  
-  return cleaned;
-}
-
-function formatTimeForTemplate(hora: string): string {
-  // La hora viene como "HH:MM:SS" o "HH:MM", devolver solo "HH:MM"
+function formatTimeForMessage(hora: string): string {
   const parts = hora.split(':');
   return `${parts[0]}:${parts[1]}`;
-}
-
-async function sendReminderWhatsApp(
-  credentials: WhatsAppCredentials,
-  recipientPhone: string,
-  appointmentTime: string,
-  tenantName: string
-): Promise<boolean> {
-  const formattedPhone = formatPhoneForWhatsApp(recipientPhone);
-  const formattedTime = formatTimeForTemplate(appointmentTime);
-  
-  console.log(`[Reminders] Sending reminder to ${formattedPhone} for appointment at ${formattedTime}`);
-
-  const messagePayload = {
-    messaging_product: "whatsapp",
-    recipient_type: "individual",
-    to: formattedPhone,
-    type: "template",
-    template: {
-      name: "recordatiorio",
-      language: { code: "es" },
-      components: [
-        {
-          type: "body",
-          parameters: [
-            { type: "text", text: formattedTime }
-          ]
-        }
-      ]
-    }
-  };
-
-  try {
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${credentials.senderId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${credentials.apiToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messagePayload),
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      console.error(`[Reminders] WhatsApp API error:`, result);
-      return false;
-    }
-
-    console.log(`[Reminders] Reminder sent successfully to ${formattedPhone}, message_id:`, result.messages?.[0]?.id);
-    return true;
-  } catch (error) {
-    console.error(`[Reminders] Error sending reminder:`, error);
-    return false;
-  }
 }
 
 serve(async (req) => {
@@ -153,23 +21,23 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Parsear body para modo de prueba
+    // Parse body for test mode
     let testMode = false;
-    let testPhone = '';
+    let testUserId = '';
     let testTenantId = '';
     let testDate = '';
 
     try {
       const body = await req.json();
       testMode = body.test_mode === true;
-      testPhone = body.test_phone || '';
+      testUserId = body.test_user_id || '';
       testTenantId = body.tenant_id || '';
       testDate = body.date || '';
     } catch {
-      // No hay body, modo normal
+      // No body, normal mode
     }
 
-    // Calcular la fecha objetivo
+    // Calculate target date
     let targetDateStr: string;
     if (testDate) {
       targetDateStr = testDate;
@@ -181,11 +49,8 @@ serve(async (req) => {
     }
 
     console.log(`[Reminders] Starting ${testMode ? 'TEST MODE' : 'daily'} reminders for appointments on ${targetDateStr}`);
-    if (testMode) {
-      console.log(`[Reminders] Test phone: ${testPhone}, Tenant: ${testTenantId}`);
-    }
 
-    // Obtener tenants (solo uno si es modo test con tenant específico)
+    // Get tenants
     let tenantsQuery = supabaseClient
       .from('tenants')
       .select('id, name')
@@ -209,42 +74,20 @@ serve(async (req) => {
     for (const tenant of tenants || []) {
       console.log(`[Reminders] Processing tenant: ${tenant.name} (${tenant.id})`);
 
-      // Obtener credenciales de WhatsApp del tenant
-      const credentials = await getWhatsAppCredentials(supabaseClient, tenant.id);
-      
-      if (!credentials) {
-        console.log(`[Reminders] Skipping tenant ${tenant.name} - no WhatsApp integration`);
-        results.push({ tenant: tenant.name, sent: 0, failed: 0, skipped: 0 });
-        continue;
-      }
-
-      // En modo test con teléfono específico, enviar directamente sin buscar citas
-      if (testMode && testPhone) {
-        console.log(`[Reminders] TEST MODE: Sending test reminder to ${testPhone}`);
-        
-        const success = await sendReminderWhatsApp(
-          credentials,
-          testPhone,
-          "10:00", // Hora de prueba
-          tenant.name
-        );
-
-        results.push({ 
-          tenant: tenant.name, 
-          sent: success ? 1 : 0, 
-          failed: success ? 0 : 1, 
-          skipped: 0 
-        });
-        continue;
-      }
-
-      // Obtener citas para la fecha objetivo
-      const { data: bookings, error: bookingsError } = await supabaseClient
+      // Get bookings for target date that have a user_id (registered users only)
+      let bookingsQuery = supabaseClient
         .from('bookings')
-        .select('id, customer_name, "Telefono", "Hora"')
+        .select('id, customer_name, "Hora", user_id, stylist, services')
         .eq('tenant_id', tenant.id)
         .eq('Fecha', targetDateStr)
-        .eq('status', 'confirmed');
+        .eq('status', 'confirmed')
+        .not('user_id', 'is', null);
+
+      if (testMode && testUserId) {
+        bookingsQuery = bookingsQuery.eq('user_id', testUserId);
+      }
+
+      const { data: bookings, error: bookingsError } = await bookingsQuery;
 
       if (bookingsError) {
         console.error(`[Reminders] Error fetching bookings for tenant ${tenant.name}:`, bookingsError);
@@ -252,34 +95,74 @@ serve(async (req) => {
         continue;
       }
 
-      console.log(`[Reminders] Found ${bookings?.length || 0} bookings for ${tenant.name} on ${targetDateStr}`);
+      console.log(`[Reminders] Found ${bookings?.length || 0} bookings with registered users for ${tenant.name} on ${targetDateStr}`);
 
       let sent = 0;
       let failed = 0;
       let skipped = 0;
 
       for (const booking of bookings || []) {
-        if (!booking.Telefono) {
-          console.log(`[Reminders] Skipping booking ${booking.id} - no phone number`);
+        if (!booking.user_id) {
           skipped++;
           continue;
         }
 
-        const success = await sendReminderWhatsApp(
-          credentials,
-          booking.Telefono,
-          booking.Hora,
-          tenant.name
-        );
+        try {
+          // Find or create conversation
+          let { data: conversation } = await supabaseClient
+            .from('conversations')
+            .select('id')
+            .eq('tenant_id', tenant.id)
+            .eq('user_id', booking.user_id)
+            .maybeSingle();
 
-        if (success) {
+          if (!conversation) {
+            const { data: newConv, error: convError } = await supabaseClient
+              .from('conversations')
+              .insert({
+                tenant_id: tenant.id,
+                user_id: booking.user_id,
+              })
+              .select('id')
+              .single();
+            
+            if (convError) {
+              console.error(`[Reminders] Error creating conversation:`, convError);
+              failed++;
+              continue;
+            }
+            conversation = newConv;
+          }
+
+          const formattedTime = formatTimeForMessage(booking.Hora);
+          const [year, month, day] = targetDateStr.split('-');
+          const formattedDate = `${day}/${month}/${year}`;
+          
+          const serviceNames = Array.isArray(booking.services) 
+            ? booking.services.map((s: any) => s.name).join(', ')
+            : 'tu cita';
+
+          const reminderMessage = `⏰ *Recordatorio de cita*\n\nHola ${booking.customer_name},\n\nTe recordamos que tienes una cita mañana ${formattedDate} a las ${formattedTime}.\n\n📋 Servicios: ${serviceNames}\n👤 Profesional: ${booking.stylist}\n\n¡Te esperamos!`;
+
+          await supabaseClient
+            .from('direct_messages')
+            .insert({
+              conversation_id: conversation.id,
+              sender_id: tenant.id,
+              sender_type: 'salon',
+              content: reminderMessage,
+              message_type: 'booking_reminder',
+            });
+
+          console.log(`[Reminders] Reminder sent to user ${booking.user_id}`);
           sent++;
-        } else {
+        } catch (msgError) {
+          console.error(`[Reminders] Error sending reminder:`, msgError);
           failed++;
         }
 
-        // Pequeña pausa para no saturar la API
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Small pause to not overload
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       results.push({ tenant: tenant.name, sent, failed, skipped });
