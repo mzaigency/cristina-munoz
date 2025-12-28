@@ -943,7 +943,7 @@ export const CalendarCRM = () => {
                   <CardContent className="p-2 md:p-6">
                     {schedule.hours.length === 0 ? <p className="text-sm text-muted-foreground italic text-center py-8">Cerrado los domingos</p> : <div className="overflow-x-auto">
                         {/* Header - OUTSIDE the relative timeline container */}
-                        <div className="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1 md:gap-3 pb-2 border-b mb-3 sticky top-0 bg-background z-10 min-w-[320px]">
+                        <div className="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1 md:gap-3 pb-2 border-b mb-3 min-w-[320px]">
                           <div className="text-[10px] md:text-xs font-semibold text-muted-foreground">HORA</div>
                           <div className="flex items-center gap-1 md:gap-2">
                             <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500" />
