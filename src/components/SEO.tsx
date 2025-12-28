@@ -10,14 +10,14 @@ interface SEOProps {
 }
 
 export const SEO = ({
-  title = "Cristina Muñoz",
-  description = "Peluquería profesional en Santpedor (Bages, Barcelona). Más de 15 años de experiencia en corte, coloración, mechas, balayage, peinados y tratamientos capilares. Reserva tu cita online.",
-  keywords = "peluquería Santpedor, peluquería Bages, peluquería cerca de mí, corte de pelo Santpedor, coloración cabello Santpedor, mechas Santpedor, balayage Santpedor, peluquería Manresa, peluquería comarca Bages, tratamientos capilares Santpedor, peinados profesionales, reserva online peluquería, salón belleza Santpedor",
+  title = "GlowUp",
+  description = "La red social de belleza y bienestar. Conecta con los mejores salones, descubre tendencias y reserva citas al instante.",
+  keywords = "red social belleza, salones de belleza, reservas online, peluquería, estética, bienestar, tendencias belleza, GlowUp",
   ogImage = "https://lovable.dev/opengraph-image-p98pqg.png",
   canonicalUrl,
   noindex = false,
 }: SEOProps) => {
-  const baseUrl = "https://cristinamunoz.lovable.app";
+  const baseUrl = "https://glowup.lovable.app";
   const fullCanonicalUrl = canonicalUrl ? `${baseUrl}${canonicalUrl}` : baseUrl;
 
   return (
@@ -37,7 +37,7 @@ export const SEO = ({
       <meta property="og:image" content={ogImage} />
       <meta property="og:url" content={fullCanonicalUrl} />
       <meta property="og:type" content="website" />
-      <meta property="og:site_name" content="Cristina Muñoz Peluquería" />
+      <meta property="og:site_name" content="GlowUp" />
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
@@ -46,11 +46,7 @@ export const SEO = ({
       <meta name="twitter:image" content={ogImage} />
 
       {/* Additional SEO */}
-      <meta name="author" content="Cristina Muñoz" />
-      <meta name="geo.region" content="ES-B" />
-      <meta name="geo.placename" content="Santpedor" />
-      <meta name="geo.position" content="41.8117;1.8892" />
-      <meta name="ICBM" content="41.8117, 1.8892" />
+      <meta name="author" content="GlowUp" />
     </Helmet>
   );
 };
