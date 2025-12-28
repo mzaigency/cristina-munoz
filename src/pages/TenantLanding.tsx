@@ -16,6 +16,7 @@ import { TenantThemeProvider } from "@/components/tenant/TenantThemeProvider";
 import { TenantAdminBar } from "@/components/tenant/TenantAdminBar";
 import { TenantEditPanel } from "@/components/tenant/TenantEditPanel";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
+import TenantContactSection from "@/components/tenant/TenantContactSection";
 
 interface Tenant {
   id: string;
@@ -273,6 +274,13 @@ const TenantLanding = () => {
             instagramUrl={tenant.instagram_url}
             facebookUrl={tenant.facebook_url}
             googleMapsUrl={tenant.google_maps_url}
+            primaryColor={primaryColor}
+          />
+
+          {/* Contact Section - Direct messaging */}
+          <TenantContactSection
+            tenantId={tenant.id}
+            tenantName={tenant.name}
             primaryColor={primaryColor}
           />
 
