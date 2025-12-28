@@ -17,52 +17,116 @@ import {
   PartyPopper,
   Building2,
   HelpCircle,
-  Layers
+  Layers,
+  Sparkles,
+  RefreshCw,
+  Paintbrush
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { motion, AnimatePresence } from "motion/react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import confetti from "canvas-confetti";
 
+interface BrandingData {
+  tagline: string;
+  description: string;
+  faqs: Array<{ question: string; answer: string }>;
+}
+
 interface StepProps {
   onNext: () => void;
   onPrev?: () => void;
   tenantId: string;
+  tenantName?: string;
   loading: boolean;
   setLoading: (loading: boolean) => void;
 }
 
 const colorPresets = [
-  { primary: "#8B5CF6", secondary: "#D946EF", name: "Violeta" },
-  { primary: "#3B82F6", secondary: "#06B6D4", name: "Azul" },
-  { primary: "#10B981", secondary: "#34D399", name: "Esmeralda" },
-  { primary: "#F59E0B", secondary: "#FBBF24", name: "Ámbar" },
-  { primary: "#EF4444", secondary: "#F87171", name: "Rojo" },
-  { primary: "#EC4899", secondary: "#F472B6", name: "Rosa" },
-  { primary: "#1F2937", secondary: "#374151", name: "Elegante" },
-  { primary: "#7C3AED", secondary: "#A78BFA", name: "Púrpura" },
+  { primary: "#8B5CF6", secondary: "#D946EF", name: "Violeta", gradient: "from-violet-500 to-fuchsia-500" },
+  { primary: "#3B82F6", secondary: "#06B6D4", name: "Océano", gradient: "from-blue-500 to-cyan-500" },
+  { primary: "#10B981", secondary: "#34D399", name: "Esmeralda", gradient: "from-emerald-500 to-green-400" },
+  { primary: "#F59E0B", secondary: "#FBBF24", name: "Ámbar", gradient: "from-amber-500 to-yellow-400" },
+  { primary: "#EF4444", secondary: "#F87171", name: "Coral", gradient: "from-red-500 to-rose-400" },
+  { primary: "#EC4899", secondary: "#F472B6", name: "Rosa", gradient: "from-pink-500 to-rose-400" },
+  { primary: "#1F2937", secondary: "#6B7280", name: "Elegante", gradient: "from-gray-800 to-gray-500" },
+  { primary: "#7C3AED", secondary: "#A78BFA", name: "Púrpura", gradient: "from-purple-600 to-violet-400" },
+  { primary: "#0EA5E9", secondary: "#38BDF8", name: "Cielo", gradient: "from-sky-500 to-sky-400" },
+  { primary: "#14B8A6", secondary: "#5EEAD4", name: "Turquesa", gradient: "from-teal-500 to-teal-300" },
+  { primary: "#F97316", secondary: "#FB923C", name: "Naranja", gradient: "from-orange-500 to-orange-400" },
+  { primary: "#8B5CF6", secondary: "#EC4899", name: "Aurora", gradient: "from-violet-500 to-pink-500" },
 ];
 
 const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-// Step 1: Branding
-function BrandingStep({ onNext, tenantId, loading, setLoading }: StepProps) {
+// Step 1: Branding with AI
+function BrandingStep({ onNext, tenantId, tenantName, loading, setLoading }: StepProps) {
   const [selectedColor, setSelectedColor] = useState(colorPresets[0]);
+  const [useCustomColor, setUseCustomColor] = useState(false);
+  const [customPrimary, setCustomPrimary] = useState("#8B5CF6");
+  const [customSecondary, setCustomSecondary] = useState("#D946EF");
   const [tagline, setTagline] = useState("");
   const [description, setDescription] = useState("");
+  const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>([]);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiGenerated, setAiGenerated] = useState(false);
   const { toast } = useToast();
+
+  const generateWithAI = async () => {
+    setGeneratingAI(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-tenant-branding", {
+        body: {
+          name: tenantName || "Mi Salón",
+          tenantId,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Error al generar");
+
+      const branding = data.branding as BrandingData;
+      setTagline(branding.tagline || "");
+      setDescription(branding.description || "");
+      setFaqs(branding.faqs || []);
+      setAiGenerated(true);
+
+      toast({
+        title: "¡Contenido generado!",
+        description: "Puedes editar el texto si lo deseas",
+      });
+    } catch (error: unknown) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al generar contenido",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
 
   const handleSave = async () => {
     setLoading(true);
     try {
+      const primaryColor = useCustomColor ? customPrimary : selectedColor.primary;
+      const secondaryColor = useCustomColor ? customSecondary : selectedColor.secondary;
+
       const { error } = await supabase
         .from("tenants")
         .update({
-          primary_color: selectedColor.primary,
-          secondary_color: selectedColor.secondary,
+          primary_color: primaryColor,
+          secondary_color: secondaryColor,
           tagline: tagline || null,
           description: description || null,
+          features: faqs.length > 0 ? { faqs } : null,
         })
         .eq("id", tenantId);
 
@@ -87,40 +151,119 @@ function BrandingStep({ onNext, tenantId, loading, setLoading }: StepProps) {
           Personaliza tu marca
         </h3>
         <p className="text-sm text-muted-foreground">
-          Elige los colores que representen tu salón
+          Elige colores y deja que la IA genere el contenido
         </p>
       </div>
 
-      <div className="grid grid-cols-4 gap-3">
-        {colorPresets.map((preset) => (
+      {/* AI Generation Button */}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={generateWithAI}
+        disabled={generatingAI}
+        className="w-full h-12 rounded-xl border-dashed border-primary/50 text-primary hover:bg-primary/5"
+      >
+        {generatingAI ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Generando con IA...
+          </>
+        ) : (
+          <>
+            {aiGenerated ? <RefreshCw className="h-4 w-4 mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+            {aiGenerated ? "Regenerar contenido con IA" : "Generar eslogan y descripción con IA"}
+          </>
+        )}
+      </Button>
+
+      {/* Color Selection */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">Paleta de colores</Label>
           <button
-            key={preset.name}
             type="button"
-            onClick={() => setSelectedColor(preset)}
-            className={`p-3 rounded-xl border-2 transition-all ${
-              selectedColor.name === preset.name 
-                ? "border-primary ring-2 ring-primary/20" 
-                : "border-border hover:border-primary/50"
-            }`}
+            onClick={() => setUseCustomColor(!useCustomColor)}
+            className="flex items-center gap-2 text-xs text-primary hover:underline"
           >
-            <div className="flex gap-1 mb-2">
+            <Paintbrush className="h-3 w-3" />
+            {useCustomColor ? "Usar paletas" : "Color personalizado"}
+          </button>
+        </div>
+
+        {!useCustomColor ? (
+          <div className="grid grid-cols-4 gap-2">
+            {colorPresets.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => setSelectedColor(preset)}
+                className={`p-2 rounded-xl border-2 transition-all ${
+                  selectedColor.name === preset.name 
+                    ? "border-primary ring-2 ring-primary/20" 
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <div 
+                  className={`h-8 w-full rounded-lg bg-gradient-to-r ${preset.gradient}`}
+                />
+                <p className="text-[10px] text-muted-foreground mt-1 text-center">{preset.name}</p>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 p-4 bg-secondary/30 rounded-xl">
+            <div>
+              <Label className="text-xs text-muted-foreground">Color principal</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="color"
+                  value={customPrimary}
+                  onChange={(e) => setCustomPrimary(e.target.value)}
+                  className="w-12 h-10 rounded-lg cursor-pointer border-0"
+                />
+                <Input
+                  value={customPrimary}
+                  onChange={(e) => setCustomPrimary(e.target.value)}
+                  className="h-10 rounded-lg font-mono text-sm"
+                  placeholder="#8B5CF6"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Color secundario</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="color"
+                  value={customSecondary}
+                  onChange={(e) => setCustomSecondary(e.target.value)}
+                  className="w-12 h-10 rounded-lg cursor-pointer border-0"
+                />
+                <Input
+                  value={customSecondary}
+                  onChange={(e) => setCustomSecondary(e.target.value)}
+                  className="h-10 rounded-lg font-mono text-sm"
+                  placeholder="#D946EF"
+                />
+              </div>
+            </div>
+            {/* Preview */}
+            <div className="col-span-2">
+              <Label className="text-xs text-muted-foreground">Vista previa</Label>
               <div 
-                className="h-6 w-6 rounded-full" 
-                style={{ backgroundColor: preset.primary }} 
-              />
-              <div 
-                className="h-6 w-6 rounded-full" 
-                style={{ backgroundColor: preset.secondary }} 
+                className="h-10 w-full rounded-lg mt-1"
+                style={{ 
+                  background: `linear-gradient(to right, ${customPrimary}, ${customSecondary})` 
+                }}
               />
             </div>
-            <p className="text-xs text-muted-foreground">{preset.name}</p>
-          </button>
-        ))}
+          </div>
+        )}
       </div>
 
+      {/* Tagline & Description */}
       <div className="space-y-4">
         <div>
-          <Label>Eslogan (opcional)</Label>
+          <Label>Eslogan</Label>
           <Input
             placeholder="Tu belleza, nuestra pasión"
             value={tagline}
@@ -130,15 +273,40 @@ function BrandingStep({ onNext, tenantId, loading, setLoading }: StepProps) {
         </div>
 
         <div>
-          <Label>Descripción (opcional)</Label>
+          <Label>Descripción</Label>
           <Textarea
             placeholder="Describe brevemente tu salón..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="rounded-xl mt-2 min-h-[100px]"
+            className="rounded-xl mt-2 min-h-[80px]"
           />
         </div>
       </div>
+
+      {/* FAQs generated by AI */}
+      {faqs.length > 0 && (
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            Preguntas frecuentes generadas
+          </Label>
+          <Accordion type="single" collapsible className="w-full">
+            {faqs.map((faq, index) => (
+              <AccordionItem key={index} value={`faq-${index}`} className="border rounded-xl px-4 mb-2">
+                <AccordionTrigger className="text-sm text-left hover:no-underline">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+          <p className="text-xs text-muted-foreground">
+            Estas FAQs se mostrarán en tu landing page
+          </p>
+        </div>
+      )}
 
       <Button 
         onClick={handleSave} 
@@ -828,6 +996,7 @@ export default function OnboardingSetup() {
   const [loading, setLoading] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
+  const [tenantName, setTenantName] = useState<string>("Mi Salón");
   const [initializing, setInitializing] = useState(true);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -875,6 +1044,7 @@ export default function OnboardingSetup() {
 
           setTenantId(data.tenant.id);
           setTenantSlug(data.tenant.slug);
+          setTenantName(data.tenant.name || "Salón Demo");
           setInitializing(false);
 
           toast({
@@ -903,8 +1073,9 @@ export default function OnboardingSetup() {
       if (existingAdmin?.tenant_id) {
         // User already has a tenant, go to success
         setTenantId(existingAdmin.tenant_id);
-        const tenant = existingAdmin.tenants as unknown as { slug: string };
+        const tenant = existingAdmin.tenants as unknown as { slug: string; name: string };
         setTenantSlug(tenant?.slug || "");
+        setTenantName(tenant?.name || "Mi Salón");
         setStep(3); // Go to success
       } else {
         // Need to provision the business
@@ -933,6 +1104,7 @@ export default function OnboardingSetup() {
 
           setTenantId(data.tenant.id);
           setTenantSlug(data.tenant.slug);
+          setTenantName(data.tenant.name || businessName);
 
           // Clear stored data
           localStorage.removeItem("onboarding_business_name");
@@ -1042,6 +1214,7 @@ export default function OnboardingSetup() {
                 <BrandingStep
                   onNext={() => setStep(1)}
                   tenantId={tenantId}
+                  tenantName={tenantName}
                   loading={loading}
                   setLoading={setLoading}
                 />
