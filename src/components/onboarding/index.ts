@@ -5,4 +5,5 @@ export { SocialStep } from "./SocialStep";
 export { StylistsStep } from "./StylistsStep";
 export { TypographyStep } from "./TypographyStep";
 export { ImagesStep } from "./ImagesStep";
+export { AIGenerationStep } from "./AIGenerationStep";
 export * from "./types";

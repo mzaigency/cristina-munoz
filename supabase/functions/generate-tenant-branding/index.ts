@@ -7,14 +7,7 @@ const corsHeaders = {
 };
 
 interface BrandingRequest {
-  tenantId?: string; // optional if not yet created
-  name: string;
-  city?: string;
-  address?: string;
-  services?: string[]; // service names
-  stylists?: string[]; // stylist names
-  existingTagline?: string;
-  existingDescription?: string;
+  tenantId: string;
 }
 
 interface BrandingOutput {
@@ -34,16 +27,19 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const body = (await req.json()) as BrandingRequest;
-    const { name, city, address, services, stylists, tenantId } = body;
+    const { tenantId } = body;
 
-    if (!name) {
+    if (!tenantId) {
       return new Response(
-        JSON.stringify({ success: false, error: "El nombre del salón es obligatorio" }),
+        JSON.stringify({ success: false, error: "El ID del tenant es obligatorio" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    
     if (!LOVABLE_API_KEY) {
       return new Response(
         JSON.stringify({ success: false, error: "API de IA no configurada" }),
@@ -51,42 +47,135 @@ serve(async (req) => {
       );
     }
 
-    // Build context for AI
-    const servicesText = services?.length ? `Servicios: ${services.join(", ")}` : "";
-    const stylistsText = stylists?.length ? `Estilistas: ${stylists.join(", ")}` : "";
-    const locationText = city ? `Ubicación: ${address ? `${address}, ` : ""}${city}` : "";
+    const adminClient = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
 
-    const prompt = `Eres un experto en marketing y branding para peluquerías y salones de belleza en España.
+    // Fetch ALL real data from the tenant
+    const { data: tenant, error: tenantError } = await adminClient
+      .from("tenants")
+      .select("*")
+      .eq("id", tenantId)
+      .single();
 
-Genera contenido de marca para el siguiente salón:
+    if (tenantError || !tenant) {
+      console.error("Error fetching tenant:", tenantError);
+      return new Response(
+        JSON.stringify({ success: false, error: "No se encontró el negocio" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-Nombre: ${name}
-${locationText}
-${servicesText}
-${stylistsText}
+    // Fetch services
+    const { data: services } = await adminClient
+      .from("services")
+      .select("name, price, category, type")
+      .eq("tenant_id", tenantId);
 
-Genera en formato JSON válido (sin markdown, solo JSON puro) con esta estructura exacta:
+    // Fetch stylists
+    const { data: stylists } = await adminClient
+      .from("tenant_stylists")
+      .select("name")
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true);
+
+    // Fetch business hours
+    const { data: businessHours } = await adminClient
+      .from("tenant_business_hours")
+      .select("day_of_week, is_open, open_time, close_time, break_start, break_end")
+      .eq("tenant_id", tenantId)
+      .order("day_of_week");
+
+    // Extract business type from features
+    const features = tenant.features as { business_type?: string; business_type_label?: string } | null;
+    const businessType = features?.business_type_label || "Salón de belleza";
+
+    // Build rich context for AI
+    const name = tenant.name;
+    const city = tenant.city || "";
+    const address = tenant.address || "";
+    const phone = tenant.phone || "";
+    const whatsapp = tenant.whatsapp_number || "";
+    const instagram = tenant.instagram_url || "";
+
+    const servicesInfo = services?.length 
+      ? services.map(s => `${s.name} (${s.category || s.type})${s.price ? ` - ${s.price}€` : ""}`).join(", ")
+      : "No especificados";
+
+    const stylistsNames = stylists?.length 
+      ? stylists.map(s => s.name).join(", ")
+      : "No especificados";
+
+    const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const hoursInfo = businessHours?.length
+      ? businessHours
+          .filter(h => h.is_open)
+          .map(h => {
+            const day = dayNames[h.day_of_week];
+            const morning = h.open_time?.slice(0, 5);
+            const close = h.close_time?.slice(0, 5);
+            const breakStart = h.break_start?.slice(0, 5);
+            const breakEnd = h.break_end?.slice(0, 5);
+            if (breakStart && breakEnd) {
+              return `${day}: ${morning}-${breakStart} y ${breakEnd}-${close}`;
+            }
+            return `${day}: ${morning}-${close}`;
+          })
+          .join("; ")
+      : "No especificados";
+
+    console.log("Generating branding for:", name, "Type:", businessType);
+
+    const prompt = `Eres un experto en marketing y copywriting para negocios de belleza en España.
+
+DATOS REALES DEL NEGOCIO (usa esta información exacta, NO inventes datos):
+
+📍 INFORMACIÓN BÁSICA:
+- Nombre: ${name}
+- Tipo de negocio: ${businessType}
+- Dirección: ${address || "No especificada"}
+- Ciudad: ${city || "No especificada"}
+- Teléfono: ${phone || "No especificado"}
+- WhatsApp: ${whatsapp || "No especificado"}
+- Instagram: ${instagram || "No especificado"}
+
+✂️ SERVICIOS QUE OFRECEN:
+${servicesInfo}
+
+👥 EQUIPO:
+${stylistsNames}
+
+🕐 HORARIOS:
+${hoursInfo}
+
+---
+
+GENERA contenido de marca BASÁNDOTE ÚNICAMENTE en los datos reales proporcionados arriba.
+NO inventes servicios, horarios, o información que no se haya proporcionado.
+Si algún dato no está especificado, NO lo menciones en las FAQs o descripción.
+
+Devuelve JSON válido (sin markdown) con esta estructura:
 {
-  "tagline": "eslogan corto y memorable (máx 60 caracteres)",
-  "description": "descripción del salón para la web (2-3 frases, máx 200 caracteres)",
-  "seoTitle": "título SEO optimizado (máx 60 caracteres)",
-  "seoDescription": "meta descripción SEO (máx 155 caracteres)",
+  "tagline": "eslogan corto y memorable que refleje la esencia del negocio (máx 60 caracteres)",
+  "description": "descripción atractiva del salón mencionando servicios reales y ubicación si está disponible (2-3 frases, máx 250 caracteres)",
+  "seoTitle": "${name} - ${businessType}${city ? ` en ${city}` : ""} | Reserva Online",
+  "seoDescription": "meta descripción SEO mencionando servicios reales y ciudad (máx 155 caracteres)",
   "faqs": [
-    {"question": "pregunta frecuente 1", "answer": "respuesta concisa"},
-    {"question": "pregunta frecuente 2", "answer": "respuesta concisa"},
-    {"question": "pregunta frecuente 3", "answer": "respuesta concisa"}
+    {"question": "pregunta sobre horarios o ubicación REAL", "answer": "respuesta con datos REALES"},
+    {"question": "pregunta sobre servicios que REALMENTE ofrecen", "answer": "respuesta mencionando servicios REALES"},
+    {"question": "pregunta sobre reservas o contacto", "answer": "respuesta con datos de contacto REALES si están disponibles"}
   ],
-  "brandTone": "descripción del tono de marca recomendado (profesional, cercano, juvenil, etc.)"
+  "brandTone": "descripción del tono de marca ideal para este tipo de negocio"
 }
 
-IMPORTANTE:
-- El contenido debe ser en español
-- Debe ser profesional pero cercano
-- Adapta el tono según el tipo de servicios (si hay barba = barbería, si hay coloración/mechas = salón de belleza, etc.)
-- Las FAQs deben ser relevantes para el negocio
-- Devuelve SOLO el JSON, sin explicaciones adicionales`;
-
-    console.log("Generating branding for:", name);
+REGLAS CRÍTICAS:
+1. Solo menciona servicios que aparezcan en la lista de servicios real
+2. Solo menciona horarios si están especificados
+3. Solo menciona ciudad/dirección si están especificadas
+4. Las FAQs deben responder con información REAL, no inventada
+5. Si faltan datos, haz las FAQs más genéricas sobre reservas y experiencia
+6. El contenido debe ser en español de España
+7. Adapta el tono al tipo de negocio (${businessType})`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -154,46 +243,46 @@ IMPORTANTE:
       );
     }
 
-    // Save generation to audit table if tenant exists
-    if (tenantId && authHeader) {
-      try {
-        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-        const adminClient = createClient(supabaseUrl, serviceKey, {
-          auth: { persistSession: false, autoRefreshToken: false },
-        });
+    // Save generation to audit table
+    try {
+      // Get user from auth header
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: { user } } = await userClient.auth.getUser();
 
-        // Get user from auth header
-        const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-        const userClient = createClient(supabaseUrl, anonKey, {
-          global: { headers: { Authorization: authHeader } },
-          auth: { persistSession: false, autoRefreshToken: false },
-        });
-        const { data: { user } } = await userClient.auth.getUser();
+      // Mark previous generations as inactive
+      await adminClient
+        .from("tenant_ai_generations")
+        .update({ is_active: false })
+        .eq("tenant_id", tenantId)
+        .eq("generation_type", "branding");
 
-        await adminClient.from("tenant_ai_generations").insert({
-          tenant_id: tenantId,
-          generation_type: "branding",
-          prompt: prompt,
-          output: branding,
-          model: "google/gemini-2.5-flash",
-          created_by: user?.id || null,
-          is_active: true,
-        });
+      await adminClient.from("tenant_ai_generations").insert({
+        tenant_id: tenantId,
+        generation_type: "branding",
+        prompt: prompt,
+        output: branding,
+        model: "google/gemini-2.5-flash",
+        created_by: user?.id || null,
+        is_active: true,
+      });
 
-        // Mark previous generations as inactive
-        await adminClient
-          .from("tenant_ai_generations")
-          .update({ is_active: false })
-          .eq("tenant_id", tenantId)
-          .eq("generation_type", "branding")
-          .neq("is_active", false);
+      // Update tenant with generated content
+      await adminClient
+        .from("tenants")
+        .update({
+          tagline: branding.tagline,
+          description: branding.description,
+        })
+        .eq("id", tenantId);
 
-        console.log("Saved AI generation to audit table");
-      } catch (saveError) {
-        console.error("Error saving generation to audit:", saveError);
-        // Don't fail the request if audit save fails
-      }
+      console.log("Saved AI generation and updated tenant");
+    } catch (saveError) {
+      console.error("Error saving generation:", saveError);
+      // Don't fail the request if save fails
     }
 
     console.log("Generated branding successfully");
