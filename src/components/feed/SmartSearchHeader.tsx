@@ -70,9 +70,12 @@ export function SmartSearchHeader({
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center justify-between mb-4"
           >
-            <h1 className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              GlowUp
-            </h1>
+            <div className="flex items-center gap-2">
+              <img src="/favicon.png" alt="GlowUp" className="h-8 w-8" />
+              <h1 className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                GlowUp
+              </h1>
+            </div>
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
               <Link to="/para-negocios">
                 <Building2 className="h-4 w-4 mr-2" />
