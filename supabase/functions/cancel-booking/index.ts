@@ -160,66 +160,40 @@ serve(async (req) => {
 
     console.log('Booking(s) cancelled successfully');
 
-    // Get WhatsApp settings for this tenant
-    let whatsappTemplateName = 'cita_cancelada';
-    let whatsappLanguage = 'es';
-    
-    if (tenantId) {
-      const { data: whatsappIntegration } = await supabase
-        .from('tenant_integrations')
-        .select('settings')
-        .eq('tenant_id', tenantId)
-        .eq('integration_type', 'whatsapp')
-        .eq('is_enabled', true)
-        .maybeSingle();
-      
-      if (whatsappIntegration?.settings) {
-        const wsSettings = whatsappIntegration.settings as any;
-        whatsappTemplateName = wsSettings.template_cancellation || 'cita_cancelada';
-        whatsappLanguage = wsSettings.template_language || 'es';
-      }
-    }
-    
-    console.log('Using WhatsApp template:', whatsappTemplateName, 'language:', whatsappLanguage);
-
-    // Send WhatsApp cancellation via Meta Cloud API
-    // Template: cita_cancelada -> {{1}}=fecha, {{2}}=hora
+    // Send internal message cancellation for bookings with user_id
     for (const booking of bookings) {
-      if (booking.Telefono && booking.Telefono.length >= 9) {
+      if (booking.user_id) {
         try {
-          const dateStr = booking.Fecha.toString();
-          const [year, month, day] = dateStr.split('-');
-          const formattedDate = `${day}/${month}/${year}`;
-          const formattedTime = booking.Hora.slice(0, 5);
-          
-          const response = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-notification`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              tenant_id: tenantId,
-              to: booking.Telefono,
-              template_name: whatsappTemplateName,
-              template_language: whatsappLanguage,
-              template_components: [
-                {
-                  type: 'body',
-                  parameters: [
-                    { type: 'text', text: formattedDate },
-                    { type: 'text', text: formattedTime },
-                  ]
-                }
-              ]
-            })
-          });
-          
-          const result = await response.json();
-          if (result.success) {
-            console.log('WhatsApp cancellation sent to:', booking.Telefono);
-          } else {
-            console.log('WhatsApp not sent:', result.error);
+          // Find conversation
+          const { data: conversation } = await supabase
+            .from('conversations')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .eq('user_id', booking.user_id)
+            .maybeSingle();
+
+          if (conversation) {
+            const dateStr = booking.Fecha.toString();
+            const [year, month, day] = dateStr.split('-');
+            const formattedDate = `${day}/${month}/${year}`;
+            const formattedTime = booking.Hora.slice(0, 5);
+
+            const cancellationMessage = `❌ *Cita cancelada*\n\nTu cita del ${formattedDate} a las ${formattedTime} ha sido cancelada.\n\nSi tienes alguna duda, no dudes en escribirnos.`;
+
+            await supabase
+              .from('direct_messages')
+              .insert({
+                conversation_id: conversation.id,
+                sender_id: tenantId,
+                sender_type: 'salon',
+                content: cancellationMessage,
+                message_type: 'booking_cancellation',
+              });
+
+            console.log('Internal cancellation message sent to user:', booking.user_id);
           }
-        } catch (whatsappError) {
-          console.error('Error sending WhatsApp cancellation:', whatsappError);
+        } catch (msgError) {
+          console.error('Error sending internal cancellation message:', msgError);
         }
       }
     }

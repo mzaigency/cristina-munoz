@@ -13,25 +13,6 @@ function getSupabaseClient() {
   );
 }
 
-async function getWebhookUrl(supabase: any, tenantId: string | null): Promise<string | null> {
-  if (!tenantId) {
-    return Deno.env.get('WEBHOOK_VALORACION') || null;
-  }
-
-  const { data } = await supabase
-    .from('tenant_integrations')
-    .select('settings, is_enabled')
-    .eq('tenant_id', tenantId)
-    .eq('integration_type', 'n8n_webhooks')
-    .single();
-
-  if (!data || !data.is_enabled || !data.settings?.webhook_valoracion) {
-    return Deno.env.get('WEBHOOK_VALORACION') || null;
-  }
-
-  return data.settings.webhook_valoracion;
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -39,32 +20,63 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { tenant_id: tenantId, ...webhookData } = body;
+    const { tenant_id: tenantId, user_id: userId, customer_name, booking_id } = body;
     
+    if (!tenantId || !userId) {
+      throw new Error('tenant_id and user_id are required');
+    }
+
     const supabase = getSupabaseClient();
-    const webhookUrl = await getWebhookUrl(supabase, tenantId);
 
-    if (!webhookUrl) {
-      throw new Error('WEBHOOK_VALORACION not configured');
+    console.log('Sending review request message for tenant:', tenantId, 'user:', userId);
+
+    // Find or create conversation
+    let { data: conversation } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!conversation) {
+      const { data: newConv, error: convError } = await supabase
+        .from('conversations')
+        .insert({
+          tenant_id: tenantId,
+          user_id: userId,
+        })
+        .select('id')
+        .single();
+      
+      if (convError) throw convError;
+      conversation = newConv;
     }
 
-    console.log('Sending review request to webhook for tenant:', tenantId);
-    console.log('Webhook data:', webhookData);
+    // Get tenant name
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('name, slug')
+      .eq('id', tenantId)
+      .single();
 
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...webhookData,
-        tenant_id: tenantId,
-      })
-    });
+    const reviewUrl = tenant?.slug 
+      ? `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app')}/valorar/${tenant.slug}`
+      : '#';
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Webhook error:', errorText);
-      throw new Error(`Webhook failed: ${response.status}`);
-    }
+    const reviewMessage = `⭐ *¡Gracias por visitarnos!*\n\nHola ${customer_name || 'cliente'},\n\nEsperamos que hayas disfrutado de tu visita a ${tenant?.name || 'nuestro salón'}.\n\n¿Te importaría dejarnos tu opinión? Tu feedback nos ayuda a mejorar.\n\n📝 Puedes valorar tu experiencia en la sección de reseñas.\n\n¡Muchas gracias!`;
+
+    await supabase
+      .from('direct_messages')
+      .insert({
+        conversation_id: conversation.id,
+        sender_id: tenantId,
+        sender_type: 'salon',
+        content: reviewMessage,
+        message_type: 'review_request',
+        metadata: { booking_id }
+      });
+
+    console.log('Review request message sent to user:', userId);
 
     return new Response(
       JSON.stringify({ success: true, tenant_id: tenantId }),

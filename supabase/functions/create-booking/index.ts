@@ -502,65 +502,56 @@ serve(async (req) => {
 
     console.log('Created bookings:', createdBookings.length);
 
-    // Get WhatsApp settings for this tenant
-    let whatsappTemplateName = 'reserva_confirmada';
-    let whatsappLanguage = 'es';
-    
-    const { data: whatsappIntegration } = await supabase
-      .from('tenant_integrations')
-      .select('settings')
-      .eq('tenant_id', tenantId)
-      .eq('integration_type', 'whatsapp')
-      .eq('is_enabled', true)
-      .maybeSingle();
-    
-    if (whatsappIntegration?.settings) {
-      const wsSettings = whatsappIntegration.settings as any;
-      whatsappTemplateName = wsSettings.template_confirmation || 'reserva_confirmada';
-      whatsappLanguage = wsSettings.template_language || 'es';
-    }
-    
-    console.log('Using WhatsApp template:', whatsappTemplateName, 'language:', whatsappLanguage);
-
-    // Send WhatsApp confirmation via Meta Cloud API
-    // Template: reserva_confirmada -> {{1}}=nombre, {{2}}=fecha a las hora
-    if (customer_phone && customer_phone.length >= 9) {
+    // Send internal message confirmation (if user has account)
+    if (bookingData.user_id) {
       try {
+        // Find or create conversation
+        let { data: conversation } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .eq('user_id', bookingData.user_id)
+          .maybeSingle();
+
+        if (!conversation) {
+          const { data: newConv, error: convError } = await supabase
+            .from('conversations')
+            .insert({
+              tenant_id: tenantId,
+              user_id: bookingData.user_id,
+            })
+            .select('id')
+            .single();
+          
+          if (convError) throw convError;
+          conversation = newConv;
+        }
+
+        // Format the confirmation message
         const [day, month, year] = [
           bookingDate.slice(8, 10),
           bookingDate.slice(5, 7),
           bookingDate.slice(0, 4)
         ];
         const formattedDateTime = `${day}/${month}/${year} a las ${bookingTime.slice(0, 5)}`;
+        const serviceNames = bookingData.services.map(s => s.name).join(', ');
         
-        const response = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-notification`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tenant_id: tenantId,
-            to: customer_phone,
-            template_name: whatsappTemplateName,
-            template_language: whatsappLanguage,
-            template_components: [
-              {
-                type: 'body',
-                parameters: [
-                  { type: 'text', text: customer_name },
-                  { type: 'text', text: formattedDateTime },
-                ]
-              }
-            ]
-          })
-        });
-        
-        const result = await response.json();
-        if (result.success) {
-          console.log('WhatsApp confirmation sent successfully');
-        } else {
-          console.log('WhatsApp not sent (integration may not be configured):', result.error);
-        }
-      } catch (whatsappError) {
-        console.error('Error sending WhatsApp confirmation:', whatsappError);
+        const confirmationMessage = `✅ *Reserva confirmada*\n\nHola ${customer_name},\n\nTu cita ha sido confirmada para el ${formattedDateTime}.\n\n📋 Servicios: ${serviceNames}\n👤 Profesional: ${actualStylist}\n\n¡Te esperamos!`;
+
+        // Insert the message
+        await supabase
+          .from('direct_messages')
+          .insert({
+            conversation_id: conversation.id,
+            sender_id: tenantId,
+            sender_type: 'salon',
+            content: confirmationMessage,
+            message_type: 'booking_confirmation',
+          });
+
+        console.log('Internal confirmation message sent to user:', bookingData.user_id);
+      } catch (msgError) {
+        console.error('Error sending internal confirmation message:', msgError);
       }
     }
 
