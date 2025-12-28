@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, ChevronLeft } from 'lucide-react';
+import { MessageCircle, ChevronLeft, Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
 import { useConversations, useMessages, Conversation } from '@/hooks/useConversations';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function Messages() {
   const navigate = useNavigate();
@@ -47,13 +48,25 @@ export default function Messages() {
     }
   };
 
-  const handleSelectConversation = (conv: Conversation) => {
+  const handleSelectConversation = useCallback((conv: Conversation) => {
     setSelectedConversation(conv);
-  };
+  }, []);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     setSelectedConversation(null);
-  };
+  }, []);
+
+  // Keyboard shortcut: Escape to go back
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedConversation) {
+        handleBack();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedConversation, handleBack]);
 
   if (loading) {
     return (
@@ -122,57 +135,98 @@ export default function Messages() {
     );
   }
 
-  // Desktop layout - iOS inspired
+  // Desktop layout - iOS inspired with better accessibility
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="container mx-auto flex items-center h-16 px-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)}
-            className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
-          >
-            <ChevronLeft className="h-6 w-6" />
-            <span>Atrás</span>
-          </Button>
-          <h1 className="flex-1 text-center text-lg font-semibold">
-            Mensajes
-          </h1>
-          <div className="w-16" /> {/* Spacer for centering */}
-        </div>
-      </div>
+    <TooltipProvider>
+      <div className="min-h-screen bg-muted/30">
+        {/* Skip link for keyboard users */}
+        <a 
+          href="#chat-content" 
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground"
+        >
+          Saltar a la conversación
+        </a>
 
-      {/* Content */}
-      <div className="container mx-auto py-6 px-4">
-        <div className="bg-background rounded-2xl border border-border/50 shadow-lg overflow-hidden h-[calc(100vh-120px)]">
-          <div className="grid md:grid-cols-[380px_1fr] h-full">
-            {/* Conversation list */}
-            <div className="border-r border-border/50 bg-background">
-              <div className="p-4 border-b border-border/30">
-                <h2 className="text-xl font-bold">Chats</h2>
-              </div>
-              <ConversationList
-                conversations={conversations}
-                loading={loadingConversations}
-                selectedId={selectedConversation?.id || null}
-                onSelect={handleSelectConversation}
-                role="user"
-              />
-            </div>
-
-            {/* Chat window */}
-            <ChatWindow
-              conversation={selectedConversation}
-              messages={messages}
-              loading={loadingMessages}
-              onSendMessage={handleSendMessage}
-              currentUserId={user?.id || ''}
-              role="user"
-            />
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
+          <div className="container mx-auto flex items-center justify-between h-16 px-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate(-1)}
+              className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
+              aria-label="Volver atrás"
+            >
+              <ChevronLeft className="h-6 w-6" />
+              <span>Atrás</span>
+            </Button>
+            <h1 className="text-lg font-semibold">
+              Mensajes
+            </h1>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-muted-foreground" aria-label="Atajos de teclado">
+                  <Keyboard className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <div className="space-y-2 text-sm">
+                  <p className="font-semibold">Atajos de teclado</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    <span><kbd className="px-1 rounded bg-muted">↑↓</kbd> Navegar</span>
+                    <span><kbd className="px-1 rounded bg-muted">Enter</kbd> Abrir</span>
+                    <span><kbd className="px-1 rounded bg-muted">Esc</kbd> Cerrar chat</span>
+                    <span><kbd className="px-1 rounded bg-muted">Home/End</kbd> Ir al inicio/fin</span>
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
+
+        {/* Content */}
+        <main className="container mx-auto py-6 px-4" role="main" aria-label="Centro de mensajes">
+          <div className="bg-background rounded-2xl border border-border/50 shadow-lg overflow-hidden h-[calc(100vh-120px)]">
+            <div className="grid md:grid-cols-[380px_1fr] h-full">
+              {/* Conversation list */}
+              <nav 
+                className="border-r border-border/50 bg-background flex flex-col" 
+                role="navigation" 
+                aria-label="Lista de conversaciones"
+              >
+                <div className="p-4 border-b border-border/30">
+                  <h2 className="text-xl font-bold" id="chats-heading">Chats</h2>
+                </div>
+                <div className="flex-1 min-h-0" aria-labelledby="chats-heading">
+                  <ConversationList
+                    conversations={conversations}
+                    loading={loadingConversations}
+                    selectedId={selectedConversation?.id || null}
+                    onSelect={handleSelectConversation}
+                    role="user"
+                  />
+                </div>
+              </nav>
+
+              {/* Chat window */}
+              <section 
+                id="chat-content" 
+                className="flex flex-col" 
+                role="region" 
+                aria-label={selectedConversation ? `Chat con ${selectedConversation.tenant?.name || 'salón'}` : 'Selecciona una conversación'}
+              >
+                <ChatWindow
+                  conversation={selectedConversation}
+                  messages={messages}
+                  loading={loadingMessages}
+                  onSendMessage={handleSendMessage}
+                  currentUserId={user?.id || ''}
+                  role="user"
+                />
+              </section>
+            </div>
+          </div>
+        </main>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

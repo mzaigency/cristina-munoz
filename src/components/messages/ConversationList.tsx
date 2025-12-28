@@ -1,11 +1,13 @@
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { MessageCircle, Building2, ChevronRight } from 'lucide-react';
+import { MessageCircle, Building2, ChevronRight, Search } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import { Conversation } from '@/hooks/useConversations';
 import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -22,6 +24,72 @@ export function ConversationList({
   onSelect,
   role,
 }: ConversationListProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const listRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // Filter conversations based on search
+  const filteredConversations = conversations.filter((conv) => {
+    const displayName =
+      role === 'user'
+        ? conv.tenant?.name || 'Salón'
+        : conv.user?.full_name || conv.user?.email || 'Cliente';
+    return displayName.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  // Update focused index when selected changes
+  useEffect(() => {
+    if (selectedId) {
+      const index = filteredConversations.findIndex((c) => c.id === selectedId);
+      if (index !== -1) {
+        setFocusedIndex(index);
+      }
+    }
+  }, [selectedId, filteredConversations]);
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (filteredConversations.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusedIndex((prev) => {
+          const next = prev < filteredConversations.length - 1 ? prev + 1 : 0;
+          itemRefs.current[next]?.focus();
+          return next;
+        });
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusedIndex((prev) => {
+          const next = prev > 0 ? prev - 1 : filteredConversations.length - 1;
+          itemRefs.current[next]?.focus();
+          return next;
+        });
+        break;
+      case 'Enter':
+      case ' ':
+        if (focusedIndex >= 0 && focusedIndex < filteredConversations.length) {
+          e.preventDefault();
+          onSelect(filteredConversations[focusedIndex]);
+        }
+        break;
+      case 'Home':
+        e.preventDefault();
+        setFocusedIndex(0);
+        itemRefs.current[0]?.focus();
+        break;
+      case 'End':
+        e.preventDefault();
+        const lastIndex = filteredConversations.length - 1;
+        setFocusedIndex(lastIndex);
+        itemRefs.current[lastIndex]?.focus();
+        break;
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-0 divide-y divide-border/50">
@@ -55,85 +123,143 @@ export function ConversationList({
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="divide-y divide-border/30">
-        {conversations.map((conv) => {
-          const unreadCount = role === 'user' ? conv.unread_count_user : conv.unread_count_salon;
-          const displayName =
-            role === 'user'
-              ? conv.tenant?.name || 'Salón'
-              : conv.user?.full_name || conv.user?.email || 'Cliente';
-          const avatarUrl = role === 'user' ? conv.tenant?.logo_url : null;
-          const isSelected = selectedId === conv.id;
-
-          return (
-            <button
-              key={conv.id}
-              onClick={() => onSelect(conv)}
-              className={cn(
-                'w-full flex items-center gap-3 p-4 text-left transition-all duration-200 active:bg-accent/80',
-                isSelected ? 'bg-accent' : 'hover:bg-accent/50',
-                unreadCount > 0 && 'bg-primary/5'
-              )}
-            >
-              {/* Avatar con indicador de no leído */}
-              <div className="relative shrink-0">
-                <Avatar className="h-14 w-14 border-2 border-background shadow-sm">
-                  <AvatarImage src={avatarUrl || undefined} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-semibold text-lg">
-                    {role === 'user' ? (
-                      <Building2 className="h-6 w-6" />
-                    ) : (
-                      displayName.charAt(0).toUpperCase()
-                    )}
-                  </AvatarFallback>
-                </Avatar>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] flex items-center justify-center bg-destructive text-destructive-foreground text-xs font-bold rounded-full px-1.5 shadow-lg animate-in zoom-in-50 duration-200">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </div>
-
-              {/* Contenido */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-0.5">
-                  <p className={cn(
-                    'font-semibold truncate text-[15px]',
-                    unreadCount > 0 && 'text-foreground'
-                  )}>
-                    {displayName}
-                  </p>
-                  <span className={cn(
-                    'text-xs shrink-0',
-                    unreadCount > 0 ? 'text-primary font-medium' : 'text-muted-foreground'
-                  )}>
-                    {formatDistanceToNow(new Date(conv.last_message_at), {
-                      addSuffix: false,
-                      locale: es,
-                    })}
-                  </span>
-                </div>
-
-                {conv.last_message && (
-                  <p className={cn(
-                    'text-sm truncate leading-relaxed',
-                    unreadCount > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'
-                  )}>
-                    {conv.last_message.sender_type === (role === 'user' ? 'user' : 'salon')
-                      ? 'Tú: '
-                      : ''}
-                    {conv.last_message.content}
-                  </p>
-                )}
-              </div>
-
-              {/* Flecha iOS */}
-              <ChevronRight className="h-5 w-5 text-muted-foreground/50 shrink-0" />
-            </button>
-          );
-        })}
+    <div className="flex flex-col h-full">
+      {/* Search bar for desktop */}
+      <div className="p-3 border-b border-border/30 hidden md:block">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Buscar conversación..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/50"
+            aria-label="Buscar conversaciones"
+          />
+        </div>
       </div>
-    </ScrollArea>
+
+      {/* Conversation count for screen readers */}
+      <div className="sr-only" role="status" aria-live="polite">
+        {filteredConversations.length} conversaciones disponibles
+        {searchTerm && ` para "${searchTerm}"`}
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div
+          ref={listRef}
+          role="listbox"
+          aria-label="Lista de conversaciones"
+          aria-activedescendant={selectedId ? `conversation-${selectedId}` : undefined}
+          onKeyDown={handleKeyDown}
+          className="divide-y divide-border/30"
+        >
+          {filteredConversations.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              <p>No se encontraron conversaciones</p>
+            </div>
+          ) : (
+            filteredConversations.map((conv, index) => {
+              const unreadCount = role === 'user' ? conv.unread_count_user : conv.unread_count_salon;
+              const displayName =
+                role === 'user'
+                  ? conv.tenant?.name || 'Salón'
+                  : conv.user?.full_name || conv.user?.email || 'Cliente';
+              const avatarUrl = role === 'user' ? conv.tenant?.logo_url : null;
+              const isSelected = selectedId === conv.id;
+              const isFocused = focusedIndex === index;
+
+              return (
+                <button
+                  key={conv.id}
+                  ref={(el) => (itemRefs.current[index] = el)}
+                  id={`conversation-${conv.id}`}
+                  role="option"
+                  aria-selected={isSelected}
+                  aria-label={`Conversación con ${displayName}${unreadCount > 0 ? `, ${unreadCount} mensajes sin leer` : ''}`}
+                  onClick={() => {
+                    setFocusedIndex(index);
+                    onSelect(conv);
+                  }}
+                  onFocus={() => setFocusedIndex(index)}
+                  className={cn(
+                    'w-full flex items-center gap-3 p-4 text-left transition-all duration-200',
+                    'focus:outline-none focus-visible:bg-accent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary',
+                    isSelected && 'bg-accent',
+                    !isSelected && 'hover:bg-accent/50',
+                    isFocused && !isSelected && 'bg-accent/30',
+                    unreadCount > 0 && 'bg-primary/5'
+                  )}
+                >
+                  {/* Avatar con indicador de no leído */}
+                  <div className="relative shrink-0">
+                    <Avatar className="h-14 w-14 border-2 border-background shadow-sm">
+                      <AvatarImage src={avatarUrl || undefined} alt={displayName} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-semibold text-lg">
+                        {role === 'user' ? (
+                          <Building2 className="h-6 w-6" aria-hidden="true" />
+                        ) : (
+                          displayName.charAt(0).toUpperCase()
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    {unreadCount > 0 && (
+                      <span 
+                        className="absolute -top-1 -right-1 min-w-[22px] h-[22px] flex items-center justify-center bg-destructive text-destructive-foreground text-xs font-bold rounded-full px-1.5 shadow-lg animate-in zoom-in-50 duration-200"
+                        aria-hidden="true"
+                      >
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <p className={cn(
+                        'font-semibold truncate text-[15px]',
+                        unreadCount > 0 && 'text-foreground'
+                      )}>
+                        {displayName}
+                      </p>
+                      <span className={cn(
+                        'text-xs shrink-0',
+                        unreadCount > 0 ? 'text-primary font-medium' : 'text-muted-foreground'
+                      )}>
+                        {formatDistanceToNow(new Date(conv.last_message_at), {
+                          addSuffix: false,
+                          locale: es,
+                        })}
+                      </span>
+                    </div>
+
+                    {conv.last_message && (
+                      <p className={cn(
+                        'text-sm truncate leading-relaxed',
+                        unreadCount > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'
+                      )}>
+                        {conv.last_message.sender_type === (role === 'user' ? 'user' : 'salon')
+                          ? 'Tú: '
+                          : ''}
+                        {conv.last_message.content}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Flecha iOS */}
+                  <ChevronRight className="h-5 w-5 text-muted-foreground/50 shrink-0 hidden md:block" aria-hidden="true" />
+                </button>
+              );
+            })
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Keyboard shortcuts hint */}
+      <div className="hidden md:flex items-center justify-center gap-4 p-2 border-t border-border/30 text-xs text-muted-foreground">
+        <span><kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">↑↓</kbd> Navegar</span>
+        <span><kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">Enter</kbd> Seleccionar</span>
+      </div>
+    </div>
   );
 }
