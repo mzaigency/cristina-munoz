@@ -2,7 +2,7 @@ import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Heart, TrendingUp, Wand2 } from "lucide-react";
+import { Heart, TrendingUp, Wand2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
@@ -249,20 +249,6 @@ const Index = () => {
 
       </div>
 
-      {/* Premium FAB */}
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-      >
-        <Link
-          to="/buscar"
-          className="fixed bottom-24 right-4 h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-accent text-white shadow-xl shadow-primary/40 flex items-center justify-center z-40 active:scale-95 transition-transform"
-          aria-label="Nueva reserva"
-        >
-          <Plus className="h-7 w-7" strokeWidth={2.5} />
-        </Link>
-      </motion.div>
     </AppLayout>
   );
 };

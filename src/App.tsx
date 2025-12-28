@@ -15,7 +15,7 @@ import Profile from "./pages/Profile";
 import Review from "./pages/Review";
 import TenantLanding from "./pages/TenantLanding";
 import Messages from "./pages/Messages";
-import Search from "./pages/Search";
+
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
 import NotFound from "./pages/NotFound";
@@ -36,7 +36,7 @@ const App = () => (
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/buscar" element={<Search />} />
+            
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/:slug" element={<TenantAdmin />} />
