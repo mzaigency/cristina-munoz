@@ -966,7 +966,32 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                         <p>Día cerrado</p>
                       </div>
                     ) : (
-                      <div className="flex gap-4 overflow-x-auto">
+                      <div className="overflow-x-auto">
+                        {/* Header - fuera de la timeline para que cuadren las horas */}
+                        <div className="flex gap-4 pb-3 border-b border-border/40 min-w-max">
+                          <div className="w-14 md:w-16 shrink-0 text-[10px] md:text-xs font-semibold text-muted-foreground">
+                            HORA
+                          </div>
+
+                          <div className="flex-1 flex gap-3 md:gap-4">
+                            {stylists.map(stylist => (
+                              <div
+                                key={stylist.slug}
+                                className="flex-1 min-w-[140px] md:min-w-[180px] text-center font-semibold text-sm py-2 rounded-lg shadow-sm"
+                                style={{
+                                  backgroundColor: `${stylist.color}15`,
+                                  color: stylist.color,
+                                  borderBottom: `2px solid ${stylist.color}`
+                                }}
+                              >
+                                {stylist.name}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Timeline */}
+                        <div className="flex gap-4 pt-3 min-w-max">
                         {/* Time column - 2px per minute = 120px per hour */}
                         <div className="w-14 md:w-16 shrink-0">
                           {schedule.hours.map(hour => {
@@ -993,12 +1018,6 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                         <div className="flex-1 flex gap-3 md:gap-4">
                           {stylists.map(stylist => (
                             <div key={stylist.slug} className="flex-1 min-w-[140px] md:min-w-[180px]">
-                              <div 
-                                className="text-center font-semibold text-sm mb-3 py-2 rounded-lg shadow-sm"
-                                style={{ backgroundColor: `${stylist.color}15`, color: stylist.color, borderBottom: `2px solid ${stylist.color}` }}
-                              >
-                                {stylist.name}
-                              </div>
                               <div 
                                 className="relative rounded-lg overflow-hidden"
                                 style={{ backgroundColor: "hsl(var(--muted) / 0.3)" }}
@@ -1256,6 +1275,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                               </div>
                             </div>
                           ))}
+                        </div>
                         </div>
                       </div>
                     )}
