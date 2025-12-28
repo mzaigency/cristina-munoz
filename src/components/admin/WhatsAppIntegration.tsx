@@ -17,6 +17,11 @@ interface WhatsAppSettings {
   sender_id: string;
   phone_number: string;
   business_name: string;
+  // Template configuration
+  template_confirmation: string;
+  template_cancellation: string;
+  template_reminder: string;
+  template_language: string;
 }
 
 export const WhatsAppIntegration = ({ tenantId }: WhatsAppIntegrationProps) => {
@@ -31,6 +36,10 @@ export const WhatsAppIntegration = ({ tenantId }: WhatsAppIntegrationProps) => {
     sender_id: "",
     phone_number: "",
     business_name: "",
+    template_confirmation: "reserva_confirmada",
+    template_cancellation: "cita_cancelada",
+    template_reminder: "recordatorio",
+    template_language: "es",
   });
   const [testResult, setTestResult] = useState<"success" | "error" | null>(null);
   const { toast } = useToast();
@@ -59,6 +68,10 @@ export const WhatsAppIntegration = ({ tenantId }: WhatsAppIntegrationProps) => {
             sender_id: savedSettings.sender_id || "",
             phone_number: savedSettings.phone_number || "",
             business_name: savedSettings.business_name || "",
+            template_confirmation: savedSettings.template_confirmation || "reserva_confirmada",
+            template_cancellation: savedSettings.template_cancellation || "cita_cancelada",
+            template_reminder: savedSettings.template_reminder || "recordatorio",
+            template_language: savedSettings.template_language || "es",
           });
         }
       }
@@ -257,6 +270,68 @@ export const WhatsAppIntegration = ({ tenantId }: WhatsAppIntegrationProps) => {
             <p className="text-xs text-muted-foreground mt-1">
               Nombre que aparecerá en los mensajes de WhatsApp
             </p>
+          </div>
+        </div>
+
+        {/* Template Configuration Section */}
+        <div className="border-t pt-4 mt-4">
+          <h4 className="text-sm font-medium mb-3">Configuración de Plantillas</h4>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label htmlFor="template_confirmation">Plantilla de Confirmación</Label>
+              <Input
+                id="template_confirmation"
+                value={settings.template_confirmation}
+                onChange={(e) => setSettings({ ...settings, template_confirmation: e.target.value })}
+                placeholder="reserva_confirmada"
+                disabled={!isEnabled}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Nombre de la plantilla en Meta para confirmar reservas
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="template_cancellation">Plantilla de Cancelación</Label>
+              <Input
+                id="template_cancellation"
+                value={settings.template_cancellation}
+                onChange={(e) => setSettings({ ...settings, template_cancellation: e.target.value })}
+                placeholder="cita_cancelada"
+                disabled={!isEnabled}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Nombre de la plantilla en Meta para cancelaciones
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="template_reminder">Plantilla de Recordatorio</Label>
+              <Input
+                id="template_reminder"
+                value={settings.template_reminder}
+                onChange={(e) => setSettings({ ...settings, template_reminder: e.target.value })}
+                placeholder="recordatorio"
+                disabled={!isEnabled}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Nombre de la plantilla para recordatorios (usado por n8n)
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="template_language">Idioma de Plantillas</Label>
+              <Input
+                id="template_language"
+                value={settings.template_language}
+                onChange={(e) => setSettings({ ...settings, template_language: e.target.value })}
+                placeholder="es"
+                disabled={!isEnabled}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Código de idioma (ej: es, es_ES, en)
+              </p>
+            </div>
           </div>
 
           <div className="md:col-span-2">

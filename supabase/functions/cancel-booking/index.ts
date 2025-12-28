@@ -176,6 +176,28 @@ serve(async (req) => {
 
     console.log('Booking(s) cancelled successfully');
 
+    // Get WhatsApp settings for this tenant
+    let whatsappTemplateName = 'cita_cancelada';
+    let whatsappLanguage = 'es';
+    
+    if (tenantId) {
+      const { data: whatsappIntegration } = await supabase
+        .from('tenant_integrations')
+        .select('settings')
+        .eq('tenant_id', tenantId)
+        .eq('integration_type', 'whatsapp')
+        .eq('is_enabled', true)
+        .maybeSingle();
+      
+      if (whatsappIntegration?.settings) {
+        const wsSettings = whatsappIntegration.settings as any;
+        whatsappTemplateName = wsSettings.template_cancellation || 'cita_cancelada';
+        whatsappLanguage = wsSettings.template_language || 'es';
+      }
+    }
+    
+    console.log('Using WhatsApp template:', whatsappTemplateName, 'language:', whatsappLanguage);
+
     // Send WhatsApp cancellation via Meta Cloud API
     // Template: cita_cancelada -> {{1}}=fecha, {{2}}=hora
     for (const booking of bookings) {
@@ -192,8 +214,8 @@ serve(async (req) => {
             body: JSON.stringify({
               tenant_id: tenantId,
               to: booking.Telefono,
-              template_name: 'cita_cancelada',
-              template_language: 'es',
+              template_name: whatsappTemplateName,
+              template_language: whatsappLanguage,
               template_components: [
                 {
                   type: 'body',

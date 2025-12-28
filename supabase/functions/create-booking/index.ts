@@ -502,6 +502,26 @@ serve(async (req) => {
 
     console.log('Created bookings:', createdBookings.length);
 
+    // Get WhatsApp settings for this tenant
+    let whatsappTemplateName = 'reserva_confirmada';
+    let whatsappLanguage = 'es';
+    
+    const { data: whatsappIntegration } = await supabase
+      .from('tenant_integrations')
+      .select('settings')
+      .eq('tenant_id', tenantId)
+      .eq('integration_type', 'whatsapp')
+      .eq('is_enabled', true)
+      .maybeSingle();
+    
+    if (whatsappIntegration?.settings) {
+      const wsSettings = whatsappIntegration.settings as any;
+      whatsappTemplateName = wsSettings.template_confirmation || 'reserva_confirmada';
+      whatsappLanguage = wsSettings.template_language || 'es';
+    }
+    
+    console.log('Using WhatsApp template:', whatsappTemplateName, 'language:', whatsappLanguage);
+
     // Send WhatsApp confirmation via Meta Cloud API
     // Template: reserva_confirmada -> {{1}}=nombre, {{2}}=fecha a las hora
     if (customer_phone && customer_phone.length >= 9) {
@@ -519,8 +539,8 @@ serve(async (req) => {
           body: JSON.stringify({
             tenant_id: tenantId,
             to: customer_phone,
-            template_name: 'reserva_confirmada',
-            template_language: 'es',
+            template_name: whatsappTemplateName,
+            template_language: whatsappLanguage,
             template_components: [
               {
                 type: 'body',
