@@ -137,7 +137,14 @@ export const Header = ({
       top: 0,
       behavior: "smooth"
     });
-    setTimeout(() => navigate("/admin"), 300);
+    // Si estamos en una landing de tenant, ir directamente al admin de ese tenant
+    const tenantMatch = location.pathname.match(/^\/salon\/([^/]+)/);
+    if (tenantMatch) {
+      const tenantSlug = tenantMatch[1];
+      setTimeout(() => navigate(`/admin/${tenantSlug}`), 300);
+    } else {
+      setTimeout(() => navigate("/admin"), 300);
+    }
   };
   const handleNavClick = (item: (typeof navItems)[0]) => {
     if (item.path.startsWith("/#")) {
