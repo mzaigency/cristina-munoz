@@ -160,9 +160,9 @@ export const Header = ({
     }
     setMenuOpen(false);
   };
-  // Determinar si el header debe ser transparente (solo en home sin scroll)
-  const isHomePage = location.pathname === '/';
-  const isTransparent = isHomePage && !scrolled;
+  // Determinar si el header debe ser transparente (en home o landing de salón sin scroll)
+  const isLandingPage = location.pathname === '/' || location.pathname.startsWith('/salon/');
+  const isTransparent = isLandingPage && !scrolled;
   
   return <header className={`fixed top-0 left-0 right-0 z-50 w-full pt-[env(safe-area-inset-top)] transition-all duration-300 ${!isTransparent ? 'border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-transparent'}`}>
       {" "}
