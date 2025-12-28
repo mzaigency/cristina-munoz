@@ -961,8 +961,8 @@ export const CalendarCRM = () => {
                         <div className="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1 md:gap-3 min-w-[320px]">
                           {/* Hours column */}
                           <div className="relative">
-                            {schedule.hours.map(hour => <div key={hour} className="h-[80px] md:h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/0.3)] flex items-start pt-1">
-                                <span className="text-[10px] md:text-sm font-medium text-muted-foreground">
+                            {schedule.hours.map(hour => <div key={hour} className="h-[80px] md:h-[104px] shadow-[inset_0_-1px_0_theme(colors.border/0.3)] flex items-start">
+                                <span className="text-[10px] md:text-sm font-medium text-muted-foreground -translate-y-2">
                                   {hour.toString().padStart(2, "0")}:00
                                 </span>
                               </div>)}
