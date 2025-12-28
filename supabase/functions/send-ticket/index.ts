@@ -15,6 +15,8 @@ interface TicketItem {
 }
 
 interface TicketRequest {
+  type?: "ticket" | "invoice";
+  invoiceNumber?: string;
   transactionId?: string;
   customerEmail: string;
   customerName: string;
@@ -39,10 +41,11 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const ticketData: TicketRequest = await req.json();
-    console.log("Ticket data received:", ticketData);
+    console.log("Ticket data received:", JSON.stringify(ticketData, null, 2));
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
+      console.error("RESEND_API_KEY not found in environment");
       throw new Error("RESEND_API_KEY not configured");
     }
 
@@ -51,28 +54,44 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { data: tenant } = await supabase
+    console.log("Fetching tenant info for:", ticketData.tenantId);
+    const { data: tenant, error: tenantError } = await supabase
       .from("tenants")
-      .select("name, logo_url, primary_color, phone, address, city")
+      .select("name, logo_url, primary_color, phone, address, city, email")
       .eq("id", ticketData.tenantId)
       .single();
+
+    if (tenantError) {
+      console.error("Error fetching tenant:", tenantError);
+      throw new Error("Tenant not found: " + tenantError.message);
+    }
 
     if (!tenant) {
       throw new Error("Tenant not found");
     }
 
+    console.log("Tenant found:", tenant.name);
+
     const primaryColor = tenant.primary_color || "#8B5CF6";
     const formatCurrency = (amount: number) => 
       new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
 
+    const isInvoice = ticketData.type === "invoice";
+    const documentTitle = isInvoice ? "Factura" : "Ticket";
+    const documentNumber = ticketData.invoiceNumber || "";
+
     // Generate items HTML
     const itemsHtml = ticketData.items.map(item => `
       <tr>
-        <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
           <span style="font-weight: 500;">${item.name}</span>
           ${item.quantity > 1 ? `<span style="color: #666;"> x${item.quantity}</span>` : ""}
         </td>
-        <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: 500;">
+        ${isInvoice ? `
+          <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: center;">${item.quantity}</td>
+          <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right;">${formatCurrency(item.price)}</td>
+        ` : ""}
+        <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: 500;">
           ${formatCurrency(item.total)}
         </td>
       </tr>
@@ -84,10 +103,10 @@ const handler = async (req: Request): Promise<Response> => {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Ticket de ${tenant.name}</title>
+        <title>${documentTitle} de ${tenant.name}</title>
       </head>
       <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
-        <div style="max-width: 400px; margin: 20px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+        <div style="max-width: 500px; margin: 20px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
           
           <!-- Header -->
           <div style="background: ${primaryColor}; padding: 24px; text-align: center;">
@@ -99,7 +118,14 @@ const handler = async (req: Request): Promise<Response> => {
             ${tenant.address ? `<p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px;">${tenant.address}${tenant.city ? `, ${tenant.city}` : ""}</p>` : ""}
           </div>
 
-          <!-- Ticket Content -->
+          <!-- Document Type Badge -->
+          <div style="text-align: center; padding: 16px;">
+            <span style="background: ${isInvoice ? "#10b981" : primaryColor}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;">
+              ${documentTitle}${documentNumber ? ` Nº ${documentNumber}` : ""}
+            </span>
+          </div>
+
+          <!-- Content -->
           <div style="padding: 24px;">
             
             <!-- Date and Stylist -->
@@ -122,6 +148,16 @@ const handler = async (req: Request): Promise<Response> => {
 
             <!-- Items -->
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+              ${isInvoice ? `
+                <thead>
+                  <tr style="background: #f8f8f8;">
+                    <th style="padding: 10px; text-align: left; font-size: 12px; color: #666;">Concepto</th>
+                    <th style="padding: 10px; text-align: center; font-size: 12px; color: #666;">Cant.</th>
+                    <th style="padding: 10px; text-align: right; font-size: 12px; color: #666;">Precio</th>
+                    <th style="padding: 10px; text-align: right; font-size: 12px; color: #666;">Total</th>
+                  </tr>
+                </thead>
+              ` : ""}
               <tbody>
                 ${itemsHtml}
               </tbody>
@@ -165,6 +201,7 @@ const handler = async (req: Request): Promise<Response> => {
           <div style="background: #f8f8f8; padding: 20px; text-align: center;">
             <p style="margin: 0; color: #666; font-size: 14px;">¡Gracias por tu visita!</p>
             ${tenant.phone ? `<p style="margin: 8px 0 0; color: #888; font-size: 12px;">📞 ${tenant.phone}</p>` : ""}
+            ${tenant.email ? `<p style="margin: 4px 0 0; color: #888; font-size: 12px;">✉️ ${tenant.email}</p>` : ""}
           </div>
 
         </div>
@@ -174,7 +211,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending email to:", ticketData.customerEmail);
 
-    // Send email using Resend API directly
+    // Send email using Resend API
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -184,16 +221,17 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: `${tenant.name} <onboarding@resend.dev>`,
         to: [ticketData.customerEmail],
-        subject: `Tu ticket de ${tenant.name} - ${ticketData.date}`,
+        subject: `${documentTitle} de ${tenant.name} - ${ticketData.date}`,
         html: emailHtml,
       }),
     });
 
     const emailResult = await emailResponse.json();
-    console.log("Email API response:", emailResult);
+    console.log("Resend API response status:", emailResponse.status);
+    console.log("Resend API response:", JSON.stringify(emailResult, null, 2));
 
     if (!emailResponse.ok) {
-      throw new Error(emailResult.message || "Failed to send email");
+      throw new Error(emailResult.message || emailResult.error?.message || "Failed to send email");
     }
 
     return new Response(JSON.stringify({ success: true, emailId: emailResult.id }), {
