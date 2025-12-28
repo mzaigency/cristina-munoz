@@ -15,6 +15,11 @@ interface Service {
   duration_part2_active: number;
 }
 
+interface CategoryImage {
+  category: string;
+  image_url: string;
+}
+
 interface TenantServicesSectionProps {
   tenantId: string;
   tenantName?: string;
@@ -28,6 +33,14 @@ const categoryIcons: Record<string, any> = {
   "default": Scissors,
 };
 
+// Default images for categories (fallback)
+const defaultCategoryImages: Record<string, string> = {
+  "Corte": "/assets/corte.jpg",
+  "Coloración": "/assets/coloracion.jpg",
+  "Peinados y Tratamientos": "/assets/peinados-tratamientos.jpg",
+  "Depilación y Maquillaje": "/assets/depilacion-maquillaje.jpg",
+};
+
 const formatDuration = (minutes: number): string => {
   if (minutes < 60) return `${minutes} min`;
   const hours = Math.floor(minutes / 60);
@@ -38,20 +51,28 @@ const formatDuration = (minutes: number): string => {
 
 export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSectionProps) => {
   const [services, setServices] = useState<Service[]>([]);
+  const [categoryImages, setCategoryImages] = useState<CategoryImage[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchData = async () => {
       try {
-        const { data, error } = await supabase
-          .from("services")
-          .select("*")
-          .eq("tenant_id", tenantId)
-          .order("category", { ascending: true })
-          .order("name", { ascending: true });
+        const [servicesRes, imagesRes] = await Promise.all([
+          supabase
+            .from("services")
+            .select("*")
+            .eq("tenant_id", tenantId)
+            .order("category", { ascending: true })
+            .order("name", { ascending: true }),
+          supabase
+            .from("tenant_category_images")
+            .select("category, image_url")
+            .eq("tenant_id", tenantId)
+        ]);
 
-        if (error) throw error;
-        setServices(data || []);
+        if (servicesRes.error) throw servicesRes.error;
+        setServices(servicesRes.data || []);
+        setCategoryImages(imagesRes.data || []);
       } catch (error) {
         console.error("Error fetching services:", error);
       } finally {
@@ -60,9 +81,15 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
     };
 
     if (tenantId) {
-      fetchServices();
+      fetchData();
     }
   }, [tenantId]);
+
+  const getCategoryImage = (category: string): string | null => {
+    const customImage = categoryImages.find(ci => ci.category === category)?.image_url;
+    if (customImage) return customImage;
+    return defaultCategoryImages[category] || null;
+  };
 
   // Group services by category
   const groupedServices = services.reduce((acc, service) => {
@@ -142,8 +169,29 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
                     }`}
                   />
 
-                  <div className="flex-1">
-                    {/* Category Header */}
+              <div className="flex-1">
+                {/* Category Header with Image */}
+                <div className="relative">
+                  {getCategoryImage(category) && (
+                    <div className="relative h-48 lg:h-64 overflow-hidden">
+                      <img
+                        src={getCategoryImage(category)!}
+                        alt={category}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent" />
+                      <div className="absolute top-4 left-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary shadow-lg shadow-primary/30">
+                          <Icon className="h-6 w-6 text-primary-foreground" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white uppercase tracking-wide drop-shadow-lg">
+                          {category}
+                        </h3>
+                      </div>
+                    </div>
+                  )}
+                  {!getCategoryImage(category) && (
                     <div className="p-6 border-b border-border/30 bg-muted/30">
                       <div className="flex items-center gap-3">
                         <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary shadow-lg shadow-primary/30">
@@ -154,6 +202,8 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
                         </h3>
                       </div>
                     </div>
+                  )}
+                </div>
 
                     {/* Services List */}
                     <div className="p-6 lg:p-8">

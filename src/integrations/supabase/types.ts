@@ -394,6 +394,41 @@ export type Database = {
           },
         ]
       }
+      tenant_category_images: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          image_url: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          image_url: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_category_images_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_encryption_keys: {
         Row: {
           created_at: string | null
@@ -533,6 +568,7 @@ export type Database = {
           description: string | null
           email: string | null
           features: Json | null
+          hero_image_url: string | null
           id: string
           is_active: boolean | null
           logo_url: string | null
@@ -559,6 +595,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           features?: Json | null
+          hero_image_url?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
@@ -585,6 +622,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           features?: Json | null
+          hero_image_url?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
