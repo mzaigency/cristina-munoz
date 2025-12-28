@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -12,6 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Loader2, 
   Building2, 
@@ -25,7 +33,11 @@ import {
   Plus,
   Trash2,
   Eye,
-  EyeOff
+  EyeOff,
+  Palette,
+  Scissors,
+  Upload,
+  Image
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +64,15 @@ interface BusinessHours {
   breakEnd: string;
 }
 
+interface Service {
+  name: string;
+  category: string;
+  type: "simple" | "compuesto";
+  durationPart1: number;
+  durationPause: number;
+  durationPart2: number;
+}
+
 const DAYS = [
   { day: 0, name: "Domingo" },
   { day: 1, name: "Lunes" },
@@ -63,21 +84,36 @@ const DAYS = [
 ];
 
 const COLORS = [
-  "#8B5CF6", "#EC4899", "#3B82F6", "#10B981", "#F59E0B", "#EF4444"
+  "#8B5CF6", "#EC4899", "#3B82F6", "#10B981", "#F59E0B", "#EF4444",
+  "#6366F1", "#14B8A6", "#F97316", "#84CC16"
+];
+
+const SERVICE_CATEGORIES = [
+  "Corte",
+  "Coloración",
+  "Peinados",
+  "Tratamientos",
+  "Mechas",
+  "Alisados",
+  "Barba",
+  "Otros"
 ];
 
 const STEPS = [
   { id: 1, title: "Datos básicos", icon: Building2 },
-  { id: 2, title: "Estilistas", icon: Users },
-  { id: 3, title: "Horarios", icon: Clock },
-  { id: 4, title: "Google Calendar", icon: Calendar },
-  { id: 5, title: "Webhooks n8n", icon: Webhook },
+  { id: 2, title: "Personalización", icon: Palette },
+  { id: 3, title: "Estilistas", icon: Users },
+  { id: 4, title: "Servicios", icon: Scissors },
+  { id: 5, title: "Horarios", icon: Clock },
+  { id: 6, title: "Integraciones", icon: Calendar },
 ];
 
 export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: TenantOnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [showSecrets, setShowSecrets] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
   const { toast } = useToast();
 
   // Step 1: Basic Info
@@ -88,14 +124,30 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     phone: "",
     address: "",
     city: "",
+    postalCode: "",
   });
 
-  // Step 2: Stylists
+  // Step 2: Customization
+  const [customization, setCustomization] = useState({
+    tagline: "",
+    description: "",
+    primaryColor: "#8B5CF6",
+    secondaryColor: "#EC4899",
+    logoUrl: "",
+    heroImageUrl: "",
+  });
+
+  // Step 3: Stylists
   const [stylists, setStylists] = useState<Stylist[]>([
     { name: "", slug: "", color: COLORS[0], calendarId: "" }
   ]);
 
-  // Step 3: Business Hours
+  // Step 4: Services
+  const [services, setServices] = useState<Service[]>([
+    { name: "", category: "Corte", type: "simple", durationPart1: 30, durationPause: 0, durationPart2: 0 }
+  ]);
+
+  // Step 5: Business Hours
   const [businessHours, setBusinessHours] = useState<BusinessHours[]>(
     DAYS.map(d => ({
       day: d.day,
@@ -108,7 +160,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     }))
   );
 
-  // Step 4: Google Calendar
+  // Step 6: Integrations
   const [gcalEnabled, setGcalEnabled] = useState(false);
   const [gcalCredentials, setGcalCredentials] = useState({
     clientId: "",
@@ -116,7 +168,6 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     refreshToken: "",
   });
 
-  // Step 5: n8n Webhooks
   const [n8nEnabled, setN8nEnabled] = useState(false);
   const [n8nWebhooks, setN8nWebhooks] = useState({
     webhookUrl: "",
@@ -126,8 +177,10 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
   const resetForm = () => {
     setCurrentStep(1);
-    setBasicInfo({ name: "", slug: "", email: "", phone: "", address: "", city: "" });
+    setBasicInfo({ name: "", slug: "", email: "", phone: "", address: "", city: "", postalCode: "" });
+    setCustomization({ tagline: "", description: "", primaryColor: "#8B5CF6", secondaryColor: "#EC4899", logoUrl: "", heroImageUrl: "" });
     setStylists([{ name: "", slug: "", color: COLORS[0], calendarId: "" }]);
+    setServices([{ name: "", category: "Corte", type: "simple", durationPart1: 30, durationPause: 0, durationPart2: 0 }]);
     setBusinessHours(DAYS.map(d => ({
       day: d.day,
       dayName: d.name,
@@ -148,6 +201,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     onOpenChange(false);
   };
 
+  // Stylists handlers
   const addStylist = () => {
     setStylists([...stylists, { 
       name: "", 
@@ -172,10 +226,90 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     setStylists(updated);
   };
 
+  // Services handlers
+  const addService = () => {
+    setServices([...services, { 
+      name: "", 
+      category: "Corte", 
+      type: "simple", 
+      durationPart1: 30, 
+      durationPause: 0, 
+      durationPart2: 0 
+    }]);
+  };
+
+  const removeService = (index: number) => {
+    if (services.length > 1) {
+      setServices(services.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateService = (index: number, field: keyof Service, value: any) => {
+    const updated = [...services];
+    updated[index] = { ...updated[index], [field]: value };
+    setServices(updated);
+  };
+
+  // Business hours handlers
   const updateBusinessHours = (index: number, field: keyof BusinessHours, value: any) => {
     const updated = [...businessHours];
     updated[index] = { ...updated[index], [field]: value };
     setBusinessHours(updated);
+  };
+
+  const copyFirstDayToAll = () => {
+    const firstOpenDay = businessHours.find(h => h.isOpen);
+    if (firstOpenDay) {
+      setBusinessHours(businessHours.map(h => ({
+        ...h,
+        openTime: firstOpenDay.openTime,
+        closeTime: firstOpenDay.closeTime,
+        breakStart: firstOpenDay.breakStart,
+        breakEnd: firstOpenDay.breakEnd,
+      })));
+    }
+  };
+
+  // Image upload handlers
+  const handleImageUpload = async (file: File, type: 'logo' | 'hero') => {
+    if (type === 'logo') setUploadingLogo(true);
+    else setUploadingHero(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${basicInfo.slug || 'temp'}-${type}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('tenant-assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('tenant-assets')
+        .getPublicUrl(filePath);
+
+      if (type === 'logo') {
+        setCustomization({ ...customization, logoUrl: publicUrl });
+      } else {
+        setCustomization({ ...customization, heroImageUrl: publicUrl });
+      }
+
+      toast({
+        title: "Imagen subida",
+        description: `${type === 'logo' ? 'Logo' : 'Imagen hero'} subida correctamente`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al subir la imagen",
+        variant: "destructive",
+      });
+    } finally {
+      if (type === 'logo') setUploadingLogo(false);
+      else setUploadingHero(false);
+    }
   };
 
   const validateStep = (): boolean => {
@@ -190,12 +324,23 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           return false;
         }
         return true;
-      case 2:
+      case 3:
         const validStylists = stylists.filter(s => s.name && s.slug);
         if (validStylists.length === 0) {
           toast({
             title: "Error",
             description: "Añade al menos un estilista",
+            variant: "destructive",
+          });
+          return false;
+        }
+        return true;
+      case 4:
+        const validServices = services.filter(s => s.name && s.category);
+        if (validServices.length === 0) {
+          toast({
+            title: "Error",
+            description: "Añade al menos un servicio",
             variant: "destructive",
           });
           return false;
@@ -221,7 +366,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
     setSaving(true);
     try {
-      // 1. Create tenant
+      // 1. Create tenant with all customization data
       const { data: tenant, error: tenantError } = await supabase
         .from("tenants")
         .insert({
@@ -231,6 +376,13 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           phone: basicInfo.phone || null,
           address: basicInfo.address || null,
           city: basicInfo.city || null,
+          postal_code: basicInfo.postalCode || null,
+          tagline: customization.tagline || null,
+          description: customization.description || null,
+          primary_color: customization.primaryColor,
+          secondary_color: customization.secondaryColor,
+          logo_url: customization.logoUrl || null,
+          hero_image_url: customization.heroImageUrl || null,
         })
         .select()
         .single();
@@ -257,7 +409,27 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         if (stylistsError) throw stylistsError;
       }
 
-      // 3. Create business hours
+      // 3. Create services
+      const validServices = services.filter(s => s.name && s.category);
+      if (validServices.length > 0) {
+        const servicesData = validServices.map(s => ({
+          tenant_id: tenantId,
+          name: s.name,
+          category: s.category,
+          type: s.type,
+          duration_part1_active: s.durationPart1,
+          duration_exposure_pause: s.type === "compuesto" ? s.durationPause : 0,
+          duration_part2_active: s.type === "compuesto" ? s.durationPart2 : 0,
+        }));
+
+        const { error: servicesError } = await supabase
+          .from("services")
+          .insert(servicesData);
+
+        if (servicesError) throw servicesError;
+      }
+
+      // 4. Create business hours
       const hoursData = businessHours.map(h => ({
         tenant_id: tenantId,
         day_of_week: h.day,
@@ -274,7 +446,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
       if (hoursError) throw hoursError;
 
-      // 4. Create Google Calendar integration if enabled
+      // 5. Create Google Calendar integration if enabled
       if (gcalEnabled && gcalCredentials.clientId) {
         const credentials = JSON.stringify({
           client_id: gcalCredentials.clientId,
@@ -287,7 +459,6 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           _tenant_id: tenantId,
         });
 
-        // Build settings with calendar IDs from stylists
         const calendarSettings: Record<string, string> = {};
         validStylists.forEach(s => {
           if (s.calendarId) {
@@ -308,7 +479,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         if (gcalError) throw gcalError;
       }
 
-      // 5. Create n8n integration if enabled
+      // 6. Create n8n integration if enabled
       if (n8nEnabled && (n8nWebhooks.webhookUrl || n8nWebhooks.cancelWebhookUrl)) {
         const { error: n8nError } = await supabase
           .from("tenant_integrations")
@@ -347,21 +518,21 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
             Crear Nuevo Tenant
           </DialogTitle>
           <DialogDescription>
-            Configura todos los aspectos de la nueva peluquería
+            Configura todos los aspectos de la nueva peluquería para una página totalmente personalizada
           </DialogDescription>
         </DialogHeader>
 
         {/* Step Indicator */}
-        <div className="flex items-center justify-between mb-6 px-2">
+        <div className="flex items-center justify-between mb-6 px-2 overflow-x-auto">
           {STEPS.map((step, index) => (
-            <div key={step.id} className="flex items-center">
+            <div key={step.id} className="flex items-center flex-shrink-0">
               <div className={cn(
                 "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors",
                 currentStep === step.id 
@@ -378,7 +549,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
               </div>
               {index < STEPS.length - 1 && (
                 <div className={cn(
-                  "w-8 h-0.5 mx-1",
+                  "w-6 h-0.5 mx-1",
                   currentStep > step.id ? "bg-primary" : "bg-muted-foreground/30"
                 )} />
               )}
@@ -392,13 +563,13 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         </div>
 
         {/* Step Content */}
-        <div className="min-h-[300px]">
+        <div className="min-h-[350px]">
           {/* Step 1: Basic Info */}
           {currentStep === 1 && (
             <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nombre *</Label>
+                  <Label htmlFor="name">Nombre del negocio *</Label>
                   <Input
                     id="name"
                     placeholder="Peluquería Cristina"
@@ -412,17 +583,20 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="slug">Slug (URL) *</Label>
-                  <Input
-                    id="slug"
-                    placeholder="peluqueria-cristina"
-                    value={basicInfo.slug}
-                    onChange={(e) => setBasicInfo({ ...basicInfo, slug: e.target.value })}
-                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">/salon/</span>
+                    <Input
+                      id="slug"
+                      placeholder="peluqueria-cristina"
+                      value={basicInfo.slug}
+                      onChange={(e) => setBasicInfo({ ...basicInfo, slug: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email de contacto</Label>
                   <Input
                     id="email"
                     type="email"
@@ -441,16 +615,16 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Dirección completa</Label>
+                <Input
+                  id="address"
+                  placeholder="Calle Principal, 123"
+                  value={basicInfo.address}
+                  onChange={(e) => setBasicInfo({ ...basicInfo, address: e.target.value })}
+                />
+              </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="address">Dirección</Label>
-                  <Input
-                    id="address"
-                    placeholder="Calle Principal, 123"
-                    value={basicInfo.address}
-                    onChange={(e) => setBasicInfo({ ...basicInfo, address: e.target.value })}
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="city">Ciudad</Label>
                   <Input
@@ -460,12 +634,199 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                     onChange={(e) => setBasicInfo({ ...basicInfo, city: e.target.value })}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="postalCode">Código Postal</Label>
+                  <Input
+                    id="postalCode"
+                    placeholder="28001"
+                    value={basicInfo.postalCode}
+                    onChange={(e) => setBasicInfo({ ...basicInfo, postalCode: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
           )}
 
-          {/* Step 2: Stylists */}
+          {/* Step 2: Customization */}
           {currentStep === 2 && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="tagline">Tagline / Eslogan</Label>
+                <Input
+                  id="tagline"
+                  placeholder="Tu estilo, nuestra pasión"
+                  value={customization.tagline}
+                  onChange={(e) => setCustomization({ ...customization, tagline: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Descripción del negocio</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe tu peluquería, servicios destacados, historia..."
+                  value={customization.description}
+                  onChange={(e) => setCustomization({ ...customization, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-3">
+                  <Label>Color Principal</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap gap-2">
+                      {COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className={cn(
+                            "w-8 h-8 rounded-full border-2 transition-all",
+                            customization.primaryColor === color ? "border-foreground scale-110" : "border-transparent"
+                          )}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setCustomization({ ...customization, primaryColor: color })}
+                        />
+                      ))}
+                    </div>
+                    <Input
+                      type="color"
+                      value={customization.primaryColor}
+                      onChange={(e) => setCustomization({ ...customization, primaryColor: e.target.value })}
+                      className="w-12 h-10 p-1"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Label>Color Secundario</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap gap-2">
+                      {COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className={cn(
+                            "w-8 h-8 rounded-full border-2 transition-all",
+                            customization.secondaryColor === color ? "border-foreground scale-110" : "border-transparent"
+                          )}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setCustomization({ ...customization, secondaryColor: color })}
+                        />
+                      ))}
+                    </div>
+                    <Input
+                      type="color"
+                      value={customization.secondaryColor}
+                      onChange={(e) => setCustomization({ ...customization, secondaryColor: e.target.value })}
+                      className="w-12 h-10 p-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview */}
+              <div 
+                className="p-4 rounded-lg border"
+                style={{ 
+                  background: `linear-gradient(135deg, ${customization.primaryColor}20, ${customization.secondaryColor}20)`
+                }}
+              >
+                <p className="text-sm text-muted-foreground mb-2">Vista previa de colores:</p>
+                <div className="flex gap-3">
+                  <Button style={{ backgroundColor: customization.primaryColor }} className="text-white">
+                    Reservar
+                  </Button>
+                  <Button variant="outline" style={{ borderColor: customization.secondaryColor, color: customization.secondaryColor }}>
+                    Ver más
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-3">
+                  <Label>Logo</Label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                    {customization.logoUrl ? (
+                      <div className="space-y-2">
+                        <img src={customization.logoUrl} alt="Logo" className="max-h-20 mx-auto" />
+                        <Button variant="outline" size="sm" onClick={() => setCustomization({ ...customization, logoUrl: "" })}>
+                          Cambiar
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer">
+                        <div className="flex flex-col items-center gap-2">
+                          {uploadingLogo ? (
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                          ) : (
+                            <Upload className="h-8 w-8 text-muted-foreground" />
+                          )}
+                          <span className="text-sm text-muted-foreground">Subir logo</span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file, 'logo');
+                          }}
+                          disabled={uploadingLogo}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <Input
+                    placeholder="O introduce URL del logo"
+                    value={customization.logoUrl}
+                    onChange={(e) => setCustomization({ ...customization, logoUrl: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Imagen Hero (cabecera)</Label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                    {customization.heroImageUrl ? (
+                      <div className="space-y-2">
+                        <img src={customization.heroImageUrl} alt="Hero" className="max-h-20 mx-auto object-cover rounded" />
+                        <Button variant="outline" size="sm" onClick={() => setCustomization({ ...customization, heroImageUrl: "" })}>
+                          Cambiar
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer">
+                        <div className="flex flex-col items-center gap-2">
+                          {uploadingHero ? (
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                          ) : (
+                            <Image className="h-8 w-8 text-muted-foreground" />
+                          )}
+                          <span className="text-sm text-muted-foreground">Subir imagen hero</span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file, 'hero');
+                          }}
+                          disabled={uploadingHero}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <Input
+                    placeholder="O introduce URL de la imagen"
+                    value={customization.heroImageUrl}
+                    onChange={(e) => setCustomization({ ...customization, heroImageUrl: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Stylists */}
+          {currentStep === 3 && (
             <div className="space-y-4">
               {stylists.map((stylist, index) => (
                 <div key={index} className="p-4 border rounded-lg space-y-3">
@@ -483,7 +844,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                   </div>
                   <div className="grid gap-3 md:grid-cols-3">
                     <div className="space-y-2">
-                      <Label>Nombre</Label>
+                      <Label>Nombre *</Label>
                       <Input
                         placeholder="Cristina"
                         value={stylist.name}
@@ -491,7 +852,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Slug</Label>
+                      <Label>Slug *</Label>
                       <Input
                         placeholder="cris"
                         value={stylist.slug}
@@ -501,12 +862,12 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                     <div className="space-y-2">
                       <Label>Color</Label>
                       <div className="flex gap-2">
-                        {COLORS.map((color) => (
+                        {COLORS.slice(0, 6).map((color) => (
                           <button
                             key={color}
                             type="button"
                             className={cn(
-                              "w-8 h-8 rounded-full border-2 transition-all",
+                              "w-7 h-7 rounded-full border-2 transition-all",
                               stylist.color === color ? "border-foreground scale-110" : "border-transparent"
                             )}
                             style={{ backgroundColor: color }}
@@ -533,173 +894,262 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
             </div>
           )}
 
-          {/* Step 3: Business Hours */}
-          {currentStep === 3 && (
-            <div className="space-y-3">
-              {businessHours.map((hour, index) => (
-                <div key={hour.day} className="flex items-center gap-3 p-3 border rounded-lg">
-                  <div className="w-24">
-                    <span className="font-medium">{hour.dayName}</span>
+          {/* Step 4: Services */}
+          {currentStep === 4 && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Añade los servicios que ofrece tu peluquería. Los servicios "compuestos" tienen tiempo de espera entre dos fases (ej: tintes).
+              </p>
+              {services.map((service, index) => (
+                <div key={index} className="p-4 border rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Servicio {index + 1}</span>
+                    {services.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeService(index)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
                   </div>
-                  <Switch
-                    checked={hour.isOpen}
-                    onCheckedChange={(checked) => updateBusinessHours(index, "isOpen", checked)}
-                  />
-                  {hour.isOpen ? (
-                    <div className="flex items-center gap-2 flex-1">
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label>Nombre *</Label>
                       <Input
-                        type="time"
-                        value={hour.openTime}
-                        onChange={(e) => updateBusinessHours(index, "openTime", e.target.value)}
-                        className="w-28"
-                      />
-                      <span>-</span>
-                      <Input
-                        type="time"
-                        value={hour.closeTime}
-                        onChange={(e) => updateBusinessHours(index, "closeTime", e.target.value)}
-                        className="w-28"
-                      />
-                      <span className="text-muted-foreground text-sm">Descanso:</span>
-                      <Input
-                        type="time"
-                        value={hour.breakStart}
-                        onChange={(e) => updateBusinessHours(index, "breakStart", e.target.value)}
-                        className="w-28"
-                      />
-                      <span>-</span>
-                      <Input
-                        type="time"
-                        value={hour.breakEnd}
-                        onChange={(e) => updateBusinessHours(index, "breakEnd", e.target.value)}
-                        className="w-28"
+                        placeholder="Corte de pelo"
+                        value={service.name}
+                        onChange={(e) => updateService(index, "name", e.target.value)}
                       />
                     </div>
-                  ) : (
-                    <span className="text-muted-foreground">Cerrado</span>
-                  )}
+                    <div className="space-y-2">
+                      <Label>Categoría *</Label>
+                      <Select
+                        value={service.category}
+                        onValueChange={(value) => updateService(index, "category", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SERVICE_CATEGORIES.map(cat => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Tipo</Label>
+                      <Select
+                        value={service.type}
+                        onValueChange={(value) => updateService(index, "type", value as "simple" | "compuesto")}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="simple">Simple</SelectItem>
+                          <SelectItem value="compuesto">Compuesto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label>Duración {service.type === "compuesto" ? "Parte 1" : ""} (min)</Label>
+                      <Input
+                        type="number"
+                        min={5}
+                        step={5}
+                        value={service.durationPart1}
+                        onChange={(e) => updateService(index, "durationPart1", parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                    {service.type === "compuesto" && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Pausa/Exposición (min)</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={5}
+                            value={service.durationPause}
+                            onChange={(e) => updateService(index, "durationPause", parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Duración Parte 2 (min)</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={5}
+                            value={service.durationPart2}
+                            onChange={(e) => updateService(index, "durationPart2", parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
+              <Button variant="outline" onClick={addService} className="w-full gap-2">
+                <Plus className="h-4 w-4" />
+                Añadir servicio
+              </Button>
             </div>
           )}
 
-          {/* Step 4: Google Calendar */}
-          {currentStep === 4 && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <Label className="text-base">Habilitar Google Calendar</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Sincroniza las citas con Google Calendar
-                  </p>
-                </div>
-                <Switch checked={gcalEnabled} onCheckedChange={setGcalEnabled} />
+          {/* Step 5: Business Hours */}
+          {currentStep === 5 && (
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={copyFirstDayToAll}>
+                  Copiar horario a todos
+                </Button>
               </div>
-
-              {gcalEnabled && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label>Credenciales OAuth2</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowSecrets(!showSecrets)}
-                    >
-                      {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
+              <div className="space-y-2">
+                {businessHours.map((hour, index) => (
+                  <div key={hour.day} className="flex items-center gap-3 p-3 border rounded-lg">
+                    <div className="w-24 flex-shrink-0">
+                      <span className="font-medium text-sm">{hour.dayName}</span>
+                    </div>
+                    <Switch
+                      checked={hour.isOpen}
+                      onCheckedChange={(checked) => updateBusinessHours(index, "isOpen", checked)}
+                    />
+                    {hour.isOpen ? (
+                      <div className="flex items-center gap-2 flex-1 flex-wrap">
+                        <Input
+                          type="time"
+                          value={hour.openTime}
+                          onChange={(e) => updateBusinessHours(index, "openTime", e.target.value)}
+                          className="w-24"
+                        />
+                        <span className="text-muted-foreground">-</span>
+                        <Input
+                          type="time"
+                          value={hour.closeTime}
+                          onChange={(e) => updateBusinessHours(index, "closeTime", e.target.value)}
+                          className="w-24"
+                        />
+                        <span className="text-muted-foreground text-xs">Desc:</span>
+                        <Input
+                          type="time"
+                          value={hour.breakStart}
+                          onChange={(e) => updateBusinessHours(index, "breakStart", e.target.value)}
+                          className="w-24"
+                        />
+                        <span className="text-muted-foreground">-</span>
+                        <Input
+                          type="time"
+                          value={hour.breakEnd}
+                          onChange={(e) => updateBusinessHours(index, "breakEnd", e.target.value)}
+                          className="w-24"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Cerrado</span>
+                    )}
                   </div>
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <Label>Client ID</Label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 6: Integrations */}
+          {currentStep === 6 && (
+            <div className="space-y-6">
+              {/* Google Calendar */}
+              <div className="border rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5" />
+                    <div>
+                      <Label className="text-base">Google Calendar</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Sincroniza las citas con Google Calendar
+                      </p>
+                    </div>
+                  </div>
+                  <Switch checked={gcalEnabled} onCheckedChange={setGcalEnabled} />
+                </div>
+
+                {gcalEnabled && (
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">Credenciales OAuth2</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowSecrets(!showSecrets)}
+                      >
+                        {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <div className="grid gap-3">
                       <Input
                         type={showSecrets ? "text" : "password"}
-                        placeholder="Tu Client ID de Google"
+                        placeholder="Client ID"
                         value={gcalCredentials.clientId}
                         onChange={(e) => setGcalCredentials({ ...gcalCredentials, clientId: e.target.value })}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Client Secret</Label>
                       <Input
                         type={showSecrets ? "text" : "password"}
-                        placeholder="Tu Client Secret de Google"
+                        placeholder="Client Secret"
                         value={gcalCredentials.clientSecret}
                         onChange={(e) => setGcalCredentials({ ...gcalCredentials, clientSecret: e.target.value })}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Refresh Token</Label>
                       <Input
                         type={showSecrets ? "text" : "password"}
-                        placeholder="Tu Refresh Token de Google"
+                        placeholder="Refresh Token"
                         value={gcalCredentials.refreshToken}
                         onChange={(e) => setGcalCredentials({ ...gcalCredentials, refreshToken: e.target.value })}
                       />
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Los Calendar IDs de cada estilista se configuraron en el paso anterior.
-                  </p>
-                </div>
-              )}
-
-              {!gcalEnabled && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Puedes configurar Google Calendar más tarde desde el panel de integraciones.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 5: n8n Webhooks */}
-          {currentStep === 5 && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <Label className="text-base">Habilitar n8n Webhooks</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Conecta con n8n para automatizaciones
-                  </p>
-                </div>
-                <Switch checked={n8nEnabled} onCheckedChange={setN8nEnabled} />
+                )}
               </div>
 
-              {n8nEnabled && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Webhook URL (Nueva reserva)</Label>
+              {/* n8n Webhooks */}
+              <div className="border rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Webhook className="h-5 w-5" />
+                    <div>
+                      <Label className="text-base">n8n Webhooks</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Automatizaciones con n8n
+                      </p>
+                    </div>
+                  </div>
+                  <Switch checked={n8nEnabled} onCheckedChange={setN8nEnabled} />
+                </div>
+
+                {n8nEnabled && (
+                  <div className="space-y-3 pt-2 border-t">
                     <Input
-                      placeholder="https://n8n.example.com/webhook/booking"
+                      placeholder="Webhook URL (nueva reserva)"
                       value={n8nWebhooks.webhookUrl}
                       onChange={(e) => setN8nWebhooks({ ...n8nWebhooks, webhookUrl: e.target.value })}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Cancel Webhook URL</Label>
                     <Input
-                      placeholder="https://n8n.example.com/webhook/cancel"
+                      placeholder="Cancel Webhook URL"
                       value={n8nWebhooks.cancelWebhookUrl}
                       onChange={(e) => setN8nWebhooks({ ...n8nWebhooks, cancelWebhookUrl: e.target.value })}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>WhatsApp Webhook URL</Label>
                     <Input
-                      placeholder="https://n8n.example.com/webhook/whatsapp"
+                      placeholder="WhatsApp Webhook URL"
                       value={n8nWebhooks.whatsappWebhookUrl}
                       onChange={(e) => setN8nWebhooks({ ...n8nWebhooks, whatsappWebhookUrl: e.target.value })}
                     />
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {!n8nEnabled && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Webhook className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Puedes configurar los webhooks de n8n más tarde desde el panel de integraciones.</p>
-                </div>
-              )}
+              <p className="text-sm text-muted-foreground text-center">
+                Las integraciones se pueden configurar o modificar más tarde desde el panel de administración.
+              </p>
             </div>
           )}
         </div>
