@@ -159,7 +159,7 @@ const Index = () => {
       {/* Superadmin Wizard Test Button */}
       {isSuperadmin && (
         <div className="px-4 pt-4">
-          <Link to="/onboarding">
+          <Link to="/onboarding/setup?demo=true">
             <Button 
               variant="outline" 
               className="w-full h-12 rounded-xl border-dashed border-primary/50 text-primary hover:bg-primary/5"
