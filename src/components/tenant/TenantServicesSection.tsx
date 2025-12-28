@@ -131,15 +131,15 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
   }
 
   return (
-    <section className="py-20 bg-background">
+    <section className="py-16 md:py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="mb-12 text-center">
+        <div className="mb-8 md:mb-12 text-center">
           <SmoothTitle>
-            <h2 className="mb-3 text-3xl font-semibold text-foreground md:text-4xl tracking-tight">
+            <h2 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl md:text-4xl tracking-tight">
               Nuestros Servicios
             </h2>
           </SmoothTitle>
-          <p className="text-base text-muted-foreground max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2">
             Descubre nuestra amplia gama de servicios profesionales
             {tenantName && ` en ${tenantName}`}
           </p>
@@ -199,20 +199,20 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
                       return (
                         <div
                           key={service.id}
-                          className="flex items-center justify-between px-5 py-3.5 hover:bg-primary/5 transition-colors group"
+                          className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-primary/5 active:bg-primary/10 transition-colors group touch-manipulation"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary/60 group-hover:bg-primary transition-colors" />
-                            <span className="font-medium text-foreground text-[15px]">
+                          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary/60 group-hover:bg-primary transition-colors flex-shrink-0" />
+                            <span className="font-medium text-foreground text-sm sm:text-[15px] truncate">
                               {service.name}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm text-muted-foreground tabular-nums">
+                          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-2">
+                            <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
                               {formatDuration(totalDuration)}
                             </span>
                             {formattedPrice && (
-                              <span className="text-sm text-primary font-semibold tabular-nums">
+                              <span className="text-xs sm:text-sm text-primary font-semibold tabular-nums whitespace-nowrap">
                                 {formattedPrice}
                               </span>
                             )}

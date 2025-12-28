@@ -32,22 +32,22 @@ export const TenantLocationSection = ({
     (fullAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}` : null);
 
   return (
-    <section className="py-20 bg-muted/30">
+    <section className="py-16 md:py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="mb-12 text-center">
+        <div className="mb-8 md:mb-12 text-center">
           <SmoothTitle>
-            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+            <h2 className="mb-3 text-2xl font-bold text-foreground sm:text-3xl md:text-4xl">
               Encuéntranos
             </h2>
           </SmoothTitle>
           <div className="line-accent mx-auto mb-4" />
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid gap-6 md:grid-cols-2 md:gap-8">
           {/* Contact Info */}
           <ScrollReveal>
-            <div className="bg-card rounded-2xl p-8 shadow-lg h-full">
-              <h3 className="text-2xl font-bold mb-6 text-primary">
+            <div className="bg-card rounded-2xl p-5 sm:p-8 shadow-lg h-full">
+              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary">
                 {tenantName}
               </h3>
               

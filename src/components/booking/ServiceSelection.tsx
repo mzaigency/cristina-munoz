@@ -86,29 +86,30 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
                     <div
                       key={service.id}
                       className={cn(
-                        "flex items-center justify-between rounded-lg border bg-card p-4 cursor-pointer transition-all duration-200 hover:bg-accent/50 group",
+                        "flex items-center justify-between rounded-xl border bg-card p-3 sm:p-4 cursor-pointer transition-all duration-200 hover:bg-accent/50 active:bg-accent/70 group touch-manipulation",
                         selected.some((s) => s.id === service.id) && 'bg-salon-pink-light border-primary shadow-glow-sm'
                       )}
                       onClick={() => toggleService(service)}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                         <Checkbox
                           checked={selected.some((s) => s.id === service.id)}
                           onCheckedChange={() => toggleService(service)}
+                          className="flex-shrink-0"
                         />
-                        <div>
-                          <p className="font-medium text-foreground">{service.name}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground text-sm sm:text-base truncate">{service.name}</p>
                           {service.type === 'Compuesto' ? (
                             <>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-xs sm:text-sm text-muted-foreground">
                                 {service.duration_part1_active + service.duration_part2_active} min activos + {service.duration_exposure_pause} min pausa
                               </p>
-                              <p className="text-xs text-muted-foreground italic mt-1">
+                              <p className="text-xs text-muted-foreground italic mt-0.5">
                                 ✓ Incluye corte y peinado
                               </p>
                             </>
                           ) : (
-                            <p className="text-sm text-muted-foreground">{service.duration} min</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground">{service.duration} min</p>
                           )}
                         </div>
                       </div>
@@ -121,7 +122,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
         })}
       </Accordion>
 
-      <div className="flex justify-between items-center pt-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4">
         <p className={cn(
           "text-sm transition-colors duration-200",
           selected.length > 0 ? 'font-semibold text-primary' : 'text-muted-foreground'
@@ -132,7 +133,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
         <Button 
           onClick={handleNext} 
           disabled={selected.length === 0}
-          className="transition-transform duration-200 hover:scale-105 disabled:scale-100"
+          className="w-full sm:w-auto h-11 transition-transform duration-200 hover:scale-105 disabled:scale-100 touch-manipulation"
         >
           Continuar
         </Button>

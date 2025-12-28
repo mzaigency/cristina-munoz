@@ -187,65 +187,65 @@ export const BookingConfirmation = ({
 
   if (confirmed) {
     return (
-      <div className="relative space-y-8 text-center py-8">
+      <div className="relative space-y-6 sm:space-y-8 text-center py-6 sm:py-8">
         <Confetti
           ref={confettiRef}
           className="absolute top-0 left-0 w-full h-full pointer-events-none z-50"
         />
         <div className="flex justify-center">
-          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-green-100 animate-in zoom-in duration-500">
-            <CheckCircle2 className="h-12 w-12 text-green-600" />
+          <div className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-green-100 animate-in zoom-in duration-500">
+            <CheckCircle2 className="h-10 w-10 sm:h-12 sm:w-12 text-green-600" />
           </div>
         </div>
-        <div className="space-y-3">
-          <h3 className="text-3xl md:text-4xl font-bold text-foreground">¡Tu Cita ha sido Confirmada!</h3>
-          <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            Recibirás un mensaje de confirmación en tu teléfono con todos los detalles de tu reserva.
+        <div className="space-y-2 sm:space-y-3">
+          <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">¡Cita Confirmada!</h3>
+          <p className="text-sm sm:text-lg text-muted-foreground max-w-md mx-auto px-2">
+            Recibirás un mensaje de confirmación con todos los detalles de tu reserva.
           </p>
         </div>
-        <div className="rounded-lg border-2 border-green-200 bg-green-50/50 p-6 text-left max-w-lg mx-auto">
-          <h4 className="mb-4 text-lg font-semibold text-foreground flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
+        <div className="rounded-xl border-2 border-green-200 bg-green-50/50 p-4 sm:p-6 text-left max-w-lg mx-auto">
+          <h4 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
             Resumen de tu cita
           </h4>
-          <div className="space-y-3 text-sm">
-            <div className="grid grid-cols-3 gap-2">
-              <span className="font-medium text-muted-foreground col-span-1">Nombre:</span>
-              <span className="col-span-2">{userProfile.full_name}</span>
+          <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
+            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
+              <span className="font-medium text-muted-foreground sm:col-span-1">Nombre:</span>
+              <span className="sm:col-span-2">{userProfile.full_name}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <span className="font-medium text-muted-foreground col-span-1">Email:</span>
-              <span className="col-span-2 break-all">{userProfile.email}</span>
+            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
+              <span className="font-medium text-muted-foreground sm:col-span-1">Email:</span>
+              <span className="sm:col-span-2 break-all">{userProfile.email}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <span className="font-medium text-muted-foreground col-span-1">Teléfono:</span>
-              <span className="col-span-2">{userProfile.phone}</span>
+            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
+              <span className="font-medium text-muted-foreground sm:col-span-1">Teléfono:</span>
+              <span className="sm:col-span-2">{userProfile.phone}</span>
             </div>
-            <div className="h-px bg-border my-2" />
-            <div className="grid grid-cols-3 gap-2">
-              <span className="font-medium text-muted-foreground col-span-1">Fecha:</span>
-              <span className="col-span-2">{bookingData.date && format(bookingData.date, "dd-MM-yyyy")}</span>
+            <div className="h-px bg-border my-1.5 sm:my-2" />
+            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
+              <span className="font-medium text-muted-foreground sm:col-span-1">Fecha:</span>
+              <span className="sm:col-span-2">{bookingData.date && format(bookingData.date, "dd-MM-yyyy")}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <span className="font-medium text-muted-foreground col-span-1">Hora:</span>
-              <span className="col-span-2">{bookingData.time}</span>
+            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
+              <span className="font-medium text-muted-foreground sm:col-span-1">Hora:</span>
+              <span className="sm:col-span-2">{bookingData.time}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <span className="font-medium text-muted-foreground col-span-1">Peluquera:</span>
-              <span className="col-span-2">{bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}</span>
+            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
+              <span className="font-medium text-muted-foreground sm:col-span-1">Profesional:</span>
+              <span className="sm:col-span-2">{bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}</span>
             </div>
-            <div className="h-px bg-border my-2" />
-            <div className="grid grid-cols-3 gap-2">
-              <span className="font-medium text-muted-foreground col-span-1">Servicios:</span>
-              <span className="col-span-2">{bookingData.services.map((s) => s.name).join(", ")}</span>
+            <div className="h-px bg-border my-1.5 sm:my-2" />
+            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
+              <span className="font-medium text-muted-foreground sm:col-span-1">Servicios:</span>
+              <span className="sm:col-span-2">{bookingData.services.map((s) => s.name).join(", ")}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <span className="font-medium text-muted-foreground col-span-1">Duración:</span>
-              <span className="col-span-2">{totalDuration} minutos</span>
+            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
+              <span className="font-medium text-muted-foreground sm:col-span-1">Duración:</span>
+              <span className="sm:col-span-2">{totalDuration} minutos</span>
             </div>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Nos vemos pronto en el salón ✨
         </p>
       </div>
@@ -253,45 +253,60 @@ export const BookingConfirmation = ({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-salon-pink-light p-6 border border-primary/20 shadow-md transition-shadow duration-300 hover:shadow-lg">
-        <h4 className="mb-3 font-semibold text-foreground">Resumen de tu reserva:</h4>
-        <div className="space-y-2 text-sm">
-          <p>
-            <span className="font-medium">Nombre:</span> {userProfile.full_name}
+    <div className="space-y-5 sm:space-y-6">
+      <div className="rounded-xl bg-salon-pink-light p-4 sm:p-6 border border-primary/20 shadow-md transition-shadow duration-300 hover:shadow-lg">
+        <h4 className="mb-3 font-semibold text-foreground text-sm sm:text-base">Resumen de tu reserva:</h4>
+        <div className="space-y-2 text-xs sm:text-sm">
+          <p className="flex flex-wrap gap-1">
+            <span className="font-medium">Nombre:</span> 
+            <span className="break-all">{userProfile.full_name}</span>
           </p>
-          <p>
-            <span className="font-medium">Email:</span> {userProfile.email}
+          <p className="flex flex-wrap gap-1">
+            <span className="font-medium">Email:</span> 
+            <span className="break-all">{userProfile.email}</span>
           </p>
-          <p>
-            <span className="font-medium">Teléfono:</span> {userProfile.phone}
+          <p className="flex flex-wrap gap-1">
+            <span className="font-medium">Teléfono:</span> 
+            <span>{userProfile.phone}</span>
           </p>
-          <p>
+          <p className="flex flex-wrap gap-1">
             <span className="font-medium">Fecha:</span>{" "}
-            {bookingData.date && format(bookingData.date, "dd-MM-yyyy")}
+            <span>{bookingData.date && format(bookingData.date, "dd-MM-yyyy")}</span>
           </p>
-          <p>
-            <span className="font-medium">Hora:</span> {bookingData.time}
+          <p className="flex flex-wrap gap-1">
+            <span className="font-medium">Hora:</span> 
+            <span>{bookingData.time}</span>
           </p>
-          <p>
-            <span className="font-medium">Peluquera:</span>{" "}
-            {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}
+          <p className="flex flex-wrap gap-1">
+            <span className="font-medium">Profesional:</span>{" "}
+            <span>{bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}</span>
           </p>
-          <p>
+          <p className="flex flex-wrap gap-1">
             <span className="font-medium">Servicios:</span>{" "}
-            {bookingData.services.map((s) => s.name).join(", ")}
+            <span>{bookingData.services.map((s) => s.name).join(", ")}</span>
           </p>
-          <p>
-            <span className="font-medium">Duración total:</span> {totalDuration} minutos
+          <p className="flex flex-wrap gap-1">
+            <span className="font-medium">Duración total:</span> 
+            <span>{totalDuration} minutos</span>
           </p>
         </div>
       </div>
 
-      <div className="flex justify-between pt-4">
-        <Button type="button" variant="outline" onClick={onBack} disabled={loading} className="transition-transform duration-200 hover:scale-105">
+      <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onBack} 
+          disabled={loading} 
+          className="w-full sm:w-auto h-11 transition-transform duration-200 hover:scale-105 touch-manipulation"
+        >
           Volver
         </Button>
-        <Button onClick={handleConfirm} disabled={loading} className="transition-transform duration-200 hover:scale-105">
+        <Button 
+          onClick={handleConfirm} 
+          disabled={loading} 
+          className="w-full sm:w-auto h-11 transition-transform duration-200 hover:scale-105 touch-manipulation"
+        >
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

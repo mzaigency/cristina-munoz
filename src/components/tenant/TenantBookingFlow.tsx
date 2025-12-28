@@ -140,29 +140,29 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   };
 
   return (
-    <section ref={bookingRef} className={cn("py-20 relative overflow-hidden", bookingData.services.length > 0 && "pb-32 lg:pb-20")}>
+    <section ref={bookingRef} className={cn("py-16 md:py-20 relative overflow-hidden", bookingData.services.length > 0 && "pb-36 lg:pb-20")}>
       {/* Decorative background */}
       <div className="absolute inset-0 gradient-radial pointer-events-none" />
       <div className="absolute top-10 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
       <div className="absolute bottom-10 left-10 w-56 h-56 bg-accent/5 rounded-full blur-3xl" />
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="mb-12 text-center">
+        <div className="mb-8 md:mb-12 text-center">
           <SmoothTitle>
-            <h2 className="mb-4 text-3xl md:text-4xl font-bold text-foreground">
+            <h2 className="mb-3 text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
               Reserva tu Cita
             </h2>
           </SmoothTitle>
           <div className="line-accent mx-auto mb-4" />
-          <p className="text-lg text-muted-foreground">
+          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground px-2">
             Sigue los pasos para reservar tu cita{tenantName ? ` en ${tenantName}` : ''} de forma rápida y sencilla
           </p>
         </div>
 
         <div className="mx-auto max-w-5xl">
           {/* Enhanced Progress Bar */}
-          <div className="mb-8 space-y-3 max-w-3xl mx-auto">
-            <div className="flex justify-between items-center text-sm text-muted-foreground px-1">
+          <div className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto">
+            <div className="flex justify-between items-center text-xs sm:text-sm text-muted-foreground px-1">
               <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
               <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Profesional</span>
               <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Fecha</span>
@@ -176,7 +176,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
             </div>
             <div className="text-center">
               <span className="text-xs text-muted-foreground">
-                Paso {step} de 4 ({Math.round((step / 4) * 100)}% completado)
+                Paso {step} de 4
               </span>
             </div>
           </div>

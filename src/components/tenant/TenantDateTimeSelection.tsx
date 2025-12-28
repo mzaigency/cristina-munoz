@@ -376,15 +376,15 @@ export const TenantDateTimeSelection = ({
               No hay horarios disponibles para este día. Intenta con otra fecha.
             </p>
           ) : (
-            <div className="grid grid-cols-3 gap-2 max-h-[300px] overflow-y-auto">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[300px] overflow-y-auto">
               {timeSlots.map((slot) => (
                 <Button
                   key={slot}
                   variant={time === slot ? "default" : "outline"}
-                  size="sm"
+                  size="default"
                   onClick={() => setTime(slot)}
                   className={cn(
-                    "transition-all duration-200 hover:shadow-md",
+                    "h-11 text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation",
                     time === slot && "shadow-glow"
                   )}
                 >

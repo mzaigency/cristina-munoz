@@ -114,29 +114,35 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
 
         {/* Bottom */}
         <div className="border-t border-primary/20 pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p>© {currentYear} {tenant.name}. Todos los derechos reservados.</p>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4">
-                <a href="/privacidad" className="hover:text-primary transition-colors">
+          <div className="flex flex-col items-center gap-4 text-sm text-muted-foreground">
+            {/* GlowUp Badge - Prominent on mobile */}
+            <a 
+              href="https://glowup.app" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-500/20 transition-all touch-manipulation"
+            >
+              <img src="/favicon.png" alt="GlowUp" className="h-5 w-5" />
+              <span className="text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+                Creado con GlowUp
+              </span>
+            </a>
+            
+            {/* Links and Copyright */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
+              <div className="flex items-center gap-6">
+                <a href="/privacidad" className="hover:text-primary transition-colors py-2 touch-manipulation">
                   Privacidad
                 </a>
-                <a href="/terminos" className="hover:text-primary transition-colors">
+                <a href="/terminos" className="hover:text-primary transition-colors py-2 touch-manipulation">
                   Términos
                 </a>
               </div>
-              <a 
-                href="https://glowup.app" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-500/20 transition-all"
-              >
-                <img src="/favicon.png" alt="GlowUp" className="h-4 w-4" />
-                <span className="text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                  Creado con GlowUp
-                </span>
-              </a>
             </div>
+            
+            <p className="text-center text-xs">
+              © {currentYear} {tenant.name}. Todos los derechos reservados.
+            </p>
           </div>
         </div>
       </div>

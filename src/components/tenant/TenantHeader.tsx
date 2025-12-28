@@ -205,20 +205,36 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
           </nav>
 
           {/* Phone, Account & Mobile Menu */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Phone - Icon only on mobile, full on desktop */}
             {tenant.phone && (
-              <a 
-                href={`tel:${tenant.phone}`}
-                className={`hidden sm:flex items-center gap-2 text-sm font-medium transition-colors duration-300 ${
-                  isScrolled ? "" : "text-white drop-shadow-md"
-                }`}
-                style={{ 
-                  color: isScrolled ? (tenant.primary_color || 'hsl(var(--primary))') : undefined 
-                }}
-              >
-                <Phone className="h-4 w-4" />
-                {tenant.phone}
-              </a>
+              <>
+                {/* Mobile: Just icon */}
+                <a 
+                  href={`tel:${tenant.phone}`}
+                  className={`sm:hidden flex items-center justify-center h-9 w-9 rounded-full transition-all duration-300 touch-manipulation ${
+                    isScrolled 
+                      ? "bg-primary/10 text-primary hover:bg-primary/20" 
+                      : "bg-white/20 hover:bg-white/30 text-white"
+                  }`}
+                  aria-label="Llamar"
+                >
+                  <Phone className="h-4 w-4" />
+                </a>
+                {/* Desktop: Full phone number */}
+                <a 
+                  href={`tel:${tenant.phone}`}
+                  className={`hidden sm:flex items-center gap-2 text-sm font-medium transition-colors duration-300 ${
+                    isScrolled ? "" : "text-white drop-shadow-md"
+                  }`}
+                  style={{ 
+                    color: isScrolled ? (tenant.primary_color || 'hsl(var(--primary))') : undefined 
+                  }}
+                >
+                  <Phone className="h-4 w-4" />
+                  {tenant.phone}
+                </a>
+              </>
             )}
 
             {/* Account Menu */}
