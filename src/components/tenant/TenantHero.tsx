@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin } from "lucide-react";
+import { motion } from "motion/react";
 
 interface Tenant {
   id: string;
@@ -8,6 +9,10 @@ interface Tenant {
   secondary_color: string | null;
   city: string | null;
   address: string | null;
+  tagline: string | null;
+  description: string | null;
+  hero_image_url: string | null;
+  logo_url: string | null;
 }
 
 interface TenantHeroProps {
@@ -18,48 +23,114 @@ interface TenantHeroProps {
 export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
   const primaryColor = tenant.primary_color || '#8B5CF6';
   const secondaryColor = tenant.secondary_color || '#D946EF';
+  const hasHeroImage = !!tenant.hero_image_url;
+
+  // Dynamic tagline
+  const tagline = tenant.tagline || 
+    `Tu peluquería de confianza${tenant.city ? ` en ${tenant.city}` : ''}. Donde la belleza y el estilo se encuentran.`;
 
   return (
     <section 
-      className="relative min-h-[80vh] flex items-center justify-center pt-16"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
       style={{
-        background: `linear-gradient(135deg, ${primaryColor}15 0%, ${secondaryColor}15 100%)`
+        background: hasHeroImage 
+          ? undefined
+          : `linear-gradient(135deg, ${primaryColor}15 0%, ${secondaryColor}15 100%)`
       }}
     >
-      {/* Background Pattern */}
-      <div 
-        className="absolute inset-0 opacity-5"
-        style={{
-          backgroundImage: `radial-gradient(${primaryColor} 1px, transparent 1px)`,
-          backgroundSize: '20px 20px'
-        }}
-      />
+      {/* Hero Image Background */}
+      {hasHeroImage && (
+        <>
+          <div className="absolute inset-0 z-0">
+            <img 
+              src={tenant.hero_image_url!} 
+              alt={`${tenant.name} - Peluquería profesional`}
+              className="w-full h-full object-cover"
+              loading="eager"
+              fetchPriority="high"
+            />
+            <div className="absolute inset-0 bg-black/60" />
+          </div>
+          <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/20 via-transparent to-black/40 pointer-events-none" />
+        </>
+      )}
+
+      {/* Background Pattern (when no hero image) */}
+      {!hasHeroImage && (
+        <div 
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `radial-gradient(${primaryColor} 1px, transparent 1px)`,
+            backgroundSize: '20px 20px'
+          }}
+        />
+      )}
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
-            Bienvenido a{" "}
-            <span style={{ color: primaryColor }}>
-              {tenant.name}
-            </span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Tu peluquería de confianza. Reserva tu cita online y descubre nuestros servicios profesionales.
-          </p>
-
-          {tenant.city && (
-            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-8">
-              <MapPin className="h-5 w-5" style={{ color: primaryColor }} />
-              <span>{tenant.address ? `${tenant.address}, ` : ''}{tenant.city}</span>
-            </div>
+          {/* Logo */}
+          {tenant.logo_url && (
+            <motion.img 
+              src={tenant.logo_url} 
+              alt={`Logo de ${tenant.name}`}
+              className="h-20 md:h-24 mx-auto mb-6"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            />
           )}
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {/* Title */}
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className={`text-4xl md:text-6xl lg:text-7xl font-bold mb-6 ${
+              hasHeroImage ? 'text-white' : ''
+            }`}
+            style={{ color: hasHeroImage ? undefined : primaryColor }}
+          >
+            {tenant.name}
+          </motion.h1>
+
+          {/* Tagline */}
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: "easeOut" }}
+            className={`text-lg md:text-xl mb-8 max-w-2xl mx-auto ${
+              hasHeroImage ? 'text-white/90' : 'text-muted-foreground'
+            }`}
+          >
+            {tagline}
+          </motion.p>
+
+          {/* Location */}
+          {(tenant.city || tenant.address) && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
+              className={`flex items-center justify-center gap-2 mb-8 ${
+                hasHeroImage ? 'text-white/80' : 'text-muted-foreground'
+              }`}
+            >
+              <MapPin className="h-5 w-5" style={{ color: hasHeroImage ? 'white' : primaryColor }} />
+              <span>{tenant.address ? `${tenant.address}, ` : ''}{tenant.city}</span>
+            </motion.div>
+          )}
+
+          {/* CTA Button */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35, ease: "easeOut" }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
             <Button
               size="lg"
               onClick={onBookNow}
-              className="text-lg px-8 py-6"
+              className="text-lg px-8 py-6 rounded-full hover:scale-105 transition-transform"
               style={{ 
                 backgroundColor: primaryColor,
                 color: 'white'
@@ -68,13 +139,13 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
               <Calendar className="mr-2 h-5 w-5" />
               Reservar Cita
             </Button>
-          </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* Decorative Elements */}
+      {/* Decorative gradient at bottom */}
       <div 
-        className="absolute bottom-0 left-0 right-0 h-32"
+        className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
         style={{
           background: `linear-gradient(to top, hsl(var(--background)), transparent)`
         }}

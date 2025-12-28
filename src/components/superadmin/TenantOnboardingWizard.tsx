@@ -39,7 +39,10 @@ import {
   Upload,
   Image,
   UserPlus,
-  Mail
+  Mail,
+  Sparkles,
+  ExternalLink,
+  Copy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -118,6 +121,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [generatingBranding, setGeneratingBranding] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [generatingPreview, setGeneratingPreview] = useState(false);
   const { toast } = useToast();
 
   // Step 1: Basic Info
@@ -139,6 +145,10 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     secondaryColor: "#EC4899",
     logoUrl: "",
     heroImageUrl: "",
+    seoTitle: "",
+    seoDescription: "",
+    faqs: [] as Array<{ question: string; answer: string }>,
+    brandTone: "",
   });
 
   // Step 3: Admin
@@ -189,7 +199,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
   const resetForm = () => {
     setCurrentStep(1);
     setBasicInfo({ name: "", slug: "", email: "", phone: "", address: "", city: "", postalCode: "" });
-    setCustomization({ tagline: "", description: "", primaryColor: "#8B5CF6", secondaryColor: "#EC4899", logoUrl: "", heroImageUrl: "" });
+    setCustomization({ tagline: "", description: "", primaryColor: "#8B5CF6", secondaryColor: "#EC4899", logoUrl: "", heroImageUrl: "", seoTitle: "", seoDescription: "", faqs: [], brandTone: "" });
     setAdminInfo({ email: "", name: "", sendWelcomeEmail: true });
     setStylists([{ name: "", slug: "", color: COLORS[0], calendarId: "" }]);
     setServices([{ name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0 }]);
@@ -207,6 +217,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     setN8nEnabled(false);
     setN8nWebhooks({ webhookUrl: "", cancelWebhookUrl: "", whatsappWebhookUrl: "" });
     setShowPreview(false);
+    setPreviewUrl(null);
   };
 
   const handleClose = () => {
@@ -332,6 +343,107 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return password;
+  };
+
+  // AI Branding Generation
+  const handleGenerateBranding = async () => {
+    if (!basicInfo.name) {
+      toast({
+        title: "Error",
+        description: "Primero añade el nombre del salón",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGeneratingBranding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-tenant-branding", {
+        body: {
+          name: basicInfo.name,
+          city: basicInfo.city,
+          address: basicInfo.address,
+          services: services.filter(s => s.name).map(s => s.name),
+          stylists: stylists.filter(s => s.name).map(s => s.name),
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Error al generar branding");
+
+      const branding = data.branding;
+      
+      setCustomization(prev => ({
+        ...prev,
+        tagline: branding.tagline || prev.tagline,
+        description: branding.description || prev.description,
+        seoTitle: branding.seoTitle || prev.seoTitle,
+        seoDescription: branding.seoDescription || prev.seoDescription,
+        faqs: branding.faqs || prev.faqs,
+        brandTone: branding.brandTone || prev.brandTone,
+      }));
+
+      toast({
+        title: "Contenido generado",
+        description: "La IA ha creado tagline, descripción y FAQs",
+      });
+    } catch (error: any) {
+      console.error("Error generating branding:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo generar el contenido",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingBranding(false);
+    }
+  };
+
+  // Generate Preview URL
+  const generatePreviewToken = () => {
+    return crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+  };
+
+  const handleGeneratePreviewUrl = async () => {
+    if (!basicInfo.slug) {
+      toast({
+        title: "Error",
+        description: "Primero añade el slug del salón",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGeneratingPreview(true);
+    try {
+      const token = generatePreviewToken();
+      const baseUrl = window.location.origin;
+      const url = `${baseUrl}/salon/${basicInfo.slug.toLowerCase().replace(/\s+/g, "-")}?preview=${token}`;
+      setPreviewUrl(url);
+      
+      toast({
+        title: "URL de preview generada",
+        description: "Copia la URL para compartirla (válida 24h)",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo generar la URL de preview",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingPreview(false);
+    }
+  };
+
+  const copyPreviewUrl = () => {
+    if (previewUrl) {
+      navigator.clipboard.writeText(previewUrl);
+      toast({
+        title: "URL copiada",
+        description: "La URL de preview se ha copiado al portapapeles",
+      });
+    }
   };
 
   const validateStep = (): boolean => {
@@ -824,6 +936,40 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
               {/* Step 2: Customization */}
               {currentStep === 2 && (
                 <div className="space-y-4">
+                  {/* AI Generation Button */}
+                  <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg border border-primary/20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        <div>
+                          <h4 className="font-medium">Generar con IA</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Crea tagline, descripción y FAQs automáticamente
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateBranding}
+                        disabled={generatingBranding || !basicInfo.name}
+                        className="gap-2"
+                      >
+                        {generatingBranding ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Generando...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            Generar
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="tagline">Tagline / Eslogan</Label>
                     <Input
@@ -843,6 +989,29 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                       rows={2}
                     />
                   </div>
+
+                  {/* Brand Tone (if generated) */}
+                  {customization.brandTone && (
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <Label className="text-sm text-muted-foreground">Tono de marca sugerido</Label>
+                      <p className="text-sm mt-1">{customization.brandTone}</p>
+                    </div>
+                  )}
+
+                  {/* FAQs (if generated) */}
+                  {customization.faqs.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>FAQs generadas</Label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {customization.faqs.map((faq, i) => (
+                          <div key={i} className="p-2 bg-muted/30 rounded text-sm">
+                            <p className="font-medium">{faq.question}</p>
+                            <p className="text-muted-foreground">{faq.answer}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
@@ -967,6 +1136,46 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Preview URL Section */}
+                  <div className="p-4 border rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        <Label>URL de Vista Previa</Label>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGeneratePreviewUrl}
+                        disabled={generatingPreview || !basicInfo.slug}
+                        className="gap-2"
+                      >
+                        {generatingPreview ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ExternalLink className="h-4 w-4" />
+                        )}
+                        Generar URL
+                      </Button>
+                    </div>
+                    {previewUrl && (
+                      <div className="flex items-center gap-2 p-2 bg-muted rounded">
+                        <code className="text-xs flex-1 truncate">{previewUrl}</code>
+                        <Button variant="ghost" size="sm" onClick={copyPreviewUrl}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" asChild>
+                          <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Esta URL permite previsualizar la landing antes de activar el tenant
+                    </p>
                   </div>
                 </div>
               )}
