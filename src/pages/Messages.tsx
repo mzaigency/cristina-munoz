@@ -152,9 +152,9 @@ export default function Messages() {
           <div className="container mx-auto flex items-center justify-between h-16 px-4">
             <Button 
               variant="ghost" 
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
-              aria-label="Volver atrás"
+              aria-label="Ir al inicio"
             >
               <ChevronLeft className="h-6 w-6" />
               <span>Atrás</span>
