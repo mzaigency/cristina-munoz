@@ -15,13 +15,18 @@ export interface Transaction {
   id: string;
   tenant_id?: string | null;
   stylist: string;
+  stylist_id?: string | null;
   customer_name: string;
   customer_name_encrypted?: string | null;
-  services: Array<{ name: string; price: number }>;
+  services: Array<{ id?: string; name: string; price: number; quantity?: number; total?: number }>;
   subtotal: number;
   discount: number;
+  discount_type?: string | null;
+  discount_reason?: string | null;
   total: number;
-  payment_method: "cash" | "card";
+  tip_amount?: number | null;
+  payment_method: "cash" | "card" | "mixed";
+  payment_details?: Record<string, unknown> | null;
   notes: string | null;
   created_at: string;
   created_by: string;
@@ -98,7 +103,14 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
 
       if (transactionsError) throw transactionsError;
 
-      const txs = (transactionsData || []) as Transaction[];
+      const txs = (transactionsData || []).map(tx => ({
+        ...tx,
+        services: (tx.services as unknown as Transaction['services']) || [],
+        payment_method: tx.payment_method as Transaction['payment_method'],
+        discount: tx.discount ?? 0,
+        voided: tx.voided ?? false,
+        payment_details: tx.payment_details as Record<string, unknown> | null,
+      })) as Transaction[];
       setTransactions(txs);
 
       // Calculate summary

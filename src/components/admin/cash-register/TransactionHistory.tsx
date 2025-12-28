@@ -41,13 +41,18 @@ interface Transaction {
   id: string;
   tenant_id?: string | null;
   stylist: string;
+  stylist_id?: string | null;
   customer_name: string;
   customer_name_encrypted?: string | null;
-  services: Array<{ name: string; price: number }>;
+  services: Array<{ id?: string; name: string; price: number; quantity?: number; total?: number }>;
   subtotal: number;
   discount: number;
+  discount_type?: string | null;
+  discount_reason?: string | null;
   total: number;
-  payment_method: "cash" | "card";
+  tip_amount?: number | null;
+  payment_method: "cash" | "card" | "mixed";
+  payment_details?: Record<string, unknown> | null;
   notes: string | null;
   created_at: string;
   created_by: string;
@@ -153,10 +158,16 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
                       <Banknote className="h-3 w-3" />
                       <span className="hidden sm:inline">Efectivo</span>
                     </Badge>
-                  ) : (
+                  ) : transaction.payment_method === "card" ? (
                     <Badge variant="outline" className="gap-1">
                       <CreditCard className="h-3 w-3" />
                       <span className="hidden sm:inline">Tarjeta</span>
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="gap-1">
+                      <Banknote className="h-3 w-3" />
+                      <CreditCard className="h-3 w-3" />
+                      <span className="hidden sm:inline">Mixto</span>
                     </Badge>
                   )}
                 </TableCell>

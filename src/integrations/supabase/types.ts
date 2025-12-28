@@ -931,13 +931,18 @@ export type Database = {
           customer_name: string
           customer_name_encrypted: string | null
           discount: number | null
+          discount_reason: string | null
+          discount_type: string | null
           id: string
           notes: string | null
+          payment_details: Json | null
           payment_method: string
           services: Json
           stylist: string
+          stylist_id: string | null
           subtotal: number
           tenant_id: string | null
+          tip_amount: number | null
           total: number
           voided: boolean | null
           voided_at: string | null
@@ -949,13 +954,18 @@ export type Database = {
           customer_name: string
           customer_name_encrypted?: string | null
           discount?: number | null
+          discount_reason?: string | null
+          discount_type?: string | null
           id?: string
           notes?: string | null
+          payment_details?: Json | null
           payment_method: string
           services: Json
           stylist: string
+          stylist_id?: string | null
           subtotal: number
           tenant_id?: string | null
+          tip_amount?: number | null
           total: number
           voided?: boolean | null
           voided_at?: string | null
@@ -967,19 +977,31 @@ export type Database = {
           customer_name?: string
           customer_name_encrypted?: string | null
           discount?: number | null
+          discount_reason?: string | null
+          discount_type?: string | null
           id?: string
           notes?: string | null
+          payment_details?: Json | null
           payment_method?: string
           services?: Json
           stylist?: string
+          stylist_id?: string | null
           subtotal?: number
           tenant_id?: string | null
+          tip_amount?: number | null
           total?: number
           voided?: boolean | null
           voided_at?: string | null
           voided_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_stylist_id_fkey"
+            columns: ["stylist_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_stylists"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_tenant_id_fkey"
             columns: ["tenant_id"]
