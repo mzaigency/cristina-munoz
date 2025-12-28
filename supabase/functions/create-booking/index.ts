@@ -34,7 +34,8 @@ const bookingRequestSchema = z.object({
   phone: z.union([z.string().min(9).max(15), z.literal('')]).optional(),
   user_id: z.string().uuid().nullable().optional(),
   skipAvailabilityCheck: z.boolean().optional(),
-  tenant_id: z.string().uuid().optional()
+  tenant_id: z.string().uuid().optional(),
+  canal: z.enum(['web', 'crm', 'whatsapp']).optional()
 }).refine(data => (data.Fecha || data.date) && (data.Hora || data.time), {
   message: "Either Fecha/Hora or date/time must be provided"
 });
@@ -59,6 +60,7 @@ interface BookingRequest {
   phone?: string;
   skipAvailabilityCheck?: boolean;
   tenant_id?: string;
+  canal?: 'web' | 'crm' | 'whatsapp';
 }
 
 // Helper function to get default tenant ID
@@ -324,7 +326,8 @@ serve(async (req) => {
         status: 'confirmed',
         title: `${customer_name} - ${serviceNames}`,
         notes: null,
-        color: stylistColor
+        color: stylistColor,
+        canal: bookingData.canal || 'web'
       };
 
       const { data: booking, error: bookingError } = await supabase
@@ -364,7 +367,8 @@ serve(async (req) => {
         status: 'confirmed',
         title: `${customer_name} - ${service.name} (Parte 1)`,
         notes: null,
-        color: stylistColor
+        color: stylistColor,
+        canal: bookingData.canal || 'web'
       };
 
       const { data: part1Booking, error: part1Error } = await supabase
@@ -403,7 +407,8 @@ serve(async (req) => {
           status: 'confirmed',
           title: `${customer_name} - ${service.name} (Parte 2)`,
           notes: null,
-          color: stylistColor
+          color: stylistColor,
+          canal: bookingData.canal || 'web'
         };
 
         const { data: part2Booking, error: part2Error } = await supabase

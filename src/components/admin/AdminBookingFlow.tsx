@@ -139,6 +139,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
         total_duration: totalDuration,
         skipAvailabilityCheck, // Pass the flag to skip validations
         tenant_id: tenantId,
+        canal: 'crm' as const, // Reservas desde el CRM
       };
 
       const { error } = await supabase.functions.invoke("create-booking", {

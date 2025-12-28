@@ -407,7 +407,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
           status: "confirmed",
           title: blockPeriod === "hours" ? `🔒 BLOQUEADO - ${stylist.toUpperCase()}` : `🌴 VACACIONES - ${stylist.toUpperCase()}`,
           notes: blockPeriod === "hours" ? "Periodo bloqueado - Horas específicas" : "Periodo bloqueado - Vacaciones",
-          color: "#EF4444"
+          color: "#EF4444",
+          canal: "crm"
         };
 
         const { error } = await supabase
