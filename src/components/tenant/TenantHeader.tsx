@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Phone, User, LogOut, Shield, Calendar, MessageCircle } from "lucide-react";
+import { Menu, X, Phone, User, LogOut, Shield, Calendar, MessageCircle, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
@@ -12,6 +12,11 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Tenant {
   id: string;
@@ -133,8 +138,27 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+          {/* Home Button + Logo */}
           <div className="flex items-center gap-3">
+            {/* Home button to go back to main app */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  to="/"
+                  className={`flex items-center justify-center h-9 w-9 rounded-full transition-all duration-300 ${
+                    isScrolled 
+                      ? "bg-muted hover:bg-muted/80 text-foreground" 
+                      : "bg-white/20 hover:bg-white/30 text-white"
+                  }`}
+                >
+                  <Home className="h-4 w-4" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Volver a SalonHub</p>
+              </TooltipContent>
+            </Tooltip>
+
             {tenant.logo_url ? (
               <img 
                 src={tenant.logo_url} 
@@ -282,6 +306,16 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
             isScrolled ? "bg-background" : "bg-background/95 backdrop-blur-sm"
           }`}>
             <div className="flex flex-col gap-2">
+              {/* Link to main app */}
+              <Link
+                to="/"
+                className="py-2 px-4 text-left rounded-lg transition-colors flex items-center gap-2 text-muted-foreground hover:bg-muted"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Home className="h-4 w-4" />
+                Volver a SalonHub
+              </Link>
+              <div className="border-t my-2" />
               {navItems.map((item) => (
                 <button
                   key={item.id}
