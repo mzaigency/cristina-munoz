@@ -37,7 +37,6 @@ interface Tenant {
   tagline: string | null;
   description: string | null;
   hero_image_url: string | null;
-  is_active: boolean | null;
   instagram_url: string | null;
   facebook_url: string | null;
   whatsapp_number: string | null;
