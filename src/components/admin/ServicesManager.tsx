@@ -20,6 +20,7 @@ interface Service {
   duration_part1_active: number;
   duration_exposure_pause: number;
   duration_part2_active: number;
+  price: number | null;
 }
 
 interface CategoryImage {
@@ -58,6 +59,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     duration_part1_active: 30,
     duration_exposure_pause: 0,
     duration_part2_active: 0,
+    price: "" as string | number,
   });
   const { toast } = useToast();
 
@@ -108,6 +110,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
       duration_part1_active: 30,
       duration_exposure_pause: 0,
       duration_part2_active: 0,
+      price: "",
     });
     setIsDialogOpen(true);
   };
@@ -121,6 +124,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
       duration_part1_active: service.duration_part1_active,
       duration_exposure_pause: service.duration_exposure_pause,
       duration_part2_active: service.duration_part2_active,
+      price: service.price ?? "",
     });
     setIsDialogOpen(true);
   };
@@ -138,6 +142,8 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     try {
       setSaving(true);
 
+      const priceValue = formData.price === "" ? null : Number(formData.price);
+      
       const serviceData = {
         name: formData.name.trim(),
         category: formData.category,
@@ -145,6 +151,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
         duration_part1_active: formData.duration_part1_active,
         duration_exposure_pause: formData.type === "Compuesto" ? formData.duration_exposure_pause : 0,
         duration_part2_active: formData.type === "Compuesto" ? formData.duration_part2_active : 0,
+        price: priceValue,
         tenant_id: tenantId,
       };
 
@@ -369,6 +376,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                       <TableHead>Nombre</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Duración</TableHead>
+                      <TableHead>Precio</TableHead>
                       <TableHead className="w-[100px]">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -382,6 +390,13 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                           </Badge>
                         </TableCell>
                         <TableCell>{formatDuration(service)}</TableCell>
+                        <TableCell>
+                          {service.price !== null ? (
+                            <span className="font-medium text-primary">{service.price.toFixed(2)} €</span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
                             <Button
@@ -511,6 +526,22 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                 </div>
               </>
             )}
+
+            <div>
+              <Label htmlFor="service-price">Precio (€) - Opcional</Label>
+              <Input
+                id="service-price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Ej: 25.00"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Deja vacío si no quieres mostrar precio
+              </p>
+            </div>
           </div>
 
           <DialogFooter>

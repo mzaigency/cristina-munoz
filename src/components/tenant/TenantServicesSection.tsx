@@ -13,6 +13,7 @@ interface Service {
   duration_part1_active: number;
   duration_exposure_pause: number;
   duration_part2_active: number;
+  price: number | null;
 }
 
 interface CategoryImage {
@@ -47,6 +48,11 @@ const formatDuration = (minutes: number): string => {
   const mins = minutes % 60;
   if (mins === 0) return `${hours}h`;
   return `${hours}h ${mins}min`;
+};
+
+const formatPrice = (price: number | null, currency: string = '€'): string | null => {
+  if (price === null || price === undefined) return null;
+  return `${price.toFixed(2).replace('.', ',')} ${currency}`;
 };
 
 export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSectionProps) => {
@@ -197,6 +203,8 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
                         service.duration_exposure_pause +
                         service.duration_part2_active;
 
+                      const formattedPrice = formatPrice(service.price);
+
                       return (
                         <div
                           key={service.id}
@@ -208,9 +216,16 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
                               {service.name}
                             </span>
                           </div>
-                          <span className="text-sm text-primary/80 font-medium tabular-nums">
-                            {formatDuration(totalDuration)}
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm text-muted-foreground tabular-nums">
+                              {formatDuration(totalDuration)}
+                            </span>
+                            {formattedPrice && (
+                              <span className="text-sm text-primary font-semibold tabular-nums">
+                                {formattedPrice}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}

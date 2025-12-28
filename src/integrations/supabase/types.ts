@@ -280,6 +280,7 @@ export type Database = {
           duration_part2_active: number
           id: string
           name: string
+          price: number | null
           tenant_id: string | null
           type: string
           updated_at: string
@@ -292,6 +293,7 @@ export type Database = {
           duration_part2_active?: number
           id?: string
           name: string
+          price?: number | null
           tenant_id?: string | null
           type: string
           updated_at?: string
@@ -304,6 +306,7 @@ export type Database = {
           duration_part2_active?: number
           id?: string
           name?: string
+          price?: number | null
           tenant_id?: string | null
           type?: string
           updated_at?: string
