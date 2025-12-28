@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +18,18 @@ interface TenantHeaderProps {
 
 export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Check initial state
+    
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navItems = [
     { id: "inicio", label: "Inicio" },
@@ -34,8 +46,14 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
 
   return (
     <header 
-      className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b"
-      style={{ borderColor: tenant.primary_color || 'hsl(var(--border))' }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? "bg-background/95 backdrop-blur-sm border-b shadow-sm" 
+          : "bg-transparent border-transparent"
+      }`}
+      style={{ 
+        borderColor: isScrolled ? (tenant.primary_color || 'hsl(var(--border))') : 'transparent' 
+      }}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -49,8 +67,12 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
               />
             ) : (
               <span 
-                className="text-xl font-bold"
-                style={{ color: tenant.primary_color || 'hsl(var(--primary))' }}
+                className={`text-xl font-bold transition-colors duration-300 ${
+                  isScrolled ? "" : "text-white drop-shadow-md"
+                }`}
+                style={{ 
+                  color: isScrolled ? (tenant.primary_color || 'hsl(var(--primary))') : undefined 
+                }}
               >
                 {tenant.name}
               </span>
@@ -63,11 +85,15 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  activeSection === item.id ? "text-primary" : "text-muted-foreground"
+                className={`text-sm font-medium transition-all duration-300 ${
+                  isScrolled
+                    ? activeSection === item.id 
+                      ? "text-primary" 
+                      : "text-muted-foreground hover:text-primary"
+                    : "text-white/90 hover:text-white drop-shadow-md"
                 }`}
                 style={{ 
-                  color: activeSection === item.id 
+                  color: isScrolled && activeSection === item.id 
                     ? (tenant.primary_color || 'hsl(var(--primary))') 
                     : undefined 
                 }}
@@ -82,8 +108,12 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
             {tenant.phone && (
               <a 
                 href={`tel:${tenant.phone}`}
-                className="hidden sm:flex items-center gap-2 text-sm font-medium"
-                style={{ color: tenant.primary_color || 'hsl(var(--primary))' }}
+                className={`hidden sm:flex items-center gap-2 text-sm font-medium transition-colors duration-300 ${
+                  isScrolled ? "" : "text-white drop-shadow-md"
+                }`}
+                style={{ 
+                  color: isScrolled ? (tenant.primary_color || 'hsl(var(--primary))') : undefined 
+                }}
               >
                 <Phone className="h-4 w-4" />
                 {tenant.phone}
@@ -93,7 +123,9 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className={`md:hidden transition-colors duration-300 ${
+                isScrolled ? "" : "text-white hover:bg-white/20"
+              }`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -103,7 +135,9 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <nav className="md:hidden py-4 border-t">
+          <nav className={`md:hidden py-4 border-t transition-colors ${
+            isScrolled ? "bg-background" : "bg-background/95 backdrop-blur-sm"
+          }`}>
             <div className="flex flex-col gap-2">
               {navItems.map((item) => (
                 <button

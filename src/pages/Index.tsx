@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, MapPin, Scissors } from "lucide-react";
+import { Search, MapPin, Scissors, Star, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,16 @@ interface Tenant {
   primary_color: string | null;
   city: string | null;
   address: string | null;
+  description: string | null;
+  tagline: string | null;
 }
 
-const SalonCard = ({ salon }: { salon: Tenant }) => {
+interface TenantWithStats extends Tenant {
+  avgRating: number | null;
+  reviewCount: number;
+}
+
+const SalonCard = ({ salon }: { salon: TenantWithStats }) => {
   const primaryColor = salon.primary_color || "#8B5CF6";
   const initials = salon.name
     .split(" ")
@@ -54,16 +61,48 @@ const SalonCard = ({ salon }: { salon: Tenant }) => {
             </div>
           )}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+          
+          {/* Rating Badge */}
+          {salon.avgRating !== null && (
+            <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 shadow-sm">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              <span className="text-xs font-semibold text-foreground">
+                {salon.avgRating.toFixed(1)}
+              </span>
+            </div>
+          )}
         </div>
 
         <CardContent className="pt-4 flex-1">
           <h3 className="font-semibold text-lg text-foreground mb-1 line-clamp-1">
             {salon.name}
           </h3>
-          {salon.city && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5" />
-              {salon.city}
+          
+          {salon.tagline && (
+            <p className="text-xs text-muted-foreground mb-2 line-clamp-1 italic">
+              {salon.tagline}
+            </p>
+          )}
+          
+          <div className="space-y-1.5">
+            {salon.city && (
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="line-clamp-1">{salon.city}</span>
+              </p>
+            )}
+            
+            {salon.reviewCount > 0 && (
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <Star className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>{salon.reviewCount} {salon.reviewCount === 1 ? "reseña" : "reseñas"}</span>
+              </p>
+            )}
+          </div>
+
+          {salon.description && (
+            <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
+              {salon.description}
             </p>
           )}
         </CardContent>
@@ -83,6 +122,8 @@ const SalonCardSkeleton = () => (
     <Skeleton className="h-32 w-full rounded-none" />
     <CardContent className="pt-4">
       <Skeleton className="h-5 w-3/4 mb-2" />
+      <Skeleton className="h-3 w-1/2 mb-3" />
+      <Skeleton className="h-4 w-2/3 mb-1.5" />
       <Skeleton className="h-4 w-1/2" />
     </CardContent>
     <CardFooter className="pt-0">
@@ -97,14 +138,46 @@ const Index = () => {
   const { data: salons, isLoading } = useQuery({
     queryKey: ["salons-hub"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch tenants
+      const { data: tenants, error: tenantsError } = await supabase
         .from("tenants")
-        .select("id, name, slug, logo_url, primary_color, city, address")
+        .select("id, name, slug, logo_url, primary_color, city, address, description, tagline")
         .eq("is_active", true)
         .order("name");
 
-      if (error) throw error;
-      return data as Tenant[];
+      if (tenantsError) throw tenantsError;
+
+      // Fetch review stats for each tenant
+      const { data: reviews, error: reviewsError } = await supabase
+        .from("reviews")
+        .select("tenant_id, rating")
+        .eq("approved", true);
+
+      if (reviewsError) throw reviewsError;
+
+      // Calculate stats per tenant
+      const statsMap = new Map<string, { sum: number; count: number }>();
+      reviews?.forEach((review) => {
+        if (review.tenant_id) {
+          const existing = statsMap.get(review.tenant_id) || { sum: 0, count: 0 };
+          statsMap.set(review.tenant_id, {
+            sum: existing.sum + review.rating,
+            count: existing.count + 1,
+          });
+        }
+      });
+
+      // Merge tenants with stats
+      const tenantsWithStats: TenantWithStats[] = (tenants || []).map((tenant) => {
+        const stats = statsMap.get(tenant.id);
+        return {
+          ...tenant,
+          avgRating: stats ? stats.sum / stats.count : null,
+          reviewCount: stats?.count || 0,
+        };
+      });
+
+      return tenantsWithStats;
     },
   });
 
@@ -113,7 +186,8 @@ const Index = () => {
     return (
       salon.name.toLowerCase().includes(query) ||
       salon.city?.toLowerCase().includes(query) ||
-      salon.address?.toLowerCase().includes(query)
+      salon.address?.toLowerCase().includes(query) ||
+      salon.description?.toLowerCase().includes(query)
     );
   });
 

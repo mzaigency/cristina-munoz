@@ -527,6 +527,7 @@ export type Database = {
           country: string | null
           created_at: string | null
           currency: string | null
+          description: string | null
           email: string | null
           features: Json | null
           id: string
@@ -542,6 +543,7 @@ export type Database = {
           slug: string
           subscription_expires_at: string | null
           subscription_plan: string | null
+          tagline: string | null
           timezone: string | null
           updated_at: string | null
         }
@@ -551,6 +553,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           currency?: string | null
+          description?: string | null
           email?: string | null
           features?: Json | null
           id?: string
@@ -566,6 +569,7 @@ export type Database = {
           slug: string
           subscription_expires_at?: string | null
           subscription_plan?: string | null
+          tagline?: string | null
           timezone?: string | null
           updated_at?: string | null
         }
@@ -575,6 +579,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           currency?: string | null
+          description?: string | null
           email?: string | null
           features?: Json | null
           id?: string
@@ -590,6 +595,7 @@ export type Database = {
           slug?: string
           subscription_expires_at?: string | null
           subscription_plan?: string | null
+          tagline?: string | null
           timezone?: string | null
           updated_at?: string | null
         }
