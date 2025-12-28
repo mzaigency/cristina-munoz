@@ -47,6 +47,12 @@
 
     --radius: 1rem;
     
+    /* Font variables - can be overridden by TenantThemeProvider */
+    --font-heading: "Playfair Display", serif;
+    --font-body: "Inter", sans-serif;
+    --heading-scale: 1;
+    --button-radius: 0.5rem;
+    
     /* iOS specific colors */
     --ios-gray-1: 230 10% 98%;
     --ios-gray-2: 230 15% 96%;
@@ -147,7 +153,13 @@
   
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;
+    font-family: var(--font-heading);
   }
+  
+  /* Apply heading scale */
+  h1 { font-size: calc(2.25rem * var(--heading-scale)); }
+  h2 { font-size: calc(1.875rem * var(--heading-scale)); }
+  h3 { font-size: calc(1.5rem * var(--heading-scale)); }
 
   /* Smooth scrolling */
   html {
