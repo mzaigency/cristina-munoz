@@ -1,12 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Calendar, MessageCircle, Search, User } from "lucide-react";
+import { Home, Calendar, MessageCircle, User } from "lucide-react";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/", icon: Home, label: "Inicio" },
   { path: "/mis-citas", icon: Calendar, label: "Citas" },
-  { path: "/buscar", icon: Search, label: "Buscar" },
   { path: "/mensajes", icon: MessageCircle, label: "Mensajes" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];
