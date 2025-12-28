@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
 import { TenantStylistSelection } from "./TenantStylistSelection";
-import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
+import { TenantDateTimeSelection } from "./TenantDateTimeSelection";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { BookingSummaryMobile } from "@/components/booking/BookingSummaryMobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,9 +119,9 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: Stylist) => {
+  const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: string) => {
     const finalStylist = resolvedStylist || bookingData.stylist;
-    setBookingData({ ...bookingData, date, time, stylist: finalStylist });
+    setBookingData({ ...bookingData, date, time, stylist: finalStylist as Stylist });
     setStep(4);
     bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -263,7 +263,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      <DateTimeSelection
+                      <TenantDateTimeSelection
+                        tenantId={tenantId}
                         selectedDate={bookingData.date}
                         selectedTime={bookingData.time}
                         totalDuration={totalDuration}
