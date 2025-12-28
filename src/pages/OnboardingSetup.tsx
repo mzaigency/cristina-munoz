@@ -842,6 +842,57 @@ export default function OnboardingSetup() {
         return;
       }
 
+      const isDemo = searchParams.get("demo") === "true";
+      
+      // Check if superadmin for demo mode
+      if (isDemo) {
+        const { data: isSuperadmin } = await supabase.rpc('is_superadmin');
+        if (!isSuperadmin) {
+          toast({
+            title: "Acceso denegado",
+            description: "Solo superadmins pueden usar el modo demo",
+            variant: "destructive",
+          });
+          navigate("/");
+          return;
+        }
+        
+        // Create a demo tenant for superadmin
+        try {
+          const demoSlug = `demo-${Date.now()}`;
+          const { data, error } = await supabase.functions.invoke("provision-business", {
+            body: {
+              businessName: "Salón Demo",
+              businessSlug: demoSlug,
+              email: session.user.email,
+              plan: "demo",
+              skipStripe: true,
+            },
+          });
+
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+
+          setTenantId(data.tenant.id);
+          setTenantSlug(data.tenant.slug);
+          setInitializing(false);
+
+          toast({
+            title: "Modo Demo",
+            description: "Salón de prueba creado. Puedes probar el wizard.",
+          });
+          return;
+        } catch (error: unknown) {
+          toast({
+            title: "Error",
+            description: error instanceof Error ? error.message : "Error al crear salón demo",
+            variant: "destructive",
+          });
+          navigate("/");
+          return;
+        }
+      }
+
       // Check if user already has a tenant
       const { data: existingAdmin } = await supabase
         .from("tenant_admins")

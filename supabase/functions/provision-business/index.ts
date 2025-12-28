@@ -54,9 +54,27 @@ serve(async (req) => {
       tagline,
       description,
       plan,
+      skipStripe,
     } = body;
 
-    logStep("Request body", { businessName, businessSlug, plan });
+    logStep("Request body", { businessName, businessSlug, plan, skipStripe });
+
+    // If skipStripe is true, verify user is superadmin
+    if (skipStripe) {
+      const { data: isSuperadmin } = await supabaseAdmin.rpc('is_superadmin');
+      // Also check via direct query since RPC runs with user context
+      const { data: roleCheck } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "superadmin")
+        .maybeSingle();
+      
+      if (!roleCheck) {
+        throw new Error("Solo superadmins pueden crear salones en modo demo");
+      }
+      logStep("Superadmin verified for demo mode");
+    }
 
     // Check if slug is available
     const { data: existingTenant } = await supabaseAdmin
@@ -69,12 +87,20 @@ serve(async (req) => {
       throw new Error("Este nombre de salón ya está en uso. Por favor elige otro.");
     }
 
-    // Calculate subscription expiration (30 days trial + plan duration)
+    // Calculate subscription expiration
     const now = new Date();
-    const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
-    const subscriptionEnd = plan === "annual" 
-      ? new Date(trialEnd.getTime() + 365 * 24 * 60 * 60 * 1000)
-      : new Date(trialEnd.getTime() + 30 * 24 * 60 * 60 * 1000);
+    let subscriptionEnd: Date;
+    
+    if (skipStripe || plan === "demo") {
+      // Demo mode: 7 days only
+      subscriptionEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    } else {
+      // Normal mode: 30 days trial + plan duration
+      const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      subscriptionEnd = plan === "annual" 
+        ? new Date(trialEnd.getTime() + 365 * 24 * 60 * 60 * 1000)
+        : new Date(trialEnd.getTime() + 30 * 24 * 60 * 60 * 1000);
+    }
 
     // Create tenant
     const { data: tenant, error: tenantError } = await supabaseAdmin
@@ -90,7 +116,7 @@ serve(async (req) => {
         secondary_color: secondaryColor || "#D946EF",
         tagline: tagline || null,
         description: description || null,
-        subscription_plan: plan === "annual" ? "annual" : "monthly",
+        subscription_plan: skipStripe ? "demo" : (plan === "annual" ? "annual" : "monthly"),
         subscription_expires_at: subscriptionEnd.toISOString(),
         is_active: true,
       })
