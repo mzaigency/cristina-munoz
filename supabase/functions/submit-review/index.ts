@@ -10,7 +10,8 @@ const corsHeaders = {
 // Validation schema
 const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
-  comment: z.string().max(1000).optional()
+  comment: z.string().max(1000).optional(),
+  tenant_id: z.string().uuid().optional()
 });
 
 // Lista de palabras malsonantes y spam
@@ -110,13 +111,13 @@ serve(async (req) => {
       );
     }
     
-    const { rating, comment } = validationResult.data;
+    const { rating, comment, tenant_id } = validationResult.data;
 
     // Detectar contenido sospechoso
     const isSuspicious = detectSuspiciousContent(comment);
     const approved = !isSuspicious;
 
-    console.log('Submitting review:', { rating, comment, approved, isSuspicious, userId: user.id });
+    console.log('Submitting review:', { rating, comment, approved, isSuspicious, userId: user.id, tenant_id });
 
     // Verificar rate limiting antes de insertar
     const { data: canCreate, error: rateLimitError } = await supabaseClient
@@ -140,14 +141,15 @@ serve(async (req) => {
       );
     }
 
-    // Save review to database (user_id se añade automáticamente por RLS)
+    // Save review to database
     const { data: reviewData, error: dbError } = await supabaseClient
       .from('reviews')
       .insert({
         user_id: user.id,
         rating,
         comment: comment || null,
-        approved
+        approved,
+        tenant_id: tenant_id || null
       })
       .select()
       .single();
@@ -176,6 +178,7 @@ serve(async (req) => {
         body: JSON.stringify({
           rating,
           comment,
+          tenant_id,
           timestamp: new Date().toISOString(),
         }),
       });
