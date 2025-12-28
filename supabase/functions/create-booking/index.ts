@@ -154,6 +154,48 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Authenticate user from header to prevent IDOR
+    const authHeader = req.headers.get('Authorization');
+    let authenticatedUser = null;
+    let isAdminOrStylist = false;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+      if (user && !authError) {
+        authenticatedUser = user;
+
+        // Check roles
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .in('role', ['admin', 'stylist', 'superadmin']);
+
+        isAdminOrStylist = roleData && roleData.length > 0;
+      }
+    }
+
+    // Security Check: Prevent IDOR / Impersonation
+    if (bookingData.user_id) {
+        if (!authenticatedUser) {
+            // Guest cannot create booking with user_id
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized: Cannot create booking for a registered user without authentication' }),
+                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+
+        if (authenticatedUser.id !== bookingData.user_id && !isAdminOrStylist) {
+             // User cannot create booking for another user unless admin
+             return new Response(
+                JSON.stringify({ error: 'Unauthorized: Cannot create booking for another user' }),
+                { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
@@ -239,7 +281,7 @@ serve(async (req) => {
 
     const normalizedPhone = normalizePhone(customer_phone);
     const [startHours, startMinutes] = bookingTime.split(':').map(Number);
-    let currentMinutes = startHours * 60 + startMinutes;
+    const currentMinutes = startHours * 60 + startMinutes;
     
     // Skip validations if admin explicitly requests it
     if (!bookingData.skipAvailabilityCheck) {
