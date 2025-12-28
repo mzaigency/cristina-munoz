@@ -13,7 +13,6 @@ import {
   Banknote, 
   CreditCard, 
   CheckCircle2,
-  Calculator,
   Percent,
   Euro,
   Heart,
@@ -22,7 +21,8 @@ import {
   X,
   Plus,
   Minus,
-  Package
+  Package,
+  PenLine
 } from "lucide-react";
 import {
   Select,
@@ -53,9 +53,13 @@ interface Stylist {
   color: string | null;
 }
 
-interface SelectedService extends Service {
+interface SelectedItem {
+  id: string;
+  name: string;
+  price: number;
   quantity: number;
-  type: "service" | "product";
+  type: "service" | "product" | "manual";
+  category?: string | null;
 }
 
 interface Product {
@@ -78,10 +82,14 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
   const [services, setServices] = useState<Service[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [stylists, setStylists] = useState<Stylist[]>([]);
-  const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [selectedStylistId, setSelectedStylistId] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [notes, setNotes] = useState("");
+  
+  // Manual item
+  const [manualItemName, setManualItemName] = useState("");
+  const [manualItemPrice, setManualItemPrice] = useState("");
   
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [cashAmount, setCashAmount] = useState("");
@@ -140,7 +148,7 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
     }
   };
 
-  const subtotal = selectedServices.reduce((sum, s) => sum + (s.price || 0) * s.quantity, 0);
+  const subtotal = selectedItems.reduce((sum, s) => sum + s.price * s.quantity, 0);
 
   const calculateDiscount = () => {
     if (!discountType || !discountValue) return 0;
@@ -167,22 +175,72 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
   };
 
   const toggleService = (service: Service) => {
-    const existing = selectedServices.find(s => s.id === service.id);
+    const existing = selectedItems.find(s => s.id === service.id && s.type === "service");
     if (existing) {
-      setSelectedServices(selectedServices.filter(s => s.id !== service.id));
+      setSelectedItems(selectedItems.filter(s => !(s.id === service.id && s.type === "service")));
     } else {
-      setSelectedServices([...selectedServices, { ...service, quantity: 1, type: "service" as const }]);
+      setSelectedItems([...selectedItems, { 
+        id: service.id, 
+        name: service.name, 
+        price: service.price || 0, 
+        quantity: 1, 
+        type: "service",
+        category: service.category
+      }]);
     }
   };
 
-  const updateQuantity = (serviceId: string, delta: number) => {
-    setSelectedServices(selectedServices.map(s => 
-      s.id === serviceId ? { ...s, quantity: Math.max(1, s.quantity + delta) } : s
+  const toggleProduct = (product: Product) => {
+    const existing = selectedItems.find(s => s.id === product.id && s.type === "product");
+    if (existing) {
+      setSelectedItems(selectedItems.filter(s => !(s.id === product.id && s.type === "product")));
+    } else {
+      setSelectedItems([...selectedItems, { 
+        id: product.id, 
+        name: product.name, 
+        price: product.price, 
+        quantity: 1, 
+        type: "product",
+        category: product.category
+      }]);
+    }
+  };
+
+  const addManualItem = () => {
+    if (!manualItemName.trim() || !manualItemPrice) {
+      toast({ title: "Error", description: "Introduce nombre y precio", variant: "destructive" });
+      return;
+    }
+    const price = parseFloat(manualItemPrice) || 0;
+    if (price <= 0) {
+      toast({ title: "Error", description: "El precio debe ser mayor que 0", variant: "destructive" });
+      return;
+    }
+    setSelectedItems([...selectedItems, { 
+      id: `manual-${Date.now()}`, 
+      name: manualItemName.trim(), 
+      price, 
+      quantity: 1, 
+      type: "manual" 
+    }]);
+    setManualItemName("");
+    setManualItemPrice("");
+  };
+
+  const updateQuantity = (itemId: string, delta: number) => {
+    setSelectedItems(selectedItems.map(s => 
+      s.id === itemId ? { ...s, quantity: Math.max(1, s.quantity + delta) } : s
     ));
   };
 
-  const removeService = (serviceId: string) => {
-    setSelectedServices(selectedServices.filter(s => s.id !== serviceId));
+  const updatePrice = (itemId: string, newPrice: number) => {
+    setSelectedItems(selectedItems.map(s => 
+      s.id === itemId ? { ...s, price: newPrice } : s
+    ));
+  };
+
+  const removeItem = (itemId: string) => {
+    setSelectedItems(selectedItems.filter(s => s.id !== itemId));
   };
 
   const groupedServices = services.reduce((acc, service) => {
@@ -192,8 +250,15 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
     return acc;
   }, {} as Record<string, Service[]>);
 
+  const groupedProducts = products.reduce((acc, product) => {
+    const category = product.category || "Otros";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(product);
+    return acc;
+  }, {} as Record<string, Product[]>);
+
   const clearAll = () => {
-    setSelectedServices([]);
+    setSelectedItems([]);
     setSelectedStylistId("");
     setCustomerName("");
     setNotes("");
@@ -205,11 +270,13 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
     setDiscountValue("");
     setDiscountReason("");
     setTipAmount("");
+    setManualItemName("");
+    setManualItemPrice("");
   };
 
   const handleSubmit = async () => {
-    if (selectedServices.length === 0) {
-      toast({ title: "Error", description: "Selecciona al menos un servicio", variant: "destructive" });
+    if (selectedItems.length === 0) {
+      toast({ title: "Error", description: "Selecciona al menos un servicio o producto", variant: "destructive" });
       return;
     }
     if (!selectedStylistId) {
@@ -227,8 +294,13 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
       if (!user) throw new Error("No autenticado");
 
       const selectedStylist = stylists.find(s => s.id === selectedStylistId);
-      const servicesData = selectedServices.map(s => ({
-        id: s.id, name: s.name, price: s.price || 0, quantity: s.quantity, total: (s.price || 0) * s.quantity
+      const servicesData = selectedItems.map(s => ({
+        id: s.id, 
+        name: s.name, 
+        price: s.price, 
+        quantity: s.quantity, 
+        total: s.price * s.quantity,
+        type: s.type
       }));
 
       const paymentDetails: Record<string, unknown> = {};
@@ -276,7 +348,7 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Left Column - Service Selection */}
+      {/* Left Column - Service/Product Selection */}
       <div className="space-y-4">
         <div className="space-y-2">
           <Label className="text-sm font-medium flex items-center gap-2">
@@ -302,55 +374,149 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
           <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Nombre del cliente" />
         </div>
 
-        <div className="space-y-2">
-          <Label className="text-sm font-medium flex items-center gap-2"><Scissors className="h-4 w-4" />Servicios</Label>
-          <Accordion type="multiple" className="w-full">
-            {Object.entries(groupedServices).map(([category, categoryServices]) => (
-              <AccordionItem key={category} value={category}>
-                <AccordionTrigger className="text-sm">
-                  {category}<Badge variant="secondary" className="ml-2">{categoryServices.length}</Badge>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-1">
-                    {categoryServices.map((service) => {
-                      const isSelected = selectedServices.some(s => s.id === service.id);
-                      return (
-                        <div key={service.id}
-                          className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-muted/50"}`}
-                          onClick={() => toggleService(service)}>
-                          <div className="flex items-center gap-2">
-                            <Checkbox checked={isSelected} />
-                            <span className="text-sm">{service.name}</span>
-                          </div>
-                          <span className="text-sm font-medium">{service.price ? formatCurrency(service.price) : "—"}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
+        {/* Manual item entry */}
+        <Card className="border-dashed border-2 border-muted-foreground/30">
+          <CardContent className="p-3 space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <PenLine className="h-4 w-4" />Añadir importe manual
+            </Label>
+            <div className="flex gap-2">
+              <Input 
+                value={manualItemName} 
+                onChange={(e) => setManualItemName(e.target.value)} 
+                placeholder="Concepto" 
+                className="flex-1"
+              />
+              <Input 
+                type="number" 
+                value={manualItemPrice} 
+                onChange={(e) => setManualItemPrice(e.target.value)} 
+                placeholder="0.00" 
+                className="w-24 text-right"
+              />
+              <Button size="icon" onClick={addManualItem} variant="secondary">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-        {selectedServices.length > 0 && (
+        <Accordion type="multiple" className="w-full" defaultValue={["servicios"]}>
+          {/* Services */}
+          <AccordionItem value="servicios">
+            <AccordionTrigger className="text-sm font-medium">
+              <div className="flex items-center gap-2">
+                <Scissors className="h-4 w-4" />
+                Servicios
+                <Badge variant="secondary">{services.length}</Badge>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <Accordion type="multiple" className="w-full pl-2">
+                {Object.entries(groupedServices).map(([category, categoryServices]) => (
+                  <AccordionItem key={category} value={category}>
+                    <AccordionTrigger className="text-sm py-2">
+                      {category}<Badge variant="outline" className="ml-2">{categoryServices.length}</Badge>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-1">
+                        {categoryServices.map((service) => {
+                          const isSelected = selectedItems.some(s => s.id === service.id && s.type === "service");
+                          return (
+                            <div key={service.id}
+                              className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-muted/50"}`}
+                              onClick={() => toggleService(service)}>
+                              <div className="flex items-center gap-2">
+                                <Checkbox checked={isSelected} />
+                                <span className="text-sm">{service.name}</span>
+                              </div>
+                              <span className="text-sm font-medium">{service.price ? formatCurrency(service.price) : "Sin precio"}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Products */}
+          {products.length > 0 && (
+            <AccordionItem value="productos">
+              <AccordionTrigger className="text-sm font-medium">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Productos
+                  <Badge variant="secondary">{products.length}</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <Accordion type="multiple" className="w-full pl-2">
+                  {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+                    <AccordionItem key={category} value={`prod-${category}`}>
+                      <AccordionTrigger className="text-sm py-2">
+                        {category}<Badge variant="outline" className="ml-2">{categoryProducts.length}</Badge>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-1">
+                          {categoryProducts.map((product) => {
+                            const isSelected = selectedItems.some(s => s.id === product.id && s.type === "product");
+                            return (
+                              <div key={product.id}
+                                className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-muted/50"}`}
+                                onClick={() => toggleProduct(product)}>
+                                <div className="flex items-center gap-2">
+                                  <Checkbox checked={isSelected} />
+                                  <span className="text-sm">{product.name}</span>
+                                  <Badge variant="outline" className="text-xs">{product.stock} uds</Badge>
+                                </div>
+                                <span className="text-sm font-medium">{formatCurrency(product.price)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+        </Accordion>
+
+        {selectedItems.length > 0 && (
           <Card className="border-primary/20">
             <CardContent className="p-3 space-y-2">
-              <Label className="text-xs text-muted-foreground">Servicios seleccionados</Label>
-              {selectedServices.map((service) => (
-                <div key={service.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="flex-1 truncate">{service.name}</span>
+              <Label className="text-xs text-muted-foreground">Items seleccionados</Label>
+              {selectedItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-2 text-sm">
+                  <div className="flex items-center gap-1 flex-1">
+                    {item.type === "product" && <Package className="h-3 w-3 text-muted-foreground" />}
+                    {item.type === "manual" && <PenLine className="h-3 w-3 text-muted-foreground" />}
+                    <span className="truncate">{item.name}</span>
+                  </div>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); updateQuantity(service.id, -1); }}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); updateQuantity(item.id, -1); }}>
                       <Minus className="h-3 w-3" />
                     </Button>
-                    <span className="w-6 text-center">{service.quantity}</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); updateQuantity(service.id, 1); }}>
+                    <span className="w-6 text-center">{item.quantity}</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); updateQuantity(item.id, 1); }}>
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
-                  <span className="font-medium w-20 text-right">{formatCurrency((service.price || 0) * service.quantity)}</span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); removeService(service.id); }}>
+                  {(item.type === "manual" || !item.price) ? (
+                    <Input 
+                      type="number" 
+                      value={item.price} 
+                      onChange={(e) => updatePrice(item.id, parseFloat(e.target.value) || 0)}
+                      className="w-20 h-7 text-right text-sm"
+                    />
+                  ) : (
+                    <span className="font-medium w-20 text-right">{formatCurrency(item.price * item.quantity)}</span>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}>
                     <X className="h-3 w-3" />
                   </Button>
                 </div>
@@ -438,55 +604,63 @@ export const QuickPayment = ({ onTransactionCreated }: QuickPaymentProps) => {
                   <Input type="number" value={cardAmount} onChange={(e) => setCardAmount(e.target.value)} placeholder="0.00" className="text-center" />
                 </div>
               </div>
-              {getMixedRemaining() > 0.01 && <p className="text-sm text-destructive text-center">Falta asignar: {formatCurrency(getMixedRemaining())}</p>}
-              {getMixedRemaining() <= 0.01 && getMixedTotal() > 0 && <p className="text-sm text-green-600 text-center">✓ Total cubierto</p>}
-            </CardContent>
-          </Card>
-        )}
-
-        {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
-          <Card className="border-emerald-200/50 bg-emerald-50/50 dark:bg-emerald-950/20">
-            <CardContent className="p-3 space-y-3">
-              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-                <Calculator className="h-4 w-4" /><Label className="text-sm font-medium">Calcular cambio</Label>
-              </div>
-              <Input type="number" value={cashGiven} onChange={(e) => setCashGiven(e.target.value)} placeholder="Efectivo entregado" className="text-center font-semibold" />
-              <div className="grid grid-cols-4 gap-1">
-                {[5, 10, 20, 50].map((v) => (
-                  <Button key={v} variant="outline" size="sm" onClick={() => setCashGiven(v.toString())} className="text-xs h-8">{v}€</Button>
-                ))}
-              </div>
-              {getChange() > 0 && (
-                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg text-center">
-                  <span className="text-xs text-muted-foreground">Cambio</span>
-                  <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(getChange())}</div>
-                </div>
+              {getMixedRemaining() > 0.01 && (
+                <p className="text-sm text-orange-600 text-center">Resta: {formatCurrency(getMixedRemaining())}</p>
+              )}
+              {getMixedRemaining() <= 0.01 && getMixedTotal() > 0 && (
+                <p className="text-sm text-green-600 text-center flex items-center justify-center gap-1">
+                  <CheckCircle2 className="h-4 w-4" />Pago completo
+                </p>
               )}
             </CardContent>
           </Card>
         )}
 
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Notas (opcional)</Label>
-          <Textarea value={notes} onChange={(e) => setNotes(e.target.value.slice(0, 200))} placeholder="Añadir comentario..." className="resize-none h-12 text-sm" maxLength={200} />
+        {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Efectivo entregado</Label>
+            <Input type="number" value={cashGiven} onChange={(e) => setCashGiven(e.target.value)} placeholder="0.00" className="text-center text-lg" />
+            {getChange() > 0 && (
+              <p className="text-center text-lg font-bold text-green-600">Cambio: {formatCurrency(getChange())}</p>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Notas (opcional)</Label>
+          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notas adicionales..." rows={2} />
         </div>
 
-        <Card className="bg-primary/5 border-primary/20">
+        <Card className="bg-muted/50">
           <CardContent className="p-4 space-y-2">
-            <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-            {discountAmount > 0 && <div className="flex justify-between text-sm text-orange-600"><span>Descuento</span><span>-{formatCurrency(discountAmount)}</span></div>}
-            {tip > 0 && <div className="flex justify-between text-sm text-pink-600"><span>Propina</span><span>+{formatCurrency(tip)}</span></div>}
-            <div className="border-t pt-2 flex justify-between text-lg font-bold">
-              <span>Total</span><span className="text-primary">{formatCurrency(grandTotal)}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-sm text-orange-600">
+                <span>Descuento</span>
+                <span>-{formatCurrency(discountAmount)}</span>
+              </div>
+            )}
+            {tip > 0 && (
+              <div className="flex justify-between text-sm text-pink-600">
+                <span>Propina</span>
+                <span>+{formatCurrency(tip)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-lg font-bold pt-2 border-t">
+              <span>TOTAL</span>
+              <span>{formatCurrency(grandTotal)}</span>
             </div>
           </CardContent>
         </Card>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={clearAll} className="flex-shrink-0">Limpiar</Button>
-          <Button onClick={handleSubmit} disabled={loading || selectedServices.length === 0 || !selectedStylistId} className="flex-1 h-12 text-lg" size="lg">
-            {loading ? (<><Loader2 className="h-5 w-5 mr-2 animate-spin" />Registrando...</>) 
-              : (<><CheckCircle2 className="h-5 w-5 mr-2" />Cobrar {grandTotal > 0 ? formatCurrency(grandTotal) : ""}</>)}
+          <Button variant="outline" onClick={clearAll} className="flex-1">Limpiar</Button>
+          <Button onClick={handleSubmit} disabled={loading || selectedItems.length === 0} className="flex-1 gap-2">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            Cobrar
           </Button>
         </div>
       </div>

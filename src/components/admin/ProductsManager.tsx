@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -38,7 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Pencil, Trash2, Package, AlertTriangle } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Package, AlertTriangle, PackagePlus } from "lucide-react";
 
 interface Product {
   id: string;
@@ -64,6 +64,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
@@ -75,6 +76,10 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
     barcode: "",
     stock: "",
     min_stock: "",
+  });
+  const [stockEntry, setStockEntry] = useState({
+    quantity: "",
+    cost: "",
   });
   const { toast } = useToast();
 
@@ -121,6 +126,12 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
     setDialogOpen(true);
   };
 
+  const openStockDialog = (product: Product) => {
+    setSelectedProduct(product);
+    setStockEntry({ quantity: "", cost: product.cost.toString() });
+    setStockDialogOpen(true);
+  };
+
   const handleSave = async () => {
     if (!formData.name.trim() || !formData.price) {
       toast({ title: "Error", description: "Nombre y precio son obligatorios", variant: "destructive" });
@@ -159,6 +170,44 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
     } catch (error) {
       console.error("Error:", error);
       toast({ title: "Error", description: "No se pudo guardar el producto", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStockEntry = async () => {
+    if (!selectedProduct || !stockEntry.quantity) {
+      toast({ title: "Error", description: "Introduce la cantidad", variant: "destructive" });
+      return;
+    }
+
+    const quantity = parseInt(stockEntry.quantity) || 0;
+    if (quantity <= 0) {
+      toast({ title: "Error", description: "La cantidad debe ser mayor que 0", variant: "destructive" });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const newStock = selectedProduct.stock + quantity;
+      const newCost = parseFloat(stockEntry.cost) || selectedProduct.cost;
+
+      const { error } = await supabase
+        .from("products")
+        .update({ stock: newStock, cost: newCost })
+        .eq("id", selectedProduct.id);
+
+      if (error) throw error;
+      
+      toast({ 
+        title: "Stock actualizado", 
+        description: `Se añadieron ${quantity} unidades. Stock actual: ${newStock}` 
+      });
+      setStockDialogOpen(false);
+      fetchProducts();
+    } catch (error) {
+      console.error("Error:", error);
+      toast({ title: "Error", description: "No se pudo actualizar el stock", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -298,10 +347,11 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                 <TableRow>
                   <TableHead>Producto</TableHead>
                   <TableHead>Categoría</TableHead>
+                  <TableHead className="text-right">Coste</TableHead>
                   <TableHead className="text-right">Precio</TableHead>
                   <TableHead className="text-right">Stock</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead className="w-[100px]"></TableHead>
+                  <TableHead className="w-[140px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -314,6 +364,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                       </div>
                     </TableCell>
                     <TableCell><Badge variant="secondary">{product.category || "Sin categoría"}</Badge></TableCell>
+                    <TableCell className="text-right text-muted-foreground">{formatCurrency(product.cost)}</TableCell>
                     <TableCell className="text-right font-medium">{formatCurrency(product.price)}</TableCell>
                     <TableCell className="text-right">
                       <span className={product.stock <= product.min_stock ? "text-orange-600 font-medium" : ""}>
@@ -329,6 +380,9 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openStockDialog(product)} title="Entrada de stock">
+                          <PackagePlus className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => openDialog(product)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -353,6 +407,51 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
           </CardContent>
         </Card>
       )}
+
+      {/* Stock Entry Dialog */}
+      <Dialog open={stockDialogOpen} onOpenChange={setStockDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PackagePlus className="h-5 w-5" />
+              Entrada de stock
+            </DialogTitle>
+          </DialogHeader>
+          {selectedProduct && (
+            <div className="space-y-4 py-4">
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">{selectedProduct.name}</p>
+                <p className="text-sm text-muted-foreground">Stock actual: {selectedProduct.stock} unidades</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Cantidad a añadir *</Label>
+                <Input 
+                  type="number" 
+                  value={stockEntry.quantity} 
+                  onChange={(e) => setStockEntry({ ...stockEntry, quantity: e.target.value })} 
+                  placeholder="Ej: 10"
+                  className="text-center text-lg"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Precio de compra (opcional)</Label>
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  value={stockEntry.cost} 
+                  onChange={(e) => setStockEntry({ ...stockEntry, cost: e.target.value })} 
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-muted-foreground">Se actualizará el coste del producto</p>
+              </div>
+              <Button onClick={handleStockEntry} disabled={saving} className="w-full gap-2">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PackagePlus className="h-4 w-4" />}
+                Añadir stock
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
