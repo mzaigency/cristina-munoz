@@ -248,6 +248,13 @@ const TenantLanding = () => {
             />
           </div>
 
+          {/* Contact Section - Direct messaging */}
+          <TenantContactSection
+            tenantId={tenant.id}
+            tenantName={tenant.name}
+            primaryColor={primaryColor}
+          />
+
           {/* Reviews Section - Tenant specific */}
           <div id="resenas">
             <TenantReviewsSection
@@ -274,13 +281,6 @@ const TenantLanding = () => {
             instagramUrl={tenant.instagram_url}
             facebookUrl={tenant.facebook_url}
             googleMapsUrl={tenant.google_maps_url}
-            primaryColor={primaryColor}
-          />
-
-          {/* Contact Section - Direct messaging */}
-          <TenantContactSection
-            tenantId={tenant.id}
-            tenantName={tenant.name}
             primaryColor={primaryColor}
           />
 
