@@ -123,9 +123,9 @@ export function ConversationList({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Search bar for desktop */}
-      <div className="p-3 border-b border-border/30 hidden md:block">
+      <div className="p-3 border-b border-border/30 hidden md:block shrink-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -145,7 +145,8 @@ export function ConversationList({
         {searchTerm && ` para "${searchTerm}"`}
       </div>
 
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-hidden min-h-0">
+        <ScrollArea className="h-full">
         <div
           ref={listRef}
           role="listbox"
@@ -253,10 +254,11 @@ export function ConversationList({
             })
           )}
         </div>
-      </ScrollArea>
+        </ScrollArea>
+      </div>
 
       {/* Keyboard shortcuts hint */}
-      <div className="hidden md:flex items-center justify-center gap-4 p-2 border-t border-border/30 text-xs text-muted-foreground">
+      <div className="hidden md:flex items-center justify-center gap-4 p-2 border-t border-border/30 text-xs text-muted-foreground shrink-0">
         <span><kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">↑↓</kbd> Navegar</span>
         <span><kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">Enter</kbd> Seleccionar</span>
       </div>
