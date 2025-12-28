@@ -564,42 +564,6 @@ serve(async (req) => {
       }
     }
 
-    // Trigger n8n webhook (only for the first booking to avoid spam)
-    const n8nWebhookUrl = await getN8nWebhookUrl(supabase, tenantId);
-    if (n8nWebhookUrl) {
-      try {
-        const [day, month, year] = [
-          bookingDate.slice(8, 10),
-          bookingDate.slice(5, 7),
-          bookingDate.slice(0, 4)
-        ];
-        const formattedDate = `${day}-${month}-${year}`;
-
-        await fetch(n8nWebhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'new_booking',
-            customer_name,
-            phone: customer_phone,
-            email: customer_email,
-            date: formattedDate,
-            time: bookingTime.slice(0, 5),
-            stylist: actualStylist,
-            services: bookingData.services.map(s => s.name),
-            total_duration: bookingData.total_duration,
-            tenant_id: tenantId,
-            booking_ids: createdBookings.map(b => b.id),
-            is_recurring: !!bookingData.recurrence,
-            recurrence_count: bookingDates.length,
-          })
-        });
-        console.log('n8n webhook sent successfully');
-      } catch (webhookError) {
-        console.error('Error sending n8n webhook:', webhookError);
-      }
-    }
-
     return new Response(
       JSON.stringify({
         success: true,
