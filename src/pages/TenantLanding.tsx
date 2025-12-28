@@ -38,6 +38,10 @@ interface Tenant {
   facebook_url: string | null;
   whatsapp_number: string | null;
   google_maps_url: string | null;
+  font_heading?: string | null;
+  font_body?: string | null;
+  heading_size?: string | null;
+  button_style?: string | null;
 }
 
 const TenantLanding = () => {
@@ -137,6 +141,10 @@ const TenantLanding = () => {
     <TenantThemeProvider 
       primaryColor={primaryColor} 
       secondaryColor={tenant.secondary_color || "#D946EF"}
+      fontHeading={tenant.font_heading}
+      fontBody={tenant.font_body}
+      headingSize={tenant.heading_size}
+      buttonStyle={tenant.button_style}
     >
       <div className="min-h-screen bg-background overflow-x-hidden">
         {/* Preview Banner */}

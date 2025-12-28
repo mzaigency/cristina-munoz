@@ -3,15 +3,17 @@ import { useEffect } from "react";
 interface TenantThemeProviderProps {
   primaryColor: string;
   secondaryColor: string;
+  fontHeading?: string | null;
+  fontBody?: string | null;
+  headingSize?: string | null;
+  buttonStyle?: string | null;
   children: React.ReactNode;
 }
 
 // Convert hex to HSL values for CSS variables
 function hexToHsl(hex: string): { h: number; s: number; l: number } {
-  // Remove # if present
   hex = hex.replace(/^#/, '');
   
-  // Parse RGB values
   let r = parseInt(hex.substring(0, 2), 16) / 255;
   let g = parseInt(hex.substring(2, 4), 16) / 255;
   let b = parseInt(hex.substring(4, 6), 16) / 255;
@@ -46,15 +48,32 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } {
   };
 }
 
-// Generate lighter/darker variants
 function adjustLightness(h: number, s: number, l: number, amount: number): string {
   const newL = Math.max(0, Math.min(100, l + amount));
   return `${h} ${s}% ${newL}%`;
 }
 
+// Load Google Fonts dynamically
+function loadGoogleFont(fontFamily: string) {
+  const formattedFont = fontFamily.replace(/ /g, '+');
+  const linkId = `font-${formattedFont}`;
+  
+  if (document.getElementById(linkId)) return;
+  
+  const link = document.createElement('link');
+  link.id = linkId;
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${formattedFont}:wght@400;500;600;700&display=swap`;
+  document.head.appendChild(link);
+}
+
 export const TenantThemeProvider = ({ 
   primaryColor, 
-  secondaryColor, 
+  secondaryColor,
+  fontHeading = "Playfair Display",
+  fontBody = "Inter",
+  headingSize = "normal",
+  buttonStyle = "rounded",
   children 
 }: TenantThemeProviderProps) => {
   
@@ -80,7 +99,35 @@ export const TenantThemeProvider = ({
     root.style.setProperty('--salon-pink-light', adjustLightness(primary.h, primary.s, primary.l, 35));
     root.style.setProperty('--salon-pink-dark', adjustLightness(primary.h, primary.s, primary.l, -15));
     
-    // Cleanup function to reset styles
+    // Load and set fonts
+    if (fontHeading) {
+      loadGoogleFont(fontHeading);
+      root.style.setProperty('--font-heading', `"${fontHeading}", serif`);
+    }
+    if (fontBody) {
+      loadGoogleFont(fontBody);
+      root.style.setProperty('--font-body', `"${fontBody}", sans-serif`);
+    }
+    
+    // Set heading size scale
+    const sizeScale = {
+      small: '0.85',
+      normal: '1',
+      large: '1.15',
+      xlarge: '1.3'
+    };
+    root.style.setProperty('--heading-scale', sizeScale[headingSize as keyof typeof sizeScale] || '1');
+    
+    // Set button border radius
+    const buttonRadius = {
+      rounded: '0.5rem',
+      pill: '9999px',
+      square: '0.25rem',
+      sharp: '0'
+    };
+    root.style.setProperty('--button-radius', buttonRadius[buttonStyle as keyof typeof buttonRadius] || '0.5rem');
+    
+    // Cleanup function
     return () => {
       root.style.removeProperty('--primary');
       root.style.removeProperty('--primary-foreground');
@@ -90,8 +137,12 @@ export const TenantThemeProvider = ({
       root.style.removeProperty('--salon-pink');
       root.style.removeProperty('--salon-pink-light');
       root.style.removeProperty('--salon-pink-dark');
+      root.style.removeProperty('--font-heading');
+      root.style.removeProperty('--font-body');
+      root.style.removeProperty('--heading-scale');
+      root.style.removeProperty('--button-radius');
     };
-  }, [primaryColor, secondaryColor]);
+  }, [primaryColor, secondaryColor, fontHeading, fontBody, headingSize, buttonStyle]);
 
   return <>{children}</>;
 };

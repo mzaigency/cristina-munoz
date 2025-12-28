@@ -81,6 +81,10 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             className={`text-4xl md:text-6xl lg:text-7xl font-bold mb-6 ${
               hasHeroImage ? 'text-white' : 'text-primary'
             }`}
+            style={{ 
+              fontFamily: 'var(--font-heading, "Playfair Display", serif)',
+              transform: `scale(var(--heading-scale, 1))`
+            }}
           >
             {tenant.name}
           </motion.h1>
@@ -93,6 +97,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             className={`text-lg md:text-xl mb-8 max-w-2xl mx-auto ${
               hasHeroImage ? 'text-white/90' : 'text-muted-foreground'
             }`}
+            style={{ fontFamily: 'var(--font-body, "Inter", sans-serif)' }}
           >
             {tagline}
           </motion.p>
@@ -106,6 +111,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
               className={`flex items-center justify-center gap-2 mb-8 ${
                 hasHeroImage ? 'text-white/80' : 'text-muted-foreground'
               }`}
+              style={{ fontFamily: 'var(--font-body, "Inter", sans-serif)' }}
             >
               <MapPin className={`h-5 w-5 ${hasHeroImage ? 'text-white' : 'text-primary'}`} />
               <span>{tenant.address ? `${tenant.address}, ` : ''}{tenant.city}</span>
@@ -122,7 +128,11 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             <Button
               size="lg"
               onClick={onBookNow}
-              className="text-lg px-8 py-6 rounded-full hover:scale-105 transition-transform bg-primary text-primary-foreground"
+              className="text-lg px-8 py-6 hover:scale-105 transition-transform bg-primary text-primary-foreground"
+              style={{ 
+                fontFamily: 'var(--font-body, "Inter", sans-serif)',
+                borderRadius: 'var(--button-radius, 9999px)'
+              }}
             >
               <Calendar className="mr-2 h-5 w-5" />
               Reservar Cita
