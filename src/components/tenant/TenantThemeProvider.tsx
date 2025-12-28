@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface TenantThemeProviderProps {
   primaryColor: string;
@@ -76,6 +76,7 @@ export const TenantThemeProvider = ({
   buttonStyle = "rounded",
   children 
 }: TenantThemeProviderProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const root = document.documentElement;
@@ -83,7 +84,7 @@ export const TenantThemeProvider = ({
     const primary = hexToHsl(primaryColor);
     const secondary = hexToHsl(secondaryColor);
     
-    // Set primary color variants
+    // Set primary color variants (colors can be global as they're brand-specific per tenant)
     root.style.setProperty('--primary', `${primary.h} ${primary.s}% ${primary.l}%`);
     root.style.setProperty('--primary-foreground', primary.l > 50 ? '0 0% 0%' : '0 0% 100%');
     
@@ -99,35 +100,15 @@ export const TenantThemeProvider = ({
     root.style.setProperty('--salon-pink-light', adjustLightness(primary.h, primary.s, primary.l, 35));
     root.style.setProperty('--salon-pink-dark', adjustLightness(primary.h, primary.s, primary.l, -15));
     
-    // Load and set fonts
+    // Load fonts (they need to be available globally for the container to use them)
     if (fontHeading) {
       loadGoogleFont(fontHeading);
-      root.style.setProperty('--font-heading', `"${fontHeading}", serif`);
     }
     if (fontBody) {
       loadGoogleFont(fontBody);
-      root.style.setProperty('--font-body', `"${fontBody}", sans-serif`);
     }
     
-    // Set heading size scale
-    const sizeScale = {
-      small: '0.85',
-      normal: '1',
-      large: '1.15',
-      xlarge: '1.3'
-    };
-    root.style.setProperty('--heading-scale', sizeScale[headingSize as keyof typeof sizeScale] || '1');
-    
-    // Set button border radius
-    const buttonRadius = {
-      rounded: '0.5rem',
-      pill: '9999px',
-      square: '0.25rem',
-      sharp: '0'
-    };
-    root.style.setProperty('--button-radius', buttonRadius[buttonStyle as keyof typeof buttonRadius] || '0.5rem');
-    
-    // Cleanup function
+    // Cleanup function - restore original colors
     return () => {
       root.style.removeProperty('--primary');
       root.style.removeProperty('--primary-foreground');
@@ -137,14 +118,67 @@ export const TenantThemeProvider = ({
       root.style.removeProperty('--salon-pink');
       root.style.removeProperty('--salon-pink-light');
       root.style.removeProperty('--salon-pink-dark');
-      root.style.removeProperty('--font-heading');
-      root.style.removeProperty('--font-body');
-      root.style.removeProperty('--heading-scale');
-      root.style.removeProperty('--button-radius');
     };
-  }, [primaryColor, secondaryColor, fontHeading, fontBody, headingSize, buttonStyle]);
+  }, [primaryColor, secondaryColor, fontHeading, fontBody]);
 
-  return <>{children}</>;
+  // Calculate styles for the container
+  const sizeScale = {
+    small: 0.85,
+    normal: 1,
+    large: 1.15,
+    xlarge: 1.3
+  };
+  
+  const buttonRadius = {
+    rounded: '0.5rem',
+    pill: '9999px',
+    square: '0.25rem',
+    sharp: '0'
+  };
+
+  const scale = sizeScale[headingSize as keyof typeof sizeScale] || 1;
+  const radius = buttonRadius[buttonStyle as keyof typeof buttonRadius] || '0.5rem';
+
+  return (
+    <div 
+      ref={containerRef}
+      className="tenant-theme-container"
+      style={{
+        '--tenant-font-heading': fontHeading ? `"${fontHeading}", serif` : '"Playfair Display", serif',
+        '--tenant-font-body': fontBody ? `"${fontBody}", sans-serif` : '"Inter", sans-serif',
+        '--tenant-heading-scale': scale,
+        '--tenant-button-radius': radius,
+      } as React.CSSProperties}
+    >
+      <style>{`
+        .tenant-theme-container {
+          font-family: var(--tenant-font-body);
+        }
+        .tenant-theme-container h1,
+        .tenant-theme-container h2,
+        .tenant-theme-container h3,
+        .tenant-theme-container h4,
+        .tenant-theme-container h5,
+        .tenant-theme-container h6 {
+          font-family: var(--tenant-font-heading);
+        }
+        .tenant-theme-container h1 {
+          font-size: calc(2.25rem * var(--tenant-heading-scale));
+        }
+        .tenant-theme-container h2 {
+          font-size: calc(1.875rem * var(--tenant-heading-scale));
+        }
+        .tenant-theme-container h3 {
+          font-size: calc(1.5rem * var(--tenant-heading-scale));
+        }
+        .tenant-theme-container button,
+        .tenant-theme-container [role="button"] {
+          border-radius: var(--tenant-button-radius);
+        }
+      `}</style>
+      {children}
+    </div>
+  );
 };
 
 export default TenantThemeProvider;

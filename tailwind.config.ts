@@ -67,10 +67,8 @@ export default {
         },
       },
       fontFamily: {
-        'sans': ['var(--font-body)', 'Plus Jakarta Sans', 'DM Sans', 'system-ui', 'sans-serif'],
+        'sans': ['Plus Jakarta Sans', 'DM Sans', 'system-ui', 'sans-serif'],
         'display': ['Plus Jakarta Sans', 'sans-serif'],
-        'heading': ['var(--font-heading)', 'Playfair Display', 'serif'],
-        'body': ['var(--font-body)', 'Inter', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
