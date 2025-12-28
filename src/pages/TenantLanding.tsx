@@ -2,20 +2,17 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { InstallPWA } from "@/components/InstallPWA";
 import { Loader2 } from "lucide-react";
 import { TenantServicesSection } from "@/components/tenant/TenantServicesSection";
 import { TenantBookingFlow } from "@/components/tenant/TenantBookingFlow";
 import { TenantHero } from "@/components/tenant/TenantHero";
 import { TenantHeader } from "@/components/tenant/TenantHeader";
-
-// Lazy load below-the-fold components
-const GallerySection = lazy(() => import("@/components/GallerySection").then(m => ({ default: m.GallerySection })));
-const ReviewsSection = lazy(() => import("@/components/ReviewsSection").then(m => ({ default: m.ReviewsSection })));
-const WhatsAppSection = lazy(() => import("@/components/WhatsAppSection").then(m => ({ default: m.WhatsAppSection })));
-const LocationSection = lazy(() => import("@/components/LocationSection").then(m => ({ default: m.LocationSection })));
+import { TenantFooter } from "@/components/tenant/TenantFooter";
+import { TenantReviewsSection } from "@/components/tenant/TenantReviewsSection";
+import { TenantGallerySection } from "@/components/tenant/TenantGallerySection";
+import { TenantWhatsAppSection } from "@/components/tenant/TenantWhatsAppSection";
+import { TenantLocationSection } from "@/components/tenant/TenantLocationSection";
 
 interface Tenant {
   id: string;
@@ -33,6 +30,10 @@ interface Tenant {
   description: string | null;
   hero_image_url: string | null;
   is_active: boolean | null;
+  instagram_url: string | null;
+  facebook_url: string | null;
+  whatsapp_number: string | null;
+  google_maps_url: string | null;
 }
 
 const SectionSkeleton = () => (
@@ -94,7 +95,7 @@ const TenantLanding = () => {
         return;
       }
 
-      setTenant(tenantData);
+      setTenant(tenantData as Tenant);
     } catch (error) {
       console.error("Error fetching tenant:", error);
       navigate("/404");
@@ -113,10 +114,6 @@ const TenantLanding = () => {
 
   const handleBookNow = () => {
     scrollToSection("reserva");
-  };
-
-  const handleViewServices = () => {
-    scrollToSection("servicios");
   };
 
   if (loading) {
@@ -140,9 +137,7 @@ const TenantLanding = () => {
     `Peluquería profesional${tenant.city ? ` en ${tenant.city}` : ''}. Especialistas en corte, coloración, mechas, balayage, peinados y tratamientos capilares. Reserva tu cita online.`;
   const seoKeywords = `peluquería${tenant.city ? ` ${tenant.city}` : ''}, ${tenant.name}, corte de pelo, coloración, reserva online peluquería`;
 
-  // Build dynamic tagline
-  const dynamicTagline = tenant.tagline || 
-    `Tu peluquería de confianza${tenant.city ? ` en ${tenant.city}` : ''}. Donde la belleza y el estilo se encuentran.`;
+  const primaryColor = tenant.primary_color || "#8B5CF6";
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -161,77 +156,80 @@ const TenantLanding = () => {
         canonicalUrl={`/salon/${tenant.slug}`}
       />
       
-      {/* Use tenant-specific header if has custom branding */}
-      {tenant.logo_url || tenant.primary_color ? (
-        <TenantHeader 
-          tenant={tenant} 
-          onNavigate={scrollToSection} 
-          activeSection={activeSection} 
-        />
-      ) : (
-        <Header onNavigate={scrollToSection} activeSection={activeSection} />
-      )}
+      <TenantHeader 
+        tenant={tenant} 
+        onNavigate={scrollToSection} 
+        activeSection={activeSection} 
+      />
 
       <main className={isPreview ? "pt-10" : ""}>
+        {/* Hero Section */}
         <div id="inicio">
-          {/* Use tenant hero if has custom branding, otherwise use default */}
-          {tenant.hero_image_url || tenant.tagline ? (
-            <TenantHero 
-              tenant={tenant}
-              onBookNow={handleBookNow}
-            />
-          ) : (
-            <section 
-              className="relative min-h-[80vh] flex items-center justify-center pt-16"
-              style={{
-                background: tenant.hero_image_url 
-                  ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${tenant.hero_image_url}) center/cover`
-                  : `linear-gradient(135deg, ${tenant.primary_color || '#8B5CF6'}15 0%, ${tenant.secondary_color || '#EC4899'}15 100%)`
-              }}
-            >
-              <div className="container mx-auto px-4 text-center">
-                <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                  {tenant.name}
-                </h1>
-                <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                  {dynamicTagline}
-                </p>
-                <button
-                  onClick={handleBookNow}
-                  className="px-8 py-4 text-lg font-semibold text-white rounded-full transition-transform hover:scale-105"
-                  style={{ backgroundColor: tenant.primary_color || '#8B5CF6' }}
-                >
-                  Reservar Cita
-                </button>
-              </div>
-            </section>
-          )}
+          <TenantHero 
+            tenant={tenant}
+            onBookNow={handleBookNow}
+          />
         </div>
 
-        <Suspense fallback={<SectionSkeleton />}>
-          <div id="servicios">
-            <TenantServicesSection tenantId={tenant.id} tenantName={tenant.name} />
-          </div>
+        {/* Services Section - Tenant specific */}
+        <div id="servicios">
+          <TenantServicesSection 
+            tenantId={tenant.id} 
+            tenantName={tenant.name} 
+          />
+        </div>
 
-          <div id="reserva">
-            <TenantBookingFlow tenantId={tenant.id} tenantName={tenant.name} />
-          </div>
+        {/* Booking Section */}
+        <div id="reserva">
+          <TenantBookingFlow 
+            tenantId={tenant.id} 
+            tenantName={tenant.name} 
+          />
+        </div>
 
-          <WhatsAppSection />
+        {/* WhatsApp CTA - Tenant specific */}
+        <TenantWhatsAppSection
+          tenantName={tenant.name}
+          whatsappNumber={tenant.whatsapp_number}
+          phone={tenant.phone}
+          primaryColor={primaryColor}
+        />
 
-          <div id="galeria">
-            <GallerySection />
-          </div>
+        {/* Gallery Section - Tenant specific */}
+        <div id="galeria">
+          <TenantGallerySection
+            tenantId={tenant.id}
+            tenantName={tenant.name}
+            primaryColor={primaryColor}
+          />
+        </div>
 
-          <div id="resenas">
-            <ReviewsSection />
-          </div>
+        {/* Reviews Section - Tenant specific */}
+        <div id="resenas">
+          <TenantReviewsSection
+            tenantId={tenant.id}
+            tenantName={tenant.name}
+            primaryColor={primaryColor}
+          />
+        </div>
 
-          <LocationSection />
-        </Suspense>
+        {/* Location Section - Tenant specific */}
+        <TenantLocationSection
+          tenantName={tenant.name}
+          address={tenant.address}
+          city={tenant.city}
+          postalCode={tenant.postal_code}
+          phone={tenant.phone}
+          email={tenant.email}
+          instagramUrl={tenant.instagram_url}
+          facebookUrl={tenant.facebook_url}
+          googleMapsUrl={tenant.google_maps_url}
+          primaryColor={primaryColor}
+        />
 
+        {/* Footer - Tenant specific */}
         <div id="contacto">
-          <Footer />
+          <TenantFooter tenant={tenant} />
         </div>
       </main>
 

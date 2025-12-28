@@ -611,9 +611,12 @@ export type Database = {
           currency: string | null
           description: string | null
           email: string | null
+          facebook_url: string | null
           features: Json | null
+          google_maps_url: string | null
           hero_image_url: string | null
           id: string
+          instagram_url: string | null
           is_active: boolean | null
           logo_url: string | null
           max_services: number | null
@@ -631,6 +634,7 @@ export type Database = {
           tagline: string | null
           timezone: string | null
           updated_at: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           address?: string | null
@@ -640,9 +644,12 @@ export type Database = {
           currency?: string | null
           description?: string | null
           email?: string | null
+          facebook_url?: string | null
           features?: Json | null
+          google_maps_url?: string | null
           hero_image_url?: string | null
           id?: string
+          instagram_url?: string | null
           is_active?: boolean | null
           logo_url?: string | null
           max_services?: number | null
@@ -660,6 +667,7 @@ export type Database = {
           tagline?: string | null
           timezone?: string | null
           updated_at?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           address?: string | null
@@ -669,9 +677,12 @@ export type Database = {
           currency?: string | null
           description?: string | null
           email?: string | null
+          facebook_url?: string | null
           features?: Json | null
+          google_maps_url?: string | null
           hero_image_url?: string | null
           id?: string
+          instagram_url?: string | null
           is_active?: boolean | null
           logo_url?: string | null
           max_services?: number | null
@@ -689,6 +700,7 @@ export type Database = {
           tagline?: string | null
           timezone?: string | null
           updated_at?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: []
       }

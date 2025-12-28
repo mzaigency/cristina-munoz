@@ -1,4 +1,4 @@
-import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Instagram, Facebook } from "lucide-react";
 
 interface Tenant {
   id: string;
@@ -9,6 +9,8 @@ interface Tenant {
   address: string | null;
   city: string | null;
   postal_code: string | null;
+  instagram_url?: string | null;
+  facebook_url?: string | null;
 }
 
 interface TenantFooterProps {
@@ -23,22 +25,50 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
     <footer 
       className="py-16"
       style={{ 
-        background: `linear-gradient(135deg, ${primaryColor}10 0%, ${primaryColor}05 100%)` 
+        background: `linear-gradient(135deg, ${primaryColor}15 0%, ${primaryColor}05 100%)` 
       }}
     >
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
-          <div>
+          <div className="md:col-span-2">
             <h3 
               className="text-2xl font-bold mb-4"
               style={{ color: primaryColor }}
             >
               {tenant.name}
             </h3>
-            <p className="text-muted-foreground">
-              Tu peluquería de confianza. Profesionales dedicados a realzar tu belleza.
+            <p className="text-muted-foreground mb-4">
+              Tu peluquería de confianza{tenant.city && ` en ${tenant.city}`}. 
+              Profesionales dedicados a realzar tu belleza con los mejores tratamientos y técnicas.
             </p>
+            {/* Social Links */}
+            {(tenant.instagram_url || tenant.facebook_url) && (
+              <div className="flex gap-3 mt-4">
+                {tenant.instagram_url && (
+                  <a 
+                    href={tenant.instagram_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white hover:opacity-80 transition-opacity"
+                    aria-label="Instagram"
+                  >
+                    <Instagram className="h-5 w-5" />
+                  </a>
+                )}
+                {tenant.facebook_url && (
+                  <a 
+                    href={tenant.facebook_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-full bg-blue-600 text-white hover:opacity-80 transition-opacity"
+                    aria-label="Facebook"
+                  >
+                    <Facebook className="h-5 w-5" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Contact Info */}
@@ -95,18 +125,14 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
         <div className="border-t pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p>© {currentYear} {tenant.name}. Todos los derechos reservados.</p>
-            <p>
-              Desarrollado con{" "}
-              <a 
-                href="https://lovable.dev" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="hover:text-foreground transition-colors"
-                style={{ color: primaryColor }}
-              >
-                Lovable
+            <div className="flex items-center gap-4">
+              <a href="/privacidad" className="hover:text-foreground transition-colors">
+                Privacidad
               </a>
-            </p>
+              <a href="/terminos" className="hover:text-foreground transition-colors">
+                Términos
+              </a>
+            </div>
           </div>
         </div>
       </div>
