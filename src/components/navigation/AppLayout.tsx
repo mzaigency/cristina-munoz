@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { BottomNavigation } from "./BottomNavigation";
+import { useNavigation } from "@/contexts/NavigationContext";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -7,12 +8,16 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children, hideNavigation = false }: AppLayoutProps) {
+  const { isNavigationHidden } = useNavigation();
+  
+  const shouldHideNav = hideNavigation || isNavigationHidden;
+
   return (
     <div className="min-h-screen bg-background">
-      <main className={hideNavigation ? "" : "pb-20"}>
+      <main className={shouldHideNav ? "" : "pb-20"}>
         {children}
       </main>
-      {!hideNavigation && <BottomNavigation />}
+      {!shouldHideNav && <BottomNavigation />}
     </div>
   );
 }

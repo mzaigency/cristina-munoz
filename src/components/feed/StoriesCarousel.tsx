@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "motion/react";
-import { X, ChevronLeft, ChevronRight, Play, Pause, Plus } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Play, Pause, Plus, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { StoryCreator } from "./StoryCreator";
+import { StoryReplyInput } from "./StoryReplyInput";
+import { useNavigation } from "@/contexts/NavigationContext";
 
 interface Story {
   id: string;
@@ -36,9 +38,11 @@ export function StoriesCarousel() {
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showCreator, setShowCreator] = useState(false);
+  const [showReplyInput, setShowReplyInput] = useState(false);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   
   const { tenantId, tenant, loading: tenantLoading } = useCurrentUserTenant();
+  const { setNavigationHidden } = useNavigation();
   const queryClient = useQueryClient();
 
   const { data: storyGroups = [], isLoading } = useQuery({
@@ -76,7 +80,7 @@ export function StoriesCarousel() {
             tenant_id: story.tenant_id,
             tenant: story.tenant as Story["tenant"],
             stories: [story as Story],
-            hasUnviewed: true, // TODO: Track viewed stories
+            hasUnviewed: true,
           });
         }
         return acc;
@@ -86,23 +90,33 @@ export function StoriesCarousel() {
     },
   });
 
+  // Hide navigation when viewing/creating stories
+  useEffect(() => {
+    setNavigationHidden(!!selectedGroup || showCreator);
+  }, [selectedGroup, showCreator, setNavigationHidden]);
+
+  // Pause progress when reply input is open
+  useEffect(() => {
+    if (showReplyInput) {
+      setIsPaused(true);
+    }
+  }, [showReplyInput]);
+
   // Auto-progress timer
   useEffect(() => {
     if (selectedGroup && !isPaused) {
       progressInterval.current = setInterval(() => {
         setProgress((p) => {
           if (p >= 100) {
-            // Move to next story
             if (currentStoryIndex < selectedGroup.stories.length - 1) {
               setCurrentStoryIndex((i) => i + 1);
               return 0;
             } else {
-              // Close viewer or go to next group
               setSelectedGroup(null);
               return 0;
             }
           }
-          return p + 2; // 5 seconds total (100/2 * 100ms)
+          return p + 2;
         });
       }, 100);
     }
@@ -118,12 +132,14 @@ export function StoriesCarousel() {
     setSelectedGroup(group);
     setCurrentStoryIndex(0);
     setProgress(0);
+    setShowReplyInput(false);
   };
 
   const handleClose = () => {
     setSelectedGroup(null);
     setProgress(0);
     setCurrentStoryIndex(0);
+    setShowReplyInput(false);
   };
 
   const handlePrevStory = () => {
@@ -146,6 +162,11 @@ export function StoriesCarousel() {
     queryClient.invalidateQueries({ queryKey: ["salon-stories"] });
   };
 
+  const toggleReplyInput = () => {
+    setShowReplyInput(!showReplyInput);
+    setIsPaused(!showReplyInput);
+  };
+
   if (isLoading || tenantLoading) {
     return (
       <div className="flex gap-4 overflow-x-auto pb-2 px-4 scrollbar-hide">
@@ -159,12 +180,13 @@ export function StoriesCarousel() {
     );
   }
 
-  // Show carousel if there are stories OR if user can create stories
   const canCreateStory = !!tenantId;
   
   if (storyGroups.length === 0 && !canCreateStory) {
     return null;
   }
+
+  const currentStory = selectedGroup?.stories[currentStoryIndex];
 
   return (
     <>
@@ -205,7 +227,6 @@ export function StoriesCarousel() {
                       {tenant.name.slice(0, 2).toUpperCase()}
                     </div>
                   )}
-                  {/* Plus icon overlay */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
                       <Plus className="w-4 h-4 text-primary-foreground" />
@@ -275,12 +296,12 @@ export function StoriesCarousel() {
 
       {/* Story Viewer Modal */}
       <AnimatePresence>
-        {selectedGroup && (
+        {selectedGroup && currentStory && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black"
+            className="fixed inset-0 z-[100] bg-black"
             onClick={handleClose}
           >
             <motion.div
@@ -333,7 +354,7 @@ export function StoriesCarousel() {
                   <div>
                     <p className="text-white font-semibold text-sm">{selectedGroup.tenant.name}</p>
                     <p className="text-white/60 text-xs">
-                      {new Date(selectedGroup.stories[currentStoryIndex].created_at).toLocaleDateString()}
+                      {new Date(currentStory.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 </Link>
@@ -361,28 +382,28 @@ export function StoriesCarousel() {
               {/* Story Image */}
               <AnimatePresence mode="wait">
                 <motion.img
-                  key={selectedGroup.stories[currentStoryIndex].id}
+                  key={currentStory.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  src={selectedGroup.stories[currentStoryIndex].image_url}
+                  src={currentStory.image_url}
                   alt=""
                   className="w-full h-full object-contain"
                 />
               </AnimatePresence>
 
               {/* Caption */}
-              {selectedGroup.stories[currentStoryIndex].caption && (
-                <div className="absolute bottom-20 left-4 right-4 z-10">
+              {currentStory.caption && !showReplyInput && (
+                <div className="absolute bottom-32 left-4 right-4 z-10">
                   <p className="text-white text-center text-lg font-medium drop-shadow-lg">
-                    {selectedGroup.stories[currentStoryIndex].caption}
+                    {currentStory.caption}
                   </p>
                 </div>
               )}
 
               {/* Navigation Areas */}
               <button
-                className="absolute left-0 top-20 bottom-20 w-1/3"
+                className="absolute left-0 top-20 bottom-32 w-1/3"
                 onClick={handlePrevStory}
               >
                 {currentStoryIndex > 0 && (
@@ -390,22 +411,45 @@ export function StoriesCarousel() {
                 )}
               </button>
               <button
-                className="absolute right-0 top-20 bottom-20 w-1/3"
+                className="absolute right-0 top-20 bottom-32 w-1/3"
                 onClick={handleNextStory}
               >
                 <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 text-white/50" />
               </button>
 
-              {/* View Salon Button */}
-              <div className="absolute bottom-6 left-4 right-4 z-10">
-                <Link
-                  to={`/salon/${selectedGroup.tenant.slug}`}
-                  onClick={handleClose}
-                  className="block w-full py-3 rounded-full bg-white text-black font-semibold text-center hover:bg-white/90 transition-colors"
-                >
-                  Ver Salón
-                </Link>
-              </div>
+              {/* Bottom actions - Reply or View Salon */}
+              {!showReplyInput ? (
+                <div className="absolute bottom-6 left-4 right-4 z-10 flex gap-3">
+                  <button
+                    onClick={toggleReplyInput}
+                    className="flex-1 py-3 rounded-full bg-white/10 backdrop-blur-sm text-white font-medium text-center hover:bg-white/20 transition-colors flex items-center justify-center gap-2 border border-white/20"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Responder
+                  </button>
+                  <Link
+                    to={`/salon/${selectedGroup.tenant.slug}`}
+                    onClick={handleClose}
+                    className="flex-1 py-3 rounded-full bg-white text-black font-semibold text-center hover:bg-white/90 transition-colors"
+                  >
+                    Ver Salón
+                  </Link>
+                </div>
+              ) : (
+                <StoryReplyInput
+                  tenantId={selectedGroup.tenant_id}
+                  tenantName={selectedGroup.tenant.name}
+                  storyId={currentStory.id}
+                  onClose={() => {
+                    setShowReplyInput(false);
+                    setIsPaused(false);
+                  }}
+                  onSent={() => {
+                    setShowReplyInput(false);
+                    setIsPaused(false);
+                  }}
+                />
+              )}
             </motion.div>
           </motion.div>
         )}
