@@ -77,7 +77,7 @@ export const JoinNetworkSection = () => {
             </ul>
 
             <Button asChild variant="outline" className="w-full">
-              <Link to="/auth?mode=register&plan=monthly">
+              <Link to="/onboarding">
                 Empezar prueba gratis
               </Link>
             </Button>
@@ -129,7 +129,7 @@ export const JoinNetworkSection = () => {
             </ul>
 
             <Button asChild className="w-full gradient-primary text-primary-foreground">
-              <Link to="/auth?mode=register&plan=annual">
+              <Link to="/onboarding">
                 Empezar prueba gratis
               </Link>
             </Button>

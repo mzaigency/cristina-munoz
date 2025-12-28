@@ -53,3 +53,9 @@ verify_jwt = false
 
 [functions.send-daily-reminders]
 verify_jwt = false
+
+[functions.create-business-checkout]
+verify_jwt = true
+
+[functions.provision-business]
+verify_jwt = true
