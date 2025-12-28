@@ -6,22 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper function to get n8n cancel webhook URL
-async function getN8nCancelWebhookUrl(supabase: any, tenantId: string): Promise<string | null> {
-  const { data: integration } = await supabase
-    .from('tenant_integrations')
-    .select('settings, is_enabled')
-    .eq('tenant_id', tenantId)
-    .eq('integration_type', 'n8n')
-    .eq('is_enabled', true)
-    .maybeSingle();
-
-  if (integration?.settings?.cancel_webhook_url) {
-    return integration.settings.cancel_webhook_url;
-  }
-
-  return Deno.env.get('N8N_CANCEL_WEBHOOK_URL') || null;
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -236,47 +220,6 @@ serve(async (req) => {
           }
         } catch (whatsappError) {
           console.error('Error sending WhatsApp cancellation:', whatsappError);
-        }
-      }
-    }
-
-    // Trigger n8n webhook (for reminders and other flows)
-    if (tenantId) {
-      const cancelWebhookUrl = await getN8nCancelWebhookUrl(supabase, tenantId);
-      
-      if (cancelWebhookUrl) {
-        try {
-          const webhookData = bookings.map(booking => {
-            const dateStr = booking.Fecha.toString();
-            const [year, month, day] = dateStr.split('-');
-            const formattedDate = `${day}-${month}-${year}`;
-            
-            return {
-              booking_id: booking.id,
-              customer_name: booking.customer_name,
-              Telefono: booking.Telefono,
-              Fecha: formattedDate,
-              Hora: booking.Hora,
-              stylist: booking.stylist,
-              services: booking.services,
-              tenant_id: tenantId,
-            };
-          });
-
-          await fetch(cancelWebhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'cancellation',
-              bookings: webhookData,
-              user: cancelUser,
-              tenant_id: tenantId,
-            }),
-          });
-
-          console.log('n8n cancel webhook sent successfully');
-        } catch (webhookError) {
-          console.error('Error sending n8n webhook:', webhookError);
         }
       }
     }
