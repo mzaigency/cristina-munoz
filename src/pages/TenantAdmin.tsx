@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, Home, Calendar, Star, MessageCircle, BarChart3, Wallet, ExternalLink, Settings, Scissors, Users, Clock } from "lucide-react";
+import { LogOut, Loader2, Home, Calendar, Star, MessageCircle, BarChart3, Wallet, ExternalLink, Settings, Scissors, Users, Clock, ImageIcon } from "lucide-react";
 import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
 import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
@@ -13,6 +13,7 @@ import { TenantSettings } from "@/components/admin/TenantSettings";
 import { ServicesManager } from "@/components/admin/ServicesManager";
 import { StylistsManager } from "@/components/admin/StylistsManager";
 import { BusinessHoursManager } from "@/components/admin/BusinessHoursManager";
+import { StoriesAnalytics } from "@/components/admin/StoriesAnalytics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Tenant {
@@ -338,6 +339,13 @@ export default function TenantAdmin() {
               )}
             </TabsTrigger>
             <TabsTrigger
+              value="stories"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              <ImageIcon className="h-4 w-4" />
+              <span className="hidden md:inline">Stories</span>
+            </TabsTrigger>
+            <TabsTrigger
               value="security"
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-b-2 border-transparent px-3 md:px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
@@ -384,6 +392,9 @@ export default function TenantAdmin() {
           </TabsContent>
           <TabsContent value="messages" className="mt-6">
             <MessagesManager tenantId={tenant.id} />
+          </TabsContent>
+          <TabsContent value="stories" className="mt-6">
+            <StoriesAnalytics tenantId={tenant.id} />
           </TabsContent>
           <TabsContent value="security" className="mt-6">
             <SecurityMonitor tenantId={tenant.id} />
