@@ -1585,6 +1585,56 @@ export type Database = {
           total_duration: number
         }[]
       }
+      get_public_tenant_by_slug: {
+        Args: { _slug: string }
+        Returns: {
+          address: string
+          average_price: number
+          button_style: string
+          city: string
+          country: string
+          description: string
+          email: string
+          facebook_url: string
+          features: Json
+          font_body: string
+          font_heading: string
+          google_maps_url: string
+          heading_size: string
+          hero_image_url: string
+          hero_images: Json
+          id: string
+          instagram_url: string
+          logo_url: string
+          name: string
+          phone: string
+          postal_code: string
+          primary_color: string
+          secondary_color: string
+          slug: string
+          tagline: string
+          whatsapp_number: string
+        }[]
+      }
+      get_public_tenants: {
+        Args: never
+        Returns: {
+          address: string
+          average_price: number
+          city: string
+          description: string
+          features: Json
+          hero_image_url: string
+          hero_images: Json
+          id: string
+          logo_url: string
+          name: string
+          primary_color: string
+          secondary_color: string
+          slug: string
+          tagline: string
+        }[]
+      }
       get_tenant_by_slug: { Args: { _slug: string }; Returns: string }
       get_user_tenant_id: { Args: never; Returns: string }
       has_role: {

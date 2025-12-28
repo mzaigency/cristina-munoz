@@ -85,11 +85,9 @@ const Index = () => {
   const { data: salons, isLoading } = useQuery({
     queryKey: ["salons-premium-hub"],
     queryFn: async () => {
+      // Use security-safe RPC function that only exposes public fields
       const { data: tenants, error: tenantsError } = await supabase
-        .from("tenants")
-        .select("id, name, slug, logo_url, hero_image_url, primary_color, city, address, description, tagline, average_price, features")
-        .eq("is_active", true)
-        .order("name");
+        .rpc("get_public_tenants");
 
       if (tenantsError) throw tenantsError;
 

@@ -30,10 +30,11 @@ interface Tenant {
   address: string | null;
   city: string | null;
   postal_code: string | null;
+  country?: string | null;
   tagline: string | null;
   description: string | null;
   hero_image_url: string | null;
-  is_active: boolean | null;
+  hero_images?: unknown;
   instagram_url: string | null;
   facebook_url: string | null;
   whatsapp_number: string | null;
@@ -42,6 +43,7 @@ interface Tenant {
   font_body?: string | null;
   heading_size?: string | null;
   button_style?: string | null;
+  average_price?: number | null;
   features?: {
     business_type?: string;
     business_type_label?: string;
@@ -76,35 +78,31 @@ const TenantLanding = () => {
 
   const fetchTenantData = async () => {
     try {
-      let query = supabase
-        .from("tenants")
-        .select("*")
-        .eq("slug", slug);
+      // Use security-safe RPC function that only exposes public fields
+      const { data: tenantData, error: tenantError } = await supabase
+        .rpc("get_public_tenant_by_slug", { _slug: slug });
 
-      // If preview token exists, allow inactive tenants
-      if (previewToken) {
-        query = query.or(`is_active.eq.true,preview_token.eq.${previewToken}`);
-        setIsPreview(true);
-      } else {
-        query = query.eq("is_active", true);
-      }
-
-      const { data: tenantData, error: tenantError } = await query.maybeSingle();
-
-      if (tenantError || !tenantData) {
+      if (tenantError) {
         console.error("Tenant not found:", tenantError);
         navigate("/404");
         return;
       }
 
-      // Validate preview token if provided
-      if (previewToken && tenantData.preview_token !== previewToken && !tenantData.is_active) {
-        console.error("Invalid preview token");
+      // RPC returns an array, get first item
+      const tenant = Array.isArray(tenantData) ? tenantData[0] : tenantData;
+
+      if (!tenant) {
+        console.error("Tenant not found");
         navigate("/404");
         return;
       }
 
-      setTenant(tenantData as Tenant);
+      // Check if this is a preview (for admin bar purposes)
+      if (previewToken) {
+        setIsPreview(true);
+      }
+
+      setTenant(tenant as Tenant);
     } catch (error) {
       console.error("Error fetching tenant:", error);
       navigate("/404");
