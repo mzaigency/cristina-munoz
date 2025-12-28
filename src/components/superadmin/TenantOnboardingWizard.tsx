@@ -37,7 +37,9 @@ import {
   Palette,
   Scissors,
   Upload,
-  Image
+  Image,
+  UserPlus,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -67,7 +69,7 @@ interface BusinessHours {
 interface Service {
   name: string;
   category: string;
-  type: "simple" | "compuesto";
+  type: "Simple" | "Compuesto";
   durationPart1: number;
   durationPause: number;
   durationPart2: number;
@@ -102,10 +104,11 @@ const SERVICE_CATEGORIES = [
 const STEPS = [
   { id: 1, title: "Datos básicos", icon: Building2 },
   { id: 2, title: "Personalización", icon: Palette },
-  { id: 3, title: "Estilistas", icon: Users },
-  { id: 4, title: "Servicios", icon: Scissors },
-  { id: 5, title: "Horarios", icon: Clock },
-  { id: 6, title: "Integraciones", icon: Calendar },
+  { id: 3, title: "Administrador", icon: UserPlus },
+  { id: 4, title: "Estilistas", icon: Users },
+  { id: 5, title: "Servicios", icon: Scissors },
+  { id: 6, title: "Horarios", icon: Clock },
+  { id: 7, title: "Integraciones", icon: Calendar },
 ];
 
 export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: TenantOnboardingWizardProps) {
@@ -114,6 +117,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
   const [showSecrets, setShowSecrets] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
 
   // Step 1: Basic Info
@@ -137,17 +141,24 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     heroImageUrl: "",
   });
 
-  // Step 3: Stylists
+  // Step 3: Admin
+  const [adminInfo, setAdminInfo] = useState({
+    email: "",
+    name: "",
+    sendWelcomeEmail: true,
+  });
+
+  // Step 4: Stylists
   const [stylists, setStylists] = useState<Stylist[]>([
     { name: "", slug: "", color: COLORS[0], calendarId: "" }
   ]);
 
-  // Step 4: Services
+  // Step 5: Services
   const [services, setServices] = useState<Service[]>([
-    { name: "", category: "Corte", type: "simple", durationPart1: 30, durationPause: 0, durationPart2: 0 }
+    { name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0 }
   ]);
 
-  // Step 5: Business Hours
+  // Step 6: Business Hours
   const [businessHours, setBusinessHours] = useState<BusinessHours[]>(
     DAYS.map(d => ({
       day: d.day,
@@ -160,7 +171,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     }))
   );
 
-  // Step 6: Integrations
+  // Step 7: Integrations
   const [gcalEnabled, setGcalEnabled] = useState(false);
   const [gcalCredentials, setGcalCredentials] = useState({
     clientId: "",
@@ -179,8 +190,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     setCurrentStep(1);
     setBasicInfo({ name: "", slug: "", email: "", phone: "", address: "", city: "", postalCode: "" });
     setCustomization({ tagline: "", description: "", primaryColor: "#8B5CF6", secondaryColor: "#EC4899", logoUrl: "", heroImageUrl: "" });
+    setAdminInfo({ email: "", name: "", sendWelcomeEmail: true });
     setStylists([{ name: "", slug: "", color: COLORS[0], calendarId: "" }]);
-    setServices([{ name: "", category: "Corte", type: "simple", durationPart1: 30, durationPause: 0, durationPart2: 0 }]);
+    setServices([{ name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0 }]);
     setBusinessHours(DAYS.map(d => ({
       day: d.day,
       dayName: d.name,
@@ -194,6 +206,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     setGcalCredentials({ clientId: "", clientSecret: "", refreshToken: "" });
     setN8nEnabled(false);
     setN8nWebhooks({ webhookUrl: "", cancelWebhookUrl: "", whatsappWebhookUrl: "" });
+    setShowPreview(false);
   };
 
   const handleClose = () => {
@@ -231,7 +244,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     setServices([...services, { 
       name: "", 
       category: "Corte", 
-      type: "simple", 
+      type: "Simple", 
       durationPart1: 30, 
       durationPause: 0, 
       durationPart2: 0 
@@ -312,6 +325,15 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     }
   };
 
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
   const validateStep = (): boolean => {
     switch (currentStep) {
       case 1:
@@ -325,6 +347,25 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         }
         return true;
       case 3:
+        if (!adminInfo.email) {
+          toast({
+            title: "Error",
+            description: "El email del administrador es obligatorio",
+            variant: "destructive",
+          });
+          return false;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(adminInfo.email)) {
+          toast({
+            title: "Error",
+            description: "Email no válido",
+            variant: "destructive",
+          });
+          return false;
+        }
+        return true;
+      case 4:
         const validStylists = stylists.filter(s => s.name && s.slug);
         if (validStylists.length === 0) {
           toast({
@@ -335,7 +376,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           return false;
         }
         return true;
-      case 4:
+      case 5:
         const validServices = services.filter(s => s.name && s.category);
         if (validServices.length === 0) {
           toast({
@@ -366,6 +407,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
     setSaving(true);
     try {
+      // Generate password for admin
+      const adminPassword = generatePassword();
+
       // 1. Create tenant with all customization data
       const { data: tenant, error: tenantError } = await supabase
         .from("tenants")
@@ -387,11 +431,82 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         .select()
         .single();
 
-      if (tenantError) throw tenantError;
+      if (tenantError) {
+        if (tenantError.code === '23505') {
+          throw new Error(`El slug "${basicInfo.slug}" ya existe. Por favor, elige otro.`);
+        }
+        throw tenantError;
+      }
 
       const tenantId = tenant.id;
 
-      // 2. Create stylists
+      // 2. Create admin user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: adminInfo.email,
+        password: adminPassword,
+        options: {
+          data: {
+            full_name: adminInfo.name || basicInfo.name,
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // 3. Assign admin role
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert({
+            user_id: authData.user.id,
+            role: 'admin',
+          });
+
+        if (roleError) console.error("Error assigning role:", roleError);
+
+        // 4. Link admin to tenant
+        const { error: adminError } = await supabase
+          .from("tenant_admins")
+          .insert({
+            tenant_id: tenantId,
+            user_id: authData.user.id,
+            is_owner: true,
+          });
+
+        if (adminError) console.error("Error linking admin:", adminError);
+
+        // 5. Send welcome email with credentials
+        if (adminInfo.sendWelcomeEmail) {
+          try {
+            await supabase.functions.invoke('send-tenant-welcome', {
+              body: {
+                email: adminInfo.email,
+                name: adminInfo.name || basicInfo.name,
+                tenantName: basicInfo.name,
+                tenantSlug: basicInfo.slug,
+                password: adminPassword,
+              },
+            });
+          } catch (emailError) {
+            console.error("Error sending welcome email:", emailError);
+            // Show password in toast if email fails
+            toast({
+              title: "Email no enviado",
+              description: `Credenciales: ${adminInfo.email} / ${adminPassword}`,
+              duration: 30000,
+            });
+          }
+        } else {
+          // Show password in toast
+          toast({
+            title: "Credenciales del administrador",
+            description: `Email: ${adminInfo.email} | Contraseña: ${adminPassword}`,
+            duration: 30000,
+          });
+        }
+      }
+
+      // 6. Create stylists
       const validStylists = stylists.filter(s => s.name && s.slug);
       if (validStylists.length > 0) {
         const stylistsData = validStylists.map(s => ({
@@ -409,7 +524,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         if (stylistsError) throw stylistsError;
       }
 
-      // 3. Create services
+      // 7. Create services
       const validServices = services.filter(s => s.name && s.category);
       if (validServices.length > 0) {
         const servicesData = validServices.map(s => ({
@@ -418,8 +533,8 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           category: s.category,
           type: s.type,
           duration_part1_active: s.durationPart1,
-          duration_exposure_pause: s.type === "compuesto" ? s.durationPause : 0,
-          duration_part2_active: s.type === "compuesto" ? s.durationPart2 : 0,
+          duration_exposure_pause: s.type === "Compuesto" ? s.durationPause : 0,
+          duration_part2_active: s.type === "Compuesto" ? s.durationPart2 : 0,
         }));
 
         const { error: servicesError } = await supabase
@@ -429,7 +544,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         if (servicesError) throw servicesError;
       }
 
-      // 4. Create business hours
+      // 8. Create business hours
       const hoursData = businessHours.map(h => ({
         tenant_id: tenantId,
         day_of_week: h.day,
@@ -446,7 +561,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
       if (hoursError) throw hoursError;
 
-      // 5. Create Google Calendar integration if enabled
+      // 9. Create Google Calendar integration if enabled
       if (gcalEnabled && gcalCredentials.clientId) {
         const credentials = JSON.stringify({
           client_id: gcalCredentials.clientId,
@@ -479,7 +594,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         if (gcalError) throw gcalError;
       }
 
-      // 6. Create n8n integration if enabled
+      // 10. Create n8n integration if enabled
       if (n8nEnabled && (n8nWebhooks.webhookUrl || n8nWebhooks.cancelWebhookUrl)) {
         const { error: n8nError } = await supabase
           .from("tenant_integrations")
@@ -516,675 +631,698 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     }
   };
 
+  // Live Preview Component
+  const LandingPreview = () => (
+    <div className="border rounded-lg overflow-hidden bg-background shadow-lg">
+      {/* Hero Section Preview */}
+      <div 
+        className="relative h-48 flex items-center justify-center"
+        style={{
+          background: customization.heroImageUrl 
+            ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${customization.heroImageUrl}) center/cover`
+            : `linear-gradient(135deg, ${customization.primaryColor}, ${customization.secondaryColor})`
+        }}
+      >
+        <div className="text-center text-white z-10">
+          {customization.logoUrl && (
+            <img src={customization.logoUrl} alt="Logo" className="h-12 mx-auto mb-2" />
+          )}
+          <h2 className="text-2xl font-bold">{basicInfo.name || "Nombre del Salón"}</h2>
+          <p className="text-sm opacity-90">{customization.tagline || "Tu eslogan aquí"}</p>
+          {basicInfo.city && (
+            <p className="text-xs opacity-75 mt-1">{basicInfo.address}, {basicInfo.city}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Services Preview */}
+      <div className="p-4">
+        <h3 className="font-semibold mb-3" style={{ color: customization.primaryColor }}>
+          Nuestros Servicios
+        </h3>
+        <div className="grid grid-cols-2 gap-2">
+          {services.filter(s => s.name).slice(0, 4).map((service, i) => (
+            <div 
+              key={i} 
+              className="p-2 rounded text-xs border"
+              style={{ borderColor: `${customization.primaryColor}30` }}
+            >
+              <span className="font-medium">{service.name}</span>
+              <span className="text-muted-foreground ml-1">({service.durationPart1}min)</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Stylists Preview */}
+      {stylists.filter(s => s.name).length > 0 && (
+        <div className="p-4 border-t">
+          <h3 className="font-semibold mb-3" style={{ color: customization.primaryColor }}>
+            Nuestro Equipo
+          </h3>
+          <div className="flex gap-3">
+            {stylists.filter(s => s.name).slice(0, 3).map((stylist, i) => (
+              <div key={i} className="text-center">
+                <div 
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold mx-auto"
+                  style={{ backgroundColor: stylist.color }}
+                >
+                  {stylist.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-xs mt-1 block">{stylist.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CTA Button Preview */}
+      <div className="p-4 border-t">
+        <Button 
+          className="w-full text-white"
+          style={{ backgroundColor: customization.primaryColor }}
+        >
+          Reservar Cita
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
             Crear Nuevo Tenant
           </DialogTitle>
           <DialogDescription>
-            Configura todos los aspectos de la nueva peluquería para una página totalmente personalizada
+            Configura todos los aspectos de la nueva peluquería
           </DialogDescription>
         </DialogHeader>
 
-        {/* Step Indicator */}
-        <div className="flex items-center justify-between mb-6 px-2 overflow-x-auto">
-          {STEPS.map((step, index) => (
-            <div key={step.id} className="flex items-center flex-shrink-0">
-              <div className={cn(
-                "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors",
-                currentStep === step.id 
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : currentStep > step.id
-                    ? "border-primary bg-primary/20 text-primary"
-                    : "border-muted-foreground/30 text-muted-foreground"
-              )}>
-                {currentStep > step.id ? (
-                  <Check className="h-5 w-5" />
-                ) : (
-                  <step.icon className="h-5 w-5" />
-                )}
-              </div>
-              {index < STEPS.length - 1 && (
-                <div className={cn(
-                  "w-6 h-0.5 mx-1",
-                  currentStep > step.id ? "bg-primary" : "bg-muted-foreground/30"
-                )} />
-              )}
-            </div>
-          ))}
+        {/* Toggle Preview */}
+        <div className="flex justify-end mb-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPreview(!showPreview)}
+            className="gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            {showPreview ? "Ocultar vista previa" : "Ver vista previa"}
+          </Button>
         </div>
 
-        <div className="text-center mb-4">
-          <h3 className="font-semibold">{STEPS[currentStep - 1].title}</h3>
-          <p className="text-sm text-muted-foreground">Paso {currentStep} de {STEPS.length}</p>
-        </div>
-
-        {/* Step Content */}
-        <div className="min-h-[350px]">
-          {/* Step 1: Basic Info */}
-          {currentStep === 1 && (
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nombre del negocio *</Label>
-                  <Input
-                    id="name"
-                    placeholder="Peluquería Cristina"
-                    value={basicInfo.name}
-                    onChange={(e) => setBasicInfo({ 
-                      ...basicInfo, 
-                      name: e.target.value,
-                      slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
-                    })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="slug">Slug (URL) *</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">/salon/</span>
-                    <Input
-                      id="slug"
-                      placeholder="peluqueria-cristina"
-                      value={basicInfo.slug}
-                      onChange={(e) => setBasicInfo({ ...basicInfo, slug: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email de contacto</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="contacto@peluqueria.com"
-                    value={basicInfo.email}
-                    onChange={(e) => setBasicInfo({ ...basicInfo, email: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  <Input
-                    id="phone"
-                    placeholder="612 345 678"
-                    value={basicInfo.phone}
-                    onChange={(e) => setBasicInfo({ ...basicInfo, phone: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Dirección completa</Label>
-                <Input
-                  id="address"
-                  placeholder="Calle Principal, 123"
-                  value={basicInfo.address}
-                  onChange={(e) => setBasicInfo({ ...basicInfo, address: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="city">Ciudad</Label>
-                  <Input
-                    id="city"
-                    placeholder="Madrid"
-                    value={basicInfo.city}
-                    onChange={(e) => setBasicInfo({ ...basicInfo, city: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="postalCode">Código Postal</Label>
-                  <Input
-                    id="postalCode"
-                    placeholder="28001"
-                    value={basicInfo.postalCode}
-                    onChange={(e) => setBasicInfo({ ...basicInfo, postalCode: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Customization */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="tagline">Tagline / Eslogan</Label>
-                <Input
-                  id="tagline"
-                  placeholder="Tu estilo, nuestra pasión"
-                  value={customization.tagline}
-                  onChange={(e) => setCustomization({ ...customization, tagline: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Descripción del negocio</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe tu peluquería, servicios destacados, historia..."
-                  value={customization.description}
-                  onChange={(e) => setCustomization({ ...customization, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-3">
-                  <Label>Color Principal</Label>
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-wrap gap-2">
-                      {COLORS.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          className={cn(
-                            "w-8 h-8 rounded-full border-2 transition-all",
-                            customization.primaryColor === color ? "border-foreground scale-110" : "border-transparent"
-                          )}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setCustomization({ ...customization, primaryColor: color })}
-                        />
-                      ))}
-                    </div>
-                    <Input
-                      type="color"
-                      value={customization.primaryColor}
-                      onChange={(e) => setCustomization({ ...customization, primaryColor: e.target.value })}
-                      className="w-12 h-10 p-1"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <Label>Color Secundario</Label>
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-wrap gap-2">
-                      {COLORS.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          className={cn(
-                            "w-8 h-8 rounded-full border-2 transition-all",
-                            customization.secondaryColor === color ? "border-foreground scale-110" : "border-transparent"
-                          )}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setCustomization({ ...customization, secondaryColor: color })}
-                        />
-                      ))}
-                    </div>
-                    <Input
-                      type="color"
-                      value={customization.secondaryColor}
-                      onChange={(e) => setCustomization({ ...customization, secondaryColor: e.target.value })}
-                      className="w-12 h-10 p-1"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Preview */}
-              <div 
-                className="p-4 rounded-lg border"
-                style={{ 
-                  background: `linear-gradient(135deg, ${customization.primaryColor}20, ${customization.secondaryColor}20)`
-                }}
-              >
-                <p className="text-sm text-muted-foreground mb-2">Vista previa de colores:</p>
-                <div className="flex gap-3">
-                  <Button style={{ backgroundColor: customization.primaryColor }} className="text-white">
-                    Reservar
-                  </Button>
-                  <Button variant="outline" style={{ borderColor: customization.secondaryColor, color: customization.secondaryColor }}>
-                    Ver más
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-3">
-                  <Label>Logo</Label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                    {customization.logoUrl ? (
-                      <div className="space-y-2">
-                        <img src={customization.logoUrl} alt="Logo" className="max-h-20 mx-auto" />
-                        <Button variant="outline" size="sm" onClick={() => setCustomization({ ...customization, logoUrl: "" })}>
-                          Cambiar
-                        </Button>
-                      </div>
+        <div className={cn("grid gap-6", showPreview ? "md:grid-cols-2" : "grid-cols-1")}>
+          {/* Main Content */}
+          <div>
+            {/* Step Indicator */}
+            <div className="flex items-center justify-between mb-6 px-2 overflow-x-auto">
+              {STEPS.map((step, index) => (
+                <div key={step.id} className="flex items-center flex-shrink-0">
+                  <div className={cn(
+                    "flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors",
+                    currentStep === step.id 
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : currentStep > step.id
+                        ? "border-primary bg-primary/20 text-primary"
+                        : "border-muted-foreground/30 text-muted-foreground"
+                  )}>
+                    {currentStep > step.id ? (
+                      <Check className="h-4 w-4" />
                     ) : (
-                      <label className="cursor-pointer">
-                        <div className="flex flex-col items-center gap-2">
-                          {uploadingLogo ? (
-                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                          ) : (
-                            <Upload className="h-8 w-8 text-muted-foreground" />
-                          )}
-                          <span className="text-sm text-muted-foreground">Subir logo</span>
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleImageUpload(file, 'logo');
-                          }}
-                          disabled={uploadingLogo}
-                        />
-                      </label>
+                      <step.icon className="h-4 w-4" />
                     )}
                   </div>
-                  <Input
-                    placeholder="O introduce URL del logo"
-                    value={customization.logoUrl}
-                    onChange={(e) => setCustomization({ ...customization, logoUrl: e.target.value })}
-                  />
+                  {index < STEPS.length - 1 && (
+                    <div className={cn(
+                      "w-4 h-0.5 mx-0.5",
+                      currentStep > step.id ? "bg-primary" : "bg-muted-foreground/30"
+                    )} />
+                  )}
                 </div>
-
-                <div className="space-y-3">
-                  <Label>Imagen Hero (cabecera)</Label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                    {customization.heroImageUrl ? (
-                      <div className="space-y-2">
-                        <img src={customization.heroImageUrl} alt="Hero" className="max-h-20 mx-auto object-cover rounded" />
-                        <Button variant="outline" size="sm" onClick={() => setCustomization({ ...customization, heroImageUrl: "" })}>
-                          Cambiar
-                        </Button>
-                      </div>
-                    ) : (
-                      <label className="cursor-pointer">
-                        <div className="flex flex-col items-center gap-2">
-                          {uploadingHero ? (
-                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                          ) : (
-                            <Image className="h-8 w-8 text-muted-foreground" />
-                          )}
-                          <span className="text-sm text-muted-foreground">Subir imagen hero</span>
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleImageUpload(file, 'hero');
-                          }}
-                          disabled={uploadingHero}
-                        />
-                      </label>
-                    )}
-                  </div>
-                  <Input
-                    placeholder="O introduce URL de la imagen"
-                    value={customization.heroImageUrl}
-                    onChange={(e) => setCustomization({ ...customization, heroImageUrl: e.target.value })}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
-          )}
 
-          {/* Step 3: Stylists */}
-          {currentStep === 3 && (
-            <div className="space-y-4">
-              {stylists.map((stylist, index) => (
-                <div key={index} className="p-4 border rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Estilista {index + 1}</span>
-                    {stylists.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeStylist(index)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-3">
+            <div className="text-center mb-4">
+              <h3 className="font-semibold">{STEPS[currentStep - 1].title}</h3>
+              <p className="text-sm text-muted-foreground">Paso {currentStep} de {STEPS.length}</p>
+            </div>
+
+            {/* Step Content */}
+            <div className="min-h-[300px]">
+              {/* Step 1: Basic Info */}
+              {currentStep === 1 && (
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label>Nombre *</Label>
+                      <Label htmlFor="name">Nombre del negocio *</Label>
                       <Input
-                        placeholder="Cristina"
-                        value={stylist.name}
-                        onChange={(e) => updateStylist(index, "name", e.target.value)}
+                        id="name"
+                        placeholder="Peluquería Cristina"
+                        value={basicInfo.name}
+                        onChange={(e) => setBasicInfo({ 
+                          ...basicInfo, 
+                          name: e.target.value,
+                          slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
+                        })}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Slug *</Label>
+                      <Label htmlFor="slug">Slug (URL) *</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">/salon/</span>
+                        <Input
+                          id="slug"
+                          placeholder="peluqueria-cristina"
+                          value={basicInfo.slug}
+                          onChange={(e) => setBasicInfo({ ...basicInfo, slug: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email de contacto</Label>
                       <Input
-                        placeholder="cris"
-                        value={stylist.slug}
-                        onChange={(e) => updateStylist(index, "slug", e.target.value)}
+                        id="email"
+                        type="email"
+                        placeholder="contacto@peluqueria.com"
+                        value={basicInfo.email}
+                        onChange={(e) => setBasicInfo({ ...basicInfo, email: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Color</Label>
-                      <div className="flex gap-2">
-                        {COLORS.slice(0, 6).map((color) => (
-                          <button
-                            key={color}
-                            type="button"
-                            className={cn(
-                              "w-7 h-7 rounded-full border-2 transition-all",
-                              stylist.color === color ? "border-foreground scale-110" : "border-transparent"
-                            )}
-                            style={{ backgroundColor: color }}
-                            onClick={() => updateStylist(index, "color", color)}
-                          />
-                        ))}
-                      </div>
+                      <Label htmlFor="phone">Teléfono</Label>
+                      <Input
+                        id="phone"
+                        placeholder="612 345 678"
+                        value={basicInfo.phone}
+                        onChange={(e) => setBasicInfo({ ...basicInfo, phone: e.target.value })}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Google Calendar ID (opcional)</Label>
+                    <Label htmlFor="address">Dirección completa</Label>
                     <Input
-                      placeholder="calendar-id@group.calendar.google.com"
-                      value={stylist.calendarId}
-                      onChange={(e) => updateStylist(index, "calendarId", e.target.value)}
+                      id="address"
+                      placeholder="Calle Principal, 123"
+                      value={basicInfo.address}
+                      onChange={(e) => setBasicInfo({ ...basicInfo, address: e.target.value })}
                     />
                   </div>
-                </div>
-              ))}
-              <Button variant="outline" onClick={addStylist} className="w-full gap-2">
-                <Plus className="h-4 w-4" />
-                Añadir estilista
-              </Button>
-            </div>
-          )}
-
-          {/* Step 4: Services */}
-          {currentStep === 4 && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Añade los servicios que ofrece tu peluquería. Los servicios "compuestos" tienen tiempo de espera entre dos fases (ej: tintes).
-              </p>
-              {services.map((service, index) => (
-                <div key={index} className="p-4 border rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Servicio {index + 1}</span>
-                    {services.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeService(index)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-3">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label>Nombre *</Label>
+                      <Label htmlFor="city">Ciudad</Label>
                       <Input
-                        placeholder="Corte de pelo"
-                        value={service.name}
-                        onChange={(e) => updateService(index, "name", e.target.value)}
+                        id="city"
+                        placeholder="Madrid"
+                        value={basicInfo.city}
+                        onChange={(e) => setBasicInfo({ ...basicInfo, city: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Categoría *</Label>
-                      <Select
-                        value={service.category}
-                        onValueChange={(value) => updateService(index, "category", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SERVICE_CATEGORIES.map(cat => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      <Label htmlFor="postalCode">Código Postal</Label>
+                      <Input
+                        id="postalCode"
+                        placeholder="28001"
+                        value={basicInfo.postalCode}
+                        onChange={(e) => setBasicInfo({ ...basicInfo, postalCode: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Customization */}
+              {currentStep === 2 && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tagline">Tagline / Eslogan</Label>
+                    <Input
+                      id="tagline"
+                      placeholder="Tu estilo, nuestra pasión"
+                      value={customization.tagline}
+                      onChange={(e) => setCustomization({ ...customization, tagline: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Descripción</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Describe tu peluquería..."
+                      value={customization.description}
+                      onChange={(e) => setCustomization({ ...customization, description: e.target.value })}
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Color Principal</Label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap gap-1">
+                          {COLORS.slice(0, 5).map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              className={cn(
+                                "w-6 h-6 rounded-full border-2 transition-all",
+                                customization.primaryColor === color ? "border-foreground scale-110" : "border-transparent"
+                              )}
+                              style={{ backgroundColor: color }}
+                              onClick={() => setCustomization({ ...customization, primaryColor: color })}
+                            />
                           ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Tipo</Label>
-                      <Select
-                        value={service.type}
-                        onValueChange={(value) => updateService(index, "type", value as "simple" | "compuesto")}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="simple">Simple</SelectItem>
-                          <SelectItem value="compuesto">Compuesto</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label>Duración {service.type === "compuesto" ? "Parte 1" : ""} (min)</Label>
-                      <Input
-                        type="number"
-                        min={5}
-                        step={5}
-                        value={service.durationPart1}
-                        onChange={(e) => updateService(index, "durationPart1", parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    {service.type === "compuesto" && (
-                      <>
-                        <div className="space-y-2">
-                          <Label>Pausa/Exposición (min)</Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={5}
-                            value={service.durationPause}
-                            onChange={(e) => updateService(index, "durationPause", parseInt(e.target.value) || 0)}
-                          />
                         </div>
-                        <div className="space-y-2">
-                          <Label>Duración Parte 2 (min)</Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={5}
-                            value={service.durationPart2}
-                            onChange={(e) => updateService(index, "durationPart2", parseInt(e.target.value) || 0)}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <Button variant="outline" onClick={addService} className="w-full gap-2">
-                <Plus className="h-4 w-4" />
-                Añadir servicio
-              </Button>
-            </div>
-          )}
-
-          {/* Step 5: Business Hours */}
-          {currentStep === 5 && (
-            <div className="space-y-4">
-              <div className="flex justify-end">
-                <Button variant="outline" size="sm" onClick={copyFirstDayToAll}>
-                  Copiar horario a todos
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {businessHours.map((hour, index) => (
-                  <div key={hour.day} className="flex items-center gap-3 p-3 border rounded-lg">
-                    <div className="w-24 flex-shrink-0">
-                      <span className="font-medium text-sm">{hour.dayName}</span>
-                    </div>
-                    <Switch
-                      checked={hour.isOpen}
-                      onCheckedChange={(checked) => updateBusinessHours(index, "isOpen", checked)}
-                    />
-                    {hour.isOpen ? (
-                      <div className="flex items-center gap-2 flex-1 flex-wrap">
                         <Input
-                          type="time"
-                          value={hour.openTime}
-                          onChange={(e) => updateBusinessHours(index, "openTime", e.target.value)}
-                          className="w-24"
-                        />
-                        <span className="text-muted-foreground">-</span>
-                        <Input
-                          type="time"
-                          value={hour.closeTime}
-                          onChange={(e) => updateBusinessHours(index, "closeTime", e.target.value)}
-                          className="w-24"
-                        />
-                        <span className="text-muted-foreground text-xs">Desc:</span>
-                        <Input
-                          type="time"
-                          value={hour.breakStart}
-                          onChange={(e) => updateBusinessHours(index, "breakStart", e.target.value)}
-                          className="w-24"
-                        />
-                        <span className="text-muted-foreground">-</span>
-                        <Input
-                          type="time"
-                          value={hour.breakEnd}
-                          onChange={(e) => updateBusinessHours(index, "breakEnd", e.target.value)}
-                          className="w-24"
+                          type="color"
+                          value={customization.primaryColor}
+                          onChange={(e) => setCustomization({ ...customization, primaryColor: e.target.value })}
+                          className="w-10 h-8 p-1"
                         />
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">Cerrado</span>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Color Secundario</Label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap gap-1">
+                          {COLORS.slice(0, 5).map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              className={cn(
+                                "w-6 h-6 rounded-full border-2 transition-all",
+                                customization.secondaryColor === color ? "border-foreground scale-110" : "border-transparent"
+                              )}
+                              style={{ backgroundColor: color }}
+                              onClick={() => setCustomization({ ...customization, secondaryColor: color })}
+                            />
+                          ))}
+                        </div>
+                        <Input
+                          type="color"
+                          value={customization.secondaryColor}
+                          onChange={(e) => setCustomization({ ...customization, secondaryColor: e.target.value })}
+                          className="w-10 h-8 p-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Logo</Label>
+                      <div className="border-2 border-dashed rounded-lg p-3 text-center">
+                        {customization.logoUrl ? (
+                          <div className="space-y-2">
+                            <img src={customization.logoUrl} alt="Logo" className="max-h-16 mx-auto" />
+                            <Button variant="outline" size="sm" onClick={() => setCustomization({ ...customization, logoUrl: "" })}>
+                              Cambiar
+                            </Button>
+                          </div>
+                        ) : (
+                          <label className="cursor-pointer">
+                            <div className="flex flex-col items-center gap-1">
+                              {uploadingLogo ? (
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                              ) : (
+                                <Upload className="h-6 w-6 text-muted-foreground" />
+                              )}
+                              <span className="text-xs text-muted-foreground">Subir logo</span>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleImageUpload(file, 'logo');
+                              }}
+                              disabled={uploadingLogo}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Imagen Hero</Label>
+                      <div className="border-2 border-dashed rounded-lg p-3 text-center">
+                        {customization.heroImageUrl ? (
+                          <div className="space-y-2">
+                            <img src={customization.heroImageUrl} alt="Hero" className="max-h-16 mx-auto object-cover rounded" />
+                            <Button variant="outline" size="sm" onClick={() => setCustomization({ ...customization, heroImageUrl: "" })}>
+                              Cambiar
+                            </Button>
+                          </div>
+                        ) : (
+                          <label className="cursor-pointer">
+                            <div className="flex flex-col items-center gap-1">
+                              {uploadingHero ? (
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                              ) : (
+                                <Image className="h-6 w-6 text-muted-foreground" />
+                              )}
+                              <span className="text-xs text-muted-foreground">Subir hero</span>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleImageUpload(file, 'hero');
+                              }}
+                              disabled={uploadingHero}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Admin */}
+              {currentStep === 3 && (
+                <div className="space-y-6">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3 mb-3">
+                      <UserPlus className="h-5 w-5 text-primary" />
+                      <div>
+                        <h4 className="font-medium">Administrador del Tenant</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Se creará una cuenta de administrador con acceso completo al panel
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="adminEmail">Email del administrador *</Label>
+                      <Input
+                        id="adminEmail"
+                        type="email"
+                        placeholder="admin@peluqueria.com"
+                        value={adminInfo.email}
+                        onChange={(e) => setAdminInfo({ ...adminInfo, email: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="adminName">Nombre del administrador</Label>
+                      <Input
+                        id="adminName"
+                        placeholder="Juan García"
+                        value={adminInfo.name}
+                        onChange={(e) => setAdminInfo({ ...adminInfo, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Mail className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <Label className="cursor-pointer">Enviar email de bienvenida</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Se enviará un email con las credenciales de acceso
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={adminInfo.sendWelcomeEmail}
+                        onCheckedChange={(checked) => setAdminInfo({ ...adminInfo, sendWelcomeEmail: checked })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Stylists */}
+              {currentStep === 4 && (
+                <div className="space-y-3">
+                  {stylists.map((stylist, index) => (
+                    <div key={index} className="p-3 border rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm">Estilista {index + 1}</span>
+                        {stylists.length > 1 && (
+                          <Button variant="ghost" size="sm" onClick={() => removeStylist(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-3">
+                        <Input
+                          placeholder="Nombre *"
+                          value={stylist.name}
+                          onChange={(e) => updateStylist(index, "name", e.target.value)}
+                        />
+                        <Input
+                          placeholder="Slug *"
+                          value={stylist.slug}
+                          onChange={(e) => updateStylist(index, "slug", e.target.value)}
+                        />
+                        <div className="flex gap-1">
+                          {COLORS.slice(0, 6).map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              className={cn(
+                                "w-6 h-6 rounded-full border-2 transition-all",
+                                stylist.color === color ? "border-foreground scale-110" : "border-transparent"
+                              )}
+                              style={{ backgroundColor: color }}
+                              onClick={() => updateStylist(index, "color", color)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <Button variant="outline" onClick={addStylist} className="w-full gap-2" size="sm">
+                    <Plus className="h-4 w-4" />
+                    Añadir estilista
+                  </Button>
+                </div>
+              )}
+
+              {/* Step 5: Services */}
+              {currentStep === 5 && (
+                <div className="space-y-3">
+                  {services.map((service, index) => (
+                    <div key={index} className="p-3 border rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm">Servicio {index + 1}</span>
+                        {services.length > 1 && (
+                          <Button variant="ghost" size="sm" onClick={() => removeService(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-4">
+                        <Input
+                          placeholder="Nombre *"
+                          value={service.name}
+                          onChange={(e) => updateService(index, "name", e.target.value)}
+                        />
+                        <Select
+                          value={service.category}
+                          onValueChange={(value) => updateService(index, "category", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SERVICE_CATEGORIES.map(cat => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          value={service.type}
+                          onValueChange={(value) => updateService(index, "type", value as "Simple" | "Compuesto")}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Simple">Simple</SelectItem>
+                            <SelectItem value="Compuesto">Compuesto</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          min={5}
+                          step={5}
+                          placeholder="Duración (min)"
+                          value={service.durationPart1}
+                          onChange={(e) => updateService(index, "durationPart1", parseInt(e.target.value) || 0)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <Button variant="outline" onClick={addService} className="w-full gap-2" size="sm">
+                    <Plus className="h-4 w-4" />
+                    Añadir servicio
+                  </Button>
+                </div>
+              )}
+
+              {/* Step 6: Business Hours */}
+              {currentStep === 6 && (
+                <div className="space-y-2">
+                  <div className="flex justify-end mb-2">
+                    <Button variant="outline" size="sm" onClick={copyFirstDayToAll}>
+                      Copiar a todos
+                    </Button>
+                  </div>
+                  {businessHours.map((hour, index) => (
+                    <div key={hour.day} className="flex items-center gap-2 p-2 border rounded-lg text-sm">
+                      <div className="w-20 flex-shrink-0">
+                        <span className="font-medium">{hour.dayName}</span>
+                      </div>
+                      <Switch
+                        checked={hour.isOpen}
+                        onCheckedChange={(checked) => updateBusinessHours(index, "isOpen", checked)}
+                      />
+                      {hour.isOpen ? (
+                        <div className="flex items-center gap-1 flex-1 flex-wrap">
+                          <Input
+                            type="time"
+                            value={hour.openTime}
+                            onChange={(e) => updateBusinessHours(index, "openTime", e.target.value)}
+                            className="w-24 h-8"
+                          />
+                          <span>-</span>
+                          <Input
+                            type="time"
+                            value={hour.closeTime}
+                            onChange={(e) => updateBusinessHours(index, "closeTime", e.target.value)}
+                            className="w-24 h-8"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Cerrado</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Step 7: Integrations */}
+              {currentStep === 7 && (
+                <div className="space-y-4">
+                  <div className="border rounded-lg p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <Label>Google Calendar</Label>
+                      </div>
+                      <Switch checked={gcalEnabled} onCheckedChange={setGcalEnabled} />
+                    </div>
+                    {gcalEnabled && (
+                      <div className="space-y-2 pt-2 border-t">
+                        <div className="flex justify-end">
+                          <Button variant="ghost" size="sm" onClick={() => setShowSecrets(!showSecrets)}>
+                            {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        <Input
+                          type={showSecrets ? "text" : "password"}
+                          placeholder="Client ID"
+                          value={gcalCredentials.clientId}
+                          onChange={(e) => setGcalCredentials({ ...gcalCredentials, clientId: e.target.value })}
+                        />
+                        <Input
+                          type={showSecrets ? "text" : "password"}
+                          placeholder="Client Secret"
+                          value={gcalCredentials.clientSecret}
+                          onChange={(e) => setGcalCredentials({ ...gcalCredentials, clientSecret: e.target.value })}
+                        />
+                        <Input
+                          type={showSecrets ? "text" : "password"}
+                          placeholder="Refresh Token"
+                          value={gcalCredentials.refreshToken}
+                          onChange={(e) => setGcalCredentials({ ...gcalCredentials, refreshToken: e.target.value })}
+                        />
+                      </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Step 6: Integrations */}
-          {currentStep === 6 && (
-            <div className="space-y-6">
-              {/* Google Calendar */}
-              <div className="border rounded-lg p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5" />
-                    <div>
-                      <Label className="text-base">Google Calendar</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Sincroniza las citas con Google Calendar
-                      </p>
-                    </div>
-                  </div>
-                  <Switch checked={gcalEnabled} onCheckedChange={setGcalEnabled} />
-                </div>
-
-                {gcalEnabled && (
-                  <div className="space-y-3 pt-2 border-t">
+                  <div className="border rounded-lg p-3 space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm">Credenciales OAuth2</Label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowSecrets(!showSecrets)}
-                      >
-                        {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Webhook className="h-4 w-4" />
+                        <Label>n8n Webhooks</Label>
+                      </div>
+                      <Switch checked={n8nEnabled} onCheckedChange={setN8nEnabled} />
                     </div>
-                    <div className="grid gap-3">
-                      <Input
-                        type={showSecrets ? "text" : "password"}
-                        placeholder="Client ID"
-                        value={gcalCredentials.clientId}
-                        onChange={(e) => setGcalCredentials({ ...gcalCredentials, clientId: e.target.value })}
-                      />
-                      <Input
-                        type={showSecrets ? "text" : "password"}
-                        placeholder="Client Secret"
-                        value={gcalCredentials.clientSecret}
-                        onChange={(e) => setGcalCredentials({ ...gcalCredentials, clientSecret: e.target.value })}
-                      />
-                      <Input
-                        type={showSecrets ? "text" : "password"}
-                        placeholder="Refresh Token"
-                        value={gcalCredentials.refreshToken}
-                        onChange={(e) => setGcalCredentials({ ...gcalCredentials, refreshToken: e.target.value })}
-                      />
-                    </div>
+                    {n8nEnabled && (
+                      <div className="space-y-2 pt-2 border-t">
+                        <Input
+                          placeholder="Webhook URL (nueva reserva)"
+                          value={n8nWebhooks.webhookUrl}
+                          onChange={(e) => setN8nWebhooks({ ...n8nWebhooks, webhookUrl: e.target.value })}
+                        />
+                        <Input
+                          placeholder="Cancel Webhook URL"
+                          value={n8nWebhooks.cancelWebhookUrl}
+                          onChange={(e) => setN8nWebhooks({ ...n8nWebhooks, cancelWebhookUrl: e.target.value })}
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* n8n Webhooks */}
-              <div className="border rounded-lg p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Webhook className="h-5 w-5" />
-                    <div>
-                      <Label className="text-base">n8n Webhooks</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Automatizaciones con n8n
-                      </p>
-                    </div>
-                  </div>
-                  <Switch checked={n8nEnabled} onCheckedChange={setN8nEnabled} />
+                  <p className="text-xs text-muted-foreground text-center">
+                    Las integraciones se pueden modificar después desde el panel
+                  </p>
                 </div>
-
-                {n8nEnabled && (
-                  <div className="space-y-3 pt-2 border-t">
-                    <Input
-                      placeholder="Webhook URL (nueva reserva)"
-                      value={n8nWebhooks.webhookUrl}
-                      onChange={(e) => setN8nWebhooks({ ...n8nWebhooks, webhookUrl: e.target.value })}
-                    />
-                    <Input
-                      placeholder="Cancel Webhook URL"
-                      value={n8nWebhooks.cancelWebhookUrl}
-                      onChange={(e) => setN8nWebhooks({ ...n8nWebhooks, cancelWebhookUrl: e.target.value })}
-                    />
-                    <Input
-                      placeholder="WhatsApp Webhook URL"
-                      value={n8nWebhooks.whatsappWebhookUrl}
-                      onChange={(e) => setN8nWebhooks({ ...n8nWebhooks, whatsappWebhookUrl: e.target.value })}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <p className="text-sm text-muted-foreground text-center">
-                Las integraciones se pueden configurar o modificar más tarde desde el panel de administración.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={currentStep === 1 ? handleClose : prevStep}
-            disabled={saving}
-          >
-            {currentStep === 1 ? (
-              "Cancelar"
-            ) : (
-              <>
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Anterior
-              </>
-            )}
-          </Button>
-
-          {currentStep < STEPS.length ? (
-            <Button onClick={nextStep} disabled={saving}>
-              Siguiente
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          ) : (
-            <Button onClick={handleComplete} disabled={saving} className="gap-2">
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
               )}
-              Crear Tenant
-            </Button>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={currentStep === 1 ? handleClose : prevStep}
+                disabled={saving}
+              >
+                {currentStep === 1 ? "Cancelar" : (
+                  <>
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Anterior
+                  </>
+                )}
+              </Button>
+
+              {currentStep < STEPS.length ? (
+                <Button onClick={nextStep} disabled={saving}>
+                  Siguiente
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              ) : (
+                <Button onClick={handleComplete} disabled={saving} className="gap-2">
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  Crear Tenant
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Preview Panel */}
+          {showPreview && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-sm flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                Vista previa de la landing
+              </h4>
+              <LandingPreview />
+            </div>
           )}
         </div>
       </DialogContent>
