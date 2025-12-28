@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Menu, User, LogOut, Shield, Home, Scissors, Calendar, ImageIcon, Star, Info, Phone } from "lucide-react";
+import { Menu, User, LogOut, Shield, Home, Scissors, Calendar, ImageIcon, Star, Info, Phone, MessageCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -132,6 +132,13 @@ export const Header = ({
     });
     setTimeout(() => navigate("/perfil"), 300);
   };
+  const handleMessagesClick = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+    setTimeout(() => navigate("/mensajes"), 300);
+  };
   const handleAdminClick = () => {
     window.scrollTo({
       top: 0,
@@ -244,6 +251,10 @@ export const Header = ({
                 <DropdownMenuItem onClick={handleMyBookingsClick}>
                   <Calendar className="h-4 w-4 mr-2" />
                   Tus Citas
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleMessagesClick}>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Mensajes
                 </DropdownMenuItem>
                 {isAdmin && <>
                     <DropdownMenuSeparator />
