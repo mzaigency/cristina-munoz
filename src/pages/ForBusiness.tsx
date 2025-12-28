@@ -63,8 +63,9 @@ export default function ForBusiness() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-foreground">
-            GlowUp
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/favicon.png" alt="GlowUp" className="h-8 w-8" />
+            <span className="text-xl font-bold text-foreground">GlowUp</span>
           </Link>
           <Button asChild>
             <Link to="/onboarding">
@@ -328,9 +329,12 @@ export default function ForBusiness() {
       {/* Footer */}
       <footer className="py-8 px-4 border-t border-border">
         <div className="container mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            © 2024 GlowUp. Todos los derechos reservados.
-          </p>
+          <div className="flex items-center gap-2">
+            <img src="/favicon.png" alt="GlowUp" className="h-6 w-6" />
+            <p className="text-sm text-muted-foreground">
+              © 2024 GlowUp. Todos los derechos reservados.
+            </p>
+          </div>
           <div className="flex gap-4">
             <Link to="/terminos" className="text-sm text-muted-foreground hover:text-foreground">
               Términos de uso
