@@ -244,27 +244,30 @@ serve(async (req) => {
     // Skip validations if admin explicitly requests it
     if (!bookingData.skipAvailabilityCheck) {
       // Check if customer already has a booking at this date/time
-      const { data: existingCustomerBooking } = await supabase
-        .from('bookings')
-        .select('id, customer_name, Hora, Telefono')
-        .eq('Fecha', bookingDate)
-        .eq('Hora', bookingTime)
-        .eq('status', 'confirmed')
-        .eq('tenant_id', tenantId);
-      
-      if (existingCustomerBooking && existingCustomerBooking.length > 0) {
-        const duplicateBooking = existingCustomerBooking.find(booking => 
-          normalizePhone(booking.Telefono || '') === normalizedPhone
-        );
+      // Only check if phone is provided (can't identify customer without it)
+      if (normalizedPhone && normalizedPhone.length >= 9) {
+        const { data: existingCustomerBooking } = await supabase
+          .from('bookings')
+          .select('id, customer_name, Hora, Telefono')
+          .eq('Fecha', bookingDate)
+          .eq('Hora', bookingTime)
+          .eq('status', 'confirmed')
+          .eq('tenant_id', tenantId);
         
-        if (duplicateBooking) {
-          return new Response(
-            JSON.stringify({ 
-              error: 'Ya existe una reserva para este cliente en esta fecha y hora',
-              details: { existing_booking_id: duplicateBooking.id }
-            }),
-            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        if (existingCustomerBooking && existingCustomerBooking.length > 0) {
+          const duplicateBooking = existingCustomerBooking.find(booking => 
+            normalizePhone(booking.Telefono || '') === normalizedPhone
           );
+          
+          if (duplicateBooking) {
+            return new Response(
+              JSON.stringify({ 
+                error: 'Ya existe una reserva para este cliente en esta fecha y hora',
+                details: { existing_booking_id: duplicateBooking.id }
+              }),
+              { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
         }
       }
       
