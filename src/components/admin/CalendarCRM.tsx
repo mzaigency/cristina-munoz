@@ -941,8 +941,8 @@ export const CalendarCRM = () => {
         return <TabsContent key={dateKey} value={dateKey} className="mt-4">
                 <Card>
                   <CardContent className="p-2 md:p-6">
-                    {schedule.hours.length === 0 ? <p className="text-sm text-muted-foreground italic text-center py-8">Cerrado los domingos</p> : <div className="relative overflow-x-auto">
-                        {/* Header */}
+                    {schedule.hours.length === 0 ? <p className="text-sm text-muted-foreground italic text-center py-8">Cerrado los domingos</p> : <div className="overflow-x-auto">
+                        {/* Header - OUTSIDE the relative timeline container */}
                         <div className="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1 md:gap-3 pb-2 border-b mb-3 sticky top-0 bg-background z-10 min-w-[320px]">
                           <div className="text-[10px] md:text-xs font-semibold text-muted-foreground">HORA</div>
                           <div className="flex items-center gap-1 md:gap-2">
@@ -955,10 +955,10 @@ export const CalendarCRM = () => {
                           </div>
                         </div>
 
-                        {/* Timeline Grid */}
-                        <div className="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1 md:gap-3 min-w-[320px]">
+                        {/* Timeline Grid - relative container starts here */}
+                        <div className="relative grid grid-cols-[50px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1 md:gap-3 min-w-[320px]">
                           {/* Hours column */}
-                          <div className="relative">
+                          <div>
                             {schedule.hours.map(hour => <div key={hour} className="h-[80px] md:h-[104px] border-t border-border/30 flex items-start pt-1">
                                 <span className="text-[10px] md:text-sm font-medium text-muted-foreground">
                                   {hour.toString().padStart(2, "0")}:00
