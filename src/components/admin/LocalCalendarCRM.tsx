@@ -35,6 +35,8 @@ interface LocalBooking {
   notes: string | null;
   color: string | null;
   tenant_id: string | null;
+  recurrence_group_id: string | null;
+  recurrence_pattern: any | null;
 }
 
 interface LocalCalendarCRMProps {
@@ -85,6 +87,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   // Completion dialog
   const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
   const [pendingCompletionBooking, setPendingCompletionBooking] = useState<LocalBooking | null>(null);
+  
+  // Series cancellation dialog
+  const [seriesCancelDialogOpen, setSeriesCancelDialogOpen] = useState(false);
+  const [pendingCancelBooking, setPendingCancelBooking] = useState<LocalBooking | null>(null);
   
   const { toast } = useToast();
 
@@ -335,8 +341,19 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   };
 
   const handleDeleteBooking = async (booking: LocalBooking) => {
+    // If booking is part of a recurring series, show special dialog
+    if (booking.recurrence_group_id) {
+      setPendingCancelBooking(booking);
+      setSeriesCancelDialogOpen(true);
+      return;
+    }
+    
     if (!confirm("¿Estás segura de que quieres eliminar esta cita?")) return;
     
+    await performBookingDeletion(booking, false);
+  };
+
+  const performBookingDeletion = async (booking: LocalBooking, cancelSeries: boolean) => {
     try {
       setLoading(true);
       
@@ -345,15 +362,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
         body: {
           bookingId: booking.id,
           user: "admin",
-          tenant_id: tenantId
+          tenant_id: tenantId,
+          cancelSeries
         }
       });
 
       if (error) throw error;
       
       toast({
-        title: "Cita eliminada",
-        description: "La cita se ha eliminado correctamente"
+        title: cancelSeries ? "Serie cancelada" : "Cita eliminada",
+        description: cancelSeries 
+          ? "Todas las citas futuras de la serie han sido canceladas" 
+          : "La cita se ha eliminado correctamente"
       });
       fetchBookings();
     } catch (error: any) {
@@ -364,6 +384,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       });
     } finally {
       setLoading(false);
+      setSeriesCancelDialogOpen(false);
+      setPendingCancelBooking(null);
     }
   };
 
@@ -1473,6 +1495,38 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
             </Button>
             <AlertDialogAction onClick={() => handleConfirmCompletion(true)}>
               Completar y enviar mensaje
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Series Cancellation Dialog */}
+      <AlertDialog open={seriesCancelDialogOpen} onOpenChange={setSeriesCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cita recurrente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta cita forma parte de una serie recurrente. ¿Qué deseas hacer?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel onClick={() => {
+              setSeriesCancelDialogOpen(false);
+              setPendingCancelBooking(null);
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <Button 
+              variant="outline" 
+              onClick={() => pendingCancelBooking && performBookingDeletion(pendingCancelBooking, false)}
+            >
+              Solo esta cita
+            </Button>
+            <AlertDialogAction 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => pendingCancelBooking && performBookingDeletion(pendingCancelBooking, true)}
+            >
+              Toda la serie futura
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

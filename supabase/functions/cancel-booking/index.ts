@@ -65,12 +65,15 @@ serve(async (req) => {
     const isAdminOrStylist = roleData && roleData.length > 0;
     console.log('User is admin/stylist:', isAdminOrStylist);
 
-    const { bookingId, bookingIds, user: cancelUser = 'client', tenant_id: requestTenantId } = await req.json();
+    const requestBody = await req.json();
+    const { bookingId, bookingIds, user: cancelUser = 'client', tenant_id: requestTenantId, cancelSeries = false } = requestBody;
 
     // Handle both single and multiple bookings
     const idsToCancel = bookingIds || [bookingId];
     console.log('Cancelling bookings:', { idsToCancel });
 
+    console.log('cancelSeries:', cancelSeries);
+    
     // Get all booking details before deleting
     const { data: bookings, error: fetchError } = await supabase
       .from('bookings')
@@ -99,7 +102,7 @@ serve(async (req) => {
 
     console.log('Authorization verified, proceeding with cancellation');
 
-    // Collect all related bookings
+    // Collect all related bookings (compound services)
     const relatedBookingIds = bookings
       .filter(b => b.is_part_of_compound && b.related_booking_id)
       .map(b => b.related_booking_id)
@@ -114,8 +117,45 @@ serve(async (req) => {
       relatedBookings = related || [];
     }
 
-    const allBookings = [...bookings, ...relatedBookings];
-    const allBookingIds = allBookings.map(b => b.id);
+    // If cancelSeries is true, get all future bookings in the same recurrence group
+    let seriesBookings: any[] = [];
+    const recurrenceGroupId = bookings[0]?.recurrence_group_id;
+    
+    if (cancelSeries && recurrenceGroupId) {
+      console.log('Cancelling entire series with recurrence_group_id:', recurrenceGroupId);
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: futureSeriesBookings } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('recurrence_group_id', recurrenceGroupId)
+        .gte('Fecha', today)
+        .eq('status', 'confirmed');
+      
+      seriesBookings = futureSeriesBookings || [];
+      console.log('Found', seriesBookings.length, 'future bookings in series');
+      
+      // Also get related bookings for all series bookings
+      const seriesRelatedIds = seriesBookings
+        .filter(b => b.is_part_of_compound && b.related_booking_id)
+        .map(b => b.related_booking_id)
+        .filter(Boolean);
+      
+      if (seriesRelatedIds.length > 0) {
+        const { data: seriesRelated } = await supabase
+          .from('bookings')
+          .select('*')
+          .in('id', seriesRelatedIds);
+        relatedBookings = [...relatedBookings, ...(seriesRelated || [])];
+      }
+    }
+
+    const allBookings = [...bookings, ...relatedBookings, ...seriesBookings];
+    // Remove duplicates by id
+    const uniqueBookings = allBookings.filter((booking, index, self) =>
+      index === self.findIndex((b) => b.id === booking.id)
+    );
+    const allBookingIds = uniqueBookings.map(b => b.id);
 
     // Break foreign key relationships
     await supabase
