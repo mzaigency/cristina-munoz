@@ -9,7 +9,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Settings } from "lucide-react";
+import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Settings, Shield, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/navigation/AppLayout";
 
 const profileSchema = z.object({
@@ -289,6 +290,35 @@ export default function Profile() {
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
               </button>
+            </div>
+
+            {/* Legal Links */}
+            <div className="ios-card overflow-hidden divide-y divide-border/50">
+              <Link 
+                to="/privacidad"
+                className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
+              >
+                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                  <Shield className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Política de Privacidad</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+              </Link>
+
+              <Link 
+                to="/terminos"
+                className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
+              >
+                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                  <FileText className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Términos de Uso</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+              </Link>
             </div>
 
             {/* Logout */}

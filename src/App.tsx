@@ -16,6 +16,8 @@ import Review from "./pages/Review";
 import TenantLanding from "./pages/TenantLanding";
 import Messages from "./pages/Messages";
 import Search from "./pages/Search";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfUse from "./pages/TermsOfUse";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +42,8 @@ const App = () => (
             <Route path="/valoracion" element={<Review />} />
             <Route path="/mensajes" element={<Messages />} />
             <Route path="/salon/:slug" element={<TenantLanding />} />
+            <Route path="/privacidad" element={<PrivacyPolicy />} />
+            <Route path="/terminos" element={<TermsOfUse />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
