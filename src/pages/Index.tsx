@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/feed/EmptyState";
 import { StoriesCarousel } from "@/components/feed/StoriesCarousel";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { useFavorites } from "@/hooks/useFavorites";
-
+import { JoinNetworkSection } from "@/components/feed/JoinNetworkSection";
 interface TenantWithStats {
   id: string;
   name: string;
@@ -207,6 +207,9 @@ const Index = () => {
             />
           )}
         </AnimatePresence>
+
+        {/* Join Network Section */}
+        <JoinNetworkSection />
       </div>
 
       {/* Premium FAB */}
