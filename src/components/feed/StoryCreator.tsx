@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useNavigation } from "@/contexts/NavigationContext";
 
 interface StoryCreatorProps {
   isOpen: boolean;
@@ -153,6 +154,13 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  
+  const { setNavigationHidden } = useNavigation();
+
+  // Hide navigation when creator is open
+  useEffect(() => {
+    setNavigationHidden(isOpen);
+  }, [isOpen, setNavigationHidden]);
 
   // Reset state when closing
   useEffect(() => {
