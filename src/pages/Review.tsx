@@ -1,25 +1,25 @@
 import { SEO } from "@/components/SEO";
 import { useState } from "react";
-import { Star } from "lucide-react";
+import { Star, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { useNavigate } from "react-router-dom";
+import { AppLayout } from "@/components/navigation/AppLayout";
+
 const Review = () => {
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState("");
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Verificar autenticación
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       toast({
@@ -46,90 +46,122 @@ const Review = () => {
       });
       
       if (error) {
-        console.error("Edge function error:", error);
-        
-        // Extraer el mensaje de error del edge function
-        let errorMessage = "No se pudo enviar tu valoración. Por favor, inténtalo de nuevo.";
-        
-        // El error puede venir en diferentes formatos
-        if (error.message) {
-          errorMessage = error.message;
-        }
-        
-        // Si el edge function devolvió un response con error
+        let errorMessage = "No se pudo enviar tu valoración.";
+        if (error.message) errorMessage = error.message;
         if (data && typeof data === 'object' && 'error' in data) {
           errorMessage = (data as { error: string }).error;
         }
-        
         throw new Error(errorMessage);
       }
       
       toast({
-        title: "¡Gracias por tu valoración!",
-        description: "Tu opinión es muy importante para nosotros"
+        title: "¡Gracias!",
+        description: "Tu valoración ha sido enviada"
       });
 
-      // Reset form
       setRating(0);
       setComment("");
+      navigate("/perfil");
     } catch (error: any) {
-      console.error("Error submitting review:", error);
       toast({
         title: "Error",
-        description: error.message || "No se pudo enviar tu valoración. Por favor, inténtalo de nuevo.",
+        description: error.message || "No se pudo enviar tu valoración",
         variant: "destructive"
       });
     } finally {
       setSubmitting(false);
     }
   };
-  const renderInteractiveStars = () => {
-    return <div className="flex gap-2">
-        {[...Array(5)].map((_, i) => <Star key={i} className={`h-8 w-8 cursor-pointer transition-all ${i < (hoveredRating || rating) ? "fill-yellow-400 text-yellow-400 scale-110" : "fill-muted text-muted hover:scale-110"}`} onMouseEnter={() => setHoveredRating(i + 1)} onMouseLeave={() => setHoveredRating(0)} onClick={() => setRating(i + 1)} />)}
-      </div>;
-  };
-  return <div className="min-h-screen flex flex-col">
+
+  const renderInteractiveStars = () => (
+    <div className="flex gap-3">
+      {[...Array(5)].map((_, i) => (
+        <button
+          key={i}
+          type="button"
+          onMouseEnter={() => setHoveredRating(i + 1)}
+          onMouseLeave={() => setHoveredRating(0)}
+          onClick={() => setRating(i + 1)}
+          className="transition-transform active:scale-90"
+        >
+          <Star 
+            className={`h-10 w-10 transition-all ${
+              i < (hoveredRating || rating) 
+                ? "fill-amber-400 text-amber-400 scale-110" 
+                : "fill-muted text-muted-foreground hover:scale-105"
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <AppLayout>
       <SEO 
-        title="Deja tu Valoración - Cristina Muñoz Peluquería"
-        description="Comparte tu experiencia con Cristina Muñoz Peluquería. Tu opinión nos ayuda a mejorar nuestros servicios."
-        keywords="valoración peluquería, opiniones cristina muñoz, reseñas peluquería Santpedor"
+        title="Deja tu Valoración"
+        description="Comparte tu experiencia"
         canonicalUrl="/valoracion"
       />
-      <Header onNavigate={() => {}} activeSection="valoracion" />
-      <main className="flex-grow container mx-auto px-4 py-16">
-        <div className="max-w-2xl mx-auto">
+
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 safe-area-top">
+        <div className="px-4 py-3 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="font-semibold text-foreground">Valoración</h1>
+        </div>
+      </div>
+
+      <div className="px-4 py-8">
+        <div className="max-w-lg mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4">Déjanos tu Valoración</h1>
-            <p className="text-muted-foreground">Tu opinión nos ayuda a mejorar nuestros servicios. La reseña es totalmente anónima</p>
+            <h2 className="text-2xl font-bold mb-2">¿Cómo fue tu experiencia?</h2>
+            <p className="text-muted-foreground text-sm">Tu opinión nos ayuda a mejorar</p>
           </div>
 
-          <div className="bg-card rounded-lg shadow-lg border border-border p-8">
+          <div className="ios-card p-6">
             <form onSubmit={handleSubmitReview} className="space-y-6">
               <div className="flex flex-col items-center gap-3">
-                <Label className="text-lg">Valoración *</Label>
+                <Label className="text-base font-medium">Valoración</Label>
                 {renderInteractiveStars()}
-                {rating > 0 && <p className="text-sm text-muted-foreground">
+                {rating > 0 && (
+                  <p className="text-sm text-muted-foreground">
                     {rating === 5 && "¡Excelente!"}
                     {rating === 4 && "Muy bueno"}
                     {rating === 3 && "Bueno"}
                     {rating === 2 && "Regular"}
                     {rating === 1 && "Necesita mejorar"}
-                  </p>}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="comment">Tu opinión</Label>
-                <Textarea id="comment" value={comment} onChange={e => setComment(e.target.value)} placeholder="Qué te han parecido nuestros servicios? (Servicio de pelquería, Página web, Asistente de Whatsapp...)" rows={5} />
+                <Label htmlFor="comment">Tu opinión (opcional)</Label>
+                <Textarea 
+                  id="comment" 
+                  value={comment} 
+                  onChange={e => setComment(e.target.value)} 
+                  placeholder="Cuéntanos qué te pareció..." 
+                  rows={4}
+                  className="rounded-xl"
+                />
               </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+              <Button 
+                type="submit" 
+                className="w-full h-12 rounded-xl" 
+                disabled={submitting || rating === 0}
+              >
                 {submitting ? "Enviando..." : "Enviar Valoración"}
               </Button>
             </form>
           </div>
         </div>
-      </main>
-      <Footer />
-    </div>;
+      </div>
+    </AppLayout>
+  );
 };
+
 export default Review;

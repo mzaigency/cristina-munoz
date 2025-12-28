@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
-import { InstallPWA } from "@/components/InstallPWA";
 import { Loader2 } from "lucide-react";
 import { TenantServicesSection } from "@/components/tenant/TenantServicesSection";
 import { TenantBookingFlow } from "@/components/tenant/TenantBookingFlow";
@@ -11,7 +10,6 @@ import { TenantHeader } from "@/components/tenant/TenantHeader";
 import { TenantFooter } from "@/components/tenant/TenantFooter";
 import { TenantReviewsSection } from "@/components/tenant/TenantReviewsSection";
 import { TenantGallerySection } from "@/components/tenant/TenantGallerySection";
-import { TenantWhatsAppSection } from "@/components/tenant/TenantWhatsAppSection";
 import { TenantLocationSection } from "@/components/tenant/TenantLocationSection";
 import { TenantThemeProvider } from "@/components/tenant/TenantThemeProvider";
 import { TenantAdminBar } from "@/components/tenant/TenantAdminBar";
@@ -193,13 +191,6 @@ const TenantLanding = () => {
             />
           </div>
 
-          {/* WhatsApp CTA - Tenant specific */}
-          <TenantWhatsAppSection
-            tenantName={tenant.name}
-            whatsappNumber={tenant.whatsapp_number}
-            phone={tenant.phone}
-            primaryColor={primaryColor}
-          />
 
           {/* Gallery Section - Tenant specific */}
           <div id="galeria">
@@ -238,8 +229,6 @@ const TenantLanding = () => {
             <TenantFooter tenant={tenant} />
           </div>
         </main>
-
-        <InstallPWA />
 
         {/* Admin Bar - Visible for admins and stylists */}
         {hasAccess && (

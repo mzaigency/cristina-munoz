@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
-import About from "./pages/About";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import SuperAdmin from "./pages/SuperAdmin";
@@ -13,8 +12,6 @@ import TenantAdmin from "./pages/TenantAdmin";
 import MyBookings from "./pages/MyBookings";
 import Profile from "./pages/Profile";
 import Review from "./pages/Review";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
 import TenantLanding from "./pages/TenantLanding";
 import Messages from "./pages/Messages";
 import Search from "./pages/Search";
@@ -32,7 +29,6 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/buscar" element={<Search />} />
-          <Route path="/sobre-nosotras" element={<About />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/:slug" element={<TenantAdmin />} />
@@ -40,8 +36,6 @@ const App = () => (
           <Route path="/mis-citas" element={<MyBookings />} />
           <Route path="/perfil" element={<Profile />} />
           <Route path="/valoracion" element={<Review />} />
-          <Route path="/politica-privacidad" element={<PrivacyPolicy />} />
-          <Route path="/terminos-uso" element={<TermsOfService />} />
           <Route path="/mensajes" element={<Messages />} />
           <Route path="/salon/:slug" element={<TenantLanding />} />
           <Route path="*" element={<NotFound />} />

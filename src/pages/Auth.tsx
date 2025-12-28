@@ -1,5 +1,6 @@
+import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,17 +11,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Eye, EyeOff } from "lucide-react";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { AppLayout } from "@/components/navigation/AppLayout";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
@@ -28,25 +20,13 @@ const signInSchema = z.object({
 });
 
 const signUpSchema = signInSchema.extend({
-  firstName: z.string().trim().min(1, "El nombre es requerido").max(50, "El nombre debe tener menos de 50 caracteres"),
-  lastName: z.string().trim().min(1, "El apellido es requerido").max(50, "El apellido debe tener menos de 50 caracteres"),
-  phone: z.string().trim().min(9, "El teléfono debe tener al menos 9 dígitos").max(15, "El teléfono debe tener menos de 15 dígitos"),
-  confirmPassword: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  firstName: z.string().trim().min(1, "El nombre es requerido").max(50),
+  lastName: z.string().trim().min(1, "El apellido es requerido").max(50),
+  phone: z.string().trim().min(9, "Mínimo 9 dígitos").max(15),
+  confirmPassword: z.string().min(6),
   acceptTerms: z.boolean().refine((val) => val === true, {
-    message: "Debes aceptar la política de privacidad y los términos de uso",
+    message: "Debes aceptar los términos",
   }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Las contraseñas no coinciden",
-  path: ["confirmPassword"],
-});
-
-const resetPasswordSchema = z.object({
-  email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
-});
-
-const newPasswordSchema = z.object({
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(100, "Contraseña demasiado larga"),
-  confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
@@ -54,22 +34,12 @@ const newPasswordSchema = z.object({
 
 type SignInFormValues = z.infer<typeof signInSchema>;
 type SignUpFormValues = z.infer<typeof signUpSchema>;
-type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
-type NewPasswordFormValues = z.infer<typeof newPasswordSchema>;
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [resetDialogOpen, setResetDialogOpen] = useState(false);
-  const [resettingPassword, setResettingPassword] = useState(false);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  const [recoveryToken, setRecoveryToken] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -82,93 +52,10 @@ export default function Auth() {
     },
   });
 
-  const resetForm = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
-    defaultValues: {
-      email: "",
-    },
-  });
-
-  const handleNewPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (newPassword.length < 6) {
-      toast({
-        title: "Error",
-        description: "La contraseña debe tener al menos 6 caracteres",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (newPassword !== confirmNewPassword) {
-      toast({
-        title: "Error",
-        description: "Las contraseñas no coinciden",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!recoveryToken) {
-      toast({
-        title: "Error",
-        description: "Token de recuperación inválido",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      // Llamar a la edge function para resetear la contraseña
-      const { data, error } = await supabase.functions.invoke('reset-password', {
-        body: {
-          token: recoveryToken,
-          newPassword: newPassword,
-        },
-      });
-
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
-
-      toast({
-        title: "Contraseña actualizada",
-        description: "Tu contraseña ha sido cambiada correctamente. Ahora puedes iniciar sesión.",
-      });
-      
-      setIsPasswordRecovery(false);
-      setNewPassword("");
-      setConfirmNewPassword("");
-      navigate("/auth");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Ocurrió un error al cambiar la contraseña",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    window.scrollTo(0, 0);
-    
-    // Verificar si es recuperación de contraseña
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const type = hashParams.get('type');
-    const token = hashParams.get('token');
-    
-    if (type === 'recovery' && token) {
-      setRecoveryToken(token);
-      setIsPasswordRecovery(true);
-      return;
-    }
-    
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session && !isPasswordRecovery) {
+      if (session) {
         navigate("/mis-citas");
       }
     };
@@ -176,13 +63,13 @@ export default function Auth() {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && !isPasswordRecovery) {
+      if (session) {
         navigate("/mis-citas");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, isPasswordRecovery]);
+  }, [navigate]);
 
   const handleAuth = async (values: SignInFormValues | SignUpFormValues) => {
     setLoading(true);
@@ -204,11 +91,9 @@ export default function Auth() {
 
         toast({
           title: "¡Cuenta creada!",
-          description: "Has sido registrada correctamente. Redirigiendo...",
+          description: "Redirigiendo...",
         });
 
-        // Con auto_confirm_email habilitado, la sesión se crea automáticamente
-        // Navegar manualmente después del registro exitoso
         if (data.session) {
           navigate("/mis-citas");
         }
@@ -221,14 +106,14 @@ export default function Auth() {
         if (error) throw error;
 
         toast({
-          title: "Bienvenida",
+          title: "Bienvenido",
           description: "Has iniciado sesión correctamente",
         });
       }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Ocurrió un error al procesar tu solicitud",
+        description: error.message || "Error al procesar tu solicitud",
         variant: "destructive",
       });
     } finally {
@@ -236,163 +121,83 @@ export default function Auth() {
     }
   };
 
-  const handleResetPassword = async (values: ResetPasswordFormValues) => {
-    setResettingPassword(true);
-    try {
-      // Llamar a la edge function para generar el token y enviar el email
-      const { data, error } = await supabase.functions.invoke('request-password-reset', {
-        body: {
-          email: values.email,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      toast({
-        title: "Email enviado",
-        description: data?.message || "Si el email existe en nuestro sistema, recibirás un enlace para recuperar tu contraseña.",
-      });
-      
-      setResetDialogOpen(false);
-      resetForm.reset();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Ocurrió un error al enviar la solicitud",
-        variant: "destructive",
-      });
-    } finally {
-      setResettingPassword(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      <Header onNavigate={() => {}} activeSection="" />
-      
-      <main className="container mx-auto px-4 py-20">
-        <div className="max-w-md mx-auto animate-fade-in">
-          <Card className="scroll-reveal visible">
-            <CardHeader className="text-center">
-              <CardTitle>
-                {isPasswordRecovery 
-                  ? "Cambiar contraseña" 
-                  : (isSignUp ? "Crear cuenta" : "Iniciar sesión")}
+    <AppLayout hideNavigation>
+      <SEO
+        title={isSignUp ? "Crear Cuenta" : "Iniciar Sesión"}
+        description="Accede a tu cuenta para gestionar tus reservas"
+        canonicalUrl="/auth"
+        noindex
+      />
+
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 safe-area-top">
+        <div className="px-4 py-3 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="font-semibold text-foreground">
+            {isSignUp ? "Crear cuenta" : "Iniciar sesión"}
+          </h1>
+        </div>
+      </div>
+
+      <div className="px-4 py-8">
+        <div className="max-w-md mx-auto">
+          <Card className="ios-card">
+            <CardHeader className="text-center pb-4">
+              <CardTitle className="text-xl">
+                {isSignUp ? "Crea tu cuenta" : "Bienvenido"}
               </CardTitle>
               <CardDescription>
-                {isPasswordRecovery
-                  ? "Introduce tu nueva contraseña"
-                  : (isSignUp 
-                    ? "Crea una cuenta para gestionar tus citas" 
-                    : "Accede a tu cuenta para ver tus citas")}
+                {isSignUp 
+                  ? "Regístrate para gestionar tus citas" 
+                  : "Accede a tu cuenta"}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {isPasswordRecovery ? (
-                <form onSubmit={handleNewPassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="newPassword" className="text-sm font-medium">
-                      Nueva contraseña
-                    </label>
-                    <div className="relative">
-                      <Input
-                        id="newPassword"
-                        type={showNewPassword ? "text" : "password"}
-                        placeholder="••••••"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        disabled={loading}
-                        className="w-full pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="confirmNewPassword" className="text-sm font-medium">
-                      Confirmar nueva contraseña
-                    </label>
-                    <div className="relative">
-                      <Input
-                        id="confirmNewPassword"
-                        type={showConfirmNewPassword ? "text" : "password"}
-                        placeholder="••••••"
-                        value={confirmNewPassword}
-                        onChange={(e) => setConfirmNewPassword(e.target.value)}
-                        disabled={loading}
-                        className="w-full pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showConfirmNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Cambiando contraseña...
-                      </>
-                    ) : (
-                      "Cambiar contraseña"
-                    )}
-                  </Button>
-                </form>
-              ) : (
-                <>
+            <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleAuth)} className="space-y-4">
                   {isSignUp && (
                     <>
-                      <FormField
-                        control={form.control}
-                        name="firstName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nombre</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="text" 
-                                placeholder="Tu nombre" 
-                                {...field}
-                                disabled={loading}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="lastName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Apellido</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="text" 
-                                placeholder="Tu apellido" 
-                                {...field}
-                                disabled={loading}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField
+                          control={form.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nombre</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Nombre" 
+                                  {...field}
+                                  disabled={loading}
+                                  className="h-12 rounded-xl"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Apellido</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Apellido" 
+                                  {...field}
+                                  disabled={loading}
+                                  className="h-12 rounded-xl"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                       <FormField
                         control={form.control}
@@ -406,6 +211,7 @@ export default function Auth() {
                                 placeholder="600 000 000" 
                                 {...field}
                                 disabled={loading}
+                                className="h-12 rounded-xl"
                               />
                             </FormControl>
                             <FormMessage />
@@ -427,6 +233,7 @@ export default function Auth() {
                             placeholder="tu@email.com" 
                             {...field}
                             disabled={loading}
+                            className="h-12 rounded-xl"
                           />
                         </FormControl>
                         <FormMessage />
@@ -447,12 +254,12 @@ export default function Auth() {
                               placeholder="••••••" 
                               {...field}
                               disabled={loading}
-                              className="pr-10"
+                              className="h-12 rounded-xl pr-10"
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                             >
                               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
@@ -470,7 +277,7 @@ export default function Auth() {
                         name="confirmPassword"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Verificar Contraseña</FormLabel>
+                            <FormLabel>Confirmar contraseña</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Input 
@@ -478,12 +285,12 @@ export default function Auth() {
                                   placeholder="••••••" 
                                   {...field}
                                   disabled={loading}
-                                  className="pr-10"
+                                  className="h-12 rounded-xl pr-10"
                                 />
                                 <button
                                   type="button"
                                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                                 >
                                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
@@ -508,22 +315,7 @@ export default function Auth() {
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-sm font-normal">
-                                Acepto la{" "}
-                                <Link 
-                                  to="/politica-privacidad" 
-                                  target="_blank"
-                                  className="text-primary hover:underline font-medium"
-                                >
-                                  Política de Privacidad
-                                </Link>
-                                {" "}y los{" "}
-                                <Link 
-                                  to="/terminos-uso" 
-                                  target="_blank"
-                                  className="text-primary hover:underline font-medium"
-                                >
-                                  Términos de Uso
-                                </Link>
+                                Acepto los términos y condiciones
                               </FormLabel>
                               <FormMessage />
                             </div>
@@ -533,11 +325,11 @@ export default function Auth() {
                     </>
                   )}
 
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button type="submit" className="w-full h-12 rounded-xl" disabled={loading}>
                     {loading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Procesando...
+                        {isSignUp ? "Creando cuenta..." : "Iniciando sesión..."}
                       </>
                     ) : (
                       isSignUp ? "Crear cuenta" : "Iniciar sesión"
@@ -546,85 +338,25 @@ export default function Auth() {
                 </form>
               </Form>
 
-              {!isSignUp && (
-                <div className="text-center">
-                  <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="link"
-                        disabled={loading}
-                        className="text-sm"
-                      >
-                        ¿Olvidaste tu contraseña?
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Recuperar contraseña</DialogTitle>
-                        <DialogDescription>
-                          Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <Form {...resetForm}>
-                        <form onSubmit={resetForm.handleSubmit(handleResetPassword)} className="space-y-4">
-                          <FormField
-                            control={resetForm.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="email" 
-                                    placeholder="tu@email.com" 
-                                    {...field}
-                                    disabled={resettingPassword}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <Button type="submit" className="w-full" disabled={resettingPassword}>
-                            {resettingPassword ? (
-                              <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Enviando...
-                              </>
-                            ) : (
-                              "Enviar enlace de recuperación"
-                            )}
-                          </Button>
-                        </form>
-                      </Form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              )}
-
-              <div className="text-center">
-                <Button
-                  variant="link"
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
                   onClick={() => {
                     setIsSignUp(!isSignUp);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    form.reset();
                   }}
+                  className="text-sm text-primary hover:underline"
                   disabled={loading}
-                  className="text-sm"
                 >
                   {isSignUp 
                     ? "¿Ya tienes cuenta? Inicia sesión" 
                     : "¿No tienes cuenta? Regístrate"}
-                </Button>
+                </button>
               </div>
-              </>
-              )}
             </CardContent>
           </Card>
         </div>
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </AppLayout>
   );
 }
