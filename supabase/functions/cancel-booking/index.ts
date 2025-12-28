@@ -176,7 +176,51 @@ serve(async (req) => {
 
     console.log('Booking(s) cancelled successfully');
 
-    // Trigger n8n webhook
+    // Send WhatsApp cancellation via Meta Cloud API
+    for (const booking of bookings) {
+      if (booking.Telefono && booking.Telefono.length >= 9) {
+        try {
+          const serviceNames = Array.isArray(booking.services) 
+            ? booking.services.map((s: any) => s.name).join(', ')
+            : 'Servicio';
+          const dateStr = booking.Fecha.toString();
+          const [year, month, day] = dateStr.split('-');
+          const formattedDate = `${day}/${month}/${year}`;
+          
+          const response = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-notification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tenant_id: tenantId,
+              to: booking.Telefono,
+              template_name: 'cita_cancelada',
+              template_language: 'es',
+              template_components: [
+                {
+                  type: 'body',
+                  parameters: [
+                    { type: 'text', text: booking.customer_name },
+                    { type: 'text', text: formattedDate },
+                    { type: 'text', text: booking.Hora.slice(0, 5) },
+                  ]
+                }
+              ]
+            })
+          });
+          
+          const result = await response.json();
+          if (result.success) {
+            console.log('WhatsApp cancellation sent to:', booking.Telefono);
+          } else {
+            console.log('WhatsApp not sent:', result.error);
+          }
+        } catch (whatsappError) {
+          console.error('Error sending WhatsApp cancellation:', whatsappError);
+        }
+      }
+    }
+
+    // Trigger n8n webhook (for reminders and other flows)
     if (tenantId) {
       const cancelWebhookUrl = await getN8nCancelWebhookUrl(supabase, tenantId);
       
