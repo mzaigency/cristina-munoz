@@ -65,3 +65,6 @@ verify_jwt = true
 
 [functions.customer-portal]
 verify_jwt = true
+
+[functions.send-ticket]
+verify_jwt = true
