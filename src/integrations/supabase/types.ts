@@ -17,6 +17,7 @@ export type Database = {
       bookings: {
         Row: {
           calendar_id: string | null
+          canal: string | null
           color: string | null
           compound_part: string | null
           created_at: string | null
@@ -44,6 +45,7 @@ export type Database = {
         }
         Insert: {
           calendar_id?: string | null
+          canal?: string | null
           color?: string | null
           compound_part?: string | null
           created_at?: string | null
@@ -71,6 +73,7 @@ export type Database = {
         }
         Update: {
           calendar_id?: string | null
+          canal?: string | null
           color?: string | null
           compound_part?: string | null
           created_at?: string | null

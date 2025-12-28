@@ -37,13 +37,17 @@ interface BookingStats {
   averageRating: number;
 }
 
+interface SecurityMonitorProps {
+  tenantId?: string;
+}
+
 const COLORS = {
   whatsapp: "hsl(145, 63%, 42%)", // verde vivo
   crm: "hsl(186, 94%, 45%)", // cyan vivo
   web: "hsl(25, 95%, 53%)", // naranja vivo
 };
 
-export function SecurityMonitor() {
+export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
   const { toast } = useToast();
   const [stats, setStats] = useState<BookingStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,11 +68,13 @@ export function SecurityMonitor() {
     );
 
     return () => clearInterval(interval);
-  }, []);
+  }, [tenantId]);
 
   const fetchBookingStats = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke("get-bookings-stats");
+      const { data, error } = await supabase.functions.invoke("get-bookings-stats", {
+        body: { tenantId },
+      });
 
       if (error) throw error;
 
