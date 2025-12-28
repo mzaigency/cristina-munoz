@@ -234,24 +234,56 @@ export function useMessages(conversationId: string | null) {
 
 export async function getOrCreateConversation(tenantId: string, userId: string): Promise<string | null> {
   try {
-    // Check if conversation exists
-    const { data: existing } = await supabase
+    // Check if conversation already exists - use maybeSingle to avoid errors
+    const { data: existing, error: fetchError } = await supabase
       .from('conversations')
       .select('id')
       .eq('tenant_id', tenantId)
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
-    if (existing) return existing.id;
+    if (fetchError) {
+      console.error('Error checking existing conversation:', fetchError);
+      throw fetchError;
+    }
 
-    // Create new conversation
+    // If conversation exists, return its ID
+    if (existing) {
+      return existing.id;
+    }
+
+    // Double-check with a more specific query to prevent race conditions
+    const { data: doubleCheck } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', userId)
+      .limit(1);
+
+    if (doubleCheck && doubleCheck.length > 0) {
+      return doubleCheck[0].id;
+    }
+
+    // Create new conversation only if it truly doesn't exist
     const { data: newConv, error } = await supabase
       .from('conversations')
       .insert({ tenant_id: tenantId, user_id: userId })
       .select('id')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // If we get a unique constraint violation, the conversation was created by another request
+      if (error.code === '23505') {
+        const { data: retryFetch } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        return retryFetch?.id || null;
+      }
+      throw error;
+    }
     return newConv?.id || null;
   } catch (error) {
     console.error('Error getting/creating conversation:', error);
