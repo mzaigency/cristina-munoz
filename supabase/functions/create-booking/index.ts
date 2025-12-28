@@ -22,6 +22,12 @@ const serviceSchema = z.object({
   duration_part2_active: z.number().int().min(0).max(480)
 });
 
+const recurrenceSchema = z.object({
+  intervalValue: z.number().int().min(1).max(52),
+  intervalUnit: z.enum(['days', 'weeks', 'months']),
+  occurrences: z.number().int().min(1).max(365),
+}).nullable().optional();
+
 const bookingRequestSchema = z.object({
   Fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format").optional(),
   Hora: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Invalid time format").optional(),
@@ -35,10 +41,17 @@ const bookingRequestSchema = z.object({
   user_id: z.string().uuid().nullable().optional(),
   skipAvailabilityCheck: z.boolean().optional(),
   tenant_id: z.string().uuid().optional(),
-  canal: z.enum(['web', 'crm', 'whatsapp']).optional()
+  canal: z.enum(['web', 'crm', 'whatsapp']).optional(),
+  recurrence: recurrenceSchema,
 }).refine(data => (data.Fecha || data.date) && (data.Hora || data.time), {
   message: "Either Fecha/Hora or date/time must be provided"
 });
+
+interface RecurrenceConfig {
+  intervalValue: number;
+  intervalUnit: 'days' | 'weeks' | 'months';
+  occurrences: number;
+}
 
 interface BookingRequest {
   Fecha?: string;
@@ -61,6 +74,7 @@ interface BookingRequest {
   skipAvailabilityCheck?: boolean;
   tenant_id?: string;
   canal?: 'web' | 'crm' | 'whatsapp';
+  recurrence?: RecurrenceConfig | null;
 }
 
 // Helper function to get default tenant ID
@@ -297,136 +311,195 @@ serve(async (req) => {
       return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
     };
 
+    // Helper function to add days to a date string
+    const addDaysToDate = (dateStr: string, days: number): string => {
+      const date = new Date(dateStr);
+      date.setDate(date.getDate() + days);
+      return date.toISOString().split('T')[0];
+    };
+
+    // Calculate recurrence dates
+    const getRecurrenceDates = (): string[] => {
+      if (!bookingData.recurrence) return [bookingDate];
+      
+      const dates: string[] = [];
+      let currentDate = bookingDate;
+      
+      for (let i = 0; i < bookingData.recurrence.occurrences; i++) {
+        dates.push(currentDate);
+        
+        // Calculate next date
+        let daysToAdd = 0;
+        switch (bookingData.recurrence.intervalUnit) {
+          case 'days':
+            daysToAdd = bookingData.recurrence.intervalValue;
+            break;
+          case 'weeks':
+            daysToAdd = bookingData.recurrence.intervalValue * 7;
+            break;
+          case 'months':
+            daysToAdd = bookingData.recurrence.intervalValue * 30;
+            break;
+        }
+        currentDate = addDaysToDate(currentDate, daysToAdd);
+      }
+      
+      return dates;
+    };
+
     // Get stylist color for the booking
     const stylistColor = await getStylistColor(supabase, tenantId, actualStylist);
 
     const createdBookings: any[] = [];
-    let mainBookingId: string | null = null;
+    
+    // Generate recurrence group ID if this is a recurring booking
+    const recurrenceGroupId = bookingData.recurrence ? crypto.randomUUID() : null;
+    const recurrencePattern = bookingData.recurrence ? {
+      intervalValue: bookingData.recurrence.intervalValue,
+      intervalUnit: bookingData.recurrence.intervalUnit,
+      occurrences: bookingData.recurrence.occurrences,
+    } : null;
 
-    // Process simple services
-    if (simpleServices.length > 0) {
-      const simpleDuration = simpleServices.reduce((sum, s) => sum + s.duration_part1_active, 0);
-      const startTime = `${String(Math.floor(currentMinutes / 60)).padStart(2, '0')}:${String(currentMinutes % 60).padStart(2, '0')}:00`;
-      const endTime = calculateEndTime(currentMinutes, simpleDuration);
+    // Get all dates to create bookings for
+    const bookingDates = getRecurrenceDates();
+    console.log(`Creating ${bookingDates.length} bookings for dates:`, bookingDates);
 
-      const serviceNames = simpleServices.map(s => s.name).join(', ');
+    // Create bookings for each date
+    for (const currentBookingDate of bookingDates) {
+      let dateCurrentMinutes = currentMinutes;
+      let mainBookingId: string | null = null;
 
-      const bookingRecord = {
-        tenant_id: tenantId,
-        Fecha: bookingDate,
-        Hora: startTime,
-        end_time: endTime,
-        stylist: actualStylist,
-        customer_name: customer_name,
-        Telefono: customer_phone,
-        services: simpleServices,
-        total_duration: simpleDuration,
-        user_id: bookingData.user_id || null,
-        skip_availability_check: bookingData.skipAvailabilityCheck || false,
-        status: 'confirmed',
-        title: `${customer_name} - ${serviceNames}`,
-        notes: null,
-        color: stylistColor,
-        canal: bookingData.canal || 'web'
-      };
+      // Process simple services
+      if (simpleServices.length > 0) {
+        const simpleDuration = simpleServices.reduce((sum, s) => sum + s.duration_part1_active, 0);
+        const startTime = `${String(Math.floor(dateCurrentMinutes / 60)).padStart(2, '0')}:${String(dateCurrentMinutes % 60).padStart(2, '0')}:00`;
+        const endTime = calculateEndTime(dateCurrentMinutes, simpleDuration);
 
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
-        .insert(bookingRecord)
-        .select()
-        .single();
+        const serviceNames = simpleServices.map(s => s.name).join(', ');
 
-      if (bookingError) throw bookingError;
-
-      createdBookings.push(booking);
-      mainBookingId = booking.id;
-      currentMinutes += simpleDuration;
-    }
-
-    // Process compound services
-    for (const service of compoundServices) {
-      // Part 1
-      const part1Start = `${String(Math.floor(currentMinutes / 60)).padStart(2, '0')}:${String(currentMinutes % 60).padStart(2, '0')}:00`;
-      const part1End = calculateEndTime(currentMinutes, service.duration_part1_active);
-
-      const part1Record = {
-        tenant_id: tenantId,
-        Fecha: bookingDate,
-        Hora: part1Start,
-        end_time: part1End,
-        stylist: actualStylist,
-        customer_name: customer_name,
-        Telefono: customer_phone,
-        services: [service],
-        total_duration: service.duration_part1_active,
-        user_id: bookingData.user_id || null,
-        is_part_of_compound: true,
-        compound_part: 'part1',
-        related_booking_id: mainBookingId,
-        skip_availability_check: bookingData.skipAvailabilityCheck || false,
-        status: 'confirmed',
-        title: `${customer_name} - ${service.name} (Parte 1)`,
-        notes: null,
-        color: stylistColor,
-        canal: bookingData.canal || 'web'
-      };
-
-      const { data: part1Booking, error: part1Error } = await supabase
-        .from('bookings')
-        .insert(part1Record)
-        .select()
-        .single();
-
-      if (part1Error) throw part1Error;
-
-      createdBookings.push(part1Booking);
-      if (!mainBookingId) mainBookingId = part1Booking.id;
-
-      currentMinutes += service.duration_part1_active + service.duration_exposure_pause;
-
-      // Part 2 if exists
-      if (service.duration_part2_active > 0) {
-        const part2Start = `${String(Math.floor(currentMinutes / 60)).padStart(2, '0')}:${String(currentMinutes % 60).padStart(2, '0')}:00`;
-        const part2End = calculateEndTime(currentMinutes, service.duration_part2_active);
-
-        const part2Record = {
+        const bookingRecord = {
           tenant_id: tenantId,
-          Fecha: bookingDate,
-          Hora: part2Start,
-          end_time: part2End,
+          Fecha: currentBookingDate,
+          Hora: startTime,
+          end_time: endTime,
+          stylist: actualStylist,
+          customer_name: customer_name,
+          Telefono: customer_phone,
+          services: simpleServices,
+          total_duration: simpleDuration,
+          user_id: bookingData.user_id || null,
+          skip_availability_check: bookingData.skipAvailabilityCheck || false,
+          status: 'confirmed',
+          title: `${customer_name} - ${serviceNames}`,
+          notes: null,
+          color: stylistColor,
+          canal: bookingData.canal || 'web',
+          recurrence_group_id: recurrenceGroupId,
+          recurrence_pattern: recurrencePattern,
+        };
+
+        const { data: booking, error: bookingError } = await supabase
+          .from('bookings')
+          .insert(bookingRecord)
+          .select()
+          .single();
+
+        if (bookingError) throw bookingError;
+
+        createdBookings.push(booking);
+        mainBookingId = booking.id;
+        dateCurrentMinutes += simpleDuration;
+      }
+
+      // Process compound services
+      for (const service of compoundServices) {
+        // Part 1
+        const part1Start = `${String(Math.floor(dateCurrentMinutes / 60)).padStart(2, '0')}:${String(dateCurrentMinutes % 60).padStart(2, '0')}:00`;
+        const part1End = calculateEndTime(dateCurrentMinutes, service.duration_part1_active);
+
+        const part1Record = {
+          tenant_id: tenantId,
+          Fecha: currentBookingDate,
+          Hora: part1Start,
+          end_time: part1End,
           stylist: actualStylist,
           customer_name: customer_name,
           Telefono: customer_phone,
           services: [service],
-          total_duration: service.duration_part2_active,
+          total_duration: service.duration_part1_active,
           user_id: bookingData.user_id || null,
           is_part_of_compound: true,
-          compound_part: 'part2',
-          related_booking_id: part1Booking.id,
+          compound_part: 'part1',
+          related_booking_id: mainBookingId,
           skip_availability_check: bookingData.skipAvailabilityCheck || false,
           status: 'confirmed',
-          title: `${customer_name} - ${service.name} (Parte 2)`,
+          title: `${customer_name} - ${service.name} (Parte 1)`,
           notes: null,
           color: stylistColor,
-          canal: bookingData.canal || 'web'
+          canal: bookingData.canal || 'web',
+          recurrence_group_id: recurrenceGroupId,
+          recurrence_pattern: recurrencePattern,
         };
 
-        const { data: part2Booking, error: part2Error } = await supabase
+        const { data: part1Booking, error: part1Error } = await supabase
           .from('bookings')
-          .insert(part2Record)
+          .insert(part1Record)
           .select()
           .single();
 
-        if (part2Error) throw part2Error;
+        if (part1Error) throw part1Error;
 
-        createdBookings.push(part2Booking);
-        currentMinutes += service.duration_part2_active;
+        createdBookings.push(part1Booking);
+        if (!mainBookingId) mainBookingId = part1Booking.id;
+
+        dateCurrentMinutes += service.duration_part1_active + service.duration_exposure_pause;
+
+        // Part 2 if exists
+        if (service.duration_part2_active > 0) {
+          const part2Start = `${String(Math.floor(dateCurrentMinutes / 60)).padStart(2, '0')}:${String(dateCurrentMinutes % 60).padStart(2, '0')}:00`;
+          const part2End = calculateEndTime(dateCurrentMinutes, service.duration_part2_active);
+
+          const part2Record = {
+            tenant_id: tenantId,
+            Fecha: currentBookingDate,
+            Hora: part2Start,
+            end_time: part2End,
+            stylist: actualStylist,
+            customer_name: customer_name,
+            Telefono: customer_phone,
+            services: [service],
+            total_duration: service.duration_part2_active,
+            user_id: bookingData.user_id || null,
+            is_part_of_compound: true,
+            compound_part: 'part2',
+            related_booking_id: part1Booking.id,
+            skip_availability_check: bookingData.skipAvailabilityCheck || false,
+            status: 'confirmed',
+            title: `${customer_name} - ${service.name} (Parte 2)`,
+            notes: null,
+            color: stylistColor,
+            canal: bookingData.canal || 'web',
+            recurrence_group_id: recurrenceGroupId,
+            recurrence_pattern: recurrencePattern,
+          };
+
+          const { data: part2Booking, error: part2Error } = await supabase
+            .from('bookings')
+            .insert(part2Record)
+            .select()
+            .single();
+
+          if (part2Error) throw part2Error;
+
+          createdBookings.push(part2Booking);
+          dateCurrentMinutes += service.duration_part2_active;
+        }
       }
     }
 
     console.log('Created bookings:', createdBookings.length);
 
-    // Trigger n8n webhook
+    // Trigger n8n webhook (only for the first booking to avoid spam)
     const n8nWebhookUrl = await getN8nWebhookUrl(supabase, tenantId);
     if (n8nWebhookUrl) {
       try {
@@ -451,7 +524,9 @@ serve(async (req) => {
             services: bookingData.services.map(s => s.name),
             total_duration: bookingData.total_duration,
             tenant_id: tenantId,
-            booking_ids: createdBookings.map(b => b.id)
+            booking_ids: createdBookings.map(b => b.id),
+            is_recurring: !!bookingData.recurrence,
+            recurrence_count: bookingDates.length,
           })
         });
         console.log('n8n webhook sent successfully');
@@ -464,9 +539,12 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         bookings: createdBookings,
-        message: 'Booking created successfully',
+        message: bookingData.recurrence 
+          ? `${createdBookings.length} recurring bookings created successfully`
+          : 'Booking created successfully',
         stylist: actualStylist,
-        tenant_id: tenantId
+        tenant_id: tenantId,
+        recurrence_group_id: recurrenceGroupId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

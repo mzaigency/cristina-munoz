@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
 import { StylistSelection } from "@/components/booking/StylistSelection";
 import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
+import { RecurrenceSelector, RecurrenceConfig } from "@/components/admin/RecurrenceSelector";
 import { Loader2 } from "lucide-react";
 import { phoneSchema } from "@/lib/phoneValidation";
 import { Service, Stylist } from "@/types/booking";
@@ -20,6 +21,7 @@ interface AdminBookingData {
   customerName: string;
   customerPhone: string;
   skipAvailabilityCheck?: boolean;
+  recurrence: RecurrenceConfig;
 }
 
 interface AdminBookingFlowProps {
@@ -39,6 +41,12 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     time: "",
     customerName: "",
     customerPhone: "",
+    recurrence: {
+      enabled: false,
+      intervalValue: 2,
+      intervalUnit: 'weeks',
+      occurrences: 4,
+    },
   });
   const { toast } = useToast();
 
@@ -140,17 +148,28 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
         skipAvailabilityCheck, // Pass the flag to skip validations
         tenant_id: tenantId,
         canal: 'crm' as const, // Reservas desde el CRM
+        // Recurrence configuration
+        recurrence: bookingData.recurrence.enabled ? {
+          intervalValue: bookingData.recurrence.intervalValue,
+          intervalUnit: bookingData.recurrence.intervalUnit,
+          occurrences: bookingData.recurrence.occurrences,
+        } : null,
       };
 
-      const { error } = await supabase.functions.invoke("create-booking", {
+      const { data, error } = await supabase.functions.invoke("create-booking", {
         body: bookingPayload,
       });
 
       if (error) throw error;
 
+      const totalCreated = data?.bookings?.length || 1;
+      const message = bookingData.recurrence.enabled 
+        ? `Se han creado ${totalCreated} citas recurrentes`
+        : "La cita se ha creado correctamente";
+
       toast({
         title: "¡Cita creada!",
-        description: "La cita se ha creado correctamente",
+        description: message,
       });
 
       onComplete();
@@ -255,6 +274,12 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                 <p className="text-xs text-muted-foreground">Si se proporciona, se enviará recordatorio por WhatsApp</p>
               </div>
 
+              {/* Recurrence Options */}
+              <RecurrenceSelector
+                value={bookingData.recurrence}
+                onChange={(recurrence) => setBookingData({ ...bookingData, recurrence })}
+              />
+
               <div className="pt-4 border-t space-y-2">
                 <h4 className="font-medium">Resumen de la cita:</h4>
                 <p className="text-sm text-muted-foreground">
@@ -269,6 +294,14 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                 <p className="text-sm text-muted-foreground">
                   <strong>Duración total:</strong> {totalDuration} minutos
                 </p>
+                {bookingData.recurrence.enabled && (
+                  <p className="text-sm text-primary font-medium">
+                    <strong>Repetición:</strong> Cada {bookingData.recurrence.intervalValue}{' '}
+                    {bookingData.recurrence.intervalUnit === 'days' ? 'días' : 
+                     bookingData.recurrence.intervalUnit === 'weeks' ? 'semanas' : 'meses'},{' '}
+                    {bookingData.recurrence.occurrences} citas en total
+                  </p>
+                )}
               </div>
             </div>
 
@@ -283,7 +316,9 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                     Creando...
                   </>
                 ) : (
-                  "Crear Cita"
+                  bookingData.recurrence.enabled 
+                    ? `Crear ${bookingData.recurrence.occurrences} Citas`
+                    : "Crear Cita"
                 )}
               </Button>
             </div>
