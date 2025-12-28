@@ -605,6 +605,7 @@ export type Database = {
       tenants: {
         Row: {
           address: string | null
+          button_style: string | null
           city: string | null
           country: string | null
           created_at: string | null
@@ -613,7 +614,10 @@ export type Database = {
           email: string | null
           facebook_url: string | null
           features: Json | null
+          font_body: string | null
+          font_heading: string | null
           google_maps_url: string | null
+          heading_size: string | null
           hero_image_url: string | null
           id: string
           instagram_url: string | null
@@ -638,6 +642,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          button_style?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
@@ -646,7 +651,10 @@ export type Database = {
           email?: string | null
           facebook_url?: string | null
           features?: Json | null
+          font_body?: string | null
+          font_heading?: string | null
           google_maps_url?: string | null
+          heading_size?: string | null
           hero_image_url?: string | null
           id?: string
           instagram_url?: string | null
@@ -671,6 +679,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          button_style?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
@@ -679,7 +688,10 @@ export type Database = {
           email?: string | null
           facebook_url?: string | null
           features?: Json | null
+          font_body?: string | null
+          font_heading?: string | null
           google_maps_url?: string | null
+          heading_size?: string | null
           hero_image_url?: string | null
           id?: string
           instagram_url?: string | null
