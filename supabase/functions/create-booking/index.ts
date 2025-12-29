@@ -154,6 +154,64 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // SECURITY: Verify authentication and authorization
+    const authHeader = req.headers.get('Authorization');
+    let callingUser = null;
+
+    if (authHeader) {
+      const anonClient = createClient(
+        supabaseUrl,
+        Deno.env.get('SUPABASE_ANON_KEY')!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await anonClient.auth.getUser();
+      callingUser = user;
+    }
+
+    // Verify user_id ownership (prevent IDOR)
+    if (bookingData.user_id) {
+      if (!callingUser) {
+         return new Response(
+          JSON.stringify({ error: 'Unauthorized: Authentication required for user booking' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (callingUser.id !== bookingData.user_id) {
+        // Check for admin/stylist role
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', callingUser.id);
+
+        const hasPermission = roles?.some(r => r.role === 'admin' || r.role === 'stylist');
+
+        if (!hasPermission) {
+          return new Response(
+            JSON.stringify({ error: 'Unauthorized: You can only book for yourself' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
+    // Verify skipAvailabilityCheck permission
+    if (bookingData.skipAvailabilityCheck) {
+      let hasPermission = false;
+      if (callingUser) {
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', callingUser.id);
+        hasPermission = roles?.some(r => r.role === 'admin' || r.role === 'stylist') || false;
+      }
+
+      if (!hasPermission) {
+        console.warn(`Unauthorized attempt to skip checks by ${callingUser?.id || 'anonymous'}`);
+        bookingData.skipAvailabilityCheck = false;
+      }
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
@@ -239,7 +297,7 @@ serve(async (req) => {
 
     const normalizedPhone = normalizePhone(customer_phone);
     const [startHours, startMinutes] = bookingTime.split(':').map(Number);
-    let currentMinutes = startHours * 60 + startMinutes;
+    const currentMinutes = startHours * 60 + startMinutes;
     
     // Skip validations if admin explicitly requests it
     if (!bookingData.skipAvailabilityCheck) {
