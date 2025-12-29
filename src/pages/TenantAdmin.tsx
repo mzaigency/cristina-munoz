@@ -350,80 +350,34 @@ export default function TenantAdmin() {
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="mx-auto max-w-7xl px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            {/* Logo and Name */}
+      <header className="sticky top-0 z-50 bg-background border-b shadow-sm">
+        <div className="mx-auto max-w-7xl px-4">
+          {/* Top row - Logo, title and actions */}
+          <div className="flex items-center justify-between py-3 border-b border-border/50">
             <div className="flex items-center gap-3">
-              {tenant.logo_url && (
-                <img src={tenant.logo_url} alt={tenant.name} className="h-8 w-8 rounded-full object-cover" />
+              {tenant.logo_url ? (
+                <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20" />
+              ) : (
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Scissors className="h-5 w-5 text-primary" />
+                </div>
               )}
-              <div className="hidden sm:block">
-                <h1 className="text-lg font-semibold text-foreground leading-tight">{tenant.name}</h1>
+              <div>
+                <h1 className="text-lg font-bold text-foreground">{tenant.name}</h1>
                 <p className="text-xs text-muted-foreground">{userEmail}</p>
               </div>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-              {mainItems.map((item) => (
-                <Button
-                  key={item.value}
-                  variant={activeTab === item.value ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab(item.value)}
-                  className="relative gap-1.5 shrink-0"
-                >
-                  {item.icon}
-                  <span className="hidden md:inline">{item.label}</span>
-                  {item.badge && item.badge > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
-                      {item.badge > 99 ? "99+" : item.badge}
-                    </span>
-                  )}
-                </Button>
-              ))}
-              
-              {/* Config Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant={isConfigTab ? "default" : "ghost"} 
-                    size="sm" 
-                    className="gap-1.5 shrink-0"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span className="hidden md:inline">Configuración</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  {configItems.map((item, index) => (
-                    <div key={item.value}>
-                      {index === 4 && <DropdownMenuSeparator />}
-                      <DropdownMenuItem 
-                        onClick={() => setActiveTab(item.value)}
-                        className={activeTab === item.value ? "bg-accent" : ""}
-                      >
-                        {item.icon}
-                        <span className="ml-2">{item.label}</span>
-                      </DropdownMenuItem>
-                    </div>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </nav>
-
-            {/* Actions */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <HelpTutorial />
               <Button 
                 onClick={() => navigate(`/salon/${slug}`)} 
-                variant="ghost" 
-                size="icon"
-                title="Ver landing"
+                variant="outline" 
+                size="sm"
+                className="gap-2"
               >
                 <ExternalLink className="h-4 w-4" />
+                <span className="hidden sm:inline">Ver web</span>
               </Button>
               <Button onClick={() => navigate("/")} variant="ghost" size="icon" title="Inicio">
                 <Home className="h-4 w-4" />
@@ -433,17 +387,51 @@ export default function TenantAdmin() {
               </Button>
             </div>
           </div>
+
+          {/* Bottom row - Navigation tabs */}
+          <nav className="flex items-center gap-1 py-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+            {mainItems.map((item) => {
+              const isActive = activeTab === item.value;
+              return (
+                <button
+                  key={item.value}
+                  onClick={() => setActiveTab(item.value)}
+                  className={`
+                    relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 shrink-0 min-w-[60px]
+                    ${isActive 
+                      ? "bg-primary text-primary-foreground shadow-md" 
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }
+                  `}
+                >
+                  <div className={`relative ${isActive ? "" : ""}`}>
+                    {item.value === "calendar" && <Calendar className="h-5 w-5" />}
+                    {item.value === "cash" && <Wallet className="h-5 w-5" />}
+                    {item.value === "reviews" && <Star className="h-5 w-5" />}
+                    {item.value === "messages" && <MessageCircle className="h-5 w-5" />}
+                    {item.value === "stories" && <ImageIcon className="h-5 w-5" />}
+                    {item.value === "security" && <BarChart3 className="h-5 w-5" />}
+                    {item.value === "products" && <Package className="h-5 w-5" />}
+                    {item.value === "services" && <Scissors className="h-5 w-5" />}
+                    {item.value === "stylists" && <Users className="h-5 w-5" />}
+                    {item.value === "hours" && <Clock className="h-5 w-5" />}
+                    {item.value === "settings" && <Settings className="h-5 w-5" />}
+                    {item.badge && item.badge > 0 && (
+                      <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white">
+                        {item.badge > 9 ? "9+" : item.badge}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-medium leading-none">{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
       </header>
 
       {/* Content */}
       <main className="mx-auto max-w-7xl px-4 py-6">
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            {activeItem?.icon}
-            {activeItem?.label}
-          </h2>
-        </div>
         {renderContent()}
       </main>
     </div>
