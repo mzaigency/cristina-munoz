@@ -44,64 +44,76 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         return;
       }
 
-      // Build CSV content
+      // Build CSV content with user's requested format
       const headers = [
-        "Fecha",
-        "Hora",
-        "Cliente",
-        "Estilista",
-        "Servicios",
-        "Subtotal",
+        "Fecha y Hora",
+        "Importe Tarjeta",
+        "Importe Efectivo",
         "Descuento",
-        "Propina",
-        "Total",
-        "Método de Pago",
-        "Anulado",
-        "Notas"
+        "Propinas"
       ];
 
-      const rows = transactions.map(tx => {
+      // Calculate amounts per transaction based on payment method
+      const rows = transactions.filter(tx => !tx.voided).map(tx => {
         const date = new Date(tx.created_at);
-        const services = Array.isArray(tx.services) 
-          ? tx.services.map((s: any) => s.name).join("; ")
-          : "";
+        const total = Number(tx.total) || 0;
+        const discount = Number(tx.discount) || 0;
+        const tips = Number(tx.tip_amount) || 0;
+        
+        let cardAmount = 0;
+        let cashAmount = 0;
+        
+        if (tx.payment_method === "card") {
+          cardAmount = total;
+        } else if (tx.payment_method === "cash") {
+          cashAmount = total;
+        } else if (tx.payment_method === "mixed" && tx.payment_details) {
+          // For mixed payments, get the split from payment_details
+          const details = tx.payment_details as { card?: number; cash?: number };
+          cardAmount = Number(details.card) || 0;
+          cashAmount = Number(details.cash) || 0;
+        }
         
         return [
-          format(date, "dd/MM/yyyy"),
-          format(date, "HH:mm"),
-          tx.customer_name || "",
-          tx.stylist || "",
-          services,
-          (tx.subtotal || 0).toFixed(2),
-          (tx.discount || 0).toFixed(2),
-          (tx.tip_amount || 0).toFixed(2),
-          (tx.total || 0).toFixed(2),
-          tx.payment_method === "cash" ? "Efectivo" : tx.payment_method === "card" ? "Tarjeta" : "Mixto",
-          tx.voided ? "Sí" : "No",
-          tx.notes || ""
+          format(date, "dd/MM/yyyy HH:mm"),
+          cardAmount > 0 ? cardAmount.toFixed(2) : "",
+          cashAmount > 0 ? cashAmount.toFixed(2) : "",
+          discount > 0 ? discount.toFixed(2) : "",
+          tips > 0 ? tips.toFixed(2) : ""
         ];
       });
 
-      // Calculate totals
+      // Calculate totals from valid transactions
       const validTxs = transactions.filter(tx => !tx.voided);
-      const totalCash = validTxs.filter(tx => tx.payment_method === "cash").reduce((sum, tx) => sum + Number(tx.total), 0);
-      const totalCard = validTxs.filter(tx => tx.payment_method === "card").reduce((sum, tx) => sum + Number(tx.total), 0);
-      const totalMixed = validTxs.filter(tx => tx.payment_method === "mixed").reduce((sum, tx) => sum + Number(tx.total), 0);
-      const totalAll = validTxs.reduce((sum, tx) => sum + Number(tx.total), 0);
-      const totalTips = validTxs.reduce((sum, tx) => sum + Number(tx.tip_amount || 0), 0);
+      let totalCard = 0;
+      let totalCash = 0;
+      
+      validTxs.forEach(tx => {
+        const total = Number(tx.total) || 0;
+        if (tx.payment_method === "card") {
+          totalCard += total;
+        } else if (tx.payment_method === "cash") {
+          totalCash += total;
+        } else if (tx.payment_method === "mixed" && tx.payment_details) {
+          const details = tx.payment_details as { card?: number; cash?: number };
+          totalCard += Number(details.card) || 0;
+          totalCash += Number(details.cash) || 0;
+        }
+      });
+      
       const totalDiscounts = validTxs.reduce((sum, tx) => sum + Number(tx.discount || 0), 0);
+      const totalTips = validTxs.reduce((sum, tx) => sum + Number(tx.tip_amount || 0), 0);
+      const grandTotal = totalCard + totalCash;
 
-      // Add summary rows
+      // Add empty rows and summary at the bottom
       rows.push([]);
-      rows.push(["RESUMEN DEL PERÍODO"]);
-      rows.push(["Total transacciones", transactions.length.toString()]);
-      rows.push(["Transacciones válidas", validTxs.length.toString()]);
-      rows.push(["Total en Efectivo", "", "", "", "", "", "", "", totalCash.toFixed(2)]);
-      rows.push(["Total en Tarjeta", "", "", "", "", "", "", "", totalCard.toFixed(2)]);
-      rows.push(["Total Mixto", "", "", "", "", "", "", "", totalMixed.toFixed(2)]);
-      rows.push(["Total Propinas", "", "", "", "", "", "", totalTips.toFixed(2)]);
-      rows.push(["Total Descuentos", "", "", "", "", "", totalDiscounts.toFixed(2)]);
-      rows.push(["TOTAL GENERAL", "", "", "", "", "", "", "", totalAll.toFixed(2)]);
+      rows.push([]);
+      rows.push(["Total Tarjeta", totalCard.toFixed(2)]);
+      rows.push(["Total Efectivo", totalCash.toFixed(2)]);
+      rows.push(["Total Descuento", totalDiscounts.toFixed(2)]);
+      rows.push(["Total Propinas", totalTips.toFixed(2)]);
+      rows.push([]);
+      rows.push(["TOTAL", grandTotal.toFixed(2)]);
 
       // Convert to CSV string
       const escapeCSV = (val: string) => {
