@@ -1,27 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  HelpCircle, 
-  Calendar, 
-  Wallet, 
-  Star, 
-  MessageCircle, 
-  ImageIcon, 
-  BarChart3, 
-  Package, 
-  Scissors, 
-  Users, 
-  Clock, 
+import {
+  HelpCircle,
+  Calendar,
+  Wallet,
+  Star,
+  MessageCircle,
+  ImageIcon,
+  BarChart3,
+  Package,
+  Scissors,
+  Users,
+  Clock,
   Settings,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 
 interface HelpSection {
@@ -41,8 +35,8 @@ const helpSections: HelpSection[] = [
       "👆 Haz clic en un hueco vacío para crear una nueva cita",
       "✏️ Arrastra las citas para cambiar la hora",
       "🎨 Cada estilista tiene un color asignado para identificar sus citas",
-      "🔄 Las citas se actualizan en tiempo real"
-    ]
+      "🔄 Las citas se actualizan en tiempo real",
+    ],
   },
   {
     id: "cash",
@@ -50,12 +44,11 @@ const helpSections: HelpSection[] = [
     icon: <Wallet className="h-5 w-5" />,
     content: [
       "💰 Registra cobros de servicios y productos",
-      "🧾 Genera facturas con datos fiscales del cliente",
       "📊 Consulta el historial de transacciones del día",
       "💳 Acepta pagos en efectivo, tarjeta o mixto",
-      "📧 Envía tickets por email a los clientes",
-      "🎁 Aplica descuentos y propinas"
-    ]
+      "📧 Descarga Excels sobre tus transacciones de los peridods deseados",
+      "🎁 Aplica descuentos y propinas",
+    ],
   },
   {
     id: "reviews",
@@ -65,8 +58,8 @@ const helpSections: HelpSection[] = [
       "⭐ Visualiza todas las reseñas de tus clientes",
       "🗑️ Elimina reseñas inapropiadas",
       "📅 Filtra por mes o por número de estrellas",
-      "📈 Monitoriza la satisfacción de tus clientes"
-    ]
+      "📈 Monitoriza la satisfacción de tus clientes",
+    ],
   },
   {
     id: "messages",
@@ -75,8 +68,8 @@ const helpSections: HelpSection[] = [
     content: [
       "💬 Chatea directamente con tus clientes",
       "🔔 Recibe notificaciones de mensajes nuevos",
-      "📱 Responde consultas y confirma citas"
-    ]
+      "📱 Responde consultas y confirma citas",
+    ],
   },
   {
     id: "stories",
@@ -86,8 +79,8 @@ const helpSections: HelpSection[] = [
       "📸 Publica fotos de tus trabajos",
       "⏰ Los stories duran 24 horas",
       "👁️ Consulta las estadísticas de visualizaciones",
-      "🎨 Muestra tu portfolio a potenciales clientes"
-    ]
+      "🎨 Muestra tu portfolio a potenciales clientes",
+    ],
   },
   {
     id: "stats",
@@ -97,8 +90,8 @@ const helpSections: HelpSection[] = [
       "📊 Analiza el rendimiento de tu negocio",
       "💵 Consulta ingresos por periodo",
       "📈 Compara datos entre meses",
-      "👥 Identifica tus mejores clientes"
-    ]
+      "👥 Identifica tus mejores clientes",
+    ],
   },
   {
     id: "products",
@@ -108,8 +101,8 @@ const helpSections: HelpSection[] = [
       "📦 Gestiona tu inventario de productos",
       "⚠️ Recibe alertas cuando el stock sea bajo",
       "💰 Establece precios de venta y coste",
-      "📊 Controla márgenes de beneficio"
-    ]
+      "📊 Controla márgenes de beneficio",
+    ],
   },
   {
     id: "services",
@@ -119,8 +112,8 @@ const helpSections: HelpSection[] = [
       "✂️ Configura los servicios que ofreces",
       "⏱️ Establece duración de cada servicio",
       "💲 Define precios",
-      "📂 Organiza por categorías"
-    ]
+      "📂 Organiza por categorías",
+    ],
   },
   {
     id: "team",
@@ -130,8 +123,8 @@ const helpSections: HelpSection[] = [
       "👥 Añade estilistas a tu equipo",
       "🎨 Asigna colores para la agenda",
       "📅 Gestiona calendarios individuales",
-      "✅ Activa/desactiva miembros del equipo"
-    ]
+      "✅ Activa/desactiva miembros del equipo",
+    ],
   },
   {
     id: "hours",
@@ -141,8 +134,8 @@ const helpSections: HelpSection[] = [
       "🕐 Configura los horarios de apertura",
       "📅 Establece horarios por día de la semana",
       "☕ Define pausas (hora de comida)",
-      "🚫 Marca días de cierre"
-    ]
+      "🚫 Marca días de cierre",
+    ],
   },
   {
     id: "settings",
@@ -152,9 +145,9 @@ const helpSections: HelpSection[] = [
       "🎨 Personaliza colores y logo",
       "📝 Edita información del negocio",
       "📍 Configura dirección y contacto",
-      "🌐 Gestiona tu landing page"
-    ]
-  }
+      "🌐 Gestiona tu landing page",
+    ],
+  },
 ];
 
 export const HelpTutorial = () => {
@@ -175,51 +168,42 @@ export const HelpTutorial = () => {
             Centro de ayuda
           </DialogTitle>
         </DialogHeader>
-        
+
         <ScrollArea className="h-[60vh] pr-4">
           {selectedSection ? (
             <div className="space-y-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setSelectedSection(null)}
-                className="mb-2"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setSelectedSection(null)} className="mb-2">
                 ← Volver
               </Button>
-              {helpSections.filter(s => s.id === selectedSection).map(section => (
-                <div key={section.id} className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                      {section.icon}
+              {helpSections
+                .filter((s) => s.id === selectedSection)
+                .map((section) => (
+                  <div key={section.id} className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary">{section.icon}</div>
+                      <h3 className="text-lg font-semibold">{section.title}</h3>
                     </div>
-                    <h3 className="text-lg font-semibold">{section.title}</h3>
+                    <ul className="space-y-3">
+                      {section.content.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <span className="mt-0.5">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <ul className="space-y-3">
-                    {section.content.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <span className="mt-0.5">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+                ))}
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground mb-4">
-                Selecciona una sección para ver la ayuda detallada:
-              </p>
-              {helpSections.map(section => (
+              <p className="text-sm text-muted-foreground mb-4">Selecciona una sección para ver la ayuda detallada:</p>
+              {helpSections.map((section) => (
                 <button
                   key={section.id}
                   onClick={() => setSelectedSection(section.id)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
                 >
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                    {section.icon}
-                  </div>
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary">{section.icon}</div>
                   <span className="flex-1 font-medium">{section.title}</span>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </button>
