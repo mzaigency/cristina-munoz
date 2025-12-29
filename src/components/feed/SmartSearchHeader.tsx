@@ -29,7 +29,7 @@ export function SmartSearchHeader({
     if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
       return;
     }
-    
+
     const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.lang = "es-ES";
@@ -65,7 +65,7 @@ export function SmartSearchHeader({
       <div className="relative bg-gradient-to-b from-background via-background/95 to-background/80 backdrop-blur-2xl border-b border-border/30">
         <div className="px-4 py-4 safe-area-top">
           {/* Logo/Title */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center justify-between mb-4"
@@ -73,7 +73,7 @@ export function SmartSearchHeader({
             <div className="flex items-center gap-2">
               <img src="/favicon.png" alt="GlowUp" className="h-8 w-8" />
               <h1 className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                GlowUp
+                GlowApp
               </h1>
             </div>
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
@@ -85,23 +85,27 @@ export function SmartSearchHeader({
           </motion.div>
 
           {/* Search Container */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="relative"
           >
-            <div className={cn(
-              "relative flex items-center gap-2 rounded-2xl border-2 transition-all duration-300",
-              isFocused 
-                ? "border-primary bg-background shadow-lg shadow-primary/10" 
-                : "border-transparent bg-secondary/60"
-            )}>
-              <Search className={cn(
-                "absolute left-4 h-5 w-5 transition-colors duration-300",
-                isFocused ? "text-primary" : "text-muted-foreground"
-              )} />
-              
+            <div
+              className={cn(
+                "relative flex items-center gap-2 rounded-2xl border-2 transition-all duration-300",
+                isFocused
+                  ? "border-primary bg-background shadow-lg shadow-primary/10"
+                  : "border-transparent bg-secondary/60",
+              )}
+            >
+              <Search
+                className={cn(
+                  "absolute left-4 h-5 w-5 transition-colors duration-300",
+                  isFocused ? "text-primary" : "text-muted-foreground",
+                )}
+              />
+
               <Input
                 ref={inputRef}
                 type="text"
@@ -141,9 +145,9 @@ export function SmartSearchHeader({
                       onClick={handleVoiceSearch}
                       className={cn(
                         "h-10 w-10 rounded-full transition-all duration-300",
-                        isListening 
-                          ? "bg-primary text-primary-foreground animate-pulse" 
-                          : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                        isListening
+                          ? "bg-primary text-primary-foreground animate-pulse"
+                          : "text-muted-foreground hover:text-primary hover:bg-primary/10",
                       )}
                     >
                       <Mic className="h-5 w-5" />
@@ -193,7 +197,7 @@ export function SmartSearchHeader({
                             Recientes
                           </p>
                           {onClearRecents && (
-                            <button 
+                            <button
                               onClick={onClearRecents}
                               className="text-xs text-primary font-medium hover:underline"
                             >
