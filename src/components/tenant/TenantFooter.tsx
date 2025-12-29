@@ -115,16 +115,16 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
         {/* Bottom */}
         <div className="border-t border-primary/20 pt-8">
           <div className="flex flex-col items-center gap-4 text-sm text-muted-foreground">
-            {/* GlowUp Badge - Prominent on mobile */}
+            {/* GlowApp Badge - Prominent on mobile */}
             <a 
-              href="https://glowup.app" 
+              href="https://glowapp.es" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-500/20 transition-all touch-manipulation"
             >
-              <img src="/favicon.png" alt="GlowUp" className="h-5 w-5" />
+              <img src="/favicon.png" alt="GlowApp" className="h-5 w-5" />
               <span className="text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                Creado con GlowUp
+                Creado con GlowApp
               </span>
             </a>
             

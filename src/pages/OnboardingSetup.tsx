@@ -1033,8 +1033,8 @@ export default function OnboardingSetup() {
   return (
     <AppLayout hideNavigation>
       <SEO
-        title="Configura tu Perfil - GlowUp"
-        description="Personaliza tu perfil profesional en GlowUp"
+        title="Configura tu Perfil - GlowApp"
+        description="Personaliza tu perfil profesional en GlowApp"
         canonicalUrl="/onboarding/setup"
         noindex
       />
