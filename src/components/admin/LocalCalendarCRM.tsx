@@ -500,8 +500,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     }
 
     // Calculate start and end hours from business hours
-    let defaultStartHour = Math.floor(businessHours.morningStart / 60);
-    let defaultEndHour = businessHours.afternoonEnd > 0 
+    const defaultStartHour = Math.floor(businessHours.morningStart / 60);
+    const defaultEndHour = businessHours.afternoonEnd > 0
       ? Math.ceil(businessHours.afternoonEnd / 60)
       : Math.ceil(businessHours.morningEnd / 60);
 
