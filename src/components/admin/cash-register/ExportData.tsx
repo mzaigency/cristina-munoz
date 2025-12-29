@@ -115,17 +115,17 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
       rows.push([]);
       rows.push(["TOTAL", grandTotal.toFixed(2)]);
 
-      // Convert to CSV string
+      // Convert to CSV string with semicolon separator (for Excel in Spanish locales)
       const escapeCSV = (val: string) => {
-        if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+        if (val.includes(";") || val.includes('"') || val.includes("\n")) {
           return `"${val.replace(/"/g, '""')}"`;
         }
         return val;
       };
 
       const csvContent = [
-        headers.join(","),
-        ...rows.map(row => row.map(cell => escapeCSV(String(cell))).join(","))
+        headers.join(";"),
+        ...rows.map(row => row.map(cell => escapeCSV(String(cell))).join(";"))
       ].join("\n");
 
       // Add BOM for Excel UTF-8 compatibility
