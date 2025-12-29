@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Pencil, Trash2, Upload, Image } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Upload, Image, X } from "lucide-react";
+import { ImageCropper } from "./ImageCropper";
 
 interface Service {
   id: string;
@@ -75,6 +76,11 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     price: "" as string | number,
   });
   const { toast } = useToast();
+  
+  // Cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchData();
@@ -242,18 +248,29 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     }
   };
 
-  const handleCategoryImageUpload = async (file: File) => {
+  // Called when user picks a file – open cropper instead of uploading directly
+  const handleFileSelected = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setCropImageSrc(e.target?.result as string);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Called after cropping is done – upload the cropped blob
+  const handleCroppedImage = async (blob: Blob) => {
     if (!selectedCategory) return;
 
     try {
       setUploading(true);
-      
-      const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+
       const categorySlug = storageSafeSlug(selectedCategory);
-      const fileName = `${tenantId}/category-${categorySlug}-${Date.now()}.${fileExt}`;
+      const fileName = `${tenantId}/category-${categorySlug}-${Date.now()}.jpg`;
+
       const { error: uploadError } = await supabase.storage
         .from("tenant-assets")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, blob, { upsert: true, contentType: "image/jpeg" });
 
       if (uploadError) throw uploadError;
 
@@ -286,6 +303,54 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
       toast({
         title: "Error",
         description: error.message || "No se pudo subir la imagen",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Delete category image
+  const handleDeleteCategoryImage = async () => {
+    if (!selectedCategory) return;
+
+    const existingImage = categoryImages.find(ci => ci.category === selectedCategory);
+    if (!existingImage) return;
+
+    try {
+      setUploading(true);
+
+      // Delete from database
+      const { error } = await supabase
+        .from("tenant_category_images")
+        .delete()
+        .eq("id", existingImage.id);
+
+      if (error) throw error;
+
+      // Try to delete from storage (extract path from URL)
+      try {
+        const url = new URL(existingImage.image_url);
+        const pathParts = url.pathname.split("/tenant-assets/");
+        if (pathParts[1]) {
+          await supabase.storage.from("tenant-assets").remove([decodeURIComponent(pathParts[1])]);
+        }
+      } catch {
+        // Ignore storage deletion errors
+      }
+
+      toast({
+        title: "Imagen eliminada",
+        description: `La imagen de ${selectedCategory} ha sido eliminada`,
+      });
+
+      setIsCategoryImageDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      console.error("Error deleting category image:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar la imagen",
         variant: "destructive",
       });
     } finally {
@@ -598,18 +663,30 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
           <DialogHeader>
             <DialogTitle>Imagen de Categoría</DialogTitle>
             <DialogDescription>
-              Sube una imagen para la categoría "{selectedCategory}"
+              Sube una imagen cuadrada (1:1) para la categoría "{selectedCategory}"
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             {selectedCategory && getCategoryImage(selectedCategory) && (
-              <div className="aspect-video relative overflow-hidden rounded-lg bg-muted">
-                <img 
-                  src={getCategoryImage(selectedCategory)} 
-                  alt={selectedCategory}
-                  className="w-full h-full object-cover"
-                />
+              <div className="relative">
+                <div className="aspect-square w-48 mx-auto overflow-hidden rounded-lg bg-muted">
+                  <img 
+                    src={getCategoryImage(selectedCategory)} 
+                    alt={selectedCategory}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {/* Delete button */}
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={handleDeleteCategoryImage}
+                  disabled={uploading}
+                >
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                </Button>
               </div>
             )}
             
@@ -621,17 +698,20 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                   ) : (
                     <Upload className="h-5 w-5" />
                   )}
-                  <span>{uploading ? "Subiendo..." : "Subir Imagen"}</span>
+                  <span>{uploading ? "Subiendo..." : "Subir nueva imagen"}</span>
                 </div>
               </Label>
               <input
+                ref={fileInputRef}
                 id="category-image-upload"
                 type="file"
                 accept="image/*"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleCategoryImageUpload(file);
+                  if (file) handleFileSelected(file);
+                  // Reset input so user can select same file again
+                  if (e.target) e.target.value = "";
                 }}
                 disabled={uploading}
               />
@@ -645,6 +725,19 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Image Cropper */}
+      <ImageCropper
+        open={cropperOpen}
+        onClose={() => {
+          setCropperOpen(false);
+          setCropImageSrc(null);
+        }}
+        imageSrc={cropImageSrc || ""}
+        aspectRatio={1}
+        outputSize={512}
+        onCropComplete={handleCroppedImage}
+      />
     </div>
   );
 };
