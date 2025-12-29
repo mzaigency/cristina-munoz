@@ -1717,6 +1717,7 @@ export type Database = {
         Returns: boolean
       }
       is_superadmin: { Args: never; Returns: boolean }
+      is_tenant_active: { Args: { _tenant_id: string }; Returns: boolean }
       search_my_bookings: {
         Args: { phone_number: string }
         Returns: {
