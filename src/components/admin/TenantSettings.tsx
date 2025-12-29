@@ -26,6 +26,7 @@ interface TenantData {
   address: string | null;
   city: string | null;
   postal_code: string | null;
+  show_logo_on_landing: boolean;
 }
 
 export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) => {
@@ -43,12 +44,12 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
     try {
       const { data, error } = await supabase
         .from("tenants")
-        .select("name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code")
+        .select("name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code, show_logo_on_landing")
         .eq("id", tenantId)
         .single();
 
       if (error) throw error;
-      setTenant(data);
+      setTenant({ ...data, show_logo_on_landing: data.show_logo_on_landing ?? true });
     } catch (error) {
       console.error("Error fetching tenant:", error);
       toast({
@@ -118,6 +119,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
           address: tenant.address,
           city: tenant.city,
           postal_code: tenant.postal_code,
+          show_logo_on_landing: tenant.show_logo_on_landing,
         })
         .eq("id", tenantId);
 
@@ -329,6 +331,24 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   value={tenant.logo_url || ""}
                   onChange={(e) => setTenant({ ...tenant, logo_url: e.target.value })}
                   placeholder="https://..."
+                />
+              </div>
+              {/* Logo visibility toggle */}
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div>
+                  <Label htmlFor="show_logo_landing" className="text-sm font-medium">
+                    Mostrar logo en landing
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    El logo se mostrará en la sección hero de tu página
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  id="show_logo_landing"
+                  checked={tenant.show_logo_on_landing}
+                  onChange={(e) => setTenant({ ...tenant, show_logo_on_landing: e.target.checked })}
+                  className="h-5 w-5 rounded border-input accent-primary"
                 />
               </div>
             </div>

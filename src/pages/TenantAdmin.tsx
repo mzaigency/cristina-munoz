@@ -18,7 +18,6 @@ import {
   Users, 
   Clock, 
   ImageIcon, 
-  CreditCard, 
   Package,
   ChevronDown
 } from "lucide-react";
@@ -33,6 +32,7 @@ import { StylistsManager } from "@/components/admin/StylistsManager";
 import { BusinessHoursManager } from "@/components/admin/BusinessHoursManager";
 import { StoriesAnalytics } from "@/components/admin/StoriesAnalytics";
 import { ProductsManager } from "@/components/admin/ProductsManager";
+import { HelpTutorial } from "@/components/admin/HelpTutorial";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -321,7 +321,7 @@ export default function TenantAdmin() {
       case "subscription":
         return (
           <div className="text-center py-12 text-muted-foreground">
-            <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Gestión de suscripción próximamente</p>
           </div>
         );
@@ -416,6 +416,7 @@ export default function TenantAdmin() {
 
             {/* Actions */}
             <div className="flex items-center gap-1">
+              <HelpTutorial />
               <Button 
                 onClick={() => navigate(`/salon/${slug}`)} 
                 variant="ghost" 

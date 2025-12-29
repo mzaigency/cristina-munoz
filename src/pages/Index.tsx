@@ -2,7 +2,7 @@ import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, TrendingUp, Wand2 } from "lucide-react";
+import { Heart, TrendingUp, Wand2, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
@@ -15,6 +15,7 @@ import { AppLayout } from "@/components/navigation/AppLayout";
 import { useFavorites } from "@/hooks/useFavorites";
 import { JoinNetworkSection } from "@/components/feed/JoinNetworkSection";
 import { Button } from "@/components/ui/button";
+import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 
 interface TenantWithStats {
   id: string;
@@ -46,6 +47,7 @@ const Index = () => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const { favorites, isAuthenticated } = useFavorites();
+  const { tenant: userTenant, isAdmin: isUserAdmin, loading: tenantLoading } = useCurrentUserTenant();
 
   // Check if current user is superadmin
   useEffect(() => {
@@ -173,6 +175,22 @@ const Index = () => {
             >
               <Wand2 className="h-4 w-4 mr-2" />
               Probar Wizard de Onboarding (Superadmin)
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {/* Admin Panel Access Button */}
+      {!tenantLoading && userTenant && (
+        <div className="px-4 pt-4">
+          <Link to={`/admin/${userTenant.slug}`}>
+            <Button 
+              variant="default" 
+              className="w-full h-12 rounded-xl gap-2"
+              style={{ backgroundColor: userTenant.primary_color || undefined }}
+            >
+              <Shield className="h-4 w-4" />
+              Panel de Administración - {userTenant.name}
             </Button>
           </Link>
         </div>

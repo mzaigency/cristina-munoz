@@ -76,6 +76,7 @@ interface Product {
   price: number;
   category: string | null;
   stock: number;
+  min_stock: number;
 }
 
 interface QuickPaymentProps {
@@ -127,12 +128,39 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     fiscalAddress: ""
   });
   const [tenantData, setTenantData] = useState<any>(null);
+  const [savedFiscalData, setSavedFiscalData] = useState<any[]>([]);
+  const [lowStockAlerts, setLowStockAlerts] = useState<string[]>([]);
   
   const { toast } = useToast();
 
   useEffect(() => {
     fetchData();
+    fetchSavedFiscalData();
   }, [tenantId]);
+
+  // Auto-fill fiscal data when customer name changes
+  useEffect(() => {
+    if (customerName.trim() && wantsInvoice) {
+      const match = savedFiscalData.find(
+        f => f.customer_name.toLowerCase() === customerName.trim().toLowerCase()
+      );
+      if (match) {
+        setInvoiceData({
+          fiscalName: match.fiscal_name || "",
+          nif: match.nif || "",
+          fiscalAddress: match.fiscal_address || ""
+        });
+      }
+    }
+  }, [customerName, wantsInvoice, savedFiscalData]);
+
+  const fetchSavedFiscalData = async () => {
+    const { data } = await supabase
+      .from("customer_fiscal_data")
+      .select("*")
+      .eq("tenant_id", tenantId);
+    if (data) setSavedFiscalData(data);
+  };
 
   const fetchData = async () => {
     try {
@@ -141,7 +169,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           .eq("tenant_id", tenantId).order("category").order("name"),
         supabase.from("tenant_stylists").select("id, name, slug, color")
           .eq("tenant_id", tenantId).eq("is_active", true).order("name"),
-        supabase.from("products").select("id, name, price, category, stock")
+        supabase.from("products").select("id, name, price, category, stock, min_stock")
           .eq("tenant_id", tenantId).eq("is_active", true).order("name"),
         supabase.from("tenants").select("name, logo_url, address, city, postal_code, phone, email")
           .eq("id", tenantId).single()
@@ -312,6 +340,40 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       const { error } = await supabase.from("transactions").insert(transactionData as never);
       if (error) throw error;
 
+      // Reduce stock for products and check for low stock
+      const productItems = selectedItems.filter(item => item.type === "product");
+      const alerts: string[] = [];
+      for (const item of productItems) {
+        const product = products.find(p => p.id === item.id);
+        if (product) {
+          const newStock = product.stock - item.quantity;
+          await supabase.from("products").update({ stock: newStock }).eq("id", item.id);
+          if (newStock <= product.min_stock) {
+            alerts.push(`${product.name}: ${newStock} uds`);
+          }
+        }
+      }
+      if (alerts.length > 0) {
+        setLowStockAlerts(alerts);
+        toast({ 
+          title: "⚠️ Stock bajo", 
+          description: alerts.join(", "),
+          variant: "destructive"
+        });
+      }
+
+      // Save fiscal data for future use
+      if (wantsInvoice && invoiceData.fiscalName && invoiceData.nif) {
+        await supabase.from("customer_fiscal_data").upsert({
+          tenant_id: tenantId,
+          customer_name: customerName.trim() || "Cliente",
+          fiscal_name: invoiceData.fiscalName,
+          nif: invoiceData.nif,
+          fiscal_address: invoiceData.fiscalAddress,
+          email: customerEmail || null
+        }, { onConflict: "tenant_id,customer_name" });
+      }
+
       setLastTransaction({
         ...transactionData,
         stylistName: selectedStylist?.name || "Estilista",
@@ -325,6 +387,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       setShowSuccess(true);
       clearAll();
       onTransactionCreated();
+      fetchData(); // Refresh products to show updated stock
       
     } catch (error: unknown) {
       console.error("Error:", error);

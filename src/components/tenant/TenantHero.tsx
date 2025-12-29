@@ -14,6 +14,7 @@ interface Tenant {
   description: string | null;
   hero_image_url: string | null;
   logo_url: string | null;
+  show_logo_on_landing?: boolean;
   features?: {
     business_type?: string;
     business_type_label?: string;
@@ -93,8 +94,8 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
         style={{ opacity: contentOpacity, y: contentY }}
       >
         <div className="max-w-2xl mx-auto text-center">
-          {/* Logo */}
-          {tenant.logo_url && (
+          {/* Logo - only show if show_logo_on_landing is true (defaults to true) */}
+          {tenant.logo_url && (tenant.show_logo_on_landing !== false) && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
