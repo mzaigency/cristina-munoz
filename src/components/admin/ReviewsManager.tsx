@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Star, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -30,6 +31,7 @@ interface Review {
   rating: number;
   comment: string | null;
   created_at: string;
+  approved: boolean;
 }
 
 type FilterType = "all" | "month" | "stars";
@@ -58,6 +60,7 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
 
   const fetchReviews = async () => {
     try {
+      // Fetch ALL reviews (both approved and pending) for the tenant
       const { data, error } = await supabase
         .from("reviews")
         .select("*")
@@ -233,12 +236,13 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
                     <TableHead>Fecha</TableHead>
                     <TableHead>Estrellas</TableHead>
                     <TableHead>Comentario</TableHead>
+                    <TableHead>Estado</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredReviews.map((review) => (
-                    <TableRow key={review.id}>
+                    <TableRow key={review.id} className={!review.approved ? "bg-yellow-50 dark:bg-yellow-950/20" : ""}>
                       <TableCell className="whitespace-nowrap">
                         {format(
                           new Date(review.created_at),
@@ -253,6 +257,11 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
                             Sin comentario
                           </span>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={review.approved ? "default" : "secondary"}>
+                          {review.approved ? "Publicada" : "Pendiente"}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

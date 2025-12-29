@@ -223,6 +223,50 @@ export type Database = {
           },
         ]
       }
+      customer_fiscal_data: {
+        Row: {
+          created_at: string
+          customer_name: string
+          email: string | null
+          fiscal_address: string | null
+          fiscal_name: string | null
+          id: string
+          nif: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          email?: string | null
+          fiscal_address?: string | null
+          fiscal_name?: string | null
+          id?: string
+          nif?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          email?: string | null
+          fiscal_address?: string | null
+          fiscal_name?: string | null
+          id?: string
+          nif?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_fiscal_data_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       direct_messages: {
         Row: {
           content: string
@@ -1016,6 +1060,7 @@ export type Database = {
           preview_token: string | null
           primary_color: string | null
           secondary_color: string | null
+          show_logo_on_landing: boolean | null
           slug: string
           subscription_expires_at: string | null
           subscription_plan: string | null
@@ -1056,6 +1101,7 @@ export type Database = {
           preview_token?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          show_logo_on_landing?: boolean | null
           slug: string
           subscription_expires_at?: string | null
           subscription_plan?: string | null
@@ -1096,6 +1142,7 @@ export type Database = {
           preview_token?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          show_logo_on_landing?: boolean | null
           slug?: string
           subscription_expires_at?: string | null
           subscription_plan?: string | null
