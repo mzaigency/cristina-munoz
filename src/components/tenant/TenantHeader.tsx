@@ -155,7 +155,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 </Link>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Volver a GlowUp</p>
+                <p>Volver a GlowApp</p>
               </TooltipContent>
             </Tooltip>
 

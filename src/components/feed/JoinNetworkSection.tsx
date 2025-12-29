@@ -29,7 +29,7 @@ export const JoinNetworkSection = () => {
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Únete a la comunidad{" "}
-            <span className="text-gradient">GlowUp</span>
+            <span className="text-gradient">GlowApp</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Haz crecer tu negocio con nuestra plataforma. 

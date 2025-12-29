@@ -38,7 +38,7 @@ interface TenantWithStats {
   } | null;
 }
 
-const STORAGE_KEY = "glowup_recent_searches";
+const STORAGE_KEY = "glowapp_recent_searches";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -145,9 +145,9 @@ const Index = () => {
   return (
     <AppLayout>
       <SEO
-        title="GlowUp | Descubre y Reserva en los Mejores Salones de Belleza"
+        title="GlowApp | Descubre y Reserva en los Mejores Salones de Belleza"
         description="La red social de belleza. Descubre los mejores salones cerca de ti, conecta con profesionales y reserva cita online."
-        keywords="red social belleza, salones de belleza, peluquerías, reserva online, spa, estética, GlowUp"
+        keywords="red social belleza, salones de belleza, peluquerías, reserva online, spa, estética, GlowApp"
         canonicalUrl="/"
       />
 

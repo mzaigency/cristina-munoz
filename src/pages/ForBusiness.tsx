@@ -54,8 +54,8 @@ export default function ForBusiness() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="GlowUp para Negocios | Tu Salón en la Plataforma Líder de Belleza"
-        description="Únete a GlowUp y haz crecer tu negocio de belleza. Landing page profesional, sistema de reservas 24/7, gestión de equipo y más. 1 mes gratis."
+        title="GlowApp para Negocios | Tu Salón en la Plataforma Líder de Belleza"
+        description="Únete a GlowApp y haz crecer tu negocio de belleza. Landing page profesional, sistema de reservas 24/7, gestión de equipo y más. 1 mes gratis."
         keywords="software peluquería, reservas salón belleza, gestión barbería, plataforma spa, agenda online estética"
         canonicalUrl="/para-negocios"
       />
@@ -64,8 +64,8 @@ export default function ForBusiness() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/favicon.png" alt="GlowUp" className="h-8 w-8" />
-            <span className="text-xl font-bold text-foreground">GlowUp</span>
+            <img src="/favicon.png" alt="GlowApp" className="h-8 w-8" />
+            <span className="text-xl font-bold text-foreground">GlowApp</span>
           </Link>
           <Button asChild>
             <Link to="/onboarding">
@@ -94,7 +94,7 @@ export default function ForBusiness() {
             className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6"
           >
             Haz crecer tu negocio con{" "}
-            <span className="text-gradient">GlowUp</span>
+            <span className="text-gradient">GlowApp</span>
           </motion.h1>
 
           <motion.p
@@ -308,7 +308,7 @@ export default function ForBusiness() {
             transition={{ delay: 0.1 }}
             className="text-lg text-muted-foreground mb-8"
           >
-            Únete a cientos de negocios que ya confían en GlowUp para crecer.
+            Únete a cientos de negocios que ya confían en GlowApp para crecer.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -330,9 +330,9 @@ export default function ForBusiness() {
       <footer className="py-8 px-4 border-t border-border">
         <div className="container mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="GlowUp" className="h-6 w-6" />
+            <img src="/favicon.png" alt="GlowApp" className="h-6 w-6" />
             <p className="text-sm text-muted-foreground">
-              © 2024 GlowUp. Todos los derechos reservados.
+              © 2024 GlowApp. Todos los derechos reservados.
             </p>
           </div>
           <div className="flex gap-4">

@@ -3,14 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Receipt, History, BarChart3, Lock, FileText } from "lucide-react";
+import { Loader2, Receipt, History, BarChart3, Lock, Download } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { QuickPayment } from "./cash-register/QuickPayment";
 import { TransactionHistory } from "./cash-register/TransactionHistory";
 import { CashRegisterStats } from "./cash-register/CashRegisterStats";
 import { DailySummary } from "./cash-register/DailySummary";
-import { InvoiceHistory } from "./cash-register/InvoiceHistory";
+import { ExportData } from "./cash-register/ExportData";
 
 export interface Transaction {
   id: string;
@@ -185,9 +185,9 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
                 <History className="h-4 w-4" />
                 <span className="hidden sm:inline">Historial</span>
               </TabsTrigger>
-              <TabsTrigger value="invoices" className="gap-2">
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">Facturas</span>
+              <TabsTrigger value="export" className="gap-2">
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Exportar</span>
               </TabsTrigger>
               <TabsTrigger value="stats" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
@@ -213,8 +213,8 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
                 onUpdate={fetchTodayData}
               />
             </TabsContent>
-            <TabsContent value="invoices" className="mt-0">
-              <InvoiceHistory tenantId={tenantId} />
+            <TabsContent value="export" className="mt-0">
+              <ExportData tenantId={tenantId} />
             </TabsContent>
             <TabsContent value="stats" className="mt-0">
               <CashRegisterStats />
