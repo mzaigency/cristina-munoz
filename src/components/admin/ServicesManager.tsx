@@ -38,8 +38,21 @@ const DEFAULT_CATEGORIES = [
   "Coloración",
   "Peinados y Tratamientos",
   "Depilación y Maquillaje",
-  "Otros"
+  "Otros",
 ];
+
+const storageSafeSlug = (value: string) => {
+  // Supabase Storage keys must be URL-safe; remove accents and special chars.
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // strip diacritics
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+};
 
 export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
   const [services, setServices] = useState<Service[]>([]);
@@ -235,9 +248,9 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     try {
       setUploading(true);
       
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${tenantId}/category-${selectedCategory.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}.${fileExt}`;
-      
+      const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const categorySlug = storageSafeSlug(selectedCategory);
+      const fileName = `${tenantId}/category-${categorySlug}-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from("tenant-assets")
         .upload(fileName, file, { upsert: true });
