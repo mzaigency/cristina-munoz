@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2, User, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, User, Upload, Clock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { StylistScheduleEditor } from "./StylistScheduleEditor";
 
 interface Stylist {
   id: string;
@@ -31,6 +32,8 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingStylist, setEditingStylist] = useState<Stylist | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [scheduleEditorOpen, setScheduleEditorOpen] = useState(false);
+  const [selectedStylistForSchedule, setSelectedStylistForSchedule] = useState<Stylist | null>(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -390,6 +393,17 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => {
+                        setSelectedStylistForSchedule(stylist);
+                        setScheduleEditorOpen(true);
+                      }}
+                      title="Editar horarios"
+                    >
+                      <Clock className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => openEditDialog(stylist)}
                     >
                       <Pencil className="h-4 w-4" />
@@ -425,6 +439,20 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
           </div>
         )}
       </CardContent>
+
+      {/* Schedule Editor */}
+      {selectedStylistForSchedule && (
+        <StylistScheduleEditor
+          open={scheduleEditorOpen}
+          onClose={() => {
+            setScheduleEditorOpen(false);
+            setSelectedStylistForSchedule(null);
+          }}
+          stylistId={selectedStylistForSchedule.id}
+          stylistName={selectedStylistForSchedule.name}
+          tenantId={tenantId}
+        />
+      )}
     </Card>
   );
 }

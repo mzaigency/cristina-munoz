@@ -10,8 +10,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Pencil, Trash2, Upload, Image, X } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Upload, Image, X, GripVertical } from "lucide-react";
 import { ImageCropper } from "./ImageCropper";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Service {
   id: string;
@@ -22,6 +39,7 @@ interface Service {
   duration_exposure_pause: number;
   duration_part2_active: number;
   price: number | null;
+  sort_order?: number;
 }
 
 interface CategoryImage {
@@ -95,12 +113,14 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
           .from("services")
           .select("*")
           .eq("tenant_id", tenantId)
+          .order("sort_order", { ascending: true })
           .order("category", { ascending: true })
           .order("name", { ascending: true }),
         supabase
           .from("tenant_category_images")
           .select("*")
           .eq("tenant_id", tenantId)
+          .order("sort_order", { ascending: true })
       ]);
 
       if (servicesRes.error) throw servicesRes.error;
@@ -368,6 +388,36 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     const hours = Math.floor(total / 60);
     const mins = total % 60;
     return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+  };
+
+  // Drag & drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // Handle service reorder within category
+  const handleDragEnd = async (event: DragEndEvent, category: string) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const categoryServices = groupedServices[category];
+    const oldIndex = categoryServices.findIndex(s => s.id === active.id);
+    const newIndex = categoryServices.findIndex(s => s.id === over.id);
+
+    const reordered = arrayMove(categoryServices, oldIndex, newIndex);
+    
+    // Update local state immediately
+    setServices(prev => {
+      const others = prev.filter(s => s.category !== category);
+      return [...others, ...reordered];
+    });
+
+    // Save to database
+    const updates = reordered.map((s, idx) => ({ id: s.id, sort_order: idx }));
+    for (const upd of updates) {
+      await supabase.from("services").update({ sort_order: upd.sort_order }).eq("id", upd.id);
+    }
   };
 
   // Group services by category
