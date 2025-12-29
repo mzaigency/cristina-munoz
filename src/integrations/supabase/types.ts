@@ -630,6 +630,7 @@ export type Database = {
           id: string
           name: string
           price: number | null
+          sort_order: number | null
           tenant_id: string | null
           type: string
           updated_at: string
@@ -643,6 +644,7 @@ export type Database = {
           id?: string
           name: string
           price?: number | null
+          sort_order?: number | null
           tenant_id?: string | null
           type: string
           updated_at?: string
@@ -656,6 +658,7 @@ export type Database = {
           id?: string
           name?: string
           price?: number | null
+          sort_order?: number | null
           tenant_id?: string | null
           type?: string
           updated_at?: string
@@ -695,6 +698,63 @@ export type Database = {
             columns: ["story_id"]
             isOneToOne: false
             referencedRelation: "salon_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stylist_business_hours: {
+        Row: {
+          break_end: string | null
+          break_start: string | null
+          created_at: string | null
+          day_of_week: number
+          end_time: string | null
+          id: string
+          is_working: boolean | null
+          start_time: string | null
+          stylist_id: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          break_end?: string | null
+          break_start?: string | null
+          created_at?: string | null
+          day_of_week: number
+          end_time?: string | null
+          id?: string
+          is_working?: boolean | null
+          start_time?: string | null
+          stylist_id: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          break_end?: string | null
+          break_start?: string | null
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string | null
+          id?: string
+          is_working?: boolean | null
+          start_time?: string | null
+          stylist_id?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_business_hours_stylist_id_fkey"
+            columns: ["stylist_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_stylists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stylist_business_hours_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -870,6 +930,7 @@ export type Database = {
           created_at: string | null
           id: string
           image_url: string
+          sort_order: number | null
           tenant_id: string
           updated_at: string | null
         }
@@ -878,6 +939,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url: string
+          sort_order?: number | null
           tenant_id: string
           updated_at?: string | null
         }
@@ -886,6 +948,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string
+          sort_order?: number | null
           tenant_id?: string
           updated_at?: string | null
         }
