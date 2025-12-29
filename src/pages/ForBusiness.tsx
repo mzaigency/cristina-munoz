@@ -65,7 +65,7 @@ export default function ForBusiness() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img src="/favicon.png" alt="GlowApp" className="h-8 w-8" />
-            <span className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"">GlowApp</span>
+            <span className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">GlowApp</span>
           </Link>
           <Button asChild>
             <Link to="/onboarding">
