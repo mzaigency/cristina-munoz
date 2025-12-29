@@ -378,17 +378,30 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
   const downloadInvoicePdf = async () => {
     if (!lastTransaction || !tenantData) return;
-    
+
+    // IMPORTANT: Open the window synchronously to avoid popup blockers.
+    const invoiceWindow = window.open("", "_blank");
+    if (!invoiceWindow) {
+      toast({
+        title: "No se pudo abrir la factura",
+        description: "Permite las ventanas emergentes para descargar/imprimir la factura.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const invoiceNumber = `FAC-${Date.now().toString(36).toUpperCase()}`;
-    const invoiceDate = new Date().toLocaleDateString("es-ES", { 
-      day: "numeric", month: "long", year: "numeric" 
+    const invoiceDate = new Date().toLocaleDateString("es-ES", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
 
-    // Save invoice to database
+    // Save invoice to database (doesn't block rendering the print window)
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from("invoices").insert({
+        const { error } = await supabase.from("invoices").insert({
           tenant_id: tenantId,
           invoice_number: invoiceNumber,
           customer_name: lastTransaction.customer_name,
@@ -402,21 +415,28 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           total: lastTransaction.grandTotal,
           payment_method: lastTransaction.payment_method,
           stylist_name: lastTransaction.stylistName,
-          created_by: user.id
+          created_by: user.id,
         });
+
+        if (error) throw error;
       }
     } catch (error) {
+      // If saving fails (permissions, etc.) we still allow printing.
       console.error("Error saving invoice:", error);
     }
 
-    const itemsHtml = lastTransaction.items.map((item: any) => `
+    const itemsHtml = lastTransaction.items
+      .map(
+        (item: any) => `
       <tr>
         <td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">${item.name}</td>
         <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: center;">${item.quantity}</td>
         <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: right;">${formatCurrency(item.price)}</td>
         <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: right;">${formatCurrency(item.total)}</td>
       </tr>
-    `).join("");
+    `
+      )
+      .join("");
 
     const invoiceHtml = `
       <!DOCTYPE html>
@@ -452,8 +472,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           .totals-row.tip { color: #ec4899; }
           .totals-row.final { border-top: 3px solid #333; border-bottom: none; padding-top: 16px; margin-top: 8px; font-size: 20px; font-weight: bold; }
           .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; color: #888; font-size: 12px; }
-          @media print { 
-            body { padding: 20px; } 
+          @media print {
+            body { padding: 20px; }
             .invoice-badge { background: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             thead { background: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           }
@@ -474,7 +494,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             <p>${invoiceNumber}</p>
           </div>
         </div>
-        
+
         <div class="parties">
           <div class="party">
             <div class="party-title">Datos del emisor</div>
@@ -495,7 +515,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         </div>
 
         <p style="margin-bottom: 10px; color: #666; font-size: 14px;">Fecha: ${invoiceDate}</p>
-        
+
         <table>
           <thead>
             <tr>
@@ -509,7 +529,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             ${itemsHtml}
           </tbody>
         </table>
-        
+
         <div class="totals">
           <div class="totals-box">
             <div class="totals-row">
@@ -534,7 +554,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             </div>
           </div>
         </div>
-        
+
         <div class="footer">
           <div>Atendido por: ${lastTransaction.stylistName}</div>
           <div>Pago: ${lastTransaction.payment_method === "cash" ? "Efectivo" : lastTransaction.payment_method === "card" ? "Tarjeta" : "Mixto"}</div>
@@ -543,15 +563,21 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       </html>
     `;
 
-    // Open in new window and trigger print
-    const invoiceWindow = window.open("", "_blank");
-    if (invoiceWindow) {
-      invoiceWindow.document.write(invoiceHtml);
-      invoiceWindow.document.close();
-      invoiceWindow.print();
-    }
-    
-    toast({ title: "Factura generada 📄" });
+    invoiceWindow.document.open();
+    invoiceWindow.document.write(invoiceHtml);
+    invoiceWindow.document.close();
+    invoiceWindow.focus();
+
+    // Give the browser a tick to paint before printing.
+    setTimeout(() => {
+      try {
+        invoiceWindow.print();
+      } catch {
+        // ignore
+      }
+    }, 250);
+
+    toast({ title: "Factura generada" });
     setShowSuccess(false);
   };
 
