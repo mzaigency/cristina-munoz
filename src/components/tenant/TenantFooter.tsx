@@ -26,20 +26,18 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="md:col-span-2">
-            <h3 className="text-2xl font-bold mb-4 text-primary">
-              {tenant.name}
-            </h3>
+            <h3 className="text-2xl font-bold mb-4 text-primary">{tenant.name}</h3>
             <p className="text-muted-foreground mb-4">
-              Tu peluquería de confianza{tenant.city && ` en ${tenant.city}`}. 
-              Profesionales dedicados a realzar tu belleza con los mejores tratamientos y técnicas.
+              Tu peluquería de confianza{tenant.city && ` en ${tenant.city}`}. Profesionales dedicados a realzar tu
+              belleza con los mejores tratamientos y técnicas.
             </p>
             {/* Social Links */}
             {(tenant.instagram_url || tenant.facebook_url) && (
               <div className="flex gap-3 mt-4">
                 {tenant.instagram_url && (
-                  <a 
-                    href={tenant.instagram_url} 
-                    target="_blank" 
+                  <a
+                    href={tenant.instagram_url}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white hover:opacity-80 transition-opacity"
                     aria-label="Instagram"
@@ -48,9 +46,9 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
                   </a>
                 )}
                 {tenant.facebook_url && (
-                  <a 
-                    href={tenant.facebook_url} 
-                    target="_blank" 
+                  <a
+                    href={tenant.facebook_url}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 rounded-full bg-blue-600 text-white hover:opacity-80 transition-opacity"
                     aria-label="Facebook"
@@ -76,9 +74,9 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
                   </span>
                 </div>
               )}
-              
+
               {tenant.phone && (
-                <a 
+                <a
                   href={`tel:${tenant.phone}`}
                   className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
                 >
@@ -88,7 +86,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
               )}
 
               {tenant.email && (
-                <a 
+                <a
                   href={`mailto:${tenant.email}`}
                   className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
                 >
@@ -116,9 +114,9 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
         <div className="border-t border-primary/20 pt-8">
           <div className="flex flex-col items-center gap-4 text-sm text-muted-foreground">
             {/* GlowApp Badge - Prominent on mobile */}
-            <a 
-              href="https://glowapp.es" 
-              target="_blank" 
+            <a
+              href="https://glowapp.app"
+              target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-500/20 transition-all touch-manipulation"
             >
@@ -127,7 +125,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
                 Creado con GlowApp
               </span>
             </a>
-            
+
             {/* Links and Copyright */}
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
               <div className="flex items-center gap-6">
@@ -139,7 +137,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
                 </a>
               </div>
             </div>
-            
+
             <p className="text-center text-xs">
               © {currentYear} {tenant.name}. Todos los derechos reservados.
             </p>

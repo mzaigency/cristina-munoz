@@ -7,16 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { 
-  CreditCard, 
-  Calendar, 
-  Crown, 
-  ArrowLeft, 
-  ExternalLink,
-  CheckCircle,
-  AlertCircle,
-  Clock
-} from "lucide-react";
+import { CreditCard, Calendar, Crown, ArrowLeft, ExternalLink, CheckCircle, AlertCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -39,21 +30,16 @@ const PLANS = {
       "Sistema de reservas online",
       "Gestión de servicios y estilistas",
       "Reseñas de clientes",
-      "Soporte prioritario"
-    ]
+      "Soporte prioritario",
+    ],
   },
   annual: {
     name: "Plan Anual",
     price: "399,99€",
     interval: "/año",
     savings: "Ahorra 2 meses",
-    features: [
-      "Todo lo del plan mensual",
-      "Ahorro de 2 meses",
-      "Soporte prioritario",
-      "Funciones premium anticipadas"
-    ]
-  }
+    features: ["Todo lo del plan mensual", "Ahorro de 2 meses", "Soporte prioritario", "Funciones premium anticipadas"],
+  },
 };
 
 export default function Subscription() {
@@ -70,7 +56,7 @@ export default function Subscription() {
   const checkSubscription = async () => {
     try {
       const { data, error } = await supabase.functions.invoke("check-subscription");
-      
+
       if (error) throw error;
       setSubscription(data);
     } catch (error) {
@@ -85,9 +71,9 @@ export default function Subscription() {
     setPortalLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
-      
+
       if (error) throw error;
-      
+
       if (data?.url) {
         window.open(data.url, "_blank");
       }
@@ -158,18 +144,12 @@ export default function Subscription() {
       <div className="container max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Gestión de Suscripción</h1>
-            {tenant && (
-              <p className="text-muted-foreground">{tenant.name}</p>
-            )}
+            {tenant && <p className="text-muted-foreground">{tenant.name}</p>}
           </div>
         </div>
 
@@ -184,9 +164,7 @@ export default function Subscription() {
                   </div>
                   <div>
                     <CardTitle>Tu Plan Actual</CardTitle>
-                    <CardDescription>
-                      {currentPlan ? currentPlan.name : "Sin suscripción activa"}
-                    </CardDescription>
+                    <CardDescription>{currentPlan ? currentPlan.name : "Sin suscripción activa"}</CardDescription>
                   </div>
                 </div>
                 {getStatusBadge()}
@@ -245,12 +223,8 @@ export default function Subscription() {
                 </>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">
-                    No tienes una suscripción activa
-                  </p>
-                  <Button onClick={() => navigate("/onboarding")}>
-                    Ver planes disponibles
-                  </Button>
+                  <p className="text-muted-foreground mb-4">No tienes una suscripción activa</p>
+                  <Button onClick={() => navigate("/onboarding")}>Ver planes disponibles</Button>
                 </div>
               )}
             </CardContent>
@@ -266,19 +240,13 @@ export default function Subscription() {
                   </div>
                   <div>
                     <CardTitle>Gestionar Suscripción</CardTitle>
-                    <CardDescription>
-                      Actualiza tu método de pago, cambia de plan o cancela
-                    </CardDescription>
+                    <CardDescription>Actualiza tu método de pago, cambia de plan o cancela</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Button
-                    onClick={openCustomerPortal}
-                    disabled={portalLoading}
-                    className="flex-1"
-                  >
+                  <Button onClick={openCustomerPortal} disabled={portalLoading} className="flex-1">
                     {portalLoading ? (
                       "Abriendo..."
                     ) : (
@@ -288,17 +256,13 @@ export default function Subscription() {
                       </>
                     )}
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={checkSubscription}
-                    className="flex-1 sm:flex-none"
-                  >
+                  <Button variant="outline" onClick={checkSubscription} className="flex-1 sm:flex-none">
                     Actualizar estado
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-4">
-                  El portal de gestión te permite cambiar tu método de pago, 
-                  descargar facturas, cambiar de plan o cancelar tu suscripción.
+                  El portal de gestión te permite cambiar tu método de pago, descargar facturas, cambiar de plan o
+                  cancelar tu suscripción.
                 </p>
               </CardContent>
             </Card>
@@ -308,13 +272,9 @@ export default function Subscription() {
           <Card className="border-dashed">
             <CardContent className="py-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-2">
-                  ¿Tienes alguna pregunta sobre tu suscripción?
-                </p>
+                <p className="text-sm text-muted-foreground mb-2">¿Tienes alguna pregunta sobre tu suscripción?</p>
                 <Button variant="link" asChild>
-                  <a href="mailto:soporte@glowapp.es">
-                    Contactar con soporte
-                  </a>
+                  <a href="mailto:soporte@glowapp.app">Contactar con soporte</a>
                 </Button>
               </div>
             </CardContent>

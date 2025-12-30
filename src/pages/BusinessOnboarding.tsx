@@ -16,7 +16,11 @@ import { motion } from "motion/react";
 
 const businessSchema = z.object({
   businessName: z.string().trim().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
-  businessSlug: z.string().trim().min(2, "Mínimo 2 caracteres").max(50, "Máximo 50 caracteres")
+  businessSlug: z
+    .string()
+    .trim()
+    .min(2, "Mínimo 2 caracteres")
+    .max(50, "Máximo 50 caracteres")
     .regex(/^[a-z0-9-]+$/, "Solo letras minúsculas, números y guiones"),
   email: z.string().trim().email("Email inválido"),
   phone: z.string().trim().min(9, "Mínimo 9 dígitos").max(15, "Máximo 15 dígitos").optional().or(z.literal("")),
@@ -70,17 +74,21 @@ export default function BusinessOnboarding() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user) {
         setUser({ id: session.user.id, email: session.user.email || "" });
         form.setValue("email", session.user.email || "");
       }
       setCheckingAuth(false);
     };
-    
+
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser({ id: session.user.id, email: session.user.email || "" });
         form.setValue("email", session.user.email || "");
@@ -168,18 +176,12 @@ export default function BusinessOnboarding() {
       <div className="px-4 py-8 pb-24">
         <div className="max-w-4xl mx-auto">
           {/* Hero Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-10"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
               <Sparkles className="h-4 w-4" />
               <span className="text-sm font-medium">30 días gratis de prueba</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Haz crecer tu negocio con GlowApp
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Haz crecer tu negocio con GlowApp</h2>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">
               Crea tu landing page profesional y empieza a recibir reservas online hoy mismo.
             </p>
@@ -194,21 +196,21 @@ export default function BusinessOnboarding() {
               className="space-y-4"
             >
               <h3 className="font-semibold text-lg text-foreground mb-4">Elige tu plan</h3>
-              
+
               {/* Monthly */}
               <button
                 type="button"
                 onClick={() => setSelectedPlan("monthly")}
                 className={`w-full text-left ios-card p-5 transition-all ${
-                  selectedPlan === "monthly" 
-                    ? "border-2 border-primary ring-2 ring-primary/20" 
-                    : "hover:border-border"
+                  selectedPlan === "monthly" ? "border-2 border-primary ring-2 ring-primary/20" : "hover:border-border"
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${
-                    selectedPlan === "monthly" ? "bg-primary text-primary-foreground" : "bg-secondary"
-                  }`}>
+                  <div
+                    className={`h-12 w-12 rounded-xl flex items-center justify-center ${
+                      selectedPlan === "monthly" ? "bg-primary text-primary-foreground" : "bg-secondary"
+                    }`}
+                  >
                     <Zap className="h-6 w-6" />
                   </div>
                   <div className="flex-1">
@@ -234,9 +236,7 @@ export default function BusinessOnboarding() {
                 type="button"
                 onClick={() => setSelectedPlan("annual")}
                 className={`w-full text-left ios-card p-5 transition-all relative ${
-                  selectedPlan === "annual" 
-                    ? "border-2 border-primary ring-2 ring-primary/20" 
-                    : "hover:border-border"
+                  selectedPlan === "annual" ? "border-2 border-primary ring-2 ring-primary/20" : "hover:border-border"
                 }`}
               >
                 <div className="absolute -top-3 left-4">
@@ -246,9 +246,11 @@ export default function BusinessOnboarding() {
                   </span>
                 </div>
                 <div className="flex items-start gap-4 mt-2">
-                  <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${
-                    selectedPlan === "annual" ? "gradient-primary text-primary-foreground" : "bg-secondary"
-                  }`}>
+                  <div
+                    className={`h-12 w-12 rounded-xl flex items-center justify-center ${
+                      selectedPlan === "annual" ? "gradient-primary text-primary-foreground" : "bg-secondary"
+                    }`}
+                  >
                     <Building2 className="h-6 w-6" />
                   </div>
                   <div className="flex-1">
@@ -285,34 +287,23 @@ export default function BusinessOnboarding() {
             </motion.div>
 
             {/* Form */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <Card className="ios-card">
                 <CardHeader>
                   <CardTitle className="text-xl">Datos de tu negocio</CardTitle>
                   <CardDescription>
-                    {user 
-                      ? "Completa la información de tu salón" 
-                      : "Crea una cuenta para continuar"}
+                    {user ? "Completa la información de tu salón" : "Crea una cuenta para continuar"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {!user ? (
                     <div className="space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        Necesitas una cuenta para crear tu salón. 
-                      </p>
+                      <p className="text-sm text-muted-foreground">Necesitas una cuenta para crear tu salón.</p>
                       <div className="flex flex-col gap-3">
-                        <Button 
-                          onClick={() => navigate("/auth?redirect=/onboarding&mode=register")}
-                          className="w-full"
-                        >
+                        <Button onClick={() => navigate("/auth?redirect=/onboarding&mode=register")} className="w-full">
                           Crear cuenta
                         </Button>
-                        <Button 
+                        <Button
                           variant="outline"
                           onClick={() => navigate("/auth?redirect=/onboarding")}
                           className="w-full"
@@ -331,8 +322,8 @@ export default function BusinessOnboarding() {
                             <FormItem>
                               <FormLabel>Nombre del salón</FormLabel>
                               <FormControl>
-                                <Input 
-                                  placeholder="Mi Salón de Belleza" 
+                                <Input
+                                  placeholder="Mi Salón de Belleza"
                                   {...field}
                                   disabled={loading}
                                   className="h-12 rounded-xl"
@@ -351,9 +342,9 @@ export default function BusinessOnboarding() {
                               <FormLabel>URL de tu salón</FormLabel>
                               <FormControl>
                                 <div className="flex items-center">
-                                  <span className="text-sm text-muted-foreground mr-2">glowapp.es/</span>
-                                  <Input 
-                                    placeholder="mi-salon" 
+                                  <span className="text-sm text-muted-foreground mr-2">glowapp.app/</span>
+                                  <Input
+                                    placeholder="mi-salon"
                                     {...field}
                                     disabled={loading}
                                     className="h-12 rounded-xl flex-1"
@@ -372,9 +363,9 @@ export default function BusinessOnboarding() {
                             <FormItem>
                               <FormLabel>Email de contacto</FormLabel>
                               <FormControl>
-                                <Input 
+                                <Input
                                   type="email"
-                                  placeholder="contacto@misalon.com" 
+                                  placeholder="contacto@misalon.com"
                                   {...field}
                                   disabled={loading}
                                   className="h-12 rounded-xl"
@@ -392,9 +383,9 @@ export default function BusinessOnboarding() {
                             <FormItem>
                               <FormLabel>Teléfono (opcional)</FormLabel>
                               <FormControl>
-                                <Input 
+                                <Input
                                   type="tel"
-                                  placeholder="600 000 000" 
+                                  placeholder="600 000 000"
                                   {...field}
                                   disabled={loading}
                                   className="h-12 rounded-xl"
@@ -406,9 +397,9 @@ export default function BusinessOnboarding() {
                         />
 
                         <div className="pt-4">
-                          <Button 
-                            type="submit" 
-                            className="w-full h-12 rounded-xl gradient-primary text-primary-foreground" 
+                          <Button
+                            type="submit"
+                            className="w-full h-12 rounded-xl gradient-primary text-primary-foreground"
                             disabled={loading}
                           >
                             {loading ? (
@@ -419,17 +410,14 @@ export default function BusinessOnboarding() {
                             ) : (
                               <>
                                 Continuar al pago
-                                <span className="ml-2 text-xs opacity-80">
-                                  (30 días gratis)
-                                </span>
+                                <span className="ml-2 text-xs opacity-80">(30 días gratis)</span>
                               </>
                             )}
                           </Button>
                         </div>
 
                         <p className="text-xs text-center text-muted-foreground">
-                          No se te cobrará hasta que termine tu período de prueba. 
-                          Puedes cancelar en cualquier momento.
+                          No se te cobrará hasta que termine tu período de prueba. Puedes cancelar en cualquier momento.
                         </p>
                       </form>
                     </Form>
