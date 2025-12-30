@@ -44,6 +44,7 @@ interface Tenant {
   heading_size?: string | null;
   button_style?: string | null;
   average_price?: number | null;
+  show_logo_on_landing?: boolean | null;
   features?: {
     business_type?: string;
     business_type_label?: string;

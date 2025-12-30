@@ -1746,6 +1746,7 @@ export type Database = {
           postal_code: string
           primary_color: string
           secondary_color: string
+          show_logo_on_landing: boolean
           slug: string
           tagline: string
           whatsapp_number: string
