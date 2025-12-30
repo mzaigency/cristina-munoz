@@ -60,9 +60,12 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         "Notas",
       ];
 
+      // Helper para formatear moneda español (coma decimal)
+      const fmtMoney = (amount: any) => (amount || 0).toFixed(2).replace(".", ",");
+
       const rows = transactions.map((tx) => {
         const date = new Date(tx.created_at);
-        const services = Array.isArray(tx.services) ? tx.services.map((s: any) => s.name).join("; ") : "";
+        const services = Array.isArray(tx.services) ? tx.services.map((s: any) => s.name).join(" | ") : ""; // Usamos | para separar servicios internamente
 
         return [
           format(date, "dd/MM/yyyy"),
@@ -70,10 +73,10 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
           tx.customer_name || "",
           tx.stylist || "",
           services,
-          (tx.subtotal || 0).toFixed(2),
-          (tx.discount || 0).toFixed(2),
-          (tx.tip_amount || 0).toFixed(2),
-          (tx.total || 0).toFixed(2),
+          fmtMoney(tx.subtotal), // Formato con coma 10,00
+          fmtMoney(tx.discount),
+          fmtMoney(tx.tip_amount),
+          fmtMoney(tx.total),
           tx.payment_method === "cash" ? "Efectivo" : tx.payment_method === "card" ? "Tarjeta" : "Mixto",
           tx.voided ? "Sí" : "No",
           tx.notes || "",
@@ -100,24 +103,25 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
       rows.push(["RESUMEN DEL PERÍODO"]);
       rows.push(["Total transacciones", transactions.length.toString()]);
       rows.push(["Transacciones válidas", validTxs.length.toString()]);
-      rows.push(["Total en Efectivo", "", "", "", "", "", "", "", totalCash.toFixed(2)]);
-      rows.push(["Total en Tarjeta", "", "", "", "", "", "", "", totalCard.toFixed(2)]);
-      rows.push(["Total Mixto", "", "", "", "", "", "", "", totalMixed.toFixed(2)]);
-      rows.push(["Total Propinas", "", "", "", "", "", "", totalTips.toFixed(2)]);
-      rows.push(["Total Descuentos", "", "", "", "", "", totalDiscounts.toFixed(2)]);
-      rows.push(["TOTAL GENERAL", "", "", "", "", "", "", "", totalAll.toFixed(2)]);
+      rows.push(["Total en Efectivo", "", "", "", "", "", "", "", fmtMoney(totalCash)]);
+      rows.push(["Total en Tarjeta", "", "", "", "", "", "", "", fmtMoney(totalCard)]);
+      rows.push(["Total Mixto", "", "", "", "", "", "", "", fmtMoney(totalMixed)]);
+      rows.push(["Total Propinas", "", "", "", "", "", "", fmtMoney(totalTips)]);
+      rows.push(["Total Descuentos", "", "", "", "", "", fmtMoney(totalDiscounts)]);
+      rows.push(["TOTAL GENERAL", "", "", "", "", "", "", "", fmtMoney(totalAll)]);
 
-      // Convert to CSV string
+      // Convert to CSV string logic updated for Spain (semicolon)
       const escapeCSV = (val: string) => {
-        if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+        // Ahora buscamos punto y coma (;) en lugar de coma
+        if (val.includes(";") || val.includes('"') || val.includes("\n")) {
           return `"${val.replace(/"/g, '""')}"`;
         }
         return val;
       };
 
       const csvContent = [
-        headers.join(","),
-        ...rows.map((row) => row.map((cell) => escapeCSV(String(cell))).join(",")),
+        headers.join(";"), // CAMBIO: Usar ; como delimitador
+        ...rows.map((row) => row.map((cell) => escapeCSV(String(cell))).join(";")), // CAMBIO: Usar ;
       ].join("\n");
 
       // Add BOM for Excel UTF-8 compatibility
@@ -184,7 +188,7 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         <FileSpreadsheet className="h-12 w-12 mx-auto text-primary mb-3" />
         <h3 className="text-lg font-semibold">Exportar Datos de Caja</h3>
         <p className="text-sm text-muted-foreground">
-          Descarga un archivo CSV con todas las transacciones del período seleccionado
+          Descarga un archivo CSV compatible con Excel (separado por punto y coma)
         </p>
       </div>
 
@@ -255,11 +259,11 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         size="lg"
       >
         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
-        {loading ? "Exportando..." : "Descargar Excel"}
+        {loading ? "Exportando..." : "Descargar Excel (Formato España)"}
       </Button>
 
       <p className="text-xs text-muted-foreground text-center">
-        El archivo CSV se puede abrir con Excel, Google Sheets u otras aplicaciones de hojas de cálculo
+        El archivo CSV está formateado para Excel en español (separador ; y decimales con coma)
       </p>
     </div>
   );
