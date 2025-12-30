@@ -34,34 +34,30 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
   // Parallax scroll effect
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start start", "end start"]
+    offset: ["start start", "end start"],
   });
 
   // Image moves slower (parallax)
   const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const imageScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
-  
+
   // Content fades and moves up on scroll
   const contentOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const contentY = useTransform(scrollYProgress, [0, 0.5], [0, -50]);
 
   // Dynamic tagline - shorter for iOS style
-  const tagline = tenant.tagline || 
-    `Belleza y estilo${tenant.city ? ` en ${tenant.city}` : ''}`;
+  const tagline = tenant.tagline || `Belleza y estilo${tenant.city ? ` en ${tenant.city}` : ""}`;
 
   return (
-    <section 
+    <section
       ref={containerRef}
       className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-black"
     >
       {/* Hero Image Background with Parallax */}
       {hasHeroImage && (
-        <motion.div 
-          className="absolute inset-0 z-0"
-          style={{ y: imageY, scale: imageScale }}
-        >
-          <motion.img 
-            src={tenant.hero_image_url!} 
+        <motion.div className="absolute inset-0 z-0" style={{ y: imageY, scale: imageScale }}>
+          <motion.img
+            src={tenant.hero_image_url!}
             alt={`${tenant.name}`}
             className="w-full h-full object-cover"
             loading="eager"
@@ -70,7 +66,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
           />
-          <motion.div 
+          <motion.div
             className="absolute inset-0 bg-black/60"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -81,7 +77,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
 
       {/* Dark gradient background when no image */}
       {!hasHeroImage && (
-        <motion.div 
+        <motion.div
           className="absolute inset-0 bg-gradient-to-b from-neutral-900 via-black to-neutral-900"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -89,40 +85,33 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
         />
       )}
 
-      <motion.div 
-        className="container mx-auto px-6 relative z-10"
-        style={{ opacity: contentOpacity, y: contentY }}
-      >
+      <motion.div className="container mx-auto px-6 relative z-10" style={{ opacity: contentOpacity, y: contentY }}>
         <div className="max-w-2xl mx-auto text-center">
           {/* Logo - only show if show_logo_on_landing is true (defaults to true) */}
-          {tenant.logo_url && (tenant.show_logo_on_landing !== false) && (
+          {tenant.logo_url && tenant.show_logo_on_landing !== false && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="mb-8"
             >
-              <img 
-                src={tenant.logo_url} 
-                alt={`${tenant.name}`}
-                className="h-16 md:h-20 mx-auto"
-              />
+              <img src={tenant.logo_url} alt={`${tenant.name}`} className="h-16 md:h-20 mx-auto" />
             </motion.div>
           )}
 
           {/* Title with staggered letter animation */}
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight mb-4 text-white"
+            className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-4 text-white"
             style={{ fontFamily: 'var(--tenant-font-heading, "SF Pro Display", system-ui, sans-serif)' }}
           >
             {tenant.name}
           </motion.h1>
 
           {/* Tagline */}
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -132,14 +121,14 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
           </motion.p>
 
           {/* CTA Button with bounce effect */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ 
-              duration: 0.8, 
-              delay: 0.8, 
+            transition={{
+              duration: 0.8,
+              delay: 0.8,
               ease: [0.25, 0.46, 0.45, 0.94],
-              scale: { type: "spring", stiffness: 200, damping: 15 }
+              scale: { type: "spring", stiffness: 200, damping: 15 },
             }}
           >
             <Button
@@ -155,7 +144,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
       </motion.div>
 
       {/* Animated scroll indicator */}
-      <motion.div 
+      <motion.div
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -167,7 +156,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-2"
         >
-          <motion.div 
+          <motion.div
             className="w-1 h-2 bg-white/50 rounded-full"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
