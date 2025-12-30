@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Loader2, 
-  Banknote, 
-  CreditCard, 
+import {
+  Loader2,
+  Banknote,
+  CreditCard,
   CheckCircle2,
   Percent,
   Heart,
@@ -24,29 +24,12 @@ import {
   Receipt,
   Sparkles,
   FileText,
-  Download
+  Download,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 
 interface Service {
   id: string;
@@ -97,40 +80,40 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   const [selectedStylistId, setSelectedStylistId] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
-  
+
   const [manualItemName, setManualItemName] = useState("");
   const [manualItemPrice, setManualItemPrice] = useState("");
   const [showManualInput, setShowManualInput] = useState(false);
-  
+
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [cashAmount, setCashAmount] = useState("");
   const [cardAmount, setCardAmount] = useState("");
   const [cashGiven, setCashGiven] = useState("");
-  
+
   const [discountType, setDiscountType] = useState<DiscountType>(null);
   const [discountValue, setDiscountValue] = useState("");
   const [discountReason, setDiscountReason] = useState("");
   const [showDiscount, setShowDiscount] = useState(false);
-  
+
   const [tipAmount, setTipAmount] = useState("");
   const [showTip, setShowTip] = useState(false);
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastTransaction, setLastTransaction] = useState<any>(null);
-  
+
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  
-  // Invoice data
+
+  // Invoice data state kept for internal logic but UI removed as requested
   const [wantsInvoice, setWantsInvoice] = useState(false);
   const [invoiceData, setInvoiceData] = useState({
     fiscalName: "",
     nif: "",
-    fiscalAddress: ""
+    fiscalAddress: "",
   });
   const [tenantData, setTenantData] = useState<any>(null);
   const [savedFiscalData, setSavedFiscalData] = useState<any[]>([]);
   const [lowStockAlerts, setLowStockAlerts] = useState<string[]>([]);
-  
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -138,41 +121,50 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     fetchSavedFiscalData();
   }, [tenantId]);
 
-  // Auto-fill fiscal data when customer name changes
   useEffect(() => {
     if (customerName.trim() && wantsInvoice) {
-      const match = savedFiscalData.find(
-        f => f.customer_name.toLowerCase() === customerName.trim().toLowerCase()
-      );
+      const match = savedFiscalData.find((f) => f.customer_name.toLowerCase() === customerName.trim().toLowerCase());
       if (match) {
         setInvoiceData({
           fiscalName: match.fiscal_name || "",
           nif: match.nif || "",
-          fiscalAddress: match.fiscal_address || ""
+          fiscalAddress: match.fiscal_address || "",
         });
       }
     }
   }, [customerName, wantsInvoice, savedFiscalData]);
 
   const fetchSavedFiscalData = async () => {
-    const { data } = await supabase
-      .from("customer_fiscal_data")
-      .select("*")
-      .eq("tenant_id", tenantId);
+    const { data } = await supabase.from("customer_fiscal_data").select("*").eq("tenant_id", tenantId);
     if (data) setSavedFiscalData(data);
   };
 
   const fetchData = async () => {
     try {
       const [servicesRes, stylistsRes, productsRes, tenantRes] = await Promise.all([
-        supabase.from("services").select("id, name, price, category")
-          .eq("tenant_id", tenantId).order("category").order("name"),
-        supabase.from("tenant_stylists").select("id, name, slug, color")
-          .eq("tenant_id", tenantId).eq("is_active", true).order("name"),
-        supabase.from("products").select("id, name, price, category, stock, min_stock")
-          .eq("tenant_id", tenantId).eq("is_active", true).order("name"),
-        supabase.from("tenants").select("name, logo_url, address, city, postal_code, phone, email")
-          .eq("id", tenantId).single()
+        supabase
+          .from("services")
+          .select("id, name, price, category")
+          .eq("tenant_id", tenantId)
+          .order("category")
+          .order("name"),
+        supabase
+          .from("tenant_stylists")
+          .select("id, name, slug, color")
+          .eq("tenant_id", tenantId)
+          .eq("is_active", true)
+          .order("name"),
+        supabase
+          .from("products")
+          .select("id, name, price, category, stock, min_stock")
+          .eq("tenant_id", tenantId)
+          .eq("is_active", true)
+          .order("name"),
+        supabase
+          .from("tenants")
+          .select("name, logo_url, address, city, postal_code, phone, email")
+          .eq("id", tenantId)
+          .single(),
       ]);
       if (servicesRes.data) setServices(servicesRes.data);
       if (stylistsRes.data) setStylists(stylistsRes.data);
@@ -184,13 +176,11 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   };
 
   const subtotal = selectedItems.reduce((sum, s) => sum + s.price * s.quantity, 0);
-  
+
   const calculateDiscount = () => {
     if (!discountType || !discountValue) return 0;
     const value = parseFloat(discountValue) || 0;
-    return discountType === "percentage" 
-      ? Math.min((subtotal * value) / 100, subtotal)
-      : Math.min(value, subtotal);
+    return discountType === "percentage" ? Math.min((subtotal * value) / 100, subtotal) : Math.min(value, subtotal);
   };
 
   const discountAmount = calculateDiscount();
@@ -208,34 +198,41 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     return Math.max(numericCashGiven - grandTotal, 0);
   };
 
-  const formatCurrency = (value: number) => 
+  const formatCurrency = (value: number) =>
     new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(value);
 
-  const categories = ["all", ...new Set([
-    ...services.map(s => s.category || "Otros"),
-    ...products.map(p => `📦 ${p.category || "Productos"}`)
-  ])];
+  const categories = [
+    "all",
+    ...new Set([
+      ...services.map((s) => s.category || "Otros"),
+      ...products.map((p) => `📦 ${p.category || "Productos"}`),
+    ]),
+  ];
 
-  const filteredItems = activeCategory === "all" 
-    ? [...services, ...products.map(p => ({ ...p, category: `📦 ${p.category || "Productos"}` }))]
-    : activeCategory.startsWith("📦")
-      ? products.filter(p => `📦 ${p.category || "Productos"}` === activeCategory)
-      : services.filter(s => (s.category || "Otros") === activeCategory);
+  const filteredItems =
+    activeCategory === "all"
+      ? [...services, ...products.map((p) => ({ ...p, category: `📦 ${p.category || "Productos"}` }))]
+      : activeCategory.startsWith("📦")
+        ? products.filter((p) => `📦 ${p.category || "Productos"}` === activeCategory)
+        : services.filter((s) => (s.category || "Otros") === activeCategory);
 
   const toggleItem = (item: Service | Product) => {
     const isProduct = "stock" in item;
-    const existing = selectedItems.find(s => s.id === item.id);
-    
+    const existing = selectedItems.find((s) => s.id === item.id);
+
     if (existing) {
-      setSelectedItems(selectedItems.filter(s => s.id !== item.id));
+      setSelectedItems(selectedItems.filter((s) => s.id !== item.id));
     } else {
-      setSelectedItems([...selectedItems, { 
-        id: item.id, 
-        name: item.name, 
-        price: item.price || 0, 
-        quantity: 1, 
-        type: isProduct ? "product" : "service"
-      }]);
+      setSelectedItems([
+        ...selectedItems,
+        {
+          id: item.id,
+          name: item.name,
+          price: item.price || 0,
+          quantity: 1,
+          type: isProduct ? "product" : "service",
+        },
+      ]);
     }
   };
 
@@ -243,27 +240,30 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     if (!manualItemName.trim() || !manualItemPrice) return;
     const price = parseFloat(manualItemPrice) || 0;
     if (price <= 0) return;
-    
-    setSelectedItems([...selectedItems, { 
-      id: `manual-${Date.now()}`, 
-      name: manualItemName.trim(), 
-      price, 
-      quantity: 1, 
-      type: "manual" 
-    }]);
+
+    setSelectedItems([
+      ...selectedItems,
+      {
+        id: `manual-${Date.now()}`,
+        name: manualItemName.trim(),
+        price,
+        quantity: 1,
+        type: "manual",
+      },
+    ]);
     setManualItemName("");
     setManualItemPrice("");
     setShowManualInput(false);
   };
 
   const updateQuantity = (itemId: string, delta: number) => {
-    setSelectedItems(selectedItems.map(s => 
-      s.id === itemId ? { ...s, quantity: Math.max(1, s.quantity + delta) } : s
-    ));
+    setSelectedItems(
+      selectedItems.map((s) => (s.id === itemId ? { ...s, quantity: Math.max(1, s.quantity + delta) } : s)),
+    );
   };
 
   const removeItem = (itemId: string) => {
-    setSelectedItems(selectedItems.filter(s => s.id !== itemId));
+    setSelectedItems(selectedItems.filter((s) => s.id !== itemId));
   };
 
   const clearAll = () => {
@@ -301,13 +301,19 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("No autenticado");
 
-      const selectedStylist = stylists.find(s => s.id === selectedStylistId);
-      const servicesData = selectedItems.map(s => ({
-        id: s.id, name: s.name, price: s.price, quantity: s.quantity, 
-        total: s.price * s.quantity, type: s.type
+      const selectedStylist = stylists.find((s) => s.id === selectedStylistId);
+      const servicesData = selectedItems.map((s) => ({
+        id: s.id,
+        name: s.name,
+        price: s.price,
+        quantity: s.quantity,
+        total: s.price * s.quantity,
+        type: s.type,
       }));
 
       const paymentDetails: Record<string, unknown> = {};
@@ -341,10 +347,10 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       if (error) throw error;
 
       // Reduce stock for products and check for low stock
-      const productItems = selectedItems.filter(item => item.type === "product");
+      const productItems = selectedItems.filter((item) => item.type === "product");
       const alerts: string[] = [];
       for (const item of productItems) {
-        const product = products.find(p => p.id === item.id);
+        const product = products.find((p) => p.id === item.id);
         if (product) {
           const newStock = product.stock - item.quantity;
           await supabase.from("products").update({ stock: newStock }).eq("id", item.id);
@@ -355,23 +361,26 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       }
       if (alerts.length > 0) {
         setLowStockAlerts(alerts);
-        toast({ 
-          title: "⚠️ Stock bajo", 
+        toast({
+          title: "⚠️ Stock bajo",
           description: alerts.join(", "),
-          variant: "destructive"
+          variant: "destructive",
         });
       }
 
       // Save fiscal data for future use
       if (wantsInvoice && invoiceData.fiscalName && invoiceData.nif) {
-        await supabase.from("customer_fiscal_data").upsert({
-          tenant_id: tenantId,
-          customer_name: customerName.trim() || "Cliente",
-          fiscal_name: invoiceData.fiscalName,
-          nif: invoiceData.nif,
-          fiscal_address: invoiceData.fiscalAddress,
-          email: customerEmail || null
-        }, { onConflict: "tenant_id,customer_name" });
+        await supabase.from("customer_fiscal_data").upsert(
+          {
+            tenant_id: tenantId,
+            customer_name: customerName.trim() || "Cliente",
+            fiscal_name: invoiceData.fiscalName,
+            nif: invoiceData.nif,
+            fiscal_address: invoiceData.fiscalAddress,
+            email: customerEmail || null,
+          },
+          { onConflict: "tenant_id,customer_name" },
+        );
       }
 
       setLastTransaction({
@@ -381,14 +390,13 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         grandTotal,
         customerEmail,
         wantsInvoice,
-        invoiceData
+        invoiceData,
       });
-      
+
       setShowSuccess(true);
       clearAll();
       onTransactionCreated();
       fetchData(); // Refresh products to show updated stock
-      
     } catch (error: unknown) {
       console.error("Error:", error);
       toast({ title: "Error al registrar", variant: "destructive" });
@@ -422,10 +430,14 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           total: lastTransaction.grandTotal,
           paymentMethod: lastTransaction.payment_method,
           stylistName: lastTransaction.stylistName,
-          date: new Date().toLocaleDateString("es-ES", { 
-            day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" 
-          })
-        }
+          date: new Date().toLocaleDateString("es-ES", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
       });
 
       if (error) throw error;
@@ -462,7 +474,9 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
     // Save invoice to database (doesn't block rendering the print window)
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         const { error } = await supabase.from("invoices").insert({
           tenant_id: tenantId,
@@ -497,7 +511,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: right;">${formatCurrency(item.price)}</td>
         <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: right;">${formatCurrency(item.total)}</td>
       </tr>
-    `
+    `,
       )
       .join("");
 
@@ -599,18 +613,26 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
               <span>Subtotal</span>
               <span>${formatCurrency(lastTransaction.subtotal)}</span>
             </div>
-            ${lastTransaction.discount > 0 ? `
+            ${
+              lastTransaction.discount > 0
+                ? `
               <div class="totals-row discount">
                 <span>Descuento</span>
                 <span>-${formatCurrency(lastTransaction.discount)}</span>
               </div>
-            ` : ""}
-            ${lastTransaction.tip_amount > 0 ? `
+            `
+                : ""
+            }
+            ${
+              lastTransaction.tip_amount > 0
+                ? `
               <div class="totals-row tip">
                 <span>Propina</span>
                 <span>+${formatCurrency(lastTransaction.tip_amount)}</span>
               </div>
-            ` : ""}
+            `
+                : ""
+            }
             <div class="totals-row final">
               <span>TOTAL</span>
               <span>${formatCurrency(lastTransaction.grandTotal)}</span>
@@ -648,40 +670,14 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     <div className="h-[calc(100vh-180px)] flex flex-col lg:flex-row gap-4">
       {/* Left: Items Grid */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Stylist Selection - iOS Style */}
-        <div className="mb-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {stylists.map((stylist) => (
-              <motion.button
-                key={stylist.id}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedStylistId(stylist.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
-                  selectedStylistId === stylist.id 
-                    ? "bg-primary text-primary-foreground shadow-lg" 
-                    : "bg-muted hover:bg-muted/80"
-                }`}
-              >
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: stylist.color || "#8B5CF6" }} 
-                />
-                {stylist.name}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-
-        {/* Category Pills */}
+        {/* Category Pills - Moved to top */}
         <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
-                activeCategory === cat 
-                  ? "bg-foreground text-background" 
-                  : "bg-muted/50 hover:bg-muted"
+                activeCategory === cat ? "bg-foreground text-background" : "bg-muted/50 hover:bg-muted"
               }`}
             >
               {cat === "all" ? "Todo" : cat}
@@ -703,7 +699,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             </motion.button>
 
             {filteredItems.map((item) => {
-              const isSelected = selectedItems.some(s => s.id === item.id);
+              const isSelected = selectedItems.some((s) => s.id === item.id);
               const isProduct = "stock" in item;
               return (
                 <motion.button
@@ -711,24 +707,18 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   whileTap={{ scale: 0.95 }}
                   onClick={() => toggleItem(item)}
                   className={`aspect-square rounded-2xl p-3 flex flex-col items-center justify-center gap-1 transition-all relative overflow-hidden ${
-                    isSelected 
-                      ? "bg-primary text-primary-foreground shadow-lg ring-2 ring-primary ring-offset-2" 
+                    isSelected
+                      ? "bg-primary text-primary-foreground shadow-lg ring-2 ring-primary ring-offset-2"
                       : "bg-muted/50 hover:bg-muted"
                   }`}
                 >
-                  {isProduct && (
-                    <Package className="h-4 w-4 absolute top-2 right-2 opacity-50" />
-                  )}
+                  {isProduct && <Package className="h-4 w-4 absolute top-2 right-2 opacity-50" />}
                   <span className="text-xs text-center font-medium line-clamp-2">{item.name}</span>
                   <span className={`text-sm font-bold ${isSelected ? "" : "text-primary"}`}>
                     {item.price ? formatCurrency(item.price) : "—"}
                   </span>
                   {isSelected && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute top-1 left-1"
-                    >
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-1 left-1">
                       <CheckCircle2 className="h-4 w-4" />
                     </motion.div>
                   )}
@@ -743,16 +733,16 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       <div className="w-full lg:w-80 flex flex-col bg-background rounded-2xl border shadow-sm">
         {/* Customer Input */}
         <div className="p-4 border-b space-y-2">
-          <Input 
-            value={customerName} 
-            onChange={(e) => setCustomerName(e.target.value)} 
+          <Input
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
             placeholder="Nombre cliente"
             className="bg-muted/50 border-0 text-center font-medium"
           />
-          <Input 
+          <Input
             type="email"
-            value={customerEmail} 
-            onChange={(e) => setCustomerEmail(e.target.value)} 
+            value={customerEmail}
+            onChange={(e) => setCustomerEmail(e.target.value)}
             placeholder="Email (opcional)"
             className="bg-muted/50 border-0 text-center text-sm"
           />
@@ -782,10 +772,13 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                     <Plus className="h-3 w-3" />
                   </Button>
                 </div>
-                <span className="text-sm font-bold w-16 text-right">
-                  {formatCurrency(item.price * item.quantity)}
-                </span>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => removeItem(item.id)}>
+                <span className="text-sm font-bold w-16 text-right">{formatCurrency(item.price * item.quantity)}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground"
+                  onClick={() => removeItem(item.id)}
+                >
                   <X className="h-3 w-3" />
                 </Button>
               </motion.div>
@@ -803,18 +796,18 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         {/* Extras (Discount & Tip) */}
         {selectedItems.length > 0 && (
           <div className="px-4 pb-2 flex gap-2">
-            <Button 
-              variant={showDiscount ? "default" : "outline"} 
-              size="sm" 
+            <Button
+              variant={showDiscount ? "default" : "outline"}
+              size="sm"
               className="flex-1 gap-1"
               onClick={() => setShowDiscount(!showDiscount)}
             >
               <Percent className="h-3 w-3" />
               {discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : "Descuento"}
             </Button>
-            <Button 
-              variant={showTip ? "default" : "outline"} 
-              size="sm" 
+            <Button
+              variant={showTip ? "default" : "outline"}
+              size="sm"
               className="flex-1 gap-1"
               onClick={() => setShowTip(!showTip)}
             >
@@ -825,32 +818,32 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         )}
 
         {showDiscount && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             className="px-4 pb-2 space-y-2"
           >
             <div className="flex gap-2">
-              <Button 
-                variant={discountType === "percentage" ? "default" : "outline"} 
-                size="sm" 
+              <Button
+                variant={discountType === "percentage" ? "default" : "outline"}
+                size="sm"
                 className="flex-1"
                 onClick={() => setDiscountType("percentage")}
               >
                 %
               </Button>
-              <Button 
-                variant={discountType === "fixed" ? "default" : "outline"} 
-                size="sm" 
+              <Button
+                variant={discountType === "fixed" ? "default" : "outline"}
+                size="sm"
                 className="flex-1"
                 onClick={() => setDiscountType("fixed")}
               >
                 €
               </Button>
-              <Input 
-                type="number" 
-                value={discountValue} 
-                onChange={(e) => setDiscountValue(e.target.value)} 
+              <Input
+                type="number"
+                value={discountValue}
+                onChange={(e) => setDiscountValue(e.target.value)}
                 placeholder="0"
                 className="w-20 text-center"
               />
@@ -859,17 +852,17 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         )}
 
         {showTip && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             className="px-4 pb-2"
           >
             <div className="flex gap-2">
               {[1, 2, 5, 10].map((v) => (
-                <Button 
-                  key={v} 
-                  variant={parseFloat(tipAmount) === v ? "default" : "outline"} 
-                  size="sm" 
+                <Button
+                  key={v}
+                  variant={parseFloat(tipAmount) === v ? "default" : "outline"}
+                  size="sm"
                   className="flex-1"
                   onClick={() => setTipAmount(v.toString())}
                 >
@@ -914,7 +907,14 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                 className="h-12 flex-col gap-0.5"
                 onClick={() => setPaymentMethod(value)}
               >
-                {Icon ? <Icon className="h-4 w-4" /> : <div className="flex"><Banknote className="h-3 w-3" /><CreditCard className="h-3 w-3" /></div>}
+                {Icon ? (
+                  <Icon className="h-4 w-4" />
+                ) : (
+                  <div className="flex">
+                    <Banknote className="h-3 w-3" />
+                    <CreditCard className="h-3 w-3" />
+                  </div>
+                )}
                 <span className="text-[10px]">{label}</span>
               </Button>
             ))}
@@ -924,20 +924,20 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs text-muted-foreground">Efectivo</Label>
-                <Input 
-                  type="number" 
-                  value={cashAmount} 
-                  onChange={(e) => setCashAmount(e.target.value)} 
+                <Input
+                  type="number"
+                  value={cashAmount}
+                  onChange={(e) => setCashAmount(e.target.value)}
                   placeholder="0"
                   className="text-center"
                 />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Tarjeta</Label>
-                <Input 
-                  type="number" 
-                  value={cardAmount} 
-                  onChange={(e) => setCardAmount(e.target.value)} 
+                <Input
+                  type="number"
+                  value={cardAmount}
+                  onChange={(e) => setCardAmount(e.target.value)}
                   placeholder="0"
                   className="text-center"
                 />
@@ -948,10 +948,10 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
             <div>
               <Label className="text-xs text-muted-foreground">Entregado</Label>
-              <Input 
-                type="number" 
-                value={cashGiven} 
-                onChange={(e) => setCashGiven(e.target.value)} 
+              <Input
+                type="number"
+                value={cashGiven}
+                onChange={(e) => setCashGiven(e.target.value)}
                 placeholder="0"
                 className="text-center text-lg font-bold"
               />
@@ -963,56 +963,39 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             </div>
           )}
 
-          {/* Invoice checkbox - VISIBLE IN CART */}
-          <div className="flex items-center space-x-2 p-3 rounded-lg bg-muted/50 border">
-            <Checkbox 
-              id="wants-invoice-cart" 
-              checked={wantsInvoice}
-              onCheckedChange={(checked) => setWantsInvoice(checked === true)}
-            />
-            <label 
-              htmlFor="wants-invoice-cart" 
-              className="text-sm font-medium cursor-pointer flex items-center gap-2 flex-1"
-            >
-              <FileText className="h-4 w-4" />
-              Generar factura
-            </label>
+          {/* ESTILISTA SELECTION - MOVED HERE */}
+          <div className="space-y-2 pt-2 border-t">
+            <Label className="text-xs text-muted-foreground">Atendido por:</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {stylists.map((stylist) => (
+                <motion.button
+                  key={stylist.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedStylistId(stylist.id)}
+                  className={`h-10 text-xs font-medium rounded-md flex items-center justify-center gap-2 transition-all border ${
+                    selectedStylistId === stylist.id
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-background hover:bg-muted border-input"
+                  }`}
+                >
+                  <div
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: stylist.color || "#8B5CF6" }}
+                  />
+                  <span className="truncate px-1">{stylist.name}</span>
+                </motion.button>
+              ))}
+            </div>
           </div>
 
-          {/* Invoice data form - VISIBLE IN CART */}
-          <AnimatePresence>
-            {wantsInvoice && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="space-y-2 overflow-hidden"
-              >
-                <Input 
-                  placeholder="Nombre fiscal / Razón social *"
-                  value={invoiceData.fiscalName}
-                  onChange={(e) => setInvoiceData(prev => ({ ...prev, fiscalName: e.target.value }))}
-                  className="text-sm"
-                />
-                <Input 
-                  placeholder="NIF / CIF *"
-                  value={invoiceData.nif}
-                  onChange={(e) => setInvoiceData(prev => ({ ...prev, nif: e.target.value }))}
-                  className="text-sm"
-                />
-                <Input 
-                  placeholder="Dirección fiscal"
-                  value={invoiceData.fiscalAddress}
-                  onChange={(e) => setInvoiceData(prev => ({ ...prev, fiscalAddress: e.target.value }))}
-                  className="text-sm"
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <Button 
-            onClick={handleSubmit} 
-            disabled={loading || selectedItems.length === 0 || !selectedStylistId || (wantsInvoice && (!invoiceData.fiscalName || !invoiceData.nif))} 
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              loading ||
+              selectedItems.length === 0 ||
+              !selectedStylistId ||
+              (wantsInvoice && (!invoiceData.fiscalName || !invoiceData.nif))
+            }
             className="w-full h-14 text-lg font-bold gap-2"
           >
             {loading ? (
@@ -1034,15 +1017,11 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             <DialogTitle>Importe manual</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input 
-              value={manualItemName} 
-              onChange={(e) => setManualItemName(e.target.value)} 
-              placeholder="Concepto"
-            />
-            <Input 
-              type="number" 
-              value={manualItemPrice} 
-              onChange={(e) => setManualItemPrice(e.target.value)} 
+            <Input value={manualItemName} onChange={(e) => setManualItemName(e.target.value)} placeholder="Concepto" />
+            <Input
+              type="number"
+              value={manualItemPrice}
+              onChange={(e) => setManualItemPrice(e.target.value)}
               placeholder="0.00"
               className="text-center text-2xl font-bold"
             />
@@ -1069,14 +1048,11 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           <p className="text-3xl font-bold text-primary text-center">
             {lastTransaction && formatCurrency(lastTransaction.grandTotal)}
           </p>
-          
+
           <div className="mt-4 space-y-3">
             {/* Show invoice download button if invoice was requested */}
             {lastTransaction?.wantsInvoice && (
-              <Button 
-                onClick={downloadInvoicePdf}
-                className="w-full gap-2"
-              >
+              <Button onClick={downloadInvoicePdf} className="w-full gap-2">
                 <Download className="h-4 w-4" />
                 Descargar factura
               </Button>
@@ -1084,7 +1060,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
             {/* Email ticket option */}
             <div className="space-y-2">
-              <Input 
+              <Input
                 type="email"
                 placeholder="Email para ticket (opcional)"
                 value={customerEmail}
@@ -1092,23 +1068,14 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                 className="text-center text-sm"
               />
               {(customerEmail || lastTransaction?.customerEmail) && (
-                <Button 
-                  onClick={sendTicketEmail} 
-                  disabled={sendingEmail}
-                  variant="outline"
-                  className="w-full gap-2"
-                >
-                  {sendingEmail ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Mail className="h-4 w-4" />
-                  )}
+                <Button onClick={sendTicketEmail} disabled={sendingEmail} variant="outline" className="w-full gap-2">
+                  {sendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                   Enviar ticket por email
                 </Button>
               )}
             </div>
           </div>
-          
+
           <Button onClick={() => setShowSuccess(false)} variant="outline" className="w-full mt-2">
             Nuevo cobro
           </Button>
