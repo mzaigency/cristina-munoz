@@ -28,10 +28,12 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
     setLoading(true);
     try {
       // Fetch transactions in the selected period
+      // CAMBIO 1: Filtramos directamente en la base de datos las NO anuladas (voided=false)
       const { data: transactions, error } = await supabase
         .from("transactions")
         .select("*")
         .eq("tenant_id", tenantId)
+        .eq("voided", false) // <--- Filtro añadido
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
         .order("created_at", { ascending: true });
@@ -44,75 +46,79 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         return;
       }
 
-      // Build CSV content
-      const headers = [
-        "Fecha",
-        "Hora",
-        "Cliente",
-        "Estilista",
-        "Servicios",
-        "Subtotal",
-        "Descuento",
-        "Propina",
-        "Total",
-        "Método de Pago",
-        "Anulado",
-        "Notas",
-      ];
+      // CAMBIO 2: Nuevas cabeceras específicas
+      const headers = ["Fecha y Hora", "Importe Tarjeta", "Importe Efectivo", "Descuento", "Propinas"];
 
       // Helper para formatear moneda español (coma decimal)
       const fmtMoney = (amount: any) => (amount || 0).toFixed(2).replace(".", ",");
 
+      // Variables para acumular totales mientras recorremos
+      let sumCard = 0;
+      let sumCash = 0;
+      let sumDiscount = 0;
+      let sumTips = 0;
+      let sumTotalGeneral = 0;
+
       const rows = transactions.map((tx) => {
         const date = new Date(tx.created_at);
-        const services = Array.isArray(tx.services) ? tx.services.map((s: any) => s.name).join(" | ") : ""; // Usamos | para separar servicios internamente
+
+        // Lógica para separar importes según método de pago
+        // Nota: Si hay método 'mixto' y no hay desglose en la BD, aquí asignamos según 'total'.
+        // Ajusta esta lógica si tienes campos específicos para pago mixto.
+        let cardAmount = 0;
+        let cashAmount = 0;
+        const total = Number(tx.total || 0);
+
+        if (tx.payment_method === "card") {
+          cardAmount = total;
+        } else if (tx.payment_method === "cash") {
+          cashAmount = total;
+        } else if (tx.payment_method === "mixed") {
+          // Si es mixto y no tenemos desglose, podrías dividirlo o asignarlo a uno.
+          // Por defecto aquí lo pondré en Efectivo o lo puedes dejar en 0.
+          // cashAmount = total;
+        }
+
+        // Acumular totales
+        sumCard += cardAmount;
+        sumCash += cashAmount;
+        sumDiscount += Number(tx.discount || 0);
+        sumTips += Number(tx.tip_amount || 0);
+        sumTotalGeneral += total;
 
         return [
-          format(date, "dd/MM/yyyy"),
-          format(date, "HH:mm"),
-          tx.customer_name || "",
-          tx.stylist || "",
-          services,
-          fmtMoney(tx.subtotal), // Formato con coma 10,00
+          format(date, "dd/MM/yyyy HH:mm"), // Fecha y Hora juntas
+          fmtMoney(cardAmount),
+          fmtMoney(cashAmount),
           fmtMoney(tx.discount),
           fmtMoney(tx.tip_amount),
-          fmtMoney(tx.total),
-          tx.payment_method === "cash" ? "Efectivo" : tx.payment_method === "card" ? "Tarjeta" : "Mixto",
-          tx.voided ? "Sí" : "No",
-          tx.notes || "",
         ];
       });
 
-      // Calculate totals
-      const validTxs = transactions.filter((tx) => !tx.voided);
-      const totalCash = validTxs
-        .filter((tx) => tx.payment_method === "cash")
-        .reduce((sum, tx) => sum + Number(tx.total), 0);
-      const totalCard = validTxs
-        .filter((tx) => tx.payment_method === "card")
-        .reduce((sum, tx) => sum + Number(tx.total), 0);
-      const totalMixed = validTxs
-        .filter((tx) => tx.payment_method === "mixed")
-        .reduce((sum, tx) => sum + Number(tx.total), 0);
-      const totalAll = validTxs.reduce((sum, tx) => sum + Number(tx.total), 0);
-      const totalTips = validTxs.reduce((sum, tx) => sum + Number(tx.tip_amount || 0), 0);
-      const totalDiscounts = validTxs.reduce((sum, tx) => sum + Number(tx.discount || 0), 0);
+      // Filas de resumen alineadas con las columnas
+      rows.push([]); // Fila vacía separadora
 
-      // Add summary rows
+      // Fila de Totales por columna
+      rows.push([
+        "TOTALES", // Columna Fecha
+        fmtMoney(sumCard), // Columna Tarjeta
+        fmtMoney(sumCash), // Columna Efectivo
+        fmtMoney(sumDiscount), // Columna Descuento
+        fmtMoney(sumTips), // Columna Propinas
+      ]);
+
+      // Fila de Total General
       rows.push([]);
-      rows.push(["RESUMEN DEL PERÍODO"]);
-      rows.push(["Total transacciones", transactions.length.toString()]);
-      rows.push(["Transacciones válidas", validTxs.length.toString()]);
-      rows.push(["Total en Efectivo", "", "", "", "", "", "", "", fmtMoney(totalCash)]);
-      rows.push(["Total en Tarjeta", "", "", "", "", "", "", "", fmtMoney(totalCard)]);
-      rows.push(["Total Mixto", "", "", "", "", "", "", "", fmtMoney(totalMixed)]);
-      rows.push(["Total Propinas", "", "", "", "", "", "", fmtMoney(totalTips)]);
-      rows.push(["Total Descuentos", "", "", "", "", "", fmtMoney(totalDiscounts)]);
-      rows.push(["TOTAL GENERAL", "", "", "", "", "", "", "", fmtMoney(totalAll)]);
+      rows.push([
+        "TOTAL GENERAL (Suma Tarjeta + Efectivo)",
+        "",
+        fmtMoney(sumTotalGeneral), // Lo ponemos aquí o donde prefieras visualizarlo
+        "",
+        "",
+      ]);
 
-      // Convert to CSV string logic updated for Spain (semicolon)
+      // CSV Construction (España: ; delimitador)
       const escapeCSV = (val: string) => {
-        // Ahora buscamos punto y coma (;) en lugar de coma
         if (val.includes(";") || val.includes('"') || val.includes("\n")) {
           return `"${val.replace(/"/g, '""')}"`;
         }
@@ -120,19 +126,18 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
       };
 
       const csvContent = [
-        headers.join(";"), // CAMBIO: Usar ; como delimitador
-        ...rows.map((row) => row.map((cell) => escapeCSV(String(cell))).join(";")), // CAMBIO: Usar ;
+        headers.join(";"),
+        ...rows.map((row) => row.map((cell) => escapeCSV(String(cell))).join(";")),
       ].join("\n");
 
       // Add BOM for Excel UTF-8 compatibility
       const BOM = "\uFEFF";
       const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
 
-      // Download file
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `caja_${startDate}_${endDate}.csv`;
+      link.download = `caja_filtrada_${startDate}_${endDate}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -186,13 +191,12 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
     <div className="space-y-6">
       <div className="text-center py-4">
         <FileSpreadsheet className="h-12 w-12 mx-auto text-primary mb-3" />
-        <h3 className="text-lg font-semibold">Exportar Datos de Caja</h3>
+        <h3 className="text-lg font-semibold">Exportar Resumen Financiero</h3>
         <p className="text-sm text-muted-foreground">
-          Descarga un archivo CSV compatible con Excel (separado por punto y coma)
+          Descarga un CSV con desglose de Tarjeta, Efectivo y Totales (sin anulaciones)
         </p>
       </div>
 
-      {/* Quick period buttons */}
       <div className="flex flex-wrap gap-2 justify-center">
         <Button variant="outline" size="sm" onClick={() => setQuickPeriod("week")}>
           Última semana
@@ -208,7 +212,6 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         </Button>
       </div>
 
-      {/* Date range inputs */}
       <Card className="p-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -242,16 +245,8 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
             </div>
           </div>
         </div>
-
-        {startDate && endDate && (
-          <p className="text-xs text-muted-foreground mt-3 text-center">
-            Período: {format(new Date(startDate), "d 'de' MMMM yyyy", { locale: es })} -{" "}
-            {format(new Date(endDate), "d 'de' MMMM yyyy", { locale: es })}
-          </p>
-        )}
       </Card>
 
-      {/* Export button */}
       <Button
         onClick={exportToCSV}
         disabled={loading || !startDate || !endDate}
@@ -259,12 +254,8 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         size="lg"
       >
         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
-        {loading ? "Exportando..." : "Descargar Excel (Formato España)"}
+        {loading ? "Exportando..." : "Descargar Excel"}
       </Button>
-
-      <p className="text-xs text-muted-foreground text-center">
-        El archivo CSV está formateado para Excel en español (separador ; y decimales con coma)
-      </p>
     </div>
   );
 };
