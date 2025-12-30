@@ -12,11 +12,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Tenant {
   id: string;
@@ -48,7 +44,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -60,7 +56,9 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdminRole(session.user.id);
@@ -126,14 +124,12 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
   };
 
   return (
-    <header 
+    <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? "bg-background/95 backdrop-blur-sm border-b shadow-sm" 
-          : "bg-transparent border-transparent"
+        isScrolled ? "bg-background/95 backdrop-blur-sm border-b shadow-sm" : "bg-transparent border-transparent"
       }`}
-      style={{ 
-        borderColor: isScrolled ? (tenant.primary_color || 'hsl(var(--border))') : 'transparent' 
+      style={{
+        borderColor: isScrolled ? tenant.primary_color || "hsl(var(--border))" : "transparent",
       }}
     >
       <div className="container mx-auto px-4">
@@ -146,8 +142,8 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 <Link
                   to="/"
                   className={`flex items-center justify-center h-9 w-9 rounded-full transition-all duration-300 ${
-                    isScrolled 
-                      ? "bg-muted hover:bg-muted/80 text-foreground" 
+                    isScrolled
+                      ? "bg-muted hover:bg-muted/80 text-foreground"
                       : "bg-white/20 hover:bg-white/30 text-white"
                   }`}
                 >
@@ -160,19 +156,15 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
             </Tooltip>
 
             {tenant.logo_url ? (
-              <img 
-                src={tenant.logo_url} 
-                alt={tenant.name} 
-                className="h-10 w-auto"
-              />
+              <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-auto" />
             ) : (
-              <span 
+              <span
                 className={`text-xl font-bold transition-colors duration-300 ${
                   isScrolled ? "" : "text-white drop-shadow-md"
                 }`}
-                style={{ 
-                  color: isScrolled ? (tenant.primary_color || 'hsl(var(--primary))') : undefined,
-                  fontFamily: 'var(--font-heading)'
+                style={{
+                  color: isScrolled ? tenant.primary_color || "hsl(var(--primary))" : undefined,
+                  fontFamily: "var(--font-heading)",
                 }}
               >
                 {tenant.name}
@@ -188,15 +180,14 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 onClick={() => handleNavClick(item.id)}
                 className={`text-sm font-medium transition-all duration-300 ${
                   isScrolled
-                    ? activeSection === item.id 
-                      ? "text-primary" 
+                    ? activeSection === item.id
+                      ? "text-primary"
                       : "text-muted-foreground hover:text-primary"
                     : "text-white/90 hover:text-white drop-shadow-md"
                 }`}
-                style={{ 
-                  color: isScrolled && activeSection === item.id 
-                    ? (tenant.primary_color || 'hsl(var(--primary))') 
-                    : undefined 
+                style={{
+                  color:
+                    isScrolled && activeSection === item.id ? tenant.primary_color || "hsl(var(--primary))" : undefined,
                 }}
               >
                 {item.label}
@@ -210,11 +201,11 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
             {tenant.phone && (
               <>
                 {/* Mobile: Just icon */}
-                <a 
+                <a
                   href={`tel:${tenant.phone}`}
                   className={`sm:hidden flex items-center justify-center h-9 w-9 rounded-full transition-all duration-300 touch-manipulation ${
-                    isScrolled 
-                      ? "bg-primary/10 text-primary hover:bg-primary/20" 
+                    isScrolled
+                      ? "bg-primary/10 text-primary hover:bg-primary/20"
                       : "bg-white/20 hover:bg-white/30 text-white"
                   }`}
                   aria-label="Llamar"
@@ -222,13 +213,13 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                   <Phone className="h-4 w-4" />
                 </a>
                 {/* Desktop: Full phone number */}
-                <a 
+                <a
                   href={`tel:${tenant.phone}`}
                   className={`hidden sm:flex items-center gap-2 text-sm font-medium transition-colors duration-300 ${
                     isScrolled ? "" : "text-white drop-shadow-md"
                   }`}
-                  style={{ 
-                    color: isScrolled ? (tenant.primary_color || 'hsl(var(--primary))') : undefined 
+                  style={{
+                    color: isScrolled ? tenant.primary_color || "hsl(var(--primary))" : undefined,
                   }}
                 >
                   <Phone className="h-4 w-4" />
@@ -241,9 +232,9 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
             {user ? (
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className={`h-9 w-9 transition-colors duration-300 ${
                       isScrolled ? "text-foreground" : "text-white hover:text-white/80 hover:bg-white/20"
                     }`}
@@ -251,8 +242,8 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="end" 
+                <DropdownMenuContent
+                  align="end"
                   className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-border z-[100]"
                 >
                   <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
@@ -270,7 +261,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                     Mensajes
                     {unreadCount > 0 && (
                       <span className="absolute right-2 min-w-[20px] h-5 flex items-center justify-center bg-destructive text-destructive-foreground text-xs font-bold rounded-full px-1.5">
-                        {unreadCount > 99 ? '99+' : unreadCount}
+                        {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
                   </DropdownMenuItem>
@@ -291,10 +282,10 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleUserIconClick} 
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleUserIconClick}
                 className={`h-9 w-9 transition-colors duration-300 ${
                   isScrolled ? "text-foreground" : "text-white hover:text-white/80 hover:bg-white/20"
                 }`}
@@ -306,9 +297,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
             <Button
               variant="ghost"
               size="icon"
-              className={`md:hidden transition-colors duration-300 ${
-                isScrolled ? "" : "text-white hover:bg-white/20"
-              }`}
+              className={`md:hidden transition-colors duration-300 ${isScrolled ? "" : "text-white hover:bg-white/20"}`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -318,9 +307,11 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <nav className={`md:hidden py-4 border-t transition-colors ${
-            isScrolled ? "bg-background" : "bg-background/95 backdrop-blur-sm"
-          }`}>
+          <nav
+            className={`md:hidden py-4 border-t transition-colors ${
+              isScrolled ? "bg-background" : "bg-background/95 backdrop-blur-sm"
+            }`}
+          >
             <div className="flex flex-col gap-2">
               {/* Link to main app */}
               <Link
@@ -329,7 +320,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Home className="h-4 w-4" />
-                Volver a GlowUp
+                Volver a GlowApp
               </Link>
               <div className="border-t my-2" />
               {navItems.map((item) => (
@@ -337,9 +328,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
                   className={`py-2 px-4 text-left rounded-lg transition-colors ${
-                    activeSection === item.id 
-                      ? "bg-primary/10 text-primary" 
-                      : "text-muted-foreground hover:bg-muted"
+                    activeSection === item.id ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   {item.label}

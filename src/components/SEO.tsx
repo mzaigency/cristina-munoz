@@ -10,9 +10,9 @@ interface SEOProps {
 }
 
 export const SEO = ({
-  title = "GlowUp",
+  title = "GlowApp",
   description = "La red social de belleza y bienestar. Conecta con los mejores salones, descubre tendencias y reserva citas al instante.",
-  keywords = "red social belleza, salones de belleza, reservas online, peluquería, estética, bienestar, tendencias belleza, GlowUp",
+  keywords = "red social belleza, salones de belleza, reservas online, peluquería, estética, bienestar, tendencias belleza, GlowUp, GlowApp",
   ogImage = "https://lovable.dev/opengraph-image-p98pqg.png",
   canonicalUrl,
   noindex = false,
@@ -37,7 +37,7 @@ export const SEO = ({
       <meta property="og:image" content={ogImage} />
       <meta property="og:url" content={fullCanonicalUrl} />
       <meta property="og:type" content="website" />
-      <meta property="og:site_name" content="GlowUp" />
+      <meta property="og:site_name" content="GlowApp" />
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
@@ -46,7 +46,7 @@ export const SEO = ({
       <meta name="twitter:image" content={ogImage} />
 
       {/* Additional SEO */}
-      <meta name="author" content="GlowUp" />
+      <meta name="author" content="GlowApp" />
     </Helmet>
   );
 };

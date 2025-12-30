@@ -71,7 +71,7 @@ export function SmartSearchHeader({
             className="flex items-center justify-between mb-4"
           >
             <div className="flex items-center gap-2">
-              <img src="/favicon.png" alt="GlowUp" className="h-8 w-8" />
+              <img src="/favicon.png" alt="GlowApp" className="h-8 w-8" />
               <h1 className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                 GlowApp
               </h1>

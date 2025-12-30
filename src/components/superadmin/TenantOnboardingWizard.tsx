@@ -6,26 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  Loader2, 
-  Building2, 
-  Users, 
-  Clock, 
-  Calendar, 
+  Loader2,
+  Building2,
+  Users,
+  Clock,
+  Calendar,
   Webhook,
   ChevronRight,
   ChevronLeft,
@@ -42,7 +30,7 @@ import {
   Mail,
   Sparkles,
   ExternalLink,
-  Copy
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -89,20 +77,19 @@ const DAYS = [
 ];
 
 const COLORS = [
-  "#8B5CF6", "#EC4899", "#3B82F6", "#10B981", "#F59E0B", "#EF4444",
-  "#6366F1", "#14B8A6", "#F97316", "#84CC16"
+  "#8B5CF6",
+  "#EC4899",
+  "#3B82F6",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#6366F1",
+  "#14B8A6",
+  "#F97316",
+  "#84CC16",
 ];
 
-const SERVICE_CATEGORIES = [
-  "Corte",
-  "Coloración",
-  "Peinados",
-  "Tratamientos",
-  "Mechas",
-  "Alisados",
-  "Barba",
-  "Otros"
-];
+const SERVICE_CATEGORIES = ["Corte", "Coloración", "Peinados", "Tratamientos", "Mechas", "Alisados", "Barba", "Otros"];
 
 const STEPS = [
   { id: 1, title: "Datos básicos", icon: Building2 },
@@ -163,18 +150,16 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
   });
 
   // Step 4: Stylists
-  const [stylists, setStylists] = useState<Stylist[]>([
-    { name: "", slug: "", color: COLORS[0], calendarId: "" }
-  ]);
+  const [stylists, setStylists] = useState<Stylist[]>([{ name: "", slug: "", color: COLORS[0], calendarId: "" }]);
 
   // Step 5: Services
   const [services, setServices] = useState<Service[]>([
-    { name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0 }
+    { name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0 },
   ]);
 
   // Step 6: Business Hours
   const [businessHours, setBusinessHours] = useState<BusinessHours[]>(
-    DAYS.map(d => ({
+    DAYS.map((d) => ({
       day: d.day,
       dayName: d.name,
       isOpen: d.day >= 1 && d.day <= 5,
@@ -182,7 +167,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
       closeTime: "19:00",
       breakStart: "14:00",
       breakEnd: "15:00",
-    }))
+    })),
   );
 
   // Step 7: Integrations
@@ -202,20 +187,47 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
   const resetForm = () => {
     setCurrentStep(1);
-    setBasicInfo({ name: "", slug: "", email: "", phone: "", address: "", city: "", postalCode: "", instagramUrl: "", facebookUrl: "", whatsappNumber: "", googleMapsUrl: "" });
-    setCustomization({ tagline: "", description: "", primaryColor: "#8B5CF6", secondaryColor: "#EC4899", logoUrl: "", heroImageUrl: "", seoTitle: "", seoDescription: "", faqs: [], brandTone: "" });
+    setBasicInfo({
+      name: "",
+      slug: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      postalCode: "",
+      instagramUrl: "",
+      facebookUrl: "",
+      whatsappNumber: "",
+      googleMapsUrl: "",
+    });
+    setCustomization({
+      tagline: "",
+      description: "",
+      primaryColor: "#8B5CF6",
+      secondaryColor: "#EC4899",
+      logoUrl: "",
+      heroImageUrl: "",
+      seoTitle: "",
+      seoDescription: "",
+      faqs: [],
+      brandTone: "",
+    });
     setAdminInfo({ email: "", name: "", sendWelcomeEmail: true });
     setStylists([{ name: "", slug: "", color: COLORS[0], calendarId: "" }]);
-    setServices([{ name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0 }]);
-    setBusinessHours(DAYS.map(d => ({
-      day: d.day,
-      dayName: d.name,
-      isOpen: d.day >= 1 && d.day <= 5,
-      openTime: "09:00",
-      closeTime: "19:00",
-      breakStart: "14:00",
-      breakEnd: "15:00",
-    })));
+    setServices([
+      { name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0 },
+    ]);
+    setBusinessHours(
+      DAYS.map((d) => ({
+        day: d.day,
+        dayName: d.name,
+        isOpen: d.day >= 1 && d.day <= 5,
+        openTime: "09:00",
+        closeTime: "19:00",
+        breakStart: "14:00",
+        breakEnd: "15:00",
+      })),
+    );
     setGcalEnabled(false);
     setGcalCredentials({ clientId: "", clientSecret: "", refreshToken: "" });
     setN8nEnabled(false);
@@ -231,12 +243,15 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
   // Stylists handlers
   const addStylist = () => {
-    setStylists([...stylists, { 
-      name: "", 
-      slug: "", 
-      color: COLORS[stylists.length % COLORS.length],
-      calendarId: "" 
-    }]);
+    setStylists([
+      ...stylists,
+      {
+        name: "",
+        slug: "",
+        color: COLORS[stylists.length % COLORS.length],
+        calendarId: "",
+      },
+    ]);
   };
 
   const removeStylist = (index: number) => {
@@ -249,21 +264,27 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     const updated = [...stylists];
     updated[index] = { ...updated[index], [field]: value };
     if (field === "name") {
-      updated[index].slug = value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      updated[index].slug = value
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
     }
     setStylists(updated);
   };
 
   // Services handlers
   const addService = () => {
-    setServices([...services, { 
-      name: "", 
-      category: "Corte", 
-      type: "Simple", 
-      durationPart1: 30, 
-      durationPause: 0, 
-      durationPart2: 0 
-    }]);
+    setServices([
+      ...services,
+      {
+        name: "",
+        category: "Corte",
+        type: "Simple",
+        durationPart1: 30,
+        durationPause: 0,
+        durationPart2: 0,
+      },
+    ]);
   };
 
   const removeService = (index: number) => {
@@ -286,39 +307,39 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
   };
 
   const copyFirstDayToAll = () => {
-    const firstOpenDay = businessHours.find(h => h.isOpen);
+    const firstOpenDay = businessHours.find((h) => h.isOpen);
     if (firstOpenDay) {
-      setBusinessHours(businessHours.map(h => ({
-        ...h,
-        openTime: firstOpenDay.openTime,
-        closeTime: firstOpenDay.closeTime,
-        breakStart: firstOpenDay.breakStart,
-        breakEnd: firstOpenDay.breakEnd,
-      })));
+      setBusinessHours(
+        businessHours.map((h) => ({
+          ...h,
+          openTime: firstOpenDay.openTime,
+          closeTime: firstOpenDay.closeTime,
+          breakStart: firstOpenDay.breakStart,
+          breakEnd: firstOpenDay.breakEnd,
+        })),
+      );
     }
   };
 
   // Image upload handlers
-  const handleImageUpload = async (file: File, type: 'logo' | 'hero') => {
-    if (type === 'logo') setUploadingLogo(true);
+  const handleImageUpload = async (file: File, type: "logo" | "hero") => {
+    if (type === "logo") setUploadingLogo(true);
     else setUploadingHero(true);
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${basicInfo.slug || 'temp'}-${type}-${Date.now()}.${fileExt}`;
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${basicInfo.slug || "temp"}-${type}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('tenant-assets')
-        .upload(filePath, file);
+      const { error: uploadError } = await supabase.storage.from("tenant-assets").upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('tenant-assets')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("tenant-assets").getPublicUrl(filePath);
 
-      if (type === 'logo') {
+      if (type === "logo") {
         setCustomization({ ...customization, logoUrl: publicUrl });
       } else {
         setCustomization({ ...customization, heroImageUrl: publicUrl });
@@ -326,7 +347,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
       toast({
         title: "Imagen subida",
-        description: `${type === 'logo' ? 'Logo' : 'Imagen hero'} subida correctamente`,
+        description: `${type === "logo" ? "Logo" : "Imagen hero"} subida correctamente`,
       });
     } catch (error: any) {
       toast({
@@ -335,14 +356,14 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         variant: "destructive",
       });
     } finally {
-      if (type === 'logo') setUploadingLogo(false);
+      if (type === "logo") setUploadingLogo(false);
       else setUploadingHero(false);
     }
   };
 
   const generatePassword = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
-    let password = '';
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
+    let password = "";
     for (let i = 0; i < 12; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -367,8 +388,8 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           name: basicInfo.name,
           city: basicInfo.city,
           address: basicInfo.address,
-          services: services.filter(s => s.name).map(s => s.name),
-          stylists: stylists.filter(s => s.name).map(s => s.name),
+          services: services.filter((s) => s.name).map((s) => s.name),
+          stylists: stylists.filter((s) => s.name).map((s) => s.name),
         },
       });
 
@@ -376,8 +397,8 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
       if (!data?.success) throw new Error(data?.error || "Error al generar branding");
 
       const branding = data.branding;
-      
-      setCustomization(prev => ({
+
+      setCustomization((prev) => ({
         ...prev,
         tagline: branding.tagline || prev.tagline,
         description: branding.description || prev.description,
@@ -424,7 +445,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
       const baseUrl = window.location.origin;
       const url = `${baseUrl}/salon/${basicInfo.slug.toLowerCase().replace(/\s+/g, "-")}?preview=${token}`;
       setPreviewUrl(url);
-      
+
       toast({
         title: "URL de preview generada",
         description: "Copia la URL para compartirla (válida 24h)",
@@ -482,7 +503,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         }
         return true;
       case 4:
-        const validStylists = stylists.filter(s => s.name && s.slug);
+        const validStylists = stylists.filter((s) => s.name && s.slug);
         if (validStylists.length === 0) {
           toast({
             title: "Error",
@@ -493,7 +514,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         }
         return true;
       case 5:
-        const validServices = services.filter(s => s.name && s.category);
+        const validServices = services.filter((s) => s.name && s.category);
         if (validServices.length === 0) {
           toast({
             title: "Error",
@@ -561,8 +582,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
       const tenantId = tenant.id;
 
       // 2. Create tenant admin WITHOUT changing the current session
-      const { data: adminProvision, error: adminProvisionError } =
-        await supabase.functions.invoke("provision-tenant-admin", {
+      const { data: adminProvision, error: adminProvisionError } = await supabase.functions.invoke(
+        "provision-tenant-admin",
+        {
           body: {
             tenantId,
             tenantName: basicInfo.name,
@@ -572,7 +594,8 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
             password: adminPassword,
             sendWelcomeEmail: adminInfo.sendWelcomeEmail,
           },
-        });
+        },
+      );
 
       if (adminProvisionError) throw adminProvisionError;
       if (!adminProvision?.success) {
@@ -593,9 +616,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
       }
 
       // 6. Create stylists
-      const validStylists = stylists.filter(s => s.name && s.slug);
+      const validStylists = stylists.filter((s) => s.name && s.slug);
       if (validStylists.length > 0) {
-        const stylistsData = validStylists.map(s => ({
+        const stylistsData = validStylists.map((s) => ({
           tenant_id: tenantId,
           name: s.name,
           slug: s.slug,
@@ -603,17 +626,15 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           google_calendar_id: s.calendarId || null,
         }));
 
-        const { error: stylistsError } = await supabase
-          .from("tenant_stylists")
-          .insert(stylistsData);
+        const { error: stylistsError } = await supabase.from("tenant_stylists").insert(stylistsData);
 
         if (stylistsError) throw stylistsError;
       }
 
       // 7. Create services
-      const validServices = services.filter(s => s.name && s.category);
+      const validServices = services.filter((s) => s.name && s.category);
       if (validServices.length > 0) {
-        const servicesData = validServices.map(s => ({
+        const servicesData = validServices.map((s) => ({
           tenant_id: tenantId,
           name: s.name,
           category: s.category,
@@ -623,15 +644,13 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           duration_part2_active: s.type === "Compuesto" ? s.durationPart2 : 0,
         }));
 
-        const { error: servicesError } = await supabase
-          .from("services")
-          .insert(servicesData);
+        const { error: servicesError } = await supabase.from("services").insert(servicesData);
 
         if (servicesError) throw servicesError;
       }
 
       // 8. Create business hours
-      const hoursData = businessHours.map(h => ({
+      const hoursData = businessHours.map((h) => ({
         tenant_id: tenantId,
         day_of_week: h.day,
         is_open: h.isOpen,
@@ -641,9 +660,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         break_end: h.isOpen ? h.breakEnd : null,
       }));
 
-      const { error: hoursError } = await supabase
-        .from("tenant_business_hours")
-        .insert(hoursData);
+      const { error: hoursError } = await supabase.from("tenant_business_hours").insert(hoursData);
 
       if (hoursError) throw hoursError;
 
@@ -661,39 +678,35 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         });
 
         const calendarSettings: Record<string, string> = {};
-        validStylists.forEach(s => {
+        validStylists.forEach((s) => {
           if (s.calendarId) {
             calendarSettings[`calendar_id_${s.slug}`] = s.calendarId;
           }
         });
 
-        const { error: gcalError } = await supabase
-          .from("tenant_integrations")
-          .insert({
-            tenant_id: tenantId,
-            integration_type: "google_calendar",
-            is_enabled: true,
-            credentials_encrypted: encrypted,
-            settings: calendarSettings,
-          });
+        const { error: gcalError } = await supabase.from("tenant_integrations").insert({
+          tenant_id: tenantId,
+          integration_type: "google_calendar",
+          is_enabled: true,
+          credentials_encrypted: encrypted,
+          settings: calendarSettings,
+        });
 
         if (gcalError) throw gcalError;
       }
 
       // 10. Create n8n integration if enabled
       if (n8nEnabled && (n8nWebhooks.webhookUrl || n8nWebhooks.cancelWebhookUrl)) {
-        const { error: n8nError } = await supabase
-          .from("tenant_integrations")
-          .insert({
-            tenant_id: tenantId,
-            integration_type: "n8n",
-            is_enabled: true,
-            settings: {
-              webhook_url: n8nWebhooks.webhookUrl || null,
-              cancel_webhook_url: n8nWebhooks.cancelWebhookUrl || null,
-              whatsapp_webhook_url: n8nWebhooks.whatsappWebhookUrl || null,
-            },
-          });
+        const { error: n8nError } = await supabase.from("tenant_integrations").insert({
+          tenant_id: tenantId,
+          integration_type: "n8n",
+          is_enabled: true,
+          settings: {
+            webhook_url: n8nWebhooks.webhookUrl || null,
+            cancel_webhook_url: n8nWebhooks.cancelWebhookUrl || null,
+            whatsapp_webhook_url: n8nWebhooks.whatsappWebhookUrl || null,
+          },
+        });
 
         if (n8nError) throw n8nError;
       }
@@ -721,22 +734,22 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
   const LandingPreview = () => (
     <div className="border rounded-lg overflow-hidden bg-background shadow-lg">
       {/* Hero Section Preview */}
-      <div 
+      <div
         className="relative h-48 flex items-center justify-center"
         style={{
-          background: customization.heroImageUrl 
+          background: customization.heroImageUrl
             ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${customization.heroImageUrl}) center/cover`
-            : `linear-gradient(135deg, ${customization.primaryColor}, ${customization.secondaryColor})`
+            : `linear-gradient(135deg, ${customization.primaryColor}, ${customization.secondaryColor})`,
         }}
       >
         <div className="text-center text-white z-10">
-          {customization.logoUrl && (
-            <img src={customization.logoUrl} alt="Logo" className="h-12 mx-auto mb-2" />
-          )}
+          {customization.logoUrl && <img src={customization.logoUrl} alt="Logo" className="h-12 mx-auto mb-2" />}
           <h2 className="text-2xl font-bold">{basicInfo.name || "Nombre del Salón"}</h2>
           <p className="text-sm opacity-90">{customization.tagline || "Tu eslogan aquí"}</p>
           {basicInfo.city && (
-            <p className="text-xs opacity-75 mt-1">{basicInfo.address}, {basicInfo.city}</p>
+            <p className="text-xs opacity-75 mt-1">
+              {basicInfo.address}, {basicInfo.city}
+            </p>
           )}
         </div>
       </div>
@@ -747,47 +760,50 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           Nuestros Servicios
         </h3>
         <div className="grid grid-cols-2 gap-2">
-          {services.filter(s => s.name).slice(0, 4).map((service, i) => (
-            <div 
-              key={i} 
-              className="p-2 rounded text-xs border"
-              style={{ borderColor: `${customization.primaryColor}30` }}
-            >
-              <span className="font-medium">{service.name}</span>
-              <span className="text-muted-foreground ml-1">({service.durationPart1}min)</span>
-            </div>
-          ))}
+          {services
+            .filter((s) => s.name)
+            .slice(0, 4)
+            .map((service, i) => (
+              <div
+                key={i}
+                className="p-2 rounded text-xs border"
+                style={{ borderColor: `${customization.primaryColor}30` }}
+              >
+                <span className="font-medium">{service.name}</span>
+                <span className="text-muted-foreground ml-1">({service.durationPart1}min)</span>
+              </div>
+            ))}
         </div>
       </div>
 
       {/* Stylists Preview */}
-      {stylists.filter(s => s.name).length > 0 && (
+      {stylists.filter((s) => s.name).length > 0 && (
         <div className="p-4 border-t">
           <h3 className="font-semibold mb-3" style={{ color: customization.primaryColor }}>
             Nuestro Equipo
           </h3>
           <div className="flex gap-3">
-            {stylists.filter(s => s.name).slice(0, 3).map((stylist, i) => (
-              <div key={i} className="text-center">
-                <div 
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold mx-auto"
-                  style={{ backgroundColor: stylist.color }}
-                >
-                  {stylist.name.charAt(0).toUpperCase()}
+            {stylists
+              .filter((s) => s.name)
+              .slice(0, 3)
+              .map((stylist, i) => (
+                <div key={i} className="text-center">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold mx-auto"
+                    style={{ backgroundColor: stylist.color }}
+                  >
+                    {stylist.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-xs mt-1 block">{stylist.name}</span>
                 </div>
-                <span className="text-xs mt-1 block">{stylist.name}</span>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}
 
       {/* CTA Button Preview */}
       <div className="p-4 border-t">
-        <Button 
-          className="w-full text-white"
-          style={{ backgroundColor: customization.primaryColor }}
-        >
+        <Button className="w-full text-white" style={{ backgroundColor: customization.primaryColor }}>
           Reservar Cita
         </Button>
       </div>
@@ -802,19 +818,12 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
             <Building2 className="h-5 w-5" />
             Crear Nuevo Tenant
           </DialogTitle>
-          <DialogDescription>
-            Configura todos los aspectos de la nueva peluquería
-          </DialogDescription>
+          <DialogDescription>Configura todos los aspectos de la nueva peluquería</DialogDescription>
         </DialogHeader>
 
         {/* Toggle Preview */}
         <div className="flex justify-end mb-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowPreview(!showPreview)}
-            className="gap-2"
-          >
+          <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)} className="gap-2">
             <Eye className="h-4 w-4" />
             {showPreview ? "Ocultar vista previa" : "Ver vista previa"}
           </Button>
@@ -827,25 +836,25 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
             <div className="flex items-center justify-between mb-6 px-2 overflow-x-auto">
               {STEPS.map((step, index) => (
                 <div key={step.id} className="flex items-center flex-shrink-0">
-                  <div className={cn(
-                    "flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors",
-                    currentStep === step.id 
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : currentStep > step.id
-                        ? "border-primary bg-primary/20 text-primary"
-                        : "border-muted-foreground/30 text-muted-foreground"
-                  )}>
-                    {currentStep > step.id ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <step.icon className="h-4 w-4" />
+                  <div
+                    className={cn(
+                      "flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors",
+                      currentStep === step.id
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : currentStep > step.id
+                          ? "border-primary bg-primary/20 text-primary"
+                          : "border-muted-foreground/30 text-muted-foreground",
                     )}
+                  >
+                    {currentStep > step.id ? <Check className="h-4 w-4" /> : <step.icon className="h-4 w-4" />}
                   </div>
                   {index < STEPS.length - 1 && (
-                    <div className={cn(
-                      "w-4 h-0.5 mx-0.5",
-                      currentStep > step.id ? "bg-primary" : "bg-muted-foreground/30"
-                    )} />
+                    <div
+                      className={cn(
+                        "w-4 h-0.5 mx-0.5",
+                        currentStep > step.id ? "bg-primary" : "bg-muted-foreground/30",
+                      )}
+                    />
                   )}
                 </div>
               ))}
@@ -853,7 +862,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
             <div className="text-center mb-4">
               <h3 className="font-semibold">{STEPS[currentStep - 1].title}</h3>
-              <p className="text-sm text-muted-foreground">Paso {currentStep} de {STEPS.length}</p>
+              <p className="text-sm text-muted-foreground">
+                Paso {currentStep} de {STEPS.length}
+              </p>
             </div>
 
             {/* Step Content */}
@@ -866,13 +877,18 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                       <Label htmlFor="name">Nombre del negocio *</Label>
                       <Input
                         id="name"
-                        placeholder="Salón GlowUp"
+                        placeholder="Salón GlowApp"
                         value={basicInfo.name}
-                        onChange={(e) => setBasicInfo({ 
-                          ...basicInfo, 
-                          name: e.target.value,
-                          slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
-                        })}
+                        onChange={(e) =>
+                          setBasicInfo({
+                            ...basicInfo,
+                            name: e.target.value,
+                            slug: e.target.value
+                              .toLowerCase()
+                              .replace(/\s+/g, "-")
+                              .replace(/[^a-z0-9-]/g, ""),
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -881,7 +897,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                         <span className="text-sm text-muted-foreground">/salon/</span>
                         <Input
                           id="slug"
-                          placeholder="salon-glowup"
+                          placeholder="salon-glowapp"
                           value={basicInfo.slug}
                           onChange={(e) => setBasicInfo({ ...basicInfo, slug: e.target.value })}
                         />
@@ -1032,7 +1048,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                               type="button"
                               className={cn(
                                 "w-6 h-6 rounded-full border-2 transition-all",
-                                customization.primaryColor === color ? "border-foreground scale-110" : "border-transparent"
+                                customization.primaryColor === color
+                                  ? "border-foreground scale-110"
+                                  : "border-transparent",
                               )}
                               style={{ backgroundColor: color }}
                               onClick={() => setCustomization({ ...customization, primaryColor: color })}
@@ -1057,7 +1075,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                               type="button"
                               className={cn(
                                 "w-6 h-6 rounded-full border-2 transition-all",
-                                customization.secondaryColor === color ? "border-foreground scale-110" : "border-transparent"
+                                customization.secondaryColor === color
+                                  ? "border-foreground scale-110"
+                                  : "border-transparent",
                               )}
                               style={{ backgroundColor: color }}
                               onClick={() => setCustomization({ ...customization, secondaryColor: color })}
@@ -1081,7 +1101,11 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                         {customization.logoUrl ? (
                           <div className="space-y-2">
                             <img src={customization.logoUrl} alt="Logo" className="max-h-16 mx-auto" />
-                            <Button variant="outline" size="sm" onClick={() => setCustomization({ ...customization, logoUrl: "" })}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCustomization({ ...customization, logoUrl: "" })}
+                            >
                               Cambiar
                             </Button>
                           </div>
@@ -1101,7 +1125,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                               className="hidden"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
-                                if (file) handleImageUpload(file, 'logo');
+                                if (file) handleImageUpload(file, "logo");
                               }}
                               disabled={uploadingLogo}
                             />
@@ -1115,8 +1139,16 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                       <div className="border-2 border-dashed rounded-lg p-3 text-center">
                         {customization.heroImageUrl ? (
                           <div className="space-y-2">
-                            <img src={customization.heroImageUrl} alt="Hero" className="max-h-16 mx-auto object-cover rounded" />
-                            <Button variant="outline" size="sm" onClick={() => setCustomization({ ...customization, heroImageUrl: "" })}>
+                            <img
+                              src={customization.heroImageUrl}
+                              alt="Hero"
+                              className="max-h-16 mx-auto object-cover rounded"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCustomization({ ...customization, heroImageUrl: "" })}
+                            >
                               Cambiar
                             </Button>
                           </div>
@@ -1136,7 +1168,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                               className="hidden"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
-                                if (file) handleImageUpload(file, 'hero');
+                                if (file) handleImageUpload(file, "hero");
                               }}
                               disabled={uploadingHero}
                             />
@@ -1273,7 +1305,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                               type="button"
                               className={cn(
                                 "w-6 h-6 rounded-full border-2 transition-all",
-                                stylist.color === color ? "border-foreground scale-110" : "border-transparent"
+                                stylist.color === color ? "border-foreground scale-110" : "border-transparent",
                               )}
                               style={{ backgroundColor: color }}
                               onClick={() => updateStylist(index, "color", color)}
@@ -1317,8 +1349,10 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {SERVICE_CATEGORIES.map(cat => (
-                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            {SERVICE_CATEGORIES.map((cat) => (
+                              <SelectItem key={cat} value={cat}>
+                                {cat}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -1369,8 +1403,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                             />
                           </div>
                           <div className="md:col-span-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                            Total: {service.durationPart1 + service.durationPause + service.durationPart2} min 
-                            (Fase 1: {service.durationPart1}min → Pausa: {service.durationPause}min → Fase 2: {service.durationPart2}min)
+                            Total: {service.durationPart1 + service.durationPause + service.durationPart2} min (Fase 1:{" "}
+                            {service.durationPart1}min → Pausa: {service.durationPause}min → Fase 2:{" "}
+                            {service.durationPart2}min)
                           </div>
                         </div>
                       )}
@@ -1497,12 +1532,10 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
             {/* Navigation */}
             <div className="flex items-center justify-between pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={currentStep === 1 ? handleClose : prevStep}
-                disabled={saving}
-              >
-                {currentStep === 1 ? "Cancelar" : (
+              <Button variant="outline" onClick={currentStep === 1 ? handleClose : prevStep} disabled={saving}>
+                {currentStep === 1 ? (
+                  "Cancelar"
+                ) : (
                   <>
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Anterior
@@ -1517,11 +1550,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
                 </Button>
               ) : (
                 <Button onClick={handleComplete} disabled={saving} className="gap-2">
-                  {saving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Check className="h-4 w-4" />
-                  )}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   Crear Tenant
                 </Button>
               )}
