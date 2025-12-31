@@ -1,8 +1,9 @@
-import { Clock, User, ChevronRight, Calendar, MapPin, MessageCircle, Phone } from "lucide-react";
+import { Clock, User, ChevronRight, Calendar, MapPin, MessageCircle, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "motion/react";
 import { useHaptic } from "@/hooks/useHaptic";
+import { formatTimeHHmm, parseISODateToLocal } from "@/lib/datetime";
 
 interface BookingCardProps {
   booking: {
@@ -12,18 +13,20 @@ interface BookingCardProps {
     stylist: string;
     services: any[];
     total_duration: number;
+    tenant_id?: string;
     tenant_name?: string;
     tenant_logo?: string;
+    tenant_logo_url?: string;
     tenant_address?: string;
-    tenant_phone?: string;
   };
   onClick?: () => void;
-  onContact?: () => void;
+  onReschedule?: () => void;
+  onMessage?: () => void;
 }
 
-export function BookingCard({ booking, onClick, onContact }: BookingCardProps) {
+export function BookingCard({ booking, onClick, onReschedule, onMessage }: BookingCardProps) {
   const haptic = useHaptic();
-  
+
   const getStylistName = (stylist: string) => {
     if (stylist === 'cris') return 'Cristina';
     if (stylist === 'desi') return 'Desi';
@@ -31,7 +34,9 @@ export function BookingCard({ booking, onClick, onContact }: BookingCardProps) {
     return stylist.charAt(0).toUpperCase() + stylist.slice(1);
   };
 
-  const bookingDate = new Date(booking.Fecha);
+  const bookingDate = parseISODateToLocal(booking.Fecha);
+  const timeLabel = formatTimeHHmm(booking.Hora);
+
   const isToday = new Date().toDateString() === bookingDate.toDateString();
   const isTomorrow = new Date(Date.now() + 86400000).toDateString() === bookingDate.toDateString();
 
@@ -44,7 +49,7 @@ export function BookingCard({ booking, onClick, onContact }: BookingCardProps) {
   // Calculate countdown for today's bookings
   const getCountdown = () => {
     if (!isToday) return null;
-    const [hours, minutes] = booking.Hora.split(':').map(Number);
+    const [hours, minutes] = timeLabel.split(':').map(Number);
     const bookingTime = new Date();
     bookingTime.setHours(hours, minutes, 0, 0);
     const diff = bookingTime.getTime() - Date.now();
@@ -56,23 +61,23 @@ export function BookingCard({ booking, onClick, onContact }: BookingCardProps) {
   };
 
   const countdown = getCountdown();
+  const logoUrl = booking.tenant_logo || booking.tenant_logo_url;
 
   const handleClick = () => {
     haptic.selection();
     onClick?.();
   };
 
-  const handleContact = (e: React.MouseEvent) => {
+  const handleReschedule = (e: React.MouseEvent) => {
     e.stopPropagation();
     haptic.selection();
-    
-    if (booking.tenant_phone) {
-      // Open WhatsApp or phone
-      const whatsappUrl = `https://wa.me/${booking.tenant_phone.replace(/\s/g, '')}?text=${encodeURIComponent('Hola, tengo una cita reservada y me gustaría...')}`;
-      window.open(whatsappUrl, '_blank');
-    }
-    
-    onContact?.();
+    onReschedule?.();
+  };
+
+  const handleMessage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    haptic.selection();
+    onMessage?.();
   };
 
   return (
@@ -84,18 +89,19 @@ export function BookingCard({ booking, onClick, onContact }: BookingCardProps) {
       <div className="flex items-start gap-4">
         {/* Time indicator with gradient or salon logo */}
         <div className="relative flex flex-col items-center justify-center bg-gradient-to-br from-primary/15 to-accent/10 rounded-2xl p-3 min-w-[70px]">
-          {booking.tenant_logo ? (
-            <img 
-              src={booking.tenant_logo} 
-              alt={booking.tenant_name || 'Salón'} 
-              className="w-10 h-10 rounded-full object-cover mb-1"
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={booking.tenant_name ? `Logo de ${booking.tenant_name}` : 'Logo del salón'}
+              loading="lazy"
+              className="w-10 h-10 rounded-full object-cover mb-1 ring-2 ring-background/60 shadow-sm"
             />
           ) : (
             <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
               {getDateLabel()}
             </span>
           )}
-          <span className="text-xl font-extrabold text-primary">{booking.Hora}</span>
+          <span className="text-xl font-extrabold text-primary">{timeLabel}</span>
           {countdown && (
             <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 rounded-full whitespace-nowrap">
               {countdown}
@@ -111,7 +117,7 @@ export function BookingCard({ booking, onClick, onContact }: BookingCardProps) {
               {booking.tenant_name}
             </h3>
           )}
-          
+
           <div className="flex items-center gap-2 mb-1.5">
             <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center">
               <User className="h-3.5 w-3.5 text-muted-foreground" />
@@ -119,15 +125,15 @@ export function BookingCard({ booking, onClick, onContact }: BookingCardProps) {
             <span className="text-sm font-semibold text-foreground">
               {getStylistName(booking.stylist)}
             </span>
-            {!booking.tenant_logo && (
+            {!logoUrl && (
               <span className="text-xs text-muted-foreground ml-auto">
                 {getDateLabel()}
               </span>
             )}
           </div>
-          
+
           <p className="text-sm text-muted-foreground line-clamp-1 mb-1.5">
-            {Array.isArray(booking.services) 
+            {Array.isArray(booking.services)
               ? booking.services.map((s: any) => s.name).join(", ")
               : "Servicios"}
           </p>
@@ -152,9 +158,19 @@ export function BookingCard({ booking, onClick, onContact }: BookingCardProps) {
 
         {/* Actions */}
         <div className="shrink-0 flex flex-col gap-2">
-          {booking.tenant_phone && (
+          {onReschedule && (
             <button
-              onClick={handleContact}
+              onClick={handleReschedule}
+              aria-label="Reagendar cita"
+              className="h-8 w-8 rounded-full bg-secondary/80 flex items-center justify-center hover:bg-secondary transition-colors"
+            >
+              <RotateCcw className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
+          {onMessage && (
+            <button
+              onClick={handleMessage}
+              aria-label="Enviar mensaje al salón"
               className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
             >
               <MessageCircle className="h-4 w-4 text-primary" />
@@ -168,3 +184,4 @@ export function BookingCard({ booking, onClick, onContact }: BookingCardProps) {
     </motion.button>
   );
 }
+
