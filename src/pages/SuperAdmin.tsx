@@ -4,15 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Loader2, Building2, Users, BarChart3, Settings, Shield, 
+  Loader2, Building2, Users, BarChart3, Shield, 
   LayoutDashboard, Heart, Activity, FileImage, Search, Bell,
-  Moon, Sun, ChevronLeft, Menu
+  Moon, Sun, ChevronLeft, Menu, CreditCard
 } from "lucide-react";
 import { TenantsManager } from "@/components/superadmin/TenantsManager";
 import { GlobalStats } from "@/components/superadmin/GlobalStats";
 import { UsersManager } from "@/components/superadmin/UsersManager";
 import { SuperAdminDashboard } from "@/components/superadmin/SuperAdminDashboard";
 import { PlatformAnalytics } from "@/components/superadmin/PlatformAnalytics";
+import { SubscriptionPlansManager } from "@/components/superadmin/SubscriptionPlansManager";
 import { FavoritesManager } from "@/components/superadmin/FavoritesManager";
 import { ActivityCenter } from "@/components/superadmin/ActivityCenter";
 import { ContentManager } from "@/components/superadmin/ContentManager";
@@ -93,6 +94,7 @@ const SuperAdmin = () => {
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "tenants", label: "Tenants", icon: Building2 },
     { id: "users", label: "Usuarios", icon: Users },
+    { id: "plans", label: "Planes", icon: CreditCard },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "favorites", label: "Favoritos", icon: Heart },
     { id: "activity", label: "Actividad", icon: Activity },
@@ -255,6 +257,7 @@ const SuperAdmin = () => {
                 {activeTab === "dashboard" && <SuperAdminDashboard />}
                 {activeTab === "tenants" && <TenantsManager />}
                 {activeTab === "users" && <UsersManager />}
+                {activeTab === "plans" && <SubscriptionPlansManager />}
                 {activeTab === "analytics" && <PlatformAnalytics />}
                 {activeTab === "favorites" && <FavoritesManager />}
                 {activeTab === "activity" && <ActivityCenter />}

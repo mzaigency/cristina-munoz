@@ -17,13 +17,12 @@ import {
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { es } from "date-fns/locale";
 
-// Pricing for subscription plans (monthly in EUR)
-const PLAN_PRICING: Record<string, number> = {
-  basic: 29,
-  professional: 59,
-  premium: 99,
-  enterprise: 199
-};
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  slug: string;
+  monthly_price: number;
+}
 
 interface DashboardStats {
   totalUsers: number;
@@ -57,13 +56,39 @@ const COLORS = ['#8B5CF6', '#D946EF', '#F59E0B', '#10B981'];
 export const SuperAdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [trendData, setTrendData] = useState<TrendData[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchPlansAndData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchPlansAndData = async () => {
+    try {
+      // First fetch subscription plans
+      const { data: plansData } = await supabase
+        .from('subscription_plans')
+        .select('id, name, slug, monthly_price')
+        .eq('is_active', true)
+        .order('sort_order');
+      
+      const fetchedPlans = plansData || [];
+      setPlans(fetchedPlans);
+      
+      // Create pricing map from database
+      const planPricing: Record<string, number> = {};
+      fetchedPlans.forEach(p => {
+        planPricing[p.slug] = p.monthly_price;
+      });
+
+      await fetchDashboardData(planPricing, fetchedPlans);
+    } catch (error) {
+      console.error("Error fetching plans:", error);
+      setLoading(false);
+    }
+  };
+
+  const fetchDashboardData = async (planPricing: Record<string, number>, plansList: SubscriptionPlan[]) => {
     try {
       const today = new Date();
       const weekAgo = subDays(today, 7);
@@ -101,18 +126,19 @@ export const SuperAdminDashboard = () => {
           .gt('expires_at', new Date().toISOString())
       ]);
 
-      // Calculate app revenue based on active tenants and their plans
+      // Calculate app revenue based on active tenants and their plans from database
       const tenants = tenantsResult.data || [];
       const totalTenants = tenants.length;
       const activeTenants = tenants.filter(t => t.is_active).length;
       
-      // Calculate MRR (Monthly Recurring Revenue)
-      const revenueByPlan = Object.keys(PLAN_PRICING).map(plan => {
-        const count = tenants.filter(t => t.is_active && t.subscription_plan === plan).length;
+      // Calculate MRR using prices from database
+      const revenueByPlan = plansList.map(plan => {
+        const count = tenants.filter(t => t.is_active && t.subscription_plan === plan.slug).length;
+        const price = planPricing[plan.slug] || 0;
         return {
-          plan: plan.charAt(0).toUpperCase() + plan.slice(1),
+          plan: plan.name,
           count,
-          revenue: count * PLAN_PRICING[plan]
+          revenue: count * price
         };
       }).filter(p => p.count > 0);
       
