@@ -11,7 +11,6 @@ import {
 import { TenantsManager } from "@/components/superadmin/TenantsManager";
 import { GlobalStats } from "@/components/superadmin/GlobalStats";
 import { UsersManager } from "@/components/superadmin/UsersManager";
-import { IntegrationsManager } from "@/components/superadmin/IntegrationsManager";
 import { SuperAdminDashboard } from "@/components/superadmin/SuperAdminDashboard";
 import { PlatformAnalytics } from "@/components/superadmin/PlatformAnalytics";
 import { FavoritesManager } from "@/components/superadmin/FavoritesManager";
@@ -98,7 +97,6 @@ const SuperAdmin = () => {
     { id: "favorites", label: "Favoritos", icon: Heart },
     { id: "activity", label: "Actividad", icon: Activity },
     { id: "content", label: "Contenido", icon: FileImage },
-    { id: "integrations", label: "Integraciones", icon: Settings },
   ];
 
   if (loading) {
@@ -261,7 +259,6 @@ const SuperAdmin = () => {
                 {activeTab === "favorites" && <FavoritesManager />}
                 {activeTab === "activity" && <ActivityCenter />}
                 {activeTab === "content" && <ContentManager />}
-                {activeTab === "integrations" && <IntegrationsManager />}
               </motion.div>
             </AnimatePresence>
           </main>
