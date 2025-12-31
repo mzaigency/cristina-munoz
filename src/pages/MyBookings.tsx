@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Loader2, Trash2, CalendarPlus, RotateCcw } from "lucide-react";
+import { Calendar, Loader2, Trash2, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -22,6 +22,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BookingCard } from "@/components/bookings/BookingCard";
 import { RescheduleFlow } from "@/components/booking/RescheduleFlow";
 import { AnimatePresence } from "motion/react";
+import { parseISODateToLocal } from "@/lib/datetime";
 
 type Booking = {
   id: string;
@@ -61,8 +62,10 @@ export default function MyBookings() {
   }, []);
 
   const checkAuthAndLoadBookings = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     if (!session) {
       navigate("/auth");
       return;
@@ -93,18 +96,18 @@ export default function MyBookings() {
 
     setCancelingDate(dateToCancel);
     try {
-      const bookingsForDate = bookings.filter(b => b.Fecha === dateToCancel);
-      const bookingIds = bookingsForDate.map(b => b.id);
-      
+      const bookingsForDate = bookings.filter((b) => b.Fecha === dateToCancel);
+      const bookingIds = bookingsForDate.map((b) => b.id);
+
       const { error: functionError } = await supabase.functions.invoke('cancel-booking', {
-        body: { bookingIds, user: 'client' }
+        body: { bookingIds, user: 'client' },
       });
 
       if (functionError) throw functionError;
 
       toast({
         title: "Citas canceladas",
-        description: `Todas las citas del ${format(new Date(dateToCancel), "dd-MM-yyyy")} han sido canceladas`,
+        description: `Todas las citas del ${format(parseISODateToLocal(dateToCancel), "dd-MM-yyyy")} han sido canceladas`,
       });
 
       await loadBookings();
@@ -121,9 +124,17 @@ export default function MyBookings() {
     }
   };
 
-  const today = new Date().toISOString().split('T')[0];
-  const upcomingBookings = bookings.filter(b => b.Fecha >= today);
-  const pastBookings = bookings.filter(b => b.Fecha < today);
+  const handleOpenChat = (booking: Booking) => {
+    if (booking.tenant_id) {
+      navigate(`/mensajes?tenant=${booking.tenant_id}`);
+      return;
+    }
+    navigate('/mensajes');
+  };
+
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const upcomingBookings = bookings.filter((b) => b.Fecha >= today);
+  const pastBookings = bookings.filter((b) => b.Fecha < today);
   const displayedBookings = activeTab === "upcoming" ? upcomingBookings : pastBookings;
 
   // Group by date
@@ -133,16 +144,16 @@ export default function MyBookings() {
     return acc;
   }, {} as Record<string, Booking[]>);
 
-  const sortedDates = Object.keys(groupedBookings).sort((a, b) => 
-    activeTab === "upcoming" 
-      ? new Date(a).getTime() - new Date(b).getTime()
-      : new Date(b).getTime() - new Date(a).getTime()
+  const sortedDates = Object.keys(groupedBookings).sort((a, b) =>
+    activeTab === "upcoming"
+      ? parseISODateToLocal(a).getTime() - parseISODateToLocal(b).getTime()
+      : parseISODateToLocal(b).getTime() - parseISODateToLocal(a).getTime()
   );
 
   if (loading) {
     return (
       <AppLayout>
-        <SEO 
+        <SEO
           title="Mis Citas"
           description="Gestiona tus reservas"
           canonicalUrl="/mis-citas"
@@ -157,22 +168,18 @@ export default function MyBookings() {
 
   return (
     <AppLayout>
-      <SEO 
+      <SEO
         title="Mis Citas"
         description="Gestiona tus reservas"
         canonicalUrl="/mis-citas"
         noindex={true}
       />
-      
+
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 safe-area-top">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-bold text-foreground mb-4">Mis Citas</h1>
-          <SegmentedControl
-            options={TABS}
-            value={activeTab}
-            onChange={setActiveTab}
-          />
+          <SegmentedControl options={TABS} value={activeTab} onChange={setActiveTab} />
         </div>
       </div>
 
@@ -190,7 +197,8 @@ export default function MyBookings() {
               {activeTab === "upcoming" && "Reserva tu primera cita ahora"}
             </p>
             {activeTab === "upcoming" && (
-              <Button onClick={() => navigate("/")}>
+              <Button onClick={() => navigate("/")}
+              >
                 <CalendarPlus className="h-4 w-4 mr-2" />
                 Reservar cita
               </Button>
@@ -199,12 +207,12 @@ export default function MyBookings() {
         ) : (
           <div className="space-y-6">
             {sortedDates.map((date) => (
-              <div key={date}>
+              <section key={date} aria-label={`Citas del ${date}`}>
                 {/* Date Header */}
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {format(new Date(date), "EEEE, d 'de' MMMM", { locale: es })}
-                  </h3>
+                  <h2 className="text-sm font-semibold text-foreground">
+                    {format(parseISODateToLocal(date), "EEEE, d 'de' MMMM", { locale: es })}
+                  </h2>
                   {activeTab === "upcoming" && (
                     <Button
                       variant="ghost"
@@ -228,22 +236,15 @@ export default function MyBookings() {
                 {/* Bookings for date */}
                 <div className="space-y-3">
                   {groupedBookings[date].map((booking) => (
-                    <div key={booking.id} className="relative">
-                      <BookingCard booking={booking} />
-                      {activeTab === "upcoming" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setRescheduleBooking(booking)}
-                          className="absolute top-3 right-14 h-8 w-8 p-0 rounded-full bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-primary"
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    <BookingCard
+                      key={booking.id}
+                      booking={booking}
+                      onReschedule={activeTab === 'upcoming' ? () => setRescheduleBooking(booking) : undefined}
+                      onMessage={() => handleOpenChat(booking)}
+                    />
                   ))}
                 </div>
-              </div>
+              </section>
             ))}
           </div>
         )}
@@ -268,8 +269,8 @@ export default function MyBookings() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Cancelar citas?</AlertDialogTitle>
             <AlertDialogDescription>
-              Vas a cancelar todas las citas del{" "}
-              {dateToCancel && format(new Date(dateToCancel), "d 'de' MMMM", { locale: es })}.
+              Vas a cancelar todas las citas del{' '}
+              {dateToCancel && format(parseISODateToLocal(dateToCancel), "d 'de' MMMM", { locale: es })}.
               Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -284,3 +285,4 @@ export default function MyBookings() {
     </AppLayout>
   );
 }
+

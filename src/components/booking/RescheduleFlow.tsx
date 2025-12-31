@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format, addDays } from "date-fns";
+import { format, addDays, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { CalendarDays, Clock, Loader2, CheckCircle, ArrowRight, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -9,6 +9,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatTimeHHmm, parseISODateToLocal } from "@/lib/datetime";
 
 interface RescheduleFlowProps {
   booking: {
@@ -25,6 +26,11 @@ interface RescheduleFlowProps {
   onSuccess: () => void;
 }
 
+type BookedSlot = {
+  Hora: string;
+  total_duration: number;
+};
+
 export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowProps) {
   const [step, setStep] = useState<"date" | "time" | "confirm">("date");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -34,9 +40,48 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
-  // Generate default time slots
+  const slotIntervalMinutes = 30;
+
+  const minutesToTime = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  };
+
+  const timeToMinutes = (time: string) => {
+    const hhmm = formatTimeHHmm(time);
+    const [h, m] = hhmm.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  const computeAvailableSlots = (bookedSlots: BookedSlot[], date: Date, durationMinutes: number) => {
+    const bookedRanges = bookedSlots
+      .filter((s) => typeof s?.Hora === 'string' && typeof s?.total_duration === 'number')
+      .map((s) => {
+        const start = timeToMinutes(s.Hora);
+        return { start, end: start + Math.max(0, s.total_duration) };
+      });
+
+    const today = new Date();
+    const isToday = today.toDateString() === date.toDateString();
+    const nowMin = today.getHours() * 60 + today.getMinutes();
+
+    const slots: string[] = [];
+    for (let startMin = 0; startMin < 24 * 60; startMin += slotIntervalMinutes) {
+      const endMin = startMin + durationMinutes;
+      if (endMin > 24 * 60) continue;
+      if (isToday && startMin <= nowMin) continue;
+
+      const overlaps = bookedRanges.some((r) => startMin < r.end && endMin > r.start);
+      if (!overlaps) slots.push(minutesToTime(startMin));
+    }
+
+    return slots;
+  };
+
+  // Generate default time slots (fallback)
   const generateDefaultSlots = () => {
-    const slots = [];
+    const slots: string[] = [];
     for (let hour = 9; hour <= 20; hour++) {
       slots.push(`${hour.toString().padStart(2, '0')}:00`);
       if (hour < 20) slots.push(`${hour.toString().padStart(2, '0')}:30`);
@@ -53,27 +98,29 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
 
   const fetchAvailableSlots = async () => {
     if (!selectedDate) return;
-    
+
     setLoading(true);
     try {
-      // If we have tenant_id, try to fetch real availability
+      // If we have tenant_id, fetch real availability (blocked slots) and compute available ones
       if (booking.tenant_id) {
         const { data, error } = await supabase.functions.invoke('check-availability', {
           body: {
-            tenantId: booking.tenant_id,
+            tenant_id: booking.tenant_id,
             date: format(selectedDate, 'yyyy-MM-dd'),
             stylist: booking.stylist,
-            duration: booking.total_duration,
-            excludeBookingId: booking.id,
-          }
+            totalDuration: booking.total_duration,
+          },
         });
 
-        if (!error && data?.slots?.length > 0) {
-          setAvailableSlots(data.slots);
+        const bookedSlots = (data?.bookedSlots || []) as BookedSlot[];
+
+        if (!error && Array.isArray(bookedSlots)) {
+          const computed = computeAvailableSlots(bookedSlots, selectedDate, booking.total_duration);
+          setAvailableSlots(computed);
           return;
         }
       }
-      
+
       // Fallback to default slots
       setAvailableSlots(generateDefaultSlots());
     } catch (error) {
@@ -101,11 +148,13 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
 
     setSubmitting(true);
     try {
+      const horaToSave = selectedTime.length === 5 ? `${selectedTime}:00` : selectedTime;
+
       const { error } = await supabase
         .from('bookings')
         .update({
           Fecha: format(selectedDate, 'yyyy-MM-dd'),
-          Hora: selectedTime,
+          Hora: horaToSave,
           updated_at: new Date().toISOString(),
         })
         .eq('id', booking.id);
@@ -130,14 +179,14 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
     }
   };
 
-  const serviceNames = Array.isArray(booking.services) 
+  const serviceNames = Array.isArray(booking.services)
     ? booking.services.map((s: any) => s.name).join(", ")
     : "Servicios";
 
   const stepTitles = {
     date: "Selecciona fecha",
-    time: "Selecciona hora", 
-    confirm: "Confirmar cambio"
+    time: "Selecciona hora",
+    confirm: "Confirmar cambio",
   };
 
   return (
@@ -146,9 +195,9 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
         <DrawerHeader className="border-b border-border/50 pb-3">
           <div className="flex items-center gap-3">
             {step !== "date" && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8 rounded-full"
                 onClick={() => setStep(step === "confirm" ? "time" : "date")}
               >
@@ -167,15 +216,15 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
 
           {/* Progress dots */}
           <div className="flex items-center justify-center gap-2 mt-3">
-            {["date", "time", "confirm"].map((s, i) => (
+            {['date', 'time', 'confirm'].map((s, i) => (
               <div
                 key={s}
                 className={`h-2 w-2 rounded-full transition-colors ${
-                  step === s 
-                    ? "bg-primary w-6" 
-                    : i < ["date", "time", "confirm"].indexOf(step)
-                      ? "bg-primary"
-                      : "bg-secondary"
+                  step === s
+                    ? 'bg-primary w-6'
+                    : i < ['date', 'time', 'confirm'].indexOf(step)
+                      ? 'bg-primary'
+                      : 'bg-secondary'
                 }`}
               />
             ))}
@@ -202,16 +251,16 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
                     <p className="text-sm">Elige cuándo prefieres tu cita</p>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-center">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={handleDateSelect}
-                    disabled={(date) => date < new Date() || date.getDay() === 0}
+                    disabled={(date) => date < startOfDay(new Date()) || date.getDay() === 0}
                     locale={es}
                     className="rounded-xl border border-border"
-                    fromDate={new Date()}
+                    fromDate={startOfDay(new Date())}
                     toDate={addDays(new Date(), 60)}
                   />
                 </div>
@@ -243,6 +292,11 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     <p className="text-sm text-muted-foreground">Cargando horarios...</p>
                   </div>
+                ) : availableSlots.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
+                    <p className="text-sm font-medium text-foreground">No hay horarios disponibles</p>
+                    <p className="text-xs text-muted-foreground">Prueba con otra fecha.</p>
+                  </div>
                 ) : (
                   <ScrollArea className="h-[300px] pr-4">
                     <div className="grid grid-cols-3 gap-2">
@@ -253,8 +307,8 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
                           onClick={() => handleTimeSelect(time)}
                           className={`py-3 px-3 rounded-xl text-sm font-semibold transition-all ${
                             selectedTime === time
-                              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                              : "bg-secondary text-foreground hover:bg-secondary/80"
+                              ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                              : 'bg-secondary text-foreground hover:bg-secondary/80'
                           }`}
                         >
                           {time}
@@ -290,9 +344,9 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
                     <div className="flex-1">
                       <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Fecha actual</p>
                       <p className="font-semibold text-foreground">
-                        {format(new Date(booking.Fecha), "EEE, d MMM", { locale: es })}
+                        {format(parseISODateToLocal(booking.Fecha), "EEE, d MMM", { locale: es })}
                       </p>
-                      <p className="text-sm text-muted-foreground">{booking.Hora}</p>
+                      <p className="text-sm text-muted-foreground">{formatTimeHHmm(booking.Hora)}</p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-primary flex-shrink-0" />
                     <div className="flex-1 text-right">
@@ -325,16 +379,8 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
                   >
                     Cambiar hora
                   </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={handleConfirm}
-                    disabled={submitting}
-                  >
-                    {submitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Confirmar"
-                    )}
+                  <Button className="flex-1" onClick={handleConfirm} disabled={submitting}>
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmar'}
                   </Button>
                 </div>
               </motion.div>
