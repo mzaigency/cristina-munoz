@@ -91,6 +91,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
   // ESTADOS
   const [step, setStep] = useState<"capture" | "edit" | "publish">("capture");
   const [imageData, setImageData] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [caption, setCaption] = useState("");
 
   // EDITOR STATE
   const [overlays, setOverlays] = useState<OverlayItem[]>([]);
@@ -104,6 +106,30 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
   const [currentFont, setCurrentFont] = useState(FONTS[0].id);
   const [currentColor, setCurrentColor] = useState(COLORS[0]);
   const [currentAlign, setCurrentAlign] = useState<"left" | "center" | "right">("center");
+
+  // --- FUNCIONES AUXILIARES ---
+  const updateOverlay = (id: string, updates: Partial<OverlayItem>) => {
+    setOverlays((prev) => prev.map((o) => (o.id === id ? { ...o, ...updates } : o)));
+  };
+
+  const addSticker = (sticker: string) => {
+    const newSticker: OverlayItem = {
+      id: Date.now().toString(),
+      type: "sticker",
+      content: sticker,
+      fontFamily: "",
+      color: "",
+      align: "center",
+      x: 0.5,
+      y: 0.5,
+      scale: 1,
+      rotation: 0,
+      isEditing: false,
+    };
+    saveToHistory();
+    setOverlays([...overlays, newSticker]);
+    setShowTools("none");
+  };
 
   // REFS GESTUALES
   const containerRef = useRef<HTMLDivElement>(null);
@@ -132,6 +158,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
       setImageData(null);
       setOverlays([]);
       setHistory([]);
+      setCaption("");
+      setIsUploading(false);
     }
   }, [isOpen]);
 
