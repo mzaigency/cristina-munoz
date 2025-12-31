@@ -29,24 +29,22 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
-      injectRegister: 'script-defer',
+      registerType: "prompt",
+      injectRegister: 'auto',
       devOptions: {
         enabled: false
       },
       includeAssets: ["favicon.ico", "robots.txt", "logo.png"],
       manifest: {
-        name: "Cristina Muñoz",
-        short_name: "Cristina Muñoz",
-        description:
-          "Reserva tu cita online en Cristina Muñoz, una peluquería ubicada en Santpedor. Servicios profesionales de corte, coloración, peinados y tratamientos capilares en un ambiente elegante",
-        theme_color: "#8B7355",
-        background_color: "#FFF9F5",
+        name: "GlowApp",
+        short_name: "GlowApp",
+        description: "La red social de belleza. Descubre salones, reserva citas y conecta con profesionales.",
+        theme_color: "#4361ee",
+        background_color: "#ffffff",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
-        start_url: "https://cristina-munoz.lovable.app/",
-        id: "https://cristina-munoz.lovable.app/",
+        start_url: "/",
         icons: [
           {
             src: "/pwa-192x192.png",
@@ -66,8 +64,9 @@ export default defineConfig(({ mode }) => ({
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        navigateFallback: null,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -99,23 +98,9 @@ export default defineConfig(({ mode }) => ({
           },
           {
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "images-cache",
-              expiration: {
-                maxEntries: 60,
-                maxAgeSeconds: 60 * 60 * 24 * 30,
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-          {
-            urlPattern: /\.(?:js|css)$/i,
             handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "static-resources",
+              cacheName: "images-cache",
               expiration: {
                 maxEntries: 60,
                 maxAgeSeconds: 60 * 60 * 24 * 7,
@@ -124,6 +109,25 @@ export default defineConfig(({ mode }) => ({
                 statuses: [0, 200],
               },
             },
+          },
+          {
+            urlPattern: /\.(?:js|css)$/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "static-resources",
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 60 * 60 * 24,
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: "NetworkOnly",
           },
         ],
       },
