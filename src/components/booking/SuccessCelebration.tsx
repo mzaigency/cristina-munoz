@@ -56,7 +56,7 @@ export function SuccessCelebration({
   useEffect(() => {
     // Fire confetti and haptic on mount
     haptic.success();
-    
+
     const timer = setTimeout(() => {
       confettiRef.current?.fire({
         particleCount: 150,
@@ -87,22 +87,27 @@ export function SuccessCelebration({
 
   const handleAddToCalendar = () => {
     haptic.selection();
-    
+
     // Create Google Calendar URL
     const [hours, minutes] = bookingTime.split(":").map(Number);
     const startDate = new Date(bookingDate);
     startDate.setHours(hours, minutes, 0, 0);
-    
+
     const endDate = new Date(startDate);
     endDate.setMinutes(endDate.getMinutes() + totalDuration);
 
     const formatDateForCalendar = (date: Date) => {
-      return date.toISOString().replace(/-|:|\.\d+/g, "").slice(0, 15) + "Z";
+      return (
+        date
+          .toISOString()
+          .replace(/-|:|\.\d+/g, "")
+          .slice(0, 15) + "Z"
+      );
     };
 
     const title = encodeURIComponent(`Cita en ${salonName || "Salón"}`);
     const details = encodeURIComponent(
-      `Servicios: ${services.map((s) => s.name).join(", ")}\nProfesional: ${stylistName}`
+      `Servicios: ${services.map((s) => s.name).join(", ")}\nProfesional: ${stylistName}`,
     );
     const location = encodeURIComponent(salonAddress || "");
 
@@ -114,10 +119,10 @@ export function SuccessCelebration({
 
   const handleShareWhatsApp = () => {
     haptic.selection();
-    
+
     const formattedDate = format(bookingDate, "EEEE d 'de' MMMM", { locale: es });
-    const message = `¡Tengo cita en ${salonName || "el salón"}! 💇‍♀️\n\n📅 ${formattedDate} a las ${bookingTime}\n💆 ${services.map((s) => s.name).join(", ")}\n\n¿Quedamos después? ✨`;
-    
+    const message = `¡He cogido cita con GlowApp en ${salonName || "el salón"}! 💇‍♀️\n\n📅 ${formattedDate} a las ${bookingTime}\n💆 ${services.map((s) => s.name).join(", ")}\n\n¿Quedamos después? ✨`;
+
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
     onShareWhatsApp?.();
@@ -126,10 +131,7 @@ export function SuccessCelebration({
   return (
     <div className="relative min-h-[60vh] flex flex-col items-center justify-center py-8 px-4">
       {/* Confetti Canvas */}
-      <Confetti
-        ref={confettiRef}
-        className="fixed inset-0 w-full h-full pointer-events-none z-50"
-      />
+      <Confetti ref={confettiRef} className="fixed inset-0 w-full h-full pointer-events-none z-50" />
 
       {/* Success Icon with Animation */}
       <motion.div
@@ -156,12 +158,8 @@ export function SuccessCelebration({
         transition={{ delay: 0.3 }}
         className="text-center mb-6"
       >
-        <h2 className="text-3xl font-bold text-foreground mb-2">
-          ¡Reserva Confirmada!
-        </h2>
-        <p className="text-muted-foreground">
-          Tu cita ha sido guardada correctamente
-        </p>
+        <h2 className="text-3xl font-bold text-foreground mb-2">¡Reserva Confirmada!</h2>
+        <p className="text-muted-foreground">Tu cita ha sido guardada correctamente</p>
       </motion.div>
 
       {/* Countdown Badge */}
@@ -191,9 +189,7 @@ export function SuccessCelebration({
               <Calendar className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="font-medium text-foreground">
-                {format(bookingDate, "EEEE, d 'de' MMMM", { locale: es })}
-              </p>
+              <p className="font-medium text-foreground">{format(bookingDate, "EEEE, d 'de' MMMM", { locale: es })}</p>
               <p className="text-sm text-muted-foreground">
                 {bookingTime} · {totalDuration} min
               </p>
@@ -209,9 +205,7 @@ export function SuccessCelebration({
               <p className="font-medium text-foreground">
                 {stylistName === "any" ? "Cualquier profesional" : stylistName}
               </p>
-              <p className="text-sm text-muted-foreground">
-                {services.map((s) => s.name).join(", ")}
-              </p>
+              <p className="text-sm text-muted-foreground">{services.map((s) => s.name).join(", ")}</p>
             </div>
           </div>
 
@@ -222,12 +216,8 @@ export function SuccessCelebration({
                 <MapPin className="h-5 w-5 text-accent-foreground" />
               </div>
               <div>
-                {salonName && (
-                  <p className="font-medium text-foreground">{salonName}</p>
-                )}
-                {salonAddress && (
-                  <p className="text-sm text-muted-foreground">{salonAddress}</p>
-                )}
+                {salonName && <p className="font-medium text-foreground">{salonName}</p>}
+                {salonAddress && <p className="text-sm text-muted-foreground">{salonAddress}</p>}
               </div>
             </div>
           )}
@@ -241,20 +231,12 @@ export function SuccessCelebration({
         transition={{ delay: 0.6 }}
         className="w-full max-w-sm space-y-3"
       >
-        <Button
-          onClick={handleAddToCalendar}
-          variant="outline"
-          className="w-full h-12 gap-2"
-        >
+        <Button onClick={handleAddToCalendar} variant="outline" className="w-full h-12 gap-2">
           <Calendar className="h-5 w-5" />
           Añadir al Calendario
         </Button>
 
-        <Button
-          onClick={handleShareWhatsApp}
-          variant="outline"
-          className="w-full h-12 gap-2"
-        >
+        <Button onClick={handleShareWhatsApp} variant="outline" className="w-full h-12 gap-2">
           <MessageCircle className="h-5 w-5" />
           Compartir por WhatsApp
         </Button>
