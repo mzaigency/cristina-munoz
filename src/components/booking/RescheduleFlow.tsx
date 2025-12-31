@@ -150,11 +150,17 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
     try {
       const horaToSave = selectedTime.length === 5 ? `${selectedTime}:00` : selectedTime;
 
+      // Mantener duración correcta: actualizar también end_time
+      const startMinutes = timeToMinutes(horaToSave);
+      const endMinutes = (startMinutes + booking.total_duration) % (24 * 60);
+      const endTimeToSave = `${minutesToTime(endMinutes)}:00`;
+
       const { error } = await supabase
         .from('bookings')
         .update({
           Fecha: format(selectedDate, 'yyyy-MM-dd'),
           Hora: horaToSave,
+          end_time: endTimeToSave,
           updated_at: new Date().toISOString(),
         })
         .eq('id', booking.id);
