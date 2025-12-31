@@ -219,43 +219,14 @@ const Index = () => {
         recentSearches={recentSearches}
         onRecentSearchClick={(search) => setSearchQuery(search)}
         onClearRecents={clearRecentSearches}
+        userTenant={userTenant}
+        isSuperadmin={isSuperadmin}
       />
 
       {/* Stories Carousel */}
       <div className="py-4 border-b border-border/30">
         <StoriesCarousel />
       </div>
-
-      {/* Superadmin Wizard Test Button */}
-      {isSuperadmin && (
-        <div className="px-4 pt-4">
-          <Link to="/onboarding/setup?demo=true">
-            <Button 
-              variant="outline" 
-              className="w-full h-12 rounded-xl border-dashed border-primary/50 text-primary hover:bg-primary/5"
-            >
-              <Wand2 className="h-4 w-4 mr-2" />
-              Probar Wizard de Onboarding (Superadmin)
-            </Button>
-          </Link>
-        </div>
-      )}
-
-      {/* Admin Panel Access Button */}
-      {!tenantLoading && userTenant && (
-        <div className="px-4 pt-4">
-          <Link to={`/admin/${userTenant.slug}`}>
-            <Button 
-              variant="default" 
-              className="w-full h-12 rounded-xl gap-2"
-              style={{ backgroundColor: userTenant.primary_color || undefined }}
-            >
-              <Shield className="h-4 w-4" />
-              Panel de Administración - {userTenant.name}
-            </Button>
-          </Link>
-        </div>
-      )}
 
       {/* Main Content */}
       <div className="px-4 py-6 pb-24">

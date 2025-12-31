@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Loader2, Trash2, CalendarPlus } from "lucide-react";
+import { Calendar, Loader2, Trash2, CalendarPlus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -20,6 +20,8 @@ import {
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BookingCard } from "@/components/bookings/BookingCard";
+import { RescheduleFlow } from "@/components/booking/RescheduleFlow";
+import { AnimatePresence } from "motion/react";
 
 type Booking = {
   id: string;
@@ -44,6 +46,7 @@ export default function MyBookings() {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [dateToCancel, setDateToCancel] = useState<string | null>(null);
   const [cancelingDate, setCancelingDate] = useState<string | null>(null);
+  const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -219,7 +222,19 @@ export default function MyBookings() {
                 {/* Bookings for date */}
                 <div className="space-y-3">
                   {groupedBookings[date].map((booking) => (
-                    <BookingCard key={booking.id} booking={booking} />
+                    <div key={booking.id} className="relative">
+                      <BookingCard booking={booking} />
+                      {activeTab === "upcoming" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setRescheduleBooking(booking)}
+                          className="absolute top-3 right-14 h-8 w-8 p-0 rounded-full bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-primary"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -228,13 +243,27 @@ export default function MyBookings() {
         )}
       </div>
 
+      {/* Reschedule Flow */}
+      <AnimatePresence>
+        {rescheduleBooking && (
+          <RescheduleFlow
+            booking={rescheduleBooking}
+            onClose={() => setRescheduleBooking(null)}
+            onSuccess={() => {
+              setRescheduleBooking(null);
+              loadBookings();
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <AlertDialog open={!!dateToCancel} onOpenChange={() => setDateToCancel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Cancelar citas?</AlertDialogTitle>
             <AlertDialogDescription>
               Vas a cancelar todas las citas del{" "}
-              {dateToCancel && format(new Date(dateToCancel), "d 'de' MMMM", { locale: es })}. 
+              {dateToCancel && format(new Date(dateToCancel), "d 'de' MMMM", { locale: es })}.
               Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>

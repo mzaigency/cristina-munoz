@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { Search, Mic, X, MapPin, Clock, Sparkles, Building2 } from "lucide-react";
+import { Search, Mic, X, MapPin, Clock, Sparkles, Building2, Shield, Wand2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { AISearchAssistant } from "./AISearchAssistant";
 
 interface SmartSearchHeaderProps {
   searchQuery: string;
@@ -12,6 +13,8 @@ interface SmartSearchHeaderProps {
   recentSearches?: string[];
   onRecentSearchClick?: (search: string) => void;
   onClearRecents?: () => void;
+  userTenant?: { slug: string; name: string; primary_color?: string | null } | null;
+  isSuperadmin?: boolean;
 }
 
 export function SmartSearchHeader({
@@ -20,6 +23,8 @@ export function SmartSearchHeader({
   recentSearches = [],
   onRecentSearchClick,
   onClearRecents,
+  userTenant,
+  isSuperadmin,
 }: SmartSearchHeaderProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -76,12 +81,31 @@ export function SmartSearchHeader({
                 GlowApp
               </h1>
             </div>
-            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <Link to="/para-negocios">
-                <Building2 className="h-4 w-4 mr-2" />
-                Para negocios
-              </Link>
-            </Button>
+            <div className="flex items-center gap-1">
+              {/* Admin buttons - subtle in header */}
+              {userTenant && (
+                <Button asChild variant="ghost" size="sm" className="text-primary hover:bg-primary/10 h-8 px-2">
+                  <Link to={`/admin/${userTenant.slug}`}>
+                    <Shield className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-1.5 text-xs">Admin</span>
+                  </Link>
+                </Button>
+              )}
+              {isSuperadmin && (
+                <Button asChild variant="ghost" size="sm" className="text-accent hover:bg-accent/10 h-8 px-2">
+                  <Link to="/onboarding/setup?demo=true">
+                    <Wand2 className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-1.5 text-xs">Wizard</span>
+                  </Link>
+                </Button>
+              )}
+              <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-8 px-2">
+                <Link to="/para-negocios">
+                  <Building2 className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-1.5">Negocios</span>
+                </Link>
+              </Button>
+            </div>
           </motion.div>
 
           {/* Search Container */}
