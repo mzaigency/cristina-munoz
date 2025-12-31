@@ -6,15 +6,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Users, Building2, Calendar, DollarSign, 
   TrendingUp, TrendingDown, Star, MessageSquare,
-  Activity, Heart, Eye
+  Activity, Heart, Eye, CreditCard
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, AreaChart, Area 
+  Tooltip, ResponsiveContainer, AreaChart, Area,
+  PieChart, Pie, Cell
 } from "recharts";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { es } from "date-fns/locale";
+
+// Pricing for subscription plans (monthly in EUR)
+const PLAN_PRICING: Record<string, number> = {
+  basic: 29,
+  professional: 59,
+  premium: 99,
+  enterprise: 199
+};
 
 interface DashboardStats {
   totalUsers: number;
@@ -24,8 +33,10 @@ interface DashboardStats {
   activeTenants: number;
   totalBookingsToday: number;
   totalBookingsThisWeek: number;
-  totalRevenue: number;
-  revenueThisWeek: number;
+  // App revenue metrics
+  monthlyRecurringRevenue: number;
+  projectedAnnualRevenue: number;
+  revenueByPlan: { plan: string; count: number; revenue: number }[];
   totalReviews: number;
   avgRating: number;
   totalFavorites: number;
@@ -38,8 +49,10 @@ interface TrendData {
   date: string;
   users: number;
   bookings: number;
-  revenue: number;
+  tenants: number;
 }
+
+const COLORS = ['#8B5CF6', '#D946EF', '#F59E0B', '#10B981'];
 
 export const SuperAdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -61,11 +74,8 @@ export const SuperAdminDashboard = () => {
         newUsersTodayResult,
         newUsersWeekResult,
         tenantsResult,
-        activeTenantsResult,
         bookingsTodayResult,
         bookingsWeekResult,
-        revenueResult,
-        revenueWeekResult,
         reviewsResult,
         favoritesResult,
         messagesResult,
@@ -77,17 +87,11 @@ export const SuperAdminDashboard = () => {
           .gte('created_at', startOfDay(today).toISOString()),
         supabase.from('profiles').select('id', { count: 'exact', head: true })
           .gte('created_at', weekAgo.toISOString()),
-        supabase.from('tenants').select('id', { count: 'exact', head: true }),
-        supabase.from('tenants').select('id', { count: 'exact', head: true })
-          .eq('is_active', true),
+        supabase.from('tenants').select('id, is_active, subscription_plan'),
         supabase.from('bookings').select('id', { count: 'exact', head: true })
           .eq('Fecha', format(today, 'yyyy-MM-dd')),
         supabase.from('bookings').select('id', { count: 'exact', head: true })
           .gte('Fecha', format(weekAgo, 'yyyy-MM-dd')),
-        supabase.from('transactions').select('total').eq('voided', false),
-        supabase.from('transactions').select('total')
-          .eq('voided', false)
-          .gte('created_at', weekAgo.toISOString()),
         supabase.from('reviews').select('rating'),
         supabase.from('favorites').select('id', { count: 'exact', head: true }),
         supabase.from('direct_messages').select('id', { count: 'exact', head: true }),
@@ -97,9 +101,23 @@ export const SuperAdminDashboard = () => {
           .gt('expires_at', new Date().toISOString())
       ]);
 
-      // Calculate revenue
-      const totalRevenue = revenueResult.data?.reduce((sum, t) => sum + (t.total || 0), 0) || 0;
-      const revenueThisWeek = revenueWeekResult.data?.reduce((sum, t) => sum + (t.total || 0), 0) || 0;
+      // Calculate app revenue based on active tenants and their plans
+      const tenants = tenantsResult.data || [];
+      const totalTenants = tenants.length;
+      const activeTenants = tenants.filter(t => t.is_active).length;
+      
+      // Calculate MRR (Monthly Recurring Revenue)
+      const revenueByPlan = Object.keys(PLAN_PRICING).map(plan => {
+        const count = tenants.filter(t => t.is_active && t.subscription_plan === plan).length;
+        return {
+          plan: plan.charAt(0).toUpperCase() + plan.slice(1),
+          count,
+          revenue: count * PLAN_PRICING[plan]
+        };
+      }).filter(p => p.count > 0);
+      
+      const monthlyRecurringRevenue = revenueByPlan.reduce((sum, p) => sum + p.revenue, 0);
+      const projectedAnnualRevenue = monthlyRecurringRevenue * 12;
       
       // Calculate avg rating
       const ratings = reviewsResult.data || [];
@@ -111,12 +129,13 @@ export const SuperAdminDashboard = () => {
         totalUsers: usersResult.count || 0,
         newUsersToday: newUsersTodayResult.count || 0,
         newUsersThisWeek: newUsersWeekResult.count || 0,
-        totalTenants: tenantsResult.count || 0,
-        activeTenants: activeTenantsResult.count || 0,
+        totalTenants,
+        activeTenants,
         totalBookingsToday: bookingsTodayResult.count || 0,
         totalBookingsThisWeek: bookingsWeekResult.count || 0,
-        totalRevenue,
-        revenueThisWeek,
+        monthlyRecurringRevenue,
+        projectedAnnualRevenue,
+        revenueByPlan,
         totalReviews: ratings.length,
         avgRating: Math.round(avgRating * 10) / 10,
         totalFavorites: favoritesResult.count || 0,
@@ -137,15 +156,14 @@ export const SuperAdminDashboard = () => {
               .lte('created_at', endOfDay(day).toISOString()),
             supabase.from('bookings').select('id', { count: 'exact', head: true })
               .eq('Fecha', dayStr),
-            supabase.from('transactions').select('total')
-              .eq('voided', false)
+            supabase.from('tenants').select('id', { count: 'exact', head: true })
               .gte('created_at', startOfDay(day).toISOString())
               .lte('created_at', endOfDay(day).toISOString())
-          ]).then(([users, bookings, revenue]) => ({
+          ]).then(([users, bookings, tenants]) => ({
             date: format(day, 'EEE', { locale: es }),
             users: users.count || 0,
             bookings: bookings.count || 0,
-            revenue: revenue.data?.reduce((sum, t) => sum + (t.total || 0), 0) || 0
+            tenants: tenants.count || 0
           }))
         );
       }
@@ -167,7 +185,8 @@ export const SuperAdminDashboard = () => {
     icon: Icon, 
     trend, 
     trendValue,
-    color = "primary"
+    color = "primary",
+    gradient
   }: { 
     title: string; 
     value: string | number; 
@@ -176,6 +195,7 @@ export const SuperAdminDashboard = () => {
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
     color?: string;
+    gradient?: string;
   }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -183,13 +203,13 @@ export const SuperAdminDashboard = () => {
       transition={{ duration: 0.3 }}
     >
       <Card className="relative overflow-hidden hover:shadow-lg transition-shadow">
-        <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full opacity-10 bg-${color}`} />
+        <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full opacity-10 ${gradient || 'bg-primary'}`} />
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             {title}
           </CardTitle>
-          <div className={`p-2 rounded-lg bg-${color}/10`}>
-            <Icon className={`h-4 w-4 text-${color}`} />
+          <div className={`p-2 rounded-lg ${gradient ? gradient : 'bg-primary/10'}`}>
+            <Icon className="h-4 w-4 text-white" />
           </div>
         </CardHeader>
         <CardContent>
@@ -240,8 +260,33 @@ export const SuperAdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Main KPIs */}
+      {/* Revenue KPIs - App Income */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="MRR (Ingresos Mensuales)"
+          value={`€${stats.monthlyRecurringRevenue.toLocaleString()}`}
+          subValue={`De ${stats.activeTenants} negocios activos`}
+          icon={DollarSign}
+          trend="up"
+          trendValue={`${stats.activeTenants} subs`}
+          gradient="bg-gradient-to-br from-green-500 to-emerald-600"
+        />
+        <StatCard
+          title="ARR Proyectado"
+          value={`€${stats.projectedAnnualRevenue.toLocaleString()}`}
+          subValue="Ingresos anuales estimados"
+          icon={CreditCard}
+          gradient="bg-gradient-to-br from-blue-500 to-indigo-600"
+        />
+        <StatCard
+          title="Negocios Activos"
+          value={`${stats.activeTenants}/${stats.totalTenants}`}
+          subValue={`${Math.round((stats.activeTenants / Math.max(stats.totalTenants, 1)) * 100)}% tasa de activación`}
+          icon={Building2}
+          trend="up"
+          trendValue={`${stats.activeTenants}`}
+          gradient="bg-gradient-to-br from-purple-500 to-violet-600"
+        />
         <StatCard
           title="Usuarios Totales"
           value={stats.totalUsers}
@@ -249,33 +294,18 @@ export const SuperAdminDashboard = () => {
           icon={Users}
           trend={stats.newUsersToday > 0 ? 'up' : 'neutral'}
           trendValue={stats.newUsersToday > 0 ? `+${stats.newUsersToday}` : '0'}
+          gradient="bg-gradient-to-br from-amber-500 to-orange-600"
         />
-        <StatCard
-          title="Negocios Activos"
-          value={`${stats.activeTenants}/${stats.totalTenants}`}
-          subValue={`${Math.round((stats.activeTenants / stats.totalTenants) * 100)}% activos`}
-          icon={Building2}
-          trend="up"
-          trendValue={`${stats.activeTenants}`}
-        />
+      </div>
+
+      {/* Secondary KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Reservas Hoy"
           value={stats.totalBookingsToday}
           subValue={`${stats.totalBookingsThisWeek} esta semana`}
           icon={Calendar}
         />
-        <StatCard
-          title="Ingresos Totales"
-          value={`€${stats.totalRevenue.toLocaleString()}`}
-          subValue={`€${stats.revenueThisWeek.toLocaleString()} esta semana`}
-          icon={DollarSign}
-          trend={stats.revenueThisWeek > 0 ? 'up' : 'neutral'}
-          trendValue={stats.revenueThisWeek > 0 ? `+€${stats.revenueThisWeek.toLocaleString()}` : '€0'}
-        />
-      </div>
-
-      {/* Secondary KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Valoración Media"
           value={stats.avgRating.toFixed(1)}
@@ -287,12 +317,6 @@ export const SuperAdminDashboard = () => {
           value={stats.totalFavorites}
           subValue="Salones guardados"
           icon={Heart}
-        />
-        <StatCard
-          title="Mensajes"
-          value={stats.totalMessages}
-          subValue="Conversaciones activas"
-          icon={MessageSquare}
         />
         <StatCard
           title="Stories Activos"
@@ -336,9 +360,9 @@ export const SuperAdminDashboard = () => {
                   <Line 
                     type="monotone" 
                     dataKey="bookings" 
-                    stroke="hsl(var(--secondary))" 
+                    stroke="#F59E0B" 
                     strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--secondary))' }}
+                    dot={{ fill: '#F59E0B' }}
                     name="Reservas"
                   />
                 </LineChart>
@@ -351,39 +375,105 @@ export const SuperAdminDashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-green-500" />
-              Ingresos Diarios
+              Ingresos por Plan de Suscripción
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" className="text-xs" />
-                  <YAxis className="text-xs" tickFormatter={(v) => `€${v}`} />
-                  <Tooltip 
-                    formatter={(value: number) => [`€${value}`, 'Ingresos']}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#22c55e" 
-                    fill="#22c55e" 
-                    fillOpacity={0.2}
-                    strokeWidth={2}
-                    name="Ingresos"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="h-[300px] flex items-center">
+              {stats.revenueByPlan.length > 0 ? (
+                <div className="w-full flex items-center gap-6">
+                  <ResponsiveContainer width="50%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={stats.revenueByPlan}
+                        dataKey="revenue"
+                        nameKey="plan"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        innerRadius={40}
+                        paddingAngle={2}
+                      >
+                        {stats.revenueByPlan.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number) => [`€${value}/mes`, 'Ingresos']}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex-1 space-y-3">
+                    {stats.revenueByPlan.map((plan, index) => (
+                      <div key={plan.plan} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <span className="text-sm font-medium">{plan.plan}</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold">€{plan.revenue}/mes</p>
+                          <p className="text-xs text-muted-foreground">{plan.count} negocios</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full text-center text-muted-foreground">
+                  <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                  <p>No hay suscripciones activas</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* New Tenants Trend */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-purple-500" />
+            Nuevos Negocios Registrados (Últimos 7 días)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[200px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="date" className="text-xs" />
+                <YAxis className="text-xs" />
+                <Tooltip 
+                  formatter={(value: number) => [value, 'Nuevos negocios']}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="tenants" 
+                  stroke="#8B5CF6" 
+                  fill="#8B5CF6" 
+                  fillOpacity={0.2}
+                  strokeWidth={2}
+                  name="Negocios"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
