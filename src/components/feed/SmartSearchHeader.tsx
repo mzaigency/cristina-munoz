@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Search, Mic, X, MapPin, Clock, Sparkles, Building2, Shield, Wand2 } from "lucide-react";
+import { Search, Mic, X, MapPin, Clock, Sparkles, Building2, Shield, Wand2, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "motion/react";
@@ -92,12 +92,20 @@ export function SmartSearchHeader({
                 </Button>
               )}
               {isSuperadmin && (
-                <Button asChild variant="ghost" size="sm" className="text-accent hover:bg-accent/10 h-8 px-2">
-                  <Link to="/onboarding/setup?demo=true">
-                    <Wand2 className="h-4 w-4" />
-                    <span className="hidden sm:inline ml-1.5 text-xs">Wizard</span>
-                  </Link>
-                </Button>
+                <>
+                  <Button asChild variant="ghost" size="sm" className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 text-amber-600 dark:text-amber-400 h-8 px-2 border border-amber-500/20">
+                    <Link to="/superadmin">
+                      <Crown className="h-4 w-4" />
+                      <span className="hidden sm:inline ml-1.5 text-xs font-semibold">SuperAdmin</span>
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" size="sm" className="text-accent hover:bg-accent/10 h-8 px-2">
+                    <Link to="/onboarding/setup?demo=true">
+                      <Wand2 className="h-4 w-4" />
+                      <span className="hidden sm:inline ml-1.5 text-xs">Wizard</span>
+                    </Link>
+                  </Button>
+                </>
               )}
               <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-8 px-2">
                 <Link to="/para-negocios">
