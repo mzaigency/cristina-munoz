@@ -20,6 +20,7 @@ import {
   Undo2,
   Zap,
   RotateCcw,
+  AlertCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -124,11 +125,18 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
   });
   const [drawingDataUrl, setDrawingDataUrl] = useState<string | null>(null);
 
+  // UX STATES
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"back" | "close" | null>(null);
+
   // REFS
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const textEditTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const editingTextRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Gestos
   const gestureRef = useRef({
@@ -145,23 +153,75 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
 
   const { setNavigationHidden } = useNavigation();
 
-  // Iniciar cámara cuando se abre
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = useCallback(() => {
+    return overlays.length > 0 || 
+           drawingDataUrl !== null || 
+           activeFilter !== "none" ||
+           Object.entries(imageAdjustments).some(([key, value]) => {
+             const defaultValue = IMAGE_ADJUSTMENTS.find(a => a.id === key)?.default ?? 0;
+             return value !== defaultValue;
+           });
+  }, [overlays, drawingDataUrl, activeFilter, imageAdjustments]);
+
+  // Visual Viewport API for keyboard handling
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+
+    const handleResize = () => {
+      const viewport = window.visualViewport;
+      if (!viewport) return;
+      
+      // Calculate keyboard height
+      const keyboardH = window.innerHeight - viewport.height;
+      setKeyboardHeight(keyboardH > 100 ? keyboardH : 0);
+    };
+
+    window.visualViewport.addEventListener('resize', handleResize);
+    window.visualViewport.addEventListener('scroll', handleResize);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('scroll', handleResize);
+    };
+  }, []);
+
+  // Start camera with proper 9:16 aspect ratio and 1x zoom
   const startCamera = useCallback(async () => {
     try {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
       
-      const stream = await navigator.mediaDevices.getUserMedia({
+      // Request camera with proper constraints for 9:16 aspect ratio
+      const constraints: MediaStreamConstraints = {
         video: { 
           facingMode,
+          aspectRatio: { ideal: 9/16 },
           width: { ideal: 1080 },
-          height: { ideal: 1920 }
+          height: { ideal: 1920 },
         },
         audio: false
-      });
+      };
       
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
+      
+      // Try to set zoom to 1x if supported
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        const capabilities = videoTrack.getCapabilities?.();
+        if (capabilities && 'zoom' in capabilities) {
+          try {
+            await videoTrack.applyConstraints({
+              advanced: [{ zoom: 1.0 } as any]
+            });
+          } catch (e) {
+            // Zoom constraint not supported, continue without it
+            console.log("Zoom constraint not supported");
+          }
+        }
+      }
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -185,33 +245,58 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !cameraReady) return;
     
-    const canvas = document.createElement("canvas");
     const video = videoRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
+    
+    // Calculate 9:16 crop from center
+    const targetAspect = 9 / 16;
+    const videoAspect = videoWidth / videoHeight;
+    
+    let cropWidth: number, cropHeight: number, cropX: number, cropY: number;
+    
+    if (videoAspect > targetAspect) {
+      // Video is wider - crop sides
+      cropHeight = videoHeight;
+      cropWidth = videoHeight * targetAspect;
+      cropX = (videoWidth - cropWidth) / 2;
+      cropY = 0;
+    } else {
+      // Video is taller - crop top/bottom
+      cropWidth = videoWidth;
+      cropHeight = videoWidth / targetAspect;
+      cropX = 0;
+      cropY = (videoHeight - cropHeight) / 2;
+    }
+    
+    const canvas = document.createElement("canvas");
+    canvas.width = cropWidth;
+    canvas.height = cropHeight;
     
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     
-    // Flip horizontal si es cámara frontal
+    // Flip horizontal if front camera
     if (facingMode === "user") {
       ctx.translate(canvas.width, 0);
       ctx.scale(-1, 1);
+      ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+    } else {
+      ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
     }
     
-    ctx.drawImage(video, 0, 0);
-    
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
     setImageData(dataUrl);
     stopCamera();
     setStep("edit");
     
-    // Haptic feedback
-    if (navigator.vibrate) navigator.vibrate(30);
+    // Haptic feedback - double pulse for capture
+    if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
   }, [cameraReady, facingMode, stopCamera]);
 
   const switchCamera = useCallback(() => {
     setFacingMode(prev => prev === "user" ? "environment" : "user");
+    if (navigator.vibrate) navigator.vibrate(15);
   }, []);
 
   // Efectos
@@ -232,6 +317,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
       setIsUploading(false);
       setActiveFilter("none");
       setDrawingDataUrl(null);
+      setShowDiscardDialog(false);
+      setPendingAction(null);
       setImageAdjustments(() => {
         const defaults: Record<string, number> = {};
         IMAGE_ADJUSTMENTS.forEach(adj => {
@@ -247,6 +334,15 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
       startCamera();
     }
   }, [facingMode, step, isOpen, imageData, startCamera]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (textEditTimeoutRef.current) {
+        clearTimeout(textEditTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // --- FUNCIONES ---
   const updateOverlay = (id: string, updates: Partial<OverlayItem>) => {
@@ -269,8 +365,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
     };
     saveToHistory();
     setOverlays([...overlays, newSticker]);
-    setShowTools("none");
-    if (navigator.vibrate) navigator.vibrate(15);
+    // Don't close the panel - let user add more stickers
+    if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
   };
 
   const saveToHistory = () => {
@@ -286,15 +382,43 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
     }
   };
 
+  const confirmDiscard = () => {
+    setShowDiscardDialog(false);
+    if (pendingAction === "back") {
+      if (step === "edit") {
+        setStep("camera");
+        setImageData(null);
+        setOverlays([]);
+        setHistory([]);
+        setDrawingDataUrl(null);
+        setActiveFilter("none");
+        setImageAdjustments(() => {
+          const defaults: Record<string, number> = {};
+          IMAGE_ADJUSTMENTS.forEach(adj => {
+            defaults[adj.id] = adj.default;
+          });
+          return defaults;
+        });
+      }
+    } else if (pendingAction === "close") {
+      onClose();
+    }
+    setPendingAction(null);
+  };
+
   const handleBack = () => {
     if (step === "publish") {
       setStep("edit");
     } else if (step === "edit") {
-      setStep("camera");
-      setImageData(null);
-      setOverlays([]);
-      setHistory([]);
-      setDrawingDataUrl(null);
+      // Check for unsaved changes
+      if (hasUnsavedChanges()) {
+        setPendingAction("back");
+        setShowDiscardDialog(true);
+        if (navigator.vibrate) navigator.vibrate([15, 30, 15]);
+      } else {
+        setStep("camera");
+        setImageData(null);
+      }
     } else {
       onClose();
     }
@@ -302,14 +426,14 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
 
   // --- GESTOS ---
   const handlePointerDown = (e: React.TouchEvent | React.MouseEvent, id: string) => {
-    if (overlays.find((o) => o.id === id)?.isEditing) return;
+    const item = overlays.find((o) => o.id === id);
+    if (item?.isEditing) return;
     e.stopPropagation();
 
     saveToHistory();
     setSelectedId(id);
     setIsDragging(true);
 
-    const item = overlays.find((o) => o.id === id);
     if (!item || !containerRef.current) return;
 
     if ("touches" in e && e.touches.length === 2) {
@@ -328,6 +452,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
       gestureRef.current.initialItemX = item.x;
       gestureRef.current.initialItemY = item.y;
     }
+    
+    if (navigator.vibrate) navigator.vibrate(5);
   };
 
   const handlePointerMove = (e: React.TouchEvent | React.MouseEvent) => {
@@ -342,15 +468,19 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
 
       const scaleFactor = currentDist / gestureRef.current.startDist;
       const rotationDiff = currentAngle - gestureRef.current.startAngle;
+      
+      const newScale = Math.max(0.5, Math.min(4, gestureRef.current.initialScale * scaleFactor));
+      const newRotation = gestureRef.current.initialRotation + rotationDiff;
+
+      // Haptic feedback at scale limits
+      if ((newScale === 0.5 || newScale === 4) && navigator.vibrate) {
+        navigator.vibrate(10);
+      }
 
       setOverlays((prev) =>
         prev.map((o) =>
           o.id === selectedId
-            ? {
-                ...o,
-                scale: Math.max(0.5, Math.min(4, gestureRef.current.initialScale * scaleFactor)),
-                rotation: gestureRef.current.initialRotation + rotationDiff,
-              }
+            ? { ...o, scale: newScale, rotation: newRotation }
             : o,
         ),
       );
@@ -364,13 +494,22 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
       const deltaPercentX = deltaX / container.width;
       const deltaPercentY = deltaY / container.height;
 
+      const newY = gestureRef.current.initialItemY + deltaPercentY;
+      
+      // Progressive haptic feedback when approaching trash zone
+      if (newY > 0.75 && newY <= 0.85 && navigator.vibrate) {
+        navigator.vibrate(8);
+      } else if (newY > 0.85 && navigator.vibrate) {
+        navigator.vibrate(20);
+      }
+
       setOverlays((prev) =>
         prev.map((o) =>
           o.id === selectedId
             ? {
                 ...o,
                 x: gestureRef.current.initialItemX + deltaPercentX,
-                y: gestureRef.current.initialItemY + deltaPercentY,
+                y: newY,
               }
             : o,
         ),
@@ -383,19 +522,29 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
 
     if (selectedId && containerRef.current) {
       const item = overlays.find((o) => o.id === selectedId);
-      if (item && item.y > 0.85) {
+      // Adjusted trash zone - only triggers below 90% (was 85%)
+      if (item && item.y > 0.9) {
         setOverlays((prev) => prev.filter((o) => o.id !== selectedId));
-        if (navigator.vibrate) navigator.vibrate(50);
+        // Strong haptic for delete
+        if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
         setSelectedId(null);
+        toast.success("Eliminado", { duration: 1500 });
       }
     }
   };
 
   const handleCanvasClick = (e: React.MouseEvent | React.TouchEvent) => {
     if ((e.target as HTMLElement).closest(".overlay-item")) return;
+    if ((e.target as HTMLElement).closest(".tool-panel")) return;
 
-    if (showTools !== "none" || selectedId) {
-      setShowTools("none");
+    // Only deselect if not interacting with tools - don't close panels!
+    if (showTools !== "none") {
+      // Just deselect the item, but keep the panel open
+      setSelectedId(null);
+      return;
+    }
+
+    if (selectedId) {
       setSelectedId(null);
       return;
     }
@@ -424,6 +573,35 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
     saveToHistory();
     setOverlays([...overlays, newText]);
     setSelectedId(newText.id);
+    if (navigator.vibrate) navigator.vibrate(10);
+  };
+
+  // Protected blur handler with delay
+  const handleTextBlur = (id: string) => {
+    // Clear any existing timeout
+    if (textEditTimeoutRef.current) {
+      clearTimeout(textEditTimeoutRef.current);
+    }
+    
+    // Delay the blur to allow for accidental taps
+    textEditTimeoutRef.current = setTimeout(() => {
+      const item = overlays.find(o => o.id === id);
+      if (item && item.content.trim() === "") {
+        // Remove empty text overlays
+        setOverlays(prev => prev.filter(o => o.id !== id));
+      } else {
+        updateOverlay(id, { isEditing: false });
+        // Confirmation haptic
+        if (navigator.vibrate) navigator.vibrate([8, 20, 8]);
+      }
+    }, 200);
+  };
+
+  // Cancel blur when user taps inside text area again
+  const handleTextFocus = () => {
+    if (textEditTimeoutRef.current) {
+      clearTimeout(textEditTimeoutRef.current);
+    }
   };
 
   const getTextStyles = (item: OverlayItem) => {
@@ -494,7 +672,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
   const handleDrawingSave = (dataUrl: string) => {
     setDrawingDataUrl(dataUrl);
     setShowTools("none");
-    if (navigator.vibrate) navigator.vibrate(15);
+    if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
   };
 
   const handleGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -505,16 +683,24 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
         setImageData(ev.target?.result as string);
         stopCamera();
         setStep("edit");
-        if (navigator.vibrate) navigator.vibrate(20);
+        if (navigator.vibrate) navigator.vibrate([15, 30, 15]);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const closeToolPanel = useCallback(() => {
+    setShowTools("none");
+    if (navigator.vibrate) navigator.vibrate(8);
+  }, []);
+
   if (!isOpen) return null;
 
   const isEditing = overlays.some((o) => o.isEditing);
-  const showSidebar = step === "edit" && !isDragging && !isEditing && showTools === "none";
+  const showSidebar = step === "edit" && !isDragging && !isEditing;
+  
+  // Calculate bottom padding based on keyboard
+  const bottomPadding = keyboardHeight > 0 ? keyboardHeight : 0;
 
   return (
     <AnimatePresence>
@@ -554,6 +740,25 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
           50% { transform: scale(1.05); opacity: 0.3; }
           100% { transform: scale(0.95); opacity: 0.7; }
         }
+        .scroll-snap-x { scroll-snap-type: x mandatory; }
+        .scroll-snap-center { scroll-snap-align: center; }
+        .scroll-fade-right::after {
+          content: '';
+          position: absolute;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          width: 40px;
+          background: linear-gradient(to right, transparent, rgba(0,0,0,0.4));
+          pointer-events: none;
+        }
+        .editing-ring {
+          animation: editing-pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes editing-pulse {
+          0%, 100% { box-shadow: 0 0 0 2px rgba(255,255,255,0.3); }
+          50% { box-shadow: 0 0 0 4px rgba(255,255,255,0.6); }
+        }
       `}</style>
 
       <motion.div
@@ -566,6 +771,62 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
         onMouseMove={(e) => isDragging && handlePointerMove(e)}
         onTouchMove={(e) => isDragging && handlePointerMove(e)}
       >
+        {/* === DISCARD DIALOG === */}
+        <AnimatePresence>
+          {showDiscardDialog && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+              onClick={() => {
+                setShowDiscardDialog(false);
+                setPendingAction(null);
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-zinc-900 rounded-3xl p-6 mx-6 max-w-sm w-full shadow-2xl border border-white/10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
+                    <AlertCircle size={24} className="text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">¿Descartar cambios?</h3>
+                    <p className="text-sm text-white/60">Perderás todos los cambios</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => {
+                      setShowDiscardDialog(false);
+                      setPendingAction(null);
+                      if (navigator.vibrate) navigator.vibrate(8);
+                    }}
+                    className="flex-1 py-3 rounded-2xl bg-white/10 font-semibold text-white transition-colors active:bg-white/20"
+                  >
+                    Seguir editando
+                  </button>
+                  <button
+                    onClick={() => {
+                      confirmDiscard();
+                      if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+                    }}
+                    className="flex-1 py-3 rounded-2xl bg-red-500 font-semibold text-white transition-colors active:bg-red-600"
+                  >
+                    Descartar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* === HEADER === */}
         <motion.header 
           initial={{ y: -60, opacity: 0 }}
@@ -574,13 +835,17 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
           className="absolute top-0 left-0 right-0 z-50 safe-top"
         >
           <div className="flex justify-between items-center p-4">
-            {/* Botón Atrás/Cerrar */}
+            {/* Botón Atrás/Cerrar con indicador de cambios */}
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={handleBack}
-              className="glass-button w-11 h-11 rounded-full flex items-center justify-center"
+              className="glass-button w-11 h-11 rounded-full flex items-center justify-center relative"
             >
               {step === "camera" ? <X size={22} /> : <ChevronLeft size={24} />}
+              {/* Indicator for unsaved changes */}
+              {step === "edit" && hasUnsavedChanges() && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full" />
+              )}
             </motion.button>
 
             {/* Botones de acción derecha */}
@@ -611,7 +876,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                 </motion.button>
               )}
 
-              {/* Siguiente - Solo en edit */}
+              {/* Siguiente - Solo en edit and no text editing active */}
               {step === "edit" && !isDragging && !isEditing && (
                 <motion.button
                   initial={{ x: 20, opacity: 0 }}
@@ -631,20 +896,28 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
         {/* === MAIN CONTENT === */}
         <div className="flex-1 relative flex items-center justify-center">
           
-          {/* CAMERA VIEW */}
+          {/* CAMERA VIEW - Fixed 9:16 aspect ratio container */}
           {step === "camera" && (
-            <div className="absolute inset-0 bg-zinc-950">
-              {/* Video feed */}
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className={cn(
-                  "absolute inset-0 w-full h-full object-cover",
-                  facingMode === "user" && "scale-x-[-1]"
-                )}
-              />
+            <div className="absolute inset-0 bg-zinc-950 flex items-center justify-center">
+              {/* 9:16 container */}
+              <div className="relative w-full h-full max-w-[100vh*9/16] flex items-center justify-center">
+                {/* Video feed - object-contain to prevent zoom */}
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={cn(
+                    "w-full h-full object-contain bg-black",
+                    facingMode === "user" && "scale-x-[-1]"
+                  )}
+                />
+                
+                {/* Frame guide overlay - optional visible frame */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute inset-4 border border-white/10 rounded-2xl" />
+                </div>
+              </div>
               
               {/* Loading state */}
               {!cameraReady && (
@@ -664,7 +937,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
               <div className="absolute bottom-0 left-0 right-0 safe-bottom">
                 <div className="flex items-end justify-between px-6 pb-8">
                   
-                  {/* Gallery button - Bottom left */}
+                  {/* Gallery button - Bottom left - Larger touch target */}
                   <motion.label
                     initial={{ y: 40, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -672,7 +945,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                     whileTap={{ scale: 0.92 }}
                     className="cursor-pointer"
                   >
-                    <div className="w-14 h-14 rounded-2xl glass-button flex items-center justify-center overflow-hidden">
+                    <div className="w-14 h-14 rounded-2xl glass-button flex items-center justify-center overflow-hidden min-w-[56px] min-h-[56px]">
                       <Images size={24} className="text-white/90" />
                     </div>
                     <input
@@ -751,7 +1024,10 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                   key={item.id}
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className={cn("overlay-item absolute flex items-center justify-center", item.isEditing && "z-[100]")}
+                  className={cn(
+                    "overlay-item absolute flex items-center justify-center",
+                    item.isEditing && "z-[100]"
+                  )}
                   style={{
                     left: `${item.x * 100}%`,
                     top: `${item.y * 100}%`,
@@ -766,24 +1042,30 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                     className={cn(
                       "relative transition-all duration-200",
                       isDragging && selectedId === item.id ? "opacity-80" : "opacity-100",
-                      isDragging && selectedId === item.id && item.y > 0.8 && "scale-50 opacity-50 grayscale",
+                      isDragging && selectedId === item.id && item.y > 0.85 && "scale-50 opacity-50 grayscale",
+                      item.isEditing && "editing-ring rounded-lg p-2"
                     )}
                   >
                     {item.type === "text" ? (
                       item.isEditing ? (
                         <textarea
+                          ref={editingTextRef}
                           autoFocus
                           value={item.content}
                           onChange={(e) => updateOverlay(item.id, { content: e.target.value })}
-                          onBlur={() => updateOverlay(item.id, { isEditing: false })}
+                          onBlur={() => handleTextBlur(item.id)}
+                          onFocus={handleTextFocus}
                           className="bg-transparent outline-none resize-none overflow-hidden text-center min-w-[50px]"
                           placeholder="Escribe..."
-                          style={getTextStyles(item) as React.CSSProperties}
-                          ref={(el) => {
-                            if (el) {
-                              el.style.height = "auto";
-                              el.style.height = el.scrollHeight + "px";
-                            }
+                          style={{
+                            ...getTextStyles(item) as React.CSSProperties,
+                            // Move text area up when keyboard is open
+                            transform: keyboardHeight > 0 ? `translateY(-${Math.min(keyboardHeight / 3, 100)}px)` : undefined,
+                          }}
+                          onInput={(e) => {
+                            const el = e.target as HTMLTextAreaElement;
+                            el.style.height = "auto";
+                            el.style.height = el.scrollHeight + "px";
                           }}
                         />
                       ) : (
@@ -791,6 +1073,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                           onClick={(e) => {
                             e.stopPropagation();
                             updateOverlay(item.id, { isEditing: true });
+                            if (navigator.vibrate) navigator.vibrate(8);
                           }}
                           className="whitespace-pre-wrap leading-tight"
                           style={getTextStyles(item) as React.CSSProperties}
@@ -805,7 +1088,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                 </motion.div>
               ))}
 
-              {/* Trash zone */}
+              {/* Trash zone - adjusted activation area */}
               <AnimatePresence>
                 {isDragging && (
                   <motion.div
@@ -816,11 +1099,18 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                   >
                     <div className={cn(
                       "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200",
-                      selectedId && overlays.find(o => o.id === selectedId)?.y && overlays.find(o => o.id === selectedId)!.y > 0.8
-                        ? "bg-red-500/90 scale-125"
-                        : "glass-button text-red-400"
+                      selectedId && overlays.find(o => o.id === selectedId)?.y && overlays.find(o => o.id === selectedId)!.y > 0.85
+                        ? overlays.find(o => o.id === selectedId)!.y > 0.9
+                          ? "bg-red-500/90 scale-125"
+                          : "bg-amber-500/70 scale-110"
+                        : "glass-button text-white/40"
                     )}>
-                      <Trash2 size={26} />
+                      <Trash2 size={26} className={cn(
+                        "transition-colors",
+                        selectedId && overlays.find(o => o.id === selectedId)?.y && overlays.find(o => o.id === selectedId)!.y > 0.85
+                          ? "text-white"
+                          : "text-red-400"
+                      )} />
                     </div>
                   </motion.div>
                 )}
@@ -898,13 +1188,13 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
               className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-40"
             >
               {[
-                { icon: Type, tool: "text" as const, label: "Texto" },
-                { icon: Wand2, tool: "textStyles" as const, label: "Estilos" },
-                { icon: Sparkles, tool: "stickers" as const, label: "Stickers" },
-                { icon: Palette, tool: "filters" as const, label: "Filtros" },
-                { icon: Sliders, tool: "adjustments" as const, label: "Ajustes" },
-                { icon: PenTool, tool: "drawing" as const, label: "Dibujar" },
-              ].map(({ icon: Icon, tool, label }, index) => (
+                { icon: Type, tool: "text" as const, label: "Texto", active: false },
+                { icon: Wand2, tool: "textStyles" as const, label: "Estilos", active: showTools === "textStyles" },
+                { icon: Sparkles, tool: "stickers" as const, label: "Stickers", active: showTools === "stickers" },
+                { icon: Palette, tool: "filters" as const, label: "Filtros", active: showTools === "filters" || activeFilter !== "none" },
+                { icon: Sliders, tool: "adjustments" as const, label: "Ajustes", active: showTools === "adjustments" },
+                { icon: PenTool, tool: "drawing" as const, label: "Dibujar", active: showTools === "drawing" || drawingDataUrl !== null },
+              ].map(({ icon: Icon, tool, label, active }, index) => (
                 <motion.button
                   key={tool}
                   initial={{ x: -40, opacity: 0 }}
@@ -922,9 +1212,17 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                     }
                     if (navigator.vibrate) navigator.vibrate(8);
                   }}
-                  className="w-12 h-12 rounded-2xl glass-button flex items-center justify-center group"
+                  className={cn(
+                    "w-12 h-12 rounded-2xl glass-button flex items-center justify-center group relative",
+                    active && "ring-2 ring-white/50"
+                  )}
                 >
                   <Icon size={20} className="text-white/90" />
+                  
+                  {/* Active indicator */}
+                  {active && (
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full" />
+                  )}
                   
                   {/* Tooltip */}
                   <motion.span 
@@ -949,20 +1247,22 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 400 }}
-              className="absolute bottom-0 left-0 right-0 glass-premium border-t border-white/5 rounded-t-3xl z-50 safe-bottom"
+              className="tool-panel absolute bottom-0 left-0 right-0 glass-premium border-t border-white/5 rounded-t-3xl z-50 safe-bottom"
+              style={{ paddingBottom: bottomPadding }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6">
                 <div className="flex justify-between items-center mb-5">
                   <h3 className="font-semibold text-lg">Filtros</h3>
                   <button 
-                    onClick={() => setShowTools("none")} 
-                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+                    onClick={closeToolPanel} 
+                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20 transition-colors"
                   >
-                    <X size={16} />
+                    <X size={18} />
                   </button>
                 </div>
 
-                <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2 scrollbar-hide">
+                <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2 scrollbar-hide scroll-snap-x relative scroll-fade-right">
                   {IMAGE_FILTERS.map((f) => (
                     <button
                       key={f.id}
@@ -970,7 +1270,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                         setActiveFilter(f.id);
                         if (navigator.vibrate) navigator.vibrate(10);
                       }}
-                      className="flex flex-col items-center gap-2 flex-shrink-0"
+                      className="flex flex-col items-center gap-2 flex-shrink-0 scroll-snap-center"
                     >
                       <div
                         className={cn(
@@ -990,75 +1290,91 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
 
           {/* Stickers */}
           {showTools === "stickers" && (
-            <StickerPicker 
-              onStickerSelect={addSticker}
-              onClose={() => setShowTools("none")}
-            />
+            <div className="tool-panel" onClick={(e) => e.stopPropagation()}>
+              <StickerPicker 
+                onStickerSelect={addSticker}
+                onClose={closeToolPanel}
+              />
+            </div>
           )}
 
           {/* Adjustments */}
           {showTools === "adjustments" && (
-            <ImageAdjustments
-              adjustments={imageAdjustments}
-              onAdjustmentsChange={setImageAdjustments}
-              onClose={() => setShowTools("none")}
-              onApply={() => setShowTools("none")}
-            />
+            <div className="tool-panel" onClick={(e) => e.stopPropagation()}>
+              <ImageAdjustments
+                adjustments={imageAdjustments}
+                onAdjustmentsChange={setImageAdjustments}
+                onClose={closeToolPanel}
+                onApply={closeToolPanel}
+              />
+            </div>
           )}
 
           {/* Text Styles */}
           {showTools === "textStyles" && (
-            <TextStylePicker
-              selectedStyle={currentTextStyle}
-              selectedGradient={currentTextGradient}
-              currentColor={currentColor}
-              onStyleChange={(style) => {
-                setCurrentTextStyle(style);
-                if (selectedId) {
-                  updateOverlay(selectedId, { textStyle: style });
-                }
-              }}
-              onGradientChange={(gradient) => {
-                setCurrentTextGradient(gradient);
-                if (selectedId) {
-                  updateOverlay(selectedId, { textGradient: gradient });
-                }
-              }}
-              onClose={() => setShowTools("none")}
-            />
+            <div className="tool-panel" onClick={(e) => e.stopPropagation()}>
+              <TextStylePicker
+                selectedStyle={currentTextStyle}
+                selectedGradient={currentTextGradient}
+                currentColor={currentColor}
+                onStyleChange={(style) => {
+                  setCurrentTextStyle(style);
+                  if (selectedId) {
+                    updateOverlay(selectedId, { textStyle: style });
+                  }
+                }}
+                onGradientChange={(gradient) => {
+                  setCurrentTextGradient(gradient);
+                  if (selectedId) {
+                    updateOverlay(selectedId, { textGradient: gradient });
+                  }
+                }}
+                onClose={closeToolPanel}
+              />
+            </div>
           )}
 
           {/* Drawing */}
           {showTools === "drawing" && containerRef.current && (
-            <DrawingCanvas
-              width={containerRef.current.offsetWidth * 2}
-              height={containerRef.current.offsetHeight * 2}
-              onSave={handleDrawingSave}
-              onClose={() => setShowTools("none")}
-            />
+            <div className="tool-panel" onClick={(e) => e.stopPropagation()}>
+              <DrawingCanvas
+                width={containerRef.current.offsetWidth * 2}
+                height={containerRef.current.offsetHeight * 2}
+                onSave={handleDrawingSave}
+                onClose={closeToolPanel}
+              />
+            </div>
           )}
 
-          {/* Text Edit Tools */}
+          {/* Text Edit Tools - with keyboard awareness */}
           {isEditing && (
             <motion.div
               initial={{ y: 100 }}
               animate={{ y: 0 }}
               exit={{ y: 100 }}
-              className="absolute bottom-0 left-0 right-0 glass-premium p-4 z-[150] flex flex-col gap-4 safe-bottom border-t border-white/5"
+              className="absolute bottom-0 left-0 right-0 glass-premium p-4 z-[150] flex flex-col gap-4 border-t border-white/5"
+              style={{ 
+                paddingBottom: `calc(${Math.max(bottomPadding, 16)}px + env(safe-area-inset-bottom, 0px))`,
+                // Reduce height when keyboard is open
+                maxHeight: keyboardHeight > 0 ? '180px' : undefined,
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              {/* Botón efectos */}
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setShowTools("textStyles")}
-                  className="px-4 py-2 rounded-full bg-white/10 text-sm font-medium flex items-center gap-2"
-                >
-                  <Wand2 size={16} />
-                  Efectos de Texto
-                </button>
-              </div>
+              {/* Botón efectos - hidden when keyboard is very tall */}
+              {keyboardHeight < 300 && (
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setShowTools("textStyles")}
+                    className="px-4 py-2 rounded-full bg-white/10 text-sm font-medium flex items-center gap-2 active:bg-white/20 transition-colors"
+                  >
+                    <Wand2 size={16} />
+                    Efectos de Texto
+                  </button>
+                </div>
+              )}
 
-              {/* Fuentes */}
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide px-1">
+              {/* Fuentes - with scroll snap */}
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide px-1 scroll-snap-x relative">
                 {FONTS.map((f) => (
                   <button
                     key={f.id}
@@ -1069,10 +1385,10 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                       if (navigator.vibrate) navigator.vibrate(8);
                     }}
                     className={cn(
-                      "px-3 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap flex-shrink-0",
+                      "px-4 py-2 rounded-full text-xs font-medium border transition-all whitespace-nowrap flex-shrink-0 scroll-snap-center min-h-[40px]",
                       overlays.find((o) => o.isEditing)?.fontFamily === f.family
                         ? "bg-white text-black border-white"
-                        : "border-white/20 text-white/70",
+                        : "border-white/20 text-white/70 active:bg-white/10",
                     )}
                   >
                     {f.name}
@@ -1080,23 +1396,24 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                 ))}
               </div>
 
-              {/* Alineación y Colores */}
+              {/* Alineación y Colores - improved touch targets */}
               <div className="flex items-center justify-between gap-3">
                 <div className="flex gap-1 bg-white/10 rounded-xl p-1">
                   {[
-                    { icon: <AlignLeft size={16} />, value: "left" },
-                    { icon: <AlignCenter size={16} />, value: "center" },
-                    { icon: <AlignRight size={16} />, value: "right" },
+                    { icon: <AlignLeft size={18} />, value: "left" },
+                    { icon: <AlignCenter size={18} />, value: "center" },
+                    { icon: <AlignRight size={18} />, value: "right" },
                   ].map((b) => (
                     <button
                       key={b.value}
                       onClick={() => {
                         const id = overlays.find((o) => o.isEditing)?.id;
                         if (id) updateOverlay(id, { align: b.value as "left" | "center" | "right" });
+                        if (navigator.vibrate) navigator.vibrate(5);
                       }}
                       className={cn(
-                        "p-2 rounded-lg transition-colors",
-                        overlays.find((o) => o.isEditing)?.align === b.value ? "bg-white text-black" : "text-white/60",
+                        "p-2.5 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center",
+                        overlays.find((o) => o.isEditing)?.align === b.value ? "bg-white text-black" : "text-white/60 active:bg-white/10",
                       )}
                     >
                       {b.icon}
@@ -1104,7 +1421,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                   ))}
                 </div>
 
-                <div className="flex gap-1.5 overflow-x-auto flex-1 max-w-[200px] scrollbar-hide">
+                {/* Colors with larger touch targets */}
+                <div className="flex gap-2 overflow-x-auto flex-1 max-w-[220px] scrollbar-hide scroll-snap-x">
                   {COLORS.map((c) => (
                     <button
                       key={c}
@@ -1113,9 +1431,10 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                         if (id) updateOverlay(id, { color: c, textGradient: null });
                         setCurrentColor(c);
                         setCurrentTextGradient(null);
+                        if (navigator.vibrate) navigator.vibrate(8);
                       }}
                       className={cn(
-                        "w-7 h-7 rounded-full shrink-0 transition-transform ring-2 ring-offset-2 ring-offset-black",
+                        "w-10 h-10 rounded-full shrink-0 transition-transform ring-2 ring-offset-2 ring-offset-black scroll-snap-center",
                         overlays.find((o) => o.isEditing)?.color === c && !overlays.find((o) => o.isEditing)?.textGradient
                           ? "scale-110 ring-white"
                           : "ring-transparent",
@@ -1125,15 +1444,16 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                   ))}
                 </div>
 
+                {/* Done button - larger */}
                 <button
                   onClick={() => {
                     const id = overlays.find((o) => o.isEditing)?.id;
                     if (id) updateOverlay(id, { isEditing: false });
-                    if (navigator.vibrate) navigator.vibrate(15);
+                    if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
                   }}
-                  className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center"
+                  className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center active:bg-white/80 transition-colors"
                 >
-                  <Check size={20} strokeWidth={3} />
+                  <Check size={22} strokeWidth={3} />
                 </button>
               </div>
             </motion.div>
