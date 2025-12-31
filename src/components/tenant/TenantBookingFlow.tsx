@@ -5,6 +5,8 @@ import { TenantStylistSelection } from "./TenantStylistSelection";
 import { TenantDateTimeSelection } from "./TenantDateTimeSelection";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { BookingSummaryMobile } from "@/components/booking/BookingSummaryMobile";
+import { SuccessCelebration } from "@/components/booking/SuccessCelebration";
+import { AuthModal } from "@/components/auth/AuthModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
@@ -13,6 +15,7 @@ import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { Service, Stylist, BookingData } from "@/types/booking";
+import { useHaptic } from "@/hooks/useHaptic";
 
 interface TenantBookingFlowProps {
   tenantId: string;
@@ -24,9 +27,13 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [pendingServices, setPendingServices] = useState<Service[] | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
+  const haptic = useHaptic();
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
     stylist: null,
@@ -94,21 +101,34 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
   const totalDuration = bookingData.services.reduce((sum, service) => sum + service.duration, 0);
 
-  const handleServicesSelect = (services: Service[]) => {
+  const handleServicesSelect = (selectedServices: Service[]) => {
     // Check if user is logged in before proceeding
     if (!user) {
-      toast({
-        title: "Inicia sesión",
-        description: "Debes iniciar sesión para continuar con la reserva",
-        variant: "destructive",
-      });
-      navigate("/auth");
+      // Save pending services and show auth modal instead of redirecting
+      setPendingServices(selectedServices);
+      setShowAuthModal(true);
+      haptic.warning();
       return;
     }
     
-    setBookingData({ ...bookingData, services });
+    haptic.selection();
+    setBookingData({ ...bookingData, services: selectedServices });
     setStep(2);
     bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Handle successful authentication
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    haptic.success();
+    
+    // If there were pending services, continue the flow
+    if (pendingServices && pendingServices.length > 0) {
+      setBookingData({ ...bookingData, services: pendingServices });
+      setPendingServices(null);
+      setStep(2);
+      bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const handleStylistSelect = (stylistSlug: string) => {
@@ -128,6 +148,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
   const handleConfirmBooking = (name: string, phone: string) => {
     setBookingData({ ...bookingData, name, phone });
+    setBookingConfirmed(true);
+    haptic.success();
   };
 
   const handleBack = () => {
@@ -275,7 +297,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       />
                     </motion.div>
                   )}
-                  {step === 4 && (
+                  {step === 4 && !bookingConfirmed && (
                     <motion.div
                       key="step-4"
                       initial={{ opacity: 0, x: 20 }}
@@ -292,6 +314,24 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       />
                     </motion.div>
                   )}
+                  {step === 4 && bookingConfirmed && bookingData.date && (
+                    <motion.div
+                      key="step-success"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    >
+                      <SuccessCelebration
+                        bookingDate={bookingData.date}
+                        bookingTime={bookingData.time || ""}
+                        stylistName={bookingData.stylist || "Cualquier profesional"}
+                        services={bookingData.services}
+                        totalDuration={totalDuration}
+                        salonName={tenantName}
+                        onViewBookings={() => navigate("/mis-citas")}
+                      />
+                    </motion.div>
+                  )}
                 </AnimatePresence>
               </CardContent>
             </Card>
@@ -299,7 +339,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
           {/* Mobile Bottom Sheet Summary */}
           <AnimatePresence>
-            {bookingData.services.length > 0 && (
+            {bookingData.services.length > 0 && !bookingConfirmed && (
               <BookingSummaryMobile
                 bookingData={bookingData}
                 totalDuration={totalDuration}
@@ -310,6 +350,18 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Auth Modal for in-situ login */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => {
+          setShowAuthModal(false);
+          setPendingServices(null);
+        }}
+        onSuccess={handleAuthSuccess}
+        title="Inicia sesión"
+        subtitle="Accede para continuar con tu reserva"
+      />
     </section>
   );
 };
