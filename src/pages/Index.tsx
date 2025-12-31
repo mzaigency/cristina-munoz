@@ -1,8 +1,8 @@
 import { SEO } from "@/components/SEO";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, TrendingUp, Wand2, Shield } from "lucide-react";
+import { Heart, TrendingUp, Wand2, Shield, Navigation, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { WelcomeCarousel, useWelcomeOnboarding } from "@/components/onboarding/WelcomeCarousel";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
+import { useGeolocation, CITY_COORDINATES } from "@/hooks/useGeolocation";
+import { useHaptic } from "@/hooks/useHaptic";
 
 interface TenantWithStats {
   id: string;
@@ -52,6 +54,9 @@ const Index = () => {
   const { tenant: userTenant, isAdmin: isUserAdmin, loading: tenantLoading } = useCurrentUserTenant();
   const { showWelcome, handleComplete: handleOnboardingComplete } = useWelcomeOnboarding();
   const queryClient = useQueryClient();
+  const { hasLocation, requestLocation, calculateDistance, formatDistance, loading: geoLoading, permissionDenied } = useGeolocation();
+  const haptic = useHaptic();
+  const [sortByDistance, setSortByDistance] = useState(false);
 
   // Check if current user is superadmin
   useEffect(() => {
@@ -134,22 +139,65 @@ const Index = () => {
     await queryClient.invalidateQueries({ queryKey: ["salons-premium-hub"] });
   }, [queryClient]);
 
-  const filteredSalons = salons?.filter((salon) => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      salon.name.toLowerCase().includes(query) ||
-      salon.city?.toLowerCase().includes(query) ||
-      salon.address?.toLowerCase().includes(query) ||
-      salon.tagline?.toLowerCase().includes(query) ||
-      salon.description?.toLowerCase().includes(query);
-
-    const matchesFavorites = !showFavoritesOnly || favorites.includes(salon.id);
+  // Calculate distances for salons
+  const salonsWithDistance = useMemo(() => {
+    if (!salons) return [];
     
-    // Filter by business type category
-    const matchesCategory = !selectedCategory || salon.features?.business_type === selectedCategory;
+    return salons.map(salon => {
+      let distance: number | null = null;
+      
+      if (hasLocation && salon.city) {
+        const cityCoords = CITY_COORDINATES[salon.city];
+        if (cityCoords) {
+          distance = calculateDistance(cityCoords.lat, cityCoords.lon);
+        }
+      }
+      
+      return {
+        ...salon,
+        distance,
+        formattedDistance: distance !== null ? formatDistance(distance) : null,
+      };
+    });
+  }, [salons, hasLocation, calculateDistance, formatDistance]);
 
-    return matchesSearch && matchesFavorites && matchesCategory;
-  });
+  const filteredSalons = useMemo(() => {
+    let result = salonsWithDistance.filter((salon) => {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        salon.name.toLowerCase().includes(query) ||
+        salon.city?.toLowerCase().includes(query) ||
+        salon.address?.toLowerCase().includes(query) ||
+        salon.tagline?.toLowerCase().includes(query) ||
+        salon.description?.toLowerCase().includes(query);
+
+      const matchesFavorites = !showFavoritesOnly || favorites.includes(salon.id);
+      
+      // Filter by business type category
+      const matchesCategory = !selectedCategory || salon.features?.business_type === selectedCategory;
+
+      return matchesSearch && matchesFavorites && matchesCategory;
+    });
+
+    // Sort by distance if enabled
+    if (sortByDistance && hasLocation) {
+      result = [...result].sort((a, b) => {
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
+      });
+    }
+
+    return result;
+  }, [salonsWithDistance, searchQuery, showFavoritesOnly, favorites, selectedCategory, sortByDistance, hasLocation]);
+
+  const handleNearMeClick = () => {
+    haptic.medium();
+    if (!hasLocation) {
+      requestLocation();
+    }
+    setSortByDistance(prev => !prev);
+  };
 
   return (
     <>
@@ -227,20 +275,41 @@ const Index = () => {
             </p>
           </div>
 
-          {isAuthenticated && (
+          <div className="flex items-center gap-2">
+            {/* Near Me Button */}
             <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              onClick={handleNearMeClick}
+              disabled={geoLoading}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
-                showFavoritesOnly
-                  ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30"
+                sortByDistance && hasLocation
+                  ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
                   : "bg-secondary text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Heart className={`h-4 w-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
-              Favoritos
+              {geoLoading ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Navigation className={`h-4 w-4 ${sortByDistance && hasLocation ? "" : ""}`} />
+              )}
+              Cerca
             </motion.button>
-          )}
+
+            {isAuthenticated && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+                  showFavoritesOnly
+                    ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Heart className={`h-4 w-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
+                Favoritos
+              </motion.button>
+            )}
+          </div>
         </motion.div>
 
         {/* Category Pills */}
@@ -264,7 +333,12 @@ const Index = () => {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
             >
               {filteredSalons.map((salon, index) => (
-                <PremiumSalonCard key={salon.id} salon={salon} index={index} />
+                <PremiumSalonCard 
+                  key={salon.id} 
+                  salon={salon} 
+                  index={index} 
+                  distance={salon.formattedDistance}
+                />
               ))}
             </motion.div>
           ) : (

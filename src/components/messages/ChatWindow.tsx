@@ -9,7 +9,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Message, Conversation } from '@/hooks/useConversations';
 import { StoryReplyPreview } from './StoryReplyPreview';
+import { TypingIndicator } from './TypingIndicator';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { AnimatePresence } from 'motion/react';
 
 interface ChatWindowProps {
   conversation: Conversation | null;
@@ -65,8 +68,11 @@ export function ChatWindow({
   role,
 }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [otherTyping, setOtherTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Scroll to bottom on new messages
@@ -85,9 +91,71 @@ export function ChatWindow({
     }
   }, [conversation?.id]);
 
+  // Typing indicator - realtime presence
+  useEffect(() => {
+    if (!conversation?.id) return;
+
+    const channel = supabase.channel(`typing:${conversation.id}`);
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const typingUsers = Object.values(state).flat() as unknown as Array<{ is_typing?: boolean; user_type?: string }>;
+        const otherUserTyping = typingUsers.some(
+          (u) => u?.is_typing && u?.user_type !== role
+        );
+        setOtherTyping(otherUserTyping);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({ is_typing: false, user_type: role });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversation?.id, role]);
+
+  // Broadcast typing status
+  const broadcastTyping = async (typing: boolean) => {
+    if (!conversation?.id) return;
+    
+    const channel = supabase.channel(`typing:${conversation.id}`);
+    await channel.track({ is_typing: typing, user_type: role });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    
+    // Broadcast typing status
+    if (!isTyping) {
+      setIsTyping(true);
+      broadcastTyping(true);
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set timeout to stop typing indicator
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      broadcastTyping(false);
+    }, 2000);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
+
+    // Stop typing indicator
+    setIsTyping(false);
+    broadcastTyping(false);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
     onSendMessage(newMessage.trim());
     setNewMessage('');
@@ -245,6 +313,13 @@ export function ChatWindow({
           )}
           </div>
         </ScrollArea>
+        
+        {/* Typing indicator */}
+        <AnimatePresence>
+          {otherTyping && (
+            <TypingIndicator name={displayName} />
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Input estilo iOS - siempre visible */}
@@ -253,7 +328,7 @@ export function ChatWindow({
           <Input
             ref={inputRef}
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleInputChange}
             placeholder="Mensaje"
             className="flex-1 rounded-full bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/50 px-4 h-11"
           />
