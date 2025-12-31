@@ -33,6 +33,7 @@ import { BusinessHoursManager } from "@/components/admin/BusinessHoursManager";
 import { StoriesAnalytics } from "@/components/admin/StoriesAnalytics";
 import { ProductsManager } from "@/components/admin/ProductsManager";
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
+import { GuidedTour } from "@/components/admin/GuidedTour";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -369,6 +370,7 @@ export default function TenantAdmin() {
             </div>
 
             <div className="flex items-center gap-2">
+              <GuidedTour onTabChange={(tab) => setActiveTab(tab as TabValue)} />
               <HelpTutorial />
               <Button 
                 onClick={() => navigate(`/salon/${slug}`)} 
