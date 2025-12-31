@@ -5,6 +5,7 @@ import { X, CalendarDays, Clock, Loader2, CheckCircle, ArrowRight } from "lucide
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,7 +50,7 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
           date: format(selectedDate, 'yyyy-MM-dd'),
           stylist: booking.stylist,
           duration: booking.total_duration,
-          excludeBookingId: booking.id, // Exclude current booking from availability check
+          excludeBookingId: booking.id,
         }
       });
 
@@ -57,7 +58,6 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
       setAvailableSlots(data?.slots || generateFallbackSlots());
     } catch (error) {
       console.error('Error fetching slots:', error);
-      // Fallback to generated slots
       setAvailableSlots(generateFallbackSlots());
     } finally {
       setLoading(false);
@@ -123,31 +123,14 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
     : "Servicios";
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100%" }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        onClick={(e) => e.stopPropagation()}
-        className="absolute bottom-0 left-0 right-0 max-h-[90vh] bg-background rounded-t-3xl shadow-2xl overflow-hidden"
-      >
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-background border-b border-border/50 px-4 py-4">
+    <Drawer open onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent className="max-h-[90vh]">
+        <DrawerHeader className="border-b border-border/50 pb-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-foreground">Reagendar cita</h2>
-              <p className="text-sm text-muted-foreground">{serviceNames}</p>
+              <DrawerTitle className="text-lg font-bold text-foreground">Reagendar cita</DrawerTitle>
+              <p className="text-sm text-muted-foreground mt-1">{serviceNames}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
-              <X className="h-5 w-5" />
-            </Button>
           </div>
 
           {/* Progress */}
@@ -164,10 +147,10 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
               </div>
             ))}
           </div>
-        </div>
+        </DrawerHeader>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-120px)] p-4">
+        <div className="overflow-y-auto p-4 pb-8">
           <AnimatePresence mode="wait">
             {step === "date" && (
               <motion.div
@@ -308,7 +291,7 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
             )}
           </AnimatePresence>
         </div>
-      </motion.div>
-    </motion.div>
+      </DrawerContent>
+    </Drawer>
   );
 }
