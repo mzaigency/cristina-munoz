@@ -1,6 +1,6 @@
 import { SEO } from "@/components/SEO";
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, TrendingUp, Wand2, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -16,6 +16,8 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { JoinNetworkSection } from "@/components/feed/JoinNetworkSection";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
+import { WelcomeCarousel, useWelcomeOnboarding } from "@/components/onboarding/WelcomeCarousel";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 
 interface TenantWithStats {
   id: string;
@@ -48,6 +50,8 @@ const Index = () => {
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const { favorites, isAuthenticated } = useFavorites();
   const { tenant: userTenant, isAdmin: isUserAdmin, loading: tenantLoading } = useCurrentUserTenant();
+  const { showWelcome, handleComplete: handleOnboardingComplete } = useWelcomeOnboarding();
+  const queryClient = useQueryClient();
 
   // Check if current user is superadmin
   useEffect(() => {
@@ -125,6 +129,11 @@ const Index = () => {
     },
   });
 
+  // Pull to refresh handler
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["salons-premium-hub"] });
+  }, [queryClient]);
+
   const filteredSalons = salons?.filter((salon) => {
     const query = searchQuery.toLowerCase();
     const matchesSearch =
@@ -143,7 +152,11 @@ const Index = () => {
   });
 
   return (
-    <AppLayout>
+    <>
+      {/* Welcome Onboarding for new users */}
+      {showWelcome && <WelcomeCarousel onComplete={handleOnboardingComplete} />}
+      
+      <AppLayout>
       <SEO
         title="GlowApp | Descubre y Reserva en los Mejores Salones de Belleza"
         description="La red social de belleza. Descubre los mejores salones cerca de ti, conecta con profesionales y reserva cita online."
@@ -266,6 +279,7 @@ const Index = () => {
       </div>
 
     </AppLayout>
+    </>
   );
 };
 

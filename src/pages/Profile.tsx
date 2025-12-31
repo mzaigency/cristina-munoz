@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Settings, Shield, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/navigation/AppLayout";
+import { AvatarUploader } from "@/components/profile/AvatarUploader";
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, "El nombre es requerido").max(100),
@@ -25,6 +26,8 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,10 +44,12 @@ export default function Profile() {
         return;
       }
 
+      setUserId(session.user.id);
+
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('full_name, email, phone')
+          .select('full_name, email, phone, avatar_url')
           .eq('id', session.user.id)
           .single();
 
@@ -56,6 +61,7 @@ export default function Profile() {
             email: profile.email || "",
             phone: profile.phone || "",
           });
+          setAvatarUrl(profile.avatar_url);
         }
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -137,10 +143,18 @@ export default function Profile() {
       {/* Header */}
       <div className="bg-gradient-to-b from-primary/10 to-background pt-8 pb-6 px-4 safe-area-top">
         <div className="flex flex-col items-center">
-          {/* Avatar */}
-          <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <User className="h-12 w-12 text-primary" />
-          </div>
+          {/* Avatar with upload */}
+          {userId && (
+            <div className="mb-4">
+              <AvatarUploader
+                currentAvatarUrl={avatarUrl}
+                userName={profileData.full_name}
+                userId={userId}
+                onAvatarChange={setAvatarUrl}
+                size="lg"
+              />
+            </div>
+          )}
           
           <h1 className="text-xl font-bold text-foreground">
             {profileData.full_name || "Usuario"}
