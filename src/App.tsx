@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { NavigationProvider } from "@/contexts/NavigationContext";
+import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
@@ -32,6 +33,7 @@ const App = () => (
       <NavigationProvider>
         <Toaster />
         <Sonner />
+        <UpdatePrompt />
         <BrowserRouter>
           <ScrollToTop />
           <Routes>
