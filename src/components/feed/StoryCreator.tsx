@@ -58,7 +58,7 @@ const FILTERS = [
   { id: "vintage", name: "1990", css: "sepia(0.2) contrast(1.1) brightness(0.9) saturate(0.8)" },
 ];
 const COLORS = ["#FFFFFF", "#000000", "#FF3B30", "#FF9500", "#FFCC00", "#34C759", "#007AFF", "#AF52DE", "#FF2D55"];
-STICKERS = ["🔥", "✨", "❤️", "💯", "🎉", "💇‍♀️", "💈", "📍", "👑", "💅", "👀", "💬", "⚡️", "🌴"];
+const STICKERS = ["🔥", "✨", "❤️", "💯", "🎉", "💇‍♀️", "💈", "📍", "👑", "💅", "👀", "💬", "⚡️", "🌴"];
 
 // --- TIPOS ---
 interface OverlayItem {
