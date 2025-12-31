@@ -807,6 +807,51 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          annual_price: number | null
+          created_at: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_services: number | null
+          max_stylists: number | null
+          monthly_price: number
+          name: string
+          slug: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          annual_price?: number | null
+          created_at?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_services?: number | null
+          max_stylists?: number | null
+          monthly_price?: number
+          name: string
+          slug: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          annual_price?: number | null
+          created_at?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_services?: number | null
+          max_stylists?: number | null
+          monthly_price?: number
+          name?: string
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tenant_admins: {
         Row: {
           created_at: string | null
