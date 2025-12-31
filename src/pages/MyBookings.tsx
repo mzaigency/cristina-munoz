@@ -33,6 +33,12 @@ type Booking = {
   services: any;
   total_duration: number;
   status: string;
+  tenant_id?: string;
+  tenant_name?: string;
+  tenant_slug?: string;
+  tenant_logo_url?: string;
+  tenant_phone?: string;
+  tenant_address?: string;
 };
 
 const TABS = [

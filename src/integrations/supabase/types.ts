@@ -1720,6 +1720,12 @@ export type Database = {
           status: string
           stylist: string
           Telefono: string
+          tenant_address: string
+          tenant_id: string
+          tenant_logo_url: string
+          tenant_name: string
+          tenant_phone: string
+          tenant_slug: string
           total_duration: number
         }[]
       }
