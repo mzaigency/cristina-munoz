@@ -13,6 +13,7 @@ import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Setti
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
+import { UserStats } from "@/components/profile/UserStats";
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, "El nombre es requerido").max(100),
@@ -258,6 +259,14 @@ export default function Profile() {
         ) : (
           /* View Mode */
           <div className="space-y-4">
+            {/* User Stats */}
+            {userId && (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3 px-1">Tu actividad</h3>
+                <UserStats userId={userId} />
+              </div>
+            )}
+
             {/* Personal Info Section */}
             <div className="ios-card overflow-hidden">
               <button 

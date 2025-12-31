@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Star, Heart, Clock, Sparkles, Zap } from "lucide-react";
+import { MapPin, Star, Heart, Clock, Sparkles, Zap, Navigation } from "lucide-react";
 import { motion } from "motion/react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { cn } from "@/lib/utils";
@@ -19,9 +19,10 @@ interface PremiumSalonCardProps {
     average_price?: number | null;
   };
   index: number;
+  distance?: string | null;
 }
 
-export function PremiumSalonCard({ salon, index }: PremiumSalonCardProps) {
+export function PremiumSalonCard({ salon, index, distance }: PremiumSalonCardProps) {
   const { isFavorite, toggleFavorite, isAuthenticated } = useFavorites();
   const isFav = isFavorite(salon.id);
   const primaryColor = salon.primary_color || "#6366f1";
@@ -180,12 +181,20 @@ export function PremiumSalonCard({ salon, index }: PremiumSalonCardProps) {
             )}
 
             <div className="flex items-center justify-between pt-2 border-t border-border/50">
-              {salon.city && (
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span className="text-sm font-medium">{salon.city}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {distance && (
+                  <div className="flex items-center gap-1 text-primary">
+                    <Navigation className="h-3.5 w-3.5" />
+                    <span className="text-sm font-semibold">{distance}</span>
+                  </div>
+                )}
+                {salon.city && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span className="text-sm font-medium">{salon.city}</span>
+                  </div>
+                )}
+              </div>
 
               {/* Quick Book Button */}
               <motion.div 
