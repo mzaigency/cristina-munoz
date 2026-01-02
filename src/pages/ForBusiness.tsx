@@ -63,6 +63,8 @@ const allBenefits = [
 ];
 
 export default function ForBusiness() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <div className="min-h-screen bg-background">
       <SEO
