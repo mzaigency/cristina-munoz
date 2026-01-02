@@ -349,153 +349,128 @@ export default function TenantAdmin() {
   const isConfigTab = configItems.some(item => item.value === activeTab);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header - Fully accessible mobile design */}
-      <header className="sticky top-0 z-50 bg-card border-b-2 border-border safe-area-top shadow-md">
-        <div className="px-4 md:px-6 lg:px-8">
+    <div className="min-h-screen bg-muted/30">
+      {/* Header - Mobile optimized with safe area */}
+      <header className="sticky top-0 z-50 bg-background border-b shadow-sm safe-area-top">
+        <div className="mx-auto max-w-7xl px-4 md:px-4">
           {/* Top row - Logo, title and actions */}
-          <div className="flex items-center justify-between h-14 md:h-16">
-            {/* Brand section */}
-            <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center justify-between py-3 md:py-3 border-b border-border/50">
+            <div className="flex items-center gap-3 md:gap-3 min-w-0">
               {tenant.logo_url ? (
                 <img 
                   src={tenant.logo_url} 
-                  alt={`Logo de ${tenant.name}`} 
-                  className="h-10 w-10 md:h-12 md:w-12 rounded-xl object-cover ring-2 ring-primary/30 shrink-0" 
+                  alt={tenant.name} 
+                  className="h-10 w-10 md:h-10 md:w-10 rounded-xl md:rounded-xl object-cover ring-2 ring-primary/20 shrink-0" 
                 />
               ) : (
-                <div 
-                  className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-primary flex items-center justify-center shrink-0"
-                  role="img"
-                  aria-label={`Logo de ${tenant.name}`}
-                >
-                  <Scissors className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
+                <div className="h-10 w-10 md:h-10 md:w-10 rounded-xl md:rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Scissors className="h-5 w-5 md:h-5 md:w-5 text-primary" />
                 </div>
               )}
-              <div className="min-w-0 flex-1">
-                <h1 className="text-base md:text-xl font-bold text-foreground truncate leading-tight">
-                  {tenant.name}
-                </h1>
-                <p className="text-xs md:text-sm text-muted-foreground truncate" aria-label="Email del usuario">
-                  {userEmail}
-                </p>
+              <div className="min-w-0">
+                <h1 className="text-base md:text-lg font-bold text-foreground truncate">{tenant.name}</h1>
+                <p className="text-xs md:text-xs text-muted-foreground truncate">{userEmail}</p>
               </div>
             </div>
 
-            {/* Actions - Always visible */}
-            <nav className="flex items-center gap-2" aria-label="Acciones rápidas">
+            <div className="flex items-center gap-2 md:gap-2">
               <div className="hidden md:flex items-center gap-2">
                 <GuidedTour onTabChange={(tab) => setActiveTab(tab as TabValue)} />
                 <HelpTutorial />
               </div>
-              
               <Button 
                 onClick={() => navigate(`/salon/${slug}`)} 
                 variant="outline" 
                 size="sm"
-                className="h-10 px-3 md:px-4 gap-2 font-medium border-2 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="gap-1.5 h-10 md:h-9 px-3 md:px-3 text-sm md:text-sm"
                 aria-label="Ver página web del salón"
               >
-                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                <ExternalLink className="h-4 w-4 md:h-4 md:w-4" />
                 <span className="hidden sm:inline">Ver web</span>
               </Button>
-              
               <Button 
                 onClick={() => navigate("/")} 
                 variant="ghost" 
                 size="icon" 
-                className="h-10 w-10 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="h-10 w-10 md:h-8 md:w-8" 
+                title="Inicio"
                 aria-label="Ir a inicio"
               >
-                <Home className="h-5 w-5" aria-hidden="true" />
+                <Home className="h-5 w-5 md:h-4 md:w-4" />
               </Button>
-              
               <Button 
                 onClick={handleSignOut} 
                 variant="ghost" 
                 size="icon" 
-                className="h-10 w-10 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="h-10 w-10 md:h-8 md:w-8" 
+                title="Cerrar sesión"
                 aria-label="Cerrar sesión"
               >
-                <LogOut className="h-5 w-5" aria-hidden="true" />
+                <LogOut className="h-5 w-5 md:h-4 md:w-4" />
               </Button>
-            </nav>
-          </div>
-        </div>
-
-        {/* Navigation tabs - Accessible scrollable navigation */}
-        <nav 
-          className="border-t border-border/50 bg-muted/30" 
-          aria-label="Navegación del panel de administración"
-          role="tablist"
-        >
-          <div className="px-4 md:px-6 lg:px-8">
-            <div className="flex items-center gap-1 py-2 overflow-x-auto scrollbar-hide -mx-2 px-2">
-              {mainItems.map((item) => {
-                const isActive = activeTab === item.value;
-                return (
-                  <button
-                    key={item.value}
-                    onClick={() => setActiveTab(item.value)}
-                    role="tab"
-                    aria-selected={isActive}
-                    aria-controls={`panel-${item.value}`}
-                    tabIndex={isActive ? 0 : -1}
-                    className={`
-                      relative flex flex-col items-center justify-center gap-1 
-                      min-w-[56px] md:min-w-[72px] h-14 md:h-16 px-2 md:px-3
-                      rounded-xl transition-all duration-200 shrink-0
-                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
-                      ${isActive 
-                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" 
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                      }
-                    `}
-                  >
-                    <div className="relative flex items-center justify-center">
-                      {item.value === "calendar" && <Calendar className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      {item.value === "cash" && <Wallet className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      {item.value === "reviews" && <Star className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      {item.value === "messages" && <MessageCircle className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      {item.value === "stories" && <ImageIcon className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      {item.value === "security" && <BarChart3 className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      {item.value === "products" && <Package className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      {item.value === "services" && <Scissors className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      {item.value === "stylists" && <Users className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      {item.value === "hours" && <Clock className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      {item.value === "settings" && <Settings className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />}
-                      
-                      {/* Badge for notifications */}
-                      {item.badge && item.badge > 0 && (
-                        <span 
-                          className="absolute -top-1 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground ring-2 ring-background"
-                          aria-label={`${item.badge} ${item.badge === 1 ? 'pendiente' : 'pendientes'}`}
-                        >
-                          {item.badge > 99 ? "99+" : item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] md:text-xs font-semibold leading-none whitespace-nowrap">
-                      {item.label}
-                    </span>
-                  </button>
-                );
-              })}
             </div>
           </div>
-        </nav>
+
+          {/* Bottom row - Navigation tabs - Scrollable on mobile */}
+          <nav 
+            className="flex items-center gap-1 md:gap-1 py-2 md:py-2 overflow-x-auto scrollbar-hide -mx-1 px-1"
+            aria-label="Navegación del panel de administración"
+            role="tablist"
+          >
+            {mainItems.map((item) => {
+              const isActive = activeTab === item.value;
+              return (
+                <button
+                  key={item.value}
+                  onClick={() => setActiveTab(item.value)}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-label={`${item.label}${item.badge ? `, ${item.badge} pendientes` : ''}`}
+                  className={`
+                    relative flex flex-col items-center gap-1 md:gap-1 
+                    px-3 md:px-3 py-2 md:py-2 
+                    rounded-xl md:rounded-xl transition-all duration-200 shrink-0 
+                    min-w-[56px] md:min-w-[60px]
+                    min-h-[56px] md:min-h-0
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                    ${isActive 
+                      ? "bg-primary text-primary-foreground shadow-md" 
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }
+                  `}
+                >
+                  <div className="relative">
+                    {item.value === "calendar" && <Calendar className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "cash" && <Wallet className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "reviews" && <Star className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "messages" && <MessageCircle className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "stories" && <ImageIcon className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "security" && <BarChart3 className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "products" && <Package className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "services" && <Scissors className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "stylists" && <Users className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "hours" && <Clock className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "settings" && <Settings className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.badge && item.badge > 0 && (
+                      <span 
+                        className="absolute -top-1.5 -right-1.5 flex h-4 w-4 md:h-4 md:w-4 items-center justify-center rounded-full bg-destructive text-[9px] md:text-[9px] font-bold text-white"
+                        aria-hidden="true"
+                      >
+                        {item.badge > 9 ? "9+" : item.badge}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] md:text-[10px] font-medium leading-none">{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
       </header>
 
-      {/* Main Content Area */}
-      <main 
-        className="px-4 md:px-6 lg:px-8 py-4 md:py-6 safe-area-bottom"
-        id={`panel-${activeTab}`}
-        role="tabpanel"
-        aria-labelledby={activeTab}
-      >
-        <div className="mx-auto max-w-7xl">
-          {renderContent()}
-        </div>
+      {/* Content */}
+      <main className="mx-auto max-w-7xl px-4 md:px-4 py-4 md:py-6 safe-area-bottom">
+        {renderContent()}
       </main>
     </div>
   );
