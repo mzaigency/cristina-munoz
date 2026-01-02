@@ -195,10 +195,10 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
               />
             </div>
             <div>
-              <Label htmlFor="heading_size">Tamaño del título</Label>
+              <Label htmlFor="heading_size">Tamaño del nombre</Label>
               <select
                 id="heading_size"
-                value={tenant.heading_size || "large"}
+                value={tenant.heading_size || "xlarge"}
                 onChange={(e) => setTenant({ ...tenant, heading_size: e.target.value })}
                 className="w-full h-10 px-3 border rounded-md bg-background text-foreground"
               >
@@ -206,7 +206,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                 <option value="large">Grande</option>
                 <option value="xlarge">Extra grande</option>
               </select>
-              <p className="text-xs text-muted-foreground mt-1">Controla el tamaño del título en la landing page</p>
+              <p className="text-xs text-muted-foreground mt-1">Solo cambia el tamaño del nombre en el hero</p>
             </div>
             <div>
               <Label htmlFor="tagline">Eslogan</Label>

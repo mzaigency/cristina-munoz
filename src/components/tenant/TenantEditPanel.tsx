@@ -449,10 +449,9 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
               <CardContent>
                 <h2 
                   className={`font-bold mb-2 ${
-                    formData.heading_size === "small" ? "text-xl" :
-                    formData.heading_size === "normal" ? "text-2xl" :
-                    formData.heading_size === "large" ? "text-3xl" :
-                    "text-4xl"
+                    formData.heading_size === "medium" ? "text-3xl" :
+                    formData.heading_size === "large" ? "text-4xl" :
+                    "text-5xl"
                   }`}
                   style={{ 
                     fontFamily: formData.font_heading || "Playfair Display",

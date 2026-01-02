@@ -1165,6 +1165,7 @@ export type Database = {
           max_services: number | null
           max_stylists: number | null
           name: string
+          name_size: string | null
           phone: string | null
           postal_code: string | null
           preview_expires_at: string | null
@@ -1206,6 +1207,7 @@ export type Database = {
           max_services?: number | null
           max_stylists?: number | null
           name: string
+          name_size?: string | null
           phone?: string | null
           postal_code?: string | null
           preview_expires_at?: string | null
@@ -1247,6 +1249,7 @@ export type Database = {
           max_services?: number | null
           max_stylists?: number | null
           name?: string
+          name_size?: string | null
           phone?: string | null
           postal_code?: string | null
           preview_expires_at?: string | null

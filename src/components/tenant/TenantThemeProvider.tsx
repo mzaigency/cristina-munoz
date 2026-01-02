@@ -72,7 +72,7 @@ export const TenantThemeProvider = ({
   secondaryColor,
   fontHeading = "Playfair Display",
   fontBody = "Inter",
-  headingSize = "normal",
+  headingSize,
   buttonStyle = "rounded",
   children 
 }: TenantThemeProviderProps) => {
@@ -122,13 +122,8 @@ export const TenantThemeProvider = ({
   }, [primaryColor, secondaryColor, fontHeading, fontBody]);
 
   // Calculate styles for the container
-  const sizeScale = {
-    small: 0.85,
-    normal: 1,
-    large: 1.15,
-    xlarge: 1.3
-  };
-  
+  // NOTE: We intentionally do NOT globally scale heading sizes here.
+  // Tailwind classes in each section/component should control sizing.
   const buttonRadius = {
     rounded: '0.5rem',
     pill: '9999px',
@@ -136,7 +131,6 @@ export const TenantThemeProvider = ({
     sharp: '0'
   };
 
-  const scale = sizeScale[headingSize as keyof typeof sizeScale] || 1;
   const radius = buttonRadius[buttonStyle as keyof typeof buttonRadius] || '0.5rem';
 
   return (
@@ -146,7 +140,6 @@ export const TenantThemeProvider = ({
       style={{
         '--tenant-font-heading': fontHeading ? `"${fontHeading}", serif` : '"Playfair Display", serif',
         '--tenant-font-body': fontBody ? `"${fontBody}", sans-serif` : '"Inter", sans-serif',
-        '--tenant-heading-scale': scale,
         '--tenant-button-radius': radius,
       } as React.CSSProperties}
     >
@@ -161,15 +154,6 @@ export const TenantThemeProvider = ({
         .tenant-theme-container h5,
         .tenant-theme-container h6 {
           font-family: var(--tenant-font-heading);
-        }
-        .tenant-theme-container h1 {
-          font-size: calc(2.25rem * var(--tenant-heading-scale));
-        }
-        .tenant-theme-container h2 {
-          font-size: calc(1.875rem * var(--tenant-heading-scale));
-        }
-        .tenant-theme-container h3 {
-          font-size: calc(1.5rem * var(--tenant-heading-scale));
         }
         .tenant-theme-container button,
         .tenant-theme-container [role="button"] {
