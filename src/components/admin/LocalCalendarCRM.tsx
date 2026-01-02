@@ -819,13 +819,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
           <h2 className="text-xl md:text-2xl font-bold text-foreground">Gestión de Citas</h2>
           <p className="text-xs md:text-sm text-muted-foreground">Sistema local</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setIsCreateDialogOpen(true)} className="flex-1 sm:flex-initial" size="sm">
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="flex-1" size="sm">
             <Plus className="h-4 w-4 mr-1 md:mr-2" />
             <span className="hidden sm:inline">Nueva </span>Cita
           </Button>
-          <Button variant="secondary" onClick={() => setIsBlockDialogOpen(true)} size="sm">
-            <Ban className="h-4 w-4 sm:mr-2" />
+          <Button variant="secondary" onClick={() => setIsBlockDialogOpen(true)} className="flex-1" size="sm">
+            <Ban className="h-4 w-4 mr-1 md:mr-2" />
             <span className="hidden sm:inline">Bloquear</span>
           </Button>
         </div>

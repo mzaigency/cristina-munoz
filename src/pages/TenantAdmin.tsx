@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,8 @@ import { StoriesAnalytics } from "@/components/admin/StoriesAnalytics";
 import { ProductsManager } from "@/components/admin/ProductsManager";
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
 import { GuidedTour } from "@/components/admin/GuidedTour";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,10 +78,12 @@ export default function TenantAdmin() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [hasAccess, setHasAccess] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const navItems: NavItem[] = [
     { value: "calendar", label: "Agenda", icon: <Calendar className="h-4 w-4" />, group: "main" },
@@ -295,30 +299,47 @@ export default function TenantAdmin() {
     navigate("/auth", { replace: true });
   };
 
+  const handleRefresh = useCallback(async () => {
+    // Trigger a refresh by updating the key
+    setRefreshKey(prev => prev + 1);
+    // Also refresh counts
+    if (tenant?.id) {
+      await Promise.all([
+        fetchPendingReviews(),
+        fetchMessagesUnreadCount(),
+        fetchStylists()
+      ]);
+    }
+    toast({
+      title: "Actualizado",
+      description: "Datos actualizados correctamente",
+    });
+  }, [tenant?.id]);
+
   const renderContent = () => {
     if (!tenant) return null;
     
     switch (activeTab) {
       case "calendar":
-        return <LocalCalendarCRM tenantId={tenant.id} stylists={stylists} />;
+        return <LocalCalendarCRM key={refreshKey} tenantId={tenant.id} stylists={stylists} />;
       case "cash":
-        return <CashRegisterManager tenantId={tenant.id} />;
+        return <CashRegisterManager key={refreshKey} tenantId={tenant.id} />;
       case "reviews":
-        return <ReviewsManager tenantId={tenant.id} />;
+        return <ReviewsManager key={refreshKey} tenantId={tenant.id} />;
       case "messages":
-        return <MessagesManager tenantId={tenant.id} />;
+        return <MessagesManager key={refreshKey} tenantId={tenant.id} />;
       case "stories":
-        return <StoriesAnalytics tenantId={tenant.id} />;
+        return <StoriesAnalytics key={refreshKey} tenantId={tenant.id} />;
       case "security":
-        return <SecurityMonitor tenantId={tenant.id} />;
+        return <SecurityMonitor key={refreshKey} tenantId={tenant.id} />;
       case "products":
-        return <ProductsManager tenantId={tenant.id} />;
+        return <ProductsManager key={refreshKey} tenantId={tenant.id} />;
       case "services":
-        return <ServicesManager tenantId={tenant.id} />;
+        return <ServicesManager key={refreshKey} tenantId={tenant.id} />;
       case "stylists":
-        return <StylistsManager tenantId={tenant.id} />;
+        return <StylistsManager key={refreshKey} tenantId={tenant.id} />;
       case "hours":
-        return <BusinessHoursManager tenantId={tenant.id} />;
+        return <BusinessHoursManager key={refreshKey} tenantId={tenant.id} />;
       case "subscription":
         return (
           <div className="text-center py-12 text-muted-foreground">
@@ -327,7 +348,7 @@ export default function TenantAdmin() {
           </div>
         );
       case "settings":
-        return <TenantSettings tenantId={tenant.id} tenantSlug={tenant.slug} />;
+        return <TenantSettings key={refreshKey} tenantId={tenant.id} tenantSlug={tenant.slug} />;
       default:
         return null;
     }
@@ -468,10 +489,18 @@ export default function TenantAdmin() {
         </div>
       </header>
 
-      {/* Content */}
-      <main className="mx-auto max-w-7xl px-4 md:px-4 py-4 md:py-6 safe-area-bottom">
-        {renderContent()}
-      </main>
+      {/* Content with Pull to Refresh on mobile */}
+      {isMobile ? (
+        <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
+          <main className="mx-auto max-w-7xl px-4 py-4 safe-area-bottom">
+            {renderContent()}
+          </main>
+        </PullToRefresh>
+      ) : (
+        <main className="mx-auto max-w-7xl px-4 py-6 safe-area-bottom">
+          {renderContent()}
+        </main>
+      )}
     </div>
   );
 }

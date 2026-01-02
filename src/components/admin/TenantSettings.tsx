@@ -27,6 +27,7 @@ interface TenantData {
   city: string | null;
   postal_code: string | null;
   show_logo_on_landing: boolean;
+  heading_size: string | null;
 }
 
 export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) => {
@@ -44,12 +45,12 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
     try {
       const { data, error } = await supabase
         .from("tenants")
-        .select("name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code, show_logo_on_landing")
+        .select("name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code, show_logo_on_landing, heading_size")
         .eq("id", tenantId)
         .single();
 
       if (error) throw error;
-      setTenant({ ...data, show_logo_on_landing: data.show_logo_on_landing ?? true });
+      setTenant({ ...data, show_logo_on_landing: data.show_logo_on_landing ?? true, heading_size: data.heading_size ?? "large" });
     } catch (error) {
       console.error("Error fetching tenant:", error);
       toast({
@@ -120,6 +121,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
           city: tenant.city,
           postal_code: tenant.postal_code,
           show_logo_on_landing: tenant.show_logo_on_landing,
+          heading_size: tenant.heading_size,
         })
         .eq("id", tenantId);
 
@@ -191,6 +193,20 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                 value={tenant.name}
                 onChange={(e) => setTenant({ ...tenant, name: e.target.value })}
               />
+            </div>
+            <div>
+              <Label htmlFor="heading_size">Tamaño del título</Label>
+              <select
+                id="heading_size"
+                value={tenant.heading_size || "large"}
+                onChange={(e) => setTenant({ ...tenant, heading_size: e.target.value })}
+                className="w-full h-10 px-3 border rounded-md bg-background text-foreground"
+              >
+                <option value="medium">Mediano</option>
+                <option value="large">Grande</option>
+                <option value="xlarge">Extra grande</option>
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">Controla el tamaño del título en la landing page</p>
             </div>
             <div>
               <Label htmlFor="tagline">Eslogan</Label>
