@@ -75,7 +75,7 @@ const DEFAULT_HOURS: Record<number, TenantBusinessHours> = {
 };
 
 export function useTenantBusinessHours(tenantId: string) {
-  const [businessHours, setBusinessHours] = useState<Record<number, TenantBusinessHours>>(DEFAULT_HOURS);
+  const [businessHours, setBusinessHours] = useState<Record<number, TenantBusinessHours> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -93,21 +93,30 @@ export function useTenantBusinessHours(tenantId: string) {
 
         if (error) {
           console.error("Error fetching business hours:", error);
+          setBusinessHours(DEFAULT_HOURS);
           setLoading(false);
           return;
         }
 
         if (data && data.length > 0) {
+          // Start with defaults for all days
           const hoursMap: Record<number, TenantBusinessHours> = { ...DEFAULT_HOURS };
           
+          // Override with tenant-specific hours
           data.forEach((record) => {
-            hoursMap[record.day_of_week] = parseBusinessHours(record as TenantBusinessHoursRecord);
+            const parsed = parseBusinessHours(record as TenantBusinessHoursRecord);
+            hoursMap[record.day_of_week] = parsed;
+            console.log(`Day ${record.day_of_week}: open=${record.open_time} close=${record.close_time} -> morningStart=${parsed.morningStart} morningEnd=${parsed.morningEnd}`);
           });
 
           setBusinessHours(hoursMap);
+        } else {
+          // No tenant hours configured, use defaults
+          setBusinessHours(DEFAULT_HOURS);
         }
       } catch (error) {
         console.error("Error fetching business hours:", error);
+        setBusinessHours(DEFAULT_HOURS);
       } finally {
         setLoading(false);
       }
@@ -116,9 +125,12 @@ export function useTenantBusinessHours(tenantId: string) {
     fetchBusinessHours();
   }, [tenantId]);
 
+  // Get effective hours (use loaded hours or defaults)
+  const effectiveHours = businessHours || DEFAULT_HOURS;
+
   // Generate available slots for a given day
   const generateBaseSlots = (dayOfWeek: number): Set<number> => {
-    const hours = businessHours[dayOfWeek] || DEFAULT_HOURS[dayOfWeek];
+    const hours = effectiveHours[dayOfWeek] || DEFAULT_HOURS[dayOfWeek];
     const slotsSet = new Set<number>();
 
     if (hours.isClosed) return slotsSet;
@@ -141,18 +153,18 @@ export function useTenantBusinessHours(tenantId: string) {
   };
 
   const getBusinessHoursForDay = (dayOfWeek: number): TenantBusinessHours => {
-    return businessHours[dayOfWeek] || DEFAULT_HOURS[dayOfWeek];
+    return effectiveHours[dayOfWeek] || DEFAULT_HOURS[dayOfWeek];
   };
 
   // Get closed days for calendar
   const getClosedDays = (): number[] => {
-    return Object.entries(businessHours)
+    return Object.entries(effectiveHours)
       .filter(([_, hours]) => hours.isClosed)
       .map(([day]) => parseInt(day));
   };
 
   return {
-    businessHours,
+    businessHours: effectiveHours,
     loading,
     generateBaseSlots,
     getBusinessHoursForDay,
