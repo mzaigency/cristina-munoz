@@ -238,7 +238,7 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
@@ -250,12 +250,12 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={openCreateDialog}>
+              <Button onClick={openCreateDialog} className="w-full md:w-auto h-11 md:h-10">
                 <Plus className="mr-2 h-4 w-4" />
                 Añadir Estilista
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingStylist ? "Editar Estilista" : "Nuevo Estilista"}
@@ -370,29 +370,30 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
             <p className="text-sm">Añade tu primer estilista para empezar</p>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {stylists.map((stylist) => (
               <Card key={stylist.id} className={!stylist.is_active ? "opacity-60" : ""}>
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Avatar className="h-12 w-12 shrink-0">
                       <AvatarImage src={stylist.avatar_url || undefined} />
                       <AvatarFallback style={{ backgroundColor: stylist.color || "#8B5CF6" }}>
                         {stylist.name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="font-medium">{stylist.name}</p>
-                      <p className="text-sm text-muted-foreground">@{stylist.slug}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{stylist.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">@{stylist.slug}</p>
                       {!stylist.is_active && (
                         <span className="text-xs text-destructive">Inactivo</span>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-2 justify-end">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
+                      className="h-10 w-10"
                       onClick={() => {
                         setSelectedStylistForSchedule(stylist);
                         setScheduleEditorOpen(true);
@@ -402,16 +403,17 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
                       <Clock className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
+                      className="h-10 w-10"
                       onClick={() => openEditDialog(stylist)}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                        <Button variant="outline" size="icon" className="h-10 w-10 text-destructive border-destructive/50">
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

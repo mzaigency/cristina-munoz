@@ -256,18 +256,18 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Package className="h-5 w-5" />
           Productos ({products.length})
         </h2>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => openDialog()} className="gap-2">
+            <Button onClick={() => openDialog()} className="gap-2 w-full sm:w-auto h-11 sm:h-10">
               <Plus className="h-4 w-4" /> Nuevo producto
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{selectedProduct ? "Editar producto" : "Nuevo producto"}</DialogTitle>
             </DialogHeader>
@@ -340,64 +340,115 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
       )}
 
       {products.length > 0 ? (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead className="text-right">Coste</TableHead>
-                  <TableHead className="text-right">Precio</TableHead>
-                  <TableHead className="text-right">Stock</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="w-[140px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map(product => (
-                  <TableRow key={product.id} className={!product.is_active ? "opacity-50" : ""}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{product.name}</p>
-                        {product.barcode && <p className="text-xs text-muted-foreground">{product.barcode}</p>}
-                      </div>
-                    </TableCell>
-                    <TableCell><Badge variant="secondary">{product.category || "Sin categoría"}</Badge></TableCell>
-                    <TableCell className="text-right text-muted-foreground">{formatCurrency(product.cost)}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(product.price)}</TableCell>
-                    <TableCell className="text-right">
-                      <span className={product.stock <= product.min_stock ? "text-orange-600 font-medium" : ""}>
-                        {product.stock}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => toggleActive(product)}>
-                        <Badge variant={product.is_active ? "default" : "secondary"}>
-                          {product.is_active ? "Activo" : "Inactivo"}
-                        </Badge>
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openStockDialog(product)} title="Entrada de stock">
-                          <PackagePlus className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openDialog(product)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive"
-                          onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+        <>
+          {/* Mobile Card View */}
+          <div className="space-y-3 md:hidden">
+            {products.map(product => (
+              <Card key={product.id} className={!product.is_active ? "opacity-50" : ""}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{product.name}</p>
+                      {product.barcode && <p className="text-xs text-muted-foreground">{product.barcode}</p>}
+                      <Badge variant="secondary" className="mt-1">{product.category || "Sin categoría"}</Badge>
+                    </div>
+                    <Badge variant={product.is_active ? "default" : "secondary"} onClick={() => toggleActive(product)} className="cursor-pointer shrink-0 ml-2">
+                      {product.is_active ? "Activo" : "Inactivo"}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-sm mb-3">
+                    <div>
+                      <p className="text-muted-foreground">Coste</p>
+                      <p>{formatCurrency(product.cost)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Precio</p>
+                      <p className="font-medium">{formatCurrency(product.price)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Stock</p>
+                      <p className={product.stock <= product.min_stock ? "text-orange-600 font-medium" : ""}>
+                        {product.stock} uds
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1 h-10" onClick={() => openStockDialog(product)}>
+                      <PackagePlus className="h-4 w-4 mr-1" /> Stock
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-10 w-10" onClick={() => openDialog(product)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="h-10 w-10 text-destructive border-destructive/50"
+                      onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <Card className="hidden md:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Producto</TableHead>
+                    <TableHead>Categoría</TableHead>
+                    <TableHead className="text-right">Coste</TableHead>
+                    <TableHead className="text-right">Precio</TableHead>
+                    <TableHead className="text-right">Stock</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="w-[140px]"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {products.map(product => (
+                    <TableRow key={product.id} className={!product.is_active ? "opacity-50" : ""}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{product.name}</p>
+                          {product.barcode && <p className="text-xs text-muted-foreground">{product.barcode}</p>}
+                        </div>
+                      </TableCell>
+                      <TableCell><Badge variant="secondary">{product.category || "Sin categoría"}</Badge></TableCell>
+                      <TableCell className="text-right text-muted-foreground">{formatCurrency(product.cost)}</TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(product.price)}</TableCell>
+                      <TableCell className="text-right">
+                        <span className={product.stock <= product.min_stock ? "text-orange-600 font-medium" : ""}>
+                          {product.stock}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => toggleActive(product)}>
+                          <Badge variant={product.is_active ? "default" : "secondary"}>
+                            {product.is_active ? "Activo" : "Inactivo"}
+                          </Badge>
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => openStockDialog(product)} title="Entrada de stock">
+                            <PackagePlus className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => openDialog(product)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-destructive"
+                            onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
       ) : (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">

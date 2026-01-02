@@ -440,12 +440,12 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Gestión de Servicios</h2>
-          <p className="text-muted-foreground">Añade, edita o elimina los servicios de tu negocio</p>
+          <h2 className="text-xl md:text-2xl font-bold">Gestión de Servicios</h2>
+          <p className="text-sm md:text-base text-muted-foreground">Añade, edita o elimina los servicios de tu negocio</p>
         </div>
-        <Button onClick={handleOpenCreate}>
+        <Button onClick={handleOpenCreate} className="w-full md:w-auto h-11 md:h-10">
           <Plus className="h-4 w-4 mr-2" />
           Nuevo Servicio
         </Button>
@@ -466,27 +466,28 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
           {categories.map((category) => (
             <Card key={category}>
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
                     {getCategoryImage(category) ? (
                       <img 
                         src={getCategoryImage(category)} 
                         alt={category}
-                        className="w-12 h-12 rounded-lg object-cover"
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                        <Image className="h-6 w-6 text-muted-foreground" />
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Image className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                       </div>
                     )}
-                    <div>
-                      <CardTitle>{category}</CardTitle>
+                    <div className="min-w-0">
+                      <CardTitle className="text-base sm:text-lg truncate">{category}</CardTitle>
                       <CardDescription>{groupedServices[category].length} servicios</CardDescription>
                     </div>
                   </div>
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className="w-full sm:w-auto h-10"
                     onClick={() => {
                       setSelectedCategory(category);
                       setIsCategoryImageDialogOpen(true);
@@ -498,58 +499,101 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Duración</TableHead>
-                      <TableHead>Precio</TableHead>
-                      <TableHead className="w-[100px]">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {groupedServices[category].map((service) => (
-                      <TableRow key={service.id}>
-                        <TableCell className="font-medium">{service.name}</TableCell>
-                        <TableCell>
-                          <Badge variant={service.type === "Compuesto" ? "secondary" : "outline"}>
-                            {service.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatDuration(service)}</TableCell>
-                        <TableCell>
-                          {service.price !== null ? (
-                            <span className="font-medium text-primary">{service.price.toFixed(2)} €</span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleOpenEdit(service)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedService(service);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                {/* Mobile Card View */}
+                <div className="space-y-3 md:hidden">
+                  {groupedServices[category].map((service) => (
+                    <div key={service.id} className="p-4 rounded-lg border">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{service.name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant={service.type === "Compuesto" ? "secondary" : "outline"} className="text-xs">
+                              {service.type}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">{formatDuration(service)}</span>
                           </div>
-                        </TableCell>
+                        </div>
+                        {service.price !== null ? (
+                          <span className="font-bold text-primary shrink-0 ml-2">{service.price.toFixed(2)} €</span>
+                        ) : (
+                          <span className="text-muted-foreground shrink-0 ml-2">-</span>
+                        )}
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <Button variant="outline" size="sm" className="flex-1 h-10" onClick={() => handleOpenEdit(service)}>
+                          <Pencil className="h-4 w-4 mr-1" /> Editar
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-10 w-10 text-destructive border-destructive/50"
+                          onClick={() => {
+                            setSelectedService(service);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Duración</TableHead>
+                        <TableHead>Precio</TableHead>
+                        <TableHead className="w-[100px]">Acciones</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {groupedServices[category].map((service) => (
+                        <TableRow key={service.id}>
+                          <TableCell className="font-medium">{service.name}</TableCell>
+                          <TableCell>
+                            <Badge variant={service.type === "Compuesto" ? "secondary" : "outline"}>
+                              {service.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatDuration(service)}</TableCell>
+                          <TableCell>
+                            {service.price !== null ? (
+                              <span className="font-medium text-primary">{service.price.toFixed(2)} €</span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleOpenEdit(service)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedService(service);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           ))}

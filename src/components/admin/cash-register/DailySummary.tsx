@@ -170,16 +170,16 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4">
         <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-200/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/20">
-                <Banknote className="h-5 w-5 text-emerald-600" />
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/20 shrink-0">
+                <Banknote className="h-4 w-4 md:h-5 md:w-5 text-emerald-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Efectivo</p>
-                <p className="text-lg font-bold text-emerald-600">
+                <p className="text-base md:text-lg font-bold text-emerald-600 truncate">
                   {formatCurrency(summary.cashTotal)}
                 </p>
               </div>
@@ -188,14 +188,14 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         </Card>
 
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-200/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/20">
-                <CreditCard className="h-5 w-5 text-blue-600" />
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/20 shrink-0">
+                <CreditCard className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Tarjeta</p>
-                <p className="text-lg font-bold text-blue-600">
+                <p className="text-base md:text-lg font-bold text-blue-600 truncate">
                   {formatCurrency(summary.cardTotal)}
                 </p>
               </div>
@@ -204,14 +204,14 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         </Card>
 
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/20">
-                <TrendingUp className="h-5 w-5 text-primary" />
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="p-2 rounded-lg bg-primary/20 shrink-0">
+                <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Total</p>
-                <p className="text-lg font-bold text-primary">
+                <p className="text-base md:text-lg font-bold text-primary truncate">
                   {formatCurrency(summary.totalSales)}
                 </p>
               </div>
@@ -220,14 +220,14 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         </Card>
 
         <Card className="bg-gradient-to-br from-violet-500/10 to-violet-600/5 border-violet-200/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-violet-500/20">
-                <Receipt className="h-5 w-5 text-violet-600" />
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="p-2 rounded-lg bg-violet-500/20 shrink-0">
+                <Receipt className="h-4 w-4 md:h-5 md:w-5 text-violet-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Operaciones</p>
-                <p className="text-lg font-bold text-violet-600">
+                <p className="text-base md:text-lg font-bold text-violet-600">
                   {summary.transactionCount}
                 </p>
               </div>

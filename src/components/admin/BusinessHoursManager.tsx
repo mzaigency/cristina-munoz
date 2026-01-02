@@ -245,7 +245,7 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
@@ -255,7 +255,7 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
               Configura los turnos de mañana y tarde de tu salón
             </CardDescription>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving} className="w-full md:w-auto h-11 md:h-10">
             {saving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -302,7 +302,7 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
                 </div>
 
                 {hour.is_open && (
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                     {/* Morning section */}
                     <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 p-4 space-y-3">
                       <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
@@ -316,7 +316,7 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
                             type="time"
                             value={hour.morning_start}
                             onChange={(e) => updateHour(day.value, "morning_start", e.target.value)}
-                            className="mt-1"
+                            className="mt-1 h-11 md:h-10"
                           />
                         </div>
                         <div className="flex-1">
@@ -325,7 +325,7 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
                             type="time"
                             value={hour.morning_end}
                             onChange={(e) => updateHour(day.value, "morning_end", e.target.value)}
-                            className="mt-1"
+                            className="mt-1 h-11 md:h-10"
                           />
                         </div>
                       </div>

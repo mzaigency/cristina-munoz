@@ -229,54 +229,91 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
           ) : filteredReviews.length === 0 ? (
             <p className="text-center text-muted-foreground">No hay reseñas</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Estrellas</TableHead>
-                    <TableHead>Comentario</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredReviews.map((review) => (
-                    <TableRow key={review.id} className={!review.approved ? "bg-yellow-50 dark:bg-yellow-950/20" : ""}>
-                      <TableCell className="whitespace-nowrap">
-                        {format(
-                          new Date(review.created_at),
-                          "dd/MM/yyyy HH:mm",
-                          { locale: es }
-                        )}
-                      </TableCell>
-                      <TableCell>{renderStars(review.rating)}</TableCell>
-                      <TableCell className="max-w-md">
-                        {review.comment || (
-                          <span className="text-muted-foreground italic">
-                            Sin comentario
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={review.approved ? "default" : "secondary"}>
-                          {review.approved ? "Publicada" : "Pendiente"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setReviewToDelete(review.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
+            <>
+              {/* Mobile Card View */}
+              <div className="space-y-3 md:hidden">
+                {filteredReviews.map((review) => (
+                  <div 
+                    key={review.id} 
+                    className={`p-4 rounded-lg border ${!review.approved ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200" : ""}`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">
+                        {format(new Date(review.created_at), "dd/MM/yyyy HH:mm", { locale: es })}
+                      </span>
+                      <Badge variant={review.approved ? "default" : "secondary"}>
+                        {review.approved ? "Publicada" : "Pendiente"}
+                      </Badge>
+                    </div>
+                    <div className="mb-2">{renderStars(review.rating)}</div>
+                    <p className="text-sm mb-3">
+                      {review.comment || (
+                        <span className="text-muted-foreground italic">Sin comentario</span>
+                      )}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full h-11 text-destructive border-destructive/50"
+                      onClick={() => setReviewToDelete(review.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Estrellas</TableHead>
+                      <TableHead>Comentario</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredReviews.map((review) => (
+                      <TableRow key={review.id} className={!review.approved ? "bg-yellow-50 dark:bg-yellow-950/20" : ""}>
+                        <TableCell className="whitespace-nowrap">
+                          {format(
+                            new Date(review.created_at),
+                            "dd/MM/yyyy HH:mm",
+                            { locale: es }
+                          )}
+                        </TableCell>
+                        <TableCell>{renderStars(review.rating)}</TableCell>
+                        <TableCell className="max-w-md">
+                          {review.comment || (
+                            <span className="text-muted-foreground italic">
+                              Sin comentario
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={review.approved ? "default" : "secondary"}>
+                            {review.approved ? "Publicada" : "Pendiente"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setReviewToDelete(review.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
