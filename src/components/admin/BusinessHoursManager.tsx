@@ -6,16 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Clock, Save } from "lucide-react";
+import { Loader2, Clock, Save, Sun, Moon, Copy } from "lucide-react";
 
 interface BusinessHour {
   id?: string;
   day_of_week: number;
   is_open: boolean;
-  open_time: string | null;
-  close_time: string | null;
-  break_start: string | null;
-  break_end: string | null;
+  morning_start: string;
+  morning_end: string;
+  afternoon_start: string;
+  afternoon_end: string;
+  has_afternoon: boolean;
 }
 
 interface BusinessHoursManagerProps {
@@ -35,11 +36,67 @@ const DAYS_OF_WEEK = [
 const DEFAULT_HOURS: BusinessHour[] = DAYS_OF_WEEK.map(day => ({
   day_of_week: day.value,
   is_open: day.value >= 1 && day.value <= 5,
-  open_time: "09:00",
-  close_time: "20:00",
-  break_start: null,
-  break_end: null
+  morning_start: "09:00",
+  morning_end: "14:00",
+  afternoon_start: "16:00",
+  afternoon_end: "20:00",
+  has_afternoon: day.value >= 1 && day.value <= 5
 }));
+
+// Convert from DB format (open_time, close_time, break_start, break_end) to UI format
+function fromDbFormat(record: any): BusinessHour {
+  const hasBreak = record.break_start && record.break_end;
+  
+  return {
+    id: record.id,
+    day_of_week: record.day_of_week,
+    is_open: record.is_open ?? false,
+    morning_start: record.open_time || "09:00",
+    morning_end: hasBreak ? record.break_start : record.close_time || "14:00",
+    afternoon_start: hasBreak ? record.break_end : "16:00",
+    afternoon_end: hasBreak ? record.close_time : "20:00",
+    has_afternoon: hasBreak
+  };
+}
+
+// Convert from UI format to DB format
+function toDbFormat(hour: BusinessHour, tenantId: string) {
+  if (!hour.is_open) {
+    return {
+      tenant_id: tenantId,
+      day_of_week: hour.day_of_week,
+      is_open: false,
+      open_time: null,
+      close_time: null,
+      break_start: null,
+      break_end: null
+    };
+  }
+
+  if (hour.has_afternoon) {
+    // Morning + Afternoon with break
+    return {
+      tenant_id: tenantId,
+      day_of_week: hour.day_of_week,
+      is_open: true,
+      open_time: hour.morning_start,
+      close_time: hour.afternoon_end,
+      break_start: hour.morning_end,
+      break_end: hour.afternoon_start
+    };
+  } else {
+    // Only morning, no break
+    return {
+      tenant_id: tenantId,
+      day_of_week: hour.day_of_week,
+      is_open: true,
+      open_time: hour.morning_start,
+      close_time: hour.morning_end,
+      break_start: null,
+      break_end: null
+    };
+  }
+}
 
 export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
   const [hours, setHours] = useState<BusinessHour[]>(DEFAULT_HOURS);
@@ -68,15 +125,7 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
       const mergedHours = DAYS_OF_WEEK.map(day => {
         const existing = data.find(h => h.day_of_week === day.value);
         if (existing) {
-          return {
-            id: existing.id,
-            day_of_week: existing.day_of_week,
-            is_open: existing.is_open ?? false,
-            open_time: existing.open_time,
-            close_time: existing.close_time,
-            break_start: existing.break_start,
-            break_end: existing.break_end
-          };
+          return fromDbFormat(existing);
         }
         return DEFAULT_HOURS.find(h => h.day_of_week === day.value)!;
       });
@@ -91,7 +140,56 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
     ));
   };
 
+  const validateHours = (): boolean => {
+    for (const hour of hours) {
+      if (!hour.is_open) continue;
+
+      const morningStart = timeToMinutes(hour.morning_start);
+      const morningEnd = timeToMinutes(hour.morning_end);
+      
+      if (morningStart >= morningEnd) {
+        toast({
+          title: "Error de validación",
+          description: `${DAYS_OF_WEEK.find(d => d.value === hour.day_of_week)?.label}: La hora de fin de mañana debe ser posterior a la de inicio`,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      if (hour.has_afternoon) {
+        const afternoonStart = timeToMinutes(hour.afternoon_start);
+        const afternoonEnd = timeToMinutes(hour.afternoon_end);
+
+        if (morningEnd >= afternoonStart) {
+          toast({
+            title: "Error de validación",
+            description: `${DAYS_OF_WEEK.find(d => d.value === hour.day_of_week)?.label}: El turno de tarde debe comenzar después del turno de mañana`,
+            variant: "destructive"
+          });
+          return false;
+        }
+
+        if (afternoonStart >= afternoonEnd) {
+          toast({
+            title: "Error de validación",
+            description: `${DAYS_OF_WEEK.find(d => d.value === hour.day_of_week)?.label}: La hora de fin de tarde debe ser posterior a la de inicio`,
+            variant: "destructive"
+          });
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  const timeToMinutes = (time: string): number => {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  };
+
   const handleSave = async () => {
+    if (!validateHours()) return;
+
     setSaving(true);
 
     // First delete existing hours for this tenant
@@ -103,17 +201,7 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
     // Then insert the new hours
     const { error } = await supabase
       .from("tenant_business_hours")
-      .insert(
-        hours.map(h => ({
-          tenant_id: tenantId,
-          day_of_week: h.day_of_week,
-          is_open: h.is_open,
-          open_time: h.is_open ? h.open_time : null,
-          close_time: h.is_open ? h.close_time : null,
-          break_start: h.is_open ? h.break_start : null,
-          break_end: h.is_open ? h.break_end : null
-        }))
-      );
+      .insert(hours.map(h => toDbFormat(h, tenantId)));
 
     if (error) {
       toast({
@@ -136,10 +224,11 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
     setHours(prev => prev.map(h => ({
       ...h,
       is_open: source.is_open,
-      open_time: source.open_time,
-      close_time: source.close_time,
-      break_start: source.break_start,
-      break_end: source.break_end
+      morning_start: source.morning_start,
+      morning_end: source.morning_end,
+      afternoon_start: source.afternoon_start,
+      afternoon_end: source.afternoon_end,
+      has_afternoon: source.has_afternoon
     })));
 
     toast({ title: "Copiado", description: "Horario aplicado a todos los días" });
@@ -163,7 +252,7 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
               Horario de Apertura
             </CardTitle>
             <CardDescription>
-              Configura el horario de apertura de tu salón
+              Configura los turnos de mañana y tarde de tu salón
             </CardDescription>
           </div>
           <Button onClick={handleSave} disabled={saving}>
@@ -183,70 +272,105 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
             return (
               <div
                 key={day.value}
-                className="flex flex-col gap-4 rounded-lg border p-4 md:flex-row md:items-center"
+                className="rounded-lg border p-4 space-y-4"
               >
-                <div className="flex items-center gap-4 md:w-40">
-                  <Switch
-                    checked={hour.is_open}
-                    onCheckedChange={(checked) => updateHour(day.value, "is_open", checked)}
-                  />
-                  <span className={`font-medium ${!hour.is_open ? "text-muted-foreground" : ""}`}>
-                    {day.label}
-                  </span>
+                {/* Day header with switch */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={hour.is_open}
+                      onCheckedChange={(checked) => updateHour(day.value, "is_open", checked)}
+                    />
+                    <span className={`font-semibold text-lg ${!hour.is_open ? "text-muted-foreground" : ""}`}>
+                      {day.label}
+                    </span>
+                    {!hour.is_open && (
+                      <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">Cerrado</span>
+                    )}
+                  </div>
+                  {index === 0 && hour.is_open && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToAllDays(day.value)}
+                      className="gap-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copiar a todos
+                    </Button>
+                  )}
                 </div>
 
                 {hour.is_open && (
-                  <div className="flex flex-1 flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm text-muted-foreground whitespace-nowrap">Apertura:</Label>
-                      <Input
-                        type="time"
-                        value={hour.open_time || "09:00"}
-                        onChange={(e) => updateHour(day.value, "open_time", e.target.value)}
-                        className="w-28"
-                      />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {/* Morning section */}
+                    <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 p-4 space-y-3">
+                      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                        <Sun className="h-4 w-4" />
+                        <Label className="font-medium">Turno de Mañana</Label>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <Label className="text-xs text-muted-foreground">Desde</Label>
+                          <Input
+                            type="time"
+                            value={hour.morning_start}
+                            onChange={(e) => updateHour(day.value, "morning_start", e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Label className="text-xs text-muted-foreground">Hasta</Label>
+                          <Input
+                            type="time"
+                            value={hour.morning_end}
+                            onChange={(e) => updateHour(day.value, "morning_end", e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm text-muted-foreground whitespace-nowrap">Cierre:</Label>
-                      <Input
-                        type="time"
-                        value={hour.close_time || "20:00"}
-                        onChange={(e) => updateHour(day.value, "close_time", e.target.value)}
-                        className="w-28"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm text-muted-foreground whitespace-nowrap">Descanso:</Label>
-                      <Input
-                        type="time"
-                        value={hour.break_start || ""}
-                        onChange={(e) => updateHour(day.value, "break_start", e.target.value || null)}
-                        className="w-28"
-                        placeholder="--:--"
-                      />
-                      <span className="text-muted-foreground">-</span>
-                      <Input
-                        type="time"
-                        value={hour.break_end || ""}
-                        onChange={(e) => updateHour(day.value, "break_end", e.target.value || null)}
-                        className="w-28"
-                        placeholder="--:--"
-                      />
-                    </div>
-                    {index === 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyToAllDays(day.value)}
-                      >
-                        Copiar a todos
-                      </Button>
-                    )}
-                  </div>
-                )}
 
-                {!hour.is_open && (
-                  <span className="text-sm text-muted-foreground">Cerrado</span>
+                    {/* Afternoon section */}
+                    <div className={`rounded-lg p-4 space-y-3 ${hour.has_afternoon ? 'bg-indigo-50 dark:bg-indigo-950/20' : 'bg-muted/50'}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
+                          <Moon className="h-4 w-4" />
+                          <Label className="font-medium">Turno de Tarde</Label>
+                        </div>
+                        <Switch
+                          checked={hour.has_afternoon}
+                          onCheckedChange={(checked) => updateHour(day.value, "has_afternoon", checked)}
+                        />
+                      </div>
+                      {hour.has_afternoon ? (
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <Label className="text-xs text-muted-foreground">Desde</Label>
+                            <Input
+                              type="time"
+                              value={hour.afternoon_start}
+                              onChange={(e) => updateHour(day.value, "afternoon_start", e.target.value)}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <Label className="text-xs text-muted-foreground">Hasta</Label>
+                            <Input
+                              type="time"
+                              value={hour.afternoon_end}
+                              onChange={(e) => updateHour(day.value, "afternoon_end", e.target.value)}
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Sin turno de tarde
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             );
