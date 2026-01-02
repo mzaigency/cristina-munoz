@@ -350,48 +350,50 @@ export default function TenantAdmin() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background border-b shadow-sm">
-        <div className="mx-auto max-w-7xl px-4">
+      {/* Header - Mobile optimized with safe area */}
+      <header className="sticky top-0 z-50 bg-background border-b shadow-sm safe-area-top">
+        <div className="mx-auto max-w-7xl px-3 md:px-4">
           {/* Top row - Logo, title and actions */}
-          <div className="flex items-center justify-between py-3 border-b border-border/50">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between py-2 md:py-3 border-b border-border/50">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
               {tenant.logo_url ? (
-                <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20" />
+                <img src={tenant.logo_url} alt={tenant.name} className="h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl object-cover ring-2 ring-primary/20 shrink-0" />
               ) : (
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Scissors className="h-5 w-5 text-primary" />
+                <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Scissors className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 </div>
               )}
-              <div>
-                <h1 className="text-lg font-bold text-foreground">{tenant.name}</h1>
-                <p className="text-xs text-muted-foreground">{userEmail}</p>
+              <div className="min-w-0">
+                <h1 className="text-sm md:text-lg font-bold text-foreground truncate">{tenant.name}</h1>
+                <p className="text-[10px] md:text-xs text-muted-foreground truncate hidden sm:block">{userEmail}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <GuidedTour onTabChange={(tab) => setActiveTab(tab as TabValue)} />
-              <HelpTutorial />
+            <div className="flex items-center gap-1 md:gap-2">
+              <div className="hidden md:flex items-center gap-2">
+                <GuidedTour onTabChange={(tab) => setActiveTab(tab as TabValue)} />
+                <HelpTutorial />
+              </div>
               <Button 
                 onClick={() => navigate(`/salon/${slug}`)} 
                 variant="outline" 
                 size="sm"
-                className="gap-2"
+                className="gap-1.5 h-8 px-2 md:px-3 text-xs md:text-sm"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 <span className="hidden sm:inline">Ver web</span>
               </Button>
-              <Button onClick={() => navigate("/")} variant="ghost" size="icon" title="Inicio">
+              <Button onClick={() => navigate("/")} variant="ghost" size="icon" className="h-8 w-8" title="Inicio">
                 <Home className="h-4 w-4" />
               </Button>
-              <Button onClick={handleSignOut} variant="ghost" size="icon" title="Cerrar sesión">
+              <Button onClick={handleSignOut} variant="ghost" size="icon" className="h-8 w-8" title="Cerrar sesión">
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          {/* Bottom row - Navigation tabs */}
-          <nav className="flex items-center gap-1 py-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+          {/* Bottom row - Navigation tabs - Scrollable on mobile */}
+          <nav className="flex items-center gap-0.5 md:gap-1 py-1.5 md:py-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
             {mainItems.map((item) => {
               const isActive = activeTab === item.value;
               return (
@@ -399,32 +401,32 @@ export default function TenantAdmin() {
                   key={item.value}
                   onClick={() => setActiveTab(item.value)}
                   className={`
-                    relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 shrink-0 min-w-[60px]
+                    relative flex flex-col items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl transition-all duration-200 shrink-0 min-w-[48px] md:min-w-[60px]
                     ${isActive 
                       ? "bg-primary text-primary-foreground shadow-md" 
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }
                   `}
                 >
-                  <div className={`relative ${isActive ? "" : ""}`}>
-                    {item.value === "calendar" && <Calendar className="h-5 w-5" />}
-                    {item.value === "cash" && <Wallet className="h-5 w-5" />}
-                    {item.value === "reviews" && <Star className="h-5 w-5" />}
-                    {item.value === "messages" && <MessageCircle className="h-5 w-5" />}
-                    {item.value === "stories" && <ImageIcon className="h-5 w-5" />}
-                    {item.value === "security" && <BarChart3 className="h-5 w-5" />}
-                    {item.value === "products" && <Package className="h-5 w-5" />}
-                    {item.value === "services" && <Scissors className="h-5 w-5" />}
-                    {item.value === "stylists" && <Users className="h-5 w-5" />}
-                    {item.value === "hours" && <Clock className="h-5 w-5" />}
-                    {item.value === "settings" && <Settings className="h-5 w-5" />}
+                  <div className="relative">
+                    {item.value === "calendar" && <Calendar className="h-4 w-4 md:h-5 md:w-5" />}
+                    {item.value === "cash" && <Wallet className="h-4 w-4 md:h-5 md:w-5" />}
+                    {item.value === "reviews" && <Star className="h-4 w-4 md:h-5 md:w-5" />}
+                    {item.value === "messages" && <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />}
+                    {item.value === "stories" && <ImageIcon className="h-4 w-4 md:h-5 md:w-5" />}
+                    {item.value === "security" && <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />}
+                    {item.value === "products" && <Package className="h-4 w-4 md:h-5 md:w-5" />}
+                    {item.value === "services" && <Scissors className="h-4 w-4 md:h-5 md:w-5" />}
+                    {item.value === "stylists" && <Users className="h-4 w-4 md:h-5 md:w-5" />}
+                    {item.value === "hours" && <Clock className="h-4 w-4 md:h-5 md:w-5" />}
+                    {item.value === "settings" && <Settings className="h-4 w-4 md:h-5 md:w-5" />}
                     {item.badge && item.badge > 0 && (
-                      <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white">
+                      <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 md:h-4 md:w-4 items-center justify-center rounded-full bg-destructive text-[8px] md:text-[9px] font-bold text-white">
                         {item.badge > 9 ? "9+" : item.badge}
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] font-medium leading-none">{item.label}</span>
+                  <span className="text-[9px] md:text-[10px] font-medium leading-none">{item.label}</span>
                 </button>
               );
             })}
@@ -433,7 +435,7 @@ export default function TenantAdmin() {
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-7xl px-4 py-6">
+      <main className="mx-auto max-w-7xl px-3 md:px-4 py-4 md:py-6 safe-area-bottom">
         {renderContent()}
       </main>
     </div>
