@@ -1,6 +1,18 @@
 import { SEO } from "@/components/SEO";
 import { motion } from "motion/react";
-import { Building2, Check, Sparkles, Crown, Zap, Calendar, Star, MessageSquare, BarChart3, Palette, ArrowRight } from "lucide-react";
+import {
+  Building2,
+  Check,
+  Sparkles,
+  Crown,
+  Zap,
+  Calendar,
+  Star,
+  MessageSquare,
+  BarChart3,
+  Palette,
+  ArrowRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -8,32 +20,32 @@ const features = [
   {
     icon: Palette,
     title: "Landing page profesional",
-    description: "Tu propia página web personalizada con tu marca, colores y estilo único."
+    description: "Tu propia página web personalizada con tu marca, colores y estilo único.",
   },
   {
     icon: Calendar,
     title: "Sistema de reservas 24/7",
-    description: "Tus clientes pueden reservar cita online en cualquier momento del día."
+    description: "Tus clientes pueden reservar cita online en cualquier momento del día.",
   },
   {
     icon: BarChart3,
     title: "Gestión de calendario",
-    description: "Calendario inteligente con vista de estilistas, bloqueos y recurrencias."
+    description: "Calendario inteligente con vista de estilistas, bloqueos y recurrencias.",
   },
   {
     icon: Star,
     title: "Reseñas verificadas",
-    description: "Sistema de valoraciones que genera confianza en nuevos clientes."
+    description: "Sistema de valoraciones que genera confianza en nuevos clientes.",
   },
   {
     icon: MessageSquare,
     title: "Stories y promociones",
-    description: "Comparte tu trabajo y ofertas especiales con toda la comunidad."
+    description: "Comparte tu trabajo y ofertas especiales con toda la comunidad.",
   },
   {
     icon: Sparkles,
     title: "Panel de administración",
-    description: "Gestiona servicios, precios, horarios y equipo desde un solo lugar."
+    description: "Gestiona servicios, precios, horarios y equipo desde un solo lugar.",
   },
 ];
 
@@ -65,12 +77,12 @@ export default function ForBusiness() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img src="/favicon.png" alt="GlowApp" className="h-8 w-8" />
-            <span className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">GlowApp</span>
+            <span className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              GlowApp
+            </span>
           </Link>
           <Button asChild>
-            <Link to="/onboarding">
-              Empezar gratis
-            </Link>
+            <Link to="/onboarding">Empezar gratis</Link>
           </Button>
         </div>
       </header>
@@ -93,8 +105,7 @@ export default function ForBusiness() {
             transition={{ delay: 0.1 }}
             className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6"
           >
-            Haz crecer tu negocio con{" "}
-            <span className="text-gradient">GlowApp</span>
+            Haz crecer tu negocio con <span className="text-gradient">GlowApp</span>
           </motion.h1>
 
           <motion.p
@@ -103,8 +114,8 @@ export default function ForBusiness() {
             transition={{ delay: 0.2 }}
             className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
           >
-            La plataforma todo en uno para peluquerías, barberías, spas y centros de estética. 
-            Conecta con nuevos clientes y gestiona tu negocio desde un solo lugar.
+            La plataforma todo en uno para peluquerías, barberías, spas y centros de estética. Conecta con nuevos
+            clientes y gestiona tu negocio desde un solo lugar.
           </motion.p>
 
           <motion.div
@@ -173,12 +184,8 @@ export default function ForBusiness() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Planes simples y transparentes
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              Sin costes ocultos. Cancela cuando quieras.
-            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Planes simples y transparentes</h2>
+            <p className="text-muted-foreground text-lg">Sin costes ocultos. Cancela cuando quieras.</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -205,9 +212,7 @@ export default function ForBusiness() {
                   <span className="text-5xl font-bold text-foreground">39,99€</span>
                   <span className="text-muted-foreground text-lg">/mes</span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Después del mes de prueba gratuito
-                </p>
+                <p className="text-sm text-muted-foreground mt-2">Después del mes de prueba gratuito</p>
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -220,9 +225,7 @@ export default function ForBusiness() {
               </ul>
 
               <Button asChild variant="outline" className="w-full" size="lg">
-                <Link to="/onboarding">
-                  Empezar prueba gratis
-                </Link>
+                <Link to="/onboarding">Empezar prueba gratis</Link>
               </Button>
             </motion.div>
 
@@ -271,9 +274,7 @@ export default function ForBusiness() {
               </ul>
 
               <Button asChild className="w-full gradient-primary text-primary-foreground" size="lg">
-                <Link to="/onboarding">
-                  Empezar prueba gratis
-                </Link>
+                <Link to="/onboarding">Empezar prueba gratis</Link>
               </Button>
             </motion.div>
           </div>
@@ -331,9 +332,7 @@ export default function ForBusiness() {
         <div className="container mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <img src="/favicon.png" alt="GlowApp" className="h-6 w-6" />
-            <p className="text-sm text-muted-foreground">
-              © 2024 GlowApp. Todos los derechos reservados.
-            </p>
+            <p className="text-sm text-muted-foreground">© {currentYear} GlowApp. Todos los derechos reservados.</p>
           </div>
           <div className="flex gap-4">
             <Link to="/terminos" className="text-sm text-muted-foreground hover:text-foreground">
