@@ -4,8 +4,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, GripVertical } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,24 +74,24 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<string>("");
   const [highlightedBookingId, setHighlightedBookingId] = useState<string | null>(null);
-  
+
   // Drag & Drop state
   const [draggedBooking, setDraggedBooking] = useState<LocalBooking | null>(null);
   const [dragOverStylist, setDragOverStylist] = useState<string | null>(null);
   const [dragOverTime, setDragOverTime] = useState<string | null>(null);
   const dragRef = useRef<HTMLDivElement | null>(null);
-  
+
   // Resize state
   const [resizingBooking, setResizingBooking] = useState<LocalBooking | null>(null);
   const [resizeStartY, setResizeStartY] = useState<number>(0);
   const [resizeOriginalDuration, setResizeOriginalDuration] = useState<number>(0);
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<LocalBooking[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  
+
   // Block period state
   const [blockStartDate, setBlockStartDate] = useState<Date | undefined>(undefined);
   const [blockEndDate, setBlockEndDate] = useState<Date | undefined>(undefined);
@@ -83,15 +99,15 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   const [blockStylist, setBlockStylist] = useState<string>("all");
   const [blockStartTime, setBlockStartTime] = useState<string>("09:00");
   const [blockEndTime, setBlockEndTime] = useState<string>("19:00");
-  
+
   // Completion dialog
   const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
   const [pendingCompletionBooking, setPendingCompletionBooking] = useState<LocalBooking | null>(null);
-  
+
   // Series cancellation dialog
   const [seriesCancelDialogOpen, setSeriesCancelDialogOpen] = useState(false);
   const [pendingCancelBooking, setPendingCancelBooking] = useState<LocalBooking | null>(null);
-  
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -109,7 +125,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     try {
       setLoading(true);
       const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-      
+
       const { data, error } = await supabase
         .from("bookings")
         .select("*")
@@ -126,7 +142,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       toast({
         title: "Error",
         description: error.message || "Error al cargar las citas",
-        variant: "destructive"
+        variant: "destructive",
       });
       setBookings([]);
     } finally {
@@ -139,15 +155,15 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       toast({
         title: "Búsqueda inválida",
         description: "Introduce al menos 2 caracteres para buscar",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    
+
     try {
       setIsSearching(true);
       const query = searchQuery.trim().toLowerCase();
-      
+
       const { data, error } = await supabase
         .from("bookings")
         .select("*")
@@ -158,16 +174,16 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
         .order("Fecha", { ascending: true })
         .order("Hora", { ascending: true })
         .limit(20);
-      
+
       if (error) throw error;
-      
+
       setSearchResults(data || []);
       setShowSearchResults(true);
-      
+
       if (!data || data.length === 0) {
         toast({
           title: "Sin resultados",
-          description: "No se encontraron citas con esos datos"
+          description: "No se encontraron citas con esos datos",
         });
       }
     } catch (error: any) {
@@ -175,7 +191,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       toast({
         title: "Error en la búsqueda",
         description: error.message || "No se pudo realizar la búsqueda",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsSearching(false);
@@ -190,21 +206,21 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     setShowSearchResults(false);
     setSearchQuery("");
     setHighlightedBookingId(result.id);
-    
+
     setTimeout(() => {
       const eventElement = document.querySelector(`[data-booking-id="${result.id}"]`);
       if (eventElement) {
         eventElement.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }, 300);
-    
+
     setTimeout(() => {
       setHighlightedBookingId(null);
     }, 5000);
-    
+
     toast({
       title: "Cita encontrada",
-      description: `${result.customer_name} - ${format(appointmentDate, "d MMM yyyy", { locale: es })}`
+      description: `${result.customer_name} - ${format(appointmentDate, "d MMM yyyy", { locale: es })}`,
     });
   };
 
@@ -223,20 +239,20 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     if (!selectedBooking) return;
     try {
       setLoading(true);
-      
+
       const { error } = await supabase
         .from("bookings")
         .update({
           title: selectedBooking.title,
-          notes: selectedBooking.notes
+          notes: selectedBooking.notes,
         })
         .eq("id", selectedBooking.id);
 
       if (error) throw error;
-      
+
       toast({
         title: "Cita actualizada",
-        description: "Los cambios se han guardado correctamente"
+        description: "Los cambios se han guardado correctamente",
       });
       setIsEditDialogOpen(false);
       setSelectedBooking(null);
@@ -245,7 +261,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       toast({
         title: "Error",
         description: error.message || "Error al actualizar la cita",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -254,7 +270,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
   const handleMarkCompleted = async (booking: LocalBooking) => {
     const isAlreadyCompleted = booking.notes?.includes("[✓ COMPLETADA]");
-    
+
     if (!isAlreadyCompleted) {
       setPendingCompletionBooking(booking);
       setCompletionDialogOpen(true);
@@ -264,33 +280,28 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     // Unmark as completed
     try {
       const updatedNotes = (booking.notes || "").replace("[✓ COMPLETADA] ", "");
-      const { error } = await supabase
-        .from("bookings")
-        .update({ notes: updatedNotes })
-        .eq("id", booking.id);
+      const { error } = await supabase.from("bookings").update({ notes: updatedNotes }).eq("id", booking.id);
 
       if (error) throw error;
 
-      setBookings(bookings.map(b => 
-        b.id === booking.id ? { ...b, notes: updatedNotes } : b
-      ));
-      
+      setBookings(bookings.map((b) => (b.id === booking.id ? { ...b, notes: updatedNotes } : b)));
+
       toast({
         title: "Cita desmarcada",
-        description: "La cita se ha desmarcado"
+        description: "La cita se ha desmarcado",
       });
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Error al actualizar la cita",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const handleConfirmCompletion = async (sendReviewMessage: boolean) => {
     if (!pendingCompletionBooking) return;
-    
+
     try {
       const updatedNotes = `[✓ COMPLETADA] ${pendingCompletionBooking.notes || ""}`;
       const { error } = await supabase
@@ -300,9 +311,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
       if (error) throw error;
 
-      setBookings(bookings.map(b => 
-        b.id === pendingCompletionBooking.id ? { ...b, notes: updatedNotes } : b
-      ));
+      setBookings(bookings.map((b) => (b.id === pendingCompletionBooking.id ? { ...b, notes: updatedNotes } : b)));
 
       if (sendReviewMessage) {
         try {
@@ -313,11 +322,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
               date: pendingCompletionBooking.Fecha,
               time: pendingCompletionBooking.Hora,
               stylist: pendingCompletionBooking.stylist,
-              services: Array.isArray(pendingCompletionBooking.services) 
-                ? pendingCompletionBooking.services.map((s: any) => s.name) 
+              services: Array.isArray(pendingCompletionBooking.services)
+                ? pendingCompletionBooking.services.map((s: any) => s.name)
                 : [],
-              tenant_id: tenantId
-            }
+              tenant_id: tenantId,
+            },
           });
         } catch (webhookError) {
           console.error("Error invoking webhook:", webhookError);
@@ -326,13 +335,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
       toast({
         title: "Cita completada",
-        description: sendReviewMessage ? "¡Cliente atendido! Mensaje de valoración enviado" : "¡Cliente atendido!"
+        description: sendReviewMessage ? "¡Cliente atendido! Mensaje de valoración enviado" : "¡Cliente atendido!",
       });
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Error al completar la cita",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setCompletionDialogOpen(false);
@@ -347,40 +356,40 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       setSeriesCancelDialogOpen(true);
       return;
     }
-    
+
     if (!confirm("¿Estás segura de que quieres eliminar esta cita?")) return;
-    
+
     await performBookingDeletion(booking, false);
   };
 
   const performBookingDeletion = async (booking: LocalBooking, cancelSeries: boolean) => {
     try {
       setLoading(true);
-      
+
       // Call cancel-booking function which handles all cleanup
       const { error } = await supabase.functions.invoke("cancel-booking", {
         body: {
           bookingId: booking.id,
           user: "admin",
           tenant_id: tenantId,
-          cancelSeries
-        }
+          cancelSeries,
+        },
       });
 
       if (error) throw error;
-      
+
       toast({
         title: cancelSeries ? "Serie cancelada" : "Cita eliminada",
-        description: cancelSeries 
-          ? "Todas las citas futuras de la serie han sido canceladas" 
-          : "La cita se ha eliminado correctamente"
+        description: cancelSeries
+          ? "Todas las citas futuras de la serie han sido canceladas"
+          : "La cita se ha eliminado correctamente",
       });
       fetchBookings();
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Error al eliminar la cita",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -394,7 +403,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       toast({
         title: "Error",
         description: "Debes seleccionar una fecha de inicio",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -409,9 +418,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
     try {
       setLoading(true);
-      const stylistsToBlock = blockStylist === "all" 
-        ? stylists.map(s => s.slug) 
-        : [blockStylist];
+      const stylistsToBlock = blockStylist === "all" ? stylists.map((s) => s.slug) : [blockStylist];
 
       for (const stylist of stylistsToBlock) {
         const bookingData = {
@@ -423,30 +430,33 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
           end_time: blockPeriod === "hours" ? blockEndTime : "23:59",
           stylist: stylist,
           services: [],
-          total_duration: blockPeriod === "hours" 
-            ? (parseInt(blockEndTime.split(":")[0]) - parseInt(blockStartTime.split(":")[0])) * 60
-            : 24 * 60,
+          total_duration:
+            blockPeriod === "hours"
+              ? (parseInt(blockEndTime.split(":")[0]) - parseInt(blockStartTime.split(":")[0])) * 60
+              : 24 * 60,
           status: "confirmed",
-          title: blockPeriod === "hours" ? `🔒 BLOQUEADO - ${stylist.toUpperCase()}` : `🌴 VACACIONES - ${stylist.toUpperCase()}`,
+          title:
+            blockPeriod === "hours"
+              ? `🔒 BLOQUEADO - ${stylist.toUpperCase()}`
+              : `🌴 VACACIONES - ${stylist.toUpperCase()}`,
           notes: blockPeriod === "hours" ? "Periodo bloqueado - Horas específicas" : "Periodo bloqueado - Vacaciones",
           color: "#EF4444",
-          canal: "crm"
+          canal: "crm",
         };
 
-        const { error } = await supabase
-          .from("bookings")
-          .insert(bookingData);
+        const { error } = await supabase.from("bookings").insert(bookingData);
 
         if (error) throw error;
       }
 
       toast({
         title: "Periodo bloqueado",
-        description: blockPeriod === "hours" 
-          ? "Se han bloqueado las horas correctamente" 
-          : "Se ha bloqueado el periodo de vacaciones correctamente"
+        description:
+          blockPeriod === "hours"
+            ? "Se han bloqueado las horas correctamente"
+            : "Se ha bloqueado el periodo de vacaciones correctamente",
       });
-      
+
       setIsBlockDialogOpen(false);
       setBlockStartDate(undefined);
       setBlockEndDate(undefined);
@@ -459,7 +469,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       toast({
         title: "Error",
         description: error.message || "Error al bloquear el periodo",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -476,7 +486,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
   const groupBookingsByDate = (bookings: LocalBooking[]) => {
     const grouped: Record<string, LocalBooking[]> = {};
-    bookings.forEach(booking => {
+    bookings.forEach((booking) => {
       const date = booking.Fecha;
       if (!grouped[date]) {
         grouped[date] = [];
@@ -487,7 +497,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   };
 
   const getStylistColor = (stylistSlug: string) => {
-    const stylist = stylists.find(s => s.slug === stylistSlug);
+    const stylist = stylists.find((s) => s.slug === stylistSlug);
     return stylist?.color || "#8B5CF6";
   };
 
@@ -501,17 +511,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
     // Calculate start and end hours from business hours
     let defaultStartHour = Math.floor(businessHours.morningStart / 60);
-    let defaultEndHour = businessHours.afternoonEnd > 0 
-      ? Math.ceil(businessHours.afternoonEnd / 60)
-      : Math.ceil(businessHours.morningEnd / 60);
+    let defaultEndHour =
+      businessHours.afternoonEnd > 0
+        ? Math.ceil(businessHours.afternoonEnd / 60)
+        : Math.ceil(businessHours.morningEnd / 60);
 
-    const dayBookings = bookings.filter(b => b.Fecha === format(dayDate, "yyyy-MM-dd"));
+    const dayBookings = bookings.filter((b) => b.Fecha === format(dayDate, "yyyy-MM-dd"));
 
     let actualStartHour = defaultStartHour;
     let actualEndHour = defaultEndHour;
 
     if (dayBookings.length > 0) {
-      dayBookings.forEach(booking => {
+      dayBookings.forEach((booking) => {
         const [startH] = booking.Hora.split(":").map(Number);
         const endTime = booking.end_time || booking.Hora;
         const [endH, endM] = endTime.split(":").map(Number);
@@ -523,7 +534,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     }
 
     const hours = Array.from({ length: actualEndHour - actualStartHour }, (_, i) => actualStartHour + i);
-    
+
     // Break times for this day
     const breakStart = businessHours.afternoonStart > 0 ? Math.floor(businessHours.morningEnd / 60) : null;
     const breakEnd = businessHours.afternoonStart > 0 ? Math.floor(businessHours.afternoonStart / 60) : null;
@@ -550,24 +561,24 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   // Calculate overlapping bookings layout
   const calculateOverlapLayout = (stylistBookings: LocalBooking[], dayDate: Date) => {
     if (!stylistBookings.length) return {};
-    
+
     const layout: Record<string, { left: string; width: string; zIndex: number }> = {};
-    
+
     // Sort by start time
     const sorted = [...stylistBookings].sort((a, b) => {
       const aPos = calculateBookingPosition(a, dayDate);
       const bPos = calculateBookingPosition(b, dayDate);
       return aPos.startMinutes - bPos.startMinutes;
     });
-    
+
     // Find overlapping groups
     const groups: LocalBooking[][] = [];
     let currentGroup: LocalBooking[] = [];
     let groupEnd = 0;
-    
-    sorted.forEach(booking => {
+
+    sorted.forEach((booking) => {
       const pos = calculateBookingPosition(booking, dayDate);
-      
+
       if (currentGroup.length === 0 || pos.startMinutes < groupEnd) {
         currentGroup.push(booking);
         groupEnd = Math.max(groupEnd, pos.endMinutes);
@@ -578,43 +589,43 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       }
     });
     if (currentGroup.length > 0) groups.push(currentGroup);
-    
+
     // Assign positions within each group
-    groups.forEach(group => {
+    groups.forEach((group) => {
       const columns: LocalBooking[][] = [];
-      
-      group.forEach(booking => {
+
+      group.forEach((booking) => {
         const pos = calculateBookingPosition(booking, dayDate);
         let placed = false;
-        
+
         for (let i = 0; i < columns.length; i++) {
           const lastInColumn = columns[i][columns[i].length - 1];
           const lastPos = calculateBookingPosition(lastInColumn, dayDate);
-          
+
           if (pos.startMinutes >= lastPos.endMinutes) {
             columns[i].push(booking);
             placed = true;
             break;
           }
         }
-        
+
         if (!placed) {
           columns.push([booking]);
         }
       });
-      
+
       const totalColumns = columns.length;
       columns.forEach((column, colIndex) => {
         column.forEach((booking, idx) => {
           layout[booking.id] = {
             left: `${(colIndex / totalColumns) * 100}%`,
             width: `${(1 / totalColumns) * 100 - 1}%`,
-            zIndex: colIndex + 1
+            zIndex: colIndex + 1,
           };
         });
       });
     });
-    
+
     return layout;
   };
 
@@ -629,18 +640,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   const handleDragOverColumn = (e: React.DragEvent, stylistSlug: string, startHour: number) => {
     e.preventDefault();
     if (!draggedBooking) return;
-    
+
     // Calculate exact time from mouse position
     const rect = e.currentTarget.getBoundingClientRect();
     const relativeY = e.clientY - rect.top;
     const minutesFromColumnStart = relativeY / PIXELS_PER_MINUTE;
     const totalMinutes = startHour * 60 + minutesFromColumnStart;
-    
+
     // Snap to 15-minute intervals
     const snappedMinutes = Math.round(totalMinutes / 15) * 15;
     const hour = Math.floor(snappedMinutes / 60);
     const minute = snappedMinutes % 60;
-    
+
     setDragOverStylist(stylistSlug);
     const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     setDragOverTime(timeStr);
@@ -651,7 +662,12 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     setDragOverTime(null);
   };
 
-  const handleDropOnColumn = async (e: React.DragEvent, targetStylist: string, startHour: number, targetDate: string) => {
+  const handleDropOnColumn = async (
+    e: React.DragEvent,
+    targetStylist: string,
+    startHour: number,
+    targetDate: string,
+  ) => {
     e.preventDefault();
     if (!draggedBooking) return;
 
@@ -660,14 +676,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     const relativeY = e.clientY - rect.top;
     const minutesFromColumnStart = relativeY / PIXELS_PER_MINUTE;
     const totalMinutes = startHour * 60 + minutesFromColumnStart;
-    
+
     // Snap to 15-minute intervals
     const snappedMinutes = Math.round(totalMinutes / 15) * 15;
     const targetHour = Math.floor(snappedMinutes / 60);
     const targetMinute = snappedMinutes % 60;
 
     const newTime = `${String(targetHour).padStart(2, "0")}:${String(targetMinute).padStart(2, "0")}`;
-    
+
     // Calculate new end time
     const durationMinutes = draggedBooking.total_duration;
     const newEndMinutes = snappedMinutes + durationMinutes;
@@ -682,7 +698,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
           stylist: targetStylist,
           Hora: newTime,
           end_time: newEndTime,
-          Fecha: targetDate
+          Fecha: targetDate,
         })
         .eq("id", draggedBooking.id);
 
@@ -690,7 +706,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
       toast({
         title: "Cita movida",
-        description: `${draggedBooking.customer_name} → ${stylists.find(s => s.slug === targetStylist)?.name} a las ${newTime}`
+        description: `${draggedBooking.customer_name} → ${stylists.find((s) => s.slug === targetStylist)?.name} a las ${newTime}`,
       });
 
       fetchBookings();
@@ -698,7 +714,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       toast({
         title: "Error",
         description: error.message || "No se pudo mover la cita",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setDraggedBooking(null);
@@ -729,26 +745,26 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       const deltaY = e.clientY - resizeStartY;
       const deltaMinutes = Math.round(deltaY / PIXELS_PER_MINUTE / 15) * 15; // Snap to 15min
       const newDuration = Math.max(15, resizeOriginalDuration + deltaMinutes);
-      
+
       // Calculate new end_time for visual feedback
       const [startH, startM] = resizingBooking.Hora.split(":").map(Number);
       const newEndMinutes = startH * 60 + startM + newDuration;
       const newEndHour = Math.floor(newEndMinutes / 60);
       const newEndMin = newEndMinutes % 60;
       const newEndTime = `${String(newEndHour).padStart(2, "0")}:${String(newEndMin).padStart(2, "0")}`;
-      
+
       // Update locally for visual feedback
-      setBookings(prev => prev.map(b => 
-        b.id === resizingBooking.id 
-          ? { ...b, total_duration: newDuration, end_time: newEndTime }
-          : b
-      ));
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === resizingBooking.id ? { ...b, total_duration: newDuration, end_time: newEndTime } : b,
+        ),
+      );
     };
 
     const handleMouseUp = async () => {
       if (!resizingBooking) return;
-      
-      const booking = bookings.find(b => b.id === resizingBooking.id);
+
+      const booking = bookings.find((b) => b.id === resizingBooking.id);
       if (!booking) return;
 
       const [startH, startM] = booking.Hora.split(":").map(Number);
@@ -762,7 +778,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
           .from("bookings")
           .update({
             total_duration: booking.total_duration,
-            end_time: newEndTime
+            end_time: newEndTime,
           })
           .eq("id", booking.id);
 
@@ -770,17 +786,17 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
         toast({
           title: "Duración actualizada",
-          description: `${booking.customer_name}: ${booking.total_duration} minutos`
+          description: `${booking.customer_name}: ${booking.total_duration} minutos`,
         });
       } catch (error: any) {
         toast({
           title: "Error",
           description: error.message || "No se pudo actualizar",
-          variant: "destructive"
+          variant: "destructive",
         });
         fetchBookings();
       }
-      
+
       setResizingBooking(null);
     };
 
@@ -844,14 +860,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
               {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             </Button>
           </div>
-          
+
           {showSearchResults && searchResults.length > 0 && (
             <div className="mt-2 border rounded-md divide-y max-h-60 md:max-h-80 overflow-y-auto">
               {searchResults.map((result) => {
-                const servicesList = Array.isArray(result.services) 
+                const servicesList = Array.isArray(result.services)
                   ? result.services.map((s: any) => s.name || s).filter(Boolean)
                   : [];
-                
+
                 return (
                   <button
                     key={result.id}
@@ -867,9 +883,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                         <p className="text-xs md:text-sm font-medium">
                           {format(parseISO(result.Fecha), "d MMM", { locale: es })}
                         </p>
-                        <p className="text-[10px] md:text-xs text-muted-foreground">
-                          {result.Hora.slice(0, 5)}
-                        </p>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">{result.Hora.slice(0, 5)}</p>
                       </div>
                     </div>
                     {servicesList.length > 0 && (
@@ -897,19 +911,31 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       {/* Navigation */}
       <div className="flex flex-col gap-2">
         <div className="flex gap-1.5 md:gap-2">
-          <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, -7))} disabled={loading} size="sm" className="flex-1 h-9">
+          <Button
+            variant="outline"
+            onClick={() => setWeekStart(addDays(weekStart, -7))}
+            disabled={loading}
+            size="sm"
+            className="flex-1 h-9"
+          >
             ←
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} 
-            disabled={loading} 
-            size="sm" 
+          <Button
+            variant="outline"
+            onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+            disabled={loading}
+            size="sm"
             className="flex-1 h-9 border-primary"
           >
             Hoy
           </Button>
-          <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading} size="sm" className="flex-1 h-9">
+          <Button
+            variant="outline"
+            onClick={() => setWeekStart(addDays(weekStart, 7))}
+            disabled={loading}
+            size="sm"
+            className="flex-1 h-9"
+          >
             →
           </Button>
           <Popover>
@@ -931,34 +957,32 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <Tabs 
-          value={activeTab || format(weekDays.find(day => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")} 
-          onValueChange={setActiveTab} 
+        <Tabs
+          value={activeTab || format(weekDays.find((day) => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")}
+          onValueChange={setActiveTab}
           className="w-full"
         >
           <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto gap-0.5 md:gap-1 bg-muted/50 p-0.5 md:p-1">
-            {weekDays.map(day => {
+            {weekDays.map((day) => {
               const dateKey = format(day, "yyyy-MM-dd");
               const dayBookings = groupedBookings[dateKey] || [];
               const isToday = isSameDay(day, new Date());
-              const hasFullBlock = dayBookings.some(b => b.title?.includes("🌴 VACACIONES"));
-              
+              const hasFullBlock = dayBookings.some((b) => b.title?.includes("🌴 VACACIONES"));
+
               return (
-                <TabsTrigger 
-                  key={dateKey} 
-                  value={dateKey} 
+                <TabsTrigger
+                  key={dateKey}
+                  value={dateKey}
                   className={cn(
                     "flex-col items-center gap-0.5 data-[state=active]:bg-background px-1.5 md:px-4 py-1.5 md:py-2 min-w-[52px] md:min-w-[100px]",
-                    isToday && "border-primary"
+                    isToday && "border-primary",
                   )}
                 >
                   <div className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 w-full">
                     <span className="text-[10px] md:text-sm font-semibold capitalize">
                       {format(day, "EEE", { locale: es })}
                     </span>
-                    <span className="text-sm md:text-base font-bold">
-                      {format(day, "d")}
-                    </span>
+                    <span className="text-sm md:text-base font-bold">{format(day, "d")}</span>
                     {isToday && (
                       <Badge variant="default" className="text-[8px] md:text-xs h-3 px-1 md:h-5 md:px-2 hidden md:flex">
                         Hoy
@@ -966,23 +990,21 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                     )}
                     {hasFullBlock && <Ban className="h-2.5 w-2.5 md:h-3 md:w-3 text-destructive" />}
                   </div>
-                  <span className="text-[9px] md:text-xs text-muted-foreground">
-                    {dayBookings.length}
-                  </span>
+                  <span className="text-[9px] md:text-xs text-muted-foreground">{dayBookings.length} citas</span>
                 </TabsTrigger>
               );
             })}
           </TabsList>
 
-          {weekDays.map(day => {
+          {weekDays.map((day) => {
             const dateKey = format(day, "yyyy-MM-dd");
             const dayBookings = groupedBookings[dateKey] || [];
             const schedule = getScheduleForDay(day);
 
             // Group by stylist
             const bookingsByStylist: Record<string, LocalBooking[]> = {};
-            stylists.forEach(s => {
-              bookingsByStylist[s.slug] = dayBookings.filter(b => b.stylist === s.slug);
+            stylists.forEach((s) => {
+              bookingsByStylist[s.slug] = dayBookings.filter((b) => b.stylist === s.slug);
             });
 
             return (
@@ -1002,14 +1024,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                           </div>
 
                           <div className="flex-1 flex gap-2 md:gap-4">
-                            {stylists.map(stylist => (
+                            {stylists.map((stylist) => (
                               <div
                                 key={stylist.slug}
                                 className="flex-1 min-w-[100px] md:min-w-[180px] text-center font-semibold text-xs md:text-sm py-1.5 md:py-2 rounded-lg shadow-sm"
                                 style={{
                                   backgroundColor: `${stylist.color}15`,
                                   color: stylist.color,
-                                  borderBottom: `2px solid ${stylist.color}`
+                                  borderBottom: `2px solid ${stylist.color}`,
                                 }}
                               >
                                 {stylist.name}
@@ -1020,290 +1042,307 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
                         {/* Timeline */}
                         <div className="flex gap-2 md:gap-4 pt-2 md:pt-3 min-w-max">
-                        {/* Time column */}
-                        <div className="w-10 md:w-16 shrink-0">
-                          {schedule.hours.map(hour => {
-                            const isBreakHour = schedule.breakStart !== null && 
-                              schedule.breakEnd !== null && 
-                              hour >= schedule.breakStart && 
-                              hour < schedule.breakEnd;
-                            
-                            return (
-                              <div 
-                                key={hour} 
-                                className={cn(
-                                  "h-[120px] text-[10px] md:text-sm text-muted-foreground border-b border-border/30 flex items-start pt-1",
-                                  isBreakHour && "bg-muted/30"
-                                )}
-                              >
-                                <span className="font-medium">{String(hour).padStart(2, "0")}:00</span>
-                              </div>
-                            );
-                          })}
-                        </div>
+                          {/* Time column */}
+                          <div className="w-10 md:w-16 shrink-0">
+                            {schedule.hours.map((hour) => {
+                              const isBreakHour =
+                                schedule.breakStart !== null &&
+                                schedule.breakEnd !== null &&
+                                hour >= schedule.breakStart &&
+                                hour < schedule.breakEnd;
 
-                        {/* Stylists columns */}
-                        <div className="flex-1 flex gap-2 md:gap-4">
-                          {stylists.map(stylist => (
-                            <div key={stylist.slug} className="flex-1 min-w-[100px] md:min-w-[180px]">
-                              <div 
-                                className="relative rounded-lg overflow-hidden"
-                                style={{ backgroundColor: "hsl(var(--muted) / 0.3)" }}
-                                onDragOver={(e) => handleDragOverColumn(e, stylist.slug, schedule.startHour)}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDropOnColumn(e, stylist.slug, schedule.startHour, dateKey)}
-                              >
-                                {/* Hour grid lines with break indication */}
-                                {schedule.hours.map((hour, idx) => {
-                                  const isBreakHour = schedule.breakStart !== null && 
-                                    schedule.breakEnd !== null && 
-                                    hour >= schedule.breakStart && 
-                                    hour < schedule.breakEnd;
-                                  
-                                  return (
-                                    <div 
-                                      key={hour}
-                                      className={cn(
-                                        "h-[120px] border-b border-border/20 relative pointer-events-none",
-                                        isBreakHour && "bg-amber-500/5"
-                                      )}
-                                    >
-                                      {/* Half-hour line */}
-                                      <div className="absolute top-[60px] left-0 right-0 border-t border-dashed border-border/15" />
-                                      
-                                      {/* Break time indicator */}
-                                      {isBreakHour && idx === schedule.breakStart && (
-                                        <div className="absolute inset-x-0 top-0 flex items-center justify-center">
-                                          <span className="text-[10px] text-amber-600/60 bg-amber-100/50 px-2 py-0.5 rounded-b-md">
-                                            Descanso
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                                
-                                {/* Drop indicator - shows exact time where booking will land */}
-                                {dragOverStylist === stylist.slug && dragOverTime && (() => {
-                                  const [h, m] = dragOverTime.split(":").map(Number);
-                                  const minutesFromStart = (h - schedule.startHour) * 60 + m;
-                                  const topPosition = minutesFromStart * PIXELS_PER_MINUTE;
-                                  const height = (draggedBooking?.total_duration || 30) * PIXELS_PER_MINUTE;
-                                  
-                                  return (
-                                    <div 
-                                      className="absolute left-1 right-1 rounded-lg bg-primary/20 border-2 border-dashed border-primary/60 pointer-events-none z-40 flex items-center justify-center"
-                                      style={{ top: Math.max(0, topPosition), height }}
-                                    >
-                                      <span className="text-xs font-semibold text-primary bg-background/80 px-2 py-0.5 rounded">
-                                        {dragOverTime}
-                                      </span>
-                                    </div>
-                                  );
-                                })()}
-                                
-                                {/* Current time indicator - only show on today */}
-                                {isSameDay(day, new Date()) && (() => {
-                                  const now = currentTime;
-                                  const currentHour = now.getHours();
-                                  const currentMinute = now.getMinutes();
-                                  
-                                  // Check if current time is within schedule
-                                  if (currentHour >= schedule.startHour && currentHour < schedule.endHour) {
-                                    const minutesFromStart = (currentHour - schedule.startHour) * 60 + currentMinute;
-                                    const topPosition = minutesFromStart * PIXELS_PER_MINUTE;
-                                    
-                                    return (
-                                      <div 
-                                        className="absolute left-0 right-0 z-50 pointer-events-none flex items-center"
-                                        style={{ top: topPosition }}
-                                      >
-                                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 -ml-1 shadow-sm" />
-                                        <div className="flex-1 h-0.5 bg-red-500 shadow-sm" />
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                })()}
-                                
-                                {/* Render bookings - iOS style with overlap handling */}
-                                {(() => {
-                                  const stylistBookings = bookingsByStylist[stylist.slug] || [];
-                                  const overlapLayout = calculateOverlapLayout(stylistBookings, day);
-                                  
-                                  return stylistBookings.map(booking => {
-                                    const pos = calculateBookingPosition(booking, day);
-                                    const isCompleted = booking.notes?.includes("[✓ COMPLETADA]");
-                                    const isBlocked = booking.title?.includes("🔒 BLOQUEADO") || booking.title?.includes("🌴 VACACIONES");
-                                    const isHighlighted = highlightedBookingId === booking.id;
-                                    const isDragging = draggedBooking?.id === booking.id;
-                                    const isResizing = resizingBooking?.id === booking.id;
-                                    const layout = overlapLayout[booking.id] || { left: "0%", width: "100%", zIndex: 1 };
-                                    
-                                    // Get services - compact display
-                                    const servicesList = Array.isArray(booking.services) 
-                                      ? booking.services.map((s: any) => s.name || s).filter(Boolean)
-                                      : [];
-                                    const firstService = servicesList[0] || "Sin servicio";
+                              return (
+                                <div
+                                  key={hour}
+                                  className={cn(
+                                    "h-[120px] text-[10px] md:text-sm text-muted-foreground border-b border-border/30 flex items-start pt-1",
+                                    isBreakHour && "bg-muted/30",
+                                  )}
+                                >
+                                  <span className="font-medium">{String(hour).padStart(2, "0")}:00</span>
+                                </div>
+                              );
+                            })}
+                          </div>
 
-                                    const bookingColor = isBlocked ? "#EF4444" : getStylistColor(booking.stylist);
-                                    const isCompact = pos.height < 60;
+                          {/* Stylists columns */}
+                          <div className="flex-1 flex gap-2 md:gap-4">
+                            {stylists.map((stylist) => (
+                              <div key={stylist.slug} className="flex-1 min-w-[100px] md:min-w-[180px]">
+                                <div
+                                  className="relative rounded-lg overflow-hidden"
+                                  style={{ backgroundColor: "hsl(var(--muted) / 0.3)" }}
+                                  onDragOver={(e) => handleDragOverColumn(e, stylist.slug, schedule.startHour)}
+                                  onDragLeave={handleDragLeave}
+                                  onDrop={(e) => handleDropOnColumn(e, stylist.slug, schedule.startHour, dateKey)}
+                                >
+                                  {/* Hour grid lines with break indication */}
+                                  {schedule.hours.map((hour, idx) => {
+                                    const isBreakHour =
+                                      schedule.breakStart !== null &&
+                                      schedule.breakEnd !== null &&
+                                      hour >= schedule.breakStart &&
+                                      hour < schedule.breakEnd;
 
                                     return (
                                       <div
-                                        key={booking.id}
-                                        data-booking-id={booking.id}
-                                        draggable={!isBlocked && !isResizing}
-                                        onDragStart={(e) => handleDragStart(e, booking)}
-                                        onDragEnd={handleDragEnd}
+                                        key={hour}
                                         className={cn(
-                                          "absolute rounded-lg overflow-hidden transition-all duration-150",
-                                          "shadow-sm hover:shadow-lg hover:z-30",
-                                          !isBlocked && "cursor-grab active:cursor-grabbing",
-                                          isCompleted && "opacity-70",
-                                          isHighlighted && "ring-2 ring-primary ring-offset-1 animate-pulse",
-                                          isDragging && "opacity-50 scale-95",
-                                          isResizing && "z-40 ring-2 ring-primary"
+                                          "h-[120px] border-b border-border/20 relative pointer-events-none",
+                                          isBreakHour && "bg-amber-500/5",
                                         )}
-                                        style={{
-                                          top: pos.top,
-                                          height: pos.height,
-                                          left: `calc(${layout.left} + 2px)`,
-                                          width: `calc(${layout.width} - 4px)`,
-                                          zIndex: layout.zIndex,
-                                          backgroundColor: isBlocked ? "#FEE2E2" : `${bookingColor}15`,
-                                          borderLeft: `3px solid ${bookingColor}`,
-                                        }}
-                                        onClick={() => {
-                                          if (!isBlocked && !isResizing) {
-                                            setSelectedBooking(booking);
-                                            setIsEditDialogOpen(true);
-                                          }
-                                        }}
                                       >
-                                        {/* Content - always visible, adaptive layout */}
-                                        <div className={cn(
-                                          "h-full flex flex-col px-2 py-1",
-                                          isCompact ? "justify-center" : "justify-between"
-                                        )}>
-                                          {isCompact ? (
-                                            // Ultra compact: single line with all info + actions
-                                            <div className="flex items-center gap-1 min-w-0">
-                                              {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
-                                              <span className="font-semibold text-xs truncate text-foreground">
-                                                {booking.customer_name}
-                                              </span>
-                                              <span className="text-[10px] truncate" style={{ color: bookingColor }}>
-                                                · {firstService}
-                                              </span>
-                                              <div className="flex gap-0.5 ml-auto shrink-0">
-                                                {!isBlocked && (
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleMarkCompleted(booking);
-                                                    }}
-                                                    className={cn(
-                                                      "p-0.5 rounded transition-colors",
-                                                      isCompleted 
-                                                        ? "bg-green-100 text-green-600" 
-                                                        : "text-muted-foreground hover:text-green-600"
-                                                    )}
-                                                    title={isCompleted ? "Desmarcar" : "Marcar completada"}
-                                                  >
-                                                    <Check className="h-3 w-3" />
-                                                  </button>
-                                                )}
-                                                <button
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteBooking(booking);
-                                                  }}
-                                                  className="p-0.5 rounded text-muted-foreground hover:text-red-600 transition-colors"
-                                                  title={isBlocked ? "Eliminar bloqueo" : "Eliminar"}
-                                                >
-                                                  <Trash2 className="h-3 w-3" />
-                                                </button>
-                                              </div>
-                                            </div>
-                                          ) : (
-                                            // Normal/expanded layout
-                                            <>
-                                              <div className="min-w-0">
-                                                <div className="flex items-center gap-1">
-                                                  {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
-                                                  <p className="font-semibold text-sm truncate text-foreground leading-tight">
-                                                    {booking.customer_name}
-                                                  </p>
-                                                  {!isBlocked && (
-                                                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 ml-auto" />
-                                                  )}
-                                                </div>
-                                                <p 
-                                                  className="text-xs font-medium truncate"
-                                                  style={{ color: bookingColor }}
-                                                >
-                                                  {isBlocked ? booking.title : firstService}
-                                                  {servicesList.length > 1 && ` +${servicesList.length - 1}`}
-                                                </p>
-                                                {pos.height >= 80 && (
-                                                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                                                    {booking.Hora.slice(0, 5)} - {booking.end_time?.slice(0, 5) || ""} · {booking.total_duration}min
-                                                  </p>
-                                                )}
-                                              </div>
-                                              
-                                              {/* Actions - always visible */}
-                                              <div className="flex gap-1 mt-1">
-                                                {!isBlocked && (
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleMarkCompleted(booking);
-                                                    }}
-                                                    className={cn(
-                                                      "p-1 rounded transition-colors",
-                                                      isCompleted 
-                                                        ? "bg-green-100 text-green-600" 
-                                                        : "bg-muted/50 text-muted-foreground hover:bg-green-50 hover:text-green-600"
-                                                    )}
-                                                    title={isCompleted ? "Desmarcar" : "Marcar completada"}
-                                                  >
-                                                    <Check className="h-3 w-3" />
-                                                  </button>
-                                                )}
-                                                <button
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteBooking(booking);
-                                                  }}
-                                                  className="p-1 rounded bg-muted/50 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                                                  title={isBlocked ? "Eliminar bloqueo" : "Eliminar"}
-                                                >
-                                                  <Trash2 className="h-3 w-3" />
-                                                </button>
-                                              </div>
-                                            </>
-                                          )}
-                                        </div>
-                                        
-                                        {/* Resize handle */}
-                                        {!isBlocked && (
-                                          <div
-                                            className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center hover:bg-muted/50 group"
-                                            onMouseDown={(e) => handleResizeStart(e, booking)}
-                                          >
-                                            <div className="w-8 h-1 rounded-full bg-muted-foreground/30 group-hover:bg-primary/50 transition-colors" />
+                                        {/* Half-hour line */}
+                                        <div className="absolute top-[60px] left-0 right-0 border-t border-dashed border-border/15" />
+
+                                        {/* Break time indicator */}
+                                        {isBreakHour && idx === schedule.breakStart && (
+                                          <div className="absolute inset-x-0 top-0 flex items-center justify-center">
+                                            <span className="text-[10px] text-amber-600/60 bg-amber-100/50 px-2 py-0.5 rounded-b-md">
+                                              Descanso
+                                            </span>
                                           </div>
                                         )}
                                       </div>
                                     );
-                                  });
-                                })()}
+                                  })}
+
+                                  {/* Drop indicator - shows exact time where booking will land */}
+                                  {dragOverStylist === stylist.slug &&
+                                    dragOverTime &&
+                                    (() => {
+                                      const [h, m] = dragOverTime.split(":").map(Number);
+                                      const minutesFromStart = (h - schedule.startHour) * 60 + m;
+                                      const topPosition = minutesFromStart * PIXELS_PER_MINUTE;
+                                      const height = (draggedBooking?.total_duration || 30) * PIXELS_PER_MINUTE;
+
+                                      return (
+                                        <div
+                                          className="absolute left-1 right-1 rounded-lg bg-primary/20 border-2 border-dashed border-primary/60 pointer-events-none z-40 flex items-center justify-center"
+                                          style={{ top: Math.max(0, topPosition), height }}
+                                        >
+                                          <span className="text-xs font-semibold text-primary bg-background/80 px-2 py-0.5 rounded">
+                                            {dragOverTime}
+                                          </span>
+                                        </div>
+                                      );
+                                    })()}
+
+                                  {/* Current time indicator - only show on today */}
+                                  {isSameDay(day, new Date()) &&
+                                    (() => {
+                                      const now = currentTime;
+                                      const currentHour = now.getHours();
+                                      const currentMinute = now.getMinutes();
+
+                                      // Check if current time is within schedule
+                                      if (currentHour >= schedule.startHour && currentHour < schedule.endHour) {
+                                        const minutesFromStart =
+                                          (currentHour - schedule.startHour) * 60 + currentMinute;
+                                        const topPosition = minutesFromStart * PIXELS_PER_MINUTE;
+
+                                        return (
+                                          <div
+                                            className="absolute left-0 right-0 z-50 pointer-events-none flex items-center"
+                                            style={{ top: topPosition }}
+                                          >
+                                            <div className="w-2.5 h-2.5 rounded-full bg-red-500 -ml-1 shadow-sm" />
+                                            <div className="flex-1 h-0.5 bg-red-500 shadow-sm" />
+                                          </div>
+                                        );
+                                      }
+                                      return null;
+                                    })()}
+
+                                  {/* Render bookings - iOS style with overlap handling */}
+                                  {(() => {
+                                    const stylistBookings = bookingsByStylist[stylist.slug] || [];
+                                    const overlapLayout = calculateOverlapLayout(stylistBookings, day);
+
+                                    return stylistBookings.map((booking) => {
+                                      const pos = calculateBookingPosition(booking, day);
+                                      const isCompleted = booking.notes?.includes("[✓ COMPLETADA]");
+                                      const isBlocked =
+                                        booking.title?.includes("🔒 BLOQUEADO") ||
+                                        booking.title?.includes("🌴 VACACIONES");
+                                      const isHighlighted = highlightedBookingId === booking.id;
+                                      const isDragging = draggedBooking?.id === booking.id;
+                                      const isResizing = resizingBooking?.id === booking.id;
+                                      const layout = overlapLayout[booking.id] || {
+                                        left: "0%",
+                                        width: "100%",
+                                        zIndex: 1,
+                                      };
+
+                                      // Get services - compact display
+                                      const servicesList = Array.isArray(booking.services)
+                                        ? booking.services.map((s: any) => s.name || s).filter(Boolean)
+                                        : [];
+                                      const firstService = servicesList[0] || "Sin servicio";
+
+                                      const bookingColor = isBlocked ? "#EF4444" : getStylistColor(booking.stylist);
+                                      const isCompact = pos.height < 60;
+
+                                      return (
+                                        <div
+                                          key={booking.id}
+                                          data-booking-id={booking.id}
+                                          draggable={!isBlocked && !isResizing}
+                                          onDragStart={(e) => handleDragStart(e, booking)}
+                                          onDragEnd={handleDragEnd}
+                                          className={cn(
+                                            "absolute rounded-lg overflow-hidden transition-all duration-150",
+                                            "shadow-sm hover:shadow-lg hover:z-30",
+                                            !isBlocked && "cursor-grab active:cursor-grabbing",
+                                            isCompleted && "opacity-70",
+                                            isHighlighted && "ring-2 ring-primary ring-offset-1 animate-pulse",
+                                            isDragging && "opacity-50 scale-95",
+                                            isResizing && "z-40 ring-2 ring-primary",
+                                          )}
+                                          style={{
+                                            top: pos.top,
+                                            height: pos.height,
+                                            left: `calc(${layout.left} + 2px)`,
+                                            width: `calc(${layout.width} - 4px)`,
+                                            zIndex: layout.zIndex,
+                                            backgroundColor: isBlocked ? "#FEE2E2" : `${bookingColor}15`,
+                                            borderLeft: `3px solid ${bookingColor}`,
+                                          }}
+                                          onClick={() => {
+                                            if (!isBlocked && !isResizing) {
+                                              setSelectedBooking(booking);
+                                              setIsEditDialogOpen(true);
+                                            }
+                                          }}
+                                        >
+                                          {/* Content - always visible, adaptive layout */}
+                                          <div
+                                            className={cn(
+                                              "h-full flex flex-col px-2 py-1",
+                                              isCompact ? "justify-center" : "justify-between",
+                                            )}
+                                          >
+                                            {isCompact ? (
+                                              // Ultra compact: single line with all info + actions
+                                              <div className="flex items-center gap-1 min-w-0">
+                                                {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
+                                                <span className="font-semibold text-xs truncate text-foreground">
+                                                  {booking.customer_name}
+                                                </span>
+                                                <span className="text-[10px] truncate" style={{ color: bookingColor }}>
+                                                  · {firstService}
+                                                </span>
+                                                <div className="flex gap-0.5 ml-auto shrink-0">
+                                                  {!isBlocked && (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMarkCompleted(booking);
+                                                      }}
+                                                      className={cn(
+                                                        "p-0.5 rounded transition-colors",
+                                                        isCompleted
+                                                          ? "bg-green-100 text-green-600"
+                                                          : "text-muted-foreground hover:text-green-600",
+                                                      )}
+                                                      title={isCompleted ? "Desmarcar" : "Marcar completada"}
+                                                    >
+                                                      <Check className="h-3 w-3" />
+                                                    </button>
+                                                  )}
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleDeleteBooking(booking);
+                                                    }}
+                                                    className="p-0.5 rounded text-muted-foreground hover:text-red-600 transition-colors"
+                                                    title={isBlocked ? "Eliminar bloqueo" : "Eliminar"}
+                                                  >
+                                                    <Trash2 className="h-3 w-3" />
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              // Normal/expanded layout
+                                              <>
+                                                <div className="min-w-0">
+                                                  <div className="flex items-center gap-1">
+                                                    {isCompleted && (
+                                                      <Check className="h-3 w-3 text-green-600 shrink-0" />
+                                                    )}
+                                                    <p className="font-semibold text-sm truncate text-foreground leading-tight">
+                                                      {booking.customer_name}
+                                                    </p>
+                                                    {!isBlocked && (
+                                                      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 ml-auto" />
+                                                    )}
+                                                  </div>
+                                                  <p
+                                                    className="text-xs font-medium truncate"
+                                                    style={{ color: bookingColor }}
+                                                  >
+                                                    {isBlocked ? booking.title : firstService}
+                                                    {servicesList.length > 1 && ` +${servicesList.length - 1}`}
+                                                  </p>
+                                                  {pos.height >= 80 && (
+                                                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                      {booking.Hora.slice(0, 5)} - {booking.end_time?.slice(0, 5) || ""}{" "}
+                                                      · {booking.total_duration}min
+                                                    </p>
+                                                  )}
+                                                </div>
+
+                                                {/* Actions - always visible */}
+                                                <div className="flex gap-1 mt-1">
+                                                  {!isBlocked && (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMarkCompleted(booking);
+                                                      }}
+                                                      className={cn(
+                                                        "p-1 rounded transition-colors",
+                                                        isCompleted
+                                                          ? "bg-green-100 text-green-600"
+                                                          : "bg-muted/50 text-muted-foreground hover:bg-green-50 hover:text-green-600",
+                                                      )}
+                                                      title={isCompleted ? "Desmarcar" : "Marcar completada"}
+                                                    >
+                                                      <Check className="h-3 w-3" />
+                                                    </button>
+                                                  )}
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleDeleteBooking(booking);
+                                                    }}
+                                                    className="p-1 rounded bg-muted/50 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                                                    title={isBlocked ? "Eliminar bloqueo" : "Eliminar"}
+                                                  >
+                                                    <Trash2 className="h-3 w-3" />
+                                                  </button>
+                                                </div>
+                                              </>
+                                            )}
+                                          </div>
+
+                                          {/* Resize handle */}
+                                          {!isBlocked && (
+                                            <div
+                                              className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center hover:bg-muted/50 group"
+                                              onMouseDown={(e) => handleResizeStart(e, booking)}
+                                            >
+                                              <div className="w-8 h-1 rounded-full bg-muted-foreground/30 group-hover:bg-primary/50 transition-colors" />
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    });
+                                  })()}
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1321,8 +1360,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
           <DialogHeader>
             <DialogTitle>Nueva Cita</DialogTitle>
           </DialogHeader>
-          <AdminBookingFlow 
-            onComplete={handleBookingComplete} 
+          <AdminBookingFlow
+            onComplete={handleBookingComplete}
             onCancel={() => setIsCreateDialogOpen(false)}
             tenantId={tenantId}
           />
@@ -1351,27 +1390,34 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                 <Label>Notas</Label>
                 <Textarea
                   value={selectedBooking.notes?.replace("[✓ COMPLETADA] ", "") || ""}
-                  onChange={(e) => setSelectedBooking({ 
-                    ...selectedBooking, 
-                    notes: selectedBooking.notes?.includes("[✓ COMPLETADA]") 
-                      ? `[✓ COMPLETADA] ${e.target.value}`
-                      : e.target.value 
-                  })}
+                  onChange={(e) =>
+                    setSelectedBooking({
+                      ...selectedBooking,
+                      notes: selectedBooking.notes?.includes("[✓ COMPLETADA]")
+                        ? `[✓ COMPLETADA] ${e.target.value}`
+                        : e.target.value,
+                    })
+                  }
                   rows={4}
                 />
               </div>
               <div>
                 <Label>Servicios</Label>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {Array.isArray(selectedBooking.services) && selectedBooking.services.map((s: any, i: number) => (
-                    <Badge key={i} variant="secondary">{s.name || s}</Badge>
-                  ))}
+                  {Array.isArray(selectedBooking.services) &&
+                    selectedBooking.services.map((s: any, i: number) => (
+                      <Badge key={i} variant="secondary">
+                        {s.name || s}
+                      </Badge>
+                    ))}
                 </div>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
             <Button onClick={handleUpdateBooking}>Guardar</Button>
           </DialogFooter>
         </DialogContent>
@@ -1382,9 +1428,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Bloquear Periodo</DialogTitle>
-            <DialogDescription>
-              Bloquea un periodo para vacaciones o horas específicas
-            </DialogDescription>
+            <DialogDescription>Bloquea un periodo para vacaciones o horas específicas</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -1408,7 +1452,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                 </div>
               </RadioGroup>
             </div>
-            
+
             <div>
               <Label>Estilista</Label>
               <RadioGroup value={blockStylist} onValueChange={setBlockStylist} className="mt-2">
@@ -1416,7 +1460,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                   <RadioGroupItem value="all" id="all-stylists" />
                   <Label htmlFor="all-stylists">Todos</Label>
                 </div>
-                {stylists.map(s => (
+                {stylists.map((s) => (
                   <div key={s.slug} className="flex items-center space-x-2">
                     <RadioGroupItem value={s.slug} id={s.slug} />
                     <Label htmlFor={s.slug}>{s.name}</Label>
@@ -1471,7 +1515,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsBlockDialogOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setIsBlockDialogOpen(false)}>
+              Cancelar
+            </Button>
             <Button onClick={handleBlockPeriod} disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Bloquear
@@ -1485,15 +1531,15 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Marcar cita como completada?</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Deseas enviar un mensaje de valoración al cliente?
-            </AlertDialogDescription>
+            <AlertDialogDescription>¿Deseas enviar un mensaje de valoración al cliente?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setCompletionDialogOpen(false);
-              setPendingCompletionBooking(null);
-            }}>
+            <AlertDialogCancel
+              onClick={() => {
+                setCompletionDialogOpen(false);
+                setPendingCompletionBooking(null);
+              }}
+            >
               Cancelar
             </AlertDialogCancel>
             <Button variant="outline" onClick={() => handleConfirmCompletion(false)}>
@@ -1516,19 +1562,21 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
-            <AlertDialogCancel onClick={() => {
-              setSeriesCancelDialogOpen(false);
-              setPendingCancelBooking(null);
-            }}>
+            <AlertDialogCancel
+              onClick={() => {
+                setSeriesCancelDialogOpen(false);
+                setPendingCancelBooking(null);
+              }}
+            >
               Cancelar
             </AlertDialogCancel>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => pendingCancelBooking && performBookingDeletion(pendingCancelBooking, false)}
             >
               Solo esta cita
             </Button>
-            <AlertDialogAction 
+            <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => pendingCancelBooking && performBookingDeletion(pendingCancelBooking, true)}
             >
