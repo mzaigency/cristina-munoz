@@ -229,30 +229,30 @@ export const SuperAdminDashboard = () => {
       transition={{ duration: 0.3 }}
     >
       <Card className="relative overflow-hidden hover:shadow-lg transition-shadow">
-        <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full opacity-10 ${gradient || 'bg-primary'}`} />
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+        <div className={`absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 -mr-6 md:-mr-8 -mt-6 md:-mt-8 rounded-full opacity-10 ${gradient || 'bg-primary'}`} />
+        <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 md:p-6 md:pb-2">
+          <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
             {title}
           </CardTitle>
-          <div className={`p-2 rounded-lg ${gradient ? gradient : 'bg-primary/10'}`}>
-            <Icon className="h-4 w-4 text-white" />
+          <div className={`p-1.5 md:p-2 rounded-lg ${gradient ? gradient : 'bg-primary/10'}`}>
+            <Icon className="h-3 w-3 md:h-4 md:w-4 text-white" />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
           <div className="flex items-end justify-between">
             <div>
-              <div className="text-2xl font-bold">{value}</div>
+              <div className="text-lg md:text-2xl font-bold">{value}</div>
               {subValue && (
-                <p className="text-xs text-muted-foreground mt-1">{subValue}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1 line-clamp-1">{subValue}</p>
               )}
             </div>
             {trend && trendValue && (
               <Badge 
                 variant={trend === 'up' ? 'default' : trend === 'down' ? 'destructive' : 'secondary'}
-                className="flex items-center gap-1"
+                className="flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs h-5 md:h-6"
               >
-                {trend === 'up' ? <TrendingUp className="h-3 w-3" /> : 
-                 trend === 'down' ? <TrendingDown className="h-3 w-3" /> : null}
+                {trend === 'up' ? <TrendingUp className="h-2.5 w-2.5 md:h-3 md:w-3" /> : 
+                 trend === 'down' ? <TrendingDown className="h-2.5 w-2.5 md:h-3 md:w-3" /> : null}
                 {trendValue}
               </Badge>
             )}
@@ -264,16 +264,16 @@ export const SuperAdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-4 md:space-y-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
           {[...Array(8)].map((_, i) => (
             <Card key={i}>
-              <CardHeader className="pb-2">
-                <Skeleton className="h-4 w-24" />
+              <CardHeader className="pb-2 p-3 md:p-6 md:pb-2">
+                <Skeleton className="h-3 md:h-4 w-16 md:w-24" />
               </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-16" />
-                <Skeleton className="h-3 w-32 mt-2" />
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <Skeleton className="h-5 md:h-8 w-12 md:w-16" />
+                <Skeleton className="h-2 md:h-3 w-24 md:w-32 mt-1 md:mt-2" />
               </CardContent>
             </Card>
           ))}
@@ -285,38 +285,38 @@ export const SuperAdminDashboard = () => {
   if (!stats) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Revenue KPIs - App Income */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         <StatCard
-          title="MRR (Ingresos Mensuales)"
+          title="MRR"
           value={`€${stats.monthlyRecurringRevenue.toLocaleString()}`}
-          subValue={`De ${stats.activeTenants} negocios activos`}
+          subValue={`${stats.activeTenants} negocios`}
           icon={DollarSign}
           trend="up"
-          trendValue={`${stats.activeTenants} subs`}
+          trendValue={`${stats.activeTenants}`}
           gradient="bg-gradient-to-br from-green-500 to-emerald-600"
         />
         <StatCard
-          title="ARR Proyectado"
+          title="ARR"
           value={`€${stats.projectedAnnualRevenue.toLocaleString()}`}
-          subValue="Ingresos anuales estimados"
+          subValue="Anual estimado"
           icon={CreditCard}
           gradient="bg-gradient-to-br from-blue-500 to-indigo-600"
         />
         <StatCard
-          title="Negocios Activos"
+          title="Negocios"
           value={`${stats.activeTenants}/${stats.totalTenants}`}
-          subValue={`${Math.round((stats.activeTenants / Math.max(stats.totalTenants, 1)) * 100)}% tasa de activación`}
+          subValue={`${Math.round((stats.activeTenants / Math.max(stats.totalTenants, 1)) * 100)}% activos`}
           icon={Building2}
           trend="up"
           trendValue={`${stats.activeTenants}`}
           gradient="bg-gradient-to-br from-purple-500 to-violet-600"
         />
         <StatCard
-          title="Usuarios Totales"
+          title="Usuarios"
           value={stats.totalUsers}
-          subValue={`+${stats.newUsersToday} hoy, +${stats.newUsersThisWeek} esta semana`}
+          subValue={`+${stats.newUsersToday} hoy`}
           icon={Users}
           trend={stats.newUsersToday > 0 ? 'up' : 'neutral'}
           trendValue={stats.newUsersToday > 0 ? `+${stats.newUsersToday}` : '0'}
@@ -325,54 +325,55 @@ export const SuperAdminDashboard = () => {
       </div>
 
       {/* Secondary KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         <StatCard
           title="Reservas Hoy"
           value={stats.totalBookingsToday}
-          subValue={`${stats.totalBookingsThisWeek} esta semana`}
+          subValue={`${stats.totalBookingsThisWeek} semana`}
           icon={Calendar}
         />
         <StatCard
-          title="Valoración Media"
+          title="Valoración"
           value={stats.avgRating.toFixed(1)}
-          subValue={`${stats.totalReviews} reseñas totales`}
+          subValue={`${stats.totalReviews} reseñas`}
           icon={Star}
         />
         <StatCard
           title="Favoritos"
           value={stats.totalFavorites}
-          subValue="Salones guardados"
+          subValue="Guardados"
           icon={Heart}
         />
         <StatCard
-          title="Stories Activos"
+          title="Stories"
           value={stats.activeStoriesNow}
           subValue={`${stats.totalStories} totales`}
           icon={Eye}
         />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts - Stack on mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              Tendencia de Usuarios y Reservas
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
+            <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+              <Activity className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+              Tendencia
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="p-2 md:p-6 pt-0">
+            <div className="h-[200px] md:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" className="text-xs" />
-                  <YAxis className="text-xs" />
+                  <XAxis dataKey="date" className="text-[10px] md:text-xs" tick={{ fontSize: 10 }} />
+                  <YAxis className="text-[10px] md:text-xs" tick={{ fontSize: 10 }} width={30} />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: '8px',
+                      fontSize: '12px'
                     }}
                   />
                   <Line 
@@ -380,15 +381,15 @@ export const SuperAdminDashboard = () => {
                     dataKey="users" 
                     stroke="hsl(var(--primary))" 
                     strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))' }}
-                    name="Nuevos usuarios"
+                    dot={{ fill: 'hsl(var(--primary))', r: 3 }}
+                    name="Usuarios"
                   />
                   <Line 
                     type="monotone" 
                     dataKey="bookings" 
                     stroke="#F59E0B" 
                     strokeWidth={2}
-                    dot={{ fill: '#F59E0B' }}
+                    dot={{ fill: '#F59E0B', r: 3 }}
                     name="Reservas"
                   />
                 </LineChart>
@@ -398,64 +399,69 @@ export const SuperAdminDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-green-500" />
-              Ingresos por Plan de Suscripción
+          <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
+            <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+              <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
+              Ingresos por Plan
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px] flex items-center">
+          <CardContent className="p-2 md:p-6 pt-0">
+            <div className="h-[200px] md:h-[300px]">
               {stats.revenueByPlan.length > 0 ? (
-                <div className="w-full flex items-center gap-6">
-                  <ResponsiveContainer width="50%" height={250}>
-                    <PieChart>
-                      <Pie
-                        data={stats.revenueByPlan}
-                        dataKey="revenue"
-                        nameKey="plan"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        innerRadius={40}
-                        paddingAngle={2}
-                      >
-                        {stats.revenueByPlan.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        formatter={(value: number) => [`€${value}/mes`, 'Ingresos']}
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex-1 space-y-3">
+                <div className="w-full h-full flex flex-col md:flex-row items-center gap-4">
+                  <div className="w-full md:w-1/2 h-32 md:h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={stats.revenueByPlan}
+                          dataKey="revenue"
+                          nameKey="plan"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius="80%"
+                          innerRadius="50%"
+                          paddingAngle={2}
+                        >
+                          {stats.revenueByPlan.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value: number) => [`€${value}/mes`, 'Ingresos']}
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            fontSize: '12px'
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="w-full md:flex-1 space-y-2 md:space-y-3">
                     {stats.revenueByPlan.map((plan, index) => (
                       <div key={plan.plan} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div 
-                            className="w-3 h-3 rounded-full" 
+                            className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full" 
                             style={{ backgroundColor: COLORS[index % COLORS.length] }}
                           />
-                          <span className="text-sm font-medium">{plan.plan}</span>
+                          <span className="text-xs md:text-sm font-medium">{plan.plan}</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold">€{plan.revenue}/mes</p>
-                          <p className="text-xs text-muted-foreground">{plan.count} negocios</p>
+                          <p className="text-xs md:text-sm font-bold">€{plan.revenue}</p>
+                          <p className="text-[10px] md:text-xs text-muted-foreground">{plan.count} negocios</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="w-full text-center text-muted-foreground">
-                  <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                  <p>No hay suscripciones activas</p>
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <DollarSign className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 opacity-20" />
+                    <p className="text-xs md:text-sm">Sin suscripciones</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -465,25 +471,26 @@ export const SuperAdminDashboard = () => {
 
       {/* New Tenants Trend */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-purple-500" />
-            Nuevos Negocios Registrados (Últimos 7 días)
+        <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
+          <CardTitle className="flex items-center gap-2 text-sm md:text-base">
+            <Building2 className="h-4 w-4 md:h-5 md:w-5 text-purple-500" />
+            Nuevos Negocios (7 días)
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-[200px]">
+        <CardContent className="p-2 md:p-6 pt-0">
+          <div className="h-[150px] md:h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="date" className="text-xs" />
-                <YAxis className="text-xs" />
+                <XAxis dataKey="date" className="text-[10px] md:text-xs" tick={{ fontSize: 10 }} />
+                <YAxis className="text-[10px] md:text-xs" tick={{ fontSize: 10 }} width={30} />
                 <Tooltip 
                   formatter={(value: number) => [value, 'Nuevos negocios']}
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
+                    fontSize: '12px'
                   }}
                 />
                 <Area 
