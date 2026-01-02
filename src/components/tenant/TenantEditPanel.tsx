@@ -68,11 +68,10 @@ const FONT_OPTIONS = [
   { value: "Quicksand", label: "Quicksand", style: "sans-serif" },
 ];
 
-const HEADING_SIZES = [
-  { value: "small", label: "Pequeño" },
-  { value: "normal", label: "Normal" },
+const NAME_SIZES = [
+  { value: "medium", label: "Mediano" },
   { value: "large", label: "Grande" },
-  { value: "xlarge", label: "Muy grande" },
+  { value: "xlarge", label: "Extra grande" },
 ];
 
 const BUTTON_STYLES = [
@@ -104,7 +103,7 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
     ...tenant,
     font_heading: tenant.font_heading || "Playfair Display",
     font_body: tenant.font_body || "Inter",
-    heading_size: tenant.heading_size || "normal",
+    heading_size: tenant.heading_size || "xlarge",
     button_style: tenant.button_style || "rounded",
   });
   const [activeTab, setActiveTab] = useState("design");
@@ -413,11 +412,11 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
               </div>
             </div>
 
-            {/* Heading Size */}
+            {/* Name Size */}
             <div>
-              <h3 className="text-sm font-semibold mb-3">Tamaño de títulos</h3>
-              <div className="grid grid-cols-4 gap-2">
-                {HEADING_SIZES.map((size) => (
+              <h3 className="text-sm font-semibold mb-3">Tamaño del nombre</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {NAME_SIZES.map((size) => (
                   <button
                     key={size.value}
                     onClick={() => handleChange("heading_size", size.value)}
@@ -429,10 +428,9 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
                   >
                     <span 
                       className={`block font-bold ${
-                        size.value === "small" ? "text-sm" :
-                        size.value === "normal" ? "text-base" :
+                        size.value === "medium" ? "text-base" :
                         size.value === "large" ? "text-lg" :
-                        "text-xl"
+                        "text-2xl"
                       }`}
                     >
                       Aa
