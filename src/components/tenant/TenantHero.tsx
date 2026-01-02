@@ -15,6 +15,7 @@ interface Tenant {
   hero_image_url: string | null;
   logo_url: string | null;
   show_logo_on_landing?: boolean;
+  heading_size?: string | null;
   features?: {
     business_type?: string;
     business_type_label?: string;
@@ -47,6 +48,14 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
 
   // Dynamic tagline - shorter for iOS style
   const tagline = tenant.tagline || `Belleza y estilo${tenant.city ? ` en ${tenant.city}` : ""}`;
+
+  // Heading size classes based on tenant setting
+  const headingSizeClasses = {
+    medium: "text-4xl md:text-5xl lg:text-6xl",
+    large: "text-5xl md:text-6xl lg:text-7xl",
+    xlarge: "text-6xl md:text-7xl lg:text-8xl",
+  };
+  const headingClass = headingSizeClasses[tenant.heading_size as keyof typeof headingSizeClasses] || headingSizeClasses.large;
 
   return (
     <section
@@ -104,7 +113,7 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-4 text-white"
+            className={`${headingClass} font-semibold tracking-tight mb-4 text-white`}
             style={{ fontFamily: 'var(--tenant-font-heading, "SF Pro Display", system-ui, sans-serif)' }}
           >
             {tenant.name}
