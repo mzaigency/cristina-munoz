@@ -49,13 +49,13 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
   // Dynamic tagline - shorter for iOS style
   const tagline = tenant.tagline || `Belleza y estilo${tenant.city ? ` en ${tenant.city}` : ""}`;
 
-  // Heading size classes based on tenant setting
+  // Heading size classes based on tenant setting - default to xlarge for impact
   const headingSizeClasses = {
     medium: "text-4xl md:text-5xl lg:text-6xl",
     large: "text-5xl md:text-6xl lg:text-7xl",
     xlarge: "text-6xl md:text-7xl lg:text-8xl",
   };
-  const headingClass = headingSizeClasses[tenant.heading_size as keyof typeof headingSizeClasses] || headingSizeClasses.large;
+  const headingClass = headingSizeClasses[tenant.heading_size as keyof typeof headingSizeClasses] || headingSizeClasses.xlarge;
 
   return (
     <section

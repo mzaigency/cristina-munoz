@@ -50,7 +50,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
         .single();
 
       if (error) throw error;
-      setTenant({ ...data, show_logo_on_landing: data.show_logo_on_landing ?? true, heading_size: data.heading_size ?? "large" });
+      setTenant({ ...data, show_logo_on_landing: data.show_logo_on_landing ?? true, heading_size: data.heading_size ?? "xlarge" });
     } catch (error) {
       console.error("Error fetching tenant:", error);
       toast({
