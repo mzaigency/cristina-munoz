@@ -127,14 +127,71 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
 
   return (
     <>
-      <div className="rounded-md border overflow-hidden">
+      {/* Mobile Card View */}
+      <div className="space-y-3 md:hidden">
+        {transactions.map((transaction) => (
+          <div
+            key={transaction.id}
+            className={`p-4 rounded-lg border ${transaction.voided ? "opacity-50 bg-muted" : ""}`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-medium">
+                  {format(new Date(transaction.created_at), "HH:mm")}
+                </span>
+                {transaction.voided && (
+                  <Badge variant="destructive" className="text-xs">Anulado</Badge>
+                )}
+              </div>
+              <span className="text-lg font-bold">
+                {formatCurrency(transaction.total)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              {transaction.payment_method === "cash" ? (
+                <Badge variant="outline" className="gap-1">
+                  <Banknote className="h-3 w-3" /> Efectivo
+                </Badge>
+              ) : transaction.payment_method === "card" ? (
+                <Badge variant="outline" className="gap-1">
+                  <CreditCard className="h-3 w-3" /> Tarjeta
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="gap-1">
+                  <Banknote className="h-3 w-3" />
+                  <CreditCard className="h-3 w-3" /> Mixto
+                </Badge>
+              )}
+              {!transaction.voided && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 text-destructive border-destructive/50"
+                  onClick={() => {
+                    setSelectedTransaction(transaction);
+                    setShowVoidDialog(true);
+                  }}
+                >
+                  <XCircle className="h-4 w-4 mr-1" /> Anular
+                </Button>
+              )}
+            </div>
+            {transaction.notes && (
+              <p className="text-sm text-muted-foreground mt-2">{transaction.notes}</p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block rounded-md border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Hora</TableHead>
               <TableHead>Método</TableHead>
               <TableHead className="text-right">Importe</TableHead>
-              <TableHead className="hidden md:table-cell">Notas</TableHead>
+              <TableHead>Notas</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -156,25 +213,25 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
                   {transaction.payment_method === "cash" ? (
                     <Badge variant="outline" className="gap-1">
                       <Banknote className="h-3 w-3" />
-                      <span className="hidden sm:inline">Efectivo</span>
+                      Efectivo
                     </Badge>
                   ) : transaction.payment_method === "card" ? (
                     <Badge variant="outline" className="gap-1">
                       <CreditCard className="h-3 w-3" />
-                      <span className="hidden sm:inline">Tarjeta</span>
+                      Tarjeta
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="gap-1">
                       <Banknote className="h-3 w-3" />
                       <CreditCard className="h-3 w-3" />
-                      <span className="hidden sm:inline">Mixto</span>
+                      Mixto
                     </Badge>
                   )}
                 </TableCell>
                 <TableCell className="text-right font-semibold text-lg">
                   {formatCurrency(transaction.total)}
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                <TableCell className="text-sm text-muted-foreground">
                   {transaction.notes || "-"}
                 </TableCell>
                 <TableCell>

@@ -153,19 +153,20 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header - Mobile responsive */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Personalización de Landing</h2>
-          <p className="text-muted-foreground">Configura la apariencia de tu página web</p>
+          <h2 className="text-xl md:text-2xl font-bold">Personalización de Landing</h2>
+          <p className="text-sm md:text-base text-muted-foreground">Configura la apariencia de tu página web</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="outline" asChild className="h-11 md:h-10">
             <a href={`/salon/${tenantSlug}`} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-4 w-4 mr-2" />
               Ver Landing
             </a>
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving} className="h-11 md:h-10">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             Guardar Cambios
           </Button>
@@ -418,7 +419,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
             <CardDescription>Datos de contacto que aparecerán en tu landing</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
               <div>
                 <Label htmlFor="phone">Teléfono</Label>
                 <Input
@@ -426,6 +427,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   value={tenant.phone || ""}
                   onChange={(e) => setTenant({ ...tenant, phone: e.target.value })}
                   placeholder="+34 600 000 000"
+                  className="h-11 md:h-10"
                 />
               </div>
               <div>
@@ -436,6 +438,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   value={tenant.email || ""}
                   onChange={(e) => setTenant({ ...tenant, email: e.target.value })}
                   placeholder="info@ejemplo.com"
+                  className="h-11 md:h-10"
                 />
               </div>
               <div>
@@ -445,15 +448,17 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   value={tenant.city || ""}
                   onChange={(e) => setTenant({ ...tenant, city: e.target.value })}
                   placeholder="Madrid"
+                  className="h-11 md:h-10"
                 />
               </div>
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2">
                 <Label htmlFor="address">Dirección</Label>
                 <Input
                   id="address"
                   value={tenant.address || ""}
                   onChange={(e) => setTenant({ ...tenant, address: e.target.value })}
                   placeholder="Calle Principal, 123"
+                  className="h-11 md:h-10"
                 />
               </div>
               <div>
@@ -463,6 +468,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   value={tenant.postal_code || ""}
                   onChange={(e) => setTenant({ ...tenant, postal_code: e.target.value })}
                   placeholder="28001"
+                  className="h-11 md:h-10"
                 />
               </div>
             </div>
