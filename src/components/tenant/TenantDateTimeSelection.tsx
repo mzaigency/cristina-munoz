@@ -376,22 +376,83 @@ export const TenantDateTimeSelection = ({
               No hay horarios disponibles para este día. Intenta con otra fecha.
             </p>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[300px] overflow-y-auto">
-              {timeSlots.map((slot) => (
-                <Button
-                  key={slot}
-                  variant={time === slot ? "default" : "outline"}
-                  size="default"
-                  onClick={() => setTime(slot)}
-                  className={cn(
-                    "h-11 text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation",
-                    time === slot && "shadow-glow"
+            (() => {
+              const dayOfWeek = date.getDay();
+              const hours = getBusinessHoursForDay(dayOfWeek);
+              const hasAfternoon = hours.afternoonStart > 0 && hours.afternoonEnd > 0;
+              
+              // Split slots into morning and afternoon
+              const morningSlots = timeSlots.filter(slot => {
+                const minutes = timeStringToMinutes(slot);
+                return minutes < hours.morningEnd;
+              });
+              const afternoonSlots = timeSlots.filter(slot => {
+                const minutes = timeStringToMinutes(slot);
+                return minutes >= hours.afternoonStart;
+              });
+              
+              return (
+                <div className="space-y-4 max-h-[300px] overflow-y-auto">
+                  {morningSlots.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-2 font-medium">
+                        ☀️ Mañana ({minutesToTimeString(hours.morningStart)} - {minutesToTimeString(hours.morningEnd)})
+                      </p>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {morningSlots.map((slot) => (
+                          <Button
+                            key={slot}
+                            variant={time === slot ? "default" : "outline"}
+                            size="default"
+                            onClick={() => setTime(slot)}
+                            className={cn(
+                              "h-11 text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation",
+                              time === slot && "shadow-glow"
+                            )}
+                          >
+                            {slot}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                   )}
-                >
-                  {slot}
-                </Button>
-              ))}
-            </div>
+                  
+                  {hasAfternoon && morningSlots.length > 0 && afternoonSlots.length > 0 && (
+                    <div className="flex items-center gap-2 py-1">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs text-muted-foreground px-2">
+                        Descanso ({minutesToTimeString(hours.morningEnd)} - {minutesToTimeString(hours.afternoonStart)})
+                      </span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                  )}
+                  
+                  {afternoonSlots.length > 0 && hasAfternoon && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-2 font-medium">
+                        🌙 Tarde ({minutesToTimeString(hours.afternoonStart)} - {minutesToTimeString(hours.afternoonEnd)})
+                      </p>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {afternoonSlots.map((slot) => (
+                          <Button
+                            key={slot}
+                            variant={time === slot ? "default" : "outline"}
+                            size="default"
+                            onClick={() => setTime(slot)}
+                            className={cn(
+                              "h-11 text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation",
+                              time === slot && "shadow-glow"
+                            )}
+                          >
+                            {slot}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()
           )}
           {date && time && (
             <p className="mt-4 text-xs text-muted-foreground">
