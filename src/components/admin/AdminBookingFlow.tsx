@@ -241,6 +241,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
             totalDuration={totalDuration}
             services={bookingData.services}
             stylist={bookingData.stylist!}
+            tenantId={tenantId}
             onNext={handleDateTimeSelect}
             onBack={handleBack}
             isAdmin={true}

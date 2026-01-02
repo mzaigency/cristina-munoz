@@ -6,10 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { es } from "date-fns/locale";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stylist, Service, TimeRange } from "@/types/booking";
+import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
+import { Loader2 } from "lucide-react";
 import { 
   hasOverlap, 
   getActiveWindows, 
-  calculateAvailableSlots,
   formatDateToISO,
   timeStringToMinutes,
   minutesToTimeString 
@@ -21,6 +22,7 @@ interface DateTimeSelectionProps {
   totalDuration: number;
   services: Service[];
   stylist: Stylist;
+  tenantId?: string;
   onNext: (date: Date, time: string, resolvedStylist?: Stylist, skipAvailabilityCheck?: boolean) => void;
   onBack: () => void;
   isAdmin?: boolean;
@@ -37,23 +39,13 @@ function parseBookedSlotsToRanges(bookedSlots: Array<{ Hora: string; total_durat
   });
 }
 
-/** Calcula slots disponibles para un estilista específico dado los datos de reservas */
-function computeAvailableSlotsForStylist(
-  date: Date,
-  bookedData: { bookedSlots?: Array<{ Hora: string; total_duration: number }> },
-  services: Service[],
-  totalDuration: number
-): string[] {
-  const ranges = parseBookedSlotsToRanges(bookedData?.bookedSlots || []);
-  return calculateAvailableSlots(date, ranges, services, totalDuration);
-}
-
 export const DateTimeSelection = ({
   selectedDate,
   selectedTime,
   totalDuration,
   services,
   stylist,
+  tenantId,
   onNext,
   onBack,
   isAdmin = false,
@@ -65,43 +57,125 @@ export const DateTimeSelection = ({
   const [bookedRanges, setBookedRanges] = useState<TimeRange[]>([]);
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [stylists, setStylists] = useState<Array<{ slug: string; id: string }>>([]);
+
+  // Use tenant business hours
+  const { 
+    loading: hoursLoading, 
+    generateBaseSlots, 
+    getBusinessHoursForDay, 
+    getClosedDays 
+  } = useTenantBusinessHours(tenantId || '');
+
+  // Fetch tenant stylists
+  useEffect(() => {
+    if (!tenantId) return;
+    
+    const fetchStylists = async () => {
+      const { data } = await supabase
+        .from("tenant_stylists")
+        .select("id, slug")
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true);
+      
+      setStylists(data || []);
+    };
+    
+    fetchStylists();
+  }, [tenantId]);
+
+  // Calculate available slots using tenant business hours
+  const computeAvailableSlotsForStylist = (
+    selectedDate: Date,
+    bookedData: { bookedSlots?: Array<{ Hora: string; total_duration: number }> }
+  ): string[] => {
+    const ranges = parseBookedSlotsToRanges(bookedData?.bookedSlots || []);
+    const dayOfWeek = selectedDate.getDay();
+    const hours = getBusinessHoursForDay(dayOfWeek);
+
+    if (hours.isClosed) return [];
+
+    const isToday = selectedDate.toDateString() === new Date().toDateString();
+    const currentMinutes = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : 0;
+
+    // Generate base slots from tenant hours
+    const slotsSet = generateBaseSlots(dayOfWeek);
+
+    // Add flexible slots after existing bookings
+    ranges.forEach(booking => {
+      const endTime = booking.end;
+      const inMorning = endTime >= hours.morningStart && endTime < hours.morningEnd;
+      const inAfternoon = endTime >= hours.afternoonStart && endTime < hours.afternoonEnd;
+      if (inMorning || inAfternoon) {
+        slotsSet.add(endTime);
+      }
+    });
+
+    // Convert to sorted array
+    const allSlots = Array.from(slotsSet).sort((a, b) => a - b).map(minutesToTimeString);
+
+    // Filter available slots
+    return allSlots.filter(slot => {
+      const startMinutes = timeStringToMinutes(slot);
+      const endMinutes = startMinutes + totalDuration;
+
+      if (isToday && startMinutes <= currentMinutes) return false;
+
+      const inMorning = startMinutes >= hours.morningStart && startMinutes < hours.morningEnd;
+      const inAfternoon = startMinutes >= hours.afternoonStart && startMinutes < hours.afternoonEnd;
+
+      if (inMorning && endMinutes > hours.morningEnd) return false;
+      if (inAfternoon && endMinutes > hours.afternoonEnd) return false;
+
+      // Check overlap with bookings
+      const activeWindows = getActiveWindows(startMinutes, services);
+      for (const window of activeWindows) {
+        for (const booking of ranges) {
+          if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  };
 
   // Fetch booked appointments when date changes
   useEffect(() => {
-    if (!date) return;
+    if (!date || hoursLoading) return;
 
     const fetchBookedSlots = async () => {
       setLoading(true);
       try {
         const dateStr = formatDateToISO(date);
         
-        if (stylist === 'any') {
-          // Fetch both stylists and merge availability
-          const [crisResponse, desiResponse] = await Promise.all([
-            supabase.functions.invoke('check-availability', {
-              body: { date: dateStr, stylist: 'cris', totalDuration },
-            }),
-            supabase.functions.invoke('check-availability', {
-              body: { date: dateStr, stylist: 'desi', totalDuration },
-            }),
-          ]);
+        if (stylist === 'any' && stylists.length > 0) {
+          // Fetch all stylists and merge availability
+          const responses = await Promise.all(
+            stylists.map(s => 
+              supabase.functions.invoke('check-availability', {
+                body: { date: dateStr, stylist: s.slug, totalDuration, tenant_id: tenantId },
+              })
+            )
+          );
 
-          if (crisResponse.error || desiResponse.error) {
-            setBookedRanges([]);
-            setFusedAvailableSlots([]);
-            return;
-          }
+          // Merge all available slots
+          const allSlotsSet = new Set<string>();
+          responses.forEach((response) => {
+            if (!response.error && response.data) {
+              const slots = computeAvailableSlotsForStylist(date, response.data);
+              slots.forEach(slot => allSlotsSet.add(slot));
+            }
+          });
 
-          const crisSlots = computeAvailableSlotsForStylist(date, crisResponse.data, services, totalDuration);
-          const desiSlots = computeAvailableSlotsForStylist(date, desiResponse.data, services, totalDuration);
-          const mergedSlots = [...new Set([...crisSlots, ...desiSlots])].sort();
-          
+          const mergedSlots = Array.from(allSlotsSet).sort();
           setFusedAvailableSlots(mergedSlots);
           setBookedRanges([]);
         } else {
           // Regular handling for specific stylist
           const { data, error } = await supabase.functions.invoke('check-availability', {
-            body: { date: dateStr, stylist, totalDuration },
+            body: { date: dateStr, stylist, totalDuration, tenant_id: tenantId },
           });
 
           if (error) {
@@ -122,12 +196,15 @@ export const DateTimeSelection = ({
     };
 
     fetchBookedSlots();
-  }, [date, stylist, totalDuration, services]);
+  }, [date, stylist, totalDuration, services, stylists, hoursLoading, tenantId]);
 
   // Generate available time slots for specific stylist
   const getAvailableTimeSlots = (selectedDate: Date | undefined): string[] => {
     if (!selectedDate) return [];
-    return calculateAvailableSlots(selectedDate, bookedRanges, services, totalDuration);
+    return computeAvailableSlotsForStylist(selectedDate, { bookedSlots: bookedRanges.map(r => ({
+      Hora: minutesToTimeString(r.start) + ':00',
+      total_duration: r.end - r.start
+    }))});
   };
 
   const timeSlots = stylist === 'any' ? fusedAvailableSlots : getAvailableTimeSlots(date);
@@ -145,54 +222,42 @@ export const DateTimeSelection = ({
 
     // In admin mode with custom time, skip availability checks
     if (isAdmin && (customHour || customMinute)) {
-      onNext(date, time, stylist === 'any' ? 'cris' : stylist, true);
+      // For 'any' stylist, pick the first available
+      const defaultStylist = stylists.length > 0 ? stylists[0].slug : 'cris';
+      onNext(date, time, (stylist === 'any' ? defaultStylist : stylist) as Stylist, true);
       return;
     }
 
     // If stylist is 'any', determine which specific stylist is available
-    if (stylist === 'any') {
+    if (stylist === 'any' && stylists.length > 0) {
       try {
         const dateStr = formatDateToISO(date);
         const selectedStartMinutes = timeStringToMinutes(time);
         const activeWindows = getActiveWindows(selectedStartMinutes, services);
 
-        const [crisResponse, desiResponse] = await Promise.all([
-          supabase.functions.invoke('check-availability', {
-            body: { date: dateStr, stylist: 'cris' },
-          }),
-          supabase.functions.invoke('check-availability', {
-            body: { date: dateStr, stylist: 'desi' },
-          }),
-        ]);
+        // Check each stylist's availability
+        const availabilityResults = await Promise.all(
+          stylists.map(async (s) => {
+            const { data, error } = await supabase.functions.invoke('check-availability', {
+              body: { date: dateStr, stylist: s.slug, tenant_id: tenantId },
+            });
 
-        const checkStylistAvailability = (bookedData: any): boolean => {
-          const ranges = parseBookedSlotsToRanges(bookedData?.bookedSlots || []);
-          for (const window of activeWindows) {
-            for (const booking of ranges) {
-              if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
-                return false;
-              }
-            }
-          }
-          return true;
-        };
+            if (error) return { slug: s.slug, available: false };
 
-        const crisAvailable = crisResponse.data && checkStylistAvailability(crisResponse.data);
-        const desiAvailable = desiResponse.data && checkStylistAvailability(desiResponse.data);
+            const ranges = parseBookedSlotsToRanges(data?.bookedSlots || []);
+            const isAvailable = !activeWindows.some(window => 
+              ranges.some(booking => hasOverlap(window.start, window.end, booking.start, booking.end))
+            );
 
-        // Determine which stylist to assign
-        let assignedStylist: Stylist;
-        if (crisAvailable && desiAvailable) {
-          assignedStylist = 'cris';
-        } else if (crisAvailable) {
-          assignedStylist = 'cris';
-        } else if (desiAvailable) {
-          assignedStylist = 'desi';
-        } else {
-          return;
+            return { slug: s.slug, available: isAvailable };
+          })
+        );
+
+        // Find first available stylist
+        const availableStylist = availabilityResults.find(r => r.available);
+        if (availableStylist) {
+          onNext(date, time, availableStylist.slug as Stylist);
         }
-
-        onNext(date, time, assignedStylist);
       } catch {
         return;
       }
@@ -201,14 +266,23 @@ export const DateTimeSelection = ({
     }
   };
 
-  // Disable Mondays, Sundays, and past dates
+  // Get closed days from tenant business hours
+  const closedDays = getClosedDays();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
   const disabledDays = [
-    { dayOfWeek: [0, 1] },
+    { dayOfWeek: closedDays },
     { before: today },
   ];
+
+  if (hoursLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -233,9 +307,10 @@ export const DateTimeSelection = ({
               Primero selecciona una fecha
             </p>
           ) : loading ? (
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
               Cargando horarios disponibles...
-            </p>
+            </div>
           ) : (
             <>
               {isAdmin && (
