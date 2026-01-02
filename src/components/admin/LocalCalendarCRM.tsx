@@ -797,39 +797,39 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   const groupedBookings = groupBookingsByDate(bookings);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Gestión de Citas</h2>
-          <p className="text-sm text-muted-foreground">Sistema local - Sin Google Calendar</p>
+          <h2 className="text-xl md:text-2xl font-bold text-foreground">Gestión de Citas</h2>
+          <p className="text-xs md:text-sm text-muted-foreground">Sistema local</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Cita
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="flex-1 sm:flex-initial" size="sm">
+            <Plus className="h-4 w-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Nueva </span>Cita
           </Button>
-          <Button variant="secondary" onClick={() => setIsBlockDialogOpen(true)}>
-            <Ban className="h-4 w-4 mr-2" />
-            Bloquear Periodo
+          <Button variant="secondary" onClick={() => setIsBlockDialogOpen(true)} size="sm">
+            <Ban className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Bloquear</span>
           </Button>
         </div>
       </div>
 
       {/* Search Section */}
-      <Card className="p-4">
-        <div className="flex flex-col gap-3">
-          <Label className="text-sm font-medium flex items-center gap-2">
-            <Search className="h-4 w-4" />
-            Buscar cita por nombre o teléfono
+      <Card className="p-3 md:p-4">
+        <div className="flex flex-col gap-2 md:gap-3">
+          <Label className="text-xs md:text-sm font-medium flex items-center gap-2">
+            <Search className="h-3.5 w-3.5 md:h-4 md:w-4" />
+            Buscar cita
           </Label>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Input
-                placeholder="Buscar por nombre, teléfono..."
+                placeholder="Nombre o teléfono..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="pr-8"
+                className="pr-8 text-sm h-9"
               />
               {searchQuery && (
                 <button
@@ -840,13 +840,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                 </button>
               )}
             </div>
-            <Button onClick={handleSearch} disabled={isSearching}>
+            <Button onClick={handleSearch} disabled={isSearching} size="sm" className="h-9 px-3">
               {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             </Button>
           </div>
           
           {showSearchResults && searchResults.length > 0 && (
-            <div className="mt-2 border rounded-md divide-y max-h-80 overflow-y-auto">
+            <div className="mt-2 border rounded-md divide-y max-h-60 md:max-h-80 overflow-y-auto">
               {searchResults.map((result) => {
                 const servicesList = Array.isArray(result.services) 
                   ? result.services.map((s: any) => s.name || s).filter(Boolean)
@@ -856,29 +856,34 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                   <button
                     key={result.id}
                     onClick={() => handleSelectSearchResult(result)}
-                    className="w-full text-left p-3 hover:bg-muted/50 transition-colors"
+                    className="w-full text-left p-2.5 md:p-3 hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex items-center justify-between gap-4 mb-2">
+                    <div className="flex items-center justify-between gap-3 mb-1.5 md:mb-2">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{result.customer_name}</p>
-                        <p className="text-sm text-muted-foreground">{result.Telefono}</p>
+                        <p className="font-medium text-sm truncate">{result.customer_name}</p>
+                        <p className="text-xs text-muted-foreground">{result.Telefono}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-sm font-medium">
-                          {format(parseISO(result.Fecha), "d MMM yyyy", { locale: es })}
+                        <p className="text-xs md:text-sm font-medium">
+                          {format(parseISO(result.Fecha), "d MMM", { locale: es })}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {result.Hora.slice(0, 5)} - {result.stylist}
+                        <p className="text-[10px] md:text-xs text-muted-foreground">
+                          {result.Hora.slice(0, 5)}
                         </p>
                       </div>
                     </div>
                     {servicesList.length > 0 && (
                       <div className="flex flex-wrap gap-1">
-                        {servicesList.map((serviceName: string, idx: number) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
+                        {servicesList.slice(0, 2).map((serviceName: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="text-[10px] md:text-xs">
                             {serviceName}
                           </Badge>
                         ))}
+                        {servicesList.length > 2 && (
+                          <Badge variant="secondary" className="text-[10px] md:text-xs">
+                            +{servicesList.length - 2}
+                          </Badge>
+                        )}
                       </div>
                     )}
                   </button>
@@ -890,9 +895,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
       </Card>
 
       {/* Navigation */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:flex-wrap">
-        <div className="flex gap-1 md:gap-2">
-          <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, -7))} disabled={loading} size="sm" className="flex-1 md:flex-initial">
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-1.5 md:gap-2">
+          <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, -7))} disabled={loading} size="sm" className="flex-1 h-9">
             ←
           </Button>
           <Button 
@@ -900,26 +905,24 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
             onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))} 
             disabled={loading} 
             size="sm" 
-            className="flex-1 md:flex-initial border-primary rounded-sm"
+            className="flex-1 h-9 border-primary"
           >
             Hoy
           </Button>
-          <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading} size="sm" className="flex-1 md:flex-initial">
+          <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading} size="sm" className="flex-1 h-9">
             →
           </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 px-2.5">
+                <CalendarIcon className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar mode="single" selected={weekStart} onSelect={handleJumpToDate} initialFocus weekStartsOn={1} />
+            </PopoverContent>
+          </Popover>
         </div>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="w-full md:w-auto">
-              <CalendarIcon className="h-4 w-4 mr-2" />
-              Ir a fecha
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={weekStart} onSelect={handleJumpToDate} initialFocus weekStartsOn={1} />
-          </PopoverContent>
-        </Popover>
       </div>
 
       {/* Calendar View */}
@@ -933,7 +936,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
           onValueChange={setActiveTab} 
           className="w-full"
         >
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap md:flex-wrap h-auto gap-1 bg-muted/50 p-1">
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto gap-0.5 md:gap-1 bg-muted/50 p-0.5 md:p-1">
             {weekDays.map(day => {
               const dateKey = format(day, "yyyy-MM-dd");
               const dayBookings = groupedBookings[dateKey] || [];
@@ -945,23 +948,26 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                   key={dateKey} 
                   value={dateKey} 
                   className={cn(
-                    "flex-col items-start gap-1 data-[state=active]:bg-background px-2 md:px-4 py-2 min-w-[100px] md:min-w-[140px]",
+                    "flex-col items-center gap-0.5 data-[state=active]:bg-background px-1.5 md:px-4 py-1.5 md:py-2 min-w-[52px] md:min-w-[100px]",
                     isToday && "border-primary"
                   )}
                 >
-                  <div className="flex items-center gap-1 md:gap-2 w-full">
-                    <span className="text-xs md:text-sm font-semibold capitalize">
-                      {format(day, "EEE d MMM", { locale: es })}
+                  <div className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 w-full">
+                    <span className="text-[10px] md:text-sm font-semibold capitalize">
+                      {format(day, "EEE", { locale: es })}
+                    </span>
+                    <span className="text-sm md:text-base font-bold">
+                      {format(day, "d")}
                     </span>
                     {isToday && (
-                      <Badge variant="default" className="text-[9px] md:text-xs h-3.5 px-1 md:h-5 md:px-2">
+                      <Badge variant="default" className="text-[8px] md:text-xs h-3 px-1 md:h-5 md:px-2 hidden md:flex">
                         Hoy
                       </Badge>
                     )}
-                    {hasFullBlock && <Ban className="h-3 w-3 text-destructive" />}
+                    {hasFullBlock && <Ban className="h-2.5 w-2.5 md:h-3 md:w-3 text-destructive" />}
                   </div>
-                  <span className="text-[10px] md:text-xs text-muted-foreground">
-                    {dayBookings.length} {dayBookings.length === 1 ? "cita" : "citas"}
+                  <span className="text-[9px] md:text-xs text-muted-foreground">
+                    {dayBookings.length}
                   </span>
                 </TabsTrigger>
               );
@@ -980,7 +986,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
             });
 
             return (
-              <TabsContent key={dateKey} value={dateKey} className="mt-4">
+              <TabsContent key={dateKey} value={dateKey} className="mt-3 md:mt-4">
                 <Card>
                   <CardContent className="p-2 md:p-6">
                     {schedule.hours.length === 0 ? (
@@ -988,18 +994,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                         <p>Día cerrado</p>
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
-                        {/* Header - fuera de la timeline para que cuadren las horas */}
-                        <div className="flex gap-4 pb-3 border-b border-border/40 min-w-max">
-                          <div className="w-14 md:w-16 shrink-0 text-[10px] md:text-xs font-semibold text-muted-foreground">
+                      <div className="overflow-x-auto -mx-2 px-2 md:mx-0 md:px-0">
+                        {/* Header */}
+                        <div className="flex gap-2 md:gap-4 pb-2 md:pb-3 border-b border-border/40 min-w-max">
+                          <div className="w-10 md:w-16 shrink-0 text-[9px] md:text-xs font-semibold text-muted-foreground">
                             HORA
                           </div>
 
-                          <div className="flex-1 flex gap-3 md:gap-4">
+                          <div className="flex-1 flex gap-2 md:gap-4">
                             {stylists.map(stylist => (
                               <div
                                 key={stylist.slug}
-                                className="flex-1 min-w-[140px] md:min-w-[180px] text-center font-semibold text-sm py-2 rounded-lg shadow-sm"
+                                className="flex-1 min-w-[100px] md:min-w-[180px] text-center font-semibold text-xs md:text-sm py-1.5 md:py-2 rounded-lg shadow-sm"
                                 style={{
                                   backgroundColor: `${stylist.color}15`,
                                   color: stylist.color,
@@ -1013,9 +1019,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                         </div>
 
                         {/* Timeline */}
-                        <div className="flex gap-4 pt-3 min-w-max">
-                        {/* Time column - 2px per minute = 120px per hour */}
-                        <div className="w-14 md:w-16 shrink-0">
+                        <div className="flex gap-2 md:gap-4 pt-2 md:pt-3 min-w-max">
+                        {/* Time column */}
+                        <div className="w-10 md:w-16 shrink-0">
                           {schedule.hours.map(hour => {
                             const isBreakHour = schedule.breakStart !== null && 
                               schedule.breakEnd !== null && 
@@ -1026,7 +1032,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                               <div 
                                 key={hour} 
                                 className={cn(
-                                  "h-[120px] text-xs md:text-sm text-muted-foreground border-b border-border/30 flex items-start pt-1",
+                                  "h-[120px] text-[10px] md:text-sm text-muted-foreground border-b border-border/30 flex items-start pt-1",
                                   isBreakHour && "bg-muted/30"
                                 )}
                               >
@@ -1037,9 +1043,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                         </div>
 
                         {/* Stylists columns */}
-                        <div className="flex-1 flex gap-3 md:gap-4">
+                        <div className="flex-1 flex gap-2 md:gap-4">
                           {stylists.map(stylist => (
-                            <div key={stylist.slug} className="flex-1 min-w-[140px] md:min-w-[180px]">
+                            <div key={stylist.slug} className="flex-1 min-w-[100px] md:min-w-[180px]">
                               <div 
                                 className="relative rounded-lg overflow-hidden"
                                 style={{ backgroundColor: "hsl(var(--muted) / 0.3)" }}

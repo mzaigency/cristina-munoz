@@ -282,17 +282,17 @@ export const TenantsManager = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Gestión de Tenants</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl md:text-2xl font-bold">Gestión de Tenants</h2>
+          <p className="text-sm text-muted-foreground">
             {tenants.length} tenant{tenants.length !== 1 ? "s" : ""} registrado{tenants.length !== 1 ? "s" : ""}
           </p>
         </div>
 
-        <Button className="gap-2" onClick={() => setIsWizardOpen(true)}>
+        <Button className="gap-2 w-full sm:w-auto" onClick={() => setIsWizardOpen(true)}>
           <Sparkles className="h-4 w-4" />
           Nuevo Tenant
         </Button>
@@ -316,8 +316,78 @@ export const TenantsManager = () => {
         />
       </div>
 
-      {/* Tenants Table */}
-      <Card>
+      {/* Mobile Cards View */}
+      <div className="md:hidden space-y-3">
+        {filteredTenants.map((tenant) => (
+          <Card key={tenant.id} className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                  <Building2 className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{tenant.name}</p>
+                  <p className="text-xs text-muted-foreground">/{tenant.slug}</p>
+                </div>
+              </div>
+              <Switch
+                checked={tenant.is_active}
+                onCheckedChange={() => handleToggleActive(tenant)}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between mt-3 pt-3 border-t">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <Badge variant={tenant.subscription_plan === "premium" ? "default" : "secondary"} className="text-xs">
+                  {tenant.subscription_plan}
+                </Badge>
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {stats[tenant.id]?.bookings_count || 0}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MessageSquare className="h-3 w-3" />
+                  {stats[tenant.id]?.contacts_count || 0}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => openTenantLanding(tenant.slug)}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => openEditDialog(tenant)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive"
+                  onClick={() => openDeleteDialog(tenant)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+        {filteredTenants.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            No se encontraron tenants
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
