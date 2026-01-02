@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { MessageCircle, Send, Users } from 'lucide-react';
+import { MessageCircle, Send, ArrowLeft, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
 import { useConversations, useMessages, Conversation, getOrCreateConversation } from '@/hooks/useConversations';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MessagesManagerProps {
   tenantId: string;
@@ -17,6 +17,7 @@ interface MessagesManagerProps {
 
 export function MessagesManager({ tenantId }: MessagesManagerProps) {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [user, setUser] = useState<any>(null);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [newMessageDialog, setNewMessageDialog] = useState(false);
@@ -53,7 +54,6 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
 
     setSearching(true);
     try {
-      // Find user by email
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('id, email, full_name')
@@ -69,7 +69,6 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
         return;
       }
 
-      // Create or get conversation
       const conversationId = await getOrCreateConversation(tenantId, profile.id);
       
       if (conversationId) {
@@ -97,8 +96,114 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
     }
   };
 
+  const handleBack = () => {
+    setSelectedConversation(null);
+  };
+
   const totalUnread = conversations.reduce((acc, c) => acc + c.unread_count_salon, 0);
 
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-[calc(100vh-180px)] bg-background rounded-lg border overflow-hidden">
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-card">
+          {selectedConversation ? (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBack}
+                className="h-10 w-10 p-0"
+                aria-label="Volver a conversaciones"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <span className="font-medium text-sm truncate flex-1 mx-3">
+                {selectedConversation.user?.full_name || selectedConversation.user?.email || 'Usuario'}
+              </span>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                <span className="font-semibold">Mensajes</span>
+                {totalUnread > 0 && (
+                  <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                    {totalUnread}
+                  </span>
+                )}
+              </div>
+              <Dialog open={newMessageDialog} onOpenChange={setNewMessageDialog}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="h-10 min-w-[44px]" aria-label="Nuevo mensaje">
+                    <Plus className="h-4 w-4 mr-1" />
+                    <span className="sr-only sm:not-sr-only">Nuevo</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="mx-4 max-w-[calc(100vw-32px)]">
+                  <DialogHeader>
+                    <DialogTitle>Iniciar conversación</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Email del cliente
+                      </label>
+                      <div className="flex flex-col gap-2">
+                        <Input
+                          type="email"
+                          placeholder="cliente@email.com"
+                          value={searchEmail}
+                          onChange={(e) => setSearchEmail(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleStartConversation()}
+                          className="h-12"
+                        />
+                        <Button 
+                          onClick={handleStartConversation} 
+                          disabled={searching}
+                          className="h-12 w-full"
+                        >
+                          {searching ? 'Buscando...' : 'Buscar cliente'}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        El cliente debe tener una cuenta registrada
+                      </p>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+        </div>
+
+        {/* Mobile Content */}
+        <div className="flex-1 overflow-hidden">
+          {selectedConversation ? (
+            <ChatWindow
+              conversation={selectedConversation}
+              messages={messages}
+              loading={loadingMessages}
+              onSendMessage={handleSendMessage}
+              currentUserId={user?.id || ''}
+              role="salon"
+            />
+          ) : (
+            <ConversationList
+              conversations={conversations}
+              loading={loadingConversations}
+              selectedId={null}
+              onSelect={setSelectedConversation}
+              role="salon"
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop Layout (unchanged)
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -151,7 +256,6 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
 
       <CardContent>
         <div className="grid md:grid-cols-[300px_1fr] gap-4 h-[500px]">
-          {/* Conversation list */}
           <div className="border rounded-lg overflow-hidden">
             <ConversationList
               conversations={conversations}
@@ -162,7 +266,6 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
             />
           </div>
 
-          {/* Chat window */}
           <div className="border rounded-lg overflow-hidden">
             <ChatWindow
               conversation={selectedConversation}
