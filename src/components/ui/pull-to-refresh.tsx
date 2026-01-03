@@ -31,28 +31,43 @@ export function PullToRefresh({
   const indicatorScale = useTransform(pullDistance, [0, PULL_THRESHOLD], [0.5, 1]);
   const indicatorRotation = useTransform(pullDistance, [0, PULL_THRESHOLD], [0, 180]);
 
+  const isAtTop = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return false;
+    // Check if we're at the very top (within 5px tolerance)
+    return container.scrollTop <= 5;
+  }, []);
+
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (disabled || isRefreshing) return;
     
-    const container = containerRef.current;
-    if (!container || container.scrollTop > 0) return;
+    // Only allow pull-to-refresh if we're at the very top
+    if (!isAtTop()) return;
 
     startY.current = e.touches[0].clientY;
     setIsPulling(true);
     hasTriggeredHaptic.current = false;
-  }, [disabled, isRefreshing]);
+  }, [disabled, isRefreshing, isAtTop]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isPulling || disabled || isRefreshing) return;
 
-    const container = containerRef.current;
-    if (!container || container.scrollTop > 0) {
+    // If user has scrolled down at all, cancel the pull
+    if (!isAtTop()) {
       pullDistance.set(0);
+      setIsPulling(false);
       return;
     }
 
     const currentY = e.touches[0].clientY;
-    const diff = Math.max(0, currentY - startY.current);
+    const diff = currentY - startY.current;
+    
+    // Only activate pull if moving downward
+    if (diff <= 0) {
+      pullDistance.set(0);
+      return;
+    }
+    
     const dampedDiff = Math.min(MAX_PULL, diff * 0.5);
     
     pullDistance.set(dampedDiff);
@@ -65,11 +80,11 @@ export function PullToRefresh({
       hasTriggeredHaptic.current = false;
     }
 
-    // Prevent scroll when pulling
-    if (dampedDiff > 0) {
+    // Prevent scroll when pulling down from top
+    if (dampedDiff > 10) {
       e.preventDefault();
     }
-  }, [isPulling, disabled, isRefreshing, pullDistance, haptic]);
+  }, [isPulling, disabled, isRefreshing, pullDistance, haptic, isAtTop]);
 
   const handleTouchEnd = useCallback(async () => {
     if (!isPulling) return;
