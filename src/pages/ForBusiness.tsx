@@ -12,6 +12,10 @@ import {
   BarChart3,
   Palette,
   ArrowRight,
+  Users,
+  Clock,
+  Shield,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -49,6 +53,13 @@ const features = [
   },
 ];
 
+const stats = [
+  { value: "500+", label: "Negocios activos", icon: Building2 },
+  { value: "50K+", label: "Reservas mensuales", icon: Calendar },
+  { value: "98%", label: "Satisfacción", icon: Star },
+  { value: "24/7", label: "Soporte", icon: Clock },
+];
+
 const allBenefits = [
   "Landing page profesional personalizable",
   "Sistema de reservas online 24/7",
@@ -60,6 +71,27 @@ const allBenefits = [
   "Recordatorios automáticos a clientes",
   "Estadísticas y métricas del negocio",
   "Soporte técnico prioritario",
+];
+
+const testimonials = [
+  {
+    name: "María García",
+    business: "Salón Elegance",
+    text: "Desde que usamos GlowApp, nuestras reservas han aumentado un 40%. ¡Increíble!",
+    rating: 5,
+  },
+  {
+    name: "Carlos Ruiz",
+    business: "Barbería Vintage",
+    text: "La mejor inversión para mi negocio. Mis clientes adoran poder reservar online.",
+    rating: 5,
+  },
+  {
+    name: "Laura Martínez",
+    business: "Centro Bienestar Zen",
+    text: "El panel de administración es súper intuitivo. Ahorro horas cada semana.",
+    rating: 5,
+  },
 ];
 
 export default function ForBusiness() {
@@ -74,84 +106,147 @@ export default function ForBusiness() {
         canonicalUrl="/para-negocios"
       />
 
-      {/* Header - with safe area for iPhone */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 safe-area-top">
-        <div className="container mx-auto px-4 h-14 md:h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/favicon.png" alt="GlowApp" className="h-7 w-7 md:h-8 md:w-8" />
-            <span className="text-xl md:text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              GlowApp
+      {/* Header - Identical to Index */}
+      <header className="sticky top-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30 safe-area-top">
+        <div className="container mx-auto px-5 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-3">
+            <motion.img 
+              src="/favicon.png" 
+              alt="GlowApp" 
+              className="h-10 w-10 rounded-xl"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            />
+            <span className="text-2xl font-black tracking-tight text-foreground">
+              Glow<span className="text-primary">App</span>
             </span>
           </Link>
-          <Button asChild size="sm" className="text-sm md:text-base md:px-4">
-            <Link to="/onboarding">Empezar gratis</Link>
-          </Button>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button 
+              asChild 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 rounded-xl shadow-lg shadow-primary/25"
+            >
+              <Link to="/onboarding">
+                <Sparkles className="h-4 w-4 mr-2" />
+                Empezar gratis
+              </Link>
+            </Button>
+          </motion.div>
         </div>
       </header>
 
-      {/* Hero Section - Mobile optimized */}
-      <section className="py-12 md:py-20 px-4">
-        <div className="container mx-auto max-w-5xl text-center">
+      {/* Hero Section - Enhanced */}
+      <section className="py-16 md:py-28 px-5 relative overflow-hidden">
+        {/* Background decorations */}
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+        
+        <div className="container mx-auto max-w-5xl text-center relative">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-primary/10 text-primary mb-4 md:mb-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/15 text-primary mb-6 border border-primary/20"
           >
-            <Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" />
-            <span className="text-xs md:text-sm font-medium">1 mes gratis de prueba</span>
+            <Sparkles className="h-4 w-4" />
+            <span className="text-sm font-bold">1 mes gratis · Sin compromiso</span>
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 md:mb-6 leading-tight"
+            transition={{ delay: 0.1, duration: 0.6 }}
+            className="text-4xl md:text-6xl lg:text-7xl font-black text-foreground mb-6 leading-[1.1] tracking-tight"
           >
-            Haz crecer tu negocio con <span className="text-gradient">GlowApp</span>
+            Haz crecer tu negocio
+            <br />
+            <span className="text-primary">con GlowApp</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 md:mb-8 px-2"
+            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
           >
-            La plataforma todo en uno para peluquerías, barberías, spas y centros de estética.
+            La plataforma todo en uno para peluquerías, barberías, spas y centros de estética. 
+            Más clientes, menos trabajo administrativo.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Button asChild size="lg" className="gradient-primary text-primary-foreground w-full sm:w-auto">
+            <Button 
+              asChild 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg h-14 px-8 rounded-2xl shadow-xl shadow-primary/30"
+            >
               <Link to="/onboarding">
                 Empezar prueba gratis
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
+            </Button>
+            <Button 
+              asChild 
+              variant="outline" 
+              size="lg" 
+              className="font-bold text-lg h-14 px-8 rounded-2xl border-2"
+            >
+              <Link to="/">Ver demo</Link>
             </Button>
           </motion.div>
         </div>
       </section>
 
-      {/* Features Grid - Mobile optimized */}
-      <section className="py-12 md:py-20 px-4 bg-secondary/30">
+      {/* Stats Section */}
+      <section className="py-12 px-5 border-y border-border/50 bg-secondary/30">
+        <div className="container mx-auto max-w-5xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="text-center"
+                >
+                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10 mb-3">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="text-3xl md:text-4xl font-black text-foreground">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground font-medium">{stat.label}</div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid - Enhanced */}
+      <section className="py-20 px-5">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
+            className="text-center mb-14"
           >
-            <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-3 md:mb-4">
+            <h2 className="text-3xl md:text-5xl font-black text-foreground mb-4">
               Todo lo que necesitas
             </h2>
-            <p className="text-muted-foreground text-sm md:text-lg max-w-2xl mx-auto px-2">
-              Herramientas profesionales para tu negocio de belleza.
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Herramientas profesionales diseñadas para hacer crecer tu negocio de belleza.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -160,14 +255,14 @@ export default function ForBusiness() {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="ios-card p-4 md:p-6"
+                  transition={{ delay: index * 0.08 }}
+                  className="group p-6 rounded-3xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
                 >
-                  <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 md:mb-4">
-                    <Icon className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                  <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
+                    <Icon className="h-7 w-7 text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground text-sm md:text-base mb-1 md:mb-2">{feature.title}</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 md:line-clamp-none">{feature.description}</p>
+                  <h3 className="font-bold text-foreground text-lg mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
                 </motion.div>
               );
             })}
@@ -175,105 +270,150 @@ export default function ForBusiness() {
         </div>
       </section>
 
-      {/* Pricing Section - Mobile optimized */}
-      <section className="py-12 md:py-20 px-4">
+      {/* Testimonials */}
+      <section className="py-20 px-5 bg-secondary/30">
+        <div className="container mx-auto max-w-6xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-14"
+          >
+            <h2 className="text-3xl md:text-5xl font-black text-foreground mb-4">
+              Lo que dicen nuestros clientes
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              Negocios reales, resultados reales.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((testimonial, index) => (
+              <motion.div
+                key={testimonial.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="p-6 rounded-3xl bg-card border border-border/50"
+              >
+                <div className="flex gap-1 mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="text-foreground mb-4 italic">"{testimonial.text}"</p>
+                <div>
+                  <div className="font-bold text-foreground">{testimonial.name}</div>
+                  <div className="text-sm text-muted-foreground">{testimonial.business}</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section - Enhanced */}
+      <section className="py-20 px-5">
         <div className="container mx-auto max-w-5xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
+            className="text-center mb-14"
           >
-            <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-3 md:mb-4">Planes simples</h2>
-            <p className="text-muted-foreground text-sm md:text-lg">Sin costes ocultos. Cancela cuando quieras.</p>
+            <h2 className="text-3xl md:text-5xl font-black text-foreground mb-4">Planes simples</h2>
+            <p className="text-muted-foreground text-lg">Sin costes ocultos. Cancela cuando quieras.</p>
           </motion.div>
 
-          <div className="grid gap-4 md:gap-8 max-w-4xl mx-auto">
-            {/* Annual Plan - First on mobile */}
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Monthly Plan */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="ios-card p-5 md:p-8 relative border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 order-1 md:order-2"
+              className="p-8 rounded-3xl bg-card border border-border/50"
             >
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="inline-flex items-center gap-1.5 px-3 md:px-4 py-1 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-semibold">
-                  <Crown className="h-3 w-3" />
-                  Más popular
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3 mb-4 md:mb-6 mt-2">
-                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl gradient-primary flex items-center justify-center">
-                  <Building2 className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-12 w-12 rounded-2xl bg-secondary flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground text-base md:text-lg">Plan Anual</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">Ahorra 2 meses</p>
+                  <h3 className="font-bold text-foreground text-xl">Plan Mensual</h3>
+                  <p className="text-sm text-muted-foreground">Flexibilidad total</p>
                 </div>
               </div>
 
-              <div className="mb-5 md:mb-8">
+              <div className="mb-8">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl md:text-5xl font-bold text-foreground">399,99€</span>
-                  <span className="text-muted-foreground text-base md:text-lg">/año</span>
+                  <span className="text-5xl font-black text-foreground">39,99€</span>
+                  <span className="text-muted-foreground text-lg">/mes</span>
                 </div>
-                <p className="text-xs md:text-sm text-muted-foreground mt-1 md:mt-2">
-                  33,33€/mes · <span className="text-success font-medium">Ahorras 79,89€</span>
-                </p>
+                <p className="text-sm text-muted-foreground mt-2">Después del mes de prueba</p>
               </div>
 
-              <ul className="space-y-2 md:space-y-3 mb-5 md:mb-8">
-                {allBenefits.slice(0, 6).map((benefit, index) => (
-                  <li key={index} className="flex items-center gap-2 md:gap-3 text-xs md:text-sm">
-                    <Check className="h-3.5 w-3.5 md:h-4 md:w-4 text-success shrink-0" />
+              <ul className="space-y-3 mb-8">
+                {allBenefits.slice(0, 5).map((benefit, index) => (
+                  <li key={index} className="flex items-center gap-3 text-sm">
+                    <Check className="h-5 w-5 text-primary shrink-0" />
                     <span className="text-foreground">{benefit}</span>
                   </li>
                 ))}
               </ul>
 
-              <Button asChild className="w-full gradient-primary text-primary-foreground" size="lg">
+              <Button asChild variant="outline" className="w-full h-12 rounded-xl font-bold text-base border-2">
                 <Link to="/onboarding">Empezar prueba gratis</Link>
               </Button>
             </motion.div>
 
-            {/* Monthly Plan */}
+            {/* Annual Plan - Featured */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="ios-card p-5 md:p-8 order-2 md:order-1"
+              className="p-8 rounded-3xl bg-card border-2 border-primary/30 relative overflow-hidden"
             >
-              <div className="flex items-center gap-3 mb-4 md:mb-6">
-                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-secondary flex items-center justify-center">
-                  <Zap className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+              {/* Popular badge */}
+              <div className="absolute -top-px left-1/2 -translate-x-1/2">
+                <div className="px-4 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-b-xl flex items-center gap-1.5">
+                  <Crown className="h-3.5 w-3.5" />
+                  Más popular
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mb-6 mt-4">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Building2 className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground text-base md:text-lg">Plan Mensual</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">Flexibilidad total</p>
+                  <h3 className="font-bold text-foreground text-xl">Plan Anual</h3>
+                  <p className="text-sm text-muted-foreground">Ahorra 2 meses</p>
                 </div>
               </div>
 
-              <div className="mb-5 md:mb-8">
+              <div className="mb-8">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl md:text-5xl font-bold text-foreground">39,99€</span>
-                  <span className="text-muted-foreground text-base md:text-lg">/mes</span>
+                  <span className="text-5xl font-black text-foreground">399,99€</span>
+                  <span className="text-muted-foreground text-lg">/año</span>
                 </div>
-                <p className="text-xs md:text-sm text-muted-foreground mt-1 md:mt-2">Después del mes de prueba</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  33,33€/mes · <span className="text-primary font-bold">Ahorras 79,89€</span>
+                </p>
               </div>
 
-              <ul className="space-y-2 md:space-y-3 mb-5 md:mb-8">
-                {allBenefits.slice(0, 4).map((benefit, index) => (
-                  <li key={index} className="flex items-center gap-2 md:gap-3 text-xs md:text-sm">
-                    <Check className="h-3.5 w-3.5 md:h-4 md:w-4 text-success shrink-0" />
+              <ul className="space-y-3 mb-8">
+                {allBenefits.slice(0, 7).map((benefit, index) => (
+                  <li key={index} className="flex items-center gap-3 text-sm">
+                    <Check className="h-5 w-5 text-primary shrink-0" />
                     <span className="text-foreground">{benefit}</span>
                   </li>
                 ))}
               </ul>
 
-              <Button asChild variant="outline" className="w-full" size="lg">
+              <Button 
+                asChild 
+                className="w-full h-12 rounded-xl font-bold text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
+              >
                 <Link to="/onboarding">Empezar prueba gratis</Link>
               </Button>
             </motion.div>
@@ -283,33 +423,47 @@ export default function ForBusiness() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-            className="text-center text-xs md:text-sm text-muted-foreground mt-6 md:mt-8"
+            transition={{ delay: 0.3 }}
+            className="text-center text-sm text-muted-foreground mt-8 flex items-center justify-center gap-2"
           >
-            Sin compromiso · Cancela cuando quieras
+            <Shield className="h-4 w-4" />
+            Sin compromiso · Cancela cuando quieras · 30 días de garantía
           </motion.p>
         </div>
       </section>
 
-      {/* CTA Section - Mobile optimized */}
-      <section className="py-12 md:py-20 px-4 bg-gradient-to-br from-primary/10 to-accent/10">
-        <div className="container mx-auto max-w-3xl text-center">
+      {/* Final CTA - Enhanced */}
+      <section className="py-20 px-5 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(var(--primary)/0.1),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,hsl(var(--accent)/0.1),transparent_50%)]" />
+        
+        <div className="container mx-auto max-w-3xl text-center relative">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6"
+          >
+            <TrendingUp className="h-4 w-4" />
+            <span className="text-sm font-bold">Únete a +500 negocios</span>
+          </motion.div>
+          
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-2xl md:text-4xl font-bold text-foreground mb-3 md:mb-4"
+            className="text-3xl md:text-5xl font-black text-foreground mb-4"
           >
-            ¿Listo para empezar?
+            ¿Listo para crecer?
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-sm md:text-lg text-muted-foreground mb-6 md:mb-8 px-2"
+            className="text-lg text-muted-foreground mb-10"
           >
-            Únete a cientos de negocios que ya confían en GlowApp.
+            Empieza hoy con 1 mes gratis. Sin tarjeta de crédito.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -317,29 +471,36 @@ export default function ForBusiness() {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            <Button asChild size="lg" className="gradient-primary text-primary-foreground w-full sm:w-auto">
+            <Button 
+              asChild 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg h-14 px-10 rounded-2xl shadow-xl shadow-primary/30"
+            >
               <Link to="/onboarding">
-                Empezar prueba gratis
-                <ArrowRight className="ml-2 h-4 w-4" />
+                Empezar ahora
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
           </motion.div>
         </div>
       </section>
 
-      {/* Footer - Mobile optimized */}
-      <footer className="py-6 md:py-8 px-4 border-t border-border safe-area-bottom">
-        <div className="container mx-auto max-w-6xl flex flex-col items-center gap-3 md:flex-row md:justify-between md:gap-4">
+      {/* Footer */}
+      <footer className="py-8 px-5 border-t border-border safe-area-bottom">
+        <div className="container mx-auto max-w-6xl flex flex-col items-center gap-4 md:flex-row md:justify-between">
           <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 md:h-6 md:w-6" />
-            <p className="text-xs md:text-sm text-muted-foreground">© {currentYear} GlowApp</p>
+            <img src="/favicon.png" alt="GlowApp" className="h-6 w-6" />
+            <p className="text-sm text-muted-foreground">© {currentYear} GlowApp. Todos los derechos reservados.</p>
           </div>
-          <div className="flex gap-4">
-            <Link to="/terminos" className="text-xs md:text-sm text-muted-foreground hover:text-foreground">
+          <div className="flex gap-6">
+            <Link to="/terminos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Términos
             </Link>
-            <Link to="/privacidad" className="text-xs md:text-sm text-muted-foreground hover:text-foreground">
+            <Link to="/privacidad" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Privacidad
+            </Link>
+            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Volver al inicio
             </Link>
           </div>
         </div>
