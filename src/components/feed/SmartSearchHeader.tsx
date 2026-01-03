@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { AISearchAssistant } from "./AISearchAssistant";
 
 interface SmartSearchHeaderProps {
   searchQuery: string;
@@ -66,77 +65,97 @@ export function SmartSearchHeader({
 
   return (
     <div className="sticky top-0 z-50">
-      {/* Glassmorphism Header */}
-      <div className="relative bg-gradient-to-b from-background via-background/95 to-background/80 backdrop-blur-2xl border-b border-border/30">
-        <div className="px-4 py-4 safe-area-top">
-          {/* Logo/Title */}
+      {/* Premium Glassmorphism Header */}
+      <div className="relative bg-gradient-to-b from-background via-background/98 to-background/90 backdrop-blur-3xl">
+        {/* Subtle gradient accent at top */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        
+        <div className="px-5 pt-4 pb-5 safe-area-top">
+          {/* Logo/Title Row - More prominent */}
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-4"
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="flex items-center justify-between mb-5"
           >
-            <div className="flex items-center gap-2">
-              <img src="/favicon.png" alt="GlowApp" className="h-8 w-8" />
-              <h1 className="text-2xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                GlowApp
-              </h1>
+            <div className="flex items-center gap-3">
+              <motion.div
+                initial={{ scale: 0.8, rotate: -10 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+              >
+                <img src="/favicon.png" alt="GlowApp" className="h-10 w-10 drop-shadow-lg" />
+              </motion.div>
+              <div>
+                <h1 className="text-[28px] font-black tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-none">
+                  GlowApp
+                </h1>
+                <p className="text-[11px] text-muted-foreground/70 font-medium tracking-wide mt-0.5">
+                  Tu belleza, conectada
+                </p>
+              </div>
             </div>
+            
+            {/* Admin buttons - more subtle, grouped */}
             <div className="flex items-center gap-1">
-              {/* Admin buttons - subtle in header */}
               {userTenant && (
-                <Button asChild variant="ghost" size="sm" className="text-primary hover:bg-primary/10 h-8 px-2">
+                <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
                   <Link to={`/admin/${userTenant.slug}`}>
-                    <Shield className="h-4 w-4" />
-                    <span className="hidden sm:inline ml-1.5 text-xs">Admin</span>
+                    <Shield className="h-[18px] w-[18px]" />
                   </Link>
                 </Button>
               )}
               {isSuperadmin && (
                 <>
-                  <Button asChild variant="ghost" size="sm" className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 text-amber-600 dark:text-amber-400 h-8 px-2 border border-amber-500/20">
+                  <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-amber-500 hover:bg-amber-500/10">
                     <Link to="/superadmin">
-                      <Crown className="h-4 w-4" />
-                      <span className="hidden sm:inline ml-1.5 text-xs font-semibold">SuperAdmin</span>
+                      <Crown className="h-[18px] w-[18px]" />
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" size="sm" className="text-accent hover:bg-accent/10 h-8 px-2">
+                  <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-accent hover:bg-accent/10">
                     <Link to="/onboarding/setup?demo=true">
-                      <Wand2 className="h-4 w-4" />
-                      <span className="hidden sm:inline ml-1.5 text-xs">Wizard</span>
+                      <Wand2 className="h-[18px] w-[18px]" />
                     </Link>
                   </Button>
                 </>
               )}
-              <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-8 px-2">
+              <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground">
                 <Link to="/para-negocios">
-                  <Building2 className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-1.5">Negocios</span>
+                  <Building2 className="h-[18px] w-[18px]" />
                 </Link>
               </Button>
             </div>
           </motion.div>
 
-          {/* Search Container */}
+          {/* Search Container - Refined */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.15, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="relative"
           >
             <div
               className={cn(
-                "relative flex items-center gap-2 rounded-2xl border-2 transition-all duration-300",
+                "relative flex items-center rounded-2xl transition-all duration-400",
                 isFocused
-                  ? "border-primary bg-background shadow-lg shadow-primary/10"
-                  : "border-transparent bg-secondary/60",
+                  ? "bg-background shadow-xl shadow-primary/10 ring-2 ring-primary/30"
+                  : "bg-secondary/50 shadow-sm"
               )}
             >
-              <Search
-                className={cn(
-                  "absolute left-4 h-5 w-5 transition-colors duration-300",
-                  isFocused ? "text-primary" : "text-muted-foreground",
-                )}
-              />
+              <motion.div
+                animate={{ 
+                  scale: isFocused ? 1.1 : 1,
+                  x: isFocused ? 2 : 0
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                <Search
+                  className={cn(
+                    "absolute left-4 h-5 w-5 transition-all duration-400",
+                    isFocused ? "text-primary" : "text-muted-foreground/60"
+                  )}
+                />
+              </motion.div>
 
               <Input
                 ref={inputRef}
@@ -146,22 +165,23 @@ export function SmartSearchHeader({
                 onChange={(e) => onSearchChange(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                className="h-14 pl-12 pr-24 text-base border-0 bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/60"
+                className="h-12 pl-12 pr-24 text-[15px] border-0 bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50 font-medium"
               />
 
-              <div className="absolute right-3 flex items-center gap-1">
+              <div className="absolute right-2 flex items-center gap-1">
                 <AnimatePresence>
                   {searchQuery && (
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.5 }}
+                      initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                      transition={{ duration: 0.2 }}
                     >
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={handleClear}
-                        className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+                        className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -176,44 +196,45 @@ export function SmartSearchHeader({
                       size="icon"
                       onClick={handleVoiceSearch}
                       className={cn(
-                        "h-10 w-10 rounded-full transition-all duration-300",
+                        "h-9 w-9 rounded-xl transition-all duration-300",
                         isListening
-                          ? "bg-primary text-primary-foreground animate-pulse"
-                          : "text-muted-foreground hover:text-primary hover:bg-primary/10",
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/40 animate-pulse"
+                          : "text-muted-foreground hover:text-primary hover:bg-primary/10"
                       )}
                     >
-                      <Mic className="h-5 w-5" />
+                      <Mic className="h-[18px] w-[18px]" />
                     </Button>
                   </motion.div>
                 )}
               </div>
             </div>
 
-            {/* Dropdown Suggestions */}
+            {/* Dropdown Suggestions - More elegant */}
             <AnimatePresence>
               {showDropdown && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: "auto" }}
-                  exit={{ opacity: 0, y: -10, height: 0 }}
-                  className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-2xl bg-card border border-border/50 shadow-xl shadow-foreground/5 z-50"
+                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute left-0 right-0 top-full mt-3 overflow-hidden rounded-2xl bg-card/95 backdrop-blur-xl border border-border/40 shadow-2xl shadow-foreground/10 z-50"
                 >
-                  <div className="p-3">
+                  <div className="p-4">
                     {/* Quick Suggestions */}
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+                    <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-[0.12em] mb-3 px-1">
                       Sugerencias
                     </p>
                     <div className="space-y-1">
                       {suggestions.map((suggestion, i) => (
                         <motion.button
                           key={i}
-                          initial={{ opacity: 0, x: -10 }}
+                          initial={{ opacity: 0, x: -16 }}
                           animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.05 }}
+                          transition={{ delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
                           onClick={() => onSearchChange(suggestion.text)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/50 transition-colors text-left"
+                          className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/60 active:scale-[0.98] transition-all text-left"
                         >
-                          <div className={cn("p-2 rounded-lg bg-secondary", suggestion.color)}>
+                          <div className={cn("p-2.5 rounded-xl bg-secondary/80", suggestion.color)}>
                             <suggestion.icon className="h-4 w-4" />
                           </div>
                           <span className="text-sm font-medium text-foreground">{suggestion.text}</span>
@@ -223,15 +244,15 @@ export function SmartSearchHeader({
 
                     {/* Recent Searches */}
                     {recentSearches.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-border/50">
-                        <div className="flex items-center justify-between mb-2 px-1">
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <div className="mt-5 pt-4 border-t border-border/30">
+                        <div className="flex items-center justify-between mb-3 px-1">
+                          <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-[0.12em]">
                             Recientes
                           </p>
                           {onClearRecents && (
                             <button
                               onClick={onClearRecents}
-                              className="text-xs text-primary font-medium hover:underline"
+                              className="text-[11px] text-primary font-semibold hover:underline"
                             >
                               Borrar
                             </button>
@@ -241,13 +262,13 @@ export function SmartSearchHeader({
                           {recentSearches.slice(0, 3).map((search, i) => (
                             <motion.button
                               key={i}
-                              initial={{ opacity: 0, x: -10 }}
+                              initial={{ opacity: 0, x: -16 }}
                               animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: i * 0.05 + 0.15 }}
+                              transition={{ delay: i * 0.06 + 0.2, ease: [0.22, 1, 0.36, 1] }}
                               onClick={() => onRecentSearchClick?.(search)}
-                              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/50 transition-colors text-left"
+                              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/60 active:scale-[0.98] transition-all text-left"
                             >
-                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <Clock className="h-4 w-4 text-muted-foreground/60" />
                               <span className="text-sm text-foreground">{search}</span>
                             </motion.button>
                           ))}
@@ -260,6 +281,9 @@ export function SmartSearchHeader({
             </AnimatePresence>
           </motion.div>
         </div>
+        
+        {/* Bottom border gradient */}
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
       </div>
     </div>
   );
