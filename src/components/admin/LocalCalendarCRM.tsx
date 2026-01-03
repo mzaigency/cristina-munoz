@@ -820,7 +820,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
           <p className="text-xs md:text-sm text-muted-foreground">Sistema local</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button onClick={() => setIsCreateDialogOpen(true)} className="flex-1" size="sm">
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="flex-1" size="sm" data-tour-step="new-appointment">
             <Plus className="h-4 w-4 mr-1 md:mr-2" />
             <span className="hidden sm:inline">Nueva </span>Cita
           </Button>

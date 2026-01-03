@@ -33,7 +33,7 @@ import { BusinessHoursManager } from "@/components/admin/BusinessHoursManager";
 import { StoriesAnalytics } from "@/components/admin/StoriesAnalytics";
 import { ProductsManager } from "@/components/admin/ProductsManager";
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
-import { GuidedTour } from "@/components/admin/GuidedTour";
+import { InteractiveTour } from "@/components/admin/InteractiveTour";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -396,7 +396,7 @@ export default function TenantAdmin() {
 
             <div className="flex items-center gap-2 md:gap-2">
               <div className="hidden md:flex items-center gap-2">
-                <GuidedTour onTabChange={(tab) => setActiveTab(tab as TabValue)} />
+                <InteractiveTour onTabChange={(tab) => setActiveTab(tab as TabValue)} />
                 <HelpTutorial />
               </div>
               <Button 
@@ -447,6 +447,7 @@ export default function TenantAdmin() {
                   role="tab"
                   aria-selected={isActive}
                   aria-label={`${item.label}${item.badge ? `, ${item.badge} pendientes` : ''}`}
+                  data-tour-step={`nav-${item.value}`}
                   className={`
                     relative flex flex-col items-center gap-1 md:gap-1 
                     px-3 md:px-3 py-2 md:py-2 
