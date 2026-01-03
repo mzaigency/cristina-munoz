@@ -215,7 +215,7 @@ export function PremiumSalonCard({ salon, index, distance }: PremiumSalonCardPro
               <motion.div 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-foreground text-background text-sm font-bold shadow-lg shadow-foreground/20"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-bold"
               >
                 <Clock className="h-3.5 w-3.5" />
                 Reservar

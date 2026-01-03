@@ -34,7 +34,7 @@ export function CategoryPills({
           className={cn(
             "shrink-0 flex items-center gap-2 px-5 py-3 rounded-full font-semibold text-[13px] transition-all duration-400",
             selected === null
-              ? "bg-foreground text-background shadow-lg shadow-foreground/20"
+              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
               : "bg-secondary/70 text-muted-foreground hover:bg-secondary hover:text-foreground active:scale-95"
           )}
         >
@@ -62,7 +62,7 @@ export function CategoryPills({
               className={cn(
                 "shrink-0 flex items-center gap-2 px-5 py-3 rounded-full font-semibold text-[13px] transition-all duration-400",
                 isSelected
-                  ? "bg-foreground text-background shadow-lg shadow-foreground/20"
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
                   : "bg-secondary/70 text-muted-foreground hover:bg-secondary hover:text-foreground active:scale-95"
               )}
             >
