@@ -107,34 +107,53 @@ export default function ForBusiness() {
       />
 
       {/* Header - Identical to Index */}
-      <header className="sticky top-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30 safe-area-top">
-        <div className="container mx-auto px-5 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <motion.img 
-              src="/favicon.png" 
-              alt="GlowApp" 
-              className="h-10 w-10 rounded-xl"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            />
-            <span className="text-2xl font-black tracking-tight text-foreground">
-              Glow<span className="text-primary">App</span>
-            </span>
-          </Link>
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button 
-              asChild 
-              size="lg" 
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 rounded-xl shadow-lg shadow-primary/25"
+      <div className="sticky top-0 z-50">
+        <div className="relative bg-gradient-to-b from-background via-background/98 to-background/90 backdrop-blur-3xl">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+          
+          <div className="px-5 pt-4 pb-5 safe-area-top">
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="flex items-center justify-between"
             >
-              <Link to="/onboarding">
-                <Sparkles className="h-4 w-4 mr-2" />
-                Empezar gratis
+              <Link to="/" className="flex items-center gap-3">
+                <motion.div
+                  initial={{ scale: 0.8, rotate: -10 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                >
+                  <img src="/favicon.png" alt="GlowApp" className="h-10 w-10 drop-shadow-lg" />
+                </motion.div>
+                <div>
+                  <h1 className="text-[28px] font-black tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-none">
+                    GlowApp
+                  </h1>
+                  <p className="text-[11px] text-muted-foreground/70 font-medium tracking-wide mt-0.5">
+                    Tu belleza, conectada
+                  </p>
+                </div>
               </Link>
-            </Button>
-          </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-5 rounded-xl shadow-lg shadow-primary/25"
+                >
+                  <Link to="/onboarding" className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Prueba gratis
+                  </Link>
+                </Button>
+              </motion.div>
+            </motion.div>
+          </div>
+          
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
         </div>
-      </header>
+      </div>
 
       {/* Hero Section - Enhanced */}
       <section className="py-16 md:py-28 px-5 relative overflow-hidden">

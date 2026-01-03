@@ -119,9 +119,14 @@ export function SmartSearchHeader({
                   </Button>
                 </>
               )}
-              <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground">
-                <Link to="/para-negocios">
-                  <Building2 className="h-[18px] w-[18px]" />
+              <Button 
+                asChild 
+                size="sm" 
+                className="h-9 px-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs border border-primary/20"
+              >
+                <Link to="/para-negocios" className="flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5" />
+                  <span>Para negocios</span>
                 </Link>
               </Button>
             </div>
