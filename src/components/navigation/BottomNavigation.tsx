@@ -22,10 +22,7 @@ export function BottomNavigation() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-2xl border-t border-border/30">
-      {/* Top accent line */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
-      
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-2xl border-t border-border/30">
       <div className="flex items-center justify-around h-[72px] max-w-lg mx-auto px-4 pb-[env(safe-area-inset-bottom)]">
         {navItems.map(({ path, icon: Icon, label }) => {
           const active = isActive(path);
