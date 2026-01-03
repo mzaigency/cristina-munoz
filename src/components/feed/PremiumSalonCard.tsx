@@ -47,59 +47,62 @@ export function PremiumSalonCard({ salon, index, distance }: PremiumSalonCardPro
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ 
-        duration: 0.5, 
+        duration: 0.6, 
         delay: index * 0.08,
-        ease: [0.25, 0.46, 0.45, 0.94]
+        ease: [0.22, 1, 0.36, 1]
       }}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -6 }}
       className="group"
     >
       <Link to={`/salon/${salon.slug}`} className="block">
-        <div className="relative overflow-hidden rounded-3xl bg-card border border-border/50 shadow-lg shadow-foreground/5 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-primary/10 group-hover:border-primary/20">
+        <div className="relative overflow-hidden rounded-[28px] bg-card border border-border/30 shadow-xl shadow-foreground/[0.03] transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-primary/15 group-hover:border-primary/30">
           
-          {/* Image Container with Gradient Overlay */}
-          <div className="relative h-44 overflow-hidden">
+          {/* Image Container with Premium Gradient Overlay */}
+          <div className="relative h-52 overflow-hidden">
             {salon.hero_image_url ? (
-              <img
+              <motion.img
                 src={salon.hero_image_url}
                 alt={salon.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                className="w-full h-full object-cover"
+                initial={{ scale: 1.1 }}
+                whileHover={{ scale: 1.15 }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               />
             ) : (
               <div
                 className="w-full h-full flex items-center justify-center"
                 style={{
-                  background: `linear-gradient(135deg, ${primaryColor}ee, ${primaryColor}99)`,
+                  background: `linear-gradient(135deg, ${primaryColor}ee, ${primaryColor}88)`,
                 }}
               >
                 {salon.logo_url ? (
                   <img
                     src={salon.logo_url}
                     alt={salon.name}
-                    className="h-20 w-20 object-contain rounded-2xl bg-white/95 p-3 shadow-2xl"
+                    className="h-24 w-24 object-contain rounded-3xl bg-white/95 p-4 shadow-2xl"
                   />
                 ) : (
-                  <div className="h-20 w-20 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center text-white text-2xl font-bold shadow-2xl border border-white/20">
+                  <div className="h-24 w-24 rounded-3xl bg-white/15 backdrop-blur-2xl flex items-center justify-center text-white text-3xl font-bold shadow-2xl border border-white/20">
                     {initials}
                   </div>
                 )}
               </div>
             )}
             
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            {/* Premium Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             
             {/* Badges Container */}
-            <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+            <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-2">
               {hasAvailabilityToday && (
                 <motion.div 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.08 + 0.3 }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/90 backdrop-blur-sm text-white text-[10px] font-semibold uppercase tracking-wide"
+                  initial={{ opacity: 0, x: -12, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  transition={{ delay: index * 0.08 + 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-emerald-500/40"
                 >
                   <Zap className="h-3 w-3" />
                   Huecos hoy
@@ -107,10 +110,10 @@ export function PremiumSalonCard({ salon, index, distance }: PremiumSalonCardPro
               )}
               {isPopular && (
                 <motion.div 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.08 + 0.35 }}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/90 backdrop-blur-sm text-white text-[10px] font-semibold uppercase tracking-wide"
+                  initial={{ opacity: 0, x: -12, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  transition={{ delay: index * 0.08 + 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-amber-500/40"
                 >
                   <Sparkles className="h-3 w-3" />
                   Popular
@@ -118,38 +121,50 @@ export function PremiumSalonCard({ salon, index, distance }: PremiumSalonCardPro
               )}
               {isNew && (
                 <motion.div 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.08 + 0.35 }}
-                  className="px-2.5 py-1 rounded-full bg-primary/90 backdrop-blur-sm text-white text-[10px] font-semibold uppercase tracking-wide"
+                  initial={{ opacity: 0, x: -12, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  transition={{ delay: index * 0.08 + 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-primary/40"
                 >
                   Nuevo
                 </motion.div>
               )}
             </div>
 
-            {/* Favorite Button */}
+            {/* Favorite Button - Premium */}
             <motion.button
-              whileTap={{ scale: 0.85 }}
+              whileTap={{ scale: 0.8 }}
               onClick={handleFavoriteClick}
               className={cn(
-                "absolute top-3 right-3 h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300",
+                "absolute top-3.5 right-3.5 h-11 w-11 rounded-full flex items-center justify-center transition-all duration-400",
                 isFav 
-                  ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30" 
-                  : "bg-white/20 backdrop-blur-md text-white hover:bg-white/30 border border-white/20"
+                  ? "bg-rose-500 text-white shadow-xl shadow-rose-500/40" 
+                  : "bg-black/20 backdrop-blur-xl text-white hover:bg-black/30 border border-white/10"
               )}
             >
-              <Heart 
-                className={cn(
-                  "h-5 w-5 transition-transform duration-300",
-                  isFav && "fill-current scale-110"
-                )} 
-              />
+              <motion.div
+                animate={{ 
+                  scale: isFav ? [1, 1.3, 1] : 1
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                <Heart 
+                  className={cn(
+                    "h-5 w-5 transition-all duration-300",
+                    isFav && "fill-current"
+                  )} 
+                />
+              </motion.div>
             </motion.button>
 
             {/* Rating Badge - Bottom Right */}
             {salon.avgRating !== null && (
-              <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/95 backdrop-blur-sm shadow-lg">
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.08 + 0.4 }}
+                className="absolute bottom-3.5 right-3.5 flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/95 backdrop-blur-sm shadow-xl"
+              >
                 <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                 <span className="text-sm font-bold text-foreground">
                   {salon.avgRating.toFixed(1)}
@@ -157,35 +172,35 @@ export function PremiumSalonCard({ salon, index, distance }: PremiumSalonCardPro
                 <span className="text-xs text-muted-foreground">
                   ({salon.reviewCount})
                 </span>
-              </div>
+              </motion.div>
             )}
           </div>
 
-          {/* Content */}
-          <div className="p-4">
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-1 group-hover:text-primary transition-colors duration-300">
+          {/* Content - Refined spacing */}
+          <div className="p-5">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <h3 className="font-bold text-foreground text-[19px] leading-tight line-clamp-1 group-hover:text-primary transition-colors duration-400">
                 {salon.name}
               </h3>
               {salon.average_price && (
-                <span className="shrink-0 text-sm font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-lg">
+                <span className="shrink-0 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg">
                   Desde {salon.average_price}€
                 </span>
               )}
             </div>
             
             {salon.tagline && (
-              <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+              <p className="text-sm text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
                 {salon.tagline}
               </p>
             )}
 
-            <div className="flex items-center justify-between pt-2 border-t border-border/50">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between pt-3 border-t border-border/40">
+              <div className="flex items-center gap-3">
                 {distance && (
-                  <div className="flex items-center gap-1 text-primary">
+                  <div className="flex items-center gap-1.5 text-primary">
                     <Navigation className="h-3.5 w-3.5" />
-                    <span className="text-sm font-semibold">{distance}</span>
+                    <span className="text-sm font-bold">{distance}</span>
                   </div>
                 )}
                 {salon.city && (
@@ -196,11 +211,11 @@ export function PremiumSalonCard({ salon, index, distance }: PremiumSalonCardPro
                 )}
               </div>
 
-              {/* Quick Book Button */}
+              {/* Quick Book Button - Premium */}
               <motion.div 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-foreground text-background text-sm font-bold shadow-lg shadow-foreground/20"
               >
                 <Clock className="h-3.5 w-3.5" />
                 Reservar

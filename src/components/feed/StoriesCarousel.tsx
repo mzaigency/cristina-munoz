@@ -169,11 +169,11 @@ export function StoriesCarousel() {
 
   if (isLoading || tenantLoading) {
     return (
-      <div className="flex gap-4 overflow-x-auto pb-2 px-4 scrollbar-hide">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex flex-col items-center gap-2 shrink-0">
-            <div className="w-16 h-16 rounded-full bg-secondary animate-pulse" />
-            <div className="w-12 h-3 bg-secondary rounded animate-pulse" />
+      <div className="flex gap-4 overflow-x-auto pb-2 px-5 scrollbar-hide">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex flex-col items-center gap-2.5 shrink-0">
+            <div className="w-[72px] h-[72px] rounded-full bg-secondary/60 animate-pulse" />
+            <div className="w-14 h-3 bg-secondary/60 rounded-full animate-pulse" />
           </div>
         ))}
       </div>
@@ -200,43 +200,53 @@ export function StoriesCarousel() {
         />
       )}
 
-      {/* Stories Carousel */}
+      {/* Stories Carousel - Premium Design */}
       <div className="relative">
-        <div className="flex gap-4 overflow-x-auto pb-2 px-4 scrollbar-hide">
+        {/* Fade edges */}
+        <div className="absolute top-0 left-0 w-6 h-full bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+        <div className="absolute top-0 right-0 w-6 h-full bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
+        
+        <div className="flex gap-4 overflow-x-auto pb-3 px-5 scrollbar-hide">
           {/* Add Story Button for admins/stylists */}
           {canCreateStory && tenant && (
             <motion.button
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               onClick={() => setShowCreator(true)}
-              className="flex flex-col items-center gap-2 shrink-0"
+              className="flex flex-col items-center gap-2.5 shrink-0"
             >
-              <div className="relative w-16 h-16 rounded-full bg-secondary p-0.5">
-                <div className="w-full h-full rounded-full bg-background p-0.5 relative">
+              <div className="relative w-[72px] h-[72px] rounded-full bg-gradient-to-br from-secondary/80 to-secondary/40 p-[3px]">
+                <div className="w-full h-full rounded-full bg-background p-[3px] relative overflow-hidden">
                   {tenant.logo_url ? (
                     <img
                       src={tenant.logo_url}
                       alt={tenant.name}
-                      className="w-full h-full rounded-full object-cover opacity-70"
+                      className="w-full h-full rounded-full object-cover opacity-60"
                     />
                   ) : (
                     <div
-                      className="w-full h-full rounded-full flex items-center justify-center text-white text-sm font-bold opacity-70"
+                      className="w-full h-full rounded-full flex items-center justify-center text-white text-sm font-bold opacity-60"
                       style={{ background: tenant.primary_color || "#6366f1" }}
                     >
                       {tenant.name.slice(0, 2).toUpperCase()}
                     </div>
                   )}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                      <Plus className="w-4 h-4 text-primary-foreground" />
+                  <motion.div 
+                    className="absolute inset-0 flex items-center justify-center"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40">
+                      <Plus className="w-4 h-4 text-primary-foreground" strokeWidth={2.5} />
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               </div>
-              <span className="text-xs text-muted-foreground font-medium">Tu story</span>
+              <span className="text-[12px] text-muted-foreground font-semibold">Tu story</span>
             </motion.button>
           )}
+          
           {storyGroups.map((group, index) => {
             const initials = group.tenant.name
               .split(" ")
@@ -251,19 +261,20 @@ export function StoriesCarousel() {
                 key={group.tenant_id}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
+                transition={{ delay: index * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => handleStoryClick(group)}
-                className="flex flex-col items-center gap-2 shrink-0"
+                className="flex flex-col items-center gap-2.5 shrink-0"
               >
                 <div
                   className={cn(
-                    "relative w-16 h-16 rounded-full p-0.5",
+                    "relative w-[72px] h-[72px] rounded-full p-[3px] transition-all duration-300",
                     group.hasUnviewed
-                      ? "bg-gradient-to-br from-rose-500 via-purple-500 to-blue-500"
-                      : "bg-secondary"
+                      ? "bg-gradient-to-br from-rose-500 via-fuchsia-500 to-indigo-500 shadow-lg shadow-fuchsia-500/30"
+                      : "bg-secondary/60"
                   )}
                 >
-                  <div className="w-full h-full rounded-full bg-background p-0.5">
+                  <div className="w-full h-full rounded-full bg-background p-[3px]">
                     {group.tenant.logo_url ? (
                       <img
                         src={group.tenant.logo_url}
@@ -280,12 +291,12 @@ export function StoriesCarousel() {
                     )}
                   </div>
                   {group.stories.length > 1 && (
-                    <span className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    <span className="absolute -bottom-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-bold min-w-[20px] h-[20px] px-1.5 rounded-full flex items-center justify-center shadow-md">
                       {group.stories.length}
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground font-medium truncate max-w-16">
+                <span className="text-[12px] text-muted-foreground font-semibold truncate max-w-[72px]">
                   {group.tenant.name.split(" ")[0]}
                 </span>
               </motion.button>

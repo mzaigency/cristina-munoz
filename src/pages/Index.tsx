@@ -2,8 +2,7 @@ import { SEO } from "@/components/SEO";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, TrendingUp, Wand2, Shield, Navigation, MapPin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Heart, TrendingUp, Navigation } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
 import { CategoryPills } from "@/components/feed/CategoryPills";
@@ -13,11 +12,8 @@ import { EmptyState } from "@/components/feed/EmptyState";
 import { StoriesCarousel } from "@/components/feed/StoriesCarousel";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { useFavorites } from "@/hooks/useFavorites";
-import { JoinNetworkSection } from "@/components/feed/JoinNetworkSection";
-import { Button } from "@/components/ui/button";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { WelcomeCarousel, useWelcomeOnboarding } from "@/components/onboarding/WelcomeCarousel";
-import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useGeolocation, CITY_COORDINATES } from "@/hooks/useGeolocation";
 import { useHaptic } from "@/hooks/useHaptic";
 
@@ -51,10 +47,10 @@ const Index = () => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const { favorites, isAuthenticated } = useFavorites();
-  const { tenant: userTenant, isAdmin: isUserAdmin, loading: tenantLoading } = useCurrentUserTenant();
+  const { tenant: userTenant, loading: tenantLoading } = useCurrentUserTenant();
   const { showWelcome, handleComplete: handleOnboardingComplete } = useWelcomeOnboarding();
   const queryClient = useQueryClient();
-  const { hasLocation, requestLocation, calculateDistance, formatDistance, loading: geoLoading, permissionDenied } = useGeolocation();
+  const { hasLocation, requestLocation, calculateDistance, formatDistance, loading: geoLoading } = useGeolocation();
   const haptic = useHaptic();
   const [sortByDistance, setSortByDistance] = useState(false);
 
@@ -224,24 +220,36 @@ const Index = () => {
       />
 
       {/* Stories Carousel */}
-      <div className="py-4 border-b border-border/30">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="py-5"
+      >
         <StoriesCarousel />
-      </div>
+      </motion.div>
 
       {/* Main Content */}
-      <div className="px-4 py-6 pb-24">
-        {/* Section Header */}
+      <div className="px-5 pt-2 pb-28">
+        {/* Section Header - Premium */}
         <motion.div 
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-5"
+          transition={{ delay: 0.25, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="flex items-center justify-between mb-6"
         >
           <div>
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
+            <h2 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-2.5">
+              <motion.div
+                initial={{ rotate: -10, scale: 0.9 }}
+                animate={{ rotate: 0, scale: 1 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+              >
+                <TrendingUp className="h-6 w-6 text-primary" />
+              </motion.div>
               {searchQuery ? "Resultados" : "Destacados"}
             </h2>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="text-[13px] text-muted-foreground mt-1 font-medium">
               {filteredSalons?.length || 0} salones disponibles
             </p>
           </div>
@@ -252,16 +260,16 @@ const Index = () => {
               whileTap={{ scale: 0.95 }}
               onClick={handleNearMeClick}
               disabled={geoLoading}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-bold transition-all duration-400 ${
                 sortByDistance && hasLocation
                   ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
-                  : "bg-secondary text-muted-foreground hover:text-foreground"
+                  : "bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary"
               }`}
             >
               {geoLoading ? (
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
-                <Navigation className={`h-4 w-4 ${sortByDistance && hasLocation ? "" : ""}`} />
+                <Navigation className="h-4 w-4" />
               )}
               Cerca
             </motion.button>
@@ -270,10 +278,10 @@ const Index = () => {
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-bold transition-all duration-400 ${
                   showFavoritesOnly
                     ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                    : "bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary"
                 }`}
               >
                 <Heart className={`h-4 w-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
@@ -284,12 +292,17 @@ const Index = () => {
         </motion.div>
 
         {/* Category Pills */}
-        <div className="mb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="mb-8"
+        >
           <CategoryPills
             selected={selectedCategory}
             onSelect={setSelectedCategory}
           />
-        </div>
+        </motion.div>
 
         {/* Salons Grid */}
         <AnimatePresence mode="wait">
@@ -301,7 +314,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
               {filteredSalons.map((salon, index) => (
                 <PremiumSalonCard 

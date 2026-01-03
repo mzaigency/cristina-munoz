@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Home, Calendar, MessageCircle, User } from "lucide-react";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { cn } from "@/lib/utils";
+import { motion } from "motion/react";
 
 const navItems = [
   { path: "/", icon: Home, label: "Inicio" },
@@ -21,8 +22,11 @@ export function BottomNavigation() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 ios-nav-blur border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-2xl border-t border-border/30">
+      {/* Top accent line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+      
+      <div className="flex items-center justify-around h-[72px] max-w-lg mx-auto px-4 pb-[env(safe-area-inset-bottom)]">
         {navItems.map(({ path, icon: Icon, label }) => {
           const active = isActive(path);
           const showBadge = path === "/mensajes" && unreadCount > 0;
@@ -32,39 +36,59 @@ export function BottomNavigation() {
               key={path}
               to={path}
               className={cn(
-                "flex flex-col items-center justify-center w-16 h-full relative transition-all duration-200",
-                "active:scale-95"
+                "flex flex-col items-center justify-center min-w-[64px] h-full relative",
+                "active:scale-95 transition-transform duration-200"
               )}
             >
-              <div
+              <motion.div
+                animate={{
+                  scale: active ? 1 : 1,
+                  y: active ? -2 : 0
+                }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                 className={cn(
-                  "flex items-center justify-center w-10 h-10 rounded-2xl transition-all duration-300",
+                  "flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 relative",
                   active
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-foreground text-background shadow-lg shadow-foreground/20"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Icon
                   className={cn(
-                    "h-5 w-5 transition-all duration-200",
-                    active && "scale-110"
+                    "h-[22px] w-[22px] transition-all duration-300",
+                    active && "scale-105"
                   )}
                   strokeWidth={active ? 2.5 : 2}
                 />
+                
+                {/* Notification Badge */}
                 {showBadge && (
-                  <span className="absolute top-1 right-2 min-w-[18px] h-[18px] bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className={cn(
+                      "absolute -top-1 -right-1 min-w-[20px] h-[20px] bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center px-1.5 shadow-lg shadow-destructive/30",
+                      active && "-top-0.5 -right-0.5"
+                    )}
+                  >
                     {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
+                  </motion.span>
                 )}
-              </div>
-              <span
+              </motion.div>
+              
+              <motion.span
+                animate={{
+                  opacity: active ? 1 : 0.6,
+                  y: active ? 0 : 1
+                }}
+                transition={{ duration: 0.3 }}
                 className={cn(
-                  "text-[10px] mt-0.5 font-medium transition-colors duration-200",
-                  active ? "text-primary" : "text-muted-foreground"
+                  "text-[11px] mt-1 font-semibold transition-colors duration-300",
+                  active ? "text-foreground" : "text-muted-foreground"
                 )}
               >
                 {label}
-              </span>
+              </motion.span>
             </Link>
           );
         })}
