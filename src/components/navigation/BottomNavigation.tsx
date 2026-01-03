@@ -49,7 +49,7 @@ export function BottomNavigation() {
                 className={cn(
                   "flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 relative",
                   active
-                    ? "bg-foreground text-background shadow-lg shadow-foreground/20"
+                    ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
