@@ -154,6 +154,35 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // SECURITY CHECK: Verify authorization if user_id is provided
+    if (bookingData.user_id) {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        throw new Error('Unauthorized: User ID provided but no authorization header');
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+      if (userError || !user) {
+        throw new Error('Unauthorized: Invalid token');
+      }
+
+      if (user.id !== bookingData.user_id) {
+        // Check if user is admin or stylist
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const allowedRoles = ['admin', 'stylist', 'superadmin'];
+        if (!userRole || !allowedRoles.includes(userRole.role)) {
+          throw new Error('Unauthorized: You do not have permission to book for this user');
+        }
+      }
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
