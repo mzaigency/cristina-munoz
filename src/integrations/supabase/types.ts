@@ -514,6 +514,68 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          booking_cancelled: boolean | null
+          booking_reminder_1h: boolean | null
+          booking_reminder_24h: boolean | null
+          created_at: string
+          daily_summary: boolean | null
+          daily_summary_time: string | null
+          email_enabled: boolean | null
+          id: string
+          new_booking: boolean | null
+          new_message: boolean | null
+          new_review: boolean | null
+          push_enabled: boolean | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_cancelled?: boolean | null
+          booking_reminder_1h?: boolean | null
+          booking_reminder_24h?: boolean | null
+          created_at?: string
+          daily_summary?: boolean | null
+          daily_summary_time?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          new_booking?: boolean | null
+          new_message?: boolean | null
+          new_review?: boolean | null
+          push_enabled?: boolean | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_cancelled?: boolean | null
+          booking_reminder_1h?: boolean | null
+          booking_reminder_24h?: boolean | null
+          created_at?: string
+          daily_summary?: boolean | null
+          daily_summary_time?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          new_booking?: boolean | null
+          new_message?: boolean | null
+          new_review?: boolean | null
+          push_enabled?: boolean | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           action_url: string | null
