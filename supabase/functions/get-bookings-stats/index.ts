@@ -42,52 +42,75 @@ Deno.serve(async (req) => {
 
     const isAdminOrStylist = roles?.some(r => r.role === 'admin' || r.role === 'stylist' || r.role === 'superadmin');
     if (!isAdminOrStylist) {
-      return new Response(JSON.stringify({ error: 'Admin access required' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // Also check tenant_admins
+      const { data: tenantAdmin } = await supabase
+        .from('tenant_admins')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      
+      if (!tenantAdmin || tenantAdmin.length === 0) {
+        return new Response(JSON.stringify({ error: 'Admin access required' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
-    // Get tenant_id from request body (optional - for tenant-specific stats)
+    // Get tenant_id from request body
     let tenantId: string | null = null;
     try {
       const body = await req.json();
       tenantId = body.tenantId || null;
     } catch {
-      // No body provided, will return global stats for superadmin
+      // No body provided
     }
 
-    // Calculate date ranges
+    // Calculate date ranges - use local dates properly
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const weekAgo = new Date(today);
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    const twoWeeksAgo = new Date(today);
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-    const monthAgo = new Date(today);
-    monthAgo.setMonth(monthAgo.getMonth() - 1);
-    const twoMonthsAgo = new Date(today);
-    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+    
+    // Today (start and end of today)
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    
+    // Yesterday (for comparison)
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    
+    // This week (last 7 days including today)
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - 6); // 6 days back + today = 7 days
+    
+    // Previous week (7 days before that)
+    const prevWeekStart = new Date(weekStart);
+    prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+    const prevWeekEnd = new Date(weekStart);
+    
+    // This month (last 30 days including today)
+    const monthStart = new Date(todayStart);
+    monthStart.setDate(monthStart.getDate() - 29); // 29 days back + today = 30 days
+    
+    // Previous month (30 days before that)
+    const prevMonthStart = new Date(monthStart);
+    prevMonthStart.setDate(prevMonthStart.getDate() - 30);
+    const prevMonthEnd = new Date(monthStart);
 
-    // Format dates for Supabase queries
+    // Format dates for Supabase queries (YYYY-MM-DD)
     const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
     console.log(`Fetching stats for tenant: ${tenantId || 'all'}`);
-    console.log(`Date ranges - Today: ${formatDate(today)}, Week ago: ${formatDate(weekAgo)}, Month ago: ${formatDate(monthAgo)}`);
+    console.log(`Today: ${formatDate(todayStart)} to ${formatDate(todayEnd)}`);
+    console.log(`This week: ${formatDate(weekStart)} to ${formatDate(todayEnd)}`);
+    console.log(`This month: ${formatDate(monthStart)} to ${formatDate(todayEnd)}`);
 
-    // Build base query
-    const buildQuery = (startDate: Date, endDate?: Date) => {
+    // Build query for a specific date range
+    const buildQuery = (startDate: Date, endDate: Date) => {
       let query = supabase
         .from('bookings')
         .select('id, Fecha, canal, status')
         .eq('status', 'confirmed')
-        .gte('Fecha', formatDate(startDate));
-      
-      if (endDate) {
-        query = query.lt('Fecha', formatDate(endDate));
-      }
+        .gte('Fecha', formatDate(startDate))
+        .lt('Fecha', formatDate(endDate));
       
       if (tenantId) {
         query = query.eq('tenant_id', tenantId);
@@ -105,20 +128,18 @@ Deno.serve(async (req) => {
       monthlyRes,
       previousMonthRes,
     ] = await Promise.all([
-      buildQuery(today),
-      buildQuery(yesterday, today),
-      buildQuery(weekAgo),
-      buildQuery(twoWeeksAgo, weekAgo),
-      buildQuery(monthAgo),
-      buildQuery(twoMonthsAgo, monthAgo),
+      buildQuery(todayStart, todayEnd),           // Today only
+      buildQuery(yesterdayStart, todayStart),     // Yesterday only
+      buildQuery(weekStart, todayEnd),            // Last 7 days
+      buildQuery(prevWeekStart, prevWeekEnd),     // Previous 7 days
+      buildQuery(monthStart, todayEnd),           // Last 30 days
+      buildQuery(prevMonthStart, prevMonthEnd),   // Previous 30 days
     ]);
 
-    // Count by channel (only CRM and Web - whatsapp merged into web)
+    // Count by channel (only CRM and Web)
     const countByChannel = (bookings: { canal: string | null }[]) => {
       const crm = bookings.filter(b => b.canal === 'crm').length;
       const web = bookings.filter(b => b.canal === 'web' || b.canal === 'whatsapp' || !b.canal).length;
-      
-      console.log(`Channel counts - CRM: ${crm}, Web: ${web}`);
       return { crm, web };
     };
 
@@ -129,7 +150,7 @@ Deno.serve(async (req) => {
     const monthlyBookings = monthlyRes.data || [];
     const previousMonthBookings = previousMonthRes.data || [];
 
-    console.log(`Daily: ${dailyBookings.length}, Weekly: ${weeklyBookings.length}, Monthly: ${monthlyBookings.length}`);
+    console.log(`Results - Daily: ${dailyBookings.length}, Weekly: ${weeklyBookings.length}, Monthly: ${monthlyBookings.length}`);
 
     // Get average rating from reviews
     let reviewsQuery = supabase
