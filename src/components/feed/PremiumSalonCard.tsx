@@ -225,7 +225,7 @@ export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday 
               </div>
 
               {/* Buttons - Only visible on sm+ screens */}
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 {/* Follow Button */}
                 <motion.button
                   whileTap={{ scale: 0.9 }}
