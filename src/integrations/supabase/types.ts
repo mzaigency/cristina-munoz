@@ -587,6 +587,7 @@ export type Database = {
           is_active: boolean | null
           story_type: string
           tenant_id: string
+          video_url: string | null
           views_count: number | null
         }
         Insert: {
@@ -599,6 +600,7 @@ export type Database = {
           is_active?: boolean | null
           story_type?: string
           tenant_id: string
+          video_url?: string | null
           views_count?: number | null
         }
         Update: {
@@ -611,6 +613,7 @@ export type Database = {
           is_active?: boolean | null
           story_type?: string
           tenant_id?: string
+          video_url?: string | null
           views_count?: number | null
         }
         Relationships: [

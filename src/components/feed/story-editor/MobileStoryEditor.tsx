@@ -12,7 +12,7 @@ import { GuideLines } from "./GuideLines";
 import { TextEditor, type TextConfig } from "./TextEditor";
 import { DrawingCanvas } from "./DrawingCanvasNew";
 import { StickerPicker } from "./StickerPickerNew";
-import { publishStory, downloadStoryImage } from "./storyPublisher";
+import { publishStory, downloadStoryImage, publishVideoStory } from "./storyPublisher";
 
 interface MobileStoryEditorProps {
   isOpen: boolean;
@@ -194,24 +194,40 @@ export function MobileStoryEditor({
     if (navigator.vibrate) navigator.vibrate([20, 50, 20]);
     
     try {
-      // For video mode, capture current frame as thumbnail
-      const baseImage = isVideoMode ? captureVideoFrame() : imageData;
-      if (!baseImage) {
-        toast.error("No se pudo procesar la historia");
-        return;
+      // For video mode, use dedicated video publish flow
+      if (isVideoMode && videoData) {
+        const thumbnailImage = captureVideoFrame();
+        if (!thumbnailImage) {
+          toast.error("No se pudo capturar la miniatura del video");
+          return;
+        }
+        
+        const { storyId, imageUrl, videoUrl } = await publishVideoStory(
+          tenantId,
+          videoData,
+          thumbnailImage
+        );
+        
+        console.log("Video story published:", storyId, imageUrl, videoUrl);
+        toast.success("¡Video publicado!", { icon: "🎬" });
+      } else {
+        // Image mode
+        if (!imageData) {
+          toast.error("No se pudo procesar la historia");
+          return;
+        }
+        
+        const { storyId, imageUrl } = await publishStory({
+          imageData,
+          overlays,
+          drawingDataUrl,
+          tenantId,
+        });
+        
+        console.log("Story published:", storyId, imageUrl);
+        toast.success("¡Historia publicada!", { icon: "🎉" });
       }
       
-      const { storyId, imageUrl } = await publishStory({
-        imageData: baseImage,
-        overlays,
-        drawingDataUrl,
-        tenantId,
-        // TODO: Add video upload support when backend is ready
-        // videoData: isVideoMode ? videoData : undefined,
-      });
-      
-      console.log("Story published:", storyId, imageUrl);
-      toast.success("¡Historia publicada!", { icon: "🎉" });
       onSuccess();
       onClose();
     } catch (error) {
@@ -220,7 +236,7 @@ export function MobileStoryEditor({
     } finally {
       setIsPublishing(false);
     }
-  }, [imageData, isVideoMode, captureVideoFrame, overlays, drawingDataUrl, tenantId, onSuccess, onClose]);
+  }, [imageData, videoData, isVideoMode, captureVideoFrame, overlays, drawingDataUrl, tenantId, onSuccess, onClose]);
 
   const getTextStyle = (item: OverlayItem): React.CSSProperties => {
     const base: React.CSSProperties = {

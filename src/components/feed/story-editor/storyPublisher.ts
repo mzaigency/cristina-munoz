@@ -9,6 +9,12 @@ interface FlattenOptions {
   height?: number;
 }
 
+interface PublishOptions extends FlattenOptions {
+  tenantId: string;
+  caption?: string;
+  videoBlob?: Blob;
+}
+
 // Load an image from URL/dataURL
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -168,7 +174,7 @@ export function canvasToBlob(canvas: HTMLCanvasElement, quality = 0.92): Promise
   });
 }
 
-// Upload story to Supabase Storage
+// Upload story image to Supabase Storage
 export async function uploadStoryImage(blob: Blob, tenantId: string): Promise<string> {
   const fileName = `${tenantId}/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
   
@@ -189,10 +195,33 @@ export async function uploadStoryImage(blob: Blob, tenantId: string): Promise<st
   return urlData.publicUrl;
 }
 
+// Upload story video to Supabase Storage
+export async function uploadStoryVideo(blob: Blob, tenantId: string): Promise<string> {
+  const fileName = `${tenantId}/${Date.now()}-${Math.random().toString(36).substring(7)}.webm`;
+  
+  const { data, error } = await supabase.storage
+    .from("story-videos")
+    .upload(fileName, blob, {
+      contentType: blob.type || "video/webm",
+      cacheControl: "3600",
+    });
+
+  if (error) throw error;
+
+  // Get public URL
+  const { data: urlData } = supabase.storage
+    .from("story-videos")
+    .getPublicUrl(data.path);
+
+  return urlData.publicUrl;
+}
+
 // Create story record in database
 export async function createStoryRecord(
   tenantId: string,
   imageUrl: string,
+  storyType: "image" | "video" = "image",
+  videoUrl?: string,
   caption?: string
 ): Promise<string> {
   // Story expires after 24 hours
@@ -204,8 +233,9 @@ export async function createStoryRecord(
     .insert({
       tenant_id: tenantId,
       image_url: imageUrl,
+      video_url: videoUrl || null,
       caption: caption || null,
-      story_type: "image",
+      story_type: storyType,
       expires_at: expiresAt.toISOString(),
       is_active: true,
     })
@@ -216,23 +246,58 @@ export async function createStoryRecord(
   return data.id;
 }
 
-// Full publish flow
+// Full publish flow for image stories
 export async function publishStory(
-  options: FlattenOptions & { tenantId: string; caption?: string }
-): Promise<{ storyId: string; imageUrl: string }> {
-  // 1. Flatten all layers
+  options: PublishOptions
+): Promise<{ storyId: string; imageUrl: string; videoUrl?: string }> {
+  const { tenantId, caption, videoBlob } = options;
+  
+  // 1. Flatten all layers for thumbnail
   const canvas = await flattenStoryLayers(options);
   
   // 2. Convert to blob
-  const blob = await canvasToBlob(canvas);
+  const imageBlob = await canvasToBlob(canvas);
   
-  // 3. Upload to storage
-  const imageUrl = await uploadStoryImage(blob, options.tenantId);
+  // 3. Upload thumbnail/image to storage
+  const imageUrl = await uploadStoryImage(imageBlob, tenantId);
   
-  // 4. Create database record
-  const storyId = await createStoryRecord(options.tenantId, imageUrl, options.caption);
+  // 4. Upload video if present
+  let videoUrl: string | undefined;
+  if (videoBlob) {
+    videoUrl = await uploadStoryVideo(videoBlob, tenantId);
+  }
   
-  return { storyId, imageUrl };
+  // 5. Create database record
+  const storyType = videoBlob ? "video" : "image";
+  const storyId = await createStoryRecord(tenantId, imageUrl, storyType, videoUrl, caption);
+  
+  return { storyId, imageUrl, videoUrl };
+}
+
+// Publish video story from blob URL
+export async function publishVideoStory(
+  tenantId: string,
+  videoObjectUrl: string,
+  thumbnailDataUrl: string,
+  caption?: string
+): Promise<{ storyId: string; imageUrl: string; videoUrl: string }> {
+  // 1. Fetch the video blob from object URL
+  const videoResponse = await fetch(videoObjectUrl);
+  const videoBlob = await videoResponse.blob();
+  
+  // 2. Create thumbnail blob from data URL
+  const thumbnailBlob = await fetch(thumbnailDataUrl).then(r => r.blob());
+  
+  // 3. Upload thumbnail
+  const imageUrl = await uploadStoryImage(thumbnailBlob, tenantId);
+  
+  // 4. Upload video
+  const videoUrl = await uploadStoryVideo(videoBlob, tenantId);
+  
+  // 5. Create database record
+  const storyId = await createStoryRecord(tenantId, imageUrl, "video", videoUrl, caption);
+  
+  return { storyId, imageUrl, videoUrl };
 }
 
 // Download story as image (for local save)
