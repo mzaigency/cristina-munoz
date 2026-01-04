@@ -166,7 +166,9 @@ export function ConversationList({
                 role === 'user'
                   ? conv.tenant?.name || 'Salón'
                   : conv.user?.full_name || conv.user?.email || 'Cliente';
-              const avatarUrl = role === 'user' ? conv.tenant?.logo_url : null;
+              const avatarUrl = role === 'user' 
+                ? conv.tenant?.logo_url 
+                : conv.user?.avatar_url;
               const isSelected = selectedId === conv.id;
               const isFocused = focusedIndex === index;
 

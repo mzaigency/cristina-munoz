@@ -20,6 +20,7 @@ export interface Conversation {
     id: string;
     full_name: string | null;
     email: string;
+    avatar_url: string | null;
   };
   last_message?: {
     content: string;
@@ -78,7 +79,7 @@ export function useConversations(role: 'user' | 'salon', tenantId?: string) {
           if (role === 'salon') {
             const { data: profile } = await supabase
               .from('profiles')
-              .select('id, full_name, email')
+              .select('id, full_name, email, avatar_url')
               .eq('id', conv.user_id)
               .single();
             user = profile;
