@@ -5,6 +5,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useFollows } from "@/hooks/useFollows";
 import { cn } from "@/lib/utils";
 import { useHaptic } from "@/hooks/useHaptic";
+import { RecommendationBadge } from "./RecommendationBadge";
 
 interface PremiumSalonCardProps {
   salon: {
@@ -23,9 +24,18 @@ interface PremiumSalonCardProps {
   index: number;
   distance?: string | null;
   hasAvailabilityToday?: boolean;
+  recommendationScore?: number;
+  matchReasons?: string[];
 }
 
-export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday = false }: PremiumSalonCardProps) {
+export function PremiumSalonCard({ 
+  salon, 
+  index, 
+  distance, 
+  hasAvailabilityToday = false,
+  recommendationScore,
+  matchReasons 
+}: PremiumSalonCardProps) {
   const { isFavorite, toggleFavorite, isAuthenticated } = useFavorites();
   const { isFollowing, toggleFollow, isLoading: followLoading } = useFollows();
   const haptic = useHaptic();
@@ -43,6 +53,7 @@ export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday 
 
   const isPopular = salon.reviewCount > 10;
   const isNew = salon.reviewCount === 0;
+  const hasHighRecommendation = recommendationScore !== undefined && recommendationScore >= 40;
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -109,6 +120,9 @@ export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday 
             
             {/* Badges Container */}
             <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-2">
+              {hasHighRecommendation && !hasAvailabilityToday && !isPopular && !isNew && (
+                <RecommendationBadge score={recommendationScore!} compact />
+              )}
               {hasAvailabilityToday && (
                 <motion.div 
                   initial={{ opacity: 0, x: -12, scale: 0.9 }}
@@ -202,9 +216,23 @@ export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday 
             </div>
             
             {salon.tagline && (
-              <p className="text-sm text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
+              <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
                 {salon.tagline}
               </p>
+            )}
+
+            {/* Match reasons for recommendations */}
+            {matchReasons && matchReasons.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {matchReasons.slice(0, 2).map((reason, i) => (
+                  <span 
+                    key={i}
+                    className="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium"
+                  >
+                    {reason}
+                  </span>
+                ))}
+              </div>
             )}
 
             <div className="flex flex-col gap-3 pt-3 border-t border-border/40">

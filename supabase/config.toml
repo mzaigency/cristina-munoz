@@ -68,3 +68,6 @@ verify_jwt = true
 
 [functions.send-ticket]
 verify_jwt = true
+
+[functions.get-recommendations]
+verify_jwt = true
