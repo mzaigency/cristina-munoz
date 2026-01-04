@@ -2,7 +2,7 @@ import { SEO } from "@/components/SEO";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, TrendingUp, Navigation } from "lucide-react";
+import { Heart, TrendingUp, Navigation, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
 import { AISearchBar } from "@/components/feed/AISearchBar";
@@ -21,6 +21,7 @@ import { useTodayAvailability } from "@/hooks/useTodayAvailability";
 import { useFollows } from "@/hooks/useFollows";
 import { FeedToggle, FeedMode } from "@/components/feed/FeedToggle";
 import { FollowingFeed } from "@/components/feed/FollowingFeed";
+import { useRecommendations } from "@/hooks/useRecommendations";
 import { cn } from "@/lib/utils";
 
 interface TenantWithStats {
@@ -61,6 +62,7 @@ const Index = () => {
   const { hasLocation, requestLocation, calculateDistance, formatDistance, loading: geoLoading } = useGeolocation();
   const haptic = useHaptic();
   const [sortByDistance, setSortByDistance] = useState(false);
+  const { scoresMap, isAuthenticated: hasRecommendations } = useRecommendations();
 
   // Check if current user is superadmin
   useEffect(() => {
@@ -218,8 +220,17 @@ const Index = () => {
       });
     }
 
+    // Apply recommendation scoring if user is authenticated and not sorting by other criteria
+    if (hasRecommendations && scoresMap.size > 0 && !sortByDistance && selectedCategory !== "popular") {
+      result = [...result].sort((a, b) => {
+        const scoreA = scoresMap.get(a.id)?.score ?? 0;
+        const scoreB = scoresMap.get(b.id)?.score ?? 0;
+        return scoreB - scoreA;
+      });
+    }
+
     return result;
-  }, [salonsWithDistance, searchQuery, showFavoritesOnly, favorites, selectedCategory, sortByDistance, hasLocation, tenantsWithAvailability]);
+  }, [salonsWithDistance, searchQuery, showFavoritesOnly, favorites, selectedCategory, sortByDistance, hasLocation, tenantsWithAvailability, hasRecommendations, scoresMap]);
 
   const handleNearMeClick = () => {
     haptic.medium();
@@ -304,9 +315,17 @@ const Index = () => {
                 {/* Top row: Title + Actions */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" />
+                    {hasRecommendations && scoresMap.size > 0 ? (
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    ) : (
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                    )}
                     <h2 className="text-lg font-bold text-foreground">
-                      {searchQuery ? "Resultados" : "Destacados"}
+                      {searchQuery 
+                        ? "Resultados" 
+                        : hasRecommendations && scoresMap.size > 0 
+                          ? "Para ti" 
+                          : "Destacados"}
                     </h2>
                     <span className="text-xs text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full">
                       {filteredSalons?.length || 0}
@@ -375,15 +394,20 @@ const Index = () => {
                     exit={{ opacity: 0 }}
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                   >
-                    {filteredSalons.map((salon, index) => (
-                      <PremiumSalonCard 
-                        key={salon.id} 
-                        salon={salon} 
-                        index={index} 
-                        distance={salon.formattedDistance}
-                        hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
-                      />
-                    ))}
+                    {filteredSalons.map((salon, index) => {
+                      const recScore = scoresMap.get(salon.id);
+                      return (
+                        <PremiumSalonCard 
+                          key={salon.id} 
+                          salon={salon} 
+                          index={index} 
+                          distance={salon.formattedDistance}
+                          hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
+                          recommendationScore={recScore?.score}
+                          matchReasons={recScore?.matchReasons}
+                        />
+                      );
+                    })}
                   </motion.div>
                 ) : (
                   <EmptyState
