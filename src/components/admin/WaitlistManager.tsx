@@ -379,12 +379,12 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
             <div>
               <Label>Estilista preferido</Label>
-              <Select value={formData.preferred_stylist_id} onValueChange={(v) => setFormData({ ...formData, preferred_stylist_id: v })}>
+              <Select value={formData.preferred_stylist_id || "none"} onValueChange={(v) => setFormData({ ...formData, preferred_stylist_id: v === "none" ? "" : v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sin preferencia" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin preferencia</SelectItem>
+                  <SelectItem value="none">Sin preferencia</SelectItem>
                   {stylists.map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
