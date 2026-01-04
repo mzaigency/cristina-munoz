@@ -22,6 +22,8 @@ const signInSchema = z.object({
 const signUpSchema = signInSchema.extend({
   firstName: z.string().trim().min(1, "El nombre es requerido").max(50),
   lastName: z.string().trim().min(1, "El apellido es requerido").max(50),
+  username: z.string().trim().min(3, "Mínimo 3 caracteres").max(30, "Máximo 30 caracteres")
+    .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guion bajo"),
   phone: z.string().trim().min(9, "Mínimo 9 dígitos").max(15),
   confirmPassword: z.string().min(6),
   acceptTerms: z.boolean().refine((val) => val === true, {
@@ -48,7 +50,7 @@ export default function Auth() {
     defaultValues: {
       email: "",
       password: "",
-      ...(isSignUp ? { firstName: "", lastName: "", phone: "", confirmPassword: "", acceptTerms: false } : {}),
+      ...(isSignUp ? { firstName: "", lastName: "", username: "", phone: "", confirmPassword: "", acceptTerms: false } : {}),
     },
   });
 
@@ -76,12 +78,31 @@ export default function Auth() {
     try {
       if (isSignUp) {
         const signUpValues = values as SignUpFormValues;
+        
+        // Check if username is available
+        const { data: existingUser } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", signUpValues.username.toLowerCase())
+          .single();
+
+        if (existingUser) {
+          toast({
+            title: "Usuario no disponible",
+            description: "Este nombre de usuario ya está en uso",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        
         const { data, error } = await supabase.auth.signUp({
           email: signUpValues.email,
           password: signUpValues.password,
           options: {
             data: {
               full_name: `${signUpValues.firstName} ${signUpValues.lastName}`,
+              username: signUpValues.username.toLowerCase(),
               phone: signUpValues.phone,
             }
           }
@@ -201,6 +222,28 @@ export default function Auth() {
                           )}
                         />
                       </div>
+
+                      <FormField
+                        control={form.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nombre de usuario</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
+                                <Input 
+                                  placeholder="tu_usuario" 
+                                  {...field}
+                                  disabled={loading}
+                                  className="h-12 rounded-xl pl-8"
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
                       <FormField
                         control={form.control}

@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { CommentsSection } from "./CommentsSection";
 
 interface PostCardProps {
   post: Post;
@@ -18,6 +19,7 @@ export function PostCard({ post, showHeader = true }: PostCardProps) {
   const [showHeart, setShowHeart] = useState(false);
   const [isLiked, setIsLiked] = useState(post.is_liked || false);
   const [likesCount, setLikesCount] = useState(post.likes_count);
+  const [showComments, setShowComments] = useState(false);
   const haptic = useHaptic();
   const { toggleLike, isAuthenticated } = usePosts();
   const navigate = useNavigate();
@@ -128,7 +130,13 @@ export function PostCard({ post, showHeader = true }: PostCardProps) {
                 )} 
               />
             </motion.button>
-            <button className="active:opacity-70">
+            <button 
+              className="active:opacity-70"
+              onClick={() => {
+                haptic.light();
+                setShowComments(true);
+              }}
+            >
               <MessageCircle className="w-6 h-6" />
             </button>
             <button className="active:opacity-70">
@@ -153,11 +161,28 @@ export function PostCard({ post, showHeader = true }: PostCardProps) {
           </p>
         )}
 
+        {/* View comments */}
+        {(post.comments_count || 0) > 0 && (
+          <button 
+            onClick={() => setShowComments(true)}
+            className="text-sm text-muted-foreground mt-1"
+          >
+            Ver los {post.comments_count} comentarios
+          </button>
+        )}
+
         {/* Time */}
         <p className="text-xs text-muted-foreground mt-1.5">
           hace {timeAgo}
         </p>
       </div>
+
+      {/* Comments modal */}
+      <CommentsSection
+        postId={post.id}
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+      />
     </div>
   );
 }
