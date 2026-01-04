@@ -8,6 +8,7 @@ import { useConversations, useMessages, Conversation, getOrCreateConversation } 
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { AppLayout } from '@/components/navigation/AppLayout';
 
 export default function Messages() {
   const navigate = useNavigate();
@@ -121,57 +122,59 @@ export default function Messages() {
   // Mobile layout - iOS style
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Header iOS style */}
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
-          <div className="flex items-center h-14 px-2">
+      <AppLayout hideNavigation={!!selectedConversation} noTopSafeArea>
+        <div className="min-h-screen bg-background">
+          {/* Header iOS style */}
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
+            <div className="flex items-center h-14 px-2">
+              {selectedConversation ? (
+                <Button
+                  variant="ghost"
+                  onClick={handleBack}
+                  className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                  <span className="text-[17px]">Atrás</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/')}
+                  className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                  <span className="text-[17px]">Atrás</span>
+                </Button>
+              )}
+              <h1 className="flex-1 text-center text-[17px] font-semibold truncate pr-10">
+                {selectedConversation ? selectedConversation.tenant?.name || 'Chat' : 'Mensajes'}
+              </h1>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className={selectedConversation ? "h-[calc(100vh-56px-env(safe-area-inset-top))]" : "h-[calc(100vh-56px-env(safe-area-inset-top)-80px)]"}>
             {selectedConversation ? (
-              <Button
-                variant="ghost"
-                onClick={handleBack}
-                className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
-              >
-                <ChevronLeft className="h-6 w-6" />
-                <span className="text-[17px]">Atrás</span>
-              </Button>
+              <ChatWindow
+                conversation={selectedConversation}
+                messages={messages}
+                loading={loadingMessages}
+                onSendMessage={handleSendMessage}
+                currentUserId={user?.id || ''}
+                role="user"
+              />
             ) : (
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/')}
-                className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
-              >
-                <ChevronLeft className="h-6 w-6" />
-                <span className="text-[17px]">Atrás</span>
-              </Button>
+              <ConversationList
+                conversations={conversations}
+                loading={loadingConversations}
+                selectedId={null}
+                onSelect={handleSelectConversation}
+                role="user"
+              />
             )}
-            <h1 className="flex-1 text-center text-[17px] font-semibold truncate pr-10">
-              {selectedConversation ? selectedConversation.tenant?.name || 'Chat' : 'Mensajes'}
-            </h1>
           </div>
         </div>
-
-        {/* Content */}
-        <div className="h-[calc(100vh-56px-env(safe-area-inset-top))]">
-          {selectedConversation ? (
-            <ChatWindow
-              conversation={selectedConversation}
-              messages={messages}
-              loading={loadingMessages}
-              onSendMessage={handleSendMessage}
-              currentUserId={user?.id || ''}
-              role="user"
-            />
-          ) : (
-            <ConversationList
-              conversations={conversations}
-              loading={loadingConversations}
-              selectedId={null}
-              onSelect={handleSelectConversation}
-              role="user"
-            />
-          )}
-        </div>
-      </div>
+      </AppLayout>
     );
   }
 
