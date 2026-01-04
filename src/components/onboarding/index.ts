@@ -6,4 +6,6 @@ export { StylistsStep } from "./StylistsStep";
 export { TypographyStep } from "./TypographyStep";
 export { ImagesStep } from "./ImagesStep";
 export { AIGenerationStep } from "./AIGenerationStep";
+export { ThemeStep } from "./ThemeStep";
 export * from "./types";
+export * from "./landing-themes";
