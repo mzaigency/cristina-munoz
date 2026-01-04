@@ -222,36 +222,36 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
             className="w-full"
           >
             <CarouselContent className="-ml-3 md:-ml-4">
-            {reviews.map((review) => (
+{reviews.map((review) => (
                 <CarouselItem 
                   key={review.id} 
-                  className="pl-3 md:pl-4 basis-[75%] xs:basis-[60%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4"
+                  className="pl-3 md:pl-4 basis-[280px] md:basis-[320px]"
                 >
                   <button
                     onClick={() => setSelectedReview(review)}
-                    className="w-full aspect-square text-left bg-card rounded-2xl p-4 shadow-md flex flex-col border border-border/50 hover:shadow-lg hover:border-primary/30 transition-all duration-200 active:scale-[0.98]"
+                    className="w-full h-[180px] text-left bg-card rounded-xl p-4 shadow-sm flex flex-col border border-border/40 hover:shadow-md hover:border-primary/20 transition-all duration-200 active:scale-[0.99]"
                   >
                     {/* Header */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs flex-shrink-0">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm flex-shrink-0">
                         {getInitials(review.profile?.full_name, review.id)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-foreground text-xs truncate">
+                        <p className="font-medium text-foreground text-sm">
                           {getDisplayName(review.profile?.full_name, review.id)}
                         </p>
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className="text-xs text-muted-foreground">
                           {formatDateShort(review.created_at)}
                         </p>
                       </div>
                     </div>
 
                     {/* Stars */}
-                    <div className="flex gap-0.5 mb-2">
+                    <div className="flex gap-0.5 mb-3">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className="h-3.5 w-3.5 text-primary"
+                          className="h-4 w-4 text-primary"
                           fill={star <= review.rating ? "currentColor" : "transparent"}
                         />
                       ))}
@@ -259,14 +259,9 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
 
                     {/* Comment */}
                     {review.comment && (
-                      <p className="text-muted-foreground flex-1 text-xs leading-relaxed line-clamp-4 overflow-hidden">
+                      <p className="text-muted-foreground flex-1 text-sm leading-relaxed line-clamp-3">
                         "{review.comment}"
                       </p>
-                    )}
-                    
-                    {/* Tap hint */}
-                    {review.comment && review.comment.length > 60 && (
-                      <p className="text-[10px] text-primary/70 mt-auto pt-1">Toca para leer más</p>
                     )}
                   </button>
                 </CarouselItem>
