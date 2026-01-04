@@ -350,6 +350,7 @@ const Index = () => {
                   salon={salon} 
                   index={index} 
                   distance={salon.formattedDistance}
+                  hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
                 />
               ))}
             </motion.div>
