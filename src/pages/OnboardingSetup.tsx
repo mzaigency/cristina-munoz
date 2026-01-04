@@ -537,7 +537,7 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
           validServices.map((s) => ({
             tenant_id: tenantId,
             name: s.name.trim(),
-            type: s.type,
+            type: s.type === "simple" ? "Simple" : "Compuesto",
             duration_part1_active: s.type === "simple" ? s.duration : s.duration_part1_active,
             duration_exposure_pause: s.type === "compound" ? s.duration_exposure_pause : 0,
             duration_part2_active: s.type === "compound" ? s.duration_part2_active : 0,
