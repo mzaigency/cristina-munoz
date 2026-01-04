@@ -227,37 +227,39 @@ export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday 
                 {/* Follow Button */}
                 <motion.button
                   whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.03 }}
                   onClick={handleFollowClick}
                   disabled={followLoading}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold transition-all",
+                    "flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-all",
+                    "px-2 sm:px-4",
                     following 
                       ? "bg-primary/10 text-primary border border-primary/30" 
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/50"
                   )}
                 >
                   {following ? (
                     <>
-                      <UserCheck className="h-3.5 w-3.5" />
+                      <UserCheck className="h-4 w-4" />
                       <span className="hidden sm:inline">Siguiendo</span>
                     </>
                   ) : (
                     <>
-                      <UserPlus className="h-3.5 w-3.5" />
+                      <UserPlus className="h-4 w-4" />
                       <span className="hidden sm:inline">Seguir</span>
                     </>
                   )}
                 </motion.button>
 
                 {/* Quick Book Button - Premium */}
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
+                <motion.button 
+                  whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-bold"
+                  className="flex items-center justify-center gap-1.5 h-9 px-4 sm:px-5 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-semibold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-shadow"
                 >
-                  <Clock className="h-3.5 w-3.5" />
-                  Reservar
-                </motion.div>
+                  <Clock className="h-4 w-4" />
+                  <span>Reservar</span>
+                </motion.button>
               </div>
             </div>
           </div>
