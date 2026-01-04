@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePosts } from "@/hooks/usePosts";
 import { PostGrid } from "@/components/social/PostGrid";
 import { Grid3X3, Camera } from "lucide-react";
+import { useTenantAccess } from "@/hooks/useTenantAccess";
 
 interface TenantGallerySectionProps {
   tenantId: string;
@@ -12,8 +13,8 @@ interface TenantGallerySectionProps {
 }
 
 export const TenantGallerySection = ({ tenantId, tenantName }: TenantGallerySectionProps) => {
-  const { tenantPosts, isLoadingTenantPosts } = usePosts(tenantId);
-
+  const { tenantPosts, isLoadingTenantPosts, deletePost } = usePosts(tenantId);
+  const { isAdmin } = useTenantAccess(tenantId);
   if (isLoadingTenantPosts) {
     return (
       <section className="py-16 bg-background">
@@ -77,7 +78,7 @@ export const TenantGallerySection = ({ tenantId, tenantName }: TenantGallerySect
               Publicaciones
             </button>
           </div>
-          <PostGrid posts={tenantPosts} />
+          <PostGrid posts={tenantPosts} isAdmin={isAdmin} onDelete={deletePost} />
         </ScrollReveal>
 
         {/* Post count */}
