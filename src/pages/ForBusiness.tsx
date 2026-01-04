@@ -119,18 +119,14 @@ export default function ForBusiness() {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="flex items-center justify-between"
             >
-              <Link to="/" className="flex items-center">
-                <motion.div
+              <Link to="/">
+                <motion.img 
+                  src={glowappLogo} 
+                  alt="GlowApp" 
+                  className="h-8 object-contain"
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-                >
-                  <img src="/favicon.png" alt="GlowApp" className="h-8 w-8 drop-shadow-lg mr-1" />
-                </motion.div>
-                <img 
-                  src={glowappLogo} 
-                  alt="GlowApp" 
-                  className="h-7 object-contain" 
                 />
               </Link>
               
