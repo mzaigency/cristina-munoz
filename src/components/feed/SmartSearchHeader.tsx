@@ -65,7 +65,7 @@ export function SmartSearchHeader({ userTenant, isSuperadmin }: SmartSearchHeade
                   <Link to="/para-negocios" className="flex items-center gap-1.5">
                     <Building2 className="h-4 w-4" />
                     <span className="hidden sm:inline">Para negocios</span>
-                    <span className="sm:hidden">Para Negocios</span>
+                    <span className="sm:hidden">Negocios</span>
                   </Link>
                 </Button>
               </motion.div>
