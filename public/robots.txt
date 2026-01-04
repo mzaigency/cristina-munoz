@@ -15,4 +15,4 @@ Allow: /
 Disallow: /admin
 Disallow: /superadmin
 
-Sitemap: https://glowup.app/sitemap.xml
+Sitemap: https://glowapp.app/sitemap.xml
