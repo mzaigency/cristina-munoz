@@ -16,7 +16,7 @@ import { AppLayout } from "@/components/navigation/AppLayout";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(100, "Contraseña demasiado larga"),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres").max(100, "Contraseña demasiado larga"),
 });
 
 const signUpSchema = signInSchema.extend({
