@@ -17,6 +17,8 @@ import { TenantAdminBar } from "@/components/tenant/TenantAdminBar";
 import { TenantEditPanel } from "@/components/tenant/TenantEditPanel";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
 import TenantContactSection from "@/components/tenant/TenantContactSection";
+import { HeroImmersive, HeroMinimal, HeroSplit, HeroBold } from "@/components/tenant/heroes";
+import { getThemeById } from "@/components/onboarding/landing-themes";
 
 interface Tenant {
   id: string;
@@ -45,6 +47,7 @@ interface Tenant {
   button_style?: string | null;
   average_price?: number | null;
   show_logo_on_landing?: boolean | null;
+  theme_id?: string | null;
   features?: {
     business_type?: string;
     business_type_label?: string;
@@ -213,12 +216,24 @@ const TenantLanding = () => {
         />
 
         <main className={isPreview ? "pt-10" : ""}>
-          {/* Hero Section */}
+          {/* Hero Section - Dynamic based on theme */}
           <div id="inicio">
-            <TenantHero 
-              tenant={tenant}
-              onBookNow={handleBookNow}
-            />
+            {(() => {
+              const theme = getThemeById(tenant.theme_id || "immersive");
+              const heroProps = { tenant, onBookNow: handleBookNow };
+              
+              switch (theme.heroLayout) {
+                case "minimal":
+                  return <HeroMinimal {...heroProps} />;
+                case "split":
+                  return <HeroSplit {...heroProps} />;
+                case "bold":
+                  return <HeroBold {...heroProps} />;
+                case "fullscreen":
+                default:
+                  return <HeroImmersive {...heroProps} />;
+              }
+            })()}
           </div>
 
           {/* Services Section - Tenant specific */}

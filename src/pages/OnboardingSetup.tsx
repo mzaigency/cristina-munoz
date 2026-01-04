@@ -54,6 +54,7 @@ import {
   StepProps,
   ServiceForm,
 } from "@/components/onboarding";
+import { ThemeStep } from "@/components/onboarding/ThemeStep";
 
 // Step: Colors only (AI generation moved to end)
 function ColorsStep({ onNext, tenantId, loading, setLoading }: StepProps) {
@@ -837,6 +838,7 @@ export default function OnboardingSetup() {
   // Define all steps with their icons
   const steps = [
     { title: "Negocio", icon: Building2 },
+    { title: "Tema", icon: Layers },
     { title: "Colores", icon: Palette },
     { title: "Tipografía", icon: Type },
     { title: "Imágenes", icon: Image },
@@ -1004,26 +1006,28 @@ export default function OnboardingSetup() {
       case 0:
         return <BusinessTypeStep {...stepProps} tenantName={tenantName} setTenantName={setTenantName} />;
       case 1:
-        return <ColorsStep {...stepProps} />;
+        return <ThemeStep {...stepProps} tenantName={tenantName} />;
       case 2:
-        return <TypographyStep {...stepProps} />;
+        return <ColorsStep {...stepProps} />;
       case 3:
-        return <ImagesStep {...stepProps} />;
+        return <TypographyStep {...stepProps} />;
       case 4:
-        return <LocationStep {...stepProps} />;
+        return <ImagesStep {...stepProps} />;
       case 5:
-        return <ContactStep {...stepProps} />;
+        return <LocationStep {...stepProps} />;
       case 6:
-        return <SocialStep {...stepProps} />;
+        return <ContactStep {...stepProps} />;
       case 7:
-        return <HoursStep {...stepProps} />;
+        return <SocialStep {...stepProps} />;
       case 8:
-        return <ServicesStep {...stepProps} />;
+        return <HoursStep {...stepProps} />;
       case 9:
-        return <StylistsStep {...stepProps} />;
+        return <ServicesStep {...stepProps} />;
       case 10:
-        return <AIGenerationStep {...stepProps} />;
+        return <StylistsStep {...stepProps} />;
       case 11:
+        return <AIGenerationStep {...stepProps} />;
+      case 12:
         return tenantSlug ? <SuccessStep tenantSlug={tenantSlug} /> : null;
       default:
         return null;

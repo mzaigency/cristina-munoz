@@ -1177,6 +1177,7 @@ export type Database = {
           subscription_expires_at: string | null
           subscription_plan: string | null
           tagline: string | null
+          theme_id: string | null
           timezone: string | null
           updated_at: string | null
           whatsapp_number: string | null
@@ -1219,6 +1220,7 @@ export type Database = {
           subscription_expires_at?: string | null
           subscription_plan?: string | null
           tagline?: string | null
+          theme_id?: string | null
           timezone?: string | null
           updated_at?: string | null
           whatsapp_number?: string | null
@@ -1261,6 +1263,7 @@ export type Database = {
           subscription_expires_at?: string | null
           subscription_plan?: string | null
           tagline?: string | null
+          theme_id?: string | null
           timezone?: string | null
           updated_at?: string | null
           whatsapp_number?: string | null
