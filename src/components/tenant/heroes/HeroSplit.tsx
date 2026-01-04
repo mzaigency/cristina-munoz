@@ -1,8 +1,11 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Tenant {
+  id: string;
   name: string;
   tagline?: string | null;
   description?: string | null;
@@ -22,6 +25,52 @@ interface HeroSplitProps {
 }
 
 export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
+  const [stats, setStats] = useState({ rating: 0, clients: 0, since: new Date().getFullYear() });
+  
+  useEffect(() => {
+    const fetchStats = async () => {
+      // Fetch average rating from approved reviews
+      const { data: reviewsData } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("tenant_id", tenant.id)
+        .eq("approved", true);
+      
+      const avgRating = reviewsData?.length 
+        ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
+        : 0;
+      
+      // Fetch unique customers count from bookings
+      const { data: bookingsData } = await supabase
+        .from("bookings")
+        .select("customer_name")
+        .eq("tenant_id", tenant.id);
+      
+      const uniqueClients = new Set(bookingsData?.map(b => b.customer_name.toLowerCase().trim()) || []).size;
+      
+      // Fetch tenant creation year
+      const { data: tenantData } = await supabase
+        .from("tenants")
+        .select("created_at")
+        .eq("id", tenant.id)
+        .single();
+      
+      const createdYear = tenantData?.created_at 
+        ? new Date(tenantData.created_at).getFullYear()
+        : new Date().getFullYear();
+      
+      setStats({
+        rating: Number(avgRating),
+        clients: uniqueClients,
+        since: createdYear
+      });
+    };
+    
+    if (tenant.id) {
+      fetchStats();
+    }
+  }, [tenant.id]);
+
   const heroImages = tenant.hero_images as string[] | null;
   const heroImage = heroImages?.[0] || tenant.hero_image_url;
 
@@ -146,9 +195,9 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
           >
             <div className="grid grid-cols-3 gap-6">
               {[
-                { value: "5★", label: "Valoración" },
-                { value: "+500", label: "Clientes" },
-                { value: "2024", label: "Desde" }
+                { value: stats.rating > 0 ? `${stats.rating}★` : "—", label: "Valoración" },
+                { value: stats.clients > 0 ? (stats.clients > 99 ? `+${stats.clients}` : `${stats.clients}`) : "—", label: "Clientes" },
+                { value: stats.since.toString(), label: "Desde" }
               ].map((stat, idx) => (
                 <div key={idx} className="text-center">
                   <p 
