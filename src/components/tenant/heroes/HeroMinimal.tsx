@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Star } from "lucide-react";
+import { Star, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import glowappIcon from "@/assets/glowapp-icon.png";
+import { FollowButton } from "@/components/social/FollowButton";
+import { useFollows } from "@/hooks/useFollows";
 
 interface Tenant {
   id: string;
@@ -24,6 +26,14 @@ interface HeroMinimalProps {
 
 export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
   const [stats, setStats] = useState({ rating: 0, since: new Date().getFullYear() });
+  const { useFollowerCount } = useFollows();
+  const { data: followerCount = 0 } = useFollowerCount(tenant.id);
+
+  const formatFollowers = (count: number) => {
+    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return count.toString();
+  };
   
   useEffect(() => {
     const fetchStats = async () => {
@@ -113,6 +123,10 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="flex items-center justify-center gap-6 mb-6 text-white/50 text-sm"
           >
+            <div className="flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5" />
+              <span>{formatFollowers(followerCount)}</span>
+            </div>
             {stats.rating > 0 && (
               <div className="flex items-center gap-1.5">
                 <Star className="w-3.5 h-3.5 fill-current" />
@@ -139,23 +153,29 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="text-base md:text-lg text-white/60 font-body font-light leading-relaxed mb-12 max-w-md mx-auto"
+              className="text-base md:text-lg text-white/60 font-body font-light leading-relaxed mb-10 max-w-md mx-auto"
             >
               {displayTagline}
             </motion.p>
           )}
 
-          {/* CTA Button - Clean and minimal */}
+          {/* CTA Buttons - Clean and minimal */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
+            className="flex flex-col sm:flex-row items-center gap-4"
           >
+            <FollowButton 
+              tenantId={tenant.id} 
+              variant="default" 
+              className="px-8 py-5 text-sm font-medium tracking-wide uppercase border-white/30 text-white hover:bg-white/10 rounded-none transition-all duration-300 bg-transparent"
+            />
             <Button
               onClick={onBookNow}
               variant="outline"
               size="lg"
-              className="px-10 py-6 text-sm font-medium tracking-wide uppercase border-white/40 text-white hover:bg-white hover:text-gray-900 rounded-none transition-all duration-300 bg-transparent"
+              className="px-10 py-5 text-sm font-medium tracking-wide uppercase border-white/40 text-white hover:bg-white hover:text-gray-900 rounded-none transition-all duration-300 bg-transparent"
             >
               Reservar
             </Button>

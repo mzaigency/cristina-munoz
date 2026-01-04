@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Star } from "lucide-react";
+import { Calendar, MapPin, Star, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import glowappIcon from "@/assets/glowapp-icon.png";
+import { FollowButton } from "@/components/social/FollowButton";
+import { useFollows } from "@/hooks/useFollows";
 
 interface Tenant {
   id: string;
@@ -27,6 +29,14 @@ interface HeroSplitProps {
 
 export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
   const [stats, setStats] = useState({ rating: 0, clients: 0, since: new Date().getFullYear() });
+  const { useFollowerCount } = useFollows();
+  const { data: followerCount = 0 } = useFollowerCount(tenant.id);
+
+  const formatFollowers = (count: number) => {
+    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return count.toString();
+  };
   
   useEffect(() => {
     const fetchStats = async () => {
@@ -150,8 +160,13 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.35 }}
-            className="flex items-center gap-4 mb-8"
+            className="flex flex-wrap items-center gap-2 mb-6"
           >
+            {/* Followers */}
+            <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-3 py-1.5">
+              <Users className="w-3.5 h-3.5 text-white/80" />
+              <span className="text-white text-sm font-medium">{formatFollowers(followerCount)}</span>
+            </div>
             {stats.rating > 0 && (
               <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-3 py-1.5">
                 <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
@@ -160,20 +175,21 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
             )}
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-3 py-1.5">
               <img src={glowappIcon} alt="Glowapp" className="w-3.5 h-3.5 object-contain" />
-              <span className="text-white/90 text-xs">En Glowapp desde {stats.since}</span>
+              <span className="text-white/90 text-xs">Desde {stats.since}</span>
             </div>
           </motion.div>
 
-          {/* CTA Button */}
+          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex flex-col gap-3"
           >
             <Button
               onClick={onBookNow}
               size="lg"
-              className="w-full py-6 text-base rounded-xl shadow-xl"
+              className="w-full py-5 text-base rounded-xl shadow-xl"
               style={{
                 backgroundColor: tenant.primary_color || 'hsl(var(--primary))'
               }}
@@ -181,6 +197,11 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
               <Calendar className="w-5 h-5 mr-2" />
               Reservar cita
             </Button>
+            <FollowButton 
+              tenantId={tenant.id} 
+              variant="default" 
+              className="w-full bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 rounded-xl py-5"
+            />
           </motion.div>
         </div>
       </div>
@@ -222,8 +243,13 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="absolute bottom-12 left-12 flex items-center gap-3"
+            className="absolute bottom-12 left-12 flex items-center gap-2"
           >
+            {/* Followers */}
+            <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
+              <Users className="w-4 h-4 text-gray-600" />
+              <span className="text-gray-900 text-sm font-semibold">{formatFollowers(followerCount)}</span>
+            </div>
             {stats.rating > 0 && (
               <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
                 <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
@@ -232,7 +258,7 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
             )}
             <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
               <img src={glowappIcon} alt="Glowapp" className="w-4 h-4 object-contain" />
-              <span className="text-gray-700 text-sm">En Glowapp desde {stats.since}</span>
+              <span className="text-gray-700 text-sm">Desde {stats.since}</span>
             </div>
           </motion.div>
         </motion.div>
@@ -283,23 +309,29 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.7 }}
-                className="flex items-center gap-2 text-gray-500 mb-10"
+                className="flex items-center gap-2 text-gray-500 mb-8"
               >
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm">{location}</span>
               </motion.div>
             )}
 
-            {/* CTA Button */}
+            {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
+              className="flex items-center gap-3"
             >
+              <FollowButton 
+                tenantId={tenant.id} 
+                variant="default" 
+                className="rounded-full px-6 py-5"
+              />
               <Button
                 onClick={onBookNow}
                 size="lg"
-                className="px-10 py-6 text-base rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
+                className="px-8 py-5 text-base rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
                 style={{
                   backgroundColor: tenant.primary_color || 'hsl(var(--primary))'
                 }}
