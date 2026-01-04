@@ -217,78 +217,78 @@ export const CashRegisterStats = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Period Selector */}
-      <div className="flex gap-2">
+      <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1">
         {(["week", "month", "quarter"] as Period[]).map(p => (
-          <Button key={p} variant={period === p ? "default" : "outline"} size="sm" onClick={() => setPeriod(p)}>
-            {p === "week" ? "Última semana" : p === "month" ? "Este mes" : "Trimestre"}
+          <Button key={p} variant={period === p ? "default" : "outline"} size="sm" onClick={() => setPeriod(p)} className="h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3 shrink-0">
+            {p === "week" ? "Semana" : p === "month" ? "Mes" : "Trimestre"}
           </Button>
         ))}
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
         <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Total ingresos</p>
-            <p className="text-xl font-bold text-primary">{formatCurrency(totals.total)}</p>
+          <CardContent className="p-2.5 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Total</p>
+            <p className="text-base sm:text-xl font-bold text-primary truncate">{formatCurrency(totals.total)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Ticket medio</p>
-            <p className="text-xl font-bold">{formatCurrency(totals.avgTicket)}</p>
+          <CardContent className="p-2.5 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Ticket medio</p>
+            <p className="text-base sm:text-xl font-bold truncate">{formatCurrency(totals.avgTicket)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Transacciones</p>
-            <p className="text-xl font-bold">{totals.transactionCount}</p>
+          <CardContent className="p-2.5 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Transacciones</p>
+            <p className="text-base sm:text-xl font-bold">{totals.transactionCount}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Propinas</p>
-            <p className="text-xl font-bold text-pink-600">{formatCurrency(totals.tips)}</p>
+          <CardContent className="p-2.5 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Propinas</p>
+            <p className="text-base sm:text-xl font-bold text-pink-600 truncate">{formatCurrency(totals.tips)}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Descuentos</p>
-            <p className="text-xl font-bold text-orange-600">-{formatCurrency(totals.discounts)}</p>
+        <Card className="col-span-2 sm:col-span-1">
+          <CardContent className="p-2.5 sm:p-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Descuentos</p>
+            <p className="text-base sm:text-xl font-bold text-orange-600 truncate">-{formatCurrency(totals.discounts)}</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview" className="gap-1">
-            <TrendingUp className="h-4 w-4" /><span className="hidden sm:inline">General</span>
+        <TabsList className="grid w-full grid-cols-3 h-auto p-1">
+          <TabsTrigger value="overview" className="gap-1 py-2 text-xs sm:text-sm">
+            <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="hidden xs:inline sm:inline">General</span>
           </TabsTrigger>
-          <TabsTrigger value="stylists" className="gap-1">
-            <Users className="h-4 w-4" /><span className="hidden sm:inline">Estilistas</span>
+          <TabsTrigger value="stylists" className="gap-1 py-2 text-xs sm:text-sm">
+            <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="hidden xs:inline sm:inline">Estilistas</span>
           </TabsTrigger>
-          <TabsTrigger value="services" className="gap-1">
-            <Scissors className="h-4 w-4" /><span className="hidden sm:inline">Servicios</span>
+          <TabsTrigger value="services" className="gap-1 py-2 text-xs sm:text-sm">
+            <Scissors className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="hidden xs:inline sm:inline">Servicios</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4 mt-4">
+        <TabsContent value="overview" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
           {data.length > 0 ? (
             <>
               <Card>
-                <CardHeader><CardTitle className="text-lg">Ingresos diarios</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
+                <CardHeader className="p-3 sm:p-6"><CardTitle className="text-sm sm:text-lg">Ingresos diarios</CardTitle></CardHeader>
+                <CardContent className="p-2 sm:p-6 pt-0">
+                  <div className="h-[200px] sm:h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis dataKey="date" tickFormatter={formatDateLabel} className="text-xs" />
-                        <YAxis tickFormatter={(v) => `${v}€`} className="text-xs" />
+                        <XAxis dataKey="date" tickFormatter={formatDateLabel} className="text-[10px] sm:text-xs" tick={{ fontSize: 10 }} />
+                        <YAxis tickFormatter={(v) => `${v}€`} className="text-[10px] sm:text-xs" tick={{ fontSize: 10 }} width={40} />
                         <Tooltip formatter={(value: number) => formatCurrency(value)}
                           labelFormatter={(label) => format(new Date(label), "d MMMM yyyy", { locale: es })} />
-                        <Line type="monotone" dataKey="total" name="Total" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: "hsl(var(--primary))" }} />
+                        <Line type="monotone" dataKey="total" name="Total" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: "hsl(var(--primary))", r: 3 }} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -296,14 +296,14 @@ export const CashRegisterStats = () => {
               </Card>
 
               <Card>
-                <CardHeader><CardTitle className="text-lg">Por método de pago</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
+                <CardHeader className="p-3 sm:p-6"><CardTitle className="text-sm sm:text-lg">Por método de pago</CardTitle></CardHeader>
+                <CardContent className="p-2 sm:p-6 pt-0">
+                  <div className="h-[200px] sm:h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis dataKey="date" tickFormatter={formatDateLabel} className="text-xs" />
-                        <YAxis tickFormatter={(v) => `${v}€`} className="text-xs" />
+                        <XAxis dataKey="date" tickFormatter={formatDateLabel} className="text-[10px] sm:text-xs" tick={{ fontSize: 10 }} />
+                        <YAxis tickFormatter={(v) => `${v}€`} className="text-[10px] sm:text-xs" tick={{ fontSize: 10 }} width={40} />
                         <Tooltip formatter={(value: number) => formatCurrency(value)}
                           labelFormatter={(label) => format(new Date(label), "d MMMM yyyy", { locale: es })} />
                         <Bar dataKey="cash" name="Efectivo" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} stackId="a" />
@@ -316,9 +316,9 @@ export const CashRegisterStats = () => {
               </Card>
             </>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No hay datos para el período seleccionado</p>
+            <div className="text-center py-8 sm:py-12 text-muted-foreground">
+              <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 opacity-50" />
+              <p className="text-sm">No hay datos para el período seleccionado</p>
             </div>
           )}
         </TabsContent>

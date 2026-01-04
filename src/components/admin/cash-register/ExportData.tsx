@@ -176,36 +176,36 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center py-4">
-        <FileSpreadsheet className="h-12 w-12 mx-auto text-primary mb-3" />
-        <h3 className="text-lg font-semibold">Exportar Caja Inteligente</h3>
-        <p className="text-sm text-muted-foreground">
-          Genera un Excel con fórmulas automáticas (SUMA) listas para usar.
+    <div className="space-y-4 sm:space-y-6">
+      <div className="text-center py-3 sm:py-4">
+        <FileSpreadsheet className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-primary mb-2 sm:mb-3" />
+        <h3 className="text-base sm:text-lg font-semibold">Exportar Caja</h3>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Genera un Excel con fórmulas automáticas
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2 justify-center">
-        <Button variant="outline" size="sm" onClick={() => setQuickPeriod("week")}>
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
+        <Button variant="outline" size="sm" onClick={() => setQuickPeriod("week")} className="h-8 sm:h-9 text-xs sm:text-sm">
           Semana
         </Button>
-        <Button variant="outline" size="sm" onClick={() => setQuickPeriod("month")}>
+        <Button variant="outline" size="sm" onClick={() => setQuickPeriod("month")} className="h-8 sm:h-9 text-xs sm:text-sm">
           Mes
         </Button>
-        <Button variant="outline" size="sm" onClick={() => setQuickPeriod("year")}>
+        <Button variant="outline" size="sm" onClick={() => setQuickPeriod("year")} className="h-8 sm:h-9 text-xs sm:text-sm">
           Año
         </Button>
       </div>
 
-      <Card className="p-4">
-        <div className="grid grid-cols-2 gap-4">
+      <Card className="p-3 sm:p-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-4">
           <div>
-            <Label>Desde</Label>
-            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <Label className="text-xs sm:text-sm">Desde</Label>
+            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9 sm:h-10 text-sm" />
           </div>
           <div>
-            <Label>Hasta</Label>
-            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <Label className="text-xs sm:text-sm">Hasta</Label>
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-9 sm:h-10 text-sm" />
           </div>
         </div>
       </Card>
@@ -213,11 +213,11 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
       <Button
         onClick={exportToCSV}
         disabled={loading || !startDate || !endDate}
-        className="w-full h-12 gap-2"
+        className="w-full h-10 sm:h-12 gap-2 text-sm sm:text-base"
         size="lg"
       >
-        {loading ? <Loader2 className="animate-spin" /> : <Download />}
-        Descargar Excel con Fórmulas
+        {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Download className="h-4 w-4" />}
+        Descargar Excel
       </Button>
     </div>
   );
