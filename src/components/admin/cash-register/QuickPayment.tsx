@@ -667,9 +667,9 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-3 sm:gap-4" style={{ minHeight: 'min(60vh, 500px)' }}>
+    <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:h-[calc(100vh-320px)] lg:min-h-[500px]">
       {/* Left: Items Grid */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 lg:min-w-0">
         {/* Category Pills */}
         <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 sm:pb-3 scrollbar-hide -mx-1 px-1">
           {categories.map((cat) => (
@@ -686,8 +686,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         </div>
 
         {/* Items Grid */}
-        <div className="flex-1 overflow-y-auto max-h-[280px] sm:max-h-[350px] lg:max-h-none">
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 gap-1.5 sm:gap-2">
+        <div className="flex-1 overflow-y-auto max-h-[280px] sm:max-h-[350px] lg:max-h-none lg:flex-1">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 sm:gap-2">
             {/* Manual Entry Button */}
             <motion.button
               whileTap={{ scale: 0.95 }}
@@ -730,9 +730,9 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       </div>
 
       {/* Right: Cart & Payment */}
-      <div className="w-full lg:w-72 xl:w-80 flex flex-col bg-background rounded-xl sm:rounded-2xl border shadow-sm">
+      <div className="w-full lg:w-80 lg:shrink-0 flex flex-col bg-background rounded-xl sm:rounded-2xl border shadow-sm lg:overflow-hidden">
         {/* Customer Input */}
-        <div className="p-2.5 sm:p-4 border-b space-y-1.5 sm:space-y-2">
+        <div className="p-2.5 sm:p-4 border-b space-y-1.5 sm:space-y-2 shrink-0">
           <Input
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
@@ -749,7 +749,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 min-h-0 max-h-[150px] sm:max-h-[200px] lg:max-h-none">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 min-h-0 max-h-[150px] sm:max-h-[200px] lg:max-h-none lg:flex-1">
           <AnimatePresence>
             {selectedItems.map((item) => (
               <motion.div
@@ -786,8 +786,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           </AnimatePresence>
 
           {selectedItems.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-6 sm:py-12 text-muted-foreground">
-              <Scissors className="h-8 w-8 sm:h-12 sm:w-12 mb-2 opacity-30" />
+            <div className="flex flex-col items-center justify-center py-6 sm:py-8 lg:py-12 text-muted-foreground">
+              <Scissors className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 mb-2 opacity-30" />
               <p className="text-xs sm:text-sm">Selecciona servicios</p>
             </div>
           )}
