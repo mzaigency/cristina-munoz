@@ -52,134 +52,126 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
     if (tenant.id) fetchStats();
   }, [tenant.id]);
 
-  const heroImages = tenant.hero_images as string[] | null;
-  const images = heroImages?.slice(0, 2) || [tenant.hero_image_url].filter(Boolean);
-
   const displayTagline = tenant.tagline || tenant.description || "Tu espacio de belleza y bienestar";
+
+  const heroImages = tenant.hero_images as string[] | null;
+  const mainImage = heroImages?.[0] || tenant.hero_image_url;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Elegant Header */}
-      <header className="w-full px-6 py-6 flex items-center justify-between border-b border-border/30">
-        <div className="flex items-center gap-3">
-          {tenant.logo_url && (
-            <img 
-              src={tenant.logo_url} 
-              alt={tenant.name}
-              className="h-10 w-10 object-contain rounded-lg"
-            />
-          )}
-          <span className="font-heading font-medium text-foreground">{tenant.name}</span>
+      {/* Fixed Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border/20">
+        <div className="flex items-center justify-between max-w-lg mx-auto">
+          <div className="flex items-center gap-2">
+            {tenant.logo_url && (
+              <img 
+                src={tenant.logo_url} 
+                alt={tenant.name}
+                className="h-8 w-8 object-contain rounded-lg"
+              />
+            )}
+            <span className="font-heading font-medium text-foreground text-sm">{tenant.name}</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBookNow}
+            className="text-xs px-3 h-8"
+            style={{ color: tenant.primary_color || 'hsl(var(--primary))' }}
+          >
+            Reservar
+            <ArrowRight className="w-3 h-3 ml-1" />
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBookNow}
-          className="text-muted-foreground hover:text-foreground group"
-        >
-          Reservar
-          <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
-        </Button>
       </header>
 
-      {/* Main Content - Refined Typography */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
+      {/* Hero Image - Full Width */}
+      {mainImage && (
+        <div className="relative w-full h-[55vh] mt-[52px]">
+          <img 
+            src={mainImage} 
+            alt={tenant.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+        </div>
+      )}
+
+      {/* Content */}
+      <main className={`flex-1 flex flex-col items-center px-6 py-10 text-center ${!mainImage ? 'pt-24' : '-mt-20 relative z-10'}`}>
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-2xl"
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-md"
         >
-          {/* Name - Elegant serif-style */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-light text-foreground tracking-tight leading-none mb-8">
+          {/* Name */}
+          <h1 className="text-4xl md:text-5xl font-heading font-light text-foreground tracking-tight leading-tight mb-4">
             {tenant.name}
           </h1>
 
-          {/* Decorative Line with dot */}
+          {/* Decorative Line */}
           <motion.div
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="flex items-center justify-center gap-3 mb-8"
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex items-center justify-center gap-2 mb-4"
           >
-            <div className="w-16 h-px bg-border" />
+            <div className="w-10 h-px bg-border" />
             <div 
-              className="w-2 h-2 rounded-full"
+              className="w-1.5 h-1.5 rounded-full"
               style={{ backgroundColor: tenant.primary_color || 'hsl(var(--primary))' }}
             />
-            <div className="w-16 h-px bg-border" />
+            <div className="w-10 h-px bg-border" />
           </motion.div>
 
           {/* Tagline */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="text-lg md:text-xl text-muted-foreground font-body leading-relaxed mb-8 max-w-md mx-auto"
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-sm md:text-base text-muted-foreground font-body leading-relaxed mb-6"
           >
             {displayTagline}
           </motion.p>
 
-          {/* Minimal Stats */}
+          {/* Stats */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex items-center justify-center gap-6 mb-10 text-sm text-muted-foreground"
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex items-center justify-center gap-4 mb-8 text-xs text-muted-foreground"
           >
             {stats.rating > 0 && (
-              <div className="flex items-center gap-1.5">
-                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span>{stats.rating}</span>
+              <div className="flex items-center gap-1">
+                <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                <span className="font-medium">{stats.rating}</span>
               </div>
             )}
-            <span className="text-border">·</span>
+            <span className="text-border/60">·</span>
             <span>Desde {stats.since}</span>
           </motion.div>
 
-          {/* CTA Button - Refined outline */}
+          {/* CTA Button */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
           >
             <Button
               onClick={onBookNow}
-              variant="outline"
               size="lg"
-              className="px-10 py-6 text-base border-2 rounded-none hover:bg-foreground hover:text-background transition-all duration-300"
-              style={{ borderColor: tenant.primary_color || 'hsl(var(--foreground))' }}
+              className="px-8 py-5 text-sm font-medium rounded-full"
+              style={{ 
+                backgroundColor: tenant.primary_color || 'hsl(var(--primary))',
+                color: 'white'
+              }}
             >
               Reservar cita
             </Button>
           </motion.div>
         </motion.div>
       </main>
-
-      {/* Images Grid - Refined */}
-      {images.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.9 }}
-          className="px-6 pb-16"
-        >
-          <div className="grid grid-cols-2 gap-3 max-w-xl mx-auto">
-            {images.slice(0, 2).map((img, idx) => (
-              <div 
-                key={idx}
-                className="aspect-[3/4] overflow-hidden bg-muted"
-              >
-                <img 
-                  src={img as string} 
-                  alt={`${tenant.name} ${idx + 1}`}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                />
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 }
