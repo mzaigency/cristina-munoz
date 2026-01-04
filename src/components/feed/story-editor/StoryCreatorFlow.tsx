@@ -165,9 +165,7 @@ export function StoryCreatorFlow({
     }
   };
 
-  const handlePublish = async (finalImageUrl: string) => {
-    // TODO: Upload to Supabase storage and create story record
-    console.log("Publishing story...", finalImageUrl.substring(0, 50));
+  const handleStorySuccess = () => {
     onSuccess();
   };
 
@@ -269,7 +267,7 @@ export function StoryCreatorFlow({
           onClose={handleEditorClose}
           imageData={imageData}
           tenantId={tenantId}
-          onPublish={handlePublish}
+          onSuccess={handleStorySuccess}
         />
       )}
     </>

@@ -12,13 +12,14 @@ import { GuideLines } from "./GuideLines";
 import { TextEditor, type TextConfig } from "./TextEditor";
 import { DrawingCanvas } from "./DrawingCanvasNew";
 import { StickerPicker } from "./StickerPickerNew";
+import { publishStory, downloadStoryImage } from "./storyPublisher";
 
 interface MobileStoryEditorProps {
   isOpen: boolean;
   onClose: () => void;
   imageData: string;
   tenantId: string;
-  onPublish: (imageUrl: string) => Promise<void>;
+  onSuccess: () => void;
 }
 
 export function MobileStoryEditor({
@@ -26,9 +27,10 @@ export function MobileStoryEditor({
   onClose,
   imageData,
   tenantId,
-  onPublish,
+  onSuccess,
 }: MobileStoryEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const pipInputRef = useRef<HTMLInputElement>(null);
   
   // Overlays state
   const [overlays, setOverlays] = useState<OverlayItem[]>([]);
@@ -39,6 +41,7 @@ export function MobileStoryEditor({
   const [showDrawingCanvas, setShowDrawingCanvas] = useState(false);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   // Gesture engine
   const { gestureState, handleTouchStart, handleTouchMove, handleTouchEnd } = useGestureEngine(
@@ -80,30 +83,94 @@ export function MobileStoryEditor({
     setOverlays(prev => [...prev, newItem]);
   }, []);
 
+  // Picture-in-Picture: Add image from gallery
+  const handleAddPiPImage = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      const newItem: OverlayItem = {
+        id: Date.now().toString(),
+        type: "image",
+        content: dataUrl,
+        x: 0.5,
+        y: 0.5,
+        scale: 1,
+        rotation: 0,
+        clipShape: "rect", // Default shape
+      };
+      setOverlays(prev => [...prev, newItem]);
+      if (navigator.vibrate) navigator.vibrate([15, 30, 15]);
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input
+    e.target.value = "";
+  }, []);
+
+  // Toggle PiP image shape on tap
+  const handlePiPTap = useCallback((itemId: string) => {
+    setOverlays(prev => prev.map(item => {
+      if (item.id === itemId && item.type === "image") {
+        const shapes: ("rect" | "circle" | "rounded")[] = ["rect", "circle", "rounded"];
+        const currentIdx = shapes.indexOf(item.clipShape || "rect");
+        const nextShape = shapes[(currentIdx + 1) % shapes.length];
+        if (navigator.vibrate) navigator.vibrate(10);
+        return { ...item, clipShape: nextShape };
+      }
+      return item;
+    }));
+  }, []);
+
   const handleSaveDrawing = useCallback((dataUrl: string) => {
     setDrawingDataUrl(dataUrl);
     if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
   }, []);
 
   const handleDownload = useCallback(async () => {
-    // TODO: Flatten and download image
-    toast.success("Imagen guardada");
-    if (navigator.vibrate) navigator.vibrate([15, 30, 15]);
-  }, []);
+    setIsDownloading(true);
+    try {
+      await downloadStoryImage({
+        imageData,
+        overlays,
+        drawingDataUrl,
+      }, `historia-${Date.now()}.jpg`);
+      
+      toast.success("¡Imagen guardada!", { icon: "📷" });
+      if (navigator.vibrate) navigator.vibrate([15, 30, 15]);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Error al guardar la imagen");
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [imageData, overlays, drawingDataUrl]);
 
   const handlePublish = useCallback(async () => {
     setIsPublishing(true);
+    if (navigator.vibrate) navigator.vibrate([20, 50, 20]);
+    
     try {
-      // TODO: Flatten all layers into single image and upload
-      await onPublish(imageData);
+      const { storyId, imageUrl } = await publishStory({
+        imageData,
+        overlays,
+        drawingDataUrl,
+        tenantId,
+      });
+      
+      console.log("Story published:", storyId, imageUrl);
       toast.success("¡Historia publicada!", { icon: "🎉" });
+      onSuccess();
       onClose();
     } catch (error) {
-      toast.error("Error al publicar");
+      console.error("Publish error:", error);
+      toast.error("Error al publicar la historia");
     } finally {
       setIsPublishing(false);
     }
-  }, [imageData, onPublish, onClose]);
+  }, [imageData, overlays, drawingDataUrl, tenantId, onSuccess, onClose]);
 
   const getTextStyle = (item: OverlayItem): React.CSSProperties => {
     const base: React.CSSProperties = {
@@ -140,6 +207,15 @@ export function MobileStoryEditor({
   return (
     <>
       <style>{`@import url('${GOOGLE_FONTS_URL}');`}</style>
+      
+      {/* Hidden file input for PiP */}
+      <input
+        ref={pipInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleAddPiPImage}
+        className="hidden"
+      />
       
       <motion.div
         initial={{ opacity: 0 }}
@@ -197,6 +273,7 @@ export function MobileStoryEditor({
                   : 1,
               }}
               onTouchStart={(e) => handleTouchStart(e, item.id)}
+              onDoubleClick={() => item.type === "image" && handlePiPTap(item.id)}
             >
               {item.type === "text" && (
                 <div 
@@ -214,10 +291,15 @@ export function MobileStoryEditor({
               {item.type === "image" && (
                 <div 
                   className={cn(
-                    "w-32 h-32 overflow-hidden",
+                    "w-32 h-32 overflow-hidden border-2 border-white/30 shadow-lg",
                     item.clipShape === "circle" && "rounded-full",
                     item.clipShape === "rounded" && "rounded-2xl",
+                    item.clipShape === "rect" && "rounded-none",
                   )}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    handlePiPTap(item.id);
+                  }}
                 >
                   <img 
                     src={item.content} 
@@ -240,6 +322,7 @@ export function MobileStoryEditor({
               onOpenStickers={() => setShowStickerPicker(true)}
               onOpenDrawing={() => setShowDrawingCanvas(true)}
               onOpenText={() => setShowTextEditor(true)}
+              onAddImage={() => pipInputRef.current?.click()}
             />
           )}
         </AnimatePresence>

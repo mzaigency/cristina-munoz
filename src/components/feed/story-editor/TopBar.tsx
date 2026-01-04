@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { X, Settings, Download, Smile, PenLine, Type } from "lucide-react";
+import { X, Settings, Download, Smile, PenLine, Type, ImagePlus } from "lucide-react";
 
 interface TopBarProps {
   onClose: () => void;
@@ -8,6 +8,7 @@ interface TopBarProps {
   onOpenDrawing: () => void;
   onOpenText: () => void;
   onOpenSettings?: () => void;
+  onAddImage?: () => void;
 }
 
 export function TopBar({
@@ -17,6 +18,7 @@ export function TopBar({
   onOpenDrawing,
   onOpenText,
   onOpenSettings,
+  onAddImage,
 }: TopBarProps) {
   const buttonClass = `
     w-11 h-11 rounded-full flex items-center justify-center
@@ -50,6 +52,12 @@ export function TopBar({
         <button onClick={onDownload} className={buttonClass} aria-label="Descargar">
           <Download size={20} className="text-white" />
         </button>
+
+        {onAddImage && (
+          <button onClick={onAddImage} className={buttonClass} aria-label="Añadir imagen">
+            <ImagePlus size={20} className="text-white" />
+          </button>
+        )}
         
         <button onClick={onOpenStickers} className={buttonClass} aria-label="Stickers">
           <Smile size={20} className="text-white" />
