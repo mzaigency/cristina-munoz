@@ -376,28 +376,28 @@ export default function TenantAdmin() {
         className="sticky top-0 z-50 bg-background border-b shadow-sm"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        <div className="mx-auto max-w-7xl px-4 md:px-4">
+        <div className="mx-auto max-w-7xl px-3 sm:px-4">
           {/* Top row - Logo, title and actions */}
-          <div className="flex items-center justify-between py-3 md:py-3 border-b border-border/50">
-            <div className="flex items-center gap-3 md:gap-3 min-w-0">
+          <div className="flex items-center justify-between py-2.5 sm:py-3 border-b border-border/50">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
               {tenant.logo_url ? (
                 <img 
                   src={tenant.logo_url} 
                   alt={tenant.name} 
-                  className="h-10 w-10 md:h-10 md:w-10 rounded-xl md:rounded-xl object-cover ring-2 ring-primary/20 shrink-0" 
+                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl object-cover ring-2 ring-primary/20 shrink-0" 
                 />
               ) : (
-                <div className="h-10 w-10 md:h-10 md:w-10 rounded-xl md:rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Scissors className="h-5 w-5 md:h-5 md:w-5 text-primary" />
+                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Scissors className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
               )}
-              <div className="min-w-0">
-                <h1 className="text-base md:text-lg font-bold text-foreground truncate">{tenant.name}</h1>
-                <p className="text-xs md:text-xs text-muted-foreground truncate">{userEmail}</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-sm sm:text-base md:text-lg font-bold text-foreground truncate">{tenant.name}</h1>
+                <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{userEmail}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 md:gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <div className="hidden md:flex items-center gap-2">
                 <InteractiveTour onTabChange={(tab) => setActiveTab(tab as TabValue)} />
                 <HelpTutorial />
@@ -406,38 +406,38 @@ export default function TenantAdmin() {
                 onClick={() => navigate(`/salon/${slug}`)} 
                 variant="outline" 
                 size="sm"
-                className="gap-1.5 h-10 md:h-9 px-3 md:px-3 text-sm md:text-sm"
+                className="gap-1 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                 aria-label="Ver página web del salón"
               >
-                <ExternalLink className="h-4 w-4 md:h-4 md:w-4" />
+                <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Ver web</span>
               </Button>
               <Button 
                 onClick={() => navigate("/")} 
                 variant="ghost" 
                 size="icon" 
-                className="h-10 w-10 md:h-8 md:w-8" 
+                className="h-8 w-8 sm:h-9 sm:w-9" 
                 title="Inicio"
                 aria-label="Ir a inicio"
               >
-                <Home className="h-5 w-5 md:h-4 md:w-4" />
+                <Home className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
               <Button 
                 onClick={handleSignOut} 
                 variant="ghost" 
                 size="icon" 
-                className="h-10 w-10 md:h-8 md:w-8" 
+                className="h-8 w-8 sm:h-9 sm:w-9" 
                 title="Cerrar sesión"
                 aria-label="Cerrar sesión"
               >
-                <LogOut className="h-5 w-5 md:h-4 md:w-4" />
+                <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </div>
           </div>
 
           {/* Bottom row - Navigation tabs - Scrollable on mobile */}
           <nav 
-            className="flex items-center gap-1 md:gap-1 py-2 md:py-2 overflow-x-auto scrollbar-hide -mx-1 px-1"
+            className="flex items-center gap-0.5 sm:gap-1 py-2 overflow-x-auto scrollbar-hide -mx-3 sm:-mx-1 px-3 sm:px-1"
             aria-label="Navegación del panel de administración"
             role="tablist"
           >
@@ -452,11 +452,11 @@ export default function TenantAdmin() {
                   aria-label={`${item.label}${item.badge ? `, ${item.badge} pendientes` : ''}`}
                   data-tour-step={`nav-${item.value}`}
                   className={`
-                    relative flex flex-col items-center gap-1 md:gap-1 
-                    px-3 md:px-3 py-2 md:py-2 
-                    rounded-xl md:rounded-xl transition-all duration-200 shrink-0 
-                    min-w-[56px] md:min-w-[60px]
-                    min-h-[56px] md:min-h-0
+                    relative flex flex-col items-center justify-center gap-0.5 sm:gap-1
+                    px-2 sm:px-3 py-1.5 sm:py-2 
+                    rounded-lg sm:rounded-xl transition-all duration-200 shrink-0 
+                    min-w-[48px] sm:min-w-[56px] md:min-w-[60px]
+                    h-[52px] sm:h-[56px]
                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
                     ${isActive 
                       ? "bg-primary text-primary-foreground shadow-md" 
@@ -465,27 +465,27 @@ export default function TenantAdmin() {
                   `}
                 >
                   <div className="relative">
-                    {item.value === "calendar" && <Calendar className="h-5 w-5 md:h-5 md:w-5" />}
-                    {item.value === "cash" && <Wallet className="h-5 w-5 md:h-5 md:w-5" />}
-                    {item.value === "reviews" && <Star className="h-5 w-5 md:h-5 md:w-5" />}
-                    {item.value === "messages" && <MessageCircle className="h-5 w-5 md:h-5 md:w-5" />}
-                    {item.value === "stories" && <ImageIcon className="h-5 w-5 md:h-5 md:w-5" />}
-                    {item.value === "security" && <BarChart3 className="h-5 w-5 md:h-5 md:w-5" />}
-                    {item.value === "products" && <Package className="h-5 w-5 md:h-5 md:w-5" />}
-                    {item.value === "services" && <Scissors className="h-5 w-5 md:h-5 md:w-5" />}
-                    {item.value === "stylists" && <Users className="h-5 w-5 md:h-5 md:w-5" />}
-                    {item.value === "hours" && <Clock className="h-5 w-5 md:h-5 md:w-5" />}
-                    {item.value === "settings" && <Settings className="h-5 w-5 md:h-5 md:w-5" />}
+                    {item.value === "calendar" && <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />}
+                    {item.value === "cash" && <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />}
+                    {item.value === "reviews" && <Star className="h-4 w-4 sm:h-5 sm:w-5" />}
+                    {item.value === "messages" && <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />}
+                    {item.value === "stories" && <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
+                    {item.value === "security" && <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />}
+                    {item.value === "products" && <Package className="h-4 w-4 sm:h-5 sm:w-5" />}
+                    {item.value === "services" && <Scissors className="h-4 w-4 sm:h-5 sm:w-5" />}
+                    {item.value === "stylists" && <Users className="h-4 w-4 sm:h-5 sm:w-5" />}
+                    {item.value === "hours" && <Clock className="h-4 w-4 sm:h-5 sm:w-5" />}
+                    {item.value === "settings" && <Settings className="h-4 w-4 sm:h-5 sm:w-5" />}
                     {item.badge && item.badge > 0 && (
                       <span 
-                        className="absolute -top-1.5 -right-1.5 flex h-4 w-4 md:h-4 md:w-4 items-center justify-center rounded-full bg-destructive text-[9px] md:text-[9px] font-bold text-white"
+                        className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-destructive text-[8px] sm:text-[9px] font-bold text-white"
                         aria-hidden="true"
                       >
                         {item.badge > 9 ? "9+" : item.badge}
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] md:text-[10px] font-medium leading-none">{item.label}</span>
+                  <span className="text-[9px] sm:text-[10px] font-medium leading-none whitespace-nowrap">{item.label}</span>
                 </button>
               );
             })}
@@ -496,7 +496,7 @@ export default function TenantAdmin() {
       {/* Content with Pull to Refresh on mobile */}
       {isMobile ? (
         <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
-          <main className="mx-auto max-w-7xl px-4 py-4 safe-area-bottom">
+          <main className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 safe-area-bottom">
             {renderContent()}
           </main>
         </PullToRefresh>
