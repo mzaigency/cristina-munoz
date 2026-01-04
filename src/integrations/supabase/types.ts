@@ -340,6 +340,35 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          id?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           created_at: string
@@ -501,6 +530,85 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      post_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          caption: string | null
+          category: string | null
+          comments_count: number | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          likes_count: number | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          caption?: string | null
+          category?: string | null
+          comments_count?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          likes_count?: number | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          caption?: string | null
+          category?: string | null
+          comments_count?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          likes_count?: number | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -1920,6 +2028,24 @@ export type Database = {
       encrypt_sensitive_data: {
         Args: { _plaintext: string; _tenant_id: string }
         Returns: string
+      }
+      get_follower_count: { Args: { _tenant_id: string }; Returns: number }
+      get_following_posts: {
+        Args: { _limit?: number; _offset?: number; _user_id: string }
+        Returns: {
+          caption: string
+          category: string
+          comments_count: number
+          created_at: string
+          id: string
+          image_url: string
+          is_liked: boolean
+          likes_count: number
+          tenant_id: string
+          tenant_logo: string
+          tenant_name: string
+          tenant_slug: string
+        }[]
       }
       get_my_bookings: {
         Args: never

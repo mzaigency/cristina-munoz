@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
+import { FollowerStats } from "@/components/social/FollowerStats";
+import { FollowButton } from "@/components/social/FollowButton";
 
 interface Tenant {
   id: string;
@@ -26,9 +28,11 @@ interface Tenant {
 interface TenantHeroProps {
   tenant: Tenant;
   onBookNow: () => void;
+  rating?: number;
+  reviewCount?: number;
 }
 
-export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
+export const TenantHero = ({ tenant, onBookNow, rating, reviewCount }: TenantHeroProps) => {
   const hasHeroImage = !!tenant.hero_image_url;
   const containerRef = useRef<HTMLElement>(null);
 
@@ -129,7 +133,22 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
             {tagline}
           </motion.p>
 
-          {/* CTA Button with bounce effect */}
+          {/* Follower Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="mb-6"
+          >
+            <FollowerStats 
+              tenantId={tenant.id} 
+              rating={rating}
+              reviewCount={reviewCount}
+              primaryColor={tenant.primary_color || undefined}
+            />
+          </motion.div>
+
+          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -139,7 +158,9 @@ export const TenantHero = ({ tenant, onBookNow }: TenantHeroProps) => {
               ease: [0.25, 0.46, 0.45, 0.94],
               scale: { type: "spring", stiffness: 200, damping: 15 },
             }}
+            className="flex items-center justify-center gap-3"
           >
+            <FollowButton tenantId={tenant.id} variant="default" className="bg-white/10 border-white/20 text-white hover:bg-white/20" />
             <Button
               size="lg"
               onClick={onBookNow}
