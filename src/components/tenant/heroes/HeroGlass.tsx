@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Star, Sparkles, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import glowappIcon from "@/assets/glowapp-icon.png";
 
 interface Tenant {
   id: string;
@@ -151,7 +152,8 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
                   <span className="text-xs font-medium text-white">{stats.rating}</span>
                 </div>
               )}
-              <div className="flex items-center px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
+                <img src={glowappIcon} alt="Glowapp" className="w-3.5 h-3.5 object-contain" />
                 <span className="text-xs text-white/80">En Glowapp desde {stats.since}</span>
               </div>
             </div>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowDown, Star, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import glowappIcon from "@/assets/glowapp-icon.png";
 
 interface Tenant {
   id: string;
@@ -182,7 +183,7 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
               </div>
             )}
             <div className="flex items-center gap-1.5 bg-white/25 backdrop-blur-md rounded-full px-5 py-2.5 shadow-lg">
-              <Calendar className="w-4 h-4 text-white/90" />
+              <img src={glowappIcon} alt="Glowapp" className="w-4 h-4 object-contain" />
               <span className="text-white font-medium">En Glowapp desde {stats.since}</span>
             </div>
           </motion.div>
