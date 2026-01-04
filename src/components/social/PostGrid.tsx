@@ -66,7 +66,7 @@ export function PostGrid({ posts, className, isAdmin, onDelete }: PostGridProps)
             />
             
             {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white rounded-xl">
               <div className="flex items-center gap-1.5">
                 <Heart className="w-5 h-5 fill-white" />
                 <span className="font-semibold">{post.likes_count}</span>
