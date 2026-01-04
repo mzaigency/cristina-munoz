@@ -21,6 +21,7 @@ import {
   Zap,
   RotateCcw,
   AlertCircle,
+  LayoutGrid,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -36,6 +37,13 @@ import {
   generateFilterCSS,
   generateVignetteCSS 
 } from "./story-creator";
+import {
+  WidgetPicker,
+  PollWidget,
+  QuestionBoxWidget,
+  EmojiSliderWidget,
+  type WidgetType
+} from "./story-creator/widgets";
 import { 
   STORY_FONTS, 
   STORY_COLORS, 
@@ -67,7 +75,7 @@ const COLORS = STORY_COLORS.slice(0, 12);
 // --- TIPOS ---
 interface OverlayItem {
   id: string;
-  type: "text" | "sticker" | "drawing";
+  type: "text" | "sticker" | "drawing" | "widget";
   content: string;
   fontFamily: string;
   color: string;
@@ -81,6 +89,8 @@ interface OverlayItem {
   textGradient?: string | null;
   textAnimation?: string;
   fontSize?: number;
+  widgetType?: WidgetType;
+  widgetConfig?: any;
 }
 
 // --- MATH UTILS ---
@@ -118,7 +128,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
   const [isDragging, setIsDragging] = useState(false);
 
   // HERRAMIENTAS
-  const [showTools, setShowTools] = useState<"none" | "filters" | "stickers" | "adjustments" | "drawing" | "textStyles">("none");
+  const [showTools, setShowTools] = useState<"none" | "filters" | "stickers" | "adjustments" | "drawing" | "textStyles" | "widgets">("none");
+  const [showWidgetPicker, setShowWidgetPicker] = useState(false);
   const [currentFont, setCurrentFont] = useState(FONTS[0].id);
   const [currentColor, setCurrentColor] = useState(COLORS[0]);
   const [currentAlign, setCurrentAlign] = useState<"left" | "center" | "right">("center");
@@ -387,6 +398,48 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
     setOverlays([...overlays, newSticker]);
     // Don't close the panel - let user add more stickers
     if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+  };
+
+  const addWidget = (widgetType: WidgetType) => {
+    let defaultConfig: any = {};
+    
+    switch (widgetType) {
+      case "poll":
+        defaultConfig = { question: "", options: ["Sí", "No"] };
+        break;
+      case "question":
+        defaultConfig = { prompt: "", placeholder: "Escribe tu respuesta..." };
+        break;
+      case "emoji_slider":
+        defaultConfig = { question: "", emoji: "❤️" };
+        break;
+    }
+
+    const newWidget: OverlayItem = {
+      id: Date.now().toString(),
+      type: "widget",
+      content: "",
+      fontFamily: "",
+      color: "",
+      align: "center",
+      x: 0.5,
+      y: 0.5,
+      scale: 1,
+      rotation: 0,
+      isEditing: true,
+      widgetType,
+      widgetConfig: defaultConfig,
+    };
+    
+    saveToHistory();
+    setOverlays([...overlays, newWidget]);
+    setSelectedId(newWidget.id);
+    setShowWidgetPicker(false);
+    if (navigator.vibrate) navigator.vibrate([15, 30, 15]);
+  };
+
+  const updateWidgetConfig = (id: string, config: any) => {
+    updateOverlay(id, { widgetConfig: config });
   };
 
   const saveToHistory = () => {
@@ -1177,9 +1230,41 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                           {item.content || "Texto"}
                         </div>
                       )
-                    ) : (
+                    ) : item.type === "widget" ? (
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!item.isEditing) {
+                            updateOverlay(item.id, { isEditing: true });
+                            setSelectedId(item.id);
+                          }
+                        }}
+                      >
+                        {item.widgetType === "poll" && (
+                          <PollWidget
+                            config={item.widgetConfig}
+                            onConfigChange={(config) => updateWidgetConfig(item.id, config)}
+                            isEditing={item.isEditing}
+                          />
+                        )}
+                        {item.widgetType === "question" && (
+                          <QuestionBoxWidget
+                            config={item.widgetConfig}
+                            onConfigChange={(config) => updateWidgetConfig(item.id, config)}
+                            isEditing={item.isEditing}
+                          />
+                        )}
+                        {item.widgetType === "emoji_slider" && (
+                          <EmojiSliderWidget
+                            config={item.widgetConfig}
+                            onConfigChange={(config) => updateWidgetConfig(item.id, config)}
+                            isEditing={item.isEditing}
+                          />
+                        )}
+                      </div>
+                    ) : item.type === "sticker" ? (
                       <div className="text-[80px] drop-shadow-xl">{item.content}</div>
-                    )}
+                    ) : null}
                   </div>
                 </motion.div>
               ))}
@@ -1262,6 +1347,7 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                 { icon: Type, tool: "text" as const, label: "Texto", active: false },
                 { icon: Wand2, tool: "textStyles" as const, label: "Estilos", active: showTools === "textStyles" },
                 { icon: Sparkles, tool: "stickers" as const, label: "Stickers", active: showTools === "stickers" },
+                { icon: LayoutGrid, tool: "widgets" as const, label: "Widgets", active: showWidgetPicker || overlays.some(o => o.type === "widget") },
                 { icon: Palette, tool: "filters" as const, label: "Filtros", active: showTools === "filters" || activeFilter !== "none" },
                 { icon: Sliders, tool: "adjustments" as const, label: "Ajustes", active: showTools === "adjustments" },
                 { icon: PenTool, tool: "drawing" as const, label: "Dibujar", active: showTools === "drawing" || drawingDataUrl !== null },
@@ -1277,6 +1363,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                     e.stopPropagation();
                     if (tool === "text") {
                       handleCanvasClick(e as any);
+                    } else if (tool === "widgets") {
+                      setShowWidgetPicker(true);
                     } else {
                       setShowTools(tool);
                       setSelectedId(null);
@@ -1541,6 +1629,40 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                   <Check size={22} strokeWidth={3} />
                 </button>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Widget Picker Modal */}
+        <WidgetPicker
+          isOpen={showWidgetPicker}
+          onClose={() => setShowWidgetPicker(false)}
+          onSelectWidget={addWidget}
+        />
+
+        {/* Widget Edit Confirm Button */}
+        <AnimatePresence>
+          {overlays.some(o => o.type === "widget" && o.isEditing) && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] safe-bottom"
+            >
+              <button
+                onClick={() => {
+                  const widgetId = overlays.find(o => o.type === "widget" && o.isEditing)?.id;
+                  if (widgetId) {
+                    updateOverlay(widgetId, { isEditing: false });
+                    setSelectedId(null);
+                  }
+                  if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+                }}
+                className="px-6 py-3 bg-white text-black rounded-full font-semibold flex items-center gap-2 shadow-xl"
+              >
+                <Check size={20} />
+                Confirmar Widget
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

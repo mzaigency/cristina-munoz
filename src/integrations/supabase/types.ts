@@ -705,6 +705,76 @@ export type Database = {
           },
         ]
       }
+      story_widget_responses: {
+        Row: {
+          created_at: string
+          id: string
+          response: Json
+          user_id: string
+          widget_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          response: Json
+          user_id: string
+          widget_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          response?: Json
+          user_id?: string
+          widget_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_widget_responses_widget_id_fkey"
+            columns: ["widget_id"]
+            isOneToOne: false
+            referencedRelation: "story_widgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_widgets: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          position_x: number
+          position_y: number
+          story_id: string
+          widget_type: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          position_x?: number
+          position_y?: number
+          story_id: string
+          widget_type: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          position_x?: number
+          position_y?: number
+          story_id?: string
+          widget_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_widgets_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "salon_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stylist_business_hours: {
         Row: {
           break_end: string | null
