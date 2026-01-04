@@ -218,7 +218,7 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
             <Button
               onClick={onBookNow}
               size="lg"
-              className="w-full sm:w-auto px-8 py-5 text-lg font-bold bg-white text-foreground hover:bg-white/95 shadow-2xl rounded-xl uppercase tracking-wide hover:scale-105 transition-transform"
+              className="w-full sm:w-auto px-8 py-5 text-lg font-bold bg-white text-gray-900 hover:bg-white/95 shadow-2xl rounded-xl uppercase tracking-wide hover:scale-105 transition-transform"
             >
               <Sparkles className="w-5 h-5 mr-2" />
               Reservar
