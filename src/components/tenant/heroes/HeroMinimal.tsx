@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import glowappIcon from "@/assets/glowapp-icon.png";
@@ -22,10 +23,20 @@ interface HeroMinimalProps {
 }
 
 export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
-  const [stats, setStats] = useState({ since: new Date().getFullYear() });
+  const [stats, setStats] = useState({ rating: 0, since: new Date().getFullYear() });
   
   useEffect(() => {
     const fetchStats = async () => {
+      const { data: reviewsData } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("tenant_id", tenant.id)
+        .eq("approved", true);
+      
+      const avgRating = reviewsData?.length 
+        ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
+        : 0;
+
       const { data: tenantData } = await supabase
         .from("tenants")
         .select("created_at")
@@ -36,7 +47,7 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
         ? new Date(tenantData.created_at).getFullYear()
         : new Date().getFullYear();
       
-      setStats({ since: createdYear });
+      setStats({ rating: Number(avgRating), since: createdYear });
     };
     
     if (tenant.id) fetchStats();
@@ -95,11 +106,30 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
             {tenant.name}
           </motion.h1>
 
+          {/* Stats - Subtle and minimal */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="flex items-center justify-center gap-6 mb-6 text-white/50 text-sm"
+          >
+            {stats.rating > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Star className="w-3.5 h-3.5 fill-current" />
+                <span>{stats.rating}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <img src={glowappIcon} alt="Glowapp" className="w-3.5 h-3.5 object-contain opacity-70" />
+              <span>Desde {stats.since}</span>
+            </div>
+          </motion.div>
+
           {/* Minimal line divider */}
           <motion.div
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
+            transition={{ duration: 0.8, delay: 0.55 }}
             className="w-12 h-px bg-white/30 mx-auto mb-6"
           />
 
@@ -133,18 +163,6 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
         </motion.div>
       </div>
 
-      {/* Footer info - Subtle at bottom */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, delay: 1 }}
-        className="relative z-10 py-8 border-t border-white/10"
-      >
-        <div className="flex items-center justify-center gap-2 text-white/40 text-xs tracking-wide">
-          <img src={glowappIcon} alt="Glowapp" className="w-3.5 h-3.5 object-contain opacity-60" />
-          <span>En Glowapp desde {stats.since}</span>
-        </div>
-      </motion.div>
     </div>
   );
 }
