@@ -50,23 +50,37 @@ export function PostGrid({ posts, className, isAdmin, onDelete }: PostGridProps)
     <>
       <div className={cn("grid grid-cols-3 gap-2", className)}>
         {posts.map((post, index) => (
-          <motion.button
+          <motion.div
             key={post.id}
+            data-fixed-radius
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: index * 0.05 }}
+            role="button"
+            tabIndex={0}
             onClick={() => setSelectedIndex(index)}
-            className="relative aspect-square bg-muted overflow-hidden group rounded-xl"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setSelectedIndex(index);
+              }
+            }}
+            className="relative aspect-square bg-muted overflow-hidden group cursor-pointer !rounded-lg"
+            style={{ borderRadius: "0.5rem" }}
           >
             <img
               src={post.image_url}
               alt={post.caption || "Post"}
-              className="w-full h-full object-cover transition-transform group-active:scale-95 rounded-xl"
+              className="w-full h-full object-cover transition-transform group-active:scale-95 !rounded-xl"
+              style={{ borderRadius: "0.75rem" }}
               loading="lazy"
             />
-            
+
             {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white rounded-xl">
+            <div
+              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white !rounded-xl"
+              style={{ borderRadius: "0.75rem" }}
+            >
               <div className="flex items-center gap-1.5">
                 <Heart className="w-5 h-5 fill-white" />
                 <span className="font-semibold">{post.likes_count}</span>
@@ -82,13 +96,14 @@ export function PostGrid({ posts, className, isAdmin, onDelete }: PostGridProps)
             {/* Admin delete button */}
             {isAdmin && (
               <button
+                type="button"
                 onClick={(e) => handleDeleteClick(e, post.id)}
                 className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/90 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive z-10"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
-          </motion.button>
+          </motion.div>
         ))}
       </div>
 
