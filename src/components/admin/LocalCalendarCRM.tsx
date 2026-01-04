@@ -91,6 +91,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   const [searchResults, setSearchResults] = useState<LocalBooking[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  
+  // Stylist filter
+  const [selectedStylistFilter, setSelectedStylistFilter] = useState<string>("all");
 
   // Block period state
   const [blockStartDate, setBlockStartDate] = useState<Date | undefined>(undefined);
@@ -812,6 +815,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const groupedBookings = groupBookingsByDate(bookings);
 
+  // Calculate today's summary
+  const todayKey = format(new Date(), "yyyy-MM-dd");
+  const todayBookings = groupedBookings[todayKey] || [];
+  const completedToday = todayBookings.filter(b => b.notes?.includes("[✓ COMPLETADA]")).length;
+  const pendingToday = todayBookings.filter(b => !b.notes?.includes("[✓ COMPLETADA]") && !b.title?.includes("BLOQUEO") && !b.title?.includes("VACACIONES")).length;
+  const nowHour = new Date().getHours();
+  const nowMinutes = new Date().getMinutes();
+  const nextBooking = todayBookings.find(b => {
+    const [h, m] = b.Hora.split(":").map(Number);
+    return (h > nowHour || (h === nowHour && m > nowMinutes)) && !b.notes?.includes("[✓ COMPLETADA]");
+  });
+
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -830,6 +845,58 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
           </Button>
         </div>
       </div>
+
+      {/* Today's quick summary */}
+      {isSameDay(weekDays.find(d => isSameDay(d, new Date())) || new Date(), new Date()) && todayBookings.length > 0 && (
+        <Card className="p-3 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <CalendarIcon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Hoy: {todayBookings.length} citas</p>
+                <p className="text-xs text-muted-foreground">
+                  {completedToday} completadas • {pendingToday} pendientes
+                </p>
+              </div>
+            </div>
+            {nextBooking && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Próxima cita</p>
+                <p className="font-semibold text-sm text-primary">{nextBooking.Hora.slice(0, 5)}</p>
+                <p className="text-[10px] text-muted-foreground truncate max-w-[100px]">{nextBooking.customer_name}</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Stylist quick filter */}
+      {stylists.length > 1 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+          <Button
+            variant={selectedStylistFilter === "all" ? "default" : "outline"}
+            size="sm"
+            className="h-8 text-xs shrink-0"
+            onClick={() => setSelectedStylistFilter("all")}
+          >
+            Todos
+          </Button>
+          {stylists.map(stylist => (
+            <Button
+              key={stylist.slug}
+              variant={selectedStylistFilter === stylist.slug ? "default" : "outline"}
+              size="sm"
+              className="h-8 text-xs shrink-0"
+              style={selectedStylistFilter === stylist.slug ? { backgroundColor: stylist.color } : { borderColor: stylist.color, color: stylist.color }}
+              onClick={() => setSelectedStylistFilter(stylist.slug)}
+            >
+              {stylist.name}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {/* Search Section */}
       <Card className="p-3 md:p-4">
@@ -1024,7 +1091,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                           </div>
 
                           <div className="flex-1 flex gap-2 md:gap-4">
-                            {stylists.map((stylist) => (
+                            {stylists
+                              .filter(s => selectedStylistFilter === "all" || s.slug === selectedStylistFilter)
+                              .map((stylist) => (
                               <div
                                 key={stylist.slug}
                                 className="flex-1 min-w-[100px] md:min-w-[180px] text-center font-semibold text-xs md:text-sm py-1.5 md:py-2 rounded-lg shadow-sm"
@@ -1067,7 +1136,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
                           {/* Stylists columns */}
                           <div className="flex-1 flex gap-2 md:gap-4">
-                            {stylists.map((stylist) => (
+                            {stylists
+                              .filter(s => selectedStylistFilter === "all" || s.slug === selectedStylistFilter)
+                              .map((stylist) => (
                               <div key={stylist.slug} className="flex-1 min-w-[100px] md:min-w-[180px]">
                                 <div
                                   className="relative rounded-lg overflow-hidden"

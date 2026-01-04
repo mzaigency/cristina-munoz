@@ -21,7 +21,8 @@ import {
   Package,
   ChevronDown,
   LayoutDashboard,
-  UserCircle
+  UserCircle,
+  BellRing
 } from "lucide-react";
 import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
@@ -40,6 +41,7 @@ import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { QuickActionsFAB } from "@/components/admin/QuickActionsFAB";
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
 import { ClientsCRM } from "@/components/admin/ClientsCRM";
+import { NotificationSettings } from "@/components/admin/NotificationSettings";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
@@ -66,7 +68,7 @@ interface Stylist {
   color: string;
 }
 
-type TabValue = "dashboard" | "calendar" | "clients" | "cash" | "reviews" | "messages" | "stories" | "security" | "products" | "services" | "stylists" | "hours" | "subscription" | "settings";
+type TabValue = "dashboard" | "calendar" | "clients" | "cash" | "reviews" | "messages" | "stories" | "security" | "products" | "services" | "stylists" | "hours" | "notifications" | "settings";
 
 interface NavItem {
   value: TabValue;
@@ -105,6 +107,7 @@ export default function TenantAdmin() {
     { value: "services", label: "Servicios", icon: <Scissors className="h-4 w-4" />, group: "main" },
     { value: "stylists", label: "Equipo", icon: <Users className="h-4 w-4" />, group: "main" },
     { value: "hours", label: "Horarios", icon: <Clock className="h-4 w-4" />, group: "main" },
+    { value: "notifications", label: "Alertas", icon: <BellRing className="h-4 w-4" />, group: "main" },
     { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" />, group: "main" },
   ];
 
@@ -393,13 +396,8 @@ export default function TenantAdmin() {
         return <StylistsManager key={refreshKey} tenantId={tenant.id} />;
       case "hours":
         return <BusinessHoursManager key={refreshKey} tenantId={tenant.id} />;
-      case "subscription":
-        return (
-          <div className="text-center py-12 text-muted-foreground">
-            <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Gestión de suscripción próximamente</p>
-          </div>
-        );
+      case "notifications":
+        return <NotificationSettings key={refreshKey} tenantId={tenant.id} />;
       case "settings":
         return <TenantSettings key={refreshKey} tenantId={tenant.id} tenantSlug={tenant.slug} />;
       default:
