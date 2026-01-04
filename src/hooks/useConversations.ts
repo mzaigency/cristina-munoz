@@ -68,9 +68,46 @@ export function useConversations(role: 'user' | 'salon', tenantId?: string) {
 
       if (error) throw error;
 
+      const baseConversations = (data || []) as any[];
+
+      // En vista "usuario": si el embed de tenant viene vacío por permisos, lo rellenamos con el perfil público
+      let publicTenantById: Map<
+        string,
+        { id: string; name: string; logo_url: string | null; slug: string }
+      > | null = null;
+
+      if (role === 'user') {
+        const neededTenantIds = Array.from(
+          new Set(
+            baseConversations
+              .filter((c) => !c?.tenant?.name)
+              .map((c) => c.tenant_id)
+              .filter(Boolean)
+          )
+        );
+
+        if (neededTenantIds.length > 0) {
+          const { data: publicTenants } = await supabase.rpc('get_public_tenants');
+
+          publicTenantById = new Map(
+            (publicTenants || [])
+              .filter((t: any) => neededTenantIds.includes(t.id))
+              .map((t: any) => [
+                t.id,
+                {
+                  id: t.id,
+                  name: t.name,
+                  logo_url: t.logo_url ?? null,
+                  slug: t.slug,
+                },
+              ])
+          );
+        }
+      }
+
       // Fetch last message for each conversation
       const conversationsWithMessages = await Promise.all(
-        (data || []).map(async (conv) => {
+        baseConversations.map(async (conv) => {
           const { data: messages } = await supabase
             .from('direct_messages')
             .select('content, sender_type, created_at')
@@ -89,8 +126,12 @@ export function useConversations(role: 'user' | 'salon', tenantId?: string) {
             user = profile;
           }
 
+          const tenant =
+            conv?.tenant?.name ? conv.tenant : publicTenantById?.get(conv.tenant_id);
+
           return {
             ...conv,
+            tenant,
             user,
             last_message: messages?.[0] || null,
           };
