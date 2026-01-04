@@ -31,6 +31,8 @@ import {
   StickerPicker, 
   ImageAdjustments, 
   DrawingCanvas,
+  GuideLines,
+  TrashZone,
   generateFilterCSS,
   generateVignetteCSS 
 } from "./story-creator";
@@ -77,12 +79,20 @@ interface OverlayItem {
   isEditing: boolean;
   textStyle?: string;
   textGradient?: string | null;
+  textAnimation?: string;
+  fontSize?: number;
 }
 
 // --- MATH UTILS ---
 const getDistance = (p1: React.Touch, p2: React.Touch) => Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
 const getAngle = (p1: React.Touch, p2: React.Touch) =>
   (Math.atan2(p2.clientY - p1.clientY, p2.clientX - p1.clientX) * 180) / Math.PI;
+
+// Snap-to-center thresholds
+const SNAP_THRESHOLD = 0.035; // 3.5% of container
+const SNAP_FRICTION = 0.5;
+const TRASH_ZONE_START = 0.82;
+const TRASH_ZONE_DELETE = 0.92;
 
 interface StoryCreatorProps {
   isOpen: boolean;
@@ -116,6 +126,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
   // PREMIUM
   const [currentTextStyle, setCurrentTextStyle] = useState("normal");
   const [currentTextGradient, setCurrentTextGradient] = useState<string | null>(null);
+  const [currentTextAnimation, setCurrentTextAnimation] = useState("none");
+  const [currentFontSize, setCurrentFontSize] = useState(40);
   const [imageAdjustments, setImageAdjustments] = useState<Record<string, number>>(() => {
     const defaults: Record<string, number> = {};
     IMAGE_ADJUSTMENTS.forEach(adj => {
@@ -149,7 +161,15 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
     startDist: 0,
     startAngle: 0,
     isMultiTouch: false,
+    lastSnapH: false,
+    lastSnapV: false,
+    lastHapticTime: 0,
   });
+  
+  // Guide lines state
+  const [showCenterGuideH, setShowCenterGuideH] = useState(false);
+  const [showCenterGuideV, setShowCenterGuideV] = useState(false);
+  const [trashZoneIntensity, setTrashZoneIntensity] = useState(0);
 
   const { setNavigationHidden } = useNavigation();
 
@@ -424,7 +444,14 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
     }
   };
 
-  // --- GESTOS ---
+  // --- GESTOS CON SNAP-TO-CENTER ---
+  const haptic = useCallback((pattern: number | number[], minInterval = 50) => {
+    const now = Date.now();
+    if (now - gestureRef.current.lastHapticTime < minInterval) return;
+    gestureRef.current.lastHapticTime = now;
+    if (navigator.vibrate) navigator.vibrate(pattern);
+  }, []);
+
   const handlePointerDown = (e: React.TouchEvent | React.MouseEvent, id: string) => {
     const item = overlays.find((o) => o.id === id);
     if (item?.isEditing) return;
@@ -436,81 +463,143 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
 
     if (!item || !containerRef.current) return;
 
+    const g = gestureRef.current;
+    g.lastSnapH = false;
+    g.lastSnapV = false;
+
     if ("touches" in e && e.touches.length === 2) {
-      gestureRef.current.isMultiTouch = true;
-      gestureRef.current.startDist = getDistance(e.touches[0], e.touches[1]);
-      gestureRef.current.startAngle = getAngle(e.touches[0], e.touches[1]);
-      gestureRef.current.initialScale = item.scale;
-      gestureRef.current.initialRotation = item.rotation;
+      g.isMultiTouch = true;
+      g.startDist = getDistance(e.touches[0], e.touches[1]);
+      g.startAngle = getAngle(e.touches[0], e.touches[1]);
+      g.initialScale = item.scale;
+      g.initialRotation = item.rotation;
+      // Also track position for pan during pinch
+      const mid = { 
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2 
+      };
+      g.startX = mid.x;
+      g.startY = mid.y;
+      g.initialItemX = item.x;
+      g.initialItemY = item.y;
     } else {
       const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
       const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
-      gestureRef.current.isMultiTouch = false;
-      gestureRef.current.startX = clientX;
-      gestureRef.current.startY = clientY;
-      gestureRef.current.initialItemX = item.x;
-      gestureRef.current.initialItemY = item.y;
+      g.isMultiTouch = false;
+      g.startX = clientX;
+      g.startY = clientY;
+      g.initialItemX = item.x;
+      g.initialItemY = item.y;
+      g.initialScale = item.scale;
+      g.initialRotation = item.rotation;
     }
     
-    if (navigator.vibrate) navigator.vibrate(5);
+    haptic(5);
   };
 
   const handlePointerMove = (e: React.TouchEvent | React.MouseEvent) => {
     if (!selectedId || !isDragging || !containerRef.current) return;
 
     const container = containerRef.current.getBoundingClientRect();
+    const g = gestureRef.current;
 
-    if ("touches" in e && e.touches.length === 2 && gestureRef.current.isMultiTouch) {
+    if ("touches" in e && e.touches.length === 2 && g.isMultiTouch) {
       e.preventDefault();
       const currentDist = getDistance(e.touches[0], e.touches[1]);
       const currentAngle = getAngle(e.touches[0], e.touches[1]);
 
-      const scaleFactor = currentDist / gestureRef.current.startDist;
-      const rotationDiff = currentAngle - gestureRef.current.startAngle;
+      const scaleFactor = currentDist / g.startDist;
+      const rotationDiff = currentAngle - g.startAngle;
       
-      const newScale = Math.max(0.5, Math.min(4, gestureRef.current.initialScale * scaleFactor));
-      const newRotation = gestureRef.current.initialRotation + rotationDiff;
+      const newScale = Math.max(0.3, Math.min(5, g.initialScale * scaleFactor));
+      const newRotation = g.initialRotation + rotationDiff;
 
-      // Haptic feedback at scale limits
-      if ((newScale === 0.5 || newScale === 4) && navigator.vibrate) {
-        navigator.vibrate(10);
+      // Pan during pinch
+      const mid = { 
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2 
+      };
+      const deltaX = (mid.x - g.startX) / container.width;
+      const deltaY = (mid.y - g.startY) / container.height;
+      const newX = g.initialItemX + deltaX;
+      const newY = g.initialItemY + deltaY;
+
+      // Haptic at scale limits
+      if (newScale <= 0.31 || newScale >= 4.99) {
+        haptic(15);
       }
 
       setOverlays((prev) =>
         prev.map((o) =>
           o.id === selectedId
-            ? { ...o, scale: newScale, rotation: newRotation }
+            ? { ...o, scale: newScale, rotation: newRotation, x: newX, y: newY }
             : o,
         ),
       );
-    } else if (!gestureRef.current.isMultiTouch) {
+    } else if (!g.isMultiTouch) {
       const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
       const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
-      const deltaX = clientX - gestureRef.current.startX;
-      const deltaY = clientY - gestureRef.current.startY;
+      const deltaX = clientX - g.startX;
+      const deltaY = clientY - g.startY;
 
-      const deltaPercentX = deltaX / container.width;
-      const deltaPercentY = deltaY / container.height;
+      let rawX = g.initialItemX + deltaX / container.width;
+      let rawY = g.initialItemY + deltaY / container.height;
 
-      const newY = gestureRef.current.initialItemY + deltaPercentY;
-      
-      // Progressive haptic feedback when approaching trash zone
-      if (newY > 0.75 && newY <= 0.85 && navigator.vibrate) {
-        navigator.vibrate(8);
-      } else if (newY > 0.85 && navigator.vibrate) {
-        navigator.vibrate(20);
+      // Snap-to-center logic
+      const distFromCenterH = Math.abs(rawX - 0.5);
+      const distFromCenterV = Math.abs(rawY - 0.5);
+
+      const snapH = distFromCenterH < SNAP_THRESHOLD;
+      const snapV = distFromCenterV < SNAP_THRESHOLD;
+
+      let finalX = rawX;
+      let finalY = rawY;
+
+      // Apply magnetic snap with smooth friction
+      if (snapH) {
+        const friction = 1 - (1 - distFromCenterH / SNAP_THRESHOLD) * SNAP_FRICTION;
+        finalX = 0.5 + (rawX - 0.5) * friction;
+        if (!g.lastSnapH) {
+          haptic(12);
+          g.lastSnapH = true;
+        }
+      } else {
+        g.lastSnapH = false;
+      }
+
+      if (snapV) {
+        const friction = 1 - (1 - distFromCenterV / SNAP_THRESHOLD) * SNAP_FRICTION;
+        finalY = 0.5 + (rawY - 0.5) * friction;
+        if (!g.lastSnapV) {
+          haptic(12);
+          g.lastSnapV = true;
+        }
+      } else {
+        g.lastSnapV = false;
+      }
+
+      // Update guide lines visibility
+      setShowCenterGuideH(snapH);
+      setShowCenterGuideV(snapV);
+
+      // Trash zone intensity
+      const isInTrash = finalY > TRASH_ZONE_START;
+      const intensity = isInTrash 
+        ? Math.min(1, (finalY - TRASH_ZONE_START) / (TRASH_ZONE_DELETE - TRASH_ZONE_START))
+        : 0;
+      setTrashZoneIntensity(intensity);
+
+      // Progressive haptic for trash zone
+      if (isInTrash && intensity > 0.5) {
+        haptic(Math.floor(10 + intensity * 25), 100);
       }
 
       setOverlays((prev) =>
         prev.map((o) =>
           o.id === selectedId
-            ? {
-                ...o,
-                x: gestureRef.current.initialItemX + deltaPercentX,
-                y: newY,
-              }
+            ? { ...o, x: finalX, y: finalY }
             : o,
         ),
       );
@@ -518,15 +607,18 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
   };
 
   const handlePointerUp = () => {
+    // Reset guides
+    setShowCenterGuideH(false);
+    setShowCenterGuideV(false);
+    setTrashZoneIntensity(0);
     setIsDragging(false);
 
     if (selectedId && containerRef.current) {
       const item = overlays.find((o) => o.id === selectedId);
-      // Adjusted trash zone - only triggers below 90% (was 85%)
-      if (item && item.y > 0.9) {
+      // Delete if in trash zone
+      if (item && item.y > TRASH_ZONE_DELETE) {
         setOverlays((prev) => prev.filter((o) => o.id !== selectedId));
-        // Strong haptic for delete
-        if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+        haptic([30, 50, 30, 50, 30]);
         setSelectedId(null);
         toast.success("Eliminado", { duration: 1500 });
       }
@@ -1018,6 +1110,9 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                 />
               )}
 
+              {/* CENTER GUIDE LINES */}
+              <GuideLines showHorizontal={showCenterGuideH} showVertical={showCenterGuideV} />
+
               {/* Overlays */}
               {overlays.map((item) => (
                 <motion.div
@@ -1042,7 +1137,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                     className={cn(
                       "relative transition-all duration-200",
                       isDragging && selectedId === item.id ? "opacity-80" : "opacity-100",
-                      isDragging && selectedId === item.id && item.y > 0.85 && "scale-50 opacity-50 grayscale",
+                      isDragging && selectedId === item.id && trashZoneIntensity > 0.3 && "scale-75 opacity-60",
+                      isDragging && selectedId === item.id && trashZoneIntensity > 0.7 && "scale-50 opacity-40 grayscale",
                       item.isEditing && "editing-ring rounded-lg p-2"
                     )}
                   >
@@ -1088,33 +1184,8 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                 </motion.div>
               ))}
 
-              {/* Trash zone - adjusted activation area */}
-              <AnimatePresence>
-                {isDragging && (
-                  <motion.div
-                    initial={{ y: 100, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 100, opacity: 0 }}
-                    className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none z-50"
-                  >
-                    <div className={cn(
-                      "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200",
-                      selectedId && overlays.find(o => o.id === selectedId)?.y && overlays.find(o => o.id === selectedId)!.y > 0.85
-                        ? overlays.find(o => o.id === selectedId)!.y > 0.9
-                          ? "bg-red-500/90 scale-125"
-                          : "bg-amber-500/70 scale-110"
-                        : "glass-button text-white/40"
-                    )}>
-                      <Trash2 size={26} className={cn(
-                        "transition-colors",
-                        selectedId && overlays.find(o => o.id === selectedId)?.y && overlays.find(o => o.id === selectedId)!.y > 0.85
-                          ? "text-white"
-                          : "text-red-400"
-                      )} />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* TRASH ZONE - Premium animated */}
+              <TrashZone isVisible={isDragging} intensity={trashZoneIntensity} />
             </div>
           )}
 
@@ -1316,7 +1387,9 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
               <TextStylePicker
                 selectedStyle={currentTextStyle}
                 selectedGradient={currentTextGradient}
+                selectedAnimation={currentTextAnimation}
                 currentColor={currentColor}
+                fontSize={currentFontSize}
                 onStyleChange={(style) => {
                   setCurrentTextStyle(style);
                   if (selectedId) {
@@ -1327,6 +1400,18 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                   setCurrentTextGradient(gradient);
                   if (selectedId) {
                     updateOverlay(selectedId, { textGradient: gradient });
+                  }
+                }}
+                onAnimationChange={(animation) => {
+                  setCurrentTextAnimation(animation);
+                  if (selectedId) {
+                    updateOverlay(selectedId, { textAnimation: animation });
+                  }
+                }}
+                onFontSizeChange={(size) => {
+                  setCurrentFontSize(size);
+                  if (selectedId) {
+                    updateOverlay(selectedId, { fontSize: size });
                   }
                 }}
                 onClose={closeToolPanel}
