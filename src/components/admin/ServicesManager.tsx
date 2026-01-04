@@ -86,7 +86,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    category: "Corte",
+    category: "",
     type: "Simple",
     duration_part1_active: 30,
     duration_exposure_pause: 0,
@@ -144,7 +144,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     setSelectedService(null);
     setFormData({
       name: "",
-      category: "Corte",
+      category: "",
       type: "Simple",
       duration_part1_active: 30,
       duration_exposure_pause: 0,
@@ -185,7 +185,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
       
       const serviceData = {
         name: formData.name.trim(),
-        category: formData.category,
+        category: formData.category.trim() || "General",
         type: formData.type,
         duration_part1_active: formData.duration_part1_active,
         duration_exposure_pause: formData.type === "Compuesto" ? formData.duration_exposure_pause : 0,
@@ -626,19 +626,12 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="service-category">Categoría</Label>
-                <Select
+                <Input
+                  id="service-category"
                   value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DEFAULT_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  placeholder="Ej: Corte, Color, Tratamientos..."
+                />
               </div>
               
               <div>

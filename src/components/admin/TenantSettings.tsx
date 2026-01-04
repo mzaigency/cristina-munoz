@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Image, Palette, Type, Save, ExternalLink } from "lucide-react";
+import { Loader2, Upload, Image, Palette, Type, Save, ExternalLink, Layout } from "lucide-react";
+import { landingThemes } from "@/components/onboarding/landing-themes";
 
 interface TenantSettingsProps {
   tenantId: string;
@@ -28,6 +29,7 @@ interface TenantData {
   postal_code: string | null;
   show_logo_on_landing: boolean;
   heading_size: string | null;
+  theme_id: string | null;
 }
 
 export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) => {
@@ -45,12 +47,12 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
     try {
       const { data, error } = await supabase
         .from("tenants")
-        .select("name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code, show_logo_on_landing, heading_size")
+        .select("name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code, show_logo_on_landing, heading_size, theme_id")
         .eq("id", tenantId)
         .single();
 
       if (error) throw error;
-      setTenant({ ...data, show_logo_on_landing: data.show_logo_on_landing ?? true, heading_size: data.heading_size ?? "xlarge" });
+      setTenant({ ...data, show_logo_on_landing: data.show_logo_on_landing ?? true, heading_size: data.heading_size ?? "xlarge", theme_id: data.theme_id ?? "immersive" });
     } catch (error) {
       console.error("Error fetching tenant:", error);
       toast({
@@ -122,6 +124,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
           postal_code: tenant.postal_code,
           show_logo_on_landing: tenant.show_logo_on_landing,
           heading_size: tenant.heading_size,
+          theme_id: tenant.theme_id,
         })
         .eq("id", tenantId);
 
@@ -298,7 +301,36 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
           </CardContent>
         </Card>
 
-        {/* Logo */}
+        {/* Tema de Landing */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Layout className="h-5 w-5" />
+              Tema de Landing
+            </CardTitle>
+            <CardDescription>Elige el estilo visual de tu página web</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              {landingThemes.map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() => setTenant({ ...tenant, theme_id: theme.id })}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    tenant.theme_id === theme.id
+                      ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <p className="font-semibold text-foreground">{theme.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{theme.description}</p>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
