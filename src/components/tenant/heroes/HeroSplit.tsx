@@ -193,10 +193,9 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
             transition={{ duration: 0.6, delay: 1 }}
             className="mt-12 pt-8 border-t border-border"
           >
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 gap-8">
               {[
                 { value: stats.rating > 0 ? `${stats.rating}★` : "—", label: "Valoración" },
-                { value: stats.clients > 0 ? (stats.clients > 99 ? `+${stats.clients}` : `${stats.clients}`) : "—", label: "Clientes" },
                 { value: stats.since.toString(), label: "Desde" }
               ].map((stat, idx) => (
                 <div key={idx} className="text-center">
