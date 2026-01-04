@@ -78,7 +78,14 @@ export default function TenantAdmin() {
   const isMobile = useIsMobile();
 
   // Use admin notifications hook
-  const { counts: notificationCounts, getCommunicationCount, refetch: refetchNotifications } = useAdminNotifications(tenant?.id || null);
+  const { counts: notificationCounts, getCommunicationCount, refetch: refetchNotifications, markSectionViewed } = useAdminNotifications(tenant?.id || null);
+
+  // Mark section as viewed when tab changes
+  useEffect(() => {
+    if (activeTab && activeTab !== 'dashboard') {
+      markSectionViewed(activeTab);
+    }
+  }, [activeTab, markSectionViewed]);
 
   // Simplified navigation - only 6 main tabs with notification badges
   const navItems: NavItem[] = [
