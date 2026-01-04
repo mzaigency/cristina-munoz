@@ -27,6 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 
 // Import consolidated sections
 import { 
@@ -66,7 +67,6 @@ export default function TenantAdmin() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
   const [activeTab, setActiveTab] = useState<TabValue>("dashboard");
-  const [messagesUnreadCount, setMessagesUnreadCount] = useState(0);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [hasAccess, setHasAccess] = useState(false);
@@ -77,14 +77,17 @@ export default function TenantAdmin() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Simplified navigation - only 6 main tabs
+  // Use admin notifications hook
+  const { counts: notificationCounts, getCommunicationCount, refetch: refetchNotifications } = useAdminNotifications(tenant?.id || null);
+
+  // Simplified navigation - only 6 main tabs with notification badges
   const navItems: NavItem[] = [
     { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
-    { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" /> },
-    { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" /> },
+    { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
+    { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: notificationCounts.clients },
     { value: "business", label: "Negocio", icon: <Wallet className="h-4 w-4" /> },
     { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
-    { value: "communication", label: "Comunica", icon: <MessageCircle className="h-4 w-4" />, badge: messagesUnreadCount },
+    { value: "communication", label: "Comunica", icon: <MessageCircle className="h-4 w-4" />, badge: getCommunicationCount() },
     { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" /> },
   ];
 
@@ -103,26 +106,7 @@ export default function TenantAdmin() {
 
   useEffect(() => {
     if (tenant?.id) {
-      fetchMessagesUnreadCount();
       fetchStylists();
-
-      const messagesChannel = supabase
-        .channel("messages-unread-count")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "conversations",
-            filter: `tenant_id=eq.${tenant.id}`
-          },
-          () => fetchMessagesUnreadCount()
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(messagesChannel);
-      };
     }
   }, [tenant?.id]);
 
@@ -142,24 +126,6 @@ export default function TenantAdmin() {
         slug: s.slug,
         color: s.color || "#8B5CF6"
       })));
-    }
-  };
-
-  const fetchMessagesUnreadCount = async () => {
-    if (!tenant?.id) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from("conversations")
-        .select("unread_count_salon")
-        .eq("tenant_id", tenant.id);
-
-      if (error) throw error;
-
-      const totalUnread = data?.reduce((sum, conv) => sum + (conv.unread_count_salon || 0), 0) || 0;
-      setMessagesUnreadCount(totalUnread);
-    } catch (error) {
-      console.error("Error fetching messages unread count:", error);
     }
   };
 
@@ -266,7 +232,7 @@ export default function TenantAdmin() {
     setRefreshKey(prev => prev + 1);
     if (tenant?.id) {
       await Promise.all([
-        fetchMessagesUnreadCount(),
+        refetchNotifications(),
         fetchStylists()
       ]);
     }
@@ -274,7 +240,7 @@ export default function TenantAdmin() {
       title: "Actualizado",
       description: "Datos actualizados correctamente",
     });
-  }, [tenant?.id]);
+  }, [tenant?.id, refetchNotifications]);
 
   const handleQuickAction = (action: string) => {
     switch (action) {
