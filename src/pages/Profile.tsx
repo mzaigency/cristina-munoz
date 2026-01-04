@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Moon, Sun, Monitor, Users } from "lucide-react";
+import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Moon, Sun, Monitor, Users, AtSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
@@ -19,6 +19,8 @@ import { useFollows } from "@/hooks/useFollows";
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, "El nombre es requerido").max(100),
+  username: z.string().trim().min(3, "Mínimo 3 caracteres").max(30, "Máximo 30 caracteres")
+    .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guion bajo"),
   email: z.string().trim().email("Email inválido").max(255),
   phone: z.string().trim().min(9, "Mínimo 9 dígitos").max(15),
 });
@@ -31,6 +33,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [originalUsername, setOriginalUsername] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
@@ -38,7 +41,7 @@ export default function Profile() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { full_name: "", email: "", phone: "" },
+    defaultValues: { full_name: "", username: "", email: "", phone: "" },
   });
 
   useEffect(() => {
@@ -54,7 +57,7 @@ export default function Profile() {
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('full_name, email, phone, avatar_url')
+          .select('full_name, username, email, phone, avatar_url')
           .eq('id', session.user.id)
           .single();
 
@@ -63,10 +66,12 @@ export default function Profile() {
         if (profile) {
           form.reset({
             full_name: profile.full_name || "",
+            username: profile.username || "",
             email: profile.email || "",
             phone: profile.phone || "",
           });
           setAvatarUrl(profile.avatar_url);
+          setOriginalUsername(profile.username);
         }
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -92,16 +97,44 @@ export default function Profile() {
         return;
       }
 
+      // Check if username is being changed and if new one is available
+      if (values.username.toLowerCase() !== originalUsername?.toLowerCase()) {
+        const { data: existingUser } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", values.username.toLowerCase())
+          .neq("id", session.user.id)
+          .single();
+
+        if (existingUser) {
+          toast({
+            title: "Usuario no disponible",
+            description: "Este nombre de usuario ya está en uso",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: values.full_name,
+          username: values.username.toLowerCase(),
           email: values.email,
           phone: values.phone,
         })
         .eq('id', session.user.id);
 
       if (error) throw error;
+
+      setOriginalUsername(values.username.toLowerCase());
+      toast({
+        title: "Perfil actualizado",
+        description: "Tu información ha sido guardada",
+      });
+      setIsEditing(false);
 
       toast({
         title: "Perfil actualizado",
@@ -169,6 +202,9 @@ export default function Profile() {
           <h1 className="text-xl font-bold text-foreground">
             {profileData.full_name || "Usuario"}
           </h1>
+          {profileData.username && (
+            <p className="text-sm text-primary font-medium">@{profileData.username}</p>
+          )}
           <p className="text-sm text-muted-foreground">{profileData.email}</p>
         </div>
       </div>
@@ -194,6 +230,29 @@ export default function Profile() {
                           disabled={loading}
                           className="h-12 rounded-xl"
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre de usuario</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
+                          <Input 
+                            type="text" 
+                            placeholder="tu_usuario" 
+                            {...field}
+                            disabled={loading}
+                            className="h-12 rounded-xl pl-8"
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
