@@ -227,9 +227,17 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
                   key={review.id} 
                   className="pl-3 md:pl-4 basis-[280px] md:basis-[320px]"
                 >
-                  <button
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedReview(review)}
-                    className="w-full h-[180px] text-left bg-card rounded-xl p-4 shadow-sm flex flex-col border border-border/40 hover:shadow-md hover:border-primary/20 transition-all duration-200 active:scale-[0.99]"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedReview(review);
+                      }
+                    }}
+                    className="w-full h-[180px] text-left bg-card rounded-lg p-4 shadow-sm flex flex-col border border-border/40 transition-shadow duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-3">
@@ -263,7 +271,7 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
                         "{review.comment}"
                       </p>
                     )}
-                  </button>
+                  </div>
                 </CarouselItem>
               ))}
             </CarouselContent>
