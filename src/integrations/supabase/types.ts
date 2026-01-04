@@ -422,6 +422,56 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean | null
+          tenant_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean | null
+          tenant_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean | null
+          tenant_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       password_reset_tokens: {
         Row: {
           created_at: string | null
@@ -535,6 +585,36 @@ export type Database = {
           id?: string
           phone?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      push_tokens: {
+        Row: {
+          created_at: string | null
+          device_id: string | null
+          id: string
+          platform: string
+          token: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          platform: string
+          token: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          platform?: string
+          token?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1818,7 +1898,21 @@ export type Database = {
         Args: { user_email: string }
         Returns: boolean
       }
+      cleanup_expired_notifications: { Args: never; Returns: undefined }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
+      create_notification: {
+        Args: {
+          _action_url?: string
+          _expires_at?: string
+          _message: string
+          _metadata?: Json
+          _tenant_id?: string
+          _title: string
+          _type: string
+          _user_id: string
+        }
+        Returns: string
+      }
       decrypt_sensitive_data: {
         Args: { _ciphertext: string; _tenant_id: string }
         Returns: string
