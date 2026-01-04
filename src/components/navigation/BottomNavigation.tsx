@@ -28,22 +28,17 @@ export function BottomNavigation() {
     return false;
   };
 
-  // Build nav items dynamically based on permissions
+  // Build nav items - base items only, admin handled separately
   const navItems = [...baseNavItems];
-  
-  // Add admin item if user has tenant admin access
-  if (isAdmin && tenant) {
-    navItems.splice(3, 0, { 
-      path: `/admin/${tenant.slug}`, 
-      icon: Shield, 
-      label: "Admin" 
-    });
-  }
 
   const handleCreatePost = () => {
     haptic.medium();
     setShowPostCreator(true);
   };
+
+  // Check if we should show the center buttons (after index 1 = Citas)
+  const showCenterButtons = isAdmin && tenant;
+  const centerButtonIndex = 2; // After "Citas"
 
   return (
     <>
@@ -53,23 +48,39 @@ export function BottomNavigation() {
             const active = isActive(path);
             const showBadge = path === "/mensajes" && unreadCount > 0;
             
-            // Insert create button after "Citas" (index 1) for admins
-            const showCreateButton = isAdmin && tenant && index === 2;
+            // Insert admin + create buttons after "Citas" (index 1)
+            const insertCenterButtons = showCenterButtons && index === centerButtonIndex;
 
             return (
               <div key={path} className="contents">
-                {showCreateButton && (
-                  <button
-                    onClick={handleCreatePost}
-                    className="flex flex-col items-center justify-center min-w-[56px] h-full relative active:scale-95 transition-transform duration-200"
-                  >
-                    <motion.div
-                      whileTap={{ scale: 0.9 }}
-                      className="flex items-center justify-center w-11 h-11 rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+                {insertCenterButtons && (
+                  <>
+                    {/* Admin Button */}
+                    <Link
+                      to={`/admin/${tenant.slug}`}
+                      className="flex flex-col items-center justify-center min-w-[56px] h-full relative active:scale-95 transition-transform duration-200"
                     >
-                      <Plus className="h-6 w-6" strokeWidth={2.5} />
-                    </motion.div>
-                  </button>
+                      <motion.div
+                        whileTap={{ scale: 0.9 }}
+                        className="flex items-center justify-center w-11 h-11 rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+                      >
+                        <Shield className="h-6 w-6" strokeWidth={2.5} />
+                      </motion.div>
+                    </Link>
+                    
+                    {/* Create Post Button */}
+                    <button
+                      onClick={handleCreatePost}
+                      className="flex flex-col items-center justify-center min-w-[56px] h-full relative active:scale-95 transition-transform duration-200"
+                    >
+                      <motion.div
+                        whileTap={{ scale: 0.9 }}
+                        className="flex items-center justify-center w-11 h-11 rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+                      >
+                        <Plus className="h-6 w-6" strokeWidth={2.5} />
+                      </motion.div>
+                    </button>
+                  </>
                 )}
                 <Link
                   to={path}
