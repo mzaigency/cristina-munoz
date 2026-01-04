@@ -123,7 +123,7 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
               </div>
             )}
             <span className="text-border/60">·</span>
-            <span>Desde {stats.since}</span>
+            <span>En Glowapp desde {stats.since}</span>
           </motion.div>
 
           {/* CTA Button */}
