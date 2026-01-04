@@ -113,14 +113,13 @@ Deno.serve(async (req) => {
       buildQuery(twoMonthsAgo, monthAgo),
     ]);
 
-    // Count by channel
+    // Count by channel (only CRM and Web - whatsapp merged into web)
     const countByChannel = (bookings: { canal: string | null }[]) => {
-      const whatsapp = bookings.filter(b => b.canal === 'whatsapp').length;
       const crm = bookings.filter(b => b.canal === 'crm').length;
-      const web = bookings.filter(b => b.canal === 'web' || !b.canal).length;
+      const web = bookings.filter(b => b.canal === 'web' || b.canal === 'whatsapp' || !b.canal).length;
       
-      console.log(`Channel counts - WhatsApp: ${whatsapp}, CRM: ${crm}, Web: ${web}`);
-      return { whatsapp, crm, web };
+      console.log(`Channel counts - CRM: ${crm}, Web: ${web}`);
+      return { crm, web };
     };
 
     const dailyBookings = dailyRes.data || [];
