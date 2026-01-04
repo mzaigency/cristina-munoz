@@ -6,7 +6,7 @@ import { X, ChevronLeft, ChevronRight, Play, Pause, Plus, MessageCircle } from "
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
-import { StoryCreator } from "./StoryCreator";
+import { StoryCreatorFlow } from "./story-editor";
 import { StoryReplyInput } from "./StoryReplyInput";
 import { useNavigation } from "@/contexts/NavigationContext";
 
@@ -192,7 +192,7 @@ export function StoriesCarousel() {
     <>
       {/* Story Creator Modal */}
       {canCreateStory && (
-        <StoryCreator
+        <StoryCreatorFlow
           isOpen={showCreator}
           onClose={() => setShowCreator(false)}
           tenantId={tenantId}

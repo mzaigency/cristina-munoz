@@ -1,0 +1,75 @@
+/* Story Editor Styles */
+.story-editor-container {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+
+/* Vertical range slider styling */
+.story-editor-container input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+.story-editor-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.story-editor-container input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.story-editor-container input[type="range"]::-webkit-slider-runnable-track {
+  background: transparent;
+}
+
+.story-editor-container input[type="range"]::-moz-range-track {
+  background: transparent;
+}
+
+/* Safe area utilities */
+.safe-area-top {
+  padding-top: max(env(safe-area-inset-top), 16px);
+}
+
+.safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
+/* Scrollbar hide */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch feedback */
+.touch-active:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+/* Drawing canvas touch styles */
+.drawing-canvas-container {
+  touch-action: none;
+  -webkit-overflow-scrolling: auto;
+}
