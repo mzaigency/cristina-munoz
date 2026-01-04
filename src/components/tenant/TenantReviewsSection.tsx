@@ -297,30 +297,30 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
 
       {/* Review Detail Modal */}
       <Dialog open={!!selectedReview} onOpenChange={(open) => !open && setSelectedReview(null)}>
-        <DialogContent className="sm:max-w-md mx-4 rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="sr-only">Reseña completa</DialogTitle>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-sm mx-auto rounded-xl p-0 overflow-hidden border-0 shadow-xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Reseña completa</DialogTitle>
           </DialogHeader>
           
           {selectedReview && (
-            <div className="pt-2">
-              {/* Header */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                  {getInitials(selectedReview.profile?.full_name, selectedReview.id)}
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {getFullDisplayName(selectedReview.profile?.full_name, selectedReview.id)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(selectedReview.created_at)}
-                  </p>
-                </div>
+            <div className="p-6 flex flex-col items-center text-center">
+              {/* Avatar */}
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl mb-4">
+                {getInitials(selectedReview.profile?.full_name, selectedReview.id)}
               </div>
+              
+              {/* Name */}
+              <p className="font-semibold text-foreground text-lg mb-1">
+                {getFullDisplayName(selectedReview.profile?.full_name, selectedReview.id)}
+              </p>
+              
+              {/* Date */}
+              <p className="text-sm text-muted-foreground mb-4">
+                {formatDate(selectedReview.created_at)}
+              </p>
 
               {/* Stars */}
-              <div className="flex gap-1 mb-4">
+              <div className="flex gap-1 mb-5">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
@@ -332,11 +332,11 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
 
               {/* Full Comment */}
               {selectedReview.comment ? (
-                <p className="text-foreground leading-relaxed">
+                <p className="text-foreground leading-relaxed text-sm">
                   "{selectedReview.comment}"
                 </p>
               ) : (
-                <p className="text-muted-foreground italic">
+                <p className="text-muted-foreground italic text-sm">
                   Sin comentario adicional
                 </p>
               )}
