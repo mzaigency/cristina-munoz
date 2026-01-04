@@ -66,51 +66,52 @@ Deno.serve(async (req) => {
       // No body provided
     }
 
-    // Calculate date ranges - use local dates properly
+    // Calculate date ranges (today / this week / this month) based on booking creation time (created_at)
     const now = new Date();
-    
+
     // Today (start and end of today)
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    
+
     // Yesterday (for comparison)
     const yesterdayStart = new Date(todayStart);
     yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-    
-    // This week (last 7 days including today)
+
+    // This week (calendar week, Monday -> today)
     const weekStart = new Date(todayStart);
-    weekStart.setDate(weekStart.getDate() - 6); // 6 days back + today = 7 days
-    
-    // Previous week (7 days before that)
+    const dayOfWeek = weekStart.getDay(); // 0=Sun..6=Sat
+    const daysSinceMonday = (dayOfWeek + 6) % 7; // Mon=0, Tue=1, ..., Sun=6
+    weekStart.setDate(weekStart.getDate() - daysSinceMonday);
+
+    // Previous week (same length as current week-to-date)
     const prevWeekStart = new Date(weekStart);
     prevWeekStart.setDate(prevWeekStart.getDate() - 7);
-    const prevWeekEnd = new Date(weekStart);
-    
-    // This month (last 30 days including today)
-    const monthStart = new Date(todayStart);
-    monthStart.setDate(monthStart.getDate() - 29); // 29 days back + today = 30 days
-    
-    // Previous month (30 days before that)
-    const prevMonthStart = new Date(monthStart);
-    prevMonthStart.setDate(prevMonthStart.getDate() - 30);
-    const prevMonthEnd = new Date(monthStart);
+    const prevWeekEnd = new Date(todayEnd);
+    prevWeekEnd.setDate(prevWeekEnd.getDate() - 7);
 
-    // Format dates for Supabase queries (YYYY-MM-DD)
-    const formatDate = (date: Date) => date.toISOString().split('T')[0];
+    // This month (calendar month, 1st -> today)
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Previous month (same length as current month-to-date)
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const daysIntoMonth = Math.floor((todayEnd.getTime() - monthStart.getTime()) / (24 * 60 * 60 * 1000));
+    const prevMonthEnd = new Date(prevMonthStart);
+    prevMonthEnd.setDate(prevMonthEnd.getDate() + daysIntoMonth);
+
 
     console.log(`Fetching stats for tenant: ${tenantId || 'all'}`);
-    console.log(`Today: ${formatDate(todayStart)} to ${formatDate(todayEnd)}`);
-    console.log(`This week: ${formatDate(weekStart)} to ${formatDate(todayEnd)}`);
-    console.log(`This month: ${formatDate(monthStart)} to ${formatDate(todayEnd)}`);
+    console.log(`Today: ${todayStart.toISOString()} to ${todayEnd.toISOString()}`);
+    console.log(`This week: ${weekStart.toISOString()} to ${todayEnd.toISOString()}`);
+    console.log(`This month: ${monthStart.toISOString()} to ${todayEnd.toISOString()}`);
 
-    // Build query for a specific date range
+    // Build query for a specific date range using created_at
     const buildQuery = (startDate: Date, endDate: Date) => {
       let query = supabase
         .from('bookings')
-        .select('id, Fecha, canal, status')
+        .select('id, created_at, canal, status')
         .eq('status', 'confirmed')
-        .gte('Fecha', formatDate(startDate))
-        .lt('Fecha', formatDate(endDate));
+        .gte('created_at', startDate.toISOString())
+        .lt('created_at', endDate.toISOString());
       
       if (tenantId) {
         query = query.eq('tenant_id', tenantId);
