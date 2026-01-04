@@ -8,6 +8,26 @@ interface TenantAvailability {
   availableSlots: number;
 }
 
+// Working hours configuration (9:00 - 20:00 with 30-min slots)
+const WORKING_START = 9 * 60; // 9:00 in minutes
+const WORKING_END = 20 * 60; // 20:00 in minutes
+const SLOT_DURATION = 30; // 30 minutes per slot
+
+// Generate all possible time slots for a working day
+function generateAllSlots(startMinutes: number, endMinutes: number): number[] {
+  const slots: number[] = [];
+  for (let min = startMinutes; min < endMinutes; min += SLOT_DURATION) {
+    slots.push(min);
+  }
+  return slots;
+}
+
+// Convert "HH:MM:SS" to minutes since midnight
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
 export function useTodayAvailability(tenantIds: string[]) {
   const [availabilityMap, setAvailabilityMap] = useState<Map<string, TenantAvailability>>(new Map());
   const [loading, setLoading] = useState(false);
@@ -22,6 +42,25 @@ export function useTodayAvailability(tenantIds: string[]) {
     const today = format(new Date(), "yyyy-MM-dd");
     const newMap = new Map<string, TenantAvailability>();
     const available: string[] = [];
+
+    // Current time in minutes (rounded up to next 30-min slot)
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const nextSlotStart = Math.ceil(currentMinutes / SLOT_DURATION) * SLOT_DURATION;
+    
+    // If it's past working hours, no availability today
+    if (nextSlotStart >= WORKING_END) {
+      setAvailabilityMap(newMap);
+      setTenantsWithAvailability([]);
+      setLoading(false);
+      return;
+    }
+
+    // Generate remaining slots for today (from now until closing)
+    const remainingSlots = generateAllSlots(
+      Math.max(nextSlotStart, WORKING_START), 
+      WORKING_END
+    );
 
     try {
       // Check availability for each tenant in parallel (batch of 5 to avoid rate limits)
@@ -47,23 +86,26 @@ export function useTodayAvailability(tenantIds: string[]) {
 
               const bookedSlots = data?.bookedSlots || [];
               
-              // Calculate available slots (working hours are typically 9:00-19:00 = 20 slots of 30min)
-              const currentHour = new Date().getHours();
-              const currentMinutes = new Date().getMinutes();
-              const currentTimeInMinutes = currentHour * 60 + currentMinutes;
-              
-              // Count future available slots (from now until end of day)
-              const futureBookedSlots = bookedSlots.filter((slot: { Hora: string }) => {
-                const [hours, minutes] = slot.Hora.split(":").map(Number);
-                const slotTimeInMinutes = hours * 60 + minutes;
-                return slotTimeInMinutes > currentTimeInMinutes;
+              // Convert booked slots to a Set of blocked minute ranges
+              const blockedMinutes = new Set<number>();
+              bookedSlots.forEach((slot: { Hora: string; total_duration: number }) => {
+                const startMin = timeToMinutes(slot.Hora);
+                const duration = slot.total_duration || 30;
+                // Mark all 30-min slots that overlap with this booking as blocked
+                for (let min = startMin; min < startMin + duration; min += SLOT_DURATION) {
+                  blockedMinutes.add(Math.floor(min / SLOT_DURATION) * SLOT_DURATION);
+                }
               });
 
-              // Estimate: if we have less than 18 future booked slots, there's likely availability
-              const hasAvailability = futureBookedSlots.length < 18;
-              const availableSlots = Math.max(0, 20 - futureBookedSlots.length);
+              // Count available slots (remaining slots that are NOT blocked)
+              const availableSlotsCount = remainingSlots.filter(
+                slotMin => !blockedMinutes.has(slotMin)
+              ).length;
 
-              return { tenantId, hasAvailability, availableSlots };
+              // Has availability if there's at least 1 free slot today
+              const hasAvailability = availableSlotsCount > 0;
+
+              return { tenantId, hasAvailability, availableSlots: availableSlotsCount };
             } catch (err) {
               console.error(`Exception checking availability for ${tenantId}:`, err);
               return { tenantId, hasAvailability: false, availableSlots: 0 };
