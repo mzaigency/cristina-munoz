@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "motion/react";
-import { X, ChevronLeft, ChevronRight, Play, Pause, Plus, MessageCircle } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Play, Pause, Plus, MessageCircle, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
@@ -14,6 +14,7 @@ interface Story {
   id: string;
   tenant_id: string;
   image_url: string;
+  video_url: string | null;
   caption: string | null;
   story_type: string;
   created_at: string;
@@ -39,7 +40,10 @@ export function StoriesCarousel() {
   const [progress, setProgress] = useState(0);
   const [showCreator, setShowCreator] = useState(false);
   const [showReplyInput, setShowReplyInput] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   const { tenantId, tenant, loading: tenantLoading } = useCurrentUserTenant();
   const { setNavigationHidden } = useNavigation();
@@ -54,6 +58,7 @@ export function StoriesCarousel() {
           id,
           tenant_id,
           image_url,
+          video_url,
           caption,
           story_type,
           created_at,
@@ -102,9 +107,28 @@ export function StoriesCarousel() {
     }
   }, [showReplyInput]);
 
-  // Auto-progress timer
+  const currentStory = selectedGroup?.stories[currentStoryIndex];
+  const isVideoStory = currentStory?.story_type === "video" && currentStory?.video_url;
+
+  // Handle video playback
+  useEffect(() => {
+    if (videoRef.current && isVideoStory) {
+      if (isPaused) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play().catch(() => {});
+      }
+    }
+  }, [isPaused, isVideoStory, currentStoryIndex]);
+
+  // Auto-progress timer (different for video vs image)
   useEffect(() => {
     if (selectedGroup && !isPaused) {
+      // For videos, let the video control progress
+      if (isVideoStory) {
+        return;
+      }
+      
       progressInterval.current = setInterval(() => {
         setProgress((p) => {
           if (p >= 100) {
@@ -126,13 +150,34 @@ export function StoriesCarousel() {
         clearInterval(progressInterval.current);
       }
     };
-  }, [selectedGroup, isPaused, currentStoryIndex]);
+  }, [selectedGroup, isPaused, currentStoryIndex, isVideoStory]);
+
+  // Handle video time update for progress
+  const handleVideoTimeUpdate = () => {
+    if (videoRef.current) {
+      const video = videoRef.current;
+      const progressPercent = (video.currentTime / video.duration) * 100;
+      setProgress(progressPercent);
+    }
+  };
+
+  // Handle video ended
+  const handleVideoEnded = () => {
+    if (selectedGroup && currentStoryIndex < selectedGroup.stories.length - 1) {
+      setCurrentStoryIndex((i) => i + 1);
+      setProgress(0);
+    } else {
+      setSelectedGroup(null);
+      setProgress(0);
+    }
+  };
 
   const handleStoryClick = (group: StoryGroup) => {
     setSelectedGroup(group);
     setCurrentStoryIndex(0);
     setProgress(0);
     setShowReplyInput(false);
+    setIsMuted(true);
   };
 
   const handleClose = () => {
@@ -167,6 +212,13 @@ export function StoriesCarousel() {
     setIsPaused(!showReplyInput);
   };
 
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+    }
+  };
+
   if (isLoading || tenantLoading) {
     return (
       <div className="flex gap-4 overflow-x-auto pb-2 px-5 scrollbar-hide">
@@ -185,8 +237,6 @@ export function StoriesCarousel() {
   if (storyGroups.length === 0 && !canCreateStory) {
     return null;
   }
-
-  const currentStory = selectedGroup?.stories[currentStoryIndex];
 
   return (
     <>
@@ -255,6 +305,7 @@ export function StoriesCarousel() {
               .slice(0, 2)
               .toUpperCase();
             const primaryColor = group.tenant.primary_color || "#6366f1";
+            const hasVideo = group.stories.some(s => s.story_type === "video");
 
             return (
               <motion.button
@@ -290,6 +341,12 @@ export function StoriesCarousel() {
                       </div>
                     )}
                   </div>
+                  {/* Video indicator */}
+                  {hasVideo && (
+                    <div className="absolute -bottom-0.5 -left-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-md">
+                      <Play className="w-2.5 h-2.5 text-primary-foreground ml-0.5" fill="currentColor" />
+                    </div>
+                  )}
                   {group.stories.length > 1 && (
                     <span className="absolute -bottom-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-bold min-w-[20px] h-[20px] px-1.5 rounded-full flex items-center justify-center shadow-md">
                       {group.stories.length}
@@ -371,6 +428,19 @@ export function StoriesCarousel() {
                 </Link>
 
                 <div className="flex items-center gap-2">
+                  {/* Mute button for video */}
+                  {isVideoStory && (
+                    <button
+                      onClick={toggleMute}
+                      className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                    >
+                      {isMuted ? (
+                        <VolumeX className="w-5 h-5 text-white" />
+                      ) : (
+                        <Volume2 className="w-5 h-5 text-white" />
+                      )}
+                    </button>
+                  )}
                   <button
                     onClick={() => setIsPaused(!isPaused)}
                     className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
@@ -390,17 +460,36 @@ export function StoriesCarousel() {
                 </div>
               </div>
 
-              {/* Story Image */}
+              {/* Story Content - Image or Video */}
               <AnimatePresence mode="wait">
-                <motion.img
-                  key={currentStory.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  src={currentStory.image_url}
-                  alt=""
-                  className="w-full h-full object-contain"
-                />
+                {isVideoStory ? (
+                  <motion.video
+                    key={currentStory.id}
+                    ref={videoRef}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    src={currentStory.video_url!}
+                    poster={currentStory.image_url}
+                    autoPlay
+                    loop={false}
+                    muted={isMuted}
+                    playsInline
+                    className="w-full h-full object-contain"
+                    onTimeUpdate={handleVideoTimeUpdate}
+                    onEnded={handleVideoEnded}
+                  />
+                ) : (
+                  <motion.img
+                    key={currentStory.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    src={currentStory.image_url}
+                    alt=""
+                    className="w-full h-full object-contain"
+                  />
+                )}
               </AnimatePresence>
 
               {/* Caption */}
