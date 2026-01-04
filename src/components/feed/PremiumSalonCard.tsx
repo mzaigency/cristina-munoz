@@ -207,7 +207,8 @@ export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday 
               </p>
             )}
 
-            <div className="flex items-center justify-between pt-3 border-t border-border/40">
+            <div className="flex flex-col gap-3 pt-3 border-t border-border/40">
+              {/* Location info */}
               <div className="flex items-center gap-3">
                 {distance && (
                   <div className="flex items-center gap-1.5 text-primary">
@@ -223,16 +224,16 @@ export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday 
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Buttons - Only visible on sm+ screens */}
+              <div className="hidden sm:flex items-center gap-2">
                 {/* Follow Button */}
                 <motion.button
                   whileTap={{ scale: 0.9 }}
-                  whileHover={{ scale: 1.03 }}
+                  whileHover={{ scale: 1.02 }}
                   onClick={handleFollowClick}
                   disabled={followLoading}
                   className={cn(
-                    "flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-all",
-                    "px-2 sm:px-4",
+                    "flex items-center justify-center gap-1.5 h-9 px-4 rounded-full text-xs font-semibold transition-all flex-1",
                     following 
                       ? "bg-primary/10 text-primary border border-primary/30" 
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/50"
@@ -240,24 +241,24 @@ export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday 
                 >
                   {following ? (
                     <>
-                      <UserCheck className="h-4 w-4" />
-                      <span className="hidden sm:inline">Siguiendo</span>
+                      <UserCheck className="h-4 w-4 shrink-0" />
+                      <span>Siguiendo</span>
                     </>
                   ) : (
                     <>
-                      <UserPlus className="h-4 w-4" />
-                      <span className="hidden sm:inline">Seguir</span>
+                      <UserPlus className="h-4 w-4 shrink-0" />
+                      <span>Seguir</span>
                     </>
                   )}
                 </motion.button>
 
-                {/* Quick Book Button - Premium */}
+                {/* Quick Book Button */}
                 <motion.button 
-                  whileHover={{ scale: 1.03 }}
+                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center justify-center gap-1.5 h-9 px-4 sm:px-5 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-semibold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-shadow"
+                  className="flex items-center justify-center gap-1.5 h-9 px-4 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md shadow-primary/20 flex-1"
                 >
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-4 w-4 shrink-0" />
                   <span>Reservar</span>
                 </motion.button>
               </div>
