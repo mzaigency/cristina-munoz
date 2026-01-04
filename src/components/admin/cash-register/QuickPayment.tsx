@@ -667,16 +667,16 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   };
 
   return (
-    <div className="h-[calc(100vh-180px)] flex flex-col lg:flex-row gap-4">
+    <div className="flex flex-col lg:flex-row gap-3 sm:gap-4" style={{ minHeight: 'min(60vh, 500px)' }}>
       {/* Left: Items Grid */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Category Pills - Moved to top */}
-        <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
+        {/* Category Pills */}
+        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 sm:pb-3 scrollbar-hide -mx-1 px-1">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
+              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap transition-all shrink-0 ${
                 activeCategory === cat ? "bg-foreground text-background" : "bg-muted/50 hover:bg-muted"
               }`}
             >
@@ -686,16 +686,16 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         </div>
 
         {/* Items Grid */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+        <div className="flex-1 overflow-y-auto max-h-[280px] sm:max-h-[350px] lg:max-h-none">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 gap-1.5 sm:gap-2">
             {/* Manual Entry Button */}
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowManualInput(true)}
-              className="aspect-square rounded-2xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/5 transition-all"
+              className="aspect-square rounded-xl sm:rounded-2xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1 sm:gap-2 hover:border-primary/50 hover:bg-primary/5 transition-all"
             >
-              <PenLine className="h-6 w-6 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Manual</span>
+              <PenLine className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+              <span className="text-[10px] sm:text-xs text-muted-foreground">Manual</span>
             </motion.button>
 
             {filteredItems.map((item) => {
@@ -706,20 +706,20 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   key={item.id}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => toggleItem(item)}
-                  className={`aspect-square rounded-2xl p-3 flex flex-col items-center justify-center gap-1 transition-all relative overflow-hidden ${
+                  className={`aspect-square rounded-xl sm:rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all relative overflow-hidden ${
                     isSelected
-                      ? "bg-primary text-primary-foreground shadow-lg ring-2 ring-primary ring-offset-2"
+                      ? "bg-primary text-primary-foreground shadow-lg ring-2 ring-primary ring-offset-1 sm:ring-offset-2"
                       : "bg-muted/50 hover:bg-muted"
                   }`}
                 >
-                  {isProduct && <Package className="h-4 w-4 absolute top-2 right-2 opacity-50" />}
-                  <span className="text-xs text-center font-medium line-clamp-2">{item.name}</span>
-                  <span className={`text-sm font-bold ${isSelected ? "" : "text-primary"}`}>
+                  {isProduct && <Package className="h-3 w-3 sm:h-4 sm:w-4 absolute top-1 right-1 sm:top-2 sm:right-2 opacity-50" />}
+                  <span className="text-[10px] sm:text-xs text-center font-medium line-clamp-2 leading-tight">{item.name}</span>
+                  <span className={`text-xs sm:text-sm font-bold ${isSelected ? "" : "text-primary"}`}>
                     {item.price ? formatCurrency(item.price) : "—"}
                   </span>
                   {isSelected && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-1 left-1">
-                      <CheckCircle2 className="h-4 w-4" />
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-0.5 left-0.5 sm:top-1 sm:left-1">
+                      <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
                     </motion.div>
                   )}
                 </motion.button>
@@ -730,26 +730,26 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       </div>
 
       {/* Right: Cart & Payment */}
-      <div className="w-full lg:w-80 flex flex-col bg-background rounded-2xl border shadow-sm">
+      <div className="w-full lg:w-72 xl:w-80 flex flex-col bg-background rounded-xl sm:rounded-2xl border shadow-sm">
         {/* Customer Input */}
-        <div className="p-4 border-b space-y-2">
+        <div className="p-2.5 sm:p-4 border-b space-y-1.5 sm:space-y-2">
           <Input
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder="Nombre cliente"
-            className="bg-muted/50 border-0 text-center font-medium"
+            className="bg-muted/50 border-0 text-center font-medium h-9 sm:h-10 text-sm"
           />
           <Input
             type="email"
             value={customerEmail}
             onChange={(e) => setCustomerEmail(e.target.value)}
             placeholder="Email (opcional)"
-            className="bg-muted/50 border-0 text-center text-sm"
+            className="bg-muted/50 border-0 text-center text-xs sm:text-sm h-8 sm:h-9"
           />
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-0">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 min-h-0 max-h-[150px] sm:max-h-[200px] lg:max-h-none">
           <AnimatePresence>
             {selectedItems.map((item) => (
               <motion.div
@@ -757,62 +757,62 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="flex items-center gap-2 p-2 rounded-xl bg-muted/30"
+                className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-muted/30"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">{formatCurrency(item.price)}</p>
+                  <p className="text-xs sm:text-sm font-medium truncate">{item.name}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">{formatCurrency(item.price)}</p>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.id, -1)}>
-                    <Minus className="h-3 w-3" />
+                <div className="flex items-center gap-0.5 sm:gap-1">
+                  <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => updateQuantity(item.id, -1)}>
+                    <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   </Button>
-                  <span className="w-5 text-center text-sm font-medium">{item.quantity}</span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.id, 1)}>
-                    <Plus className="h-3 w-3" />
+                  <span className="w-4 sm:w-5 text-center text-xs sm:text-sm font-medium">{item.quantity}</span>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => updateQuantity(item.id, 1)}>
+                    <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   </Button>
                 </div>
-                <span className="text-sm font-bold w-16 text-right">{formatCurrency(item.price * item.quantity)}</span>
+                <span className="text-xs sm:text-sm font-bold w-12 sm:w-16 text-right">{formatCurrency(item.price * item.quantity)}</span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-muted-foreground"
+                  className="h-6 w-6 sm:h-7 sm:w-7 text-muted-foreground"
                   onClick={() => removeItem(item.id)}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                 </Button>
               </motion.div>
             ))}
           </AnimatePresence>
 
           {selectedItems.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Scissors className="h-12 w-12 mb-2 opacity-30" />
-              <p className="text-sm">Selecciona servicios</p>
+            <div className="flex flex-col items-center justify-center py-6 sm:py-12 text-muted-foreground">
+              <Scissors className="h-8 w-8 sm:h-12 sm:w-12 mb-2 opacity-30" />
+              <p className="text-xs sm:text-sm">Selecciona servicios</p>
             </div>
           )}
         </div>
 
         {/* Extras (Discount & Tip) */}
         {selectedItems.length > 0 && (
-          <div className="px-4 pb-2 flex gap-2">
+          <div className="px-2.5 sm:px-4 pb-1.5 sm:pb-2 flex gap-1.5 sm:gap-2">
             <Button
               variant={showDiscount ? "default" : "outline"}
               size="sm"
-              className="flex-1 gap-1"
+              className="flex-1 gap-1 h-8 sm:h-9 text-xs sm:text-sm"
               onClick={() => setShowDiscount(!showDiscount)}
             >
               <Percent className="h-3 w-3" />
-              {discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : "Descuento"}
+              <span className="truncate">{discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : "Dto"}</span>
             </Button>
             <Button
               variant={showTip ? "default" : "outline"}
               size="sm"
-              className="flex-1 gap-1"
+              className="flex-1 gap-1 h-8 sm:h-9 text-xs sm:text-sm"
               onClick={() => setShowTip(!showTip)}
             >
               <Heart className="h-3 w-3" />
-              {tip > 0 ? `+${formatCurrency(tip)}` : "Propina"}
+              <span className="truncate">{tip > 0 ? `+${formatCurrency(tip)}` : "Propina"}</span>
             </Button>
           </div>
         )}
@@ -821,13 +821,13 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            className="px-4 pb-2 space-y-2"
+            className="px-2.5 sm:px-4 pb-1.5 sm:pb-2 space-y-1.5 sm:space-y-2"
           >
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2">
               <Button
                 variant={discountType === "percentage" ? "default" : "outline"}
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-8 sm:h-9"
                 onClick={() => setDiscountType("percentage")}
               >
                 %
@@ -835,7 +835,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
               <Button
                 variant={discountType === "fixed" ? "default" : "outline"}
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-8 sm:h-9"
                 onClick={() => setDiscountType("fixed")}
               >
                 €
@@ -845,7 +845,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                 value={discountValue}
                 onChange={(e) => setDiscountValue(e.target.value)}
                 placeholder="0"
-                className="w-20 text-center"
+                className="w-16 sm:w-20 text-center h-8 sm:h-9"
               />
             </div>
           </motion.div>
@@ -855,15 +855,15 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            className="px-4 pb-2"
+            className="px-2.5 sm:px-4 pb-1.5 sm:pb-2"
           >
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2">
               {[1, 2, 5, 10].map((v) => (
                 <Button
                   key={v}
                   variant={parseFloat(tipAmount) === v ? "default" : "outline"}
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
                   onClick={() => setTipAmount(v.toString())}
                 >
                   {v}€
@@ -874,28 +874,28 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         )}
 
         {/* Totals */}
-        <div className="p-4 border-t bg-muted/30 space-y-1">
+        <div className="p-2.5 sm:p-4 border-t bg-muted/30 space-y-0.5 sm:space-y-1">
           {discountAmount > 0 && (
-            <div className="flex justify-between text-sm text-orange-600">
+            <div className="flex justify-between text-xs sm:text-sm text-orange-600">
               <span>Descuento</span>
               <span>-{formatCurrency(discountAmount)}</span>
             </div>
           )}
           {tip > 0 && (
-            <div className="flex justify-between text-sm text-pink-600">
+            <div className="flex justify-between text-xs sm:text-sm text-pink-600">
               <span>Propina</span>
               <span>+{formatCurrency(tip)}</span>
             </div>
           )}
-          <div className="flex justify-between text-2xl font-bold pt-1">
+          <div className="flex justify-between text-lg sm:text-2xl font-bold pt-0.5 sm:pt-1">
             <span>Total</span>
             <span className="text-primary">{formatCurrency(grandTotal)}</span>
           </div>
         </div>
 
         {/* Payment Methods */}
-        <div className="p-4 border-t space-y-3">
-          <div className="grid grid-cols-3 gap-2">
+        <div className="p-2.5 sm:p-4 border-t space-y-2 sm:space-y-3">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
             {[
               { value: "cash" as const, icon: Banknote, label: "Efectivo" },
               { value: "card" as const, icon: CreditCard, label: "Tarjeta" },
@@ -904,42 +904,42 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
               <Button
                 key={value}
                 variant={paymentMethod === value ? "default" : "outline"}
-                className="h-12 flex-col gap-0.5"
+                className="h-10 sm:h-12 flex-col gap-0.5"
                 onClick={() => setPaymentMethod(value)}
               >
                 {Icon ? (
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 ) : (
                   <div className="flex">
-                    <Banknote className="h-3 w-3" />
-                    <CreditCard className="h-3 w-3" />
+                    <Banknote className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                    <CreditCard className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   </div>
                 )}
-                <span className="text-[10px]">{label}</span>
+                <span className="text-[9px] sm:text-[10px]">{label}</span>
               </Button>
             ))}
           </div>
 
           {paymentMethod === "mixed" && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               <div>
-                <Label className="text-xs text-muted-foreground">Efectivo</Label>
+                <Label className="text-[10px] sm:text-xs text-muted-foreground">Efectivo</Label>
                 <Input
                   type="number"
                   value={cashAmount}
                   onChange={(e) => setCashAmount(e.target.value)}
                   placeholder="0"
-                  className="text-center"
+                  className="text-center h-8 sm:h-10"
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Tarjeta</Label>
+                <Label className="text-[10px] sm:text-xs text-muted-foreground">Tarjeta</Label>
                 <Input
                   type="number"
                   value={cardAmount}
                   onChange={(e) => setCardAmount(e.target.value)}
                   placeholder="0"
-                  className="text-center"
+                  className="text-center h-8 sm:h-10"
                 />
               </div>
             </div>
@@ -947,42 +947,42 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
           {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
             <div>
-              <Label className="text-xs text-muted-foreground">Entregado</Label>
+              <Label className="text-[10px] sm:text-xs text-muted-foreground">Entregado</Label>
               <Input
                 type="number"
                 value={cashGiven}
                 onChange={(e) => setCashGiven(e.target.value)}
                 placeholder="0"
-                className="text-center text-lg font-bold"
+                className="text-center text-base sm:text-lg font-bold h-9 sm:h-10"
               />
               {getChange() > 0 && (
-                <p className="text-center text-lg font-bold text-green-600 mt-1">
+                <p className="text-center text-base sm:text-lg font-bold text-green-600 mt-1">
                   Cambio: {formatCurrency(getChange())}
                 </p>
               )}
             </div>
           )}
 
-          {/* ESTILISTA SELECTION - MOVED HERE */}
-          <div className="space-y-2 pt-2 border-t">
-            <Label className="text-xs text-muted-foreground">Atendido por:</Label>
-            <div className="grid grid-cols-2 gap-2">
+          {/* ESTILISTA SELECTION */}
+          <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t">
+            <Label className="text-[10px] sm:text-xs text-muted-foreground">Atendido por:</Label>
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               {stylists.map((stylist) => (
                 <motion.button
                   key={stylist.id}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedStylistId(stylist.id)}
-                  className={`h-10 text-xs font-medium rounded-md flex items-center justify-center gap-2 transition-all border ${
+                  className={`h-8 sm:h-10 text-[10px] sm:text-xs font-medium rounded-md flex items-center justify-center gap-1.5 sm:gap-2 transition-all border ${
                     selectedStylistId === stylist.id
                       ? "bg-primary text-primary-foreground border-primary shadow-sm"
                       : "bg-background hover:bg-muted border-input"
                   }`}
                 >
                   <div
-                    className="w-2 h-2 rounded-full shrink-0"
+                    className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0"
                     style={{ backgroundColor: stylist.color || "#8B5CF6" }}
                   />
-                  <span className="truncate px-1">{stylist.name}</span>
+                  <span className="truncate px-0.5 sm:px-1">{stylist.name}</span>
                 </motion.button>
               ))}
             </div>
@@ -996,13 +996,13 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
               !selectedStylistId ||
               (wantsInvoice && (!invoiceData.fiscalName || !invoiceData.nif))
             }
-            className="w-full h-14 text-lg font-bold gap-2"
+            className="w-full h-11 sm:h-14 text-sm sm:text-lg font-bold gap-2"
           >
             {loading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
             ) : (
               <>
-                <CheckCircle2 className="h-5 w-5" />
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
                 Cobrar {formatCurrency(grandTotal)}
               </>
             )}

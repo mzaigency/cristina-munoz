@@ -168,40 +168,40 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Day Summary Cards */}
       <DailySummary summary={daySummary} onRefresh={fetchTodayData} />
 
       {/* Main Content Tabs */}
-      <Card>
+      <Card className="overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <CardHeader className="pb-0">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="payment" className="gap-2">
-                <Receipt className="h-4 w-4" />
-                <span className="hidden sm:inline">Cobrar</span>
+          <CardHeader className="p-2 sm:p-4 pb-0">
+            <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+              <TabsTrigger value="payment" className="gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+                <Receipt className="h-4 w-4 shrink-0" />
+                <span className="hidden xs:inline sm:inline">Cobrar</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-2">
-                <History className="h-4 w-4" />
-                <span className="hidden sm:inline">Historial</span>
+              <TabsTrigger value="history" className="gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+                <History className="h-4 w-4 shrink-0" />
+                <span className="hidden xs:inline sm:inline">Historial</span>
               </TabsTrigger>
-              <TabsTrigger value="export" className="gap-2">
-                <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">Exportar</span>
+              <TabsTrigger value="export" className="gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+                <Download className="h-4 w-4 shrink-0" />
+                <span className="hidden xs:inline sm:inline">Exportar</span>
               </TabsTrigger>
-              <TabsTrigger value="stats" className="gap-2">
-                <BarChart3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Stats</span>
+              <TabsTrigger value="stats" className="gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+                <BarChart3 className="h-4 w-4 shrink-0" />
+                <span className="hidden xs:inline sm:inline">Stats</span>
               </TabsTrigger>
             </TabsList>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="p-2 sm:p-4 pt-4 sm:pt-6">
             <TabsContent value="payment" className="mt-0">
               {daySummary.isClosed ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <Lock className="h-12 w-12 mb-4" />
-                  <p className="text-lg font-medium">Caja cerrada</p>
-                  <p className="text-sm">No se pueden registrar más cobros hoy</p>
+                <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-muted-foreground">
+                  <Lock className="h-10 w-10 sm:h-12 sm:w-12 mb-3 sm:mb-4" />
+                  <p className="text-base sm:text-lg font-medium">Caja cerrada</p>
+                  <p className="text-xs sm:text-sm">No se pueden registrar más cobros hoy</p>
                 </div>
               ) : (
                 <QuickPayment onTransactionCreated={handleTransactionCreated} tenantId={tenantId} />
