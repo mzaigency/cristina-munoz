@@ -1,11 +1,31 @@
-import { Building2 } from "lucide-react";
+import { Building2, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import glowappLogo from "@/assets/glowapp-logo.png";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SmartSearchHeader() {
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
+
+  useEffect(() => {
+    const checkSuperadmin = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .eq("role", "superadmin")
+          .maybeSingle();
+        setIsSuperadmin(!!data);
+      }
+    };
+    checkSuperadmin();
+  }, []);
+
   return (
     <div className="sticky top-0 z-50">
       <div className="relative bg-gradient-to-b from-background via-background/98 to-background/90 backdrop-blur-3xl">
@@ -32,8 +52,18 @@ export function SmartSearchHeader() {
               />
             </Link>
 
-            {/* Right side: Notifications + Para negocios */}
+            {/* Right side: Superadmin + Notifications + Para negocios */}
             <div className="flex items-center gap-2">
+              {/* Superadmin link */}
+              {isSuperadmin && (
+                <Link 
+                  to="/superadmin"
+                  className="p-2 rounded-xl text-amber-500 hover:bg-amber-500/10 transition-colors"
+                >
+                  <Crown className="h-5 w-5" />
+                </Link>
+              )}
+              
               {/* Notification Bell */}
               <NotificationBadge />
               

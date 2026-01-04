@@ -1,11 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Calendar, MessageCircle, User, Shield, Crown, Plus } from "lucide-react";
+import { Home, Calendar, MessageCircle, User, Shield, Plus } from "lucide-react";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { PostCreator } from "@/components/social/PostCreator";
 import { useHaptic } from "@/hooks/useHaptic";
 
@@ -20,25 +19,8 @@ export function BottomNavigation() {
   const location = useLocation();
   const { unreadCount } = useUnreadMessages();
   const { tenant, isAdmin } = useCurrentUserTenant();
-  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [showPostCreator, setShowPostCreator] = useState(false);
   const haptic = useHaptic();
-
-  useEffect(() => {
-    const checkSuperadmin = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .eq("role", "superadmin")
-          .maybeSingle();
-        setIsSuperadmin(!!data);
-      }
-    };
-    checkSuperadmin();
-  }, []);
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -55,15 +37,6 @@ export function BottomNavigation() {
       path: `/admin/${tenant.slug}`, 
       icon: Shield, 
       label: "Admin" 
-    });
-  }
-  
-  // Add superadmin item if user is superadmin
-  if (isSuperadmin) {
-    navItems.splice(isAdmin && tenant ? 4 : 3, 0, { 
-      path: "/superadmin", 
-      icon: Crown, 
-      label: "Super" 
     });
   }
 
