@@ -106,31 +106,31 @@ export default function ForBusiness() {
         canonicalUrl="/para-negocios"
       />
 
-      {/* Header - Identical to Index */}
+      {/* Header - Mobile optimized */}
       <div className="sticky top-0 z-50">
         <div className="relative bg-gradient-to-b from-background via-background/98 to-background/90 backdrop-blur-3xl">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
           
-          <div className="px-5 pt-4 pb-5 safe-area-top">
+          <div className="px-4 pt-3 pb-4 safe-area-top">
             <motion.div
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="flex items-center justify-between"
             >
-              <Link to="/" className="flex items-center gap-3">
+              <Link to="/" className="flex items-center gap-2.5">
                 <motion.div
                   initial={{ scale: 0.8, rotate: -10 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
                 >
-                  <img src="/favicon.png" alt="GlowApp" className="h-10 w-10 drop-shadow-lg" />
+                  <img src="/favicon.png" alt="GlowApp" className="h-9 w-9 drop-shadow-lg" />
                 </motion.div>
                 <div>
-                  <h1 className="text-[28px] font-black tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-none">
+                  <h1 className="text-2xl font-black tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-none">
                     GlowApp
                   </h1>
-                  <p className="text-[11px] text-muted-foreground/70 font-medium tracking-wide mt-0.5">
+                  <p className="text-[10px] text-muted-foreground/70 font-medium tracking-wide mt-0.5 hidden xs:block">
                     Tu belleza, conectada
                   </p>
                 </div>
@@ -139,12 +139,13 @@ export default function ForBusiness() {
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button 
                   asChild 
-                  size="lg" 
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-5 rounded-xl shadow-lg shadow-primary/25"
+                  size="default" 
+                  className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4 rounded-xl shadow-lg shadow-primary/25 text-sm"
                 >
-                  <Link to="/onboarding" className="flex items-center gap-2">
+                  <Link to="/onboarding" className="flex items-center gap-1.5">
                     <Sparkles className="h-4 w-4" />
-                    Prueba gratis
+                    <span className="hidden sm:inline">Prueba gratis</span>
+                    <span className="sm:hidden">Gratis</span>
                   </Link>
                 </Button>
               </motion.div>
