@@ -7,9 +7,11 @@ export function SmartSearchHeader() {
   return (
     <div className="sticky top-0 z-50">
       <div className="relative bg-gradient-to-b from-background via-background/98 to-background/90 backdrop-blur-3xl">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        {/* Safe area spacer for notch */}
+        <div className="h-[env(safe-area-inset-top)] bg-background" />
+        <div className="absolute inset-x-0 top-[env(safe-area-inset-top)] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
-        <div className="px-4 pt-3 pb-3 safe-area-top">
+        <div className="px-4 pt-3 pb-3">
           <motion.div
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}

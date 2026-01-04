@@ -122,9 +122,14 @@ export default function Profile() {
 
   if (initialLoading) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <AppLayout noTopSafeArea>
+        <div className="flex items-center justify-center h-[80vh]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground">Cargando perfil...</p>
+          </div>
         </div>
       </AppLayout>
     );
@@ -133,7 +138,7 @@ export default function Profile() {
   const profileData = form.getValues();
 
   return (
-    <AppLayout>
+    <AppLayout noTopSafeArea>
       <SEO 
         title="Mi Perfil"
         description="Gestiona tu información personal"
@@ -141,8 +146,8 @@ export default function Profile() {
         noindex={true}
       />
       
-      {/* Header */}
-      <div className="bg-gradient-to-b from-primary/10 to-background pt-8 pb-6 px-4 safe-area-top">
+      {/* Header with safe area */}
+      <div className="bg-gradient-to-b from-primary/10 to-background pt-[calc(env(safe-area-inset-top)+2rem)] pb-6 px-4">
         <div className="flex flex-col items-center">
           {/* Avatar with upload */}
           {userId && (
