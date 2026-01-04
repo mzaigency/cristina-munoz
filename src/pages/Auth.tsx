@@ -25,6 +25,9 @@ const signUpSchema = signInSchema.extend({
   username: z.string().trim().min(3, "Mínimo 3 caracteres").max(30, "Máximo 30 caracteres")
     .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guion bajo"),
   phone: z.string().trim().min(9, "Mínimo 9 dígitos").max(15),
+  country: z.string().trim().min(1, "El país es requerido").max(100),
+  province: z.string().trim().min(1, "La provincia es requerida").max(100),
+  city: z.string().trim().min(1, "La ciudad es requerida").max(100),
   confirmPassword: z.string().min(6),
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: "Debes aceptar los términos",
@@ -50,7 +53,7 @@ export default function Auth() {
     defaultValues: {
       email: "",
       password: "",
-      ...(isSignUp ? { firstName: "", lastName: "", username: "", phone: "", confirmPassword: "", acceptTerms: false } : {}),
+      ...(isSignUp ? { firstName: "", lastName: "", username: "", phone: "", country: "España", province: "", city: "", confirmPassword: "", acceptTerms: false } : {}),
     },
   });
 
@@ -175,6 +178,9 @@ export default function Auth() {
               full_name: `${signUpValues.firstName} ${signUpValues.lastName}`,
               username: signUpValues.username.toLowerCase(),
               phone: signUpValues.phone,
+              country: signUpValues.country,
+              province: signUpValues.province,
+              city: signUpValues.city,
             }
           }
         });
@@ -346,6 +352,65 @@ export default function Auth() {
                           </FormItem>
                         )}
                       />
+
+                      {/* Location fields */}
+                      <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>País</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="España" 
+                                {...field}
+                                disabled={loading}
+                                className="h-12 rounded-xl"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField
+                          control={form.control}
+                          name="province"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Provincia</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Barcelona" 
+                                  {...field}
+                                  disabled={loading}
+                                  className="h-12 rounded-xl"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Ciudad</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Santpedor" 
+                                  {...field}
+                                  disabled={loading}
+                                  className="h-12 rounded-xl"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </>
                   )}
 
