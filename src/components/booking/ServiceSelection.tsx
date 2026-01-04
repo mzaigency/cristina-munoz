@@ -115,7 +115,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext }: Service
 
   return (
     <div className="space-y-6">
-      <Accordion type="multiple" className="w-full" defaultValue={categories}>
+      <Accordion type="multiple" className="w-full">
         {categories.map((category) => {
           const categoryServices = groupedServices[category];
           if (!categoryServices || categoryServices.length === 0) return null;
