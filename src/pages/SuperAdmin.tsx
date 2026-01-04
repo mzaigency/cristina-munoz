@@ -223,7 +223,10 @@ const SuperAdmin = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Top Header */}
-          <header className="h-14 md:h-16 border-b border-border/50 bg-card/30 backdrop-blur-xl flex items-center justify-between px-3 md:px-6 safe-area-top">
+          <header 
+            className="h-14 md:h-16 border-b border-border/50 bg-card/30 backdrop-blur-xl flex items-center justify-between px-3 md:px-6"
+            style={{ paddingTop: "env(safe-area-inset-top)" }}
+          >
             <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
               {/* Mobile Menu Button */}
               {isMobile && (
