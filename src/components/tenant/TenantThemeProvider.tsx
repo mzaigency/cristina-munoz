@@ -155,8 +155,8 @@ export const TenantThemeProvider = ({
         .tenant-theme-container h6 {
           font-family: var(--tenant-font-heading);
         }
-        .tenant-theme-container button,
-        .tenant-theme-container [role="button"] {
+        .tenant-theme-container button:not([data-fixed-radius]),
+        .tenant-theme-container [role="button"]:not([data-fixed-radius]) {
           border-radius: var(--tenant-button-radius);
         }
       `}</style>
