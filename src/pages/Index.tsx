@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Heart, TrendingUp, Navigation } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
+import { AISearchBar } from "@/components/feed/AISearchBar";
 import { CategoryPills } from "@/components/feed/CategoryPills";
 import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { PremiumSkeleton } from "@/components/feed/PremiumSkeleton";
@@ -209,16 +210,22 @@ const Index = () => {
         canonicalUrl="/"
       />
 
-      {/* Smart Search Header */}
+      {/* Header Bar - Fixed, compact */}
       <SmartSearchHeader
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        recentSearches={recentSearches}
-        onRecentSearchClick={(search) => setSearchQuery(search)}
-        onClearRecents={clearRecentSearches}
         userTenant={userTenant}
         isSuperadmin={isSuperadmin}
       />
+
+      {/* AI Search Bar - Below header */}
+      <div className="py-3">
+        <AISearchBar
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          recentSearches={recentSearches}
+          onRecentSearchClick={(search) => setSearchQuery(search)}
+          onClearRecents={clearRecentSearches}
+        />
+      </div>
 
       {/* Stories Carousel */}
       <motion.div 
