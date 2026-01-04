@@ -731,25 +731,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
       {/* Right: Cart & Payment */}
       <div className="w-full lg:w-80 lg:shrink-0 flex flex-col bg-background rounded-xl sm:rounded-2xl border shadow-sm lg:overflow-hidden">
-        {/* Customer Input */}
-        <div className="p-2.5 sm:p-4 border-b space-y-1.5 sm:space-y-2 shrink-0">
-          <Input
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            placeholder="Nombre cliente"
-            className="bg-muted/50 border-0 text-center font-medium h-9 sm:h-10 text-sm"
-          />
-          <Input
-            type="email"
-            value={customerEmail}
-            onChange={(e) => setCustomerEmail(e.target.value)}
-            placeholder="Email (opcional)"
-            className="bg-muted/50 border-0 text-center text-xs sm:text-sm h-8 sm:h-9"
-          />
-        </div>
-
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 min-h-0 max-h-[150px] sm:max-h-[200px] lg:max-h-none lg:flex-1 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 min-h-0 max-h-[180px] sm:max-h-[250px] lg:max-h-none lg:flex-1 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
           <AnimatePresence>
             {selectedItems.map((item) => (
               <motion.div
