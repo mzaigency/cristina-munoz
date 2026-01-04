@@ -1,9 +1,11 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Star } from "lucide-react";
+import { ChevronDown, Star, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import glowappIcon from "@/assets/glowapp-icon.png";
+import { FollowButton } from "@/components/social/FollowButton";
+import { useFollows } from "@/hooks/useFollows";
 
 interface Tenant {
   id: string;
@@ -34,7 +36,9 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
 
-  const [stats, setStats] = useState({ rating: 0, since: new Date().getFullYear() });
+  const [stats, setStats] = useState({ rating: 0, reviewCount: 0, since: new Date().getFullYear() });
+  const { useFollowerCount } = useFollows();
+  const { data: followerCount = 0 } = useFollowerCount(tenant.id);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -54,11 +58,17 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
         ? new Date(tenantData.created_at).getFullYear()
         : new Date().getFullYear();
 
-      setStats({ rating: Number(avgRating), since: createdYear });
+      setStats({ rating: Number(avgRating), reviewCount: reviewsData?.length || 0, since: createdYear });
     };
 
     if (tenant.id) fetchStats();
   }, [tenant.id]);
+
+  const formatFollowers = (count: number) => {
+    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return count.toString();
+  };
 
   const heroImages = tenant.hero_images as string[] | null;
   const heroImage = heroImages?.[0] || tenant.hero_image_url;
@@ -128,8 +138,15 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="flex items-center gap-4 mb-8"
+          className="flex flex-wrap items-center justify-center gap-3 mb-8"
         >
+          {/* Followers count */}
+          <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
+            <Users className="w-4 h-4 text-white/80" />
+            <span className="text-white font-medium text-sm">{formatFollowers(followerCount)}</span>
+            <span className="text-white/70 text-sm">seguidores</span>
+          </div>
+          
           {stats.rating > 0 && (
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
               <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
@@ -138,16 +155,22 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
           )}
           <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
             <img src={glowappIcon} alt="Glowapp" className="w-4 h-4 object-contain" />
-            <span className="text-white/90 text-sm">En Glowapp desde {stats.since}</span>
+            <span className="text-white/90 text-sm">Desde {stats.since}</span>
           </div>
         </motion.div>
 
-        {/* CTA Button */}
+        {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.9 }}
+          className="flex items-center gap-3"
         >
+          <FollowButton 
+            tenantId={tenant.id} 
+            variant="default" 
+            className="bg-white/15 backdrop-blur-md border-white/20 text-white hover:bg-white/25"
+          />
           <Button
             onClick={onBookNow}
             size="lg"

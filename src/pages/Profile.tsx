@@ -9,12 +9,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Moon, Sun, Monitor } from "lucide-react";
+import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Moon, Sun, Monitor, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { UserStats } from "@/components/profile/UserStats";
 import { useTheme } from "next-themes";
+import { useFollows } from "@/hooks/useFollows";
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, "El nombre es requerido").max(100),
@@ -33,6 +34,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const { followingCount } = useFollows();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -320,6 +322,19 @@ export default function Profile() {
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
               </button>
+            </div>
+
+            {/* Following Count */}
+            <div className="ios-card overflow-hidden">
+              <div className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Siguiendo</p>
+                  <p className="text-xs text-muted-foreground">{followingCount} salones</p>
+                </div>
+              </div>
             </div>
 
             {/* Appearance */}

@@ -18,6 +18,9 @@ import { WelcomeCarousel, useWelcomeOnboarding } from "@/components/onboarding/W
 import { useGeolocation, CITY_COORDINATES } from "@/hooks/useGeolocation";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useTodayAvailability } from "@/hooks/useTodayAvailability";
+import { useFollows } from "@/hooks/useFollows";
+import { FeedToggle, FeedMode } from "@/components/feed/FeedToggle";
+import { FollowingFeed } from "@/components/feed/FollowingFeed";
 import { cn } from "@/lib/utils";
 
 interface TenantWithStats {
@@ -49,7 +52,9 @@ const Index = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [feedMode, setFeedMode] = useState<FeedMode>("discover");
   const { favorites, isAuthenticated } = useFavorites();
+  const { followingCount } = useFollows();
   const { tenant: userTenant, loading: tenantLoading } = useCurrentUserTenant();
   const { showWelcome, handleComplete: handleOnboardingComplete } = useWelcomeOnboarding();
   const queryClient = useQueryClient();
@@ -261,115 +266,143 @@ const Index = () => {
         <StoriesCarousel />
       </motion.div>
 
+      {/* Feed Toggle - Para ti / Siguiendo */}
+      <FeedToggle 
+        mode={feedMode} 
+        onChange={setFeedMode} 
+        followingCount={followingCount}
+      />
+
       {/* Main Content */}
       <div className="px-4 pt-1 pb-28">
-        {/* Compact Section Header + Filters */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-          className="mb-4"
-        >
-          {/* Top row: Title + Actions */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-bold text-foreground">
-                {searchQuery ? "Resultados" : "Destacados"}
-              </h2>
-              <span className="text-xs text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full">
-                {filteredSalons?.length || 0}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              {/* Near Me Button */}
-              <motion.button
-                whileTap={{ scale: 0.92 }}
-                onClick={handleNearMeClick}
-                disabled={geoLoading}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
-                  sortByDistance && hasLocation
-                    ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
-                    : "bg-secondary/80 text-muted-foreground active:bg-secondary"
-                )}
-              >
-                {geoLoading ? (
-                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Navigation className="h-3.5 w-3.5" />
-                )}
-                <span className="hidden xs:inline">Cerca</span>
-              </motion.button>
-
-              {isAuthenticated && (
-                <motion.button
-                  whileTap={{ scale: 0.92 }}
-                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
-                    showFavoritesOnly
-                      ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
-                      : "bg-secondary/80 text-muted-foreground active:bg-secondary"
-                  )}
-                >
-                  <Heart className={cn("h-3.5 w-3.5", showFavoritesOnly && "fill-current")} />
-                  <span className="hidden xs:inline">Favoritos</span>
-                </motion.button>
-              )}
-            </div>
-          </div>
-
-          {/* Category Pills - more compact */}
-          <CategoryPills
-            selected={selectedCategory}
-            onSelect={setSelectedCategory}
-            tenantsWithAvailability={tenantsWithAvailability}
-            loadingAvailability={availabilityLoading}
-            hasCheckedAvailability={hasChecked}
-            onCheckAvailability={checkAvailability}
-          />
-        </motion.div>
-
-        {/* Salons Grid */}
         <AnimatePresence mode="wait">
-          {isLoading ? (
-            <PremiumSkeleton />
-          ) : filteredSalons && filteredSalons.length > 0 ? (
+          {feedMode === "following" ? (
             <motion.div
-              key="results"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              key="following"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
             >
-              {filteredSalons.map((salon, index) => (
-                <PremiumSalonCard 
-                  key={salon.id} 
-                  salon={salon} 
-                  index={index} 
-                  distance={salon.formattedDistance}
-                  hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
-                />
-              ))}
+              <FollowingFeed />
             </motion.div>
           ) : (
-            <EmptyState
-              type={
-                selectedCategory === "huecos" && hasChecked && tenantsWithAvailability.length === 0
-                  ? "no-availability"
-                  : searchQuery 
-                    ? "no-results" 
-                    : "empty"
-              }
-              searchQuery={searchQuery}
-              onClearSearch={() => setSearchQuery("")}
-              onClearFilter={() => setSelectedCategory(null)}
-            />
+            <motion.div
+              key="discover"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* Compact Section Header + Filters */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+                className="mb-4"
+              >
+                {/* Top row: Title + Actions */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    <h2 className="text-lg font-bold text-foreground">
+                      {searchQuery ? "Resultados" : "Destacados"}
+                    </h2>
+                    <span className="text-xs text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full">
+                      {filteredSalons?.length || 0}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {/* Near Me Button */}
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      onClick={handleNearMeClick}
+                      disabled={geoLoading}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
+                        sortByDistance && hasLocation
+                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
+                          : "bg-secondary/80 text-muted-foreground active:bg-secondary"
+                      )}
+                    >
+                      {geoLoading ? (
+                        <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Navigation className="h-3.5 w-3.5" />
+                      )}
+                      <span className="hidden xs:inline">Cerca</span>
+                    </motion.button>
+
+                    {isAuthenticated && (
+                      <motion.button
+                        whileTap={{ scale: 0.92 }}
+                        onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
+                          showFavoritesOnly
+                            ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
+                            : "bg-secondary/80 text-muted-foreground active:bg-secondary"
+                        )}
+                      >
+                        <Heart className={cn("h-3.5 w-3.5", showFavoritesOnly && "fill-current")} />
+                        <span className="hidden xs:inline">Favoritos</span>
+                      </motion.button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Category Pills - more compact */}
+                <CategoryPills
+                  selected={selectedCategory}
+                  onSelect={setSelectedCategory}
+                  tenantsWithAvailability={tenantsWithAvailability}
+                  loadingAvailability={availabilityLoading}
+                  hasCheckedAvailability={hasChecked}
+                  onCheckAvailability={checkAvailability}
+                />
+              </motion.div>
+
+              {/* Salons Grid */}
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <PremiumSkeleton />
+                ) : filteredSalons && filteredSalons.length > 0 ? (
+                  <motion.div
+                    key="results"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                  >
+                    {filteredSalons.map((salon, index) => (
+                      <PremiumSalonCard 
+                        key={salon.id} 
+                        salon={salon} 
+                        index={index} 
+                        distance={salon.formattedDistance}
+                        hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
+                      />
+                    ))}
+                  </motion.div>
+                ) : (
+                  <EmptyState
+                    type={
+                      selectedCategory === "huecos" && hasChecked && tenantsWithAvailability.length === 0
+                        ? "no-availability"
+                        : searchQuery 
+                          ? "no-results" 
+                          : "empty"
+                    }
+                    searchQuery={searchQuery}
+                    onClearSearch={() => setSearchQuery("")}
+                    onClearFilter={() => setSelectedCategory(null)}
+                  />
+                )}
+              </AnimatePresence>
+            </motion.div>
           )}
         </AnimatePresence>
-
       </div>
 
     </AppLayout>
