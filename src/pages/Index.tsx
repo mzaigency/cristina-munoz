@@ -16,6 +16,7 @@ import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { WelcomeCarousel, useWelcomeOnboarding } from "@/components/onboarding/WelcomeCarousel";
 import { useGeolocation, CITY_COORDINATES } from "@/hooks/useGeolocation";
 import { useHaptic } from "@/hooks/useHaptic";
+import { cn } from "@/lib/utils";
 
 interface TenantWithStats {
   id: string;
@@ -230,74 +231,66 @@ const Index = () => {
       </motion.div>
 
       {/* Main Content */}
-      <div className="px-5 pt-2 pb-28">
-        {/* Section Header - Premium */}
+      <div className="px-4 pt-1 pb-28">
+        {/* Compact Section Header + Filters */}
         <motion.div 
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="flex items-center justify-between mb-6"
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="mb-4"
         >
-          <div>
-            <h2 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-2.5">
-              <motion.div
-                initial={{ rotate: -10, scale: 0.9 }}
-                animate={{ rotate: 0, scale: 1 }}
-                transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-              >
-                <TrendingUp className="h-6 w-6 text-primary" />
-              </motion.div>
-              {searchQuery ? "Resultados" : "Destacados"}
-            </h2>
-            <p className="text-[13px] text-muted-foreground mt-1 font-medium">
-              {filteredSalons?.length || 0} salones disponibles
-            </p>
-          </div>
+          {/* Top row: Title + Actions */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-bold text-foreground">
+                {searchQuery ? "Resultados" : "Destacados"}
+              </h2>
+              <span className="text-xs text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full">
+                {filteredSalons?.length || 0}
+              </span>
+            </div>
 
-          <div className="flex items-center gap-2">
-            {/* Near Me Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleNearMeClick}
-              disabled={geoLoading}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-bold transition-all duration-400 ${
-                sortByDistance && hasLocation
-                  ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
-                  : "bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
-            >
-              {geoLoading ? (
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Navigation className="h-4 w-4" />
-              )}
-              Cerca
-            </motion.button>
-
-            {isAuthenticated && (
+            <div className="flex items-center gap-1.5">
+              {/* Near Me Button */}
               <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-bold transition-all duration-400 ${
-                  showFavoritesOnly
-                    ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30"
-                    : "bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`}
+                whileTap={{ scale: 0.92 }}
+                onClick={handleNearMeClick}
+                disabled={geoLoading}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
+                  sortByDistance && hasLocation
+                    ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
+                    : "bg-secondary/80 text-muted-foreground active:bg-secondary"
+                )}
               >
-                <Heart className={`h-4 w-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
-                Favoritos
+                {geoLoading ? (
+                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Navigation className="h-3.5 w-3.5" />
+                )}
+                <span className="hidden xs:inline">Cerca</span>
               </motion.button>
-            )}
-          </div>
-        </motion.div>
 
-        {/* Category Pills */}
-        <motion.div 
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="mb-8"
-        >
+              {isAuthenticated && (
+                <motion.button
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
+                    showFavoritesOnly
+                      ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
+                      : "bg-secondary/80 text-muted-foreground active:bg-secondary"
+                  )}
+                >
+                  <Heart className={cn("h-3.5 w-3.5", showFavoritesOnly && "fill-current")} />
+                  <span className="hidden xs:inline">Favoritos</span>
+                </motion.button>
+              )}
+            </div>
+          </div>
+
+          {/* Category Pills - more compact */}
           <CategoryPills
             selected={selectedCategory}
             onSelect={setSelectedCategory}
