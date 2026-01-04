@@ -73,6 +73,61 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const getErrorMessage = (error: any): { title: string; description: string } => {
+    const errorMessage = error?.message?.toLowerCase() || "";
+    const errorCode = error?.code || "";
+
+    // Email errors
+    if (errorMessage.includes("user already registered") || errorCode === "user_already_exists") {
+      return {
+        title: "Email ya registrado",
+        description: "Ya existe una cuenta con este email. Prueba a iniciar sesión.",
+      };
+    }
+    if (errorMessage.includes("invalid email") || errorMessage.includes("email")) {
+      return {
+        title: "Email inválido",
+        description: "Por favor, introduce un email válido.",
+      };
+    }
+
+    // Password errors
+    if (errorMessage.includes("password") && errorMessage.includes("weak")) {
+      return {
+        title: "Contraseña débil",
+        description: "La contraseña debe tener al menos 6 caracteres.",
+      };
+    }
+    if (errorMessage.includes("invalid login credentials") || errorMessage.includes("invalid credentials")) {
+      return {
+        title: "Credenciales incorrectas",
+        description: "El email o la contraseña no son correctos.",
+      };
+    }
+
+    // Rate limiting
+    if (errorMessage.includes("rate limit") || errorMessage.includes("too many requests")) {
+      return {
+        title: "Demasiados intentos",
+        description: "Has realizado demasiados intentos. Espera unos minutos.",
+      };
+    }
+
+    // Network errors
+    if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
+      return {
+        title: "Error de conexión",
+        description: "Comprueba tu conexión a internet e inténtalo de nuevo.",
+      };
+    }
+
+    // Generic error
+    return {
+      title: "Error",
+      description: error?.message || "Ha ocurrido un error. Inténtalo de nuevo.",
+    };
+  };
+
   const handleAuth = async (values: SignInFormValues | SignUpFormValues) => {
     setLoading(true);
     try {
@@ -80,17 +135,32 @@ export default function Auth() {
         const signUpValues = values as SignUpFormValues;
         
         // Check if username is available
-        const { data: existingUser } = await supabase
+        const { data: existingUsername } = await supabase
           .from("profiles")
           .select("id")
           .eq("username", signUpValues.username.toLowerCase())
-          .single();
+          .maybeSingle();
 
-        if (existingUser) {
-          toast({
-            title: "Usuario no disponible",
-            description: "Este nombre de usuario ya está en uso",
-            variant: "destructive",
+        if (existingUsername) {
+          form.setError("username" as any, {
+            type: "manual",
+            message: "Este nombre de usuario ya está en uso",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Check if email is already registered
+        const { data: existingEmail } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", signUpValues.email.toLowerCase())
+          .maybeSingle();
+
+        if (existingEmail) {
+          form.setError("email", {
+            type: "manual",
+            message: "Ya existe una cuenta con este email",
           });
           setLoading(false);
           return;
@@ -100,6 +170,7 @@ export default function Auth() {
           email: signUpValues.email,
           password: signUpValues.password,
           options: {
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: `${signUpValues.firstName} ${signUpValues.lastName}`,
               username: signUpValues.username.toLowerCase(),
@@ -109,6 +180,16 @@ export default function Auth() {
         });
 
         if (error) throw error;
+
+        // Check if user was actually created (Supabase returns user even if email exists in some cases)
+        if (data.user && !data.session && data.user.identities?.length === 0) {
+          form.setError("email", {
+            type: "manual",
+            message: "Ya existe una cuenta con este email",
+          });
+          setLoading(false);
+          return;
+        }
 
         toast({
           title: "¡Cuenta creada!",
@@ -132,9 +213,10 @@ export default function Auth() {
         });
       }
     } catch (error: any) {
+      const { title, description } = getErrorMessage(error);
       toast({
-        title: "Error",
-        description: error.message || "Error al procesar tu solicitud",
+        title,
+        description,
         variant: "destructive",
       });
     } finally {
