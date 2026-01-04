@@ -3,7 +3,7 @@ import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePosts } from "@/hooks/usePosts";
 import { PostGrid } from "@/components/social/PostGrid";
-import { Grid3X3, Camera } from "lucide-react";
+import { Camera } from "lucide-react";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
 
 interface TenantGallerySectionProps {
@@ -70,14 +70,8 @@ export const TenantGallerySection = ({ tenantId, tenantName }: TenantGallerySect
           </p>
         </div>
 
-        {/* Instagram-style grid */}
+        {/* Gallery grid */}
         <ScrollReveal>
-          <div className="flex justify-center gap-4 mb-6">
-            <button className="flex items-center gap-2 text-sm font-medium text-foreground border-t-2 border-foreground pt-3 px-4">
-              <Grid3X3 className="w-4 h-4" />
-              Publicaciones
-            </button>
-          </div>
           <PostGrid posts={tenantPosts} isAdmin={isAdmin} onDelete={deletePost} />
         </ScrollReveal>
 
