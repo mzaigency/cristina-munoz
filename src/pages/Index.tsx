@@ -211,10 +211,7 @@ const Index = () => {
       />
 
       {/* Header Bar - Fixed, compact */}
-      <SmartSearchHeader
-        userTenant={userTenant}
-        isSuperadmin={isSuperadmin}
-      />
+      <SmartSearchHeader />
 
       {/* AI Search Bar - Below header */}
       <div className="py-3">
