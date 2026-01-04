@@ -13,30 +13,32 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
-import { LocationSelector } from "@/components/auth/LocationSelector";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres").max(100, "Contraseña demasiado larga"),
 });
 
-const signUpSchema = signInSchema.extend({
-  firstName: z.string().trim().min(1, "El nombre es requerido").max(50),
-  lastName: z.string().trim().min(1, "El apellido es requerido").max(50),
-  username: z.string().trim().min(3, "Mínimo 3 caracteres").max(30, "Máximo 30 caracteres")
-    .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guion bajo"),
-  phone: z.string().trim().min(9, "Mínimo 9 dígitos").max(15),
-  country: z.string().trim().min(1, "El país es requerido").max(100),
-  province: z.string().trim().min(1, "La provincia es requerida").max(100),
-  city: z.string().trim().min(1, "La ciudad es requerida").max(100),
-  confirmPassword: z.string().min(6),
-  acceptTerms: z.boolean().refine((val) => val === true, {
-    message: "Debes aceptar los términos",
-  }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Las contraseñas no coinciden",
-  path: ["confirmPassword"],
-});
+const signUpSchema = signInSchema
+  .extend({
+    firstName: z.string().trim().min(1, "El nombre es requerido").max(50),
+    lastName: z.string().trim().min(1, "El apellido es requerido").max(50),
+    username: z
+      .string()
+      .trim()
+      .min(3, "Mínimo 3 caracteres")
+      .max(30, "Máximo 30 caracteres")
+      .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guion bajo"),
+    phone: z.string().trim().min(9, "Mínimo 9 dígitos").max(15),
+    confirmPassword: z.string().min(6),
+    acceptTerms: z.boolean().refine((val) => val === true, {
+      message: "Debes aceptar los términos",
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
 
 type SignInFormValues = z.infer<typeof signInSchema>;
 type SignUpFormValues = z.infer<typeof signUpSchema>;
@@ -54,21 +56,27 @@ export default function Auth() {
     defaultValues: {
       email: "",
       password: "",
-      ...(isSignUp ? { firstName: "", lastName: "", username: "", phone: "", country: "España", province: "", city: "", confirmPassword: "", acceptTerms: false } : {}),
+      ...(isSignUp
+        ? { firstName: "", lastName: "", username: "", phone: "", confirmPassword: "", acceptTerms: false }
+        : {}),
     },
   });
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) {
         navigate("/mis-citas");
       }
     };
-    
+
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         navigate("/mis-citas");
       }
@@ -137,7 +145,7 @@ export default function Auth() {
     try {
       if (isSignUp) {
         const signUpValues = values as SignUpFormValues;
-        
+
         // Check if username is available
         const { data: existingUsername } = await supabase
           .from("profiles")
@@ -169,7 +177,7 @@ export default function Auth() {
           setLoading(false);
           return;
         }
-        
+
         const { data, error } = await supabase.auth.signUp({
           email: signUpValues.email,
           password: signUpValues.password,
@@ -179,11 +187,8 @@ export default function Auth() {
               full_name: `${signUpValues.firstName} ${signUpValues.lastName}`,
               username: signUpValues.username.toLowerCase(),
               phone: signUpValues.phone,
-              country: signUpValues.country,
-              province: signUpValues.province,
-              city: signUpValues.city,
-            }
-          }
+            },
+          },
         });
 
         if (error) throw error;
@@ -241,7 +246,7 @@ export default function Auth() {
       />
 
       {/* Header */}
-      <div 
+      <div
         className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
@@ -249,9 +254,7 @@ export default function Auth() {
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-semibold text-foreground">
-            {isSignUp ? "Crear cuenta" : "Iniciar sesión"}
-          </h1>
+          <h1 className="font-semibold text-foreground">{isSignUp ? "Crear cuenta" : "Iniciar sesión"}</h1>
         </div>
       </div>
 
@@ -259,13 +262,9 @@ export default function Auth() {
         <div className="max-w-md mx-auto">
           <Card className="ios-card">
             <CardHeader className="text-center pb-4">
-              <CardTitle className="text-xl">
-                {isSignUp ? "Crea tu cuenta" : "Bienvenido"}
-              </CardTitle>
+              <CardTitle className="text-xl">{isSignUp ? "Crea tu cuenta" : "Bienvenido"}</CardTitle>
               <CardDescription>
-                {isSignUp 
-                  ? "Regístrate para gestionar tus citas" 
-                  : "Accede a tu cuenta"}
+                {isSignUp ? "Regístrate para gestionar tus citas" : "Accede a tu cuenta"}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -281,12 +280,7 @@ export default function Auth() {
                             <FormItem>
                               <FormLabel>Nombre</FormLabel>
                               <FormControl>
-                                <Input 
-                                  placeholder="Nombre" 
-                                  {...field}
-                                  disabled={loading}
-                                  className="h-12 rounded-xl"
-                                />
+                                <Input placeholder="Nombre" {...field} disabled={loading} className="h-12 rounded-xl" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -299,8 +293,8 @@ export default function Auth() {
                             <FormItem>
                               <FormLabel>Apellido</FormLabel>
                               <FormControl>
-                                <Input 
-                                  placeholder="Apellido" 
+                                <Input
+                                  placeholder="Apellido"
                                   {...field}
                                   disabled={loading}
                                   className="h-12 rounded-xl"
@@ -320,9 +314,11 @@ export default function Auth() {
                             <FormLabel>Nombre de usuario</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
-                                <Input 
-                                  placeholder="tu_usuario" 
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                  @
+                                </span>
+                                <Input
+                                  placeholder="tu_usuario"
                                   {...field}
                                   disabled={loading}
                                   className="h-12 rounded-xl pl-8"
@@ -341,9 +337,9 @@ export default function Auth() {
                           <FormItem>
                             <FormLabel>Teléfono</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="tel" 
-                                placeholder="600 000 000" 
+                              <Input
+                                type="tel"
+                                placeholder="612345678"
                                 {...field}
                                 disabled={loading}
                                 className="h-12 rounded-xl"
@@ -352,19 +348,6 @@ export default function Auth() {
                             <FormMessage />
                           </FormItem>
                         )}
-                      />
-
-                      {/* Location Selector with Cascading Dropdowns */}
-                      <LocationSelector
-                        onCountryChange={(value) => form.setValue("country" as any, value)}
-                        onProvinceChange={(value) => form.setValue("province" as any, value)}
-                        onCityChange={(value) => form.setValue("city" as any, value)}
-                        defaultCountry="ES"
-                        errors={{
-                          country: (form.formState.errors as any).country?.message,
-                          province: (form.formState.errors as any).province?.message,
-                          city: (form.formState.errors as any).city?.message,
-                        }}
                       />
                     </>
                   )}
@@ -376,9 +359,9 @@ export default function Auth() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="email" 
-                            placeholder="tu@email.com" 
+                          <Input
+                            type="email"
+                            placeholder="tu@email.com"
                             {...field}
                             disabled={loading}
                             className="h-12 rounded-xl"
@@ -397,9 +380,9 @@ export default function Auth() {
                         <FormLabel>Contraseña</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input 
+                            <Input
                               type={showPassword ? "text" : "password"}
-                              placeholder="••••••" 
+                              placeholder="••••••"
                               {...field}
                               disabled={loading}
                               className="h-12 rounded-xl pr-10"
@@ -428,9 +411,9 @@ export default function Auth() {
                             <FormLabel>Confirmar contraseña</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <Input 
+                                <Input
                                   type={showConfirmPassword ? "text" : "password"}
-                                  placeholder="••••••" 
+                                  placeholder="••••••"
                                   {...field}
                                   disabled={loading}
                                   className="h-12 rounded-xl pr-10"
@@ -455,16 +438,10 @@ export default function Auth() {
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                             <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                disabled={loading}
-                              />
+                              <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={loading} />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel className="text-sm font-normal">
-                                Acepto los términos y condiciones
-                              </FormLabel>
+                              <FormLabel className="text-sm font-normal">Acepto los términos y condiciones</FormLabel>
                               <FormMessage />
                             </div>
                           </FormItem>
@@ -479,8 +456,10 @@ export default function Auth() {
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         {isSignUp ? "Creando cuenta..." : "Iniciando sesión..."}
                       </>
+                    ) : isSignUp ? (
+                      "Crear cuenta"
                     ) : (
-                      isSignUp ? "Crear cuenta" : "Iniciar sesión"
+                      "Iniciar sesión"
                     )}
                   </Button>
                 </form>
@@ -496,9 +475,7 @@ export default function Auth() {
                   className="text-sm text-primary hover:underline"
                   disabled={loading}
                 >
-                  {isSignUp 
-                    ? "¿Ya tienes cuenta? Inicia sesión" 
-                    : "¿No tienes cuenta? Regístrate"}
+                  {isSignUp ? "¿Ya tienes cuenta? Inicia sesión" : "¿No tienes cuenta? Regístrate"}
                 </button>
               </div>
             </CardContent>
