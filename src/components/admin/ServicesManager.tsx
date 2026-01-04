@@ -626,12 +626,38 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="service-category">Categoría</Label>
-                <Input
-                  id="service-category"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder="Ej: Corte, Color, Tratamientos..."
-                />
+                <div className="relative">
+                  <Input
+                    id="service-category"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="Escribe o selecciona..."
+                    list="category-options"
+                  />
+                  <datalist id="category-options">
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat} />
+                    ))}
+                  </datalist>
+                </div>
+                {categories.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {categories.slice(0, 4).map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, category: cat })}
+                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                          formData.category === cat
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted hover:bg-accent border-transparent"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               
               <div>
