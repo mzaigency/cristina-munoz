@@ -129,11 +129,12 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
         isScrolled ? "bg-background/95 backdrop-blur-sm border-b shadow-sm" : "bg-transparent border-transparent"
       }`}
       style={{
+        paddingTop: "env(safe-area-inset-top)",
         borderColor: isScrolled ? tenant.primary_color || "hsl(var(--border))" : "transparent",
       }}
     >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-14 md:h-16">
           {/* Home Button + Logo */}
           <div className="flex items-center gap-3">
             {/* Home button to go back to main app */}

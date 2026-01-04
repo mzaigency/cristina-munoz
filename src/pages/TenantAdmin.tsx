@@ -372,7 +372,10 @@ export default function TenantAdmin() {
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header - Mobile optimized with safe area */}
-      <header className="sticky top-0 z-50 bg-background border-b shadow-sm safe-area-top">
+      <header 
+        className="sticky top-0 z-50 bg-background border-b shadow-sm"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
         <div className="mx-auto max-w-7xl px-4 md:px-4">
           {/* Top row - Logo, title and actions */}
           <div className="flex items-center justify-between py-3 md:py-3 border-b border-border/50">
