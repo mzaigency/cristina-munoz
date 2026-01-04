@@ -20,7 +20,8 @@ import {
   ImageIcon, 
   Package,
   ChevronDown,
-  LayoutDashboard
+  LayoutDashboard,
+  UserCircle
 } from "lucide-react";
 import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
@@ -38,8 +39,10 @@ import { HelpTutorial } from "@/components/admin/HelpTutorial";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { QuickActionsFAB } from "@/components/admin/QuickActionsFAB";
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
+import { ClientsCRM } from "@/components/admin/ClientsCRM";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,7 +66,7 @@ interface Stylist {
   color: string;
 }
 
-type TabValue = "dashboard" | "calendar" | "cash" | "reviews" | "messages" | "stories" | "security" | "products" | "services" | "stylists" | "hours" | "subscription" | "settings";
+type TabValue = "dashboard" | "calendar" | "clients" | "cash" | "reviews" | "messages" | "stories" | "security" | "products" | "services" | "stylists" | "hours" | "subscription" | "settings";
 
 interface NavItem {
   value: TabValue;
@@ -92,6 +95,7 @@ export default function TenantAdmin() {
   const navItems: NavItem[] = [
     { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" />, group: "main" },
     { value: "calendar", label: "Agenda", icon: <Calendar className="h-4 w-4" />, group: "main" },
+    { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, group: "main" },
     { value: "cash", label: "Caja", icon: <Wallet className="h-4 w-4" />, group: "main" },
     { value: "reviews", label: "Reseñas", icon: <Star className="h-4 w-4" />, badge: pendingReviewsCount, group: "main" },
     { value: "messages", label: "Mensajes", icon: <MessageCircle className="h-4 w-4" />, badge: messagesUnreadCount, group: "main" },
@@ -103,6 +107,15 @@ export default function TenantAdmin() {
     { value: "hours", label: "Horarios", icon: <Clock className="h-4 w-4" />, group: "main" },
     { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" />, group: "main" },
   ];
+
+  const tabOrder = navItems.map(item => item.value);
+  
+  const { handlers: swipeHandlers } = useSwipeNavigation({
+    tabs: tabOrder,
+    currentTab: activeTab,
+    onTabChange: (tab) => setActiveTab(tab as TabValue),
+    enabled: isMobile
+  });
 
   const mainItems = navItems.filter(item => item.group === "main");
   const configItems = navItems.filter(item => item.group === "config");
@@ -355,6 +368,8 @@ export default function TenantAdmin() {
         );
       case "calendar":
         return <LocalCalendarCRM key={refreshKey} tenantId={tenant.id} stylists={stylists} />;
+      case "clients":
+        return <ClientsCRM key={refreshKey} tenantId={tenant.id} />;
       case "cash":
         return <CashRegisterManager key={refreshKey} tenantId={tenant.id} />;
       case "reviews":
@@ -532,10 +547,13 @@ export default function TenantAdmin() {
         </div>
       </header>
 
-      {/* Content with Pull to Refresh on mobile */}
+      {/* Content with Pull to Refresh on mobile + Swipe navigation */}
       {isMobile ? (
         <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
-          <main className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 safe-area-bottom pb-24">
+          <main 
+            className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 safe-area-bottom pb-24"
+            {...swipeHandlers}
+          >
             {renderContent()}
           </main>
         </PullToRefresh>
