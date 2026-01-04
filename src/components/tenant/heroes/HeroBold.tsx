@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowDown, Star, Calendar } from "lucide-react";
+import { Sparkles, ArrowDown, Star, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import glowappIcon from "@/assets/glowapp-icon.png";
+import { FollowButton } from "@/components/social/FollowButton";
+import { useFollows } from "@/hooks/useFollows";
 
 interface Tenant {
   id: string;
@@ -25,6 +27,14 @@ interface HeroBoldProps {
 
 export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
   const [stats, setStats] = useState({ rating: 0, since: new Date().getFullYear() });
+  const { useFollowerCount } = useFollows();
+  const { data: followerCount = 0 } = useFollowerCount(tenant.id);
+
+  const formatFollowers = (count: number) => {
+    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return count.toString();
+  };
   
   useEffect(() => {
     const fetchStats = async () => {
@@ -174,33 +184,44 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.7 }}
-            className="flex items-center gap-3 mb-8"
+            className="flex flex-wrap items-center justify-center gap-2 mb-8"
           >
+            {/* Followers */}
+            <div className="flex items-center gap-1.5 bg-white/25 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
+              <Users className="w-4 h-4 text-white/80" />
+              <span className="text-white font-bold">{formatFollowers(followerCount)}</span>
+            </div>
             {stats.rating > 0 && (
-              <div className="flex items-center gap-1.5 bg-white/25 backdrop-blur-md rounded-full px-5 py-2.5 shadow-lg">
-                <Star className="w-5 h-5 text-yellow-300 fill-yellow-300" />
+              <div className="flex items-center gap-1.5 bg-white/25 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
+                <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
                 <span className="text-white font-bold">{stats.rating}</span>
               </div>
             )}
-            <div className="flex items-center gap-1.5 bg-white/25 backdrop-blur-md rounded-full px-5 py-2.5 shadow-lg">
+            <div className="flex items-center gap-1.5 bg-white/25 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
               <img src={glowappIcon} alt="Glowapp" className="w-4 h-4 object-contain" />
-              <span className="text-white font-medium">En Glowapp desde {stats.since}</span>
+              <span className="text-white font-medium text-sm">Desde {stats.since}</span>
             </div>
           </motion.div>
 
-          {/* CTA Button - Big and Bold */}
+          {/* CTA Buttons - Stacked on mobile */}
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.8, type: "spring" }}
+            className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs"
           >
+            <FollowButton 
+              tenantId={tenant.id} 
+              variant="default" 
+              className="w-full sm:w-auto bg-white/20 backdrop-blur-md border-white/30 text-white hover:bg-white/30 rounded-xl px-6 py-5"
+            />
             <Button
               onClick={onBookNow}
               size="lg"
-              className="px-12 py-8 text-xl font-black bg-white text-foreground hover:bg-white/95 shadow-2xl rounded-2xl uppercase tracking-wide hover:scale-105 transition-transform"
+              className="w-full sm:w-auto px-8 py-5 text-lg font-bold bg-white text-foreground hover:bg-white/95 shadow-2xl rounded-xl uppercase tracking-wide hover:scale-105 transition-transform"
             >
-              <Sparkles className="w-6 h-6 mr-3" />
-              ¡Reservar Ahora!
+              <Sparkles className="w-5 h-5 mr-2" />
+              Reservar
             </Button>
           </motion.div>
         </div>
@@ -216,9 +237,8 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            <ArrowDown className="w-7 h-7 text-white/70" />
+            <ArrowDown className="w-6 h-6 text-white/70" />
           </motion.div>
-          <span className="text-sm text-white/70 mt-2 font-medium">Ver más</span>
         </motion.div>
       </motion.div>
     </div>

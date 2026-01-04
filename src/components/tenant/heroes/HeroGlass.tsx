@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Star, Sparkles, ArrowRight } from "lucide-react";
+import { Star, Sparkles, ArrowRight, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import glowappIcon from "@/assets/glowapp-icon.png";
+import { FollowButton } from "@/components/social/FollowButton";
+import { useFollows } from "@/hooks/useFollows";
 
 interface Tenant {
   id: string;
@@ -24,6 +26,14 @@ interface HeroGlassProps {
 
 export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
   const [stats, setStats] = useState({ rating: 0, since: new Date().getFullYear() });
+  const { useFollowerCount } = useFollows();
+  const { data: followerCount = 0 } = useFollowerCount(tenant.id);
+
+  const formatFollowers = (count: number) => {
+    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return count.toString();
+  };
   
   useEffect(() => {
     const fetchStats = async () => {
@@ -145,7 +155,12 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
             </p>
 
             {/* Stats in glass pills */}
-            <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+              {/* Followers */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
+                <Users className="w-3.5 h-3.5 text-white/80" />
+                <span className="text-xs font-medium text-white">{formatFollowers(followerCount)}</span>
+              </div>
               {stats.rating > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
                   <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
@@ -154,19 +169,26 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
               )}
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
                 <img src={glowappIcon} alt="Glowapp" className="w-3.5 h-3.5 object-contain" />
-                <span className="text-xs text-white/80">En Glowapp desde {stats.since}</span>
+                <span className="text-xs text-white/80">Desde {stats.since}</span>
               </div>
             </div>
 
-            {/* CTA Button */}
-            <Button
-              onClick={onBookNow}
-              size="lg"
-              className="w-full py-6 text-base font-semibold rounded-2xl bg-white text-gray-900 hover:bg-white/90 shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]"
-            >
-              Reservar cita
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            {/* CTA Buttons */}
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={onBookNow}
+                size="lg"
+                className="w-full py-5 text-base font-semibold rounded-2xl bg-white text-gray-900 hover:bg-white/90 shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]"
+              >
+                Reservar cita
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+              <FollowButton 
+                tenantId={tenant.id} 
+                variant="default" 
+                className="w-full bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 rounded-2xl py-5"
+              />
+            </div>
           </div>
         </motion.div>
 
