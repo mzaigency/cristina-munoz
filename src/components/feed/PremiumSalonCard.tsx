@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
-import { MapPin, Star, Heart, Clock, Sparkles, Zap, Navigation } from "lucide-react";
+import { MapPin, Star, Heart, Clock, Sparkles, Zap, Navigation, UserPlus, UserCheck } from "lucide-react";
 import { motion } from "motion/react";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useFollows } from "@/hooks/useFollows";
 import { cn } from "@/lib/utils";
+import { useHaptic } from "@/hooks/useHaptic";
 
 interface PremiumSalonCardProps {
   salon: {
@@ -25,7 +27,11 @@ interface PremiumSalonCardProps {
 
 export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday = false }: PremiumSalonCardProps) {
   const { isFavorite, toggleFavorite, isAuthenticated } = useFavorites();
+  const { isFollowing, toggleFollow, isLoading: followLoading } = useFollows();
+  const haptic = useHaptic();
+  
   const isFav = isFavorite(salon.id);
+  const following = isFollowing(salon.id);
   const primaryColor = salon.primary_color || "#6366f1";
   
   const initials = salon.name
@@ -42,6 +48,13 @@ export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday 
     e.preventDefault();
     e.stopPropagation();
     toggleFavorite(salon.id);
+  };
+
+  const handleFollowClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    haptic.medium();
+    toggleFollow(salon.id);
   };
 
   return (
@@ -210,15 +223,42 @@ export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday 
                 )}
               </div>
 
-              {/* Quick Book Button - Premium */}
-              <motion.div 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-bold"
-              >
-                <Clock className="h-3.5 w-3.5" />
-                Reservar
-              </motion.div>
+              <div className="flex items-center gap-2">
+                {/* Follow Button */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleFollowClick}
+                  disabled={followLoading}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold transition-all",
+                    following 
+                      ? "bg-primary/10 text-primary border border-primary/30" 
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  {following ? (
+                    <>
+                      <UserCheck className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Siguiendo</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Seguir</span>
+                    </>
+                  )}
+                </motion.button>
+
+                {/* Quick Book Button - Premium */}
+                <motion.div 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-bold"
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  Reservar
+                </motion.div>
+              </div>
             </div>
           </div>
         </div>
