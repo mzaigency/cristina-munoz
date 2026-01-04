@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import glowappLogo from "@/assets/glowapp-logo.png";
 
 const features = [
   {
@@ -118,22 +119,19 @@ export default function ForBusiness() {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="flex items-center justify-between"
             >
-              <Link to="/" className="flex items-center gap-2.5">
+              <Link to="/" className="flex items-center">
                 <motion.div
-                  initial={{ scale: 0.8, rotate: -10 }}
-                  animate={{ scale: 1, rotate: 0 }}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
                 >
-                  <img src="/favicon.png" alt="GlowApp" className="h-9 w-9 drop-shadow-lg" />
+                  <img src="/favicon.png" alt="GlowApp" className="h-8 w-8 drop-shadow-lg mr-1" />
                 </motion.div>
-                <div>
-                  <h1 className="text-2xl font-black tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-none">
-                    GlowApp
-                  </h1>
-                  <p className="text-[10px] text-muted-foreground/70 font-medium tracking-wide mt-0.5 hidden xs:block">
-                    Tu belleza, conectada
-                  </p>
-                </div>
+                <img 
+                  src={glowappLogo} 
+                  alt="GlowApp" 
+                  className="h-7 object-contain" 
+                />
               </Link>
               
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
