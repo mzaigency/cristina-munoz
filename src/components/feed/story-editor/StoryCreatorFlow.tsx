@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, Camera, ImagePlus, RotateCcw, Video, Square } from "lucide-react";
 import { MobileStoryEditor } from "./MobileStoryEditor";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { useHaptic } from "@/hooks/useHaptic";
 
 interface StoryCreatorFlowProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export function StoryCreatorFlow({
   const recordingTimerRef = useRef<number | null>(null);
 
   const { setNavigationHidden } = useNavigation();
+  const haptic = useHaptic();
 
   const MAX_RECORDING_TIME = 60; // 60 seconds max
 
@@ -197,8 +199,8 @@ export function StoryCreatorFlow({
     stopCamera();
     setStep("edit");
 
-    if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-  }, [cameraReady, facingMode, stopCamera]);
+    haptic.success();
+  }, [cameraReady, facingMode, stopCamera, haptic]);
 
   const startRecording = useCallback(() => {
     if (!streamRef.current || !cameraReady) return;
@@ -267,19 +269,19 @@ export function StoryCreatorFlow({
         });
       }, 1000);
 
-      if (navigator.vibrate) navigator.vibrate([50]);
+      haptic.medium();
     } catch (err) {
       console.error("Recording error:", err);
     }
-  }, [cameraReady, stopCamera]);
+  }, [cameraReady, stopCamera, haptic]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+      haptic.success();
     }
-  }, []);
+  }, [haptic]);
 
   const handleCaptureOrRecord = useCallback(() => {
     if (captureMode === "photo") {
@@ -295,8 +297,8 @@ export function StoryCreatorFlow({
 
   const switchCamera = useCallback(() => {
     setFacingMode(prev => (prev === "user" ? "environment" : "user"));
-    if (navigator.vibrate) navigator.vibrate(15);
-  }, []);
+    haptic.light();
+  }, [haptic]);
 
   const handleGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -308,14 +310,14 @@ export function StoryCreatorFlow({
         setVideoData(videoUrl);
         stopCamera();
         setStep("edit");
-        if (navigator.vibrate) navigator.vibrate([15, 30, 15]);
+        haptic.selection();
       } else {
         const reader = new FileReader();
         reader.onload = (ev) => {
           setImageData(ev.target?.result as string);
           stopCamera();
           setStep("edit");
-          if (navigator.vibrate) navigator.vibrate([15, 30, 15]);
+          haptic.selection();
         };
         reader.readAsDataURL(file);
       }

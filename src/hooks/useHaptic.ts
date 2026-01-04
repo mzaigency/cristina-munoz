@@ -1,4 +1,6 @@
 import { useCallback } from "react";
+import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
+import { Capacitor } from "@capacitor/core";
 
 type HapticPattern = "light" | "medium" | "heavy" | "success" | "warning" | "error" | "selection";
 
@@ -18,17 +20,52 @@ const HAPTIC_PATTERNS: Record<HapticPattern, number[]> = {
 };
 
 export function useHaptic() {
-  const vibrate = useCallback((options: HapticOptions = {}) => {
-    const { pattern = "selection", duration } = options;
+  const isNative = Capacitor.isNativePlatform();
 
-    // Check if vibration API is supported
-    if (!navigator.vibrate) {
-      return false;
-    }
+  const vibrate = useCallback(async (options: HapticOptions = {}) => {
+    const { pattern = "selection", duration } = options;
 
     // Check user preferences for reduced motion
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
+      return false;
+    }
+
+    // Use native haptics on iOS/Android
+    if (isNative) {
+      try {
+        switch (pattern) {
+          case "light":
+            await Haptics.impact({ style: ImpactStyle.Light });
+            break;
+          case "medium":
+            await Haptics.impact({ style: ImpactStyle.Medium });
+            break;
+          case "heavy":
+            await Haptics.impact({ style: ImpactStyle.Heavy });
+            break;
+          case "success":
+            await Haptics.notification({ type: NotificationType.Success });
+            break;
+          case "warning":
+            await Haptics.notification({ type: NotificationType.Warning });
+            break;
+          case "error":
+            await Haptics.notification({ type: NotificationType.Error });
+            break;
+          case "selection":
+            await Haptics.selectionStart();
+            await Haptics.selectionEnd();
+            break;
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    // Fallback to web vibration API
+    if (!navigator.vibrate) {
       return false;
     }
 
@@ -42,7 +79,7 @@ export function useHaptic() {
     } catch {
       return false;
     }
-  }, []);
+  }, [isNative]);
 
   const light = useCallback(() => vibrate({ pattern: "light" }), [vibrate]);
   const medium = useCallback(() => vibrate({ pattern: "medium" }), [vibrate]);
