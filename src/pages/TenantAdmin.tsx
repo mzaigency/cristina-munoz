@@ -31,6 +31,7 @@ import { ServicesManager } from "@/components/admin/ServicesManager";
 import { StylistsManager } from "@/components/admin/StylistsManager";
 import { BusinessHoursManager } from "@/components/admin/BusinessHoursManager";
 import { StoriesAnalytics } from "@/components/admin/StoriesAnalytics";
+import { WidgetResponsesViewer } from "@/components/admin/WidgetResponsesViewer";
 import { ProductsManager } from "@/components/admin/ProductsManager";
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
@@ -329,7 +330,12 @@ export default function TenantAdmin() {
       case "messages":
         return <MessagesManager key={refreshKey} tenantId={tenant.id} />;
       case "stories":
-        return <StoriesAnalytics key={refreshKey} tenantId={tenant.id} />;
+        return (
+          <div className="space-y-8">
+            <StoriesAnalytics key={refreshKey} tenantId={tenant.id} />
+            <WidgetResponsesViewer tenantId={tenant.id} />
+          </div>
+        );
       case "security":
         return <SecurityMonitor key={refreshKey} tenantId={tenant.id} />;
       case "products":
