@@ -10,14 +10,14 @@ interface SEOProps {
 }
 
 export const SEO = ({
-  title = "GlowApp - La Red Social de Belleza y Bienestar",
-  description = "Descubre los mejores salones de belleza, conecta con estilistas profesionales y reserva citas al instante. GlowApp es tu red social de belleza y bienestar.",
-  keywords = "salones de belleza, peluquería, estética, reservas online, belleza, bienestar, estilistas, tratamientos, manicura, spa",
-  ogImage = "https://glowapp.app/og-image.png",
+  title = "GlowApp",
+  description = "La red social de belleza y bienestar. Conecta con los mejores salones, descubre tendencias y reserva citas al instante.",
+  keywords = "red social belleza, salones de belleza, reservas online, peluquería, estética, bienestar, tendencias belleza, GlowUp, GlowApp",
+  ogImage = "https://lovable.dev/opengraph-image-p98pqg.png",
   canonicalUrl,
   noindex = false,
 }: SEOProps) => {
-  const baseUrl = "https://glowapp.app";
+  const baseUrl = "https://glowapp.lovable.app";
   const fullCanonicalUrl = canonicalUrl ? `${baseUrl}${canonicalUrl}` : baseUrl;
 
   return (
@@ -35,12 +35,9 @@ export const SEO = ({
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImage} />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
       <meta property="og:url" content={fullCanonicalUrl} />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="GlowApp" />
-      <meta property="og:locale" content="es_ES" />
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
