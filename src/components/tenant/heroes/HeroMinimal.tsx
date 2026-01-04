@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import glowappIcon from "@/assets/glowapp-icon.png";
 
 interface Tenant {
   id: string;
@@ -123,7 +124,10 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
               </div>
             )}
             <span className="text-border/60">·</span>
-            <span>En Glowapp desde {stats.since}</span>
+            <div className="flex items-center gap-1">
+              <img src={glowappIcon} alt="Glowapp" className="w-3.5 h-3.5 object-contain" />
+              <span>En Glowapp desde {stats.since}</span>
+            </div>
           </motion.div>
 
           {/* CTA Button */}

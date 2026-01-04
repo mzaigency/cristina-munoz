@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import glowappIcon from "@/assets/glowapp-icon.png";
 
 interface Tenant {
   id: string;
@@ -194,20 +195,27 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
             className="mt-12 pt-8 border-t border-border"
           >
             <div className="grid grid-cols-2 gap-8">
-              {[
-                { value: stats.rating > 0 ? `${stats.rating}★` : "—", label: "Valoración" },
-                { value: stats.since.toString(), label: "En Glowapp desde" }
-              ].map((stat, idx) => (
-                <div key={idx} className="text-center">
-                  <p 
-                    className="text-2xl font-bold"
-                    style={{ color: tenant.primary_color || 'hsl(var(--primary))' }}
-                  >
-                    {stat.value}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                </div>
-              ))}
+              <div className="text-center">
+                <p 
+                  className="text-2xl font-bold"
+                  style={{ color: tenant.primary_color || 'hsl(var(--primary))' }}
+                >
+                  {stats.rating > 0 ? `${stats.rating}★` : "—"}
+                </p>
+                <p className="text-xs text-muted-foreground">Valoración</p>
+              </div>
+              <div className="text-center">
+                <p 
+                  className="text-2xl font-bold"
+                  style={{ color: tenant.primary_color || 'hsl(var(--primary))' }}
+                >
+                  {stats.since}
+                </p>
+                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  <img src={glowappIcon} alt="Glowapp" className="w-3 h-3 object-contain" />
+                  En Glowapp desde
+                </p>
+              </div>
             </div>
           </motion.div>
         </div>

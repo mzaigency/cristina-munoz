@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import glowappIcon from "@/assets/glowapp-icon.png";
 
 interface Tenant {
   id: string;
@@ -135,7 +136,8 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
               <span className="text-white font-medium text-sm">{stats.rating}</span>
             </div>
           )}
-          <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
+          <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
+            <img src={glowappIcon} alt="Glowapp" className="w-4 h-4 object-contain" />
             <span className="text-white/90 text-sm">En Glowapp desde {stats.since}</span>
           </div>
         </motion.div>
