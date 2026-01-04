@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
+import { LocationSelector } from "@/components/auth/LocationSelector";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
@@ -353,64 +354,18 @@ export default function Auth() {
                         )}
                       />
 
-                      {/* Location fields */}
-                      <FormField
-                        control={form.control}
-                        name="country"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>País</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="España" 
-                                {...field}
-                                disabled={loading}
-                                className="h-12 rounded-xl"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                      {/* Location Selector with Cascading Dropdowns */}
+                      <LocationSelector
+                        onCountryChange={(value) => form.setValue("country" as any, value)}
+                        onProvinceChange={(value) => form.setValue("province" as any, value)}
+                        onCityChange={(value) => form.setValue("city" as any, value)}
+                        defaultCountry="ES"
+                        errors={{
+                          country: (form.formState.errors as any).country?.message,
+                          province: (form.formState.errors as any).province?.message,
+                          city: (form.formState.errors as any).city?.message,
+                        }}
                       />
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <FormField
-                          control={form.control}
-                          name="province"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Provincia</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Barcelona" 
-                                  {...field}
-                                  disabled={loading}
-                                  className="h-12 rounded-xl"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="city"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Ciudad</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Santpedor" 
-                                  {...field}
-                                  disabled={loading}
-                                  className="h-12 rounded-xl"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
                     </>
                   )}
 
