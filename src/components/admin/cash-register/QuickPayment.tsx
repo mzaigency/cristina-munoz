@@ -667,7 +667,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:h-[calc(100vh-320px)] lg:min-h-[500px]">
+    <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:min-h-[calc(100vh-220px)] lg:items-stretch">
       {/* Left: Items Grid */}
       <div className="flex-1 flex flex-col min-h-0 lg:min-w-0">
         {/* Category Pills */}
@@ -730,9 +730,9 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       </div>
 
       {/* Right: Cart & Payment */}
-      <div className="w-full lg:w-80 lg:shrink-0 flex flex-col bg-background rounded-xl sm:rounded-2xl border shadow-sm lg:overflow-hidden">
+      <div className="w-full lg:w-[420px] xl:w-[480px] 2xl:w-[520px] lg:shrink-0 lg:h-full lg:min-h-0 flex flex-col bg-background rounded-xl sm:rounded-2xl border shadow-sm lg:overflow-hidden">
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 min-h-0 max-h-[180px] sm:max-h-[250px] lg:max-h-none lg:flex-1 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 lg:p-3 space-y-1.5 sm:space-y-2 min-h-0 max-h-[180px] sm:max-h-[250px] lg:max-h-none lg:flex-1 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
           <AnimatePresence>
             {selectedItems.map((item) => (
               <motion.div
@@ -857,7 +857,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         )}
 
         {/* Totals */}
-        <div className="p-2.5 sm:p-4 border-t bg-muted/30 space-y-0.5 sm:space-y-1">
+        <div className="p-2.5 sm:p-4 lg:p-3 border-t bg-muted/30 space-y-0.5 sm:space-y-1">
           {discountAmount > 0 && (
             <div className="flex justify-between text-xs sm:text-sm text-orange-600">
               <span>Descuento</span>
@@ -877,7 +877,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         </div>
 
         {/* Payment Methods */}
-        <div className="p-2.5 sm:p-4 border-t space-y-2 sm:space-y-3">
+        <div className="p-2.5 sm:p-4 lg:p-3 border-t space-y-2 sm:space-y-3 lg:space-y-2">
           <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
             {[
               { value: "cash" as const, icon: Banknote, label: "Efectivo" },
@@ -887,7 +887,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
               <Button
                 key={value}
                 variant={paymentMethod === value ? "default" : "outline"}
-                className="h-10 sm:h-12 flex-col gap-0.5"
+                className="h-10 sm:h-12 lg:h-11 flex-col gap-0.5"
                 onClick={() => setPaymentMethod(value)}
               >
                 {Icon ? (
@@ -912,7 +912,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   value={cashAmount}
                   onChange={(e) => setCashAmount(e.target.value)}
                   placeholder="0"
-                  className="text-center h-8 sm:h-10"
+                  className="text-center h-8 sm:h-10 lg:h-9"
                 />
               </div>
               <div>
@@ -922,7 +922,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   value={cardAmount}
                   onChange={(e) => setCardAmount(e.target.value)}
                   placeholder="0"
-                  className="text-center h-8 sm:h-10"
+                  className="text-center h-8 sm:h-10 lg:h-9"
                 />
               </div>
             </div>
@@ -936,7 +936,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                 value={cashGiven}
                 onChange={(e) => setCashGiven(e.target.value)}
                 placeholder="0"
-                className="text-center text-base sm:text-lg font-bold h-9 sm:h-10"
+                className="text-center text-base sm:text-lg font-bold h-9 sm:h-10 lg:h-9"
               />
               {getChange() > 0 && (
                 <p className="text-center text-base sm:text-lg font-bold text-green-600 mt-1">
@@ -947,7 +947,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           )}
 
           {/* ESTILISTA SELECTION */}
-          <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t">
+          <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 lg:pt-1 border-t">
             <Label className="text-[10px] sm:text-xs text-muted-foreground">Atendido por:</Label>
             <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               {stylists.map((stylist) => (
@@ -955,11 +955,11 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   key={stylist.id}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedStylistId(stylist.id)}
-                  className={`h-8 sm:h-10 text-[10px] sm:text-xs font-medium rounded-md flex items-center justify-center gap-1.5 sm:gap-2 transition-all border ${
-                    selectedStylistId === stylist.id
-                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                      : "bg-background hover:bg-muted border-input"
-                  }`}
+                    className={`h-8 sm:h-10 lg:h-9 text-[10px] sm:text-xs font-medium rounded-md flex items-center justify-center gap-1.5 sm:gap-2 transition-all border ${
+                      selectedStylistId === stylist.id
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        : "bg-background hover:bg-muted border-input"
+                    }`}
                 >
                   <div
                     className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0"
@@ -979,7 +979,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
               !selectedStylistId ||
               (wantsInvoice && (!invoiceData.fiscalName || !invoiceData.nif))
             }
-            className="w-full h-11 sm:h-14 text-sm sm:text-lg font-bold gap-2"
+            className="w-full h-11 sm:h-14 lg:h-12 text-sm sm:text-lg lg:text-base font-bold gap-2"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
