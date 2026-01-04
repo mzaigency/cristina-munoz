@@ -189,9 +189,11 @@ export type Database = {
           favorite_stylist_id: string | null
           id: string
           last_visit_at: string | null
+          loyalty_points: number | null
           name: string
           notes: string | null
           phone: string | null
+          preferred_services: string[] | null
           tags: string[] | null
           tenant_id: string
           total_spent: number | null
@@ -204,9 +206,11 @@ export type Database = {
           favorite_stylist_id?: string | null
           id?: string
           last_visit_at?: string | null
+          loyalty_points?: number | null
           name: string
           notes?: string | null
           phone?: string | null
+          preferred_services?: string[] | null
           tags?: string[] | null
           tenant_id: string
           total_spent?: number | null
@@ -219,9 +223,11 @@ export type Database = {
           favorite_stylist_id?: string | null
           id?: string
           last_visit_at?: string | null
+          loyalty_points?: number | null
           name?: string
           notes?: string | null
           phone?: string | null
+          preferred_services?: string[] | null
           tags?: string[] | null
           tenant_id?: string
           total_spent?: number | null
@@ -510,6 +516,50 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions_decrypted"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_goals: {
+        Row: {
+          bookings_goal: number | null
+          created_at: string | null
+          id: string
+          month: number
+          new_clients_goal: number | null
+          revenue_goal: number | null
+          tenant_id: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          bookings_goal?: number | null
+          created_at?: string | null
+          id?: string
+          month: number
+          new_clients_goal?: number | null
+          revenue_goal?: number | null
+          tenant_id: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          bookings_goal?: number | null
+          created_at?: string | null
+          id?: string
+          month?: number
+          new_clients_goal?: number | null
+          revenue_goal?: number | null
+          tenant_id?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_goals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -821,6 +871,71 @@ export type Database = {
         }
         Relationships: []
       }
+      promotions: {
+        Row: {
+          applies_to: string | null
+          code: string | null
+          created_at: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          loyalty_points_required: number | null
+          max_uses: number | null
+          min_purchase: number | null
+          name: string
+          tenant_id: string
+          updated_at: string | null
+          uses_count: number | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          applies_to?: string | null
+          code?: string | null
+          created_at?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          loyalty_points_required?: number | null
+          max_uses?: number | null
+          min_purchase?: number | null
+          name: string
+          tenant_id: string
+          updated_at?: string | null
+          uses_count?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          applies_to?: string | null
+          code?: string | null
+          created_at?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          loyalty_points_required?: number | null
+          max_uses?: number | null
+          min_purchase?: number | null
+          name?: string
+          tenant_id?: string
+          updated_at?: string | null
+          uses_count?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_tokens: {
         Row: {
           created_at: string | null
@@ -932,6 +1047,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "salon_stories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_packages: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          discount_percentage: number | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          original_total: number
+          package_price: number
+          services: Json
+          tenant_id: string
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          original_total?: number
+          package_price?: number
+          services?: Json
+          tenant_id: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          original_total?: number
+          package_price?: number
+          services?: Json
+          tenant_id?: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_packages_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -1150,7 +1324,9 @@ export type Database = {
       }
       stylist_commissions: {
         Row: {
+          commission_fixed: number | null
           commission_percentage: number | null
+          commission_type: string | null
           created_at: string | null
           effective_from: string | null
           id: string
@@ -1159,7 +1335,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          commission_fixed?: number | null
           commission_percentage?: number | null
+          commission_type?: string | null
           created_at?: string | null
           effective_from?: string | null
           id?: string
@@ -1168,7 +1346,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          commission_fixed?: number | null
           commission_percentage?: number | null
+          commission_type?: string | null
           created_at?: string | null
           effective_from?: string | null
           id?: string
@@ -1767,6 +1947,78 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      waitlist: {
+        Row: {
+          client_email: string | null
+          client_name: string
+          client_phone: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          notified_at: string | null
+          preferred_date: string | null
+          preferred_stylist_id: string | null
+          preferred_time_end: string | null
+          preferred_time_start: string | null
+          priority: number | null
+          services: Json | null
+          status: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          client_email?: string | null
+          client_name: string
+          client_phone: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          preferred_date?: string | null
+          preferred_stylist_id?: string | null
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          priority?: number | null
+          services?: Json | null
+          status?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          preferred_date?: string | null
+          preferred_stylist_id?: string | null
+          preferred_time_end?: string | null
+          preferred_time_start?: string | null
+          priority?: number | null
+          services?: Json | null
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_preferred_stylist_id_fkey"
+            columns: ["preferred_stylist_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_stylists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_contacts: {
         Row: {
