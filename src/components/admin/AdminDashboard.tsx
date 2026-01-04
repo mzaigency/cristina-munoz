@@ -233,8 +233,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
         </div>
         <div>
           <h2 className="text-lg font-semibold text-foreground">
-            Buenos {new Date().getHours() < 14 ? "días"}
-            Buenas {new Date().getHours() < 20 ? "tardes" : "noches"}
+            {new Date().getHours() < 14 ? "Buenos días" : new Date().getHours() < 20 ? "Buenas tardes" : "Buenas noches"}
           </h2>
           <p className="text-sm text-muted-foreground">
             {format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}
