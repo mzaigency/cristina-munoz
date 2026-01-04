@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -7,7 +6,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,54 +20,82 @@ serve(async (req) => {
       );
     }
 
-    // Use Lovable AI to process the query
-    const response = await fetch('https://lovable.ai/api/ai', {
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      console.error('LOVABLE_API_KEY not configured');
+      // Fallback when no API key
+      return new Response(
+        JSON.stringify({
+          suggestion: query.toLowerCase().trim(),
+          explanation: "Búsqueda preparada."
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('LOVABLE_AI_KEY') || ''}`,
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
           {
             role: 'system',
-            content: `Eres un asistente de búsqueda para GlowApp, una aplicación de reservas de belleza.
-            
-Tu tarea es:
-1. Entender lo que el usuario busca
-2. Generar una búsqueda optimizada que encuentre los mejores salones/servicios
-3. Dar una breve explicación de por qué sugieres esa búsqueda
+            content: `Eres un asistente de búsqueda para GlowApp, una app de reservas de belleza en España.
 
-Responde SIEMPRE en formato JSON con esta estructura:
+Tu tarea es optimizar las búsquedas de usuarios para encontrar los mejores salones y servicios.
+
+IMPORTANTE:
+- Extrae palabras clave relevantes: servicio, ubicación, tipo de salón
+- Si mencionan una ciudad/zona, inclúyela en la búsqueda
+- Si buscan algo específico (balayage, mechas, keratina, etc), enfócate en eso
+- Mantén la búsqueda concisa pero completa
+
+Responde SOLO en JSON:
 {
-  "suggestion": "texto de búsqueda optimizado",
-  "explanation": "breve explicación (máx 50 palabras)"
+  "suggestion": "búsqueda optimizada para filtrar salones",
+  "explanation": "explicación breve de qué buscarás (máx 30 palabras)"
 }
 
 Ejemplos:
-- "quiero cortarme el pelo" → {"suggestion": "corte de pelo", "explanation": "Buscaré salones que ofrezcan servicios de corte de pelo con buenas valoraciones."}
-- "necesito algo para mi boda" → {"suggestion": "peinado novia maquillaje", "explanation": "Te mostraré salones especializados en servicios nupciales."}
-- "tengo el pelo muy dañado" → {"suggestion": "tratamiento capilar reparación", "explanation": "Encontraré salones con tratamientos de hidratación y reparación profunda."}
-
-IMPORTANTE: Solo responde con el JSON, sin texto adicional.`
+- "mejores balayage en manresa" → {"suggestion": "balayage manresa", "explanation": "Busco salones en Manresa especializados en técnica balayage."}
+- "peluqueria barata barcelona" → {"suggestion": "peluquería económica barcelona", "explanation": "Salones con buenos precios en Barcelona."}
+- "quiero cortarme el pelo" → {"suggestion": "corte de pelo", "explanation": "Salones que ofrecen servicios de corte."}
+- "tratamiento para pelo seco" → {"suggestion": "tratamiento hidratación capilar", "explanation": "Salones con tratamientos de hidratación y reparación."}`
           },
           {
             role: 'user',
             content: query
           }
         ],
-        max_tokens: 200,
       }),
     });
 
     if (!response.ok) {
-      // Fallback if Lovable AI is not available
-      console.error('Lovable AI error, using fallback');
+      const errorStatus = response.status;
+      console.error('AI gateway error:', errorStatus);
+      
+      if (errorStatus === 429) {
+        return new Response(
+          JSON.stringify({ error: "Demasiadas búsquedas. Espera un momento." }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (errorStatus === 402) {
+        return new Response(
+          JSON.stringify({ error: "Límite de uso alcanzado." }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Fallback
       return new Response(
         JSON.stringify({
-          suggestion: query.toLowerCase().replace(/[^\w\sáéíóúüñ]/gi, '').trim(),
-          explanation: "He preparado tu búsqueda para encontrar los mejores resultados."
+          suggestion: query.toLowerCase().trim(),
+          explanation: "Búsqueda lista."
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -78,15 +104,16 @@ IMPORTANTE: Solo responde con el JSON, sin texto adicional.`
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || '';
     
-    // Parse the AI response
+    // Parse AI response
     let parsed;
     try {
-      parsed = JSON.parse(content);
+      // Clean potential markdown formatting
+      const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      parsed = JSON.parse(cleanContent);
     } catch {
-      // If parsing fails, use the content as suggestion
       parsed = {
-        suggestion: query,
-        explanation: content || "Búsqueda lista."
+        suggestion: query.toLowerCase().trim(),
+        explanation: "Búsqueda preparada."
       };
     }
 
@@ -98,11 +125,10 @@ IMPORTANTE: Solo responde con el JSON, sin texto adicional.`
   } catch (error) {
     console.error('Error in ai-search-assistant:', error);
     
-    // Fallback response
     return new Response(
       JSON.stringify({
         suggestion: '',
-        explanation: 'No se pudo procesar la búsqueda. Inténtalo de nuevo.'
+        explanation: 'Error al procesar. Inténtalo de nuevo.'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
