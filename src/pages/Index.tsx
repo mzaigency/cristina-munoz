@@ -171,11 +171,23 @@ const Index = () => {
 
       const matchesFavorites = !showFavoritesOnly || favorites.includes(salon.id);
       
-      // Filter by business type category
-      const matchesCategory = !selectedCategory || salon.features?.business_type === selectedCategory;
+      // Filter by business type category (excluding quick filters)
+      const isQuickFilter = selectedCategory === "huecos" || selectedCategory === "popular";
+      const matchesCategory = !selectedCategory || isQuickFilter || salon.features?.business_type === selectedCategory;
 
       return matchesSearch && matchesFavorites && matchesCategory;
     });
+
+    // Apply quick filter sorting
+    if (selectedCategory === "popular") {
+      // Sort by rating (highest first)
+      result = [...result].sort((a, b) => {
+        const ratingA = a.avgRating ?? 0;
+        const ratingB = b.avgRating ?? 0;
+        if (ratingB !== ratingA) return ratingB - ratingA;
+        return b.reviewCount - a.reviewCount;
+      });
+    }
 
     // Sort by distance if enabled
     if (sortByDistance && hasLocation) {
