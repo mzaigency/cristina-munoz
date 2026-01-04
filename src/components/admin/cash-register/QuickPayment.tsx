@@ -749,7 +749,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 min-h-0 max-h-[150px] sm:max-h-[200px] lg:max-h-none lg:flex-1">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 min-h-0 max-h-[150px] sm:max-h-[200px] lg:max-h-none lg:flex-1 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
           <AnimatePresence>
             {selectedItems.map((item) => (
               <motion.div
