@@ -107,12 +107,15 @@ export default function ForBusiness() {
         canonicalUrl="/para-negocios"
       />
 
-      {/* Header - Mobile optimized */}
+      {/* Header - Mobile optimized with iPhone safe area */}
       <div className="sticky top-0 z-50">
-        <div className="relative bg-gradient-to-b from-background via-background/98 to-background/90 backdrop-blur-3xl">
+        <div 
+          className="relative bg-gradient-to-b from-background via-background/98 to-background/90 backdrop-blur-3xl"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
           
-          <div className="px-4 pt-3 pb-4 safe-area-top">
+          <div className="px-4 pt-3 pb-4">
             <motion.div
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
