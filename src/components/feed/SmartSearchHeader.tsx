@@ -70,51 +70,51 @@ export function SmartSearchHeader({
         {/* Subtle gradient accent at top */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
         
-        <div className="px-5 pt-4 pb-5 safe-area-top">
-          {/* Logo/Title Row - More prominent */}
+        <div className="px-4 pt-3 pb-4 safe-area-top">
+          {/* Logo/Title Row - Mobile optimized */}
           <motion.div
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="flex items-center justify-between mb-5"
+            className="flex items-center justify-between mb-4"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <motion.div
                 initial={{ scale: 0.8, rotate: -10 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
               >
-                <img src="/favicon.png" alt="GlowApp" className="h-10 w-10 drop-shadow-lg" />
+                <img src="/favicon.png" alt="GlowApp" className="h-9 w-9 drop-shadow-lg" />
               </motion.div>
               <div>
-                <h1 className="text-[28px] font-black tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-none">
+                <h1 className="text-2xl font-black tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent leading-none">
                   GlowApp
                 </h1>
-                <p className="text-[11px] text-muted-foreground/70 font-medium tracking-wide mt-0.5">
+                <p className="text-[10px] text-muted-foreground/70 font-medium tracking-wide mt-0.5 hidden xs:block">
                   Tu belleza, conectada
                 </p>
               </div>
             </div>
             
-            {/* Admin buttons - more subtle, grouped */}
-            <div className="flex items-center gap-1">
+            {/* Admin buttons - compact for mobile */}
+            <div className="flex items-center gap-0.5">
               {userTenant && (
-                <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
+                <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10">
                   <Link to={`/admin/${userTenant.slug}`}>
-                    <Shield className="h-[18px] w-[18px]" />
+                    <Shield className="h-4 w-4" />
                   </Link>
                 </Button>
               )}
               {isSuperadmin && (
                 <>
-                  <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-amber-500 hover:bg-amber-500/10">
+                  <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-amber-500 hover:bg-amber-500/10">
                     <Link to="/superadmin">
-                      <Crown className="h-[18px] w-[18px]" />
+                      <Crown className="h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-accent hover:bg-accent/10">
+                  <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-accent hover:bg-accent/10">
                     <Link to="/onboarding/setup?demo=true">
-                      <Wand2 className="h-[18px] w-[18px]" />
+                      <Wand2 className="h-4 w-4" />
                     </Link>
                   </Button>
                 </>
@@ -122,11 +122,12 @@ export function SmartSearchHeader({
               <Button 
                 asChild 
                 size="sm" 
-                className="h-9 px-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs border border-primary/20"
+                className="h-8 px-2.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-bold text-[11px] border border-primary/20"
               >
-                <Link to="/para-negocios" className="flex items-center gap-1.5">
+                <Link to="/para-negocios" className="flex items-center gap-1">
                   <Building2 className="h-3.5 w-3.5" />
-                  <span>Para negocios</span>
+                  <span className="hidden sm:inline">Para negocios</span>
+                  <span className="sm:hidden">Negocios</span>
                 </Link>
               </Button>
             </div>
