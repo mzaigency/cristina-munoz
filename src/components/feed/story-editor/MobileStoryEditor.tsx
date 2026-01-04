@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Send } from "lucide-react";
+import { Send, Play, Pause } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,8 @@ import { publishStory, downloadStoryImage } from "./storyPublisher";
 interface MobileStoryEditorProps {
   isOpen: boolean;
   onClose: () => void;
-  imageData: string;
+  imageData?: string;
+  videoData?: string;
   tenantId: string;
   onSuccess: () => void;
 }
@@ -26,15 +27,20 @@ export function MobileStoryEditor({
   isOpen,
   onClose,
   imageData,
+  videoData,
   tenantId,
   onSuccess,
 }: MobileStoryEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pipInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   // Overlays state
   const [overlays, setOverlays] = useState<OverlayItem[]>([]);
   const [drawingDataUrl, setDrawingDataUrl] = useState<string | null>(null);
+  
+  // Video state
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   
   // Tools state
   const [showTextEditor, setShowTextEditor] = useState(false);
@@ -50,6 +56,19 @@ export function MobileStoryEditor({
     setOverlays,
     (id) => toast.success("Eliminado")
   );
+
+  const isVideoMode = !!videoData;
+
+  const toggleVideoPlayback = useCallback(() => {
+    if (videoRef.current) {
+      if (isVideoPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsVideoPlaying(!isVideoPlaying);
+    }
+  }, [isVideoPlaying]);
 
   const handleAddText = useCallback((text: string, config: TextConfig) => {
     const newItem: OverlayItem = {
@@ -129,11 +148,33 @@ export function MobileStoryEditor({
     if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
   }, []);
 
+  // Capture video frame for thumbnail/processing
+  const captureVideoFrame = useCallback((): string | null => {
+    if (!videoRef.current) return null;
+    
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1080;
+    canvas.height = video.videoHeight || 1920;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.95);
+  }, []);
+
   const handleDownload = useCallback(async () => {
     setIsDownloading(true);
     try {
+      const baseImage = isVideoMode ? captureVideoFrame() : imageData;
+      if (!baseImage) {
+        toast.error("No se pudo capturar la imagen");
+        return;
+      }
+      
       await downloadStoryImage({
-        imageData,
+        imageData: baseImage,
         overlays,
         drawingDataUrl,
       }, `historia-${Date.now()}.jpg`);
@@ -146,18 +187,27 @@ export function MobileStoryEditor({
     } finally {
       setIsDownloading(false);
     }
-  }, [imageData, overlays, drawingDataUrl]);
+  }, [imageData, isVideoMode, captureVideoFrame, overlays, drawingDataUrl]);
 
   const handlePublish = useCallback(async () => {
     setIsPublishing(true);
     if (navigator.vibrate) navigator.vibrate([20, 50, 20]);
     
     try {
+      // For video mode, capture current frame as thumbnail
+      const baseImage = isVideoMode ? captureVideoFrame() : imageData;
+      if (!baseImage) {
+        toast.error("No se pudo procesar la historia");
+        return;
+      }
+      
       const { storyId, imageUrl } = await publishStory({
-        imageData,
+        imageData: baseImage,
         overlays,
         drawingDataUrl,
         tenantId,
+        // TODO: Add video upload support when backend is ready
+        // videoData: isVideoMode ? videoData : undefined,
       });
       
       console.log("Story published:", storyId, imageUrl);
@@ -170,7 +220,7 @@ export function MobileStoryEditor({
     } finally {
       setIsPublishing(false);
     }
-  }, [imageData, overlays, drawingDataUrl, tenantId, onSuccess, onClose]);
+  }, [imageData, isVideoMode, captureVideoFrame, overlays, drawingDataUrl, tenantId, onSuccess, onClose]);
 
   const getTextStyle = (item: OverlayItem): React.CSSProperties => {
     const base: React.CSSProperties = {
@@ -225,17 +275,49 @@ export function MobileStoryEditor({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Background image - full screen */}
+        {/* Background image or video - full screen */}
         <div 
           ref={containerRef}
           className="absolute inset-0"
         >
-          <img
-            src={imageData}
-            alt="Story"
-            className="w-full h-full object-cover"
-            draggable={false}
-          />
+          {isVideoMode ? (
+            <>
+              <video
+                ref={videoRef}
+                src={videoData}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              {/* Video play/pause overlay */}
+              <button
+                onClick={toggleVideoPlayback}
+                className="absolute inset-0 flex items-center justify-center z-5"
+              >
+                <AnimatePresence>
+                  {!isVideoPlaying && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center"
+                    >
+                      <Play size={32} className="text-white ml-1" fill="white" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </button>
+            </>
+          ) : (
+            <img
+              src={imageData}
+              alt="Story"
+              className="w-full h-full object-cover"
+              draggable={false}
+            />
+          )}
           
           {/* Drawing overlay */}
           {drawingDataUrl && (
@@ -333,6 +415,16 @@ export function MobileStoryEditor({
           intensity={gestureState.trashIntensity}
         />
 
+        {/* Video mode indicator */}
+        {isVideoMode && !showTextEditor && !showDrawingCanvas && (
+          <div className="absolute bottom-24 left-4 z-30">
+            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
+              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-white/80 text-xs font-medium">Video</span>
+            </div>
+          </div>
+        )}
+
         {/* Publish button */}
         <AnimatePresence>
           {!showTextEditor && !showDrawingCanvas && !gestureState.isDragging && (
@@ -379,7 +471,7 @@ export function MobileStoryEditor({
               onSave={handleSaveDrawing}
               width={1080}
               height={1920}
-              backgroundImage={imageData}
+              backgroundImage={isVideoMode ? captureVideoFrame() || "" : imageData || ""}
             />
           )}
         </AnimatePresence>
