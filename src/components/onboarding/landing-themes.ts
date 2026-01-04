@@ -4,7 +4,7 @@ export interface LandingTheme {
   description: string;
   
   // Layout del hero
-  heroLayout: "fullscreen" | "minimal" | "split" | "bold";
+  heroLayout: "fullscreen" | "minimal" | "split" | "bold" | "glass";
   
   // Estilo de servicios
   servicesLayout: "cards" | "list" | "horizontal-scroll" | "accordion";
@@ -79,6 +79,18 @@ export const landingThemes: LandingTheme[] = [
     defaultColors: { primary: "#F97316", secondary: "#EAB308" },
     recommendedFonts: { heading: "Montserrat", body: "Open Sans" },
     buttonStyle: "square"
+  },
+  {
+    id: "glass",
+    name: "Cristal",
+    description: "Efecto glassmorphism moderno y elegante",
+    heroLayout: "glass",
+    servicesLayout: "cards",
+    galleryLayout: "grid",
+    reviewsLayout: "carousel",
+    defaultColors: { primary: "#A855F7", secondary: "#EC4899" },
+    recommendedFonts: { heading: "Outfit", body: "Inter" },
+    buttonStyle: "rounded"
   }
 ];
 
