@@ -1,19 +1,32 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Post } from "@/hooks/usePosts";
 import { PostCard } from "./PostCard";
 import { useHaptic } from "@/hooks/useHaptic";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PostModalProps {
   posts: Post[];
   initialIndex: number;
   isOpen: boolean;
   onClose: () => void;
+  isAdmin?: boolean;
+  onDelete?: (postId: string) => void;
 }
 
-export function PostModal({ posts, initialIndex, isOpen, onClose }: PostModalProps) {
+export function PostModal({ posts, initialIndex, isOpen, onClose, isAdmin, onDelete }: PostModalProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const haptic = useHaptic();
 
   useEffect(() => {
@@ -58,6 +71,18 @@ export function PostModal({ posts, initialIndex, isOpen, onClose }: PostModalPro
     }
   };
 
+  const handleDelete = () => {
+    if (onDelete && posts[currentIndex]) {
+      onDelete(posts[currentIndex].id);
+      setShowDeleteDialog(false);
+      if (posts.length === 1) {
+        onClose();
+      } else if (currentIndex >= posts.length - 1) {
+        setCurrentIndex(prev => Math.max(0, prev - 1));
+      }
+    }
+  };
+
   if (!isOpen || posts.length === 0) return null;
 
   const currentPost = posts[currentIndex];
@@ -81,7 +106,16 @@ export function PostModal({ posts, initialIndex, isOpen, onClose }: PostModalPro
           <span className="text-sm text-muted-foreground">
             {currentIndex + 1} / {posts.length}
           </span>
-          <div className="w-10" /> {/* Spacer */}
+          {isAdmin ? (
+            <button
+              onClick={() => setShowDeleteDialog(true)}
+              className="p-2 -mr-2 rounded-full text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          ) : (
+            <div className="w-10" />
+          )}
         </div>
 
         {/* Content */}
@@ -139,6 +173,24 @@ export function PostModal({ posts, initialIndex, isOpen, onClose }: PostModalPro
           </div>
         )}
       </motion.div>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar publicación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. La publicación será eliminada permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AnimatePresence>
   );
 }
