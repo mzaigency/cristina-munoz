@@ -42,6 +42,13 @@ import { QuickActionsFAB } from "@/components/admin/QuickActionsFAB";
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
 import { ClientsCRM } from "@/components/admin/ClientsCRM";
 import { NotificationSettings } from "@/components/admin/NotificationSettings";
+import { PromotionsManager } from "@/components/admin/PromotionsManager";
+import { WaitlistManager } from "@/components/admin/WaitlistManager";
+import { ServicePackagesManager } from "@/components/admin/ServicePackagesManager";
+import { CommissionsManager } from "@/components/admin/CommissionsManager";
+import { MonthlyGoals } from "@/components/admin/MonthlyGoals";
+import { AdvancedCashStats } from "@/components/admin/AdvancedCashStats";
+import { PDFReportsGenerator } from "@/components/admin/PDFReportsGenerator";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
@@ -68,7 +75,7 @@ interface Stylist {
   color: string;
 }
 
-type TabValue = "dashboard" | "calendar" | "clients" | "cash" | "reviews" | "messages" | "stories" | "security" | "products" | "services" | "stylists" | "hours" | "notifications" | "settings";
+type TabValue = "dashboard" | "calendar" | "clients" | "cash" | "reviews" | "messages" | "stories" | "security" | "products" | "services" | "stylists" | "hours" | "notifications" | "settings" | "promotions" | "waitlist" | "packages" | "commissions" | "goals" | "reports";
 
 interface NavItem {
   value: TabValue;
@@ -99,13 +106,17 @@ export default function TenantAdmin() {
     { value: "calendar", label: "Agenda", icon: <Calendar className="h-4 w-4" />, group: "main" },
     { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, group: "main" },
     { value: "cash", label: "Caja", icon: <Wallet className="h-4 w-4" />, group: "main" },
-    { value: "reviews", label: "Reseñas", icon: <Star className="h-4 w-4" />, badge: pendingReviewsCount, group: "main" },
+    { value: "promotions", label: "Promos", icon: <Star className="h-4 w-4" />, group: "main" },
+    { value: "waitlist", label: "Espera", icon: <Clock className="h-4 w-4" />, group: "main" },
     { value: "messages", label: "Mensajes", icon: <MessageCircle className="h-4 w-4" />, badge: messagesUnreadCount, group: "main" },
     { value: "stories", label: "Stories", icon: <ImageIcon className="h-4 w-4" />, group: "main" },
     { value: "security", label: "Stats", icon: <BarChart3 className="h-4 w-4" />, group: "main" },
     { value: "products", label: "Productos", icon: <Package className="h-4 w-4" />, group: "main" },
     { value: "services", label: "Servicios", icon: <Scissors className="h-4 w-4" />, group: "main" },
+    { value: "packages", label: "Paquetes", icon: <Package className="h-4 w-4" />, group: "main" },
     { value: "stylists", label: "Equipo", icon: <Users className="h-4 w-4" />, group: "main" },
+    { value: "commissions", label: "Comisiones", icon: <Wallet className="h-4 w-4" />, group: "main" },
+    { value: "goals", label: "Objetivos", icon: <BarChart3 className="h-4 w-4" />, group: "main" },
     { value: "hours", label: "Horarios", icon: <Clock className="h-4 w-4" />, group: "main" },
     { value: "notifications", label: "Alertas", icon: <BellRing className="h-4 w-4" />, group: "main" },
     { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" />, group: "main" },
@@ -374,9 +385,17 @@ export default function TenantAdmin() {
       case "clients":
         return <ClientsCRM key={refreshKey} tenantId={tenant.id} />;
       case "cash":
-        return <CashRegisterManager key={refreshKey} tenantId={tenant.id} />;
-      case "reviews":
-        return <ReviewsManager key={refreshKey} tenantId={tenant.id} />;
+        return (
+          <div className="space-y-6">
+            <CashRegisterManager key={refreshKey} tenantId={tenant.id} />
+            <AdvancedCashStats tenantId={tenant.id} />
+            <PDFReportsGenerator tenantId={tenant.id} tenantName={tenant.name} />
+          </div>
+        );
+      case "promotions":
+        return <PromotionsManager key={refreshKey} tenantId={tenant.id} />;
+      case "waitlist":
+        return <WaitlistManager key={refreshKey} tenantId={tenant.id} />;
       case "messages":
         return <MessagesManager key={refreshKey} tenantId={tenant.id} />;
       case "stories":
@@ -392,8 +411,14 @@ export default function TenantAdmin() {
         return <ProductsManager key={refreshKey} tenantId={tenant.id} />;
       case "services":
         return <ServicesManager key={refreshKey} tenantId={tenant.id} />;
+      case "packages":
+        return <ServicePackagesManager key={refreshKey} tenantId={tenant.id} />;
       case "stylists":
         return <StylistsManager key={refreshKey} tenantId={tenant.id} />;
+      case "commissions":
+        return <CommissionsManager key={refreshKey} tenantId={tenant.id} />;
+      case "goals":
+        return <MonthlyGoals key={refreshKey} tenantId={tenant.id} />;
       case "hours":
         return <BusinessHoursManager key={refreshKey} tenantId={tenant.id} />;
       case "notifications":
