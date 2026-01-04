@@ -489,6 +489,7 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
       duration_part1_active: 15,
       duration_exposure_pause: 30,
       duration_part2_active: 15,
+      category: "",
     },
   ]);
   const [showCompoundHelp, setShowCompoundHelp] = useState(false);
@@ -505,6 +506,7 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
         duration_part1_active: 15,
         duration_exposure_pause: 30,
         duration_part2_active: 15,
+        category: "",
       }
     ]);
   };
@@ -542,7 +544,7 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
             duration_exposure_pause: s.type === "compound" ? s.duration_exposure_pause : 0,
             duration_part2_active: s.type === "compound" ? s.duration_part2_active : 0,
             price: s.price ? parseFloat(s.price) : null,
-            category: "General",
+            category: s.category.trim() || "General",
           }))
         );
 
@@ -627,12 +629,20 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
             </div>
             
             <div className="space-y-4">
-              <Input
-                placeholder="Nombre del servicio"
-                value={service.name}
-                onChange={(e) => updateService(index, "name", e.target.value)}
-                className="h-11 rounded-xl"
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input
+                  placeholder="Nombre del servicio"
+                  value={service.name}
+                  onChange={(e) => updateService(index, "name", e.target.value)}
+                  className="h-11 rounded-xl"
+                />
+                <Input
+                  placeholder="Categoría (ej: Corte, Color...)"
+                  value={service.category}
+                  onChange={(e) => updateService(index, "category", e.target.value)}
+                  className="h-11 rounded-xl"
+                />
+              </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <button

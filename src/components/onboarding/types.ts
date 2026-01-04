@@ -21,6 +21,7 @@ export interface ServiceForm {
   duration_part1_active: number;
   duration_exposure_pause: number;
   duration_part2_active: number;
+  category: string;
 }
 
 export interface StylistForm {
