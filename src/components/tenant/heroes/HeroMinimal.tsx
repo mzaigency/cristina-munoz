@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -59,35 +59,9 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-background/80 backdrop-blur-md border-b border-border/20">
-        <div className="flex items-center justify-between max-w-lg mx-auto">
-          <div className="flex items-center gap-2">
-            {tenant.logo_url && (
-              <img 
-                src={tenant.logo_url} 
-                alt={tenant.name}
-                className="h-8 w-8 object-contain rounded-lg"
-              />
-            )}
-            <span className="font-heading font-medium text-foreground text-sm">{tenant.name}</span>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBookNow}
-            className="text-xs px-3 h-8"
-            style={{ color: tenant.primary_color || 'hsl(var(--primary))' }}
-          >
-            Reservar
-            <ArrowRight className="w-3 h-3 ml-1" />
-          </Button>
-        </div>
-      </header>
-
       {/* Hero Image - Full Width */}
       {mainImage && (
-        <div className="relative w-full h-[55vh] mt-[52px]">
+        <div className="relative w-full h-[55vh]">
           <img 
             src={mainImage} 
             alt={tenant.name}

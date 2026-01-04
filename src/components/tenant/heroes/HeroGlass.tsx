@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star, Sparkles } from "lucide-react";
+import { Star, Sparkles, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -91,33 +91,6 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
           style={{ backgroundColor: tenant.primary_color || 'hsl(var(--primary))' }}
         />
       </div>
-
-      {/* Glass Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 p-4">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg">
-            <div className="flex items-center gap-2">
-              {tenant.logo_url && (
-                <img 
-                  src={tenant.logo_url} 
-                  alt={tenant.name}
-                  className="h-8 w-8 object-contain rounded-lg"
-                />
-              )}
-              <span className="font-heading font-medium text-white text-sm drop-shadow-sm">{tenant.name}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBookNow}
-              className="text-xs px-3 h-8 text-white hover:bg-white/20"
-            >
-              Reservar
-              <ArrowRight className="w-3 h-3 ml-1" />
-            </Button>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-20">
