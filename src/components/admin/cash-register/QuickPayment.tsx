@@ -687,15 +687,15 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
         {/* Items Grid */}
         <div className="flex-1 overflow-y-auto max-h-[280px] sm:max-h-[350px] lg:max-h-none lg:flex-1">
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-3">
             {/* Manual Entry Button */}
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowManualInput(true)}
-              className="aspect-square rounded-xl sm:rounded-2xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1 sm:gap-2 hover:border-primary/50 hover:bg-primary/5 transition-all"
+              className="aspect-square rounded-xl sm:rounded-2xl lg:rounded-2xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1.5 sm:gap-2 hover:border-primary/50 hover:bg-primary/5 transition-all min-h-[80px] sm:min-h-[100px] lg:min-h-[110px]"
             >
-              <PenLine className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-              <span className="text-[10px] sm:text-xs text-muted-foreground">Manual</span>
+              <PenLine className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-muted-foreground" />
+              <span className="text-xs sm:text-sm lg:text-sm text-muted-foreground font-medium">Manual</span>
             </motion.button>
 
             {filteredItems.map((item) => {
@@ -706,20 +706,20 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   key={item.id}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => toggleItem(item)}
-                  className={`aspect-square rounded-xl sm:rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all relative overflow-hidden ${
+                  className={`aspect-square rounded-xl sm:rounded-2xl lg:rounded-2xl p-2.5 sm:p-3 lg:p-4 flex flex-col items-center justify-center gap-1 sm:gap-1.5 transition-all relative overflow-hidden min-h-[80px] sm:min-h-[100px] lg:min-h-[110px] ${
                     isSelected
-                      ? "bg-primary text-primary-foreground shadow-lg ring-2 ring-primary ring-offset-1 sm:ring-offset-2"
+                      ? "bg-primary text-primary-foreground shadow-lg ring-2 ring-primary ring-offset-2"
                       : "bg-muted/50 hover:bg-muted"
                   }`}
                 >
-                  {isProduct && <Package className="h-3 w-3 sm:h-4 sm:w-4 absolute top-1 right-1 sm:top-2 sm:right-2 opacity-50" />}
-                  <span className="text-[10px] sm:text-xs text-center font-medium line-clamp-2 leading-tight">{item.name}</span>
-                  <span className={`text-xs sm:text-sm font-bold ${isSelected ? "" : "text-primary"}`}>
+                  {isProduct && <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-5 lg:w-5 absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-50" />}
+                  <span className="text-xs sm:text-sm lg:text-sm text-center font-medium line-clamp-2 leading-tight">{item.name}</span>
+                  <span className={`text-sm sm:text-base lg:text-lg font-bold ${isSelected ? "" : "text-primary"}`}>
                     {item.price ? formatCurrency(item.price) : "—"}
                   </span>
                   {isSelected && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-0.5 left-0.5 sm:top-1 sm:left-1">
-                      <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5">
+                      <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
                     </motion.div>
                   )}
                 </motion.button>
@@ -731,246 +731,252 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
       {/* Right: Cart & Payment */}
       <div className="w-full lg:w-[420px] xl:w-[480px] 2xl:w-[520px] lg:shrink-0 lg:h-full lg:min-h-0 flex flex-col bg-background rounded-xl sm:rounded-2xl border shadow-sm lg:overflow-hidden">
-        {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 lg:p-3 space-y-1.5 sm:space-y-2 min-h-0 max-h-[180px] sm:max-h-[250px] lg:max-h-none lg:flex-1 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
-          <AnimatePresence>
-            {selectedItems.map((item) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-muted/30"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-medium truncate">{item.name}</p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">{formatCurrency(item.price)}</p>
-                </div>
-                <div className="flex items-center gap-0.5 sm:gap-1">
-                  <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => updateQuantity(item.id, -1)}>
-                    <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                  </Button>
-                  <span className="w-4 sm:w-5 text-center text-xs sm:text-sm font-medium">{item.quantity}</span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => updateQuantity(item.id, 1)}>
-                    <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                  </Button>
-                </div>
-                <span className="text-xs sm:text-sm font-bold w-12 sm:w-16 text-right">{formatCurrency(item.price * item.quantity)}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 sm:h-7 sm:w-7 text-muted-foreground"
-                  onClick={() => removeItem(item.id)}
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto lg:overflow-y-auto scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+          {/* Cart Items */}
+          <div className="p-2.5 sm:p-4 lg:p-3 space-y-1.5 sm:space-y-2">
+            <AnimatePresence>
+              {selectedItems.map((item) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-muted/30"
                 >
-                  <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                </Button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs sm:text-sm font-medium truncate">{item.name}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{formatCurrency(item.price)}</p>
+                  </div>
+                  <div className="flex items-center gap-0.5 sm:gap-1">
+                    <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => updateQuantity(item.id, -1)}>
+                      <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                    </Button>
+                    <span className="w-4 sm:w-5 text-center text-xs sm:text-sm font-medium">{item.quantity}</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => updateQuantity(item.id, 1)}>
+                      <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                    </Button>
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold w-12 sm:w-16 text-right">{formatCurrency(item.price * item.quantity)}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 sm:h-7 sm:w-7 text-muted-foreground"
+                    onClick={() => removeItem(item.id)}
+                  >
+                    <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                  </Button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-          {selectedItems.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-6 sm:py-8 lg:py-12 text-muted-foreground">
-              <Scissors className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 mb-2 opacity-30" />
-              <p className="text-xs sm:text-sm">Selecciona servicios</p>
+            {selectedItems.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-6 sm:py-8 lg:py-12 text-muted-foreground">
+                <Scissors className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 mb-2 opacity-30" />
+                <p className="text-xs sm:text-sm">Selecciona servicios</p>
+              </div>
+            )}
+          </div>
+
+          {/* Extras (Discount & Tip) */}
+          {selectedItems.length > 0 && (
+            <div className="px-2.5 sm:px-4 pb-1.5 sm:pb-2 flex gap-1.5 sm:gap-2">
+              <Button
+                variant={showDiscount ? "default" : "outline"}
+                size="sm"
+                className="flex-1 gap-1 h-8 sm:h-9 text-xs sm:text-sm"
+                onClick={() => setShowDiscount(!showDiscount)}
+              >
+                <Percent className="h-3 w-3" />
+                <span className="truncate">{discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : "Dto"}</span>
+              </Button>
+              <Button
+                variant={showTip ? "default" : "outline"}
+                size="sm"
+                className="flex-1 gap-1 h-8 sm:h-9 text-xs sm:text-sm"
+                onClick={() => setShowTip(!showTip)}
+              >
+                <Heart className="h-3 w-3" />
+                <span className="truncate">{tip > 0 ? `+${formatCurrency(tip)}` : "Propina"}</span>
+              </Button>
             </div>
           )}
-        </div>
 
-        {/* Extras (Discount & Tip) */}
-        {selectedItems.length > 0 && (
-          <div className="px-2.5 sm:px-4 pb-1.5 sm:pb-2 flex gap-1.5 sm:gap-2">
-            <Button
-              variant={showDiscount ? "default" : "outline"}
-              size="sm"
-              className="flex-1 gap-1 h-8 sm:h-9 text-xs sm:text-sm"
-              onClick={() => setShowDiscount(!showDiscount)}
+          {showDiscount && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              className="px-2.5 sm:px-4 pb-1.5 sm:pb-2 space-y-1.5 sm:space-y-2"
             >
-              <Percent className="h-3 w-3" />
-              <span className="truncate">{discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : "Dto"}</span>
-            </Button>
-            <Button
-              variant={showTip ? "default" : "outline"}
-              size="sm"
-              className="flex-1 gap-1 h-8 sm:h-9 text-xs sm:text-sm"
-              onClick={() => setShowTip(!showTip)}
-            >
-              <Heart className="h-3 w-3" />
-              <span className="truncate">{tip > 0 ? `+${formatCurrency(tip)}` : "Propina"}</span>
-            </Button>
-          </div>
-        )}
-
-        {showDiscount && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            className="px-2.5 sm:px-4 pb-1.5 sm:pb-2 space-y-1.5 sm:space-y-2"
-          >
-            <div className="flex gap-1.5 sm:gap-2">
-              <Button
-                variant={discountType === "percentage" ? "default" : "outline"}
-                size="sm"
-                className="flex-1 h-8 sm:h-9"
-                onClick={() => setDiscountType("percentage")}
-              >
-                %
-              </Button>
-              <Button
-                variant={discountType === "fixed" ? "default" : "outline"}
-                size="sm"
-                className="flex-1 h-8 sm:h-9"
-                onClick={() => setDiscountType("fixed")}
-              >
-                €
-              </Button>
-              <Input
-                type="number"
-                value={discountValue}
-                onChange={(e) => setDiscountValue(e.target.value)}
-                placeholder="0"
-                className="w-16 sm:w-20 text-center h-8 sm:h-9"
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {showTip && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            className="px-2.5 sm:px-4 pb-1.5 sm:pb-2"
-          >
-            <div className="flex gap-1 sm:gap-2">
-              {[1, 2, 5, 10].map((v) => (
+              <div className="flex gap-1.5 sm:gap-2">
                 <Button
-                  key={v}
-                  variant={parseFloat(tipAmount) === v ? "default" : "outline"}
+                  variant={discountType === "percentage" ? "default" : "outline"}
                   size="sm"
-                  className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
-                  onClick={() => setTipAmount(v.toString())}
+                  className="flex-1 h-8 sm:h-9"
+                  onClick={() => setDiscountType("percentage")}
                 >
-                  {v}€
+                  %
+                </Button>
+                <Button
+                  variant={discountType === "fixed" ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1 h-8 sm:h-9"
+                  onClick={() => setDiscountType("fixed")}
+                >
+                  €
+                </Button>
+                <Input
+                  type="number"
+                  value={discountValue}
+                  onChange={(e) => setDiscountValue(e.target.value)}
+                  placeholder="0"
+                  className="w-16 sm:w-20 text-center h-8 sm:h-9"
+                />
+              </div>
+            </motion.div>
+          )}
+
+          {showTip && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              className="px-2.5 sm:px-4 pb-1.5 sm:pb-2"
+            >
+              <div className="flex gap-1 sm:gap-2">
+                {[1, 2, 5, 10].map((v) => (
+                  <Button
+                    key={v}
+                    variant={parseFloat(tipAmount) === v ? "default" : "outline"}
+                    size="sm"
+                    className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
+                    onClick={() => setTipAmount(v.toString())}
+                  >
+                    {v}€
+                  </Button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Totals */}
+          <div className="p-2.5 sm:p-4 lg:p-3 border-t bg-muted/30 space-y-0.5 sm:space-y-1">
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-xs sm:text-sm text-orange-600">
+                <span>Descuento</span>
+                <span>-{formatCurrency(discountAmount)}</span>
+              </div>
+            )}
+            {tip > 0 && (
+              <div className="flex justify-between text-xs sm:text-sm text-pink-600">
+                <span>Propina</span>
+                <span>+{formatCurrency(tip)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-lg sm:text-2xl font-bold pt-0.5 sm:pt-1">
+              <span>Total</span>
+              <span className="text-primary">{formatCurrency(grandTotal)}</span>
+            </div>
+          </div>
+
+          {/* Payment Methods */}
+          <div className="p-2.5 sm:p-4 lg:p-3 border-t space-y-2 sm:space-y-3 lg:space-y-2">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+              {[
+                { value: "cash" as const, icon: Banknote, label: "Efectivo" },
+                { value: "card" as const, icon: CreditCard, label: "Tarjeta" },
+                { value: "mixed" as const, icon: null, label: "Mixto" },
+              ].map(({ value, icon: Icon, label }) => (
+                <Button
+                  key={value}
+                  variant={paymentMethod === value ? "default" : "outline"}
+                  className="h-10 sm:h-12 lg:h-11 flex-col gap-0.5"
+                  onClick={() => setPaymentMethod(value)}
+                >
+                  {Icon ? (
+                    <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  ) : (
+                    <div className="flex">
+                      <Banknote className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                      <CreditCard className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                    </div>
+                  )}
+                  <span className="text-[9px] sm:text-[10px]">{label}</span>
                 </Button>
               ))}
             </div>
-          </motion.div>
-        )}
 
-        {/* Totals */}
-        <div className="p-2.5 sm:p-4 lg:p-3 border-t bg-muted/30 space-y-0.5 sm:space-y-1">
-          {discountAmount > 0 && (
-            <div className="flex justify-between text-xs sm:text-sm text-orange-600">
-              <span>Descuento</span>
-              <span>-{formatCurrency(discountAmount)}</span>
-            </div>
-          )}
-          {tip > 0 && (
-            <div className="flex justify-between text-xs sm:text-sm text-pink-600">
-              <span>Propina</span>
-              <span>+{formatCurrency(tip)}</span>
-            </div>
-          )}
-          <div className="flex justify-between text-lg sm:text-2xl font-bold pt-0.5 sm:pt-1">
-            <span>Total</span>
-            <span className="text-primary">{formatCurrency(grandTotal)}</span>
-          </div>
-        </div>
+            {paymentMethod === "mixed" && (
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                <div>
+                  <Label className="text-[10px] sm:text-xs text-muted-foreground">Efectivo</Label>
+                  <Input
+                    type="number"
+                    value={cashAmount}
+                    onChange={(e) => setCashAmount(e.target.value)}
+                    placeholder="0"
+                    className="text-center h-8 sm:h-10 lg:h-9"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] sm:text-xs text-muted-foreground">Tarjeta</Label>
+                  <Input
+                    type="number"
+                    value={cardAmount}
+                    onChange={(e) => setCardAmount(e.target.value)}
+                    placeholder="0"
+                    className="text-center h-8 sm:h-10 lg:h-9"
+                  />
+                </div>
+              </div>
+            )}
 
-        {/* Payment Methods */}
-        <div className="p-2.5 sm:p-4 lg:p-3 border-t space-y-2 sm:space-y-3 lg:space-y-2">
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-            {[
-              { value: "cash" as const, icon: Banknote, label: "Efectivo" },
-              { value: "card" as const, icon: CreditCard, label: "Tarjeta" },
-              { value: "mixed" as const, icon: null, label: "Mixto" },
-            ].map(({ value, icon: Icon, label }) => (
-              <Button
-                key={value}
-                variant={paymentMethod === value ? "default" : "outline"}
-                className="h-10 sm:h-12 lg:h-11 flex-col gap-0.5"
-                onClick={() => setPaymentMethod(value)}
-              >
-                {Icon ? (
-                  <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                ) : (
-                  <div className="flex">
-                    <Banknote className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                    <CreditCard className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                  </div>
+            {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
+              <div>
+                <Label className="text-[10px] sm:text-xs text-muted-foreground">Entregado</Label>
+                <Input
+                  type="number"
+                  value={cashGiven}
+                  onChange={(e) => setCashGiven(e.target.value)}
+                  placeholder="0"
+                  className="text-center text-base sm:text-lg font-bold h-9 sm:h-10 lg:h-9"
+                />
+                {getChange() > 0 && (
+                  <p className="text-center text-base sm:text-lg font-bold text-green-600 mt-1">
+                    Cambio: {formatCurrency(getChange())}
+                  </p>
                 )}
-                <span className="text-[9px] sm:text-[10px]">{label}</span>
-              </Button>
-            ))}
-          </div>
-
-          {paymentMethod === "mixed" && (
-            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-              <div>
-                <Label className="text-[10px] sm:text-xs text-muted-foreground">Efectivo</Label>
-                <Input
-                  type="number"
-                  value={cashAmount}
-                  onChange={(e) => setCashAmount(e.target.value)}
-                  placeholder="0"
-                  className="text-center h-8 sm:h-10 lg:h-9"
-                />
               </div>
-              <div>
-                <Label className="text-[10px] sm:text-xs text-muted-foreground">Tarjeta</Label>
-                <Input
-                  type="number"
-                  value={cardAmount}
-                  onChange={(e) => setCardAmount(e.target.value)}
-                  placeholder="0"
-                  className="text-center h-8 sm:h-10 lg:h-9"
-                />
-              </div>
-            </div>
-          )}
+            )}
 
-          {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
-            <div>
-              <Label className="text-[10px] sm:text-xs text-muted-foreground">Entregado</Label>
-              <Input
-                type="number"
-                value={cashGiven}
-                onChange={(e) => setCashGiven(e.target.value)}
-                placeholder="0"
-                className="text-center text-base sm:text-lg font-bold h-9 sm:h-10 lg:h-9"
-              />
-              {getChange() > 0 && (
-                <p className="text-center text-base sm:text-lg font-bold text-green-600 mt-1">
-                  Cambio: {formatCurrency(getChange())}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* ESTILISTA SELECTION */}
-          <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 lg:pt-1 border-t">
-            <Label className="text-[10px] sm:text-xs text-muted-foreground">Atendido por:</Label>
-            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-              {stylists.map((stylist) => (
-                <motion.button
-                  key={stylist.id}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setSelectedStylistId(stylist.id)}
+            {/* ESTILISTA SELECTION */}
+            <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 lg:pt-1 border-t">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground">Atendido por:</Label>
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                {stylists.map((stylist) => (
+                  <motion.button
+                    key={stylist.id}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedStylistId(stylist.id)}
                     className={`h-8 sm:h-10 lg:h-9 text-[10px] sm:text-xs font-medium rounded-md flex items-center justify-center gap-1.5 sm:gap-2 transition-all border ${
                       selectedStylistId === stylist.id
                         ? "bg-primary text-primary-foreground border-primary shadow-sm"
                         : "bg-background hover:bg-muted border-input"
                     }`}
-                >
-                  <div
-                    className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: stylist.color || "#8B5CF6" }}
-                  />
-                  <span className="truncate px-0.5 sm:px-1">{stylist.name}</span>
-                </motion.button>
-              ))}
+                  >
+                    <div
+                      className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: stylist.color || "#8B5CF6" }}
+                    />
+                    <span className="truncate px-0.5 sm:px-1">{stylist.name}</span>
+                  </motion.button>
+                ))}
+              </div>
             </div>
           </div>
+        </div>
 
+        {/* Sticky Button - Outside scroll area */}
+        <div className="p-2.5 sm:p-4 lg:p-3 border-t bg-background shrink-0">
           <Button
             onClick={handleSubmit}
             disabled={
