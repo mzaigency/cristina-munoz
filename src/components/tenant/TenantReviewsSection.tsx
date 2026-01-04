@@ -227,9 +227,9 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
                   key={review.id} 
                   className="pl-3 md:pl-4 basis-[280px] md:basis-[320px]"
                 >
-                  <div
-                    role="button"
+                  <article
                     tabIndex={0}
+                    aria-label={`Leer reseña de ${getDisplayName(review.profile?.full_name, review.id)}`}
                     onClick={() => setSelectedReview(review)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -237,7 +237,8 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
                         setSelectedReview(review);
                       }
                     }}
-                    className="w-full h-[180px] text-left bg-card rounded-lg p-4 shadow-sm flex flex-col border border-border/40 transition-shadow duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    style={{ borderRadius: 10 }}
+                    className="w-full h-[180px] cursor-pointer select-none text-left bg-card p-4 shadow-sm flex flex-col border border-border/40 transition-shadow duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-3">
@@ -271,7 +272,7 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
                         "{review.comment}"
                       </p>
                     )}
-                  </div>
+                  </article>
                 </CarouselItem>
               ))}
             </CarouselContent>
