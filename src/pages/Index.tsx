@@ -17,6 +17,7 @@ import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { WelcomeCarousel, useWelcomeOnboarding } from "@/components/onboarding/WelcomeCarousel";
 import { useGeolocation, CITY_COORDINATES } from "@/hooks/useGeolocation";
 import { useHaptic } from "@/hooks/useHaptic";
+import { useTodayAvailability } from "@/hooks/useTodayAvailability";
 import { cn } from "@/lib/utils";
 
 interface TenantWithStats {
@@ -137,6 +138,12 @@ const Index = () => {
     await queryClient.invalidateQueries({ queryKey: ["salons-premium-hub"] });
   }, [queryClient]);
 
+  // Get all tenant IDs for availability check
+  const tenantIds = useMemo(() => salons?.map(s => s.id) || [], [salons]);
+  
+  // Check today's availability for "Huecos hoy" filter
+  const { tenantsWithAvailability, loading: availabilityLoading } = useTodayAvailability(tenantIds);
+
   // Calculate distances for salons
   const salonsWithDistance = useMemo(() => {
     if (!salons) return [];
@@ -175,7 +182,10 @@ const Index = () => {
       const isQuickFilter = selectedCategory === "huecos" || selectedCategory === "popular";
       const matchesCategory = !selectedCategory || isQuickFilter || salon.features?.business_type === selectedCategory;
 
-      return matchesSearch && matchesFavorites && matchesCategory;
+      // Filter by availability for "huecos hoy"
+      const matchesAvailability = selectedCategory !== "huecos" || tenantsWithAvailability.includes(salon.id);
+
+      return matchesSearch && matchesFavorites && matchesCategory && matchesAvailability;
     });
 
     // Apply quick filter sorting
@@ -199,7 +209,7 @@ const Index = () => {
     }
 
     return result;
-  }, [salonsWithDistance, searchQuery, showFavoritesOnly, favorites, selectedCategory, sortByDistance, hasLocation]);
+  }, [salonsWithDistance, searchQuery, showFavoritesOnly, favorites, selectedCategory, sortByDistance, hasLocation, tenantsWithAvailability]);
 
   const handleNearMeClick = () => {
     haptic.medium();
@@ -310,6 +320,8 @@ const Index = () => {
           <CategoryPills
             selected={selectedCategory}
             onSelect={setSelectedCategory}
+            tenantsWithAvailability={tenantsWithAvailability}
+            loadingAvailability={availabilityLoading}
           />
         </motion.div>
 
