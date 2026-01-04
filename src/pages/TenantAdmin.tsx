@@ -22,7 +22,17 @@ import {
   ChevronDown,
   LayoutDashboard,
   UserCircle,
-  BellRing
+  BellRing,
+  Gift,
+  UserPlus,
+  Target,
+  Percent,
+  FileText,
+  HelpCircle,
+  Sparkles,
+  Menu,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
@@ -58,7 +68,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface Tenant {
   id: string;
@@ -82,8 +95,16 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
   badge?: number;
-  group: "main" | "config";
+  group: "main" | "sales" | "team" | "config";
 }
+
+// Group definitions for better organization
+const NAV_GROUPS = {
+  main: { label: "Principal", icon: <LayoutDashboard className="h-4 w-4" /> },
+  sales: { label: "Ventas", icon: <Wallet className="h-4 w-4" /> },
+  team: { label: "Gestión", icon: <Users className="h-4 w-4" /> },
+  config: { label: "Configuración", icon: <Settings className="h-4 w-4" /> },
+};
 
 export default function TenantAdmin() {
   const [loading, setLoading] = useState(true);
@@ -95,6 +116,7 @@ export default function TenantAdmin() {
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [hasAccess, setHasAccess] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
@@ -102,25 +124,40 @@ export default function TenantAdmin() {
   const isMobile = useIsMobile();
 
   const navItems: NavItem[] = [
+    // Main group - Most used
     { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" />, group: "main" },
     { value: "calendar", label: "Agenda", icon: <Calendar className="h-4 w-4" />, group: "main" },
     { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, group: "main" },
-    { value: "cash", label: "Caja", icon: <Wallet className="h-4 w-4" />, group: "main" },
-    { value: "promotions", label: "Promos", icon: <Star className="h-4 w-4" />, group: "main" },
-    { value: "waitlist", label: "Espera", icon: <Clock className="h-4 w-4" />, group: "main" },
     { value: "messages", label: "Mensajes", icon: <MessageCircle className="h-4 w-4" />, badge: messagesUnreadCount, group: "main" },
     { value: "stories", label: "Stories", icon: <ImageIcon className="h-4 w-4" />, group: "main" },
-    { value: "security", label: "Stats", icon: <BarChart3 className="h-4 w-4" />, group: "main" },
-    { value: "products", label: "Productos", icon: <Package className="h-4 w-4" />, group: "main" },
-    { value: "services", label: "Servicios", icon: <Scissors className="h-4 w-4" />, group: "main" },
-    { value: "packages", label: "Paquetes", icon: <Package className="h-4 w-4" />, group: "main" },
-    { value: "stylists", label: "Equipo", icon: <Users className="h-4 w-4" />, group: "main" },
-    { value: "commissions", label: "Comisiones", icon: <Wallet className="h-4 w-4" />, group: "main" },
-    { value: "goals", label: "Objetivos", icon: <BarChart3 className="h-4 w-4" />, group: "main" },
-    { value: "hours", label: "Horarios", icon: <Clock className="h-4 w-4" />, group: "main" },
-    { value: "notifications", label: "Alertas", icon: <BellRing className="h-4 w-4" />, group: "main" },
-    { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" />, group: "main" },
+    
+    // Sales group
+    { value: "cash", label: "Caja", icon: <Wallet className="h-4 w-4" />, group: "sales" },
+    { value: "promotions", label: "Promos", icon: <Gift className="h-4 w-4" />, group: "sales" },
+    { value: "packages", label: "Paquetes", icon: <Package className="h-4 w-4" />, group: "sales" },
+    { value: "products", label: "Productos", icon: <Package className="h-4 w-4" />, group: "sales" },
+    { value: "goals", label: "Objetivos", icon: <Target className="h-4 w-4" />, group: "sales" },
+    { value: "security", label: "Stats", icon: <BarChart3 className="h-4 w-4" />, group: "sales" },
+    
+    // Team group
+    { value: "stylists", label: "Equipo", icon: <Users className="h-4 w-4" />, group: "team" },
+    { value: "commissions", label: "Comisiones", icon: <Percent className="h-4 w-4" />, group: "team" },
+    { value: "waitlist", label: "Espera", icon: <UserPlus className="h-4 w-4" />, group: "team" },
+    { value: "services", label: "Servicios", icon: <Scissors className="h-4 w-4" />, group: "team" },
+    
+    // Config group
+    { value: "hours", label: "Horarios", icon: <Clock className="h-4 w-4" />, group: "config" },
+    { value: "notifications", label: "Alertas", icon: <BellRing className="h-4 w-4" />, group: "config" },
+    { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" />, group: "config" },
   ];
+
+  // For mobile: show primary tabs + more menu
+  const mobileVisibleItems = navItems.filter(item => 
+    ["dashboard", "calendar", "clients", "cash", "messages"].includes(item.value)
+  );
+  const mobileHiddenItems = navItems.filter(item => 
+    !["dashboard", "calendar", "clients", "cash", "messages"].includes(item.value)
+  );
 
   const tabOrder = navItems.map(item => item.value);
   
@@ -332,9 +369,7 @@ export default function TenantAdmin() {
   };
 
   const handleRefresh = useCallback(async () => {
-    // Trigger a refresh by updating the key
     setRefreshKey(prev => prev + 1);
-    // Also refresh counts
     if (tenant?.id) {
       await Promise.all([
         fetchPendingReviews(),
@@ -430,6 +465,54 @@ export default function TenantAdmin() {
     }
   };
 
+  const renderNavButton = (item: NavItem, compact: boolean = false) => {
+    const isActive = activeTab === item.value;
+    return (
+      <button
+        key={item.value}
+        onClick={() => {
+          setActiveTab(item.value);
+          setShowMoreMenu(false);
+        }}
+        role="tab"
+        aria-selected={isActive}
+        aria-label={`${item.label}${item.badge ? `, ${item.badge} pendientes` : ''}`}
+        data-tour-step={`nav-${item.value}`}
+        className={cn(
+          "relative flex items-center justify-center gap-1.5 transition-all duration-200 shrink-0",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          compact ? [
+            "flex-col px-2 py-1.5 rounded-lg min-w-[52px] h-[52px]",
+            isActive 
+              ? "bg-primary text-primary-foreground shadow-md" 
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ] : [
+            "px-3 py-2 rounded-xl min-w-[72px] h-[56px] flex-col",
+            isActive 
+              ? "bg-primary text-primary-foreground shadow-lg" 
+              : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+          ]
+        )}
+      >
+        <div className="relative">
+          {item.icon}
+          {item.badge && item.badge > 0 && (
+            <span 
+              className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-white"
+              aria-hidden="true"
+            >
+              {item.badge > 9 ? "9+" : item.badge}
+            </span>
+          )}
+        </div>
+        <span className={cn(
+          "font-medium leading-none whitespace-nowrap",
+          compact ? "text-[9px]" : "text-[10px]"
+        )}>{item.label}</span>
+      </button>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -443,11 +526,10 @@ export default function TenantAdmin() {
   }
 
   const activeItem = navItems.find(item => item.value === activeTab);
-  const isConfigTab = configItems.some(item => item.value === activeTab);
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Header - Mobile optimized with safe area */}
+      {/* Header */}
       <header 
         className="sticky top-0 z-50 bg-background border-b shadow-sm"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
@@ -474,10 +556,10 @@ export default function TenantAdmin() {
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <div className="hidden md:flex items-center gap-2">
-                <InteractiveTour onTabChange={(tab) => setActiveTab(tab as TabValue)} />
-                <HelpTutorial />
-              </div>
+              {/* Tour and Help buttons */}
+              <InteractiveTour onTabChange={(tab) => setActiveTab(tab as TabValue)} />
+              <HelpTutorial />
+              
               <Button 
                 onClick={() => navigate(`/salon/${slug}`)} 
                 variant="outline" 
@@ -511,62 +593,94 @@ export default function TenantAdmin() {
             </div>
           </div>
 
-          {/* Bottom row - Navigation tabs - Scrollable on mobile */}
-          <nav 
-            className="flex items-center gap-0.5 sm:gap-1 py-2 overflow-x-auto scrollbar-hide -mx-3 sm:-mx-1 px-3 sm:px-1"
-            aria-label="Navegación del panel de administración"
-            role="tablist"
-          >
-            {mainItems.map((item) => {
-              const isActive = activeTab === item.value;
-              return (
-                <button
-                  key={item.value}
-                  onClick={() => setActiveTab(item.value)}
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-label={`${item.label}${item.badge ? `, ${item.badge} pendientes` : ''}`}
-                  data-tour-step={`nav-${item.value}`}
-                  className={`
-                    relative flex flex-col items-center justify-center gap-0.5 sm:gap-1
-                    px-2 sm:px-3 py-1.5 sm:py-2 
-                    rounded-lg sm:rounded-xl transition-all duration-200 shrink-0 
-                    min-w-[48px] sm:min-w-[56px] md:min-w-[60px]
-                    h-[52px] sm:h-[56px]
-                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
-                    ${isActive 
-                      ? "bg-primary text-primary-foreground shadow-md" 
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }
-                  `}
-                >
-                  <div className="relative">
-                    {item.value === "dashboard" && <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "calendar" && <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "cash" && <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "reviews" && <Star className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "messages" && <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "stories" && <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "security" && <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "products" && <Package className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "services" && <Scissors className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "stylists" && <Users className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "hours" && <Clock className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.value === "settings" && <Settings className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    {item.badge && item.badge > 0 && (
-                      <span 
-                        className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-destructive text-[8px] sm:text-[9px] font-bold text-white"
-                        aria-hidden="true"
-                      >
-                        {item.badge > 9 ? "9+" : item.badge}
-                      </span>
+          {/* Navigation - Different for mobile and desktop */}
+          {isMobile ? (
+            /* Mobile Navigation - Primary tabs + More menu */
+            <nav 
+              className="flex items-center gap-1 py-2"
+              aria-label="Navegación del panel de administración"
+              role="tablist"
+            >
+              {mobileVisibleItems.map((item) => renderNavButton(item, true))}
+              
+              {/* More menu */}
+              <DropdownMenu open={showMoreMenu} onOpenChange={setShowMoreMenu}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={cn(
+                      "relative flex flex-col items-center justify-center gap-0.5",
+                      "px-2 py-1.5 rounded-lg min-w-[52px] h-[52px] transition-all duration-200",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      mobileHiddenItems.some(i => i.value === activeTab)
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
-                  </div>
-                  <span className="text-[9px] sm:text-[10px] font-medium leading-none whitespace-nowrap">{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+                  >
+                    <Menu className="h-4 w-4" />
+                    <span className="text-[9px] font-medium">Más</span>
+                    {mobileHiddenItems.some(i => i.badge && i.badge > 0) && (
+                      <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  align="end" 
+                  className="w-56 max-h-[60vh] overflow-y-auto"
+                  sideOffset={8}
+                >
+                  {Object.entries(NAV_GROUPS).map(([groupKey, group]) => {
+                    const groupItems = mobileHiddenItems.filter(item => item.group === groupKey);
+                    if (groupItems.length === 0) return null;
+                    
+                    return (
+                      <div key={groupKey}>
+                        <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {group.icon}
+                          {group.label}
+                        </DropdownMenuLabel>
+                        {groupItems.map((item) => (
+                          <DropdownMenuItem
+                            key={item.value}
+                            onClick={() => {
+                              setActiveTab(item.value);
+                              setShowMoreMenu(false);
+                            }}
+                            className={cn(
+                              "flex items-center gap-3 cursor-pointer",
+                              activeTab === item.value && "bg-primary/10 text-primary"
+                            )}
+                          >
+                            {item.icon}
+                            <span className="flex-1">{item.label}</span>
+                            {item.badge && item.badge > 0 && (
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                                {item.badge > 9 ? "9+" : item.badge}
+                              </span>
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuSeparator />
+                      </div>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </nav>
+          ) : (
+            /* Desktop Navigation - Horizontal scroll with groups */
+            <nav 
+              className="flex items-center py-2"
+              aria-label="Navegación del panel de administración"
+              role="tablist"
+            >
+              <ScrollArea className="w-full">
+                <div className="flex items-center gap-1 pb-2">
+                  {navItems.map((item) => renderNavButton(item, false))}
+                </div>
+                <ScrollBar orientation="horizontal" className="h-1.5" />
+              </ScrollArea>
+            </nav>
+          )}
         </div>
       </header>
 
