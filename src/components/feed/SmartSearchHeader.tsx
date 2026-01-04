@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import glowappLogo from "@/assets/glowapp-logo.png";
+import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 
 export function SmartSearchHeader() {
   return (
@@ -31,20 +32,26 @@ export function SmartSearchHeader() {
               />
             </Link>
 
-            {/* Para negocios button */}
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button
-                asChild
-                size="default"
-                className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4 rounded-xl shadow-lg shadow-primary/25 text-sm"
-              >
-                <Link to="/para-negocios" className="flex items-center gap-1.5">
-                  <Building2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Para negocios</span>
-                  <span className="sm:hidden">Negocios</span>
-                </Link>
-              </Button>
-            </motion.div>
+            {/* Right side: Notifications + Para negocios */}
+            <div className="flex items-center gap-2">
+              {/* Notification Bell */}
+              <NotificationBadge />
+              
+              {/* Para negocios button */}
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  asChild
+                  size="default"
+                  className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4 rounded-xl shadow-lg shadow-primary/25 text-sm"
+                >
+                  <Link to="/para-negocios" className="flex items-center gap-1.5">
+                    <Building2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Para negocios</span>
+                    <span className="sm:hidden">Negocios</span>
+                  </Link>
+                </Button>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       </div>
