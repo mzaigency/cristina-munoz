@@ -19,7 +19,8 @@ import {
   Clock, 
   ImageIcon, 
   Package,
-  ChevronDown
+  ChevronDown,
+  LayoutDashboard
 } from "lucide-react";
 import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
 import { ReviewsManager } from "@/components/admin/ReviewsManager";
@@ -34,6 +35,7 @@ import { StoriesAnalytics } from "@/components/admin/StoriesAnalytics";
 import { WidgetResponsesViewer } from "@/components/admin/WidgetResponsesViewer";
 import { ProductsManager } from "@/components/admin/ProductsManager";
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -60,7 +62,7 @@ interface Stylist {
   color: string;
 }
 
-type TabValue = "calendar" | "cash" | "reviews" | "messages" | "stories" | "security" | "products" | "services" | "stylists" | "hours" | "subscription" | "settings";
+type TabValue = "dashboard" | "calendar" | "cash" | "reviews" | "messages" | "stories" | "security" | "products" | "services" | "stylists" | "hours" | "subscription" | "settings";
 
 interface NavItem {
   value: TabValue;
@@ -73,7 +75,7 @@ interface NavItem {
 export default function TenantAdmin() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
-  const [activeTab, setActiveTab] = useState<TabValue>("calendar");
+  const [activeTab, setActiveTab] = useState<TabValue>("dashboard");
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
   const [messagesUnreadCount, setMessagesUnreadCount] = useState(0);
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -87,6 +89,7 @@ export default function TenantAdmin() {
   const isMobile = useIsMobile();
 
   const navItems: NavItem[] = [
+    { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" />, group: "main" },
     { value: "calendar", label: "Agenda", icon: <Calendar className="h-4 w-4" />, group: "main" },
     { value: "cash", label: "Caja", icon: <Wallet className="h-4 w-4" />, group: "main" },
     { value: "reviews", label: "Reseñas", icon: <Star className="h-4 w-4" />, badge: pendingReviewsCount, group: "main" },
@@ -317,10 +320,36 @@ export default function TenantAdmin() {
     });
   }, [tenant?.id]);
 
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case "new-booking":
+        setActiveTab("calendar");
+        // The calendar component handles new booking via its own UI
+        break;
+      case "new-payment":
+        setActiveTab("cash");
+        break;
+      case "block-slot":
+        setActiveTab("calendar");
+        break;
+      default:
+        break;
+    }
+  };
+
   const renderContent = () => {
     if (!tenant) return null;
     
     switch (activeTab) {
+      case "dashboard":
+        return (
+          <AdminDashboard 
+            key={refreshKey} 
+            tenantId={tenant.id} 
+            onNavigate={(tab) => setActiveTab(tab as TabValue)}
+            onQuickAction={handleQuickAction}
+          />
+        );
       case "calendar":
         return <LocalCalendarCRM key={refreshKey} tenantId={tenant.id} stylists={stylists} />;
       case "cash":
@@ -471,6 +500,7 @@ export default function TenantAdmin() {
                   `}
                 >
                   <div className="relative">
+                    {item.value === "dashboard" && <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5" />}
                     {item.value === "calendar" && <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />}
                     {item.value === "cash" && <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />}
                     {item.value === "reviews" && <Star className="h-4 w-4 sm:h-5 sm:w-5" />}
