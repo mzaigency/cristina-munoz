@@ -48,7 +48,7 @@ export function PostGrid({ posts, className, isAdmin, onDelete }: PostGridProps)
 
   return (
     <>
-      <div className={cn("grid grid-cols-3 gap-0.5", className)}>
+      <div className={cn("grid grid-cols-3 gap-2", className)}>
         {posts.map((post, index) => (
           <motion.button
             key={post.id}
@@ -56,12 +56,12 @@ export function PostGrid({ posts, className, isAdmin, onDelete }: PostGridProps)
             animate={{ opacity: 1 }}
             transition={{ delay: index * 0.05 }}
             onClick={() => setSelectedIndex(index)}
-            className="relative aspect-square bg-muted overflow-hidden group"
+            className="relative aspect-square bg-muted overflow-hidden group rounded-xl"
           >
             <img
               src={post.image_url}
               alt={post.caption || "Post"}
-              className="w-full h-full object-cover transition-transform group-active:scale-95"
+              className="w-full h-full object-cover transition-transform group-active:scale-95 rounded-xl"
               loading="lazy"
             />
             
