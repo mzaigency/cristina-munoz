@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
@@ -12,11 +12,13 @@ export function useTodayAvailability(tenantIds: string[]) {
   const [availabilityMap, setAvailabilityMap] = useState<Map<string, TenantAvailability>>(new Map());
   const [loading, setLoading] = useState(false);
   const [tenantsWithAvailability, setTenantsWithAvailability] = useState<string[]>([]);
+  const [hasChecked, setHasChecked] = useState(false);
 
   const checkAvailability = useCallback(async () => {
     if (tenantIds.length === 0) return;
     
     setLoading(true);
+    setHasChecked(true);
     const today = format(new Date(), "yyyy-MM-dd");
     const newMap = new Map<string, TenantAvailability>();
     const available: string[] = [];
@@ -46,7 +48,6 @@ export function useTodayAvailability(tenantIds: string[]) {
               const bookedSlots = data?.bookedSlots || [];
               
               // Calculate available slots (working hours are typically 9:00-19:00 = 20 slots of 30min)
-              // If less than 20 slots are booked, there's availability
               const currentHour = new Date().getHours();
               const currentMinutes = new Date().getMinutes();
               const currentTimeInMinutes = currentHour * 60 + currentMinutes;
@@ -58,8 +59,7 @@ export function useTodayAvailability(tenantIds: string[]) {
                 return slotTimeInMinutes > currentTimeInMinutes;
               });
 
-              // Estimate: if we have less than 15 future booked slots, there's likely availability
-              // This is a heuristic since we're checking if stylist=any has gaps
+              // Estimate: if we have less than 18 future booked slots, there's likely availability
               const hasAvailability = futureBookedSlots.length < 18;
               const availableSlots = Math.max(0, 20 - futureBookedSlots.length);
 
@@ -88,14 +88,11 @@ export function useTodayAvailability(tenantIds: string[]) {
     }
   }, [tenantIds]);
 
-  useEffect(() => {
-    checkAvailability();
-  }, [checkAvailability]);
-
   return {
     availabilityMap,
     tenantsWithAvailability,
     loading,
-    refetch: checkAvailability,
+    hasChecked,
+    checkAvailability,
   };
 }

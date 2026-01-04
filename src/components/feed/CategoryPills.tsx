@@ -8,6 +8,8 @@ interface CategoryPillsProps {
   onSelect: (id: string | null) => void;
   tenantsWithAvailability?: string[];
   loadingAvailability?: boolean;
+  hasCheckedAvailability?: boolean;
+  onCheckAvailability?: () => void;
 }
 
 const DEFAULT_CATEGORIES = [
@@ -30,11 +32,21 @@ export function CategoryPills({
   selected, 
   onSelect,
   tenantsWithAvailability = [],
-  loadingAvailability = false
+  loadingAvailability = false,
+  hasCheckedAvailability = false,
+  onCheckAvailability
 }: CategoryPillsProps) {
   const items = categories.length > 0 ? categories : DEFAULT_CATEGORIES;
 
   const availableCount = tenantsWithAvailability.length;
+
+  const handleFilterClick = (filterId: string, isSelected: boolean) => {
+    if (filterId === "huecos" && !isSelected && !hasCheckedAvailability && onCheckAvailability) {
+      // First time clicking "Huecos hoy" - trigger availability check
+      onCheckAvailability();
+    }
+    onSelect(isSelected ? null : filterId);
+  };
 
   return (
     <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
@@ -49,7 +61,7 @@ export function CategoryPills({
           <motion.button
             key={filter.id}
             whileTap={{ scale: 0.95 }}
-            onClick={() => onSelect(isSelected ? null : filter.id)}
+            onClick={() => handleFilterClick(filter.id, isSelected)}
             className={cn(
               "shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs transition-all relative",
               isHuecos && isSelected && "bg-emerald-500 text-white shadow-md shadow-emerald-500/25",
@@ -64,7 +76,7 @@ export function CategoryPills({
               <Icon className="h-3.5 w-3.5" />
             )}
             {filter.label}
-            {isHuecos && availableCount > 0 && !loadingAvailability && (
+            {isHuecos && hasCheckedAvailability && availableCount > 0 && !loadingAvailability && (
               <span className={cn(
                 "ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
                 isSelected ? "bg-white/20" : "bg-emerald-500 text-white"

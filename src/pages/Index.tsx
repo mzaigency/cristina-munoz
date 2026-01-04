@@ -141,8 +141,8 @@ const Index = () => {
   // Get all tenant IDs for availability check
   const tenantIds = useMemo(() => salons?.map(s => s.id) || [], [salons]);
   
-  // Check today's availability for "Huecos hoy" filter
-  const { tenantsWithAvailability, loading: availabilityLoading } = useTodayAvailability(tenantIds);
+  // Check today's availability for "Huecos hoy" filter - lazy loading
+  const { tenantsWithAvailability, loading: availabilityLoading, hasChecked, checkAvailability } = useTodayAvailability(tenantIds);
 
   // Calculate distances for salons
   const salonsWithDistance = useMemo(() => {
@@ -322,6 +322,8 @@ const Index = () => {
             onSelect={setSelectedCategory}
             tenantsWithAvailability={tenantsWithAvailability}
             loadingAvailability={availabilityLoading}
+            hasCheckedAvailability={hasChecked}
+            onCheckAvailability={checkAvailability}
           />
         </motion.div>
 
