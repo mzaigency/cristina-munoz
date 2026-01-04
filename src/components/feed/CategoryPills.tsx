@@ -56,6 +56,11 @@ export function CategoryPills({
         const isSelected = selected === filter.id;
         const isHuecos = filter.id === "huecos";
         const isPopular = filter.id === "popular";
+
+        // Hide "Huecos hoy" button if checked and no availability
+        if (isHuecos && hasCheckedAvailability && availableCount === 0 && !loadingAvailability) {
+          return null;
+        }
         
         return (
           <motion.button

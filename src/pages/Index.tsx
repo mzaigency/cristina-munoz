@@ -185,12 +185,17 @@ const Index = () => {
       // Filter by availability for "huecos hoy"
       const matchesAvailability = selectedCategory !== "huecos" || tenantsWithAvailability.includes(salon.id);
 
-      return matchesSearch && matchesFavorites && matchesCategory && matchesAvailability;
+      // Filter for "popular" - only show salons with good ratings (>= 4 stars) or at least 2 reviews
+      const matchesPopular = selectedCategory !== "popular" || 
+        (salon.avgRating !== null && salon.avgRating >= 4) || 
+        salon.reviewCount >= 2;
+
+      return matchesSearch && matchesFavorites && matchesCategory && matchesAvailability && matchesPopular;
     });
 
     // Apply quick filter sorting
     if (selectedCategory === "popular") {
-      // Sort by rating (highest first)
+      // Sort by rating (highest first), then by review count
       result = [...result].sort((a, b) => {
         const ratingA = a.avgRating ?? 0;
         const ratingB = b.avgRating ?? 0;
