@@ -17,7 +17,7 @@ import { TenantAdminBar } from "@/components/tenant/TenantAdminBar";
 import { TenantEditPanel } from "@/components/tenant/TenantEditPanel";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
 import TenantContactSection from "@/components/tenant/TenantContactSection";
-import { HeroImmersive, HeroMinimal, HeroSplit, HeroBold } from "@/components/tenant/heroes";
+import { HeroImmersive, HeroMinimal, HeroSplit, HeroBold, HeroGlass } from "@/components/tenant/heroes";
 import { getThemeById } from "@/components/onboarding/landing-themes";
 
 interface Tenant {
@@ -229,6 +229,8 @@ const TenantLanding = () => {
                   return <HeroSplit {...heroProps} />;
                 case "bold":
                   return <HeroBold {...heroProps} />;
+                case "glass":
+                  return <HeroGlass {...heroProps} />;
                 case "fullscreen":
                 default:
                   return <HeroImmersive {...heroProps} />;
