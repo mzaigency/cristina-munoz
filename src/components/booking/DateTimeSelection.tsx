@@ -4,10 +4,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { es } from "date-fns/locale";
+import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stylist, Service, TimeRange } from "@/types/booking";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
-import { Loader2 } from "lucide-react";
+import { Loader2, Clock, Bell } from "lucide-react";
 import { 
   hasOverlap, 
   getActiveWindows, 
@@ -15,6 +16,17 @@ import {
   timeStringToMinutes,
   minutesToTimeString 
 } from "@/lib/booking-utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 interface DateTimeSelectionProps {
   selectedDate: Date | null;
@@ -57,7 +69,15 @@ export const DateTimeSelection = ({
   const [bookedRanges, setBookedRanges] = useState<TimeRange[]>([]);
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [stylists, setStylists] = useState<Array<{ slug: string; id: string }>>([]);
+  const [stylists, setStylists] = useState<Array<{ slug: string; id: string; name: string }>>([]);
+  
+  // Waitlist state
+  const [showWaitlistDialog, setShowWaitlistDialog] = useState(false);
+  const [waitlistName, setWaitlistName] = useState("");
+  const [waitlistPhone, setWaitlistPhone] = useState("");
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  
+  const { toast } = useToast();
 
   // Use tenant business hours
   const { 
@@ -74,7 +94,7 @@ export const DateTimeSelection = ({
     const fetchStylists = async () => {
       const { data } = await supabase
         .from("tenant_stylists")
-        .select("id, slug")
+        .select("id, slug, name")
         .eq("tenant_id", tenantId)
         .eq("is_active", true);
       
@@ -266,6 +286,59 @@ export const DateTimeSelection = ({
     }
   };
 
+  // Handle waitlist submission
+  const handleWaitlistSubmit = async () => {
+    if (!waitlistName.trim() || !waitlistPhone.trim() || !date || !tenantId) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setWaitlistSubmitting(true);
+    try {
+      const serviceNames = services.map(s => s.name).join(", ");
+      const preferredStylistId = stylist !== 'any' 
+        ? stylists.find(s => s.slug === stylist)?.id 
+        : null;
+
+      const { error } = await supabase
+        .from("waitlist")
+        .insert({
+          tenant_id: tenantId,
+          client_name: waitlistName.trim(),
+          client_phone: waitlistPhone.trim(),
+          preferred_date: format(date, "yyyy-MM-dd"),
+          preferred_stylist_id: preferredStylistId,
+          services: services.map(s => ({ id: s.id, name: s.name })),
+          notes: `Duración total: ${totalDuration} min`,
+          status: "waiting",
+          priority: 3
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "¡Añadido a la lista de espera!",
+        description: "Te avisaremos cuando haya disponibilidad para esta fecha"
+      });
+      
+      setShowWaitlistDialog(false);
+      setWaitlistName("");
+      setWaitlistPhone("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo añadir a la lista de espera",
+        variant: "destructive"
+      });
+    } finally {
+      setWaitlistSubmitting(false);
+    }
+  };
+
   // Get closed days from tenant business hours
   const closedDays = getClosedDays();
   const today = new Date();
@@ -352,11 +425,27 @@ export const DateTimeSelection = ({
               )}
               
               {timeSlots.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {isAdmin 
-                    ? "No hay horarios predefinidos disponibles. Puedes usar el campo de hora personalizada arriba."
-                    : "No hay horarios disponibles para este día. Todos los slots están reservados."}
-                </p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-border/50">
+                    <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <p className="text-sm text-muted-foreground">
+                      {isAdmin 
+                        ? "No hay horarios predefinidos disponibles. Puedes usar el campo de hora personalizada arriba."
+                        : "No hay horarios disponibles para este día. Todos los slots están reservados."}
+                    </p>
+                  </div>
+                  
+                  {!isAdmin && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                      onClick={() => setShowWaitlistDialog(true)}
+                    >
+                      <Bell className="h-4 w-4" />
+                      Añadirme a la lista de espera
+                    </Button>
+                  )}
+                </div>
               ) : (
                 <>
                   {isAdmin && <p className="text-sm text-muted-foreground mb-2">O selecciona un horario disponible:</p>}
@@ -474,6 +563,68 @@ export const DateTimeSelection = ({
           Continuar
         </Button>
       </div>
+
+      {/* Waitlist Dialog */}
+      <Dialog open={showWaitlistDialog} onOpenChange={setShowWaitlistDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
+              Lista de espera
+            </DialogTitle>
+            <DialogDescription>
+              Te avisaremos cuando haya disponibilidad para el {date ? format(date, "d 'de' MMMM", { locale: es }) : ""}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="waitlist-name">Nombre</Label>
+              <Input
+                id="waitlist-name"
+                placeholder="Tu nombre"
+                value={waitlistName}
+                onChange={(e) => setWaitlistName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="waitlist-phone">Teléfono</Label>
+              <Input
+                id="waitlist-phone"
+                placeholder="Tu teléfono"
+                type="tel"
+                value={waitlistPhone}
+                onChange={(e) => setWaitlistPhone(e.target.value)}
+              />
+            </div>
+            
+            <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+              <p className="font-medium text-foreground mb-1">Servicios solicitados:</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                {services.map(s => (
+                  <li key={s.id}>{s.name}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWaitlistDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleWaitlistSubmit} disabled={waitlistSubmitting}>
+              {waitlistSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Enviando...
+                </>
+              ) : (
+                "Añadirme a la lista"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
