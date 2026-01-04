@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Star, ArrowDown } from "lucide-react";
+import { Star, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import glowappIcon from "@/assets/glowapp-icon.png";
@@ -59,122 +59,112 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
   const mainImage = heroImages?.[0] || tenant.hero_image_url;
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Full Screen Hero Image */}
-      {mainImage ? (
-        <div className="absolute inset-0">
-          <img 
-            src={mainImage} 
-            alt={tenant.name}
-            className="w-full h-full object-cover"
-          />
-          {/* Elegant dark gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
-        </div>
-      ) : (
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(180deg, ${tenant.primary_color || '#18181B'} 0%, #000 100%)`
-          }}
-        />
-      )}
+    <div className="min-h-screen bg-white">
+      {/* Main Content - Split layout on desktop */}
+      <div className="min-h-screen flex flex-col lg:flex-row">
+        
+        {/* Left Side - Content */}
+        <div className="flex-1 flex flex-col justify-center px-8 md:px-16 lg:px-20 py-16 lg:py-0 order-2 lg:order-1">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-xl"
+          >
+            {/* Logo */}
+            {tenant.logo_url && tenant.show_logo_on_landing !== false && (
+              <motion.img
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                src={tenant.logo_url}
+                alt={tenant.name}
+                className="w-12 h-12 md:w-14 md:h-14 object-contain mb-8 rounded-lg"
+              />
+            )}
 
-      {/* Content - Centered */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-lg"
-        >
-          {/* Logo */}
-          {tenant.logo_url && tenant.show_logo_on_landing !== false && (
-            <motion.img
-              initial={{ opacity: 0, scale: 0.8 }}
+            {/* Stats - Subtle top info */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="flex items-center gap-4 mb-6"
+            >
+              {stats.rating > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  <span className="text-gray-700 text-sm font-medium">{stats.rating}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 text-gray-500 text-sm">
+                <img src={glowappIcon} alt="Glowapp" className="w-4 h-4 object-contain" />
+                <span>En Glowapp desde {stats.since}</span>
+              </div>
+            </motion.div>
+
+            {/* Name - Large editorial typography */}
+            <h1 
+              className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold tracking-tight leading-[1.1] mb-6"
+              style={{ color: tenant.primary_color || '#18181B' }}
+            >
+              {tenant.name}
+            </h1>
+
+            {/* Tagline */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-lg md:text-xl text-gray-600 font-body leading-relaxed mb-10 max-w-md"
+            >
+              {displayTagline}
+            </motion.p>
+
+            {/* CTA Button - Minimal with arrow */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <Button
+                onClick={onBookNow}
+                size="lg"
+                className="group px-8 py-6 text-base font-medium rounded-full text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
+                style={{
+                  backgroundColor: tenant.primary_color || '#18181B',
+                }}
+              >
+                Reservar cita
+                <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Right Side - Image */}
+        <div className="lg:flex-1 h-[50vh] lg:h-screen order-1 lg:order-2 relative">
+          {mainImage ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 1.05 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              src={tenant.logo_url}
-              alt={tenant.name}
-              className="w-16 h-16 md:w-20 md:h-20 object-contain mx-auto mb-8 rounded-xl"
+              transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0"
+            >
+              <img 
+                src={mainImage} 
+                alt={tenant.name}
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          ) : (
+            <div 
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(135deg, ${tenant.primary_color || '#f4f4f5'} 0%, #e4e4e7 100%)`
+              }}
             />
           )}
-
-          {/* Name - Elegant typography */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-light text-white tracking-tight leading-tight mb-6">
-            {tenant.name}
-          </h1>
-
-          {/* Subtle decorative line */}
-          <motion.div
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="w-16 h-px mx-auto mb-6"
-            style={{ backgroundColor: tenant.primary_color || 'rgba(255,255,255,0.4)' }}
-          />
-
-          {/* Tagline */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-base md:text-lg text-white/80 font-body leading-relaxed mb-8 max-w-sm mx-auto"
-          >
-            {displayTagline}
-          </motion.p>
-
-          {/* Stats - Minimal pills */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="flex items-center justify-center gap-4 mb-10"
-          >
-            {stats.rating > 0 && (
-              <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                <span className="text-white text-sm font-medium">{stats.rating}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-              <img src={glowappIcon} alt="Glowapp" className="w-4 h-4 object-contain" />
-              <span className="text-white/90 text-sm">En Glowapp desde {stats.since}</span>
-            </div>
-          </motion.div>
-
-          {/* CTA Button - Clean and elegant */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
-            <Button
-              onClick={onBookNow}
-              size="lg"
-              className="px-10 py-6 text-base font-medium rounded-full bg-white text-gray-900 hover:bg-white/90 shadow-xl transition-all duration-300 hover:scale-105"
-            >
-              Reservar cita
-            </Button>
-          </motion.div>
-        </motion.div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            className="flex flex-col items-center gap-2"
-          >
-            <span className="text-white/50 text-xs tracking-widest uppercase">Descubrir</span>
-            <ArrowDown className="w-4 h-4 text-white/50" />
-          </motion.div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
