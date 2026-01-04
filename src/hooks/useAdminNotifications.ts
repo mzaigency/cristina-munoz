@@ -18,6 +18,7 @@ export function useAdminNotifications(tenantId: string | null) {
     reviews: 0
   });
   const [loading, setLoading] = useState(true);
+  const [viewedSections, setViewedSections] = useState<Set<string>>(new Set());
 
   const fetchCounts = useCallback(async () => {
     if (!tenantId) return;
@@ -66,18 +67,44 @@ export function useAdminNotifications(tenantId: string | null) {
         .reduce((sum, conv) => sum + (conv.unread_count_salon || 0), 0);
 
       setCounts({
-        agenda: newBookingsResult.count || 0,
-        clients: newClientsResult.count || 0,
+        agenda: viewedSections.has('agenda') ? 0 : (newBookingsResult.count || 0),
+        clients: viewedSections.has('clients') ? 0 : (newClientsResult.count || 0),
         business: 0,
-        messages: unreadMessages,
-        reviews: pendingReviewsResult.count || 0
+        messages: viewedSections.has('communication') ? 0 : unreadMessages,
+        reviews: viewedSections.has('communication') ? 0 : (pendingReviewsResult.count || 0)
       });
     } catch (error) {
       console.error('Error fetching admin notifications:', error);
     } finally {
       setLoading(false);
     }
-  }, [tenantId]);
+  }, [tenantId, viewedSections]);
+
+  // Mark a section as viewed (clears its notification)
+  const markSectionViewed = useCallback((section: string) => {
+    setViewedSections(prev => {
+      const newSet = new Set(prev);
+      newSet.add(section);
+      return newSet;
+    });
+    
+    // Clear the count for this section immediately
+    setCounts(prev => {
+      const newCounts = { ...prev };
+      if (section === 'agenda') newCounts.agenda = 0;
+      if (section === 'clients') newCounts.clients = 0;
+      if (section === 'communication') {
+        newCounts.messages = 0;
+        newCounts.reviews = 0;
+      }
+      return newCounts;
+    });
+  }, []);
+
+  // Reset viewed sections (e.g., on new day or refresh)
+  const resetViewedSections = useCallback(() => {
+    setViewedSections(new Set());
+  }, []);
 
   useEffect(() => {
     fetchCounts();
@@ -89,13 +116,22 @@ export function useAdminNotifications(tenantId: string | null) {
       .channel(`admin-notifications-${tenantId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'bookings', filter: `tenant_id=eq.${tenantId}` },
-        () => fetchCounts()
+        { event: 'INSERT', schema: 'public', table: 'bookings', filter: `tenant_id=eq.${tenantId}` },
+        () => {
+          // Only update if section hasn't been viewed
+          if (!viewedSections.has('agenda')) {
+            setCounts(prev => ({ ...prev, agenda: prev.agenda + 1 }));
+          }
+        }
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'clients', filter: `tenant_id=eq.${tenantId}` },
-        () => fetchCounts()
+        { event: 'INSERT', schema: 'public', table: 'clients', filter: `tenant_id=eq.${tenantId}` },
+        () => {
+          if (!viewedSections.has('clients')) {
+            setCounts(prev => ({ ...prev, clients: prev.clients + 1 }));
+          }
+        }
       )
       .on(
         'postgres_changes',
@@ -104,15 +140,19 @@ export function useAdminNotifications(tenantId: string | null) {
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'reviews', filter: `tenant_id=eq.${tenantId}` },
-        () => fetchCounts()
+        { event: 'INSERT', schema: 'public', table: 'reviews', filter: `tenant_id=eq.${tenantId}` },
+        () => {
+          if (!viewedSections.has('communication')) {
+            setCounts(prev => ({ ...prev, reviews: prev.reviews + 1 }));
+          }
+        }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [tenantId, fetchCounts]);
+  }, [tenantId, fetchCounts, viewedSections]);
 
   // Get total for communication section (messages + reviews)
   const getCommunicationCount = () => counts.messages + counts.reviews;
@@ -121,6 +161,8 @@ export function useAdminNotifications(tenantId: string | null) {
     counts,
     loading,
     refetch: fetchCounts,
-    getCommunicationCount
+    getCommunicationCount,
+    markSectionViewed,
+    resetViewedSections
   };
 }

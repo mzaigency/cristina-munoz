@@ -34,7 +34,7 @@ import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks,
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
-import { BUSINESS_HOURS } from "@/constants/business";
+import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
 
 interface LocalBooking {
   id: string;
@@ -112,6 +112,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
   const [pendingCancelBooking, setPendingCancelBooking] = useState<LocalBooking | null>(null);
 
   const { toast } = useToast();
+  
+  // Get tenant business hours
+  const { businessHours, getBusinessHoursForDay, getClosedDays } = useTenantBusinessHours(tenantId);
 
   useEffect(() => {
     const timerId = setInterval(() => {
@@ -506,18 +509,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
   const getScheduleForDay = (dayDate: Date) => {
     const dayOfWeek = dayDate.getDay();
-    const businessHours = BUSINESS_HOURS[dayOfWeek];
+    const dayHours = getBusinessHoursForDay(dayOfWeek);
 
-    if (businessHours.isClosed) {
-      return { hours: [], startHour: 0, endHour: 0, breakStart: null, breakEnd: null };
+    if (dayHours.isClosed) {
+      return { hours: [], startHour: 0, endHour: 0, breakStart: null, breakEnd: null, isClosed: true };
     }
 
     // Calculate start and end hours from business hours
-    let defaultStartHour = Math.floor(businessHours.morningStart / 60);
+    let defaultStartHour = Math.floor(dayHours.morningStart / 60);
     let defaultEndHour =
-      businessHours.afternoonEnd > 0
-        ? Math.ceil(businessHours.afternoonEnd / 60)
-        : Math.ceil(businessHours.morningEnd / 60);
+      dayHours.afternoonEnd > 0
+        ? Math.ceil(dayHours.afternoonEnd / 60)
+        : Math.ceil(dayHours.morningEnd / 60);
 
     const dayBookings = bookings.filter((b) => b.Fecha === format(dayDate, "yyyy-MM-dd"));
 
@@ -539,10 +542,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     const hours = Array.from({ length: actualEndHour - actualStartHour }, (_, i) => actualStartHour + i);
 
     // Break times for this day
-    const breakStart = businessHours.afternoonStart > 0 ? Math.floor(businessHours.morningEnd / 60) : null;
-    const breakEnd = businessHours.afternoonStart > 0 ? Math.floor(businessHours.afternoonStart / 60) : null;
+    const breakStart = dayHours.afternoonStart > 0 ? Math.floor(dayHours.morningEnd / 60) : null;
+    const breakEnd = dayHours.afternoonStart > 0 ? Math.floor(dayHours.afternoonStart / 60) : null;
 
-    return { hours, startHour: actualStartHour, endHour: actualEndHour, breakStart, breakEnd };
+    return { hours, startHour: actualStartHour, endHour: actualEndHour, breakStart, breakEnd, isClosed: false };
   };
 
   const calculateBookingPosition = (booking: LocalBooking, dayDate: Date) => {
@@ -1035,6 +1038,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
               const dayBookings = groupedBookings[dateKey] || [];
               const isToday = isSameDay(day, new Date());
               const hasFullBlock = dayBookings.some((b) => b.title?.includes("🌴 VACACIONES"));
+              const schedule = getScheduleForDay(day);
+              const isClosed = schedule.isClosed;
 
               return (
                 <TabsTrigger
@@ -1043,6 +1048,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                   className={cn(
                     "flex-col items-center gap-0.5 data-[state=active]:bg-background px-1.5 md:px-4 py-1.5 md:py-2 min-w-[52px] md:min-w-[100px]",
                     isToday && "border-primary",
+                    isClosed && "opacity-60",
                   )}
                 >
                   <div className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 w-full">
@@ -1055,9 +1061,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                         Hoy
                       </Badge>
                     )}
-                    {hasFullBlock && <Ban className="h-2.5 w-2.5 md:h-3 md:w-3 text-destructive" />}
+                    {(hasFullBlock || isClosed) && <Ban className="h-2.5 w-2.5 md:h-3 md:w-3 text-destructive" />}
                   </div>
-                  <span className="text-[9px] md:text-xs text-muted-foreground">{dayBookings.length} citas</span>
+                  <span className="text-[9px] md:text-xs text-muted-foreground">
+                    {isClosed ? "Cerrado" : `${dayBookings.length} citas`}
+                  </span>
                 </TabsTrigger>
               );
             })}
