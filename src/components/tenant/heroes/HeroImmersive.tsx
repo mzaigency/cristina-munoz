@@ -26,7 +26,7 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start start", "end start"]
+    offset: ["start start", "end start"],
   });
 
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
@@ -42,24 +42,20 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
         .select("rating")
         .eq("tenant_id", tenant.id)
         .eq("approved", true);
-      
-      const avgRating = reviewsData?.length 
+
+      const avgRating = reviewsData?.length
         ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
         : 0;
-      
-      const { data: tenantData } = await supabase
-        .from("tenants")
-        .select("created_at")
-        .eq("id", tenant.id)
-        .single();
-      
-      const createdYear = tenantData?.created_at 
+
+      const { data: tenantData } = await supabase.from("tenants").select("created_at").eq("id", tenant.id).single();
+
+      const createdYear = tenantData?.created_at
         ? new Date(tenantData.created_at).getFullYear()
         : new Date().getFullYear();
-      
+
       setStats({ rating: Number(avgRating), since: createdYear });
     };
-    
+
     if (tenant.id) fetchStats();
   }, [tenant.id]);
 
@@ -71,32 +67,25 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
   return (
     <div ref={containerRef} className="relative h-screen w-full overflow-hidden">
       {/* Background Image with Parallax */}
-      <motion.div 
-        style={{ y, scale }}
-        className="absolute inset-0"
-      >
+      <motion.div style={{ y, scale }} className="absolute inset-0">
         {heroImage ? (
-          <img
-            src={heroImage}
-            alt={tenant.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={heroImage} alt={tenant.name} className="w-full h-full object-cover" />
         ) : (
-          <div 
+          <div
             className="w-full h-full"
             style={{
-              background: `linear-gradient(135deg, ${tenant.primary_color || '#8B5CF6'} 0%, ${tenant.secondary_color || '#D946EF'} 100%)`
+              background: `linear-gradient(135deg, ${tenant.primary_color || "#8B5CF6"} 0%, ${tenant.secondary_color || "#D946EF"} 100%)`,
             }}
           />
         )}
-        
+
         {/* Gradient Overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
       </motion.div>
 
       {/* Content */}
-      <motion.div 
+      <motion.div
         style={{ opacity }}
         className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center"
       >
@@ -118,7 +107,7 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-4 tracking-tight"
-          style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+          style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
         >
           {tenant.name}
         </motion.h1>
@@ -147,7 +136,7 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
             </div>
           )}
           <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
-            <span className="text-white/90 text-sm">Desde {stats.since}</span>
+            <span className="text-white/90 text-sm">En Glowapp desde {stats.since}</span>
           </div>
         </motion.div>
 
@@ -162,7 +151,7 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
             size="lg"
             className="text-base px-8 py-6 rounded-full shadow-2xl hover:scale-105 transition-transform"
             style={{
-              background: `linear-gradient(135deg, ${tenant.primary_color || '#8B5CF6'} 0%, ${tenant.secondary_color || '#D946EF'} 100%)`
+              background: `linear-gradient(135deg, ${tenant.primary_color || "#8B5CF6"} 0%, ${tenant.secondary_color || "#D946EF"} 100%)`,
             }}
           >
             Reservar cita
