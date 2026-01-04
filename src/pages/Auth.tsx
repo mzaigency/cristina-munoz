@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { phoneSchema, cleanPhoneNumber } from "@/lib/phoneValidation";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
@@ -29,7 +30,7 @@ const signUpSchema = signInSchema
       .min(3, "Mínimo 3 caracteres")
       .max(30, "Máximo 30 caracteres")
       .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guion bajo"),
-    phone: z.string().trim().min(9, "Mínimo 9 dígitos").max(15),
+    phone: phoneSchema,
     confirmPassword: z.string().min(6),
     acceptTerms: z.boolean().refine((val) => val === true, {
       message: "Debes aceptar los términos",
@@ -186,7 +187,7 @@ export default function Auth() {
             data: {
               full_name: `${signUpValues.firstName} ${signUpValues.lastName}`,
               username: signUpValues.username.toLowerCase(),
-              phone: signUpValues.phone,
+              phone: cleanPhoneNumber(signUpValues.phone),
             },
           },
         });
