@@ -8,70 +8,34 @@ import {
   Loader2, 
   Home, 
   Calendar, 
-  Star, 
   MessageCircle, 
-  BarChart3, 
   Wallet, 
   ExternalLink, 
   Settings, 
   Scissors, 
   Users, 
-  Clock, 
-  ImageIcon, 
-  Package,
-  ChevronDown,
   LayoutDashboard,
-  UserCircle,
-  BellRing,
-  Gift,
-  UserPlus,
-  Target,
-  Percent,
-  FileText,
-  HelpCircle,
-  Sparkles,
-  Menu,
-  ChevronLeft,
-  ChevronRight
+  UserCircle
 } from "lucide-react";
-import { LocalCalendarCRM } from "@/components/admin/LocalCalendarCRM";
-import { ReviewsManager } from "@/components/admin/ReviewsManager";
-import { SecurityMonitor } from "@/components/admin/SecurityMonitor";
-import { MessagesManager } from "@/components/admin/MessagesManager";
-import { CashRegisterManager } from "@/components/admin/CashRegisterManager";
-import { TenantSettings } from "@/components/admin/TenantSettings";
-import { ServicesManager } from "@/components/admin/ServicesManager";
-import { StylistsManager } from "@/components/admin/StylistsManager";
-import { BusinessHoursManager } from "@/components/admin/BusinessHoursManager";
-import { StoriesAnalytics } from "@/components/admin/StoriesAnalytics";
-import { WidgetResponsesViewer } from "@/components/admin/WidgetResponsesViewer";
-import { ProductsManager } from "@/components/admin/ProductsManager";
-import { HelpTutorial } from "@/components/admin/HelpTutorial";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { ClientsCRM } from "@/components/admin/ClientsCRM";
+import { HelpTutorial } from "@/components/admin/HelpTutorial";
 import { QuickActionsFAB } from "@/components/admin/QuickActionsFAB";
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
-import { ClientsCRM } from "@/components/admin/ClientsCRM";
-import { NotificationSettings } from "@/components/admin/NotificationSettings";
-import { PromotionsManager } from "@/components/admin/PromotionsManager";
-import { WaitlistManager } from "@/components/admin/WaitlistManager";
-import { ServicePackagesManager } from "@/components/admin/ServicePackagesManager";
-import { CommissionsManager } from "@/components/admin/CommissionsManager";
-import { MonthlyGoals } from "@/components/admin/MonthlyGoals";
-import { AdvancedCashStats } from "@/components/admin/AdvancedCashStats";
-import { PDFReportsGenerator } from "@/components/admin/PDFReportsGenerator";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+
+// Import consolidated sections
+import { 
+  BusinessSection, 
+  TeamSection, 
+  SettingsSection, 
+  AgendaSection,
+  CommunicationSection 
+} from "@/components/admin/sections";
 
 interface Tenant {
   id: string;
@@ -88,76 +52,41 @@ interface Stylist {
   color: string;
 }
 
-type TabValue = "dashboard" | "calendar" | "clients" | "cash" | "reviews" | "messages" | "stories" | "security" | "products" | "services" | "stylists" | "hours" | "notifications" | "settings" | "promotions" | "waitlist" | "packages" | "commissions" | "goals" | "reports";
+// Simplified to 6 main tabs
+type TabValue = "dashboard" | "agenda" | "clients" | "business" | "team" | "communication" | "settings";
 
 interface NavItem {
   value: TabValue;
   label: string;
   icon: React.ReactNode;
   badge?: number;
-  group: "main" | "sales" | "team" | "config";
 }
-
-// Group definitions for better organization
-const NAV_GROUPS = {
-  main: { label: "Principal", icon: <LayoutDashboard className="h-4 w-4" /> },
-  sales: { label: "Ventas", icon: <Wallet className="h-4 w-4" /> },
-  team: { label: "Gestión", icon: <Users className="h-4 w-4" /> },
-  config: { label: "Configuración", icon: <Settings className="h-4 w-4" /> },
-};
 
 export default function TenantAdmin() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
   const [activeTab, setActiveTab] = useState<TabValue>("dashboard");
-  const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
   const [messagesUnreadCount, setMessagesUnreadCount] = useState(0);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [hasAccess, setHasAccess] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
   
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
+  // Simplified navigation - only 6 main tabs
   const navItems: NavItem[] = [
-    // Main group - Most used
-    { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" />, group: "main" },
-    { value: "calendar", label: "Agenda", icon: <Calendar className="h-4 w-4" />, group: "main" },
-    { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, group: "main" },
-    { value: "messages", label: "Mensajes", icon: <MessageCircle className="h-4 w-4" />, badge: messagesUnreadCount, group: "main" },
-    { value: "stories", label: "Stories", icon: <ImageIcon className="h-4 w-4" />, group: "main" },
-    
-    // Sales group
-    { value: "cash", label: "Caja", icon: <Wallet className="h-4 w-4" />, group: "sales" },
-    { value: "promotions", label: "Promos", icon: <Gift className="h-4 w-4" />, group: "sales" },
-    { value: "packages", label: "Paquetes", icon: <Package className="h-4 w-4" />, group: "sales" },
-    { value: "products", label: "Productos", icon: <Package className="h-4 w-4" />, group: "sales" },
-    { value: "goals", label: "Objetivos", icon: <Target className="h-4 w-4" />, group: "sales" },
-    { value: "security", label: "Stats", icon: <BarChart3 className="h-4 w-4" />, group: "sales" },
-    
-    // Team group
-    { value: "stylists", label: "Equipo", icon: <Users className="h-4 w-4" />, group: "team" },
-    { value: "commissions", label: "Comisiones", icon: <Percent className="h-4 w-4" />, group: "team" },
-    { value: "waitlist", label: "Espera", icon: <UserPlus className="h-4 w-4" />, group: "team" },
-    { value: "services", label: "Servicios", icon: <Scissors className="h-4 w-4" />, group: "team" },
-    
-    // Config group
-    { value: "hours", label: "Horarios", icon: <Clock className="h-4 w-4" />, group: "config" },
-    { value: "notifications", label: "Alertas", icon: <BellRing className="h-4 w-4" />, group: "config" },
-    { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" />, group: "config" },
+    { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
+    { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" /> },
+    { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" /> },
+    { value: "business", label: "Negocio", icon: <Wallet className="h-4 w-4" /> },
+    { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
+    { value: "communication", label: "Comunica", icon: <MessageCircle className="h-4 w-4" />, badge: messagesUnreadCount },
+    { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" /> },
   ];
-
-  // For mobile: show primary tabs + more menu
-  const mobileVisibleItems = navItems.filter(item => 
-    ["dashboard", "calendar", "clients", "cash", "messages"].includes(item.value)
-  );
-  const mobileHiddenItems = navItems.filter(item => 
-    !["dashboard", "calendar", "clients", "cash", "messages"].includes(item.value)
-  );
 
   const tabOrder = navItems.map(item => item.value);
   
@@ -168,32 +97,14 @@ export default function TenantAdmin() {
     enabled: isMobile
   });
 
-  const mainItems = navItems.filter(item => item.group === "main");
-  const configItems = navItems.filter(item => item.group === "config");
-
   useEffect(() => {
     checkAuth();
   }, [slug]);
 
   useEffect(() => {
     if (tenant?.id) {
-      fetchPendingReviews();
       fetchMessagesUnreadCount();
       fetchStylists();
-
-      const reviewsChannel = supabase
-        .channel("pending-reviews-count")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "reviews",
-            filter: `tenant_id=eq.${tenant.id}`
-          },
-          () => fetchPendingReviews()
-        )
-        .subscribe();
 
       const messagesChannel = supabase
         .channel("messages-unread-count")
@@ -210,7 +121,6 @@ export default function TenantAdmin() {
         .subscribe();
 
       return () => {
-        supabase.removeChannel(reviewsChannel);
         supabase.removeChannel(messagesChannel);
       };
     }
@@ -232,22 +142,6 @@ export default function TenantAdmin() {
         slug: s.slug,
         color: s.color || "#8B5CF6"
       })));
-    }
-  };
-
-  const fetchPendingReviews = async () => {
-    if (!tenant?.id) return;
-    
-    try {
-      const { count } = await supabase
-        .from("reviews")
-        .select("*", { count: "exact", head: true })
-        .eq("tenant_id", tenant.id)
-        .eq("approved", false);
-
-      setPendingReviewsCount(count || 0);
-    } catch (error) {
-      console.error("Error fetching pending reviews:", error);
     }
   };
 
@@ -372,7 +266,6 @@ export default function TenantAdmin() {
     setRefreshKey(prev => prev + 1);
     if (tenant?.id) {
       await Promise.all([
-        fetchPendingReviews(),
         fetchMessagesUnreadCount(),
         fetchStylists()
       ]);
@@ -386,16 +279,16 @@ export default function TenantAdmin() {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case "new-booking":
-        setActiveTab("calendar");
+        setActiveTab("agenda");
         break;
       case "new-payment":
-        setActiveTab("cash");
+        setActiveTab("business");
         break;
       case "block-slot":
-        setActiveTab("calendar");
+        setActiveTab("agenda");
         break;
       case "new-service":
-        setActiveTab("services");
+        setActiveTab("team");
         break;
       default:
         break;
@@ -411,83 +304,59 @@ export default function TenantAdmin() {
           <AdminDashboard 
             key={refreshKey} 
             tenantId={tenant.id} 
-            onNavigate={(tab) => setActiveTab(tab as TabValue)}
+            onNavigate={(tab) => {
+              // Map old tab names to new ones
+              const tabMap: Record<string, TabValue> = {
+                "calendar": "agenda",
+                "cash": "business",
+                "services": "team",
+                "stylists": "team",
+                "messages": "communication",
+                "settings": "settings",
+                "clients": "clients"
+              };
+              setActiveTab(tabMap[tab] || tab as TabValue);
+            }}
             onQuickAction={handleQuickAction}
           />
         );
-      case "calendar":
-        return <LocalCalendarCRM key={refreshKey} tenantId={tenant.id} stylists={stylists} />;
+      case "agenda":
+        return <AgendaSection key={refreshKey} tenantId={tenant.id} />;
       case "clients":
         return <ClientsCRM key={refreshKey} tenantId={tenant.id} />;
-      case "cash":
-        return (
-          <div className="space-y-6">
-            <CashRegisterManager key={refreshKey} tenantId={tenant.id} />
-            <AdvancedCashStats tenantId={tenant.id} />
-            <PDFReportsGenerator tenantId={tenant.id} tenantName={tenant.name} />
-          </div>
-        );
-      case "promotions":
-        return <PromotionsManager key={refreshKey} tenantId={tenant.id} />;
-      case "waitlist":
-        return <WaitlistManager key={refreshKey} tenantId={tenant.id} />;
-      case "messages":
-        return <MessagesManager key={refreshKey} tenantId={tenant.id} />;
-      case "stories":
-        return (
-          <div className="space-y-8">
-            <StoriesAnalytics key={refreshKey} tenantId={tenant.id} />
-            <WidgetResponsesViewer tenantId={tenant.id} />
-          </div>
-        );
-      case "security":
-        return <SecurityMonitor key={refreshKey} tenantId={tenant.id} />;
-      case "products":
-        return <ProductsManager key={refreshKey} tenantId={tenant.id} />;
-      case "services":
-        return <ServicesManager key={refreshKey} tenantId={tenant.id} />;
-      case "packages":
-        return <ServicePackagesManager key={refreshKey} tenantId={tenant.id} />;
-      case "stylists":
-        return <StylistsManager key={refreshKey} tenantId={tenant.id} />;
-      case "commissions":
-        return <CommissionsManager key={refreshKey} tenantId={tenant.id} />;
-      case "goals":
-        return <MonthlyGoals key={refreshKey} tenantId={tenant.id} />;
-      case "hours":
-        return <BusinessHoursManager key={refreshKey} tenantId={tenant.id} />;
-      case "notifications":
-        return <NotificationSettings key={refreshKey} tenantId={tenant.id} />;
+      case "business":
+        return <BusinessSection key={refreshKey} tenantId={tenant.id} />;
+      case "team":
+        return <TeamSection key={refreshKey} tenantId={tenant.id} />;
+      case "communication":
+        return <CommunicationSection key={refreshKey} tenantId={tenant.id} />;
       case "settings":
-        return <TenantSettings key={refreshKey} tenantId={tenant.id} tenantSlug={tenant.slug} />;
+        return <SettingsSection key={refreshKey} tenantId={tenant.id} tenantSlug={tenant.slug} />;
       default:
         return null;
     }
   };
 
-  const renderNavButton = (item: NavItem, compact: boolean = false) => {
+  const renderNavButton = (item: NavItem) => {
     const isActive = activeTab === item.value;
     return (
       <button
         key={item.value}
-        onClick={() => {
-          setActiveTab(item.value);
-          setShowMoreMenu(false);
-        }}
+        onClick={() => setActiveTab(item.value)}
         role="tab"
         aria-selected={isActive}
         aria-label={`${item.label}${item.badge ? `, ${item.badge} pendientes` : ''}`}
         data-tour-step={`nav-${item.value}`}
         className={cn(
-          "relative flex items-center justify-center gap-1.5 transition-all duration-200 shrink-0",
+          "relative flex flex-col items-center justify-center gap-1 transition-all duration-200 shrink-0",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          compact ? [
-            "flex-col px-2 py-1.5 rounded-lg min-w-[52px] h-[52px]",
+          isMobile ? [
+            "px-2 py-1.5 rounded-xl min-w-[48px] h-[56px]",
             isActive 
-              ? "bg-primary text-primary-foreground shadow-md" 
+              ? "bg-primary text-primary-foreground shadow-lg scale-105" 
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           ] : [
-            "px-3 py-2 rounded-xl min-w-[72px] h-[56px] flex-col",
+            "px-4 py-2.5 rounded-xl min-w-[80px] h-[60px]",
             isActive 
               ? "bg-primary text-primary-foreground shadow-lg" 
               : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
@@ -498,7 +367,7 @@ export default function TenantAdmin() {
           {item.icon}
           {item.badge && item.badge > 0 && (
             <span 
-              className="absolute -top-1 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-white"
+              className="absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white"
               aria-hidden="true"
             >
               {item.badge > 9 ? "9+" : item.badge}
@@ -507,7 +376,7 @@ export default function TenantAdmin() {
         </div>
         <span className={cn(
           "font-medium leading-none whitespace-nowrap",
-          compact ? "text-[9px]" : "text-[10px]"
+          isMobile ? "text-[10px]" : "text-xs"
         )}>{item.label}</span>
       </button>
     );
@@ -524,8 +393,6 @@ export default function TenantAdmin() {
   if (!hasAccess || !tenant) {
     return null;
   }
-
-  const activeItem = navItems.find(item => item.value === activeTab);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -556,8 +423,20 @@ export default function TenantAdmin() {
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* Tour and Help buttons */}
-              <InteractiveTour onTabChange={(tab) => setActiveTab(tab as TabValue)} />
+              <InteractiveTour onTabChange={(tab) => {
+                // Map old tab names to new ones for tour
+                const tabMap: Record<string, TabValue> = {
+                  "calendar": "agenda",
+                  "cash": "business",
+                  "services": "team",
+                  "stylists": "team",
+                  "messages": "communication",
+                  "settings": "settings",
+                  "clients": "clients",
+                  "dashboard": "dashboard"
+                };
+                setActiveTab(tabMap[tab] || tab as TabValue);
+              }} />
               <HelpTutorial />
               
               <Button 
@@ -593,94 +472,25 @@ export default function TenantAdmin() {
             </div>
           </div>
 
-          {/* Navigation - Different for mobile and desktop */}
-          {isMobile ? (
-            /* Mobile Navigation - Primary tabs + More menu */
-            <nav 
-              className="flex items-center gap-1 py-2"
-              aria-label="Navegación del panel de administración"
-              role="tablist"
-            >
-              {mobileVisibleItems.map((item) => renderNavButton(item, true))}
-              
-              {/* More menu */}
-              <DropdownMenu open={showMoreMenu} onOpenChange={setShowMoreMenu}>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={cn(
-                      "relative flex flex-col items-center justify-center gap-0.5",
-                      "px-2 py-1.5 rounded-lg min-w-[52px] h-[52px] transition-all duration-200",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      mobileHiddenItems.some(i => i.value === activeTab)
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    <Menu className="h-4 w-4" />
-                    <span className="text-[9px] font-medium">Más</span>
-                    {mobileHiddenItems.some(i => i.badge && i.badge > 0) && (
-                      <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
-                    )}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="end" 
-                  className="w-56 max-h-[60vh] overflow-y-auto"
-                  sideOffset={8}
-                >
-                  {Object.entries(NAV_GROUPS).map(([groupKey, group]) => {
-                    const groupItems = mobileHiddenItems.filter(item => item.group === groupKey);
-                    if (groupItems.length === 0) return null;
-                    
-                    return (
-                      <div key={groupKey}>
-                        <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {group.icon}
-                          {group.label}
-                        </DropdownMenuLabel>
-                        {groupItems.map((item) => (
-                          <DropdownMenuItem
-                            key={item.value}
-                            onClick={() => {
-                              setActiveTab(item.value);
-                              setShowMoreMenu(false);
-                            }}
-                            className={cn(
-                              "flex items-center gap-3 cursor-pointer",
-                              activeTab === item.value && "bg-primary/10 text-primary"
-                            )}
-                          >
-                            {item.icon}
-                            <span className="flex-1">{item.label}</span>
-                            {item.badge && item.badge > 0 && (
-                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
-                                {item.badge > 9 ? "9+" : item.badge}
-                              </span>
-                            )}
-                          </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                      </div>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </nav>
-          ) : (
-            /* Desktop Navigation - Horizontal scroll with groups */
-            <nav 
-              className="flex items-center py-2"
-              aria-label="Navegación del panel de administración"
-              role="tablist"
-            >
+          {/* Navigation - Clean horizontal tabs for both mobile and desktop */}
+          <nav 
+            className="flex items-center py-2"
+            aria-label="Navegación del panel de administración"
+            role="tablist"
+          >
+            {isMobile ? (
+              <div className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar pb-1">
+                {navItems.map((item) => renderNavButton(item))}
+              </div>
+            ) : (
               <ScrollArea className="w-full">
-                <div className="flex items-center gap-1 pb-2">
-                  {navItems.map((item) => renderNavButton(item, false))}
+                <div className="flex items-center gap-2 pb-2">
+                  {navItems.map((item) => renderNavButton(item))}
                 </div>
                 <ScrollBar orientation="horizontal" className="h-1.5" />
               </ScrollArea>
-            </nav>
-          )}
+            )}
+          </nav>
         </div>
       </header>
 
