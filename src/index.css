@@ -334,6 +334,11 @@
     background-clip: text;
   }
 
+  /* Story ring gradient - matches logo typography gradient */
+  .story-ring-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+
   /* Card styles with depth */
   .card-elevated {
     box-shadow: 

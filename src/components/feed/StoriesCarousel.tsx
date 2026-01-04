@@ -49,8 +49,17 @@ export function StoriesCarousel() {
   const { setNavigationHidden } = useNavigation();
   const queryClient = useQueryClient();
 
+  // Get current user for viewing status
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setCurrentUserId(user?.id || null);
+    });
+  }, []);
+
   const { data: storyGroups = [], isLoading } = useQuery({
-    queryKey: ["salon-stories"],
+    queryKey: ["salon-stories", currentUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("salon_stories")
@@ -75,21 +84,41 @@ export function StoriesCarousel() {
 
       if (error) throw error;
 
+      // Get viewed stories for current user
+      let viewedStoryIds: string[] = [];
+      if (currentUserId) {
+        const { data: views } = await supabase
+          .from("story_views")
+          .select("story_id")
+          .eq("user_id", currentUserId);
+        viewedStoryIds = views?.map(v => v.story_id) || [];
+      }
+
       // Group stories by tenant
       const grouped = (data || []).reduce((acc, story) => {
         const existing = acc.find((g) => g.tenant_id === story.tenant_id);
+        const isViewed = viewedStoryIds.includes(story.id);
+        
         if (existing) {
           existing.stories.push(story as Story);
+          if (!isViewed) existing.hasUnviewed = true;
         } else {
           acc.push({
             tenant_id: story.tenant_id,
             tenant: story.tenant as Story["tenant"],
             stories: [story as Story],
-            hasUnviewed: true,
+            hasUnviewed: !isViewed,
           });
         }
         return acc;
       }, [] as StoryGroup[]);
+
+      // Sort: unviewed first
+      grouped.sort((a, b) => {
+        if (a.hasUnviewed && !b.hasUnviewed) return -1;
+        if (!a.hasUnviewed && b.hasUnviewed) return 1;
+        return 0;
+      });
 
       return grouped;
     },
@@ -172,12 +201,22 @@ export function StoriesCarousel() {
     }
   };
 
-  const handleStoryClick = (group: StoryGroup) => {
+  const handleStoryClick = async (group: StoryGroup) => {
     setSelectedGroup(group);
     setCurrentStoryIndex(0);
     setProgress(0);
     setShowReplyInput(false);
     setIsMuted(true);
+    
+    // Mark first story as viewed
+    if (currentUserId && group.stories[0]) {
+      await supabase.from("story_views").upsert({
+        story_id: group.stories[0].id,
+        user_id: currentUserId
+      }, { onConflict: 'story_id,user_id' }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["salon-stories"] });
+      });
+    }
   };
 
   const handleClose = () => {
@@ -194,12 +233,22 @@ export function StoriesCarousel() {
     }
   };
 
-  const handleNextStory = () => {
+  const handleNextStory = async () => {
     if (selectedGroup && currentStoryIndex < selectedGroup.stories.length - 1) {
-      setCurrentStoryIndex((i) => i + 1);
+      const nextIndex = currentStoryIndex + 1;
+      setCurrentStoryIndex(nextIndex);
       setProgress(0);
+      
+      // Mark next story as viewed
+      if (currentUserId && selectedGroup.stories[nextIndex]) {
+        await supabase.from("story_views").upsert({
+          story_id: selectedGroup.stories[nextIndex].id,
+          user_id: currentUserId
+        }, { onConflict: 'story_id,user_id' });
+      }
     } else {
       handleClose();
+      queryClient.invalidateQueries({ queryKey: ["salon-stories"] });
     }
   };
 
@@ -221,10 +270,10 @@ export function StoriesCarousel() {
 
   if (isLoading || tenantLoading) {
     return (
-      <div className="flex gap-4 overflow-x-auto pb-2 px-5 scrollbar-hide">
+      <div className="flex gap-5 overflow-x-auto pb-2 px-5 scrollbar-hide">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex flex-col items-center gap-2.5 shrink-0">
-            <div className="w-[72px] h-[72px] rounded-full bg-secondary/60 animate-pulse" />
+          <div key={i} className="flex flex-col items-center gap-2 shrink-0">
+            <div className="w-20 h-20 rounded-full bg-secondary/60 animate-pulse" />
             <div className="w-14 h-3 bg-secondary/60 rounded-full animate-pulse" />
           </div>
         ))}
@@ -256,7 +305,7 @@ export function StoriesCarousel() {
         <div className="absolute top-0 left-0 w-6 h-full bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
         <div className="absolute top-0 right-0 w-6 h-full bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
         
-        <div className="flex gap-4 overflow-x-auto pb-3 px-5 scrollbar-hide">
+        <div className="flex gap-5 overflow-x-auto pb-3 px-5 scrollbar-hide">
           {/* Add Story Button for admins/stylists */}
           {canCreateStory && tenant && (
             <motion.button
@@ -264,9 +313,9 @@ export function StoriesCarousel() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               onClick={() => setShowCreator(true)}
-              className="flex flex-col items-center gap-2.5 shrink-0"
+              className="flex flex-col items-center gap-2 shrink-0"
             >
-              <div className="relative w-[72px] h-[72px] rounded-full bg-gradient-to-br from-secondary/80 to-secondary/40 p-[3px]">
+              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-secondary/80 to-secondary/40 p-[3px]">
                 <div className="w-full h-full rounded-full bg-background p-[3px] relative overflow-hidden">
                   {tenant.logo_url ? (
                     <img
@@ -276,7 +325,7 @@ export function StoriesCarousel() {
                     />
                   ) : (
                     <div
-                      className="w-full h-full rounded-full flex items-center justify-center text-white text-sm font-bold opacity-60"
+                      className="w-full h-full rounded-full flex items-center justify-center text-white text-base font-bold opacity-60"
                       style={{ background: tenant.primary_color || "#6366f1" }}
                     >
                       {tenant.name.slice(0, 2).toUpperCase()}
@@ -293,7 +342,7 @@ export function StoriesCarousel() {
                   </motion.div>
                 </div>
               </div>
-              <span className="text-[12px] text-muted-foreground font-semibold">Tu story</span>
+              <span className="text-[11px] text-muted-foreground font-semibold">Tu story</span>
             </motion.button>
           )}
           
@@ -315,17 +364,20 @@ export function StoriesCarousel() {
                 transition={{ delay: index * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleStoryClick(group)}
-                className="flex flex-col items-center gap-2.5 shrink-0"
+                className="flex flex-col items-center gap-2 shrink-0"
               >
                 <div
                   className={cn(
-                    "relative w-[72px] h-[72px] rounded-full p-[3px] transition-all duration-300",
+                    "relative w-20 h-20 rounded-full p-[3px] transition-all duration-300",
                     group.hasUnviewed
-                      ? "bg-gradient-to-br from-rose-500 via-fuchsia-500 to-indigo-500 shadow-lg shadow-fuchsia-500/30"
-                      : "bg-secondary/60"
+                      ? "story-ring-gradient shadow-lg shadow-primary/20"
+                      : "bg-secondary/50"
                   )}
                 >
-                  <div className="w-full h-full rounded-full bg-background p-[3px]">
+                  <div className={cn(
+                    "w-full h-full rounded-full bg-background p-[3px]",
+                    !group.hasUnviewed && "opacity-60"
+                  )}>
                     {group.tenant.logo_url ? (
                       <img
                         src={group.tenant.logo_url}
@@ -334,7 +386,7 @@ export function StoriesCarousel() {
                       />
                     ) : (
                       <div
-                        className="w-full h-full rounded-full flex items-center justify-center text-white text-sm font-bold"
+                        className="w-full h-full rounded-full flex items-center justify-center text-white text-base font-bold"
                         style={{ background: primaryColor }}
                       >
                         {initials}
@@ -353,7 +405,10 @@ export function StoriesCarousel() {
                     </span>
                   )}
                 </div>
-                <span className="text-[12px] text-muted-foreground font-semibold truncate max-w-[72px]">
+                <span className={cn(
+                  "text-[11px] font-semibold truncate max-w-20",
+                  group.hasUnviewed ? "text-foreground" : "text-muted-foreground"
+                )}>
                   {group.tenant.name.split(" ")[0]}
                 </span>
               </motion.button>
