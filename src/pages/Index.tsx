@@ -356,9 +356,16 @@ const Index = () => {
             </motion.div>
           ) : (
             <EmptyState
-              type={searchQuery ? "no-results" : "empty"}
+              type={
+                selectedCategory === "huecos" && hasChecked && tenantsWithAvailability.length === 0
+                  ? "no-availability"
+                  : searchQuery 
+                    ? "no-results" 
+                    : "empty"
+              }
               searchQuery={searchQuery}
               onClearSearch={() => setSearchQuery("")}
+              onClearFilter={() => setSelectedCategory(null)}
             />
           )}
         </AnimatePresence>
