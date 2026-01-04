@@ -13,7 +13,10 @@ export default function PrivacyPolicy() {
       
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <header 
+          className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
           <div className="container mx-auto flex items-center h-16 px-4">
             <Button 
               variant="ghost" 
