@@ -47,6 +47,8 @@ interface TenantWithStats {
 
 const STORAGE_KEY = "glowapp_recent_searches";
 
+const ITEMS_PER_PAGE = 6;
+
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -54,6 +56,7 @@ const Index = () => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [feedMode, setFeedMode] = useState<FeedMode>("discover");
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const { favorites, isAuthenticated } = useFavorites();
   const { followingCount } = useFollows();
   const { tenant: userTenant, loading: tenantLoading } = useCurrentUserTenant();
@@ -232,6 +235,23 @@ const Index = () => {
     return result;
   }, [salonsWithDistance, searchQuery, showFavoritesOnly, favorites, selectedCategory, sortByDistance, hasLocation, tenantsWithAvailability, hasRecommendations, scoresMap]);
 
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(ITEMS_PER_PAGE);
+  }, [searchQuery, selectedCategory, showFavoritesOnly, sortByDistance]);
+
+  // Paginated salons
+  const visibleSalons = useMemo(() => {
+    return filteredSalons.slice(0, visibleCount);
+  }, [filteredSalons, visibleCount]);
+
+  const hasMoreSalons = filteredSalons.length > visibleCount;
+
+  const handleLoadMore = () => {
+    haptic.light();
+    setVisibleCount(prev => prev + ITEMS_PER_PAGE);
+  };
+
   const handleNearMeClick = () => {
     haptic.medium();
     if (!hasLocation) {
@@ -386,29 +406,51 @@ const Index = () => {
               <AnimatePresence mode="wait">
                 {isLoading ? (
                   <PremiumSkeleton />
-                ) : filteredSalons && filteredSalons.length > 0 ? (
-                  <motion.div
-                    key="results"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                  >
-                    {filteredSalons.map((salon, index) => {
-                      const recScore = scoresMap.get(salon.id);
-                      return (
-                        <PremiumSalonCard 
-                          key={salon.id} 
-                          salon={salon} 
-                          index={index} 
-                          distance={salon.formattedDistance}
-                          hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
-                          recommendationScore={recScore?.score}
-                          matchReasons={recScore?.matchReasons}
-                        />
-                      );
-                    })}
-                  </motion.div>
+                ) : visibleSalons && visibleSalons.length > 0 ? (
+                  <div className="space-y-6">
+                    <motion.div
+                      key="results"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    >
+                      {visibleSalons.map((salon, index) => {
+                        const recScore = scoresMap.get(salon.id);
+                        return (
+                          <PremiumSalonCard 
+                            key={salon.id} 
+                            salon={salon} 
+                            index={index} 
+                            distance={salon.formattedDistance}
+                            hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
+                            recommendationScore={recScore?.score}
+                            matchReasons={recScore?.matchReasons}
+                          />
+                        );
+                      })}
+                    </motion.div>
+                    
+                    {/* Load More Button */}
+                    {hasMoreSalons && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex justify-center pt-4"
+                      >
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={handleLoadMore}
+                          className="flex items-center gap-2 px-6 py-3 rounded-full bg-secondary text-foreground font-semibold text-sm hover:bg-secondary/80 transition-colors shadow-sm"
+                        >
+                          <span>Ver más</span>
+                          <span className="text-muted-foreground text-xs">
+                            ({filteredSalons.length - visibleCount} restantes)
+                          </span>
+                        </motion.button>
+                      </motion.div>
+                    )}
+                  </div>
                 ) : (
                   <EmptyState
                     type={
