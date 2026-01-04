@@ -8,4 +8,5 @@ export { GuideLines } from "./GuideLines";
 export { TextEditor, type TextConfig } from "./TextEditor";
 export { DrawingCanvas } from "./DrawingCanvasNew";
 export { StickerPicker } from "./StickerPickerNew";
+export { publishStory, downloadStoryImage, flattenStoryLayers } from "./storyPublisher";
 export * from "./types";
