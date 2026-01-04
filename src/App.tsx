@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { NavigationProvider } from "@/contexts/NavigationContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
@@ -29,36 +30,38 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <NavigationProvider>
-        <Toaster />
-        <Sonner />
-        <UpdatePrompt />
-        <BrowserRouter>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/:slug" element={<TenantAdmin />} />
-            <Route path="/superadmin" element={<SuperAdmin />} />
-            <Route path="/mis-citas" element={<MyBookings />} />
-            <Route path="/perfil" element={<Profile />} />
-            <Route path="/valoracion" element={<Review />} />
-            <Route path="/mensajes" element={<Messages />} />
-            <Route path="/salon/:slug" element={<TenantLanding />} />
-            <Route path="/onboarding" element={<BusinessOnboarding />} />
-            <Route path="/onboarding/setup" element={<OnboardingSetup />} />
-            <Route path="/subscription" element={<Subscription />} />
-            <Route path="/para-negocios" element={<ForBusiness />} />
-            <Route path="/privacidad" element={<PrivacyPolicy />} />
-            <Route path="/terminos" element={<TermsOfUse />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </NavigationProvider>
-    </TooltipProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <TooltipProvider>
+        <NavigationProvider>
+          <Toaster />
+          <Sonner />
+          <UpdatePrompt />
+          <BrowserRouter>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/:slug" element={<TenantAdmin />} />
+              <Route path="/superadmin" element={<SuperAdmin />} />
+              <Route path="/mis-citas" element={<MyBookings />} />
+              <Route path="/perfil" element={<Profile />} />
+              <Route path="/valoracion" element={<Review />} />
+              <Route path="/mensajes" element={<Messages />} />
+              <Route path="/salon/:slug" element={<TenantLanding />} />
+              <Route path="/onboarding" element={<BusinessOnboarding />} />
+              <Route path="/onboarding/setup" element={<OnboardingSetup />} />
+              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/para-negocios" element={<ForBusiness />} />
+              <Route path="/privacidad" element={<PrivacyPolicy />} />
+              <Route path="/terminos" element={<TermsOfUse />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </NavigationProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

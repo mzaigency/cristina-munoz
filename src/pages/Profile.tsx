@@ -9,11 +9,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Settings, Shield, FileText } from "lucide-react";
+import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Moon, Sun, Monitor } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { UserStats } from "@/components/profile/UserStats";
+import { useTheme } from "next-themes";
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, "El nombre es requerido").max(100),
@@ -31,6 +32,7 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -318,6 +320,59 @@ export default function Profile() {
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
               </button>
+            </div>
+
+            {/* Appearance */}
+            <div className="ios-card overflow-hidden">
+              <div className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  {theme === 'dark' ? (
+                    <Moon className="h-5 w-5 text-primary" />
+                  ) : theme === 'light' ? (
+                    <Sun className="h-5 w-5 text-primary" />
+                  ) : (
+                    <Monitor className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Apariencia</p>
+                  <p className="text-xs text-muted-foreground">
+                    {theme === 'dark' ? 'Modo oscuro' : theme === 'light' ? 'Modo claro' : 'Automático'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+                  <button
+                    onClick={() => setTheme('light')}
+                    className={`p-2 rounded-md transition-all ${
+                      theme === 'light' 
+                        ? 'bg-background shadow-sm text-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Sun className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setTheme('dark')}
+                    className={`p-2 rounded-md transition-all ${
+                      theme === 'dark' 
+                        ? 'bg-background shadow-sm text-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Moon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setTheme('system')}
+                    className={`p-2 rounded-md transition-all ${
+                      theme === 'system' 
+                        ? 'bg-background shadow-sm text-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Monitor className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Legal Links */}
