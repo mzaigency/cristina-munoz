@@ -36,6 +36,7 @@ import { WidgetResponsesViewer } from "@/components/admin/WidgetResponsesViewer"
 import { ProductsManager } from "@/components/admin/ProductsManager";
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { QuickActionsFAB } from "@/components/admin/QuickActionsFAB";
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -324,13 +325,15 @@ export default function TenantAdmin() {
     switch (action) {
       case "new-booking":
         setActiveTab("calendar");
-        // The calendar component handles new booking via its own UI
         break;
       case "new-payment":
         setActiveTab("cash");
         break;
       case "block-slot":
         setActiveTab("calendar");
+        break;
+      case "new-service":
+        setActiveTab("services");
         break;
       default:
         break;
@@ -532,7 +535,7 @@ export default function TenantAdmin() {
       {/* Content with Pull to Refresh on mobile */}
       {isMobile ? (
         <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
-          <main className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 safe-area-bottom">
+          <main className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 safe-area-bottom pb-24">
             {renderContent()}
           </main>
         </PullToRefresh>
@@ -540,6 +543,11 @@ export default function TenantAdmin() {
         <main className="mx-auto max-w-7xl px-4 py-6 safe-area-bottom">
           {renderContent()}
         </main>
+      )}
+
+      {/* Quick Actions FAB - only show when not on dashboard */}
+      {activeTab !== "dashboard" && (
+        <QuickActionsFAB onAction={handleQuickAction} />
       )}
     </div>
   );

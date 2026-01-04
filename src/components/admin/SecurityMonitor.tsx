@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, TrendingUp, TrendingDown, Users, Star, BarChart3 } from "lucide-react";
+import { Calendar, TrendingUp, TrendingDown, Users, Star, BarChart3, Target, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { format, getDaysInMonth, getDate } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface BookingStats {
   daily: {
@@ -32,6 +35,12 @@ interface BookingStats {
   averageRating: number;
 }
 
+interface RevenueData {
+  monthlyRevenue: number;
+  monthlyGoal: number;
+  projectedRevenue: number;
+}
+
 interface SecurityMonitorProps {
   tenantId?: string;
 }
@@ -41,6 +50,11 @@ type PeriodTab = "daily" | "weekly" | "monthly";
 export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
   const { toast } = useToast();
   const [stats, setStats] = useState<BookingStats | null>(null);
+  const [revenueData, setRevenueData] = useState<RevenueData>({
+    monthlyRevenue: 0,
+    monthlyGoal: 3000, // Default goal
+    projectedRevenue: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<PeriodTab>("daily");
   const [totalProfiles, setTotalProfiles] = useState(0);
@@ -48,11 +62,13 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
   useEffect(() => {
     fetchBookingStats();
     fetchTotalProfiles();
+    fetchMonthlyRevenue();
 
     const interval = setInterval(
       () => {
         fetchBookingStats();
         fetchTotalProfiles();
+        fetchMonthlyRevenue();
       },
       5 * 60 * 1000,
     );
@@ -103,6 +119,42 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
       setTotalProfiles(count || 0);
     } catch (error) {
       console.error("Error fetching profiles count:", error);
+    }
+  };
+
+  const fetchMonthlyRevenue = async () => {
+    if (!tenantId) return;
+    
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("total, created_at")
+        .eq("tenant_id", tenantId)
+        .eq("voided", false)
+        .gte("created_at", startOfMonth.toISOString())
+        .lte("created_at", endOfMonth.toISOString());
+
+      if (error) throw error;
+
+      const monthlyRevenue = data?.reduce((sum, t) => sum + (t.total || 0), 0) || 0;
+      
+      // Calculate projection based on current pace
+      const dayOfMonth = getDate(now);
+      const daysInMonth = getDaysInMonth(now);
+      const dailyAverage = dayOfMonth > 0 ? monthlyRevenue / dayOfMonth : 0;
+      const projectedRevenue = dailyAverage * daysInMonth;
+
+      setRevenueData(prev => ({
+        ...prev,
+        monthlyRevenue,
+        projectedRevenue,
+      }));
+    } catch (error) {
+      console.error("Error fetching monthly revenue:", error);
     }
   };
 
@@ -236,6 +288,87 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
           </div>
         </div>
       </div>
+
+      {/* Monthly Goal Progress */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="ios-card p-4 overflow-hidden relative"
+      >
+        {/* Background decoration */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+        
+        <div className="relative">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <Target className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Objetivo mensual</p>
+                <p className="text-sm font-semibold text-foreground">{format(new Date(), "MMMM yyyy", { locale: es })}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-foreground">
+                {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(revenueData.monthlyRevenue)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                de {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(revenueData.monthlyGoal)}
+              </p>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-3 bg-muted rounded-full overflow-hidden mb-2">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min((revenueData.monthlyRevenue / revenueData.monthlyGoal) * 100, 100)}%` }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className={cn(
+                "h-full rounded-full",
+                revenueData.monthlyRevenue >= revenueData.monthlyGoal
+                  ? "bg-gradient-to-r from-emerald-500 to-green-400"
+                  : "bg-gradient-to-r from-primary to-violet-400"
+              )}
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-xs">
+            <span className={cn(
+              "font-medium",
+              revenueData.monthlyRevenue >= revenueData.monthlyGoal
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-muted-foreground"
+            )}>
+              {Math.round((revenueData.monthlyRevenue / revenueData.monthlyGoal) * 100)}% completado
+            </span>
+            
+            {/* Projection */}
+            {revenueData.projectedRevenue > 0 && (
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Sparkles className="h-3 w-3" />
+                <span>
+                  Proyección: {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(revenueData.projectedRevenue)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Goal reached celebration */}
+          {revenueData.monthlyRevenue >= revenueData.monthlyGoal && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-3 p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-center"
+            >
+              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                🎉 ¡Objetivo alcanzado!
+              </p>
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
 
       {/* Channel Breakdown */}
       <div className="ios-card p-4">
