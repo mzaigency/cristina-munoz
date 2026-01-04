@@ -1,10 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Calendar, MessageCircle, User } from "lucide-react";
+import { Home, Calendar, MessageCircle, User, Shield, Crown } from "lucide-react";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const navItems = [
+const baseNavItems = [
   { path: "/", icon: Home, label: "Inicio" },
   { path: "/mis-citas", icon: Calendar, label: "Citas" },
   { path: "/mensajes", icon: MessageCircle, label: "Mensajes" },
@@ -14,12 +17,51 @@ const navItems = [
 export function BottomNavigation() {
   const location = useLocation();
   const { unreadCount } = useUnreadMessages();
+  const { tenant, isAdmin } = useCurrentUserTenant();
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
+
+  useEffect(() => {
+    const checkSuperadmin = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .eq("role", "superadmin")
+          .maybeSingle();
+        setIsSuperadmin(!!data);
+      }
+    };
+    checkSuperadmin();
+  }, []);
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
     if (path !== "/" && location.pathname.startsWith(path)) return true;
     return false;
   };
+
+  // Build nav items dynamically based on permissions
+  const navItems = [...baseNavItems];
+  
+  // Add admin item if user has tenant admin access
+  if (isAdmin && tenant) {
+    navItems.splice(3, 0, { 
+      path: `/admin/${tenant.slug}`, 
+      icon: Shield, 
+      label: "Admin" 
+    });
+  }
+  
+  // Add superadmin item if user is superadmin
+  if (isSuperadmin) {
+    navItems.splice(isAdmin && tenant ? 4 : 3, 0, { 
+      path: "/superadmin", 
+      icon: Crown, 
+      label: "Super" 
+    });
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-2xl border-t border-border/30">
