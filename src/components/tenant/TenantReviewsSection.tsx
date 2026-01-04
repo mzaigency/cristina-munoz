@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Star, Quote, User } from "lucide-react";
-import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Review {
   id: string;
@@ -22,15 +28,12 @@ interface TenantReviewsSectionProps {
   primaryColor?: string;
 }
 
-// Helper to get display name (first name only for privacy)
 const getDisplayName = (fullName: string | null | undefined): string => {
   if (!fullName) return "Cliente";
   const firstName = fullName.trim().split(" ")[0];
-  // Only show first name, max 15 chars
   return firstName.slice(0, 15);
 };
 
-// Helper to get initials for avatar
 const getInitials = (fullName: string | null | undefined): string => {
   if (!fullName) return "C";
   const parts = fullName.trim().split(" ");
@@ -42,28 +45,21 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        // Fetch reviews with user profiles
-        const { data, error } = await supabase
+        // Fetch ALL approved reviews for this tenant
+        const { data, error, count } = await supabase
           .from("reviews")
-          .select(`
-            id, 
-            rating, 
-            comment, 
-            created_at, 
-            user_id
-          `)
+          .select(`id, rating, comment, created_at, user_id`, { count: 'exact' })
           .eq("tenant_id", tenantId)
           .eq("approved", true)
-          .order("created_at", { ascending: false })
-          .limit(6);
+          .order("created_at", { ascending: false });
 
         if (error) throw error;
 
-        // Fetch profiles for the reviews
         if (data && data.length > 0) {
           const userIds = [...new Set(data.map(r => r.user_id))];
           const { data: profiles } = await supabase
@@ -79,11 +75,13 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
           }));
 
           setReviews(reviewsWithProfiles);
+          setTotalReviews(count || data.length);
           
           const avg = data.reduce((sum, r) => sum + r.rating, 0) / data.length;
           setAverageRating(Math.round(avg * 10) / 10);
         } else {
           setReviews([]);
+          setTotalReviews(0);
         }
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -104,15 +102,15 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
 
   if (loading) {
     return (
-      <section className="py-20 bg-muted/30">
+      <section className="py-12 md:py-20 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="mb-12 text-center">
-            <Skeleton className="h-10 w-64 mx-auto mb-4" />
-            <Skeleton className="h-6 w-96 mx-auto" />
+          <div className="mb-8 text-center">
+            <Skeleton className="h-8 w-56 mx-auto mb-4" />
+            <Skeleton className="h-6 w-40 mx-auto" />
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="flex gap-4 overflow-hidden">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-48 rounded-xl" />
+              <Skeleton key={i} className="h-44 w-72 flex-shrink-0 rounded-2xl" />
             ))}
           </div>
         </div>
@@ -125,72 +123,104 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
   }
 
   return (
-    <section className="py-16 md:py-20 bg-muted/30">
+    <section className="py-12 md:py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="mb-8 md:mb-12 text-center">
+        {/* Header */}
+        <div className="mb-6 md:mb-10 text-center">
           <SmoothTitle>
-            <h2 className="mb-3 text-2xl font-bold text-foreground sm:text-3xl md:text-4xl">
+            <h2 className="mb-2 text-xl font-bold text-foreground sm:text-2xl md:text-3xl">
               Lo Que Dicen Nuestros Clientes
             </h2>
           </SmoothTitle>
           <div className="line-accent mx-auto mb-4" />
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+          
+          {/* Rating summary */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className="h-5 w-5 sm:h-6 sm:w-6 text-primary"
+                  className="h-5 w-5 text-primary"
                   fill={star <= Math.round(averageRating) ? "currentColor" : "transparent"}
                 />
               ))}
             </div>
-            <span className="text-base sm:text-lg font-semibold text-primary">
-              {averageRating} / 5
+            <span className="text-base font-semibold text-primary">
+              {averageRating}
             </span>
-            <span className="text-sm sm:text-base text-muted-foreground">({reviews.length} reseñas)</span>
+            <span className="text-sm text-muted-foreground">
+              ({totalReviews} reseñas)
+            </span>
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
-          {reviews.map((review, idx) => (
-            <ScrollReveal key={review.id} delay={idx * 80}>
-              <div className="bg-card rounded-xl p-6 shadow-lg h-full flex flex-col">
-                {/* Header with avatar and name */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                    {getInitials(review.profile?.full_name)}
+        {/* Carousel */}
+        <Carousel
+          opts={{
+            align: "start",
+            loop: reviews.length > 3,
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-3 md:-ml-4">
+            {reviews.map((review) => (
+              <CarouselItem 
+                key={review.id} 
+                className="pl-3 md:pl-4 basis-[85%] sm:basis-1/2 lg:basis-1/3"
+              >
+                <div className="bg-card rounded-2xl p-5 shadow-md h-full flex flex-col border border-border/50">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm flex-shrink-0">
+                      {getInitials(review.profile?.full_name)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground text-sm truncate">
+                        {getDisplayName(review.profile?.full_name)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(review.created_at)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {getDisplayName(review.profile?.full_name)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(review.created_at)}
-                    </p>
+
+                  {/* Stars */}
+                  <div className="flex gap-0.5 mb-3">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className="h-4 w-4 text-primary"
+                        fill={star <= review.rating ? "currentColor" : "transparent"}
+                      />
+                    ))}
                   </div>
-                </div>
 
-                {/* Stars */}
-                <div className="flex mb-3">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className="h-4 w-4 text-primary"
-                      fill={star <= review.rating ? "currentColor" : "transparent"}
-                    />
-                  ))}
+                  {/* Comment */}
+                  {review.comment && (
+                    <p className="text-muted-foreground flex-1 text-sm leading-relaxed line-clamp-4">
+                      "{review.comment}"
+                    </p>
+                  )}
                 </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
 
-                {/* Comment */}
-                {review.comment && (
-                  <p className="text-muted-foreground flex-1 italic text-sm leading-relaxed">
-                    "{review.comment}"
-                  </p>
-                )}
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
+          {/* Navigation - hidden on mobile, visible on desktop */}
+          <CarouselPrevious className="hidden md:flex -left-4 h-10 w-10 bg-card border-border shadow-md" />
+          <CarouselNext className="hidden md:flex -right-4 h-10 w-10 bg-card border-border shadow-md" />
+        </Carousel>
+
+        {/* Mobile swipe hint */}
+        {reviews.length > 1 && (
+          <div className="flex justify-center mt-4 md:hidden">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <ChevronLeft className="h-3 w-3" />
+              <span>Desliza para ver más</span>
+              <ChevronRight className="h-3 w-3" />
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
