@@ -152,7 +152,7 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
                 </div>
               )}
               <div className="flex items-center px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
-                <span className="text-xs text-white/80">Desde {stats.since}</span>
+                <span className="text-xs text-white/80">En Glowapp desde {stats.since}</span>
               </div>
             </div>
 

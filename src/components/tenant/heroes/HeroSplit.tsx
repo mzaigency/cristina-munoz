@@ -196,7 +196,7 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
             <div className="grid grid-cols-2 gap-8">
               {[
                 { value: stats.rating > 0 ? `${stats.rating}★` : "—", label: "Valoración" },
-                { value: stats.since.toString(), label: "Desde" }
+                { value: stats.since.toString(), label: "En Glowapp desde" }
               ].map((stat, idx) => (
                 <div key={idx} className="text-center">
                   <p 
