@@ -214,7 +214,7 @@ const Index = () => {
       {/* Welcome Onboarding for new users */}
       {showWelcome && <WelcomeCarousel onComplete={handleOnboardingComplete} />}
       
-      <AppLayout>
+      <AppLayout noTopSafeArea>
       <SEO
         title="GlowApp | Descubre y Reserva en los Mejores Salones de Belleza"
         description="La red social de belleza. Descubre los mejores salones cerca de ti, conecta con profesionales y reserva cita online."

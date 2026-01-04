@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, isToday, isTomorrow, isThisWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Loader2, Trash2, CalendarPlus } from "lucide-react";
+import { Calendar, Loader2, CalendarPlus, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -19,10 +19,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { BookingCard } from "@/components/bookings/BookingCard";
 import { RescheduleFlow } from "@/components/booking/RescheduleFlow";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { parseISODateToLocal } from "@/lib/datetime";
+import { formatTimeHHmm } from "@/lib/datetime";
+import { cn } from "@/lib/utils";
 
 type Booking = {
   id: string;
@@ -132,6 +133,37 @@ export default function MyBookings() {
     navigate('/mensajes');
   };
 
+  const getStylistName = (stylist: string) => {
+    if (stylist === 'cris') return 'Cristina';
+    if (stylist === 'desi') return 'Desi';
+    return stylist.charAt(0).toUpperCase() + stylist.slice(1);
+  };
+
+  const getDateLabel = (dateStr: string) => {
+    const date = parseISODateToLocal(dateStr);
+    if (isToday(date)) return "Hoy";
+    if (isTomorrow(date)) return "Mañana";
+    if (isThisWeek(date)) return format(date, "EEEE", { locale: es });
+    return format(date, "EEEE d", { locale: es });
+  };
+
+  const getCountdown = (dateStr: string, hora: string) => {
+    const date = parseISODateToLocal(dateStr);
+    if (!isToday(date)) return null;
+    
+    const [hours, minutes] = hora.split(':').map(Number);
+    const bookingTime = new Date();
+    bookingTime.setHours(hours, minutes, 0, 0);
+    const diff = bookingTime.getTime() - Date.now();
+    
+    if (diff < 0) return null;
+    const hoursLeft = Math.floor(diff / (1000 * 60 * 60));
+    const minsLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hoursLeft > 0) return `En ${hoursLeft}h ${minsLeft}m`;
+    return `En ${minsLeft} min`;
+  };
+
   const today = format(new Date(), 'yyyy-MM-dd');
   const upcomingBookings = bookings.filter((b) => b.Fecha >= today);
   const pastBookings = bookings.filter((b) => b.Fecha < today);
@@ -152,22 +184,27 @@ export default function MyBookings() {
 
   if (loading) {
     return (
-      <AppLayout>
+      <AppLayout noTopSafeArea>
         <SEO
           title="Mis Citas"
           description="Gestiona tus reservas"
           canonicalUrl="/mis-citas"
           noindex={true}
         />
-        <div className="flex items-center justify-center h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex items-center justify-center h-[80vh]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground">Cargando citas...</p>
+          </div>
         </div>
       </AppLayout>
     );
   }
 
   return (
-    <AppLayout>
+    <AppLayout noTopSafeArea>
       <SEO
         title="Mis Citas"
         description="Gestiona tus reservas"
@@ -175,79 +212,194 @@ export default function MyBookings() {
         noindex={true}
       />
 
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 safe-area-top">
-        <div className="px-4 py-4">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Mis Citas</h1>
+      {/* iOS-style Header */}
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 pt-[env(safe-area-inset-top)]">
+        <div className="px-4 py-3">
+          <h1 className="text-[28px] font-bold text-foreground tracking-tight">Mis Citas</h1>
+        </div>
+        <div className="px-4 pb-3">
           <SegmentedControl options={TABS} value={activeTab} onChange={setActiveTab} />
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-4 py-4">
-        {displayedBookings.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
-              <Calendar className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              {activeTab === "upcoming" ? "No tienes citas próximas" : "No hay historial"}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              {activeTab === "upcoming" && "Reserva tu primera cita ahora"}
-            </p>
-            {activeTab === "upcoming" && (
-              <Button onClick={() => navigate("/")}
-              >
-                <CalendarPlus className="h-4 w-4 mr-2" />
-                Reservar cita
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {sortedDates.map((date) => (
-              <section key={date} aria-label={`Citas del ${date}`}>
-                {/* Date Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-semibold text-foreground">
-                    {format(parseISODateToLocal(date), "EEEE, d 'de' MMMM", { locale: es })}
-                  </h2>
-                  {activeTab === "upcoming" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDateToCancel(date)}
-                      disabled={cancelingDate === date}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-2"
-                    >
-                      {cancelingDate === date ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          <span className="text-xs">Cancelar</span>
-                        </>
+      <div className="px-4 py-4 pb-8">
+        <AnimatePresence mode="wait">
+          {displayedBookings.length === 0 ? (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="text-center py-20"
+            >
+              <div className="w-20 h-20 rounded-3xl bg-secondary flex items-center justify-center mx-auto mb-5">
+                <Calendar className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                {activeTab === "upcoming" ? "Sin citas próximas" : "Sin historial"}
+              </h3>
+              <p className="text-base text-muted-foreground mb-8 max-w-[260px] mx-auto">
+                {activeTab === "upcoming" && "Encuentra el salón perfecto y reserva tu primera cita"}
+              </p>
+              {activeTab === "upcoming" && (
+                <Button 
+                  onClick={() => navigate("/")}
+                  size="lg"
+                  className="h-14 px-8 rounded-2xl text-base font-semibold shadow-lg shadow-primary/25"
+                >
+                  <CalendarPlus className="h-5 w-5 mr-2" />
+                  Reservar cita
+                </Button>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="list"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-6"
+            >
+              {sortedDates.map((date, groupIndex) => {
+                const dateObj = parseISODateToLocal(date);
+                const isTodayDate = isToday(dateObj);
+                
+                return (
+                  <motion.section 
+                    key={date}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: groupIndex * 0.1 }}
+                    aria-label={`Citas del ${date}`}
+                  >
+                    {/* Date Header - iOS style */}
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <div className="flex items-center gap-2">
+                        <h2 className={cn(
+                          "text-sm font-semibold capitalize",
+                          isTodayDate ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          {getDateLabel(date)}
+                        </h2>
+                        <span className="text-sm text-muted-foreground">
+                          {format(dateObj, "d MMM", { locale: es })}
+                        </span>
+                      </div>
+                      {activeTab === "upcoming" && (
+                        <button
+                          onClick={() => setDateToCancel(date)}
+                          disabled={cancelingDate === date}
+                          className="text-xs text-destructive font-medium px-3 py-1.5 rounded-full bg-destructive/10 active:bg-destructive/20 transition-colors"
+                        >
+                          {cancelingDate === date ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            "Cancelar"
+                          )}
+                        </button>
                       )}
-                    </Button>
-                  )}
-                </div>
+                    </div>
 
-                {/* Bookings for date */}
-                <div className="space-y-3">
-                  {groupedBookings[date].map((booking) => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      onReschedule={activeTab === 'upcoming' ? () => setRescheduleBooking(booking) : undefined}
-                      onMessage={() => handleOpenChat(booking)}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
+                    {/* Booking Cards */}
+                    <div className="space-y-3">
+                      {groupedBookings[date].map((booking, index) => {
+                        const countdown = getCountdown(booking.Fecha, booking.Hora);
+                        const logoUrl = booking.tenant_logo_url;
+                        
+                        return (
+                          <motion.div
+                            key={booking.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="ios-card p-4 active:scale-[0.98] transition-transform"
+                          >
+                            {/* Countdown badge */}
+                            {countdown && (
+                              <div className="mb-3">
+                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 px-3 py-1.5 rounded-full">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  {countdown}
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="flex items-start gap-4">
+                              {/* Time & Logo */}
+                              <div className="flex flex-col items-center">
+                                {logoUrl ? (
+                                  <img
+                                    src={logoUrl}
+                                    alt={booking.tenant_name || 'Salón'}
+                                    className="w-14 h-14 rounded-2xl object-cover ring-2 ring-border/50 shadow-sm"
+                                  />
+                                ) : (
+                                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                                    <Calendar className="h-6 w-6 text-primary" />
+                                  </div>
+                                )}
+                                <span className="text-lg font-bold text-foreground mt-2">
+                                  {formatTimeHHmm(booking.Hora)}
+                                </span>
+                              </div>
+
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                {booking.tenant_name && (
+                                  <h3 className="text-base font-semibold text-foreground mb-1 line-clamp-1">
+                                    {booking.tenant_name}
+                                  </h3>
+                                )}
+
+                                <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                                  {Array.isArray(booking.services)
+                                    ? booking.services.map((s: any) => s.name).join(" · ")
+                                    : "Servicios"}
+                                </p>
+
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                  <span className="font-medium text-foreground/80">
+                                    {getStylistName(booking.stylist)}
+                                  </span>
+                                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+                                  <span>{booking.total_duration} min</span>
+                                </div>
+                              </div>
+
+                              {/* Arrow */}
+                              <div className="shrink-0 self-center">
+                                <ChevronRight className="h-5 w-5 text-muted-foreground/50" />
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            {activeTab === "upcoming" && (
+                              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/50">
+                                <button
+                                  onClick={() => setRescheduleBooking(booking)}
+                                  className="flex-1 h-10 rounded-xl bg-secondary text-sm font-medium text-foreground active:bg-secondary/80 transition-colors"
+                                >
+                                  Reagendar
+                                </button>
+                                <button
+                                  onClick={() => handleOpenChat(booking)}
+                                  className="flex-1 h-10 rounded-xl bg-primary/10 text-sm font-medium text-primary active:bg-primary/20 transition-colors"
+                                >
+                                  Mensaje
+                                </button>
+                              </div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </motion.section>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Reschedule Flow */}
@@ -264,25 +416,34 @@ export default function MyBookings() {
         )}
       </AnimatePresence>
 
+      {/* Cancel Dialog - iOS style */}
       <AlertDialog open={!!dateToCancel} onOpenChange={() => setDateToCancel(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Cancelar citas?</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialogContent className="rounded-3xl max-w-[340px] p-0 overflow-hidden">
+          <AlertDialogHeader className="p-6 pb-4 text-center">
+            <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+              <X className="h-7 w-7 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-lg">¿Cancelar citas?</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
               Vas a cancelar todas las citas del{' '}
-              {dateToCancel && format(parseISODateToLocal(dateToCancel), "d 'de' MMMM", { locale: es })}.
-              Esta acción no se puede deshacer.
+              <span className="font-medium text-foreground">
+                {dateToCancel && format(parseISODateToLocal(dateToCancel), "EEEE d 'de' MMMM", { locale: es })}
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>No, mantener</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelAllBookingsForDate}>
+          <AlertDialogFooter className="flex-col border-t border-border/50 p-0 sm:flex-col sm:space-x-0">
+            <AlertDialogAction 
+              onClick={handleCancelAllBookingsForDate}
+              className="h-14 rounded-none border-b border-border/50 bg-transparent text-destructive font-semibold hover:bg-destructive/5 m-0"
+            >
               Sí, cancelar
             </AlertDialogAction>
+            <AlertDialogCancel className="h-14 rounded-none bg-transparent text-primary font-semibold hover:bg-primary/5 m-0 border-0">
+              Mantener citas
+            </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </AppLayout>
   );
 }
-
