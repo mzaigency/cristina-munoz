@@ -48,6 +48,8 @@ export function useConversations(role: 'user' | 'salon', tenantId?: string) {
 
   const fetchConversations = async () => {
     try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
       let query = supabase
         .from('conversations')
         .select(`
@@ -58,6 +60,8 @@ export function useConversations(role: 'user' | 'salon', tenantId?: string) {
 
       if (role === 'salon' && tenantId) {
         query = query.eq('tenant_id', tenantId);
+      } else if (role === 'user' && currentUser) {
+        query = query.eq('user_id', currentUser.id);
       }
 
       const { data, error } = await query;
