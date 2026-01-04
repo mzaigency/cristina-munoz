@@ -1,9 +1,11 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Tenant {
+  id: string;
   name: string;
   tagline?: string | null;
   description?: string | null;
@@ -30,6 +32,36 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
+
+  const [stats, setStats] = useState({ rating: 0, since: new Date().getFullYear() });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { data: reviewsData } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("tenant_id", tenant.id)
+        .eq("approved", true);
+      
+      const avgRating = reviewsData?.length 
+        ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
+        : 0;
+      
+      const { data: tenantData } = await supabase
+        .from("tenants")
+        .select("created_at")
+        .eq("id", tenant.id)
+        .single();
+      
+      const createdYear = tenantData?.created_at 
+        ? new Date(tenantData.created_at).getFullYear()
+        : new Date().getFullYear();
+      
+      setStats({ rating: Number(avgRating), since: createdYear });
+    };
+    
+    if (tenant.id) fetchStats();
+  }, [tenant.id]);
 
   const heroImages = tenant.hero_images as string[] | null;
   const heroImage = heroImages?.[0] || tenant.hero_image_url;
@@ -96,16 +128,34 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="text-lg md:text-xl text-white/90 mb-8 max-w-md font-body"
+          className="text-lg md:text-xl text-white/90 mb-6 max-w-md font-body"
         >
           {displayTagline}
         </motion.p>
+
+        {/* Stats Pills */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
+          className="flex items-center gap-4 mb-8"
+        >
+          {stats.rating > 0 && (
+            <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
+              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+              <span className="text-white font-medium text-sm">{stats.rating}</span>
+            </div>
+          )}
+          <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
+            <span className="text-white/90 text-sm">Desde {stats.since}</span>
+          </div>
+        </motion.div>
 
         {/* CTA Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          transition={{ duration: 0.8, delay: 0.9 }}
         >
           <Button
             onClick={onBookNow}
