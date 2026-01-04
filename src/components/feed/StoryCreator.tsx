@@ -22,6 +22,7 @@ import {
   RotateCcw,
   AlertCircle,
   LayoutGrid,
+  Download,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -44,10 +45,11 @@ import {
   EmojiSliderWidget,
   type WidgetType
 } from "./story-creator/widgets";
+import { flattenStoryToImage, downloadStoryAsImage } from "@/lib/story-renderer";
 import { 
   STORY_FONTS, 
   STORY_COLORS, 
-  IMAGE_FILTERS, 
+  IMAGE_FILTERS,
   TEXT_STYLES, 
   TEXT_GRADIENTS,
   IMAGE_ADJUSTMENTS 
@@ -806,12 +808,49 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
     setIsUploading(true);
     if (navigator.vibrate) navigator.vibrate([20, 50, 20]);
     
-    setTimeout(() => {
-      setIsUploading(false);
+    try {
+      // Flatten all layers into a single image
+      const flattenedImage = await flattenStoryToImage({
+        imageData: imageData!,
+        overlays: overlays.map(o => ({ ...o, isEditing: false })),
+        activeFilter,
+        imageAdjustments,
+        drawingDataUrl,
+      });
+      
+      // TODO: Upload flattenedImage to storage and save to salon_stories
+      console.log("Flattened image ready for upload", flattenedImage.substring(0, 50));
+      
       toast.success("¡Historia publicada!", { icon: "🎉" });
       onSuccess();
       onClose();
-    }, 1500);
+    } catch (error) {
+      console.error("Error publishing story:", error);
+      toast.error("Error al publicar la historia");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleExportImage = async () => {
+    if (!imageData) return;
+    
+    try {
+      if (navigator.vibrate) navigator.vibrate([15, 30, 15]);
+      
+      await downloadStoryAsImage({
+        imageData,
+        overlays: overlays.map(o => ({ ...o, isEditing: false })),
+        activeFilter,
+        imageAdjustments,
+        drawingDataUrl,
+      }, `historia-${Date.now()}.jpg`);
+      
+      toast.success("¡Imagen guardada!", { icon: "📷" });
+    } catch (error) {
+      console.error("Error exporting story:", error);
+      toast.error("Error al exportar la imagen");
+    }
   };
 
   const handleDrawingSave = (dataUrl: string) => {
@@ -1304,6 +1343,17 @@ export function StoryCreator({ isOpen, onClose, tenantId, onSuccess }: StoryCrea
                   placeholder="Añade un comentario..."
                   className="w-full bg-transparent outline-none text-white placeholder:text-white/30 resize-none h-24 text-sm"
                 />
+              </div>
+              
+              <div className="flex gap-3 mb-4">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleExportImage}
+                  className="flex-1 py-3 glass-button rounded-xl font-semibold flex items-center justify-center gap-2"
+                >
+                  <Download size={18} />
+                  Guardar
+                </motion.button>
               </div>
               
               <motion.button
