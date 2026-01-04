@@ -20,9 +20,10 @@ interface PremiumSalonCardProps {
   };
   index: number;
   distance?: string | null;
+  hasAvailabilityToday?: boolean;
 }
 
-export function PremiumSalonCard({ salon, index, distance }: PremiumSalonCardProps) {
+export function PremiumSalonCard({ salon, index, distance, hasAvailabilityToday = false }: PremiumSalonCardProps) {
   const { isFavorite, toggleFavorite, isAuthenticated } = useFavorites();
   const isFav = isFavorite(salon.id);
   const primaryColor = salon.primary_color || "#6366f1";
@@ -34,8 +35,6 @@ export function PremiumSalonCard({ salon, index, distance }: PremiumSalonCardPro
     .slice(0, 2)
     .toUpperCase();
 
-  // Check if salon has availability today (mock for now)
-  const hasAvailabilityToday = index % 3 === 0;
   const isPopular = salon.reviewCount > 10;
   const isNew = salon.reviewCount === 0;
 
