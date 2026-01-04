@@ -1809,6 +1809,7 @@ export type Database = {
           show_logo_on_landing: boolean
           slug: string
           tagline: string
+          theme_id: string
           whatsapp_number: string
         }[]
       }
