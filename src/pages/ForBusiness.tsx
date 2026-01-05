@@ -101,10 +101,20 @@ export default function ForBusiness() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="GlowApp para Negocios | Tu Salón en la Plataforma Líder de Belleza"
-        description="Únete a GlowApp y haz crecer tu negocio de belleza. Landing page profesional, sistema de reservas 24/7, gestión de equipo y más. 1 mes gratis."
-        keywords="software peluquería, reservas salón belleza, gestión barbería, plataforma spa, agenda online estética"
+        title="Software para Salones de Belleza | GlowApp para Negocios"
+        description="Gestiona tu peluquería, barbería o spa con GlowApp. Reservas online 24/7, calendario inteligente, reseñas y tu propia landing page. Prueba 1 mes gratis."
+        keywords="software peluquería, app reservas salón, gestión barbería online, plataforma spa, agenda digital estética, sistema citas belleza"
         canonicalUrl="/para-negocios"
+        breadcrumbs={[
+          { name: "Inicio", url: "/" },
+          { name: "Para Negocios", url: "/para-negocios" }
+        ]}
+        faq={[
+          { question: "¿Cuánto cuesta GlowApp para negocios?", answer: "GlowApp ofrece un plan mensual de 39,99€ y un plan anual de 399,99€ (ahorra 2 meses). El primer mes es gratis sin compromiso." },
+          { question: "¿Qué incluye la plataforma para negocios?", answer: "Incluye landing page profesional, sistema de reservas 24/7, gestión de calendario, reseñas verificadas, stories y promociones, y un panel de administración completo." },
+          { question: "¿Puedo gestionar varios estilistas?", answer: "Sí, puedes añadir múltiples estilistas o profesionales a tu cuenta, cada uno con su propio calendario y servicios." },
+          { question: "¿Cómo empiezo a usar GlowApp?", answer: "Regístrate gratis y configura tu negocio en minutos. No necesitas conocimientos técnicos y tendrás 1 mes de prueba sin compromiso." }
+        ]}
       />
 
       {/* Header - Mobile optimized with iPhone safe area */}

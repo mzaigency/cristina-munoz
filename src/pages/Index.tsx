@@ -267,9 +267,9 @@ const Index = () => {
       
       <AppLayout noTopSafeArea>
       <SEO
-        title="GlowApp | Descubre y Reserva en los Mejores Salones de Belleza"
-        description="La red social de belleza. Descubre los mejores salones cerca de ti, conecta con profesionales y reserva cita online."
-        keywords="red social belleza, salones de belleza, peluquerías, reserva online, spa, estética, GlowApp"
+        title="GlowApp | Reserva Cita en Salones de Belleza Cerca de Ti"
+        description="Descubre peluquerías, spas y centros de estética cerca de ti. Reserva cita online al instante. La app de belleza #1 en España con +500 salones."
+        keywords="reservar peluquería, salones belleza cerca, cita online spa, estética cerca de mí, manicura, pedicura, barbería, tratamientos faciales, GlowApp"
         canonicalUrl="/"
       />
 

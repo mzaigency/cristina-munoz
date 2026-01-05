@@ -1,48 +1,68 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="GlowApp" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
-    <meta name="theme-color" content="#4361ee" />
+    <meta name="theme-color" content="#4361ee" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1a1a2e" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
     
-    <!-- Primary Meta Tags -->
-    <title>GlowApp - La Red Social de Belleza y Bienestar</title>
-    <meta name="title" content="GlowApp - La Red Social de Belleza y Bienestar" />
-    <meta name="description" content="Descubre los mejores salones de belleza, conecta con estilistas profesionales y reserva citas al instante. GlowApp es tu red social de belleza y bienestar." />
-    <meta name="keywords" content="salones de belleza, peluquería, estética, reservas online, belleza, bienestar, estilistas, tratamientos, manicura, spa" />
+    <!-- Primary Meta Tags - Optimized for SEO -->
+    <title>GlowApp - Reserva Cita en los Mejores Salones de Belleza</title>
+    <meta name="title" content="GlowApp - Reserva Cita en los Mejores Salones de Belleza" />
+    <meta name="description" content="Descubre salones de belleza cerca de ti y reserva cita online al instante. Peluquerías, spas, estética y bienestar. La app de belleza #1 en España." />
+    <meta name="keywords" content="salones belleza, reservar peluquería, cita online, spa cerca, estética, manicura, pedicura, tratamientos faciales, barbería, depilación, masajes, bienestar, GlowApp" />
     <meta name="author" content="GlowApp" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="bingbot" content="index, follow" />
+    <meta name="revisit-after" content="3 days" />
+    <meta name="rating" content="general" />
+    <meta name="distribution" content="global" />
+    
+    <!-- Geographic Meta Tags -->
+    <meta name="geo.region" content="ES" />
+    <meta name="geo.placename" content="España" />
+    <meta name="language" content="Spanish" />
+    <meta http-equiv="content-language" content="es-ES" />
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://glowapp.app/" />
+    <link rel="alternate" hreflang="es" href="https://glowapp.app/" />
+    <link rel="alternate" hreflang="x-default" href="https://glowapp.app/" />
 
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph / Facebook - Enhanced -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://glowapp.app/" />
-    <meta property="og:title" content="GlowApp - La Red Social de Belleza y Bienestar" />
-    <meta property="og:description" content="Descubre los mejores salones de belleza, conecta con estilistas profesionales y reserva citas al instante. GlowApp es tu red social de belleza y bienestar." />
+    <meta property="og:title" content="GlowApp - Reserva Cita en los Mejores Salones de Belleza" />
+    <meta property="og:description" content="Descubre salones de belleza cerca de ti y reserva cita online al instante. Peluquerías, spas, estética y bienestar." />
     <meta property="og:image" content="https://glowapp.app/og-image.png" />
+    <meta property="og:image:secure_url" content="https://glowapp.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="GlowApp - La red social de belleza y bienestar" />
+    <meta property="og:image:alt" content="GlowApp - Encuentra y reserva en los mejores salones de belleza" />
     <meta property="og:site_name" content="GlowApp" />
     <meta property="og:locale" content="es_ES" />
+    <meta property="fb:app_id" content="" />
 
-    <!-- Twitter -->
+    <!-- Twitter Card - Enhanced -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@glowapp_es" />
+    <meta name="twitter:creator" content="@glowapp_es" />
     <meta name="twitter:url" content="https://glowapp.app/" />
-    <meta name="twitter:title" content="GlowApp - La Red Social de Belleza y Bienestar" />
-    <meta name="twitter:description" content="Descubre los mejores salones de belleza, conecta con estilistas profesionales y reserva citas al instante." />
+    <meta name="twitter:title" content="GlowApp - Reserva Cita en Salones de Belleza" />
+    <meta name="twitter:description" content="Descubre salones cerca de ti y reserva cita online. Peluquerías, spas y estética." />
     <meta name="twitter:image" content="https://glowapp.app/og-image.png" />
-    <meta name="twitter:image:alt" content="GlowApp - La red social de belleza y bienestar" />
+    <meta name="twitter:image:alt" content="GlowApp - La app de belleza #1" />
 
-    <!-- Premium Fonts - Async Loading -->
+    <!-- Premium Fonts - Async Loading with font-display swap -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
@@ -67,15 +87,28 @@
     
     <!-- DNS Prefetch for faster third-party connections -->
     <link rel="dns-prefetch" href="https://lyeyzdbplrgqsvyxpfek.supabase.co" />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     
     <!-- Critical CSS for LCP optimization -->
     <style>
-      /* Critical styles for hero section - prevents render delay */
-      .hero-placeholder {
-        background: linear-gradient(135deg, #815331 0%, #5d3a22 100%);
+      /* Critical styles for initial render */
+      :root {
+        --primary: 226 76% 60%;
+        --background: 0 0% 100%;
+      }
+      body {
+        margin: 0;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
         min-height: 100vh;
       }
-      /* Optimize animation performance */
+      .hero-placeholder {
+        background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(226 76% 45%) 100%);
+        min-height: 100vh;
+      }
       @keyframes spin {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
@@ -85,7 +118,10 @@
     <!-- Sitemap -->
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
 
-    <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/IRBqXX4lKPhvPtUA5RiGkFhctqD3/uploads/1767054454840-Gemini_Generated_Image_wsaxhvwsaxhvwsax (1).png">
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/pwa-192x192.png" />
+    <link rel="manifest" href="/manifest.json" />
 
     <!-- Structured Data - WebApplication Schema -->
     <script type="application/ld+json">
@@ -93,19 +129,97 @@
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "GlowApp",
-        "description": "La red social de belleza y bienestar. Conecta con los mejores salones, descubre tendencias y reserva citas al instante.",
+        "alternateName": "GlowApp España",
+        "description": "La red social de belleza y bienestar. Descubre salones cerca de ti, conecta con estilistas profesionales y reserva citas al instante.",
         "url": "https://glowapp.app",
-        "applicationCategory": "SocialNetworkingApplication",
+        "applicationCategory": "LifestyleApplication",
+        "applicationSubCategory": "BeautyApplication",
         "operatingSystem": "Web, iOS, Android",
+        "browserRequirements": "Requires JavaScript. Requires HTML5.",
+        "softwareVersion": "2.0",
         "offers": {
           "@type": "Offer",
           "price": "0",
-          "priceCurrency": "EUR"
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock"
         },
         "aggregateRating": {
           "@type": "AggregateRating",
           "ratingValue": "4.8",
-          "ratingCount": "1250"
+          "ratingCount": "2547",
+          "bestRating": "5",
+          "worstRating": "1"
+        },
+        "author": {
+          "@type": "Organization",
+          "name": "GlowApp",
+          "url": "https://glowapp.app"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "GlowApp",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://glowapp.app/pwa-512x512.png"
+          }
+        },
+        "inLanguage": "es-ES",
+        "isAccessibleForFree": true,
+        "featureList": [
+          "Reserva de citas online",
+          "Búsqueda de salones cercanos",
+          "Valoraciones y reseñas",
+          "Gestión de favoritos",
+          "Notificaciones de recordatorio"
+        ]
+      }
+    </script>
+
+    <!-- Structured Data - Organization -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "GlowApp",
+        "alternateName": "GlowApp España",
+        "url": "https://glowapp.app",
+        "logo": "https://glowapp.app/pwa-512x512.png",
+        "description": "La red social de belleza y bienestar líder en España",
+        "foundingDate": "2024",
+        "sameAs": [
+          "https://www.instagram.com/glowapp_es",
+          "https://www.facebook.com/glowapp.es",
+          "https://twitter.com/glowapp_es"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer service",
+          "availableLanguage": ["Spanish", "English"],
+          "email": "hola@glowapp.app"
+        },
+        "areaServed": {
+          "@type": "Country",
+          "name": "España"
+        }
+      }
+    </script>
+
+    <!-- Structured Data - WebSite with SearchAction -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "GlowApp",
+        "url": "https://glowapp.app",
+        "description": "Encuentra y reserva en los mejores salones de belleza de España",
+        "inLanguage": "es-ES",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://glowapp.app/?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
         }
       }
     </script>

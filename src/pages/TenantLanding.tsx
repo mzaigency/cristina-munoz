@@ -161,7 +161,7 @@ const TenantLanding = () => {
   const businessLabel = businessTypeLabel || "Salón de belleza";
   const typeKeywords = businessType ? seoKeywordsByType[businessType] || "" : "";
   
-  const seoTitle = `${tenant.name} - ${businessLabel}${tenant.city ? ` en ${tenant.city}` : ''} | Reserva Online`;
+  const seoTitle = `${tenant.name} | ${businessLabel}${tenant.city ? ` en ${tenant.city}` : ''} - Reserva Online`;
   
   const seoDescription = tenant.description || 
     `${businessLabel} profesional${tenant.city ? ` en ${tenant.city}` : ''}. ${
@@ -179,8 +179,29 @@ const TenantLanding = () => {
     tenant.name,
     typeKeywords,
     "reserva online",
+    "cita previa",
     tenant.city ? `${businessLabel.toLowerCase()} ${tenant.city}` : null,
+    tenant.city ? `reservar ${businessLabel.toLowerCase()} ${tenant.city}` : null,
   ].filter(Boolean).join(", ");
+
+  // Build LocalBusiness structured data
+  const localBusinessData = {
+    name: tenant.name,
+    description: tenant.description || `${businessLabel} profesional`,
+    image: tenant.hero_image_url || tenant.logo_url || undefined,
+    ...(tenant.address || tenant.city ? {
+      address: {
+        street: tenant.address || undefined,
+        city: tenant.city || undefined,
+        postalCode: tenant.postal_code || undefined,
+        country: tenant.country || "ES",
+      }
+    } : {}),
+    ...(tenant.phone ? { telephone: tenant.phone } : {}),
+    ...(tenant.average_price ? { 
+      priceRange: tenant.average_price <= 20 ? "€" : tenant.average_price <= 50 ? "€€" : "€€€" 
+    } : {}),
+  };
 
   const primaryColor = tenant.primary_color || "#8B5CF6";
 
@@ -207,6 +228,14 @@ const TenantLanding = () => {
           description={seoDescription}
           keywords={seoKeywords}
           canonicalUrl={`/salon/${tenant.slug}`}
+          ogImage={tenant.hero_image_url || undefined}
+          localBusiness={localBusinessData}
+          breadcrumbs={[
+            { name: "Inicio", url: "/" },
+            { name: businessLabel, url: `/?category=${businessType || 'all'}` },
+            { name: tenant.name, url: `/salon/${tenant.slug}` }
+          ]}
+          noindex={isPreview}
         />
         
         <TenantHeader 
