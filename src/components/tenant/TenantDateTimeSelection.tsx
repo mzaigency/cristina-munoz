@@ -16,8 +16,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 interface TenantStylist {
   id: string;
@@ -103,12 +101,10 @@ export const TenantDateTimeSelection = ({
   
   // Waitlist state
   const [showWaitlistDialog, setShowWaitlistDialog] = useState(false);
-  const [waitlistName, setWaitlistName] = useState("");
-  const [waitlistPhone, setWaitlistPhone] = useState("");
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   
   // User authentication state
-  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; phone: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string } | null>(null);
   const [userLoading, setUserLoading] = useState(true);
   
   const { toast } = useToast();
@@ -123,20 +119,14 @@ export const TenantDateTimeSelection = ({
         if (user) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("full_name, phone")
+            .select("full_name")
             .eq("id", user.id)
             .single();
           
-          if (profile) {
-            setCurrentUser({
-              id: user.id,
-              name: profile.full_name || "",
-              phone: profile.phone || ""
-            });
-            // Pre-fill waitlist fields
-            setWaitlistName(profile.full_name || "");
-            setWaitlistPhone(profile.phone || "");
-          }
+          setCurrentUser({
+            id: user.id,
+            name: profile?.full_name || user.email || ""
+          });
         }
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -383,14 +373,10 @@ export const TenantDateTimeSelection = ({
 
   // Handle waitlist submission
   const handleWaitlistSubmit = async () => {
-    // Use currentUser data if available, otherwise use form fields
-    const nameToUse = (currentUser?.name || waitlistName).trim();
-    const phoneToUse = (currentUser?.phone || waitlistPhone).trim();
-    
-    if (!nameToUse || !phoneToUse || !date) {
+    if (!currentUser || !date) {
       toast({
         title: "Error",
-        description: "Por favor completa todos los campos",
+        description: "Debes iniciar sesión para unirte a la lista de espera",
         variant: "destructive"
       });
       return;
@@ -406,12 +392,12 @@ export const TenantDateTimeSelection = ({
         .from("waitlist")
         .insert({
           tenant_id: tenantId,
-          client_name: nameToUse,
-          client_phone: phoneToUse,
+          client_name: currentUser.name,
+          client_phone: currentUser.id, // Usamos el user_id como referencia para mensajes directos
           preferred_date: format(date, "yyyy-MM-dd"),
           preferred_stylist_id: preferredStylistId,
           services: services.map(s => ({ id: s.id, name: s.name })),
-          notes: `Duración total: ${totalDuration} min`,
+          notes: `user_id:${currentUser.id} | Duración: ${totalDuration} min`,
           status: "waiting",
           priority: 3
         });
@@ -420,12 +406,10 @@ export const TenantDateTimeSelection = ({
 
       toast({
         title: "¡Añadido a la lista de espera!",
-        description: "Te avisaremos cuando haya disponibilidad para esta fecha"
+        description: "Te notificaremos cuando haya disponibilidad"
       });
       
       setShowWaitlistDialog(false);
-      setWaitlistName("");
-      setWaitlistPhone("");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -609,41 +593,22 @@ export const TenantDateTimeSelection = ({
               Lista de espera
             </DialogTitle>
             <DialogDescription>
-              Te avisaremos cuando haya disponibilidad para {date ? format(date, "d 'de' MMMM", { locale: es }) : "esta fecha"}.
+              Te notificaremos dentro de la app cuando haya disponibilidad para {date ? format(date, "d 'de' MMMM", { locale: es }) : "esta fecha"}.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            {currentUser && currentUser.name && currentUser.phone ? (
-              // Usuario logueado con datos completos - mostrar resumen
+            {currentUser ? (
               <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                <p className="text-sm font-medium text-foreground mb-2">Tus datos:</p>
+                <p className="text-sm font-medium text-foreground mb-1">Te añadiremos como:</p>
                 <p className="text-sm text-muted-foreground">{currentUser.name}</p>
-                <p className="text-sm text-muted-foreground">{currentUser.phone}</p>
               </div>
             ) : (
-              // Usuario no logueado o sin datos - mostrar formulario
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="waitlist-name">Nombre</Label>
-                  <Input
-                    id="waitlist-name"
-                    placeholder="Tu nombre"
-                    value={waitlistName}
-                    onChange={(e) => setWaitlistName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="waitlist-phone">Teléfono</Label>
-                  <Input
-                    id="waitlist-phone"
-                    type="tel"
-                    placeholder="600 123 456"
-                    value={waitlistPhone}
-                    onChange={(e) => setWaitlistPhone(e.target.value)}
-                  />
-                </div>
-              </>
+              <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                <p className="text-sm text-destructive">
+                  Debes iniciar sesión para unirte a la lista de espera
+                </p>
+              </div>
             )}
             
             <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
@@ -662,7 +627,7 @@ export const TenantDateTimeSelection = ({
             </Button>
             <Button 
               onClick={handleWaitlistSubmit}
-              disabled={waitlistSubmitting || (!(currentUser?.name && currentUser?.phone) && (!waitlistName.trim() || !waitlistPhone.trim()))}
+              disabled={waitlistSubmitting || !currentUser}
             >
               {waitlistSubmitting ? (
                 <>
