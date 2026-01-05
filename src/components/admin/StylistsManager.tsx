@@ -161,17 +161,28 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
 
       if (stylistError) throw stylistError;
 
-      // Always add "stylist" role to user_roles with tenant_id
+      // First, remove any orphan stylist role without tenant_id
+      await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "stylist")
+        .is("tenant_id", null);
+
+      // Add "stylist" role to user_roles with tenant_id
       const { error: roleError } = await supabase
         .from("user_roles")
-        .upsert({ 
+        .insert({ 
           user_id: userId, 
           role: "stylist" as const,
           tenant_id: tenantId
-        }, { onConflict: "user_id,role,tenant_id" });
+        });
 
       if (roleError) {
-        console.error("Error adding stylist role:", roleError);
+        // If already exists, that's fine
+        if (!roleError.message.includes("duplicate")) {
+          console.error("Error adding stylist role:", roleError);
+        }
       }
 
       // If admin role selected, also add to tenant_admins
