@@ -8,7 +8,8 @@ import {
   Star, 
   Clock,
   Trash2,
-  Check
+  Check,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Notification } from '@/hooks/useNotifications';
@@ -33,6 +34,9 @@ const getNotificationIcon = (type: string) => {
     case 'new_review':
     case 'review_approved':
       return Star;
+    case 'new_waitlist':
+    case 'waitlist_availability':
+      return Users;
     default:
       return Bell;
   }
@@ -52,6 +56,10 @@ const getNotificationColor = (type: string) => {
     case 'new_review':
     case 'review_approved':
       return 'text-yellow-500 bg-yellow-500/10';
+    case 'new_waitlist':
+      return 'text-purple-500 bg-purple-500/10';
+    case 'waitlist_availability':
+      return 'text-emerald-500 bg-emerald-500/10';
     default:
       return 'text-primary bg-primary/10';
   }
