@@ -512,7 +512,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
     const dayHours = getBusinessHoursForDay(dayOfWeek);
 
     if (dayHours.isClosed) {
-      return { hours: [], startHour: 0, endHour: 0, breakStart: null, breakEnd: null, isClosed: true };
+      return { hours: [], startHour: 0, endHour: 0, breakStartMinutes: null, breakEndMinutes: null, isClosed: true };
     }
 
     // Calculate start and end hours from business hours
@@ -541,11 +541,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
 
     const hours = Array.from({ length: actualEndHour - actualStartHour }, (_, i) => actualStartHour + i);
 
-    // Break times for this day
-    const breakStart = dayHours.afternoonStart > 0 ? Math.floor(dayHours.morningEnd / 60) : null;
-    const breakEnd = dayHours.afternoonStart > 0 ? Math.floor(dayHours.afternoonStart / 60) : null;
+    // Break times for this day - store in MINUTES for precise positioning
+    const breakStartMinutes = dayHours.afternoonStart > 0 ? dayHours.morningEnd : null;
+    const breakEndMinutes = dayHours.afternoonStart > 0 ? dayHours.afternoonStart : null;
 
-    return { hours, startHour: actualStartHour, endHour: actualEndHour, breakStart, breakEnd, isClosed: false };
+    return { 
+      hours, 
+      startHour: actualStartHour, 
+      endHour: actualEndHour, 
+      breakStartMinutes, 
+      breakEndMinutes, 
+      isClosed: false 
+    };
   };
 
   const calculateBookingPosition = (booking: LocalBooking, dayDate: Date) => {
@@ -1121,25 +1128,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                         <div className="flex gap-2 md:gap-4 pt-2 md:pt-3 min-w-max">
                           {/* Time column */}
                           <div className="w-10 md:w-16 shrink-0">
-                            {schedule.hours.map((hour) => {
-                              const isBreakHour =
-                                schedule.breakStart !== null &&
-                                schedule.breakEnd !== null &&
-                                hour >= schedule.breakStart &&
-                                hour < schedule.breakEnd;
-
-                              return (
-                                <div
-                                  key={hour}
-                                  className={cn(
-                                    "h-[120px] text-[10px] md:text-sm text-muted-foreground border-b border-border/30 flex items-start pt-1",
-                                    isBreakHour && "bg-muted/30",
-                                  )}
-                                >
-                                  <span className="font-medium">{String(hour).padStart(2, "0")}:00</span>
-                                </div>
-                              );
-                            })}
+                            {schedule.hours.map((hour) => (
+                              <div
+                                key={hour}
+                                className="h-[120px] text-[10px] md:text-sm text-muted-foreground border-b border-border/30 flex items-start pt-1"
+                              >
+                                <span className="font-medium">{String(hour).padStart(2, "0")}:00</span>
+                              </div>
+                            ))}
                           </div>
 
                           {/* Stylists columns */}
@@ -1155,36 +1151,35 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                   onDragLeave={handleDragLeave}
                                   onDrop={(e) => handleDropOnColumn(e, stylist.slug, schedule.startHour, dateKey)}
                                 >
-                                  {/* Hour grid lines with break indication */}
-                                  {schedule.hours.map((hour, idx) => {
-                                    const isBreakHour =
-                                      schedule.breakStart !== null &&
-                                      schedule.breakEnd !== null &&
-                                      hour >= schedule.breakStart &&
-                                      hour < schedule.breakEnd;
-
+                                  {/* Hour grid lines */}
+                                  {schedule.hours.map((hour) => (
+                                    <div
+                                      key={hour}
+                                      className="h-[120px] border-b border-border/20 relative pointer-events-none"
+                                    >
+                                      {/* Half-hour line */}
+                                      <div className="absolute top-[60px] left-0 right-0 border-t border-dashed border-border/15" />
+                                    </div>
+                                  ))}
+                                  
+                                  {/* Break zone - positioned exactly based on minutes */}
+                                  {schedule.breakStartMinutes !== null && schedule.breakEndMinutes !== null && (() => {
+                                    const breakTopMinutes = schedule.breakStartMinutes - (schedule.startHour * 60);
+                                    const breakDurationMinutes = schedule.breakEndMinutes - schedule.breakStartMinutes;
+                                    const top = breakTopMinutes * PIXELS_PER_MINUTE;
+                                    const height = breakDurationMinutes * PIXELS_PER_MINUTE;
+                                    
                                     return (
-                                      <div
-                                        key={hour}
-                                        className={cn(
-                                          "h-[120px] border-b border-border/20 relative pointer-events-none",
-                                          isBreakHour && "bg-amber-500/5",
-                                        )}
+                                      <div 
+                                        className="absolute inset-x-0 bg-amber-500/10 pointer-events-none z-0 flex items-center justify-center"
+                                        style={{ top: `${top}px`, height: `${height}px` }}
                                       >
-                                        {/* Half-hour line */}
-                                        <div className="absolute top-[60px] left-0 right-0 border-t border-dashed border-border/15" />
-
-                                        {/* Break time indicator */}
-                                        {isBreakHour && idx === schedule.breakStart && (
-                                          <div className="absolute inset-x-0 top-0 flex items-center justify-center">
-                                            <span className="text-[10px] text-amber-600/60 bg-amber-100/50 px-2 py-0.5 rounded-b-md">
-                                              Descanso
-                                            </span>
-                                          </div>
-                                        )}
+                                        <span className="text-[10px] text-amber-600/60 bg-amber-100/50 px-2 py-0.5 rounded">
+                                          Descanso
+                                        </span>
                                       </div>
                                     );
-                                  })}
+                                  })()}
 
                                   {/* Drop indicator - shows exact time where booking will land */}
                                   {dragOverStylist === stylist.slug &&
