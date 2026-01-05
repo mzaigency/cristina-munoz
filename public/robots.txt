@@ -1,5 +1,5 @@
 # GlowApp - Robots.txt
-# https://glowapp.app
+# https://www.glowapp.app
 
 # Google
 User-agent: Googlebot
@@ -55,7 +55,7 @@ User-agent: Claude-Web
 Allow: /
 
 # Sitemap location
-Sitemap: https://glowapp.app/sitemap.xml
+Sitemap: https://www.glowapp.app/sitemap.xml
 
 # Host
-Host: https://glowapp.app
+Host: https://www.glowapp.app

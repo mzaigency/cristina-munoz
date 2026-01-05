@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
-const APP_URL = 'https://glowapp.app'
+const APP_URL = 'https://www.glowapp.app'
 
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {

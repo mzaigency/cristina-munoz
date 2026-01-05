@@ -9,7 +9,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
-const APP_URL = 'https://glowapp.app'
+const APP_URL = 'https://www.glowapp.app'
 const FROM_EMAIL = 'GlowApp <contacto@glowapp.app>'
 const LOGO_URL = `${APP_URL}/og-image.png`
 
