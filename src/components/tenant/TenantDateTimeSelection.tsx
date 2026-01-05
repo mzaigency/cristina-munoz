@@ -107,9 +107,46 @@ export const TenantDateTimeSelection = ({
   const [waitlistPhone, setWaitlistPhone] = useState("");
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   
+  // User authentication state
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; phone: string } | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
+  
   const { toast } = useToast();
 
   const { businessHours, loading: hoursLoading, generateBaseSlots, getBusinessHoursForDay, getClosedDays } = useTenantBusinessHours(tenantId);
+
+  // Fetch current user profile
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, phone")
+            .eq("id", user.id)
+            .single();
+          
+          if (profile) {
+            setCurrentUser({
+              id: user.id,
+              name: profile.full_name || "",
+              phone: profile.phone || ""
+            });
+            // Pre-fill waitlist fields
+            setWaitlistName(profile.full_name || "");
+            setWaitlistPhone(profile.phone || "");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
   // Fetch tenant stylists
   useEffect(() => {
     const fetchStylists = async () => {
@@ -573,25 +610,37 @@ export const TenantDateTimeSelection = ({
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="waitlist-name">Nombre</Label>
-              <Input
-                id="waitlist-name"
-                placeholder="Tu nombre"
-                value={waitlistName}
-                onChange={(e) => setWaitlistName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="waitlist-phone">Teléfono</Label>
-              <Input
-                id="waitlist-phone"
-                type="tel"
-                placeholder="600 123 456"
-                value={waitlistPhone}
-                onChange={(e) => setWaitlistPhone(e.target.value)}
-              />
-            </div>
+            {currentUser && currentUser.name && currentUser.phone ? (
+              // Usuario logueado con datos completos - mostrar resumen
+              <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                <p className="text-sm font-medium text-foreground mb-2">Tus datos:</p>
+                <p className="text-sm text-muted-foreground">{currentUser.name}</p>
+                <p className="text-sm text-muted-foreground">{currentUser.phone}</p>
+              </div>
+            ) : (
+              // Usuario no logueado o sin datos - mostrar formulario
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="waitlist-name">Nombre</Label>
+                  <Input
+                    id="waitlist-name"
+                    placeholder="Tu nombre"
+                    value={waitlistName}
+                    onChange={(e) => setWaitlistName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="waitlist-phone">Teléfono</Label>
+                  <Input
+                    id="waitlist-phone"
+                    type="tel"
+                    placeholder="600 123 456"
+                    value={waitlistPhone}
+                    onChange={(e) => setWaitlistPhone(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
             
             <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
               <p className="font-medium mb-1">Servicios solicitados:</p>
