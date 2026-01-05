@@ -102,7 +102,7 @@ const Index = () => {
     localStorage.removeItem(STORAGE_KEY);
   };
 
-  const { data: salons, isLoading } = useQuery({
+  const { data: salons, isLoading, isFetching } = useQuery({
     queryKey: ["salons-premium-hub"],
     queryFn: async () => {
       // Use security-safe RPC function that only exposes public fields
@@ -141,6 +141,9 @@ const Index = () => {
 
       return tenantsWithStats;
     },
+    staleTime: 1000 * 60 * 5, // 5 minutos - datos frescos, no recarga innecesaria
+    gcTime: 1000 * 60 * 30, // 30 minutos en cache
+    refetchOnWindowFocus: false, // No recargar al volver a la ventana
   });
 
   // Pull to refresh handler
@@ -402,70 +405,62 @@ const Index = () => {
                 />
               </motion.div>
 
-              {/* Salons Grid */}
-              <AnimatePresence mode="wait">
-                {isLoading ? (
-                  <PremiumSkeleton />
-                ) : visibleSalons && visibleSalons.length > 0 ? (
-                  <div className="space-y-6">
-                    <motion.div
-                      key="results"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                    >
-                      {visibleSalons.map((salon, index) => {
-                        const recScore = scoresMap.get(salon.id);
-                        return (
-                          <PremiumSalonCard 
-                            key={salon.id} 
-                            salon={salon} 
-                            index={index} 
-                            distance={salon.formattedDistance}
-                            hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
-                            recommendationScore={recScore?.score}
-                            matchReasons={recScore?.matchReasons}
-                          />
-                        );
-                      })}
-                    </motion.div>
-                    
-                    {/* Load More Button */}
-                    {hasMoreSalons && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex justify-center pt-4"
-                      >
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={handleLoadMore}
-                          className="flex items-center gap-2 px-6 py-3 rounded-full bg-secondary text-foreground font-semibold text-sm hover:bg-secondary/80 transition-colors shadow-sm"
-                        >
-                          <span>Ver más</span>
-                          <span className="text-muted-foreground text-xs">
-                            ({filteredSalons.length - visibleCount} restantes)
-                          </span>
-                        </motion.button>
-                      </motion.div>
-                    )}
+              {/* Salons Grid - Solo skeleton en carga inicial, no en revalidaciones */}
+              {isLoading && !salons ? (
+                <PremiumSkeleton />
+              ) : visibleSalons && visibleSalons.length > 0 ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {visibleSalons.map((salon, index) => {
+                      const recScore = scoresMap.get(salon.id);
+                      return (
+                        <PremiumSalonCard 
+                          key={salon.id} 
+                          salon={salon} 
+                          index={index} 
+                          distance={salon.formattedDistance}
+                          hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
+                          recommendationScore={recScore?.score}
+                          matchReasons={recScore?.matchReasons}
+                        />
+                      );
+                    })}
                   </div>
-                ) : (
-                  <EmptyState
-                    type={
-                      selectedCategory === "huecos" && hasChecked && tenantsWithAvailability.length === 0
-                        ? "no-availability"
-                        : searchQuery 
-                          ? "no-results" 
-                          : "empty"
-                    }
-                    searchQuery={searchQuery}
-                    onClearSearch={() => setSearchQuery("")}
-                    onClearFilter={() => setSelectedCategory(null)}
-                  />
-                )}
-              </AnimatePresence>
+                  
+                  {/* Load More Button */}
+                  {hasMoreSalons && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex justify-center pt-4"
+                    >
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleLoadMore}
+                        className="flex items-center gap-2 px-6 py-3 rounded-full bg-secondary text-foreground font-semibold text-sm hover:bg-secondary/80 transition-colors shadow-sm"
+                      >
+                        <span>Ver más</span>
+                        <span className="text-muted-foreground text-xs">
+                          ({filteredSalons.length - visibleCount} restantes)
+                        </span>
+                      </motion.button>
+                    </motion.div>
+                  )}
+                </div>
+              ) : (
+                <EmptyState
+                  type={
+                    selectedCategory === "huecos" && hasChecked && tenantsWithAvailability.length === 0
+                      ? "no-availability"
+                      : searchQuery 
+                        ? "no-results" 
+                        : "empty"
+                  }
+                  searchQuery={searchQuery}
+                  onClearSearch={() => setSearchQuery("")}
+                  onClearFilter={() => setSelectedCategory(null)}
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
