@@ -405,10 +405,8 @@ const Index = () => {
                 />
               </motion.div>
 
-              {/* Salons Grid - Solo skeleton en carga inicial, no en revalidaciones */}
-              {isLoading && !salons ? (
-                <PremiumSkeleton />
-              ) : visibleSalons && visibleSalons.length > 0 ? (
+              {/* Salons Grid - Sin skeleton, contenido directo */}
+              {visibleSalons && visibleSalons.length > 0 ? (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {visibleSalons.map((salon, index) => {

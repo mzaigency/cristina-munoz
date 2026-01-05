@@ -90,18 +90,14 @@ export function ConversationList({
     }
   };
 
-  if (loading) {
+  // No mostrar skeleton, mostrar lista vacía mientras carga
+  if (loading && conversations.length === 0) {
     return (
-      <div className="space-y-0 divide-y divide-border/50">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="flex items-center gap-3 p-4">
-            <Skeleton className="h-14 w-14 rounded-full" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-full" />
-            </div>
-          </div>
-        ))}
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+          <MessageCircle className="h-10 w-10 text-muted-foreground/50" />
+        </div>
+        <p className="text-sm text-muted-foreground">Cargando conversaciones...</p>
       </div>
     );
   }
