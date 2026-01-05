@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CurrentUserTenant {
@@ -14,19 +14,56 @@ interface CurrentUserTenant {
   } | null;
 }
 
+// Cache global para mantener el estado entre navegaciones
+let globalCache: CurrentUserTenant | null = null;
+let cacheUserId: string | null = null;
+
 export const useCurrentUserTenant = (): CurrentUserTenant => {
-  const [state, setState] = useState<CurrentUserTenant>({
-    tenantId: null,
-    isAdmin: false,
-    loading: true,
-    tenant: null,
+  // Inicializar con cache si existe
+  const [state, setState] = useState<CurrentUserTenant>(() => {
+    if (globalCache) {
+      return globalCache;
+    }
+    return {
+      tenantId: null,
+      isAdmin: false,
+      loading: true,
+      tenant: null,
+    };
   });
 
-  useEffect(() => {
-    checkUserTenant();
+  const hasChecked = useRef(false);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkUserTenant();
+  useEffect(() => {
+    // Si ya tenemos cache válida, no volver a cargar
+    const checkCache = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUserId = session?.user?.id || null;
+      
+      // Si el usuario es el mismo y ya tenemos cache, usar cache
+      if (globalCache && cacheUserId === currentUserId && !state.loading) {
+        return;
+      }
+      
+      // Si ya verificamos en este montaje, no repetir
+      if (hasChecked.current && cacheUserId === currentUserId) {
+        return;
+      }
+      
+      hasChecked.current = true;
+      await checkUserTenant();
+    };
+
+    checkCache();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      // Solo recargar en eventos importantes de auth
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        hasChecked.current = false;
+        globalCache = null;
+        cacheUserId = null;
+        checkUserTenant();
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -37,12 +74,15 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
-        setState({
+        const newState = {
           tenantId: null,
           isAdmin: false,
           loading: false,
           tenant: null,
-        });
+        };
+        globalCache = newState;
+        cacheUserId = null;
+        setState(newState);
         return;
       }
 
@@ -65,12 +105,15 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
         .maybeSingle();
 
       if (adminData?.tenant) {
-        setState({
+        const newState = {
           tenantId: adminData.tenant_id,
           isAdmin: true,
           loading: false,
           tenant: adminData.tenant as CurrentUserTenant["tenant"],
-        });
+        };
+        globalCache = newState;
+        cacheUserId = userId;
+        setState(newState);
         return;
       }
 
@@ -92,29 +135,38 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
         .maybeSingle();
 
       if (stylistData?.tenant) {
-        setState({
+        const newState = {
           tenantId: stylistData.tenant_id,
           isAdmin: false,
           loading: false,
           tenant: stylistData.tenant as CurrentUserTenant["tenant"],
-        });
+        };
+        globalCache = newState;
+        cacheUserId = userId;
+        setState(newState);
         return;
       }
 
-      setState({
+      const newState = {
         tenantId: null,
         isAdmin: false,
         loading: false,
         tenant: null,
-      });
+      };
+      globalCache = newState;
+      cacheUserId = userId;
+      setState(newState);
     } catch (error) {
       console.error("Error checking user tenant:", error);
-      setState({
+      const newState = {
         tenantId: null,
         isAdmin: false,
         loading: false,
         tenant: null,
-      });
+      };
+      globalCache = newState;
+      cacheUserId = null;
+      setState(newState);
     }
   };
 
