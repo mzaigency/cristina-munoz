@@ -188,6 +188,7 @@ export type Database = {
           email: string | null
           favorite_stylist_id: string | null
           id: string
+          is_blocked: boolean | null
           last_visit_at: string | null
           loyalty_points: number | null
           name: string
@@ -205,6 +206,7 @@ export type Database = {
           email?: string | null
           favorite_stylist_id?: string | null
           id?: string
+          is_blocked?: boolean | null
           last_visit_at?: string | null
           loyalty_points?: number | null
           name: string
@@ -222,6 +224,7 @@ export type Database = {
           email?: string | null
           favorite_stylist_id?: string | null
           id?: string
+          is_blocked?: boolean | null
           last_visit_at?: string | null
           loyalty_points?: number | null
           name?: string

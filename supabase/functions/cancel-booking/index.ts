@@ -198,6 +198,31 @@ serve(async (req) => {
       }
     }
 
+    // Check waitlist for availability after cancellation
+    try {
+      for (const booking of bookings) {
+        if (booking.Fecha && booking.tenant_id) {
+          // Invoke check-waitlist-availability for each cancelled date
+          const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/check-waitlist-availability`;
+          await fetch(functionUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+            },
+            body: JSON.stringify({
+              tenant_id: booking.tenant_id,
+              date: booking.Fecha
+            })
+          });
+          console.log('Checked waitlist availability for date:', booking.Fecha);
+        }
+      }
+    } catch (waitlistError) {
+      console.error('Error checking waitlist:', waitlistError);
+      // Don't fail the cancellation if waitlist check fails
+    }
+
     return new Response(
       JSON.stringify({ success: true, message: 'Booking cancelled successfully' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
