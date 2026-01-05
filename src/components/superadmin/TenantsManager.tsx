@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { TenantOnboardingWizard } from "./TenantOnboardingWizard";
 
 interface Tenant {
   id: string;
@@ -65,11 +65,11 @@ interface TenantStats {
 }
 
 export const TenantsManager = () => {
+  const navigate = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [stats, setStats] = useState<Record<string, TenantStats>>({});
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -289,18 +289,11 @@ export const TenantsManager = () => {
           </p>
         </div>
 
-        <Button className="gap-2 w-full sm:w-auto" onClick={() => setIsWizardOpen(true)}>
+        <Button className="gap-2 w-full sm:w-auto" onClick={() => navigate("/onboarding?admin=true")}>
           <Sparkles className="h-4 w-4" />
           Nuevo Tenant
         </Button>
       </div>
-
-      {/* Onboarding Wizard */}
-      <TenantOnboardingWizard
-        open={isWizardOpen}
-        onOpenChange={setIsWizardOpen}
-        onComplete={fetchTenants}
-      />
 
       {/* Search */}
       <div className="relative">
