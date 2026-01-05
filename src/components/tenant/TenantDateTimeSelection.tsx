@@ -4,10 +4,21 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { es } from "date-fns/locale";
+import { format } from "date-fns";
 import { Service, TimeRange } from "@/types/booking";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
-import { Loader2 } from "lucide-react";
-
+import { Loader2, Clock, Bell } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 interface TenantStylist {
   id: string;
   name: string;
@@ -89,9 +100,16 @@ export const TenantDateTimeSelection = ({
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [stylistsLoading, setStylistsLoading] = useState(true);
+  
+  // Waitlist state
+  const [showWaitlistDialog, setShowWaitlistDialog] = useState(false);
+  const [waitlistName, setWaitlistName] = useState("");
+  const [waitlistPhone, setWaitlistPhone] = useState("");
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  
+  const { toast } = useToast();
 
   const { businessHours, loading: hoursLoading, generateBaseSlots, getBusinessHoursForDay, getClosedDays } = useTenantBusinessHours(tenantId);
-
   // Fetch tenant stylists
   useEffect(() => {
     const fetchStylists = async () => {
@@ -326,6 +344,58 @@ export const TenantDateTimeSelection = ({
     }
   };
 
+  // Handle waitlist submission
+  const handleWaitlistSubmit = async () => {
+    if (!waitlistName.trim() || !waitlistPhone.trim() || !date) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setWaitlistSubmitting(true);
+    try {
+      const preferredStylistId = stylist !== 'any' 
+        ? stylists.find(s => s.slug === stylist)?.id 
+        : null;
+
+      const { error } = await supabase
+        .from("waitlist")
+        .insert({
+          tenant_id: tenantId,
+          client_name: waitlistName.trim(),
+          client_phone: waitlistPhone.trim(),
+          preferred_date: format(date, "yyyy-MM-dd"),
+          preferred_stylist_id: preferredStylistId,
+          services: services.map(s => ({ id: s.id, name: s.name })),
+          notes: `Duración total: ${totalDuration} min`,
+          status: "waiting",
+          priority: 3
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "¡Añadido a la lista de espera!",
+        description: "Te avisaremos cuando haya disponibilidad para esta fecha"
+      });
+      
+      setShowWaitlistDialog(false);
+      setWaitlistName("");
+      setWaitlistPhone("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo añadir a la lista de espera",
+        variant: "destructive"
+      });
+    } finally {
+      setWaitlistSubmitting(false);
+    }
+  };
+
   // Get closed days for calendar disabling
   const closedDays = getClosedDays();
   const today = new Date();
@@ -372,9 +442,23 @@ export const TenantDateTimeSelection = ({
               Cargando horarios disponibles...
             </div>
           ) : timeSlots.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No hay horarios disponibles para este día. Intenta con otra fecha.
-            </p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-border/50">
+                <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
+                <p className="text-sm text-muted-foreground">
+                  No hay horarios disponibles para este día. Todos los slots están reservados.
+                </p>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                onClick={() => setShowWaitlistDialog(true)}
+              >
+                <Bell className="h-4 w-4" />
+                Añadirme a la lista de espera
+              </Button>
+            </div>
           ) : (
             (() => {
               const dayOfWeek = date.getDay();
@@ -474,6 +558,71 @@ export const TenantDateTimeSelection = ({
           Continuar
         </Button>
       </div>
+
+      {/* Waitlist Dialog */}
+      <Dialog open={showWaitlistDialog} onOpenChange={setShowWaitlistDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
+              Lista de espera
+            </DialogTitle>
+            <DialogDescription>
+              Te avisaremos cuando haya disponibilidad para {date ? format(date, "d 'de' MMMM", { locale: es }) : "esta fecha"}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="waitlist-name">Nombre</Label>
+              <Input
+                id="waitlist-name"
+                placeholder="Tu nombre"
+                value={waitlistName}
+                onChange={(e) => setWaitlistName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="waitlist-phone">Teléfono</Label>
+              <Input
+                id="waitlist-phone"
+                type="tel"
+                placeholder="600 123 456"
+                value={waitlistPhone}
+                onChange={(e) => setWaitlistPhone(e.target.value)}
+              />
+            </div>
+            
+            <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+              <p className="font-medium mb-1">Servicios solicitados:</p>
+              <p>{services.map(s => s.name).join(", ")}</p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowWaitlistDialog(false)}
+              disabled={waitlistSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleWaitlistSubmit}
+              disabled={waitlistSubmitting || !waitlistName.trim() || !waitlistPhone.trim()}
+            >
+              {waitlistSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Añadiendo...
+                </>
+              ) : (
+                "Añadir a lista de espera"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
