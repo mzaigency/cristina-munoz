@@ -20,7 +20,7 @@ import {
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { ClientsCRM } from "@/components/admin/ClientsCRM";
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
-import { QuickActionsFAB } from "@/components/admin/QuickActionsFAB";
+
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -507,10 +507,6 @@ export default function TenantAdmin() {
         </main>
       )}
 
-      {/* Quick Actions FAB - only show when not on dashboard */}
-      {activeTab !== "dashboard" && (
-        <QuickActionsFAB onAction={handleQuickAction} />
-      )}
     </div>
   );
 }
