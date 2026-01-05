@@ -126,7 +126,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-xl font-semibold mt-8 mb-4">8. Contacto</h2>
               <p className="text-foreground/80 leading-relaxed">
-                Si tienes preguntas sobre esta política de privacidad o sobre cómo tratamos tus datos, puedes contactarnos en: <a href="mailto:mzaigency@gmail.com" className="text-primary hover:underline">mzaigency@gmail.com</a>
+                Si tienes preguntas sobre esta política de privacidad o sobre cómo tratamos tus datos, puedes contactarnos en: <a href="mailto:contacto@glowapp.app" className="text-primary hover:underline">contacto@glowapp.app</a>
               </p>
             </section>
           </div>

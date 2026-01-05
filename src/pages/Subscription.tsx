@@ -276,7 +276,7 @@ export default function Subscription() {
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-2">¿Tienes alguna pregunta sobre tu suscripción?</p>
                 <Button variant="link" asChild>
-                  <a href="mailto:soporte@glowapp.app">Contactar con soporte</a>
+                  <a href="mailto:contacto@glowapp.app">Contactar con soporte</a>
                 </Button>
               </div>
             </CardContent>
