@@ -204,13 +204,9 @@ export function ChatWindow({
       <div className="flex-1 overflow-hidden min-h-0">
         <ScrollArea className="h-full" ref={scrollRef}>
           <div className="p-4 space-y-3">
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className={`flex gap-2 ${i % 2 === 0 ? 'justify-end' : ''}`}>
-                  <Skeleton className="h-12 w-48 rounded-2xl" />
-                </div>
-              ))}
+          {loading && messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-sm text-muted-foreground">Cargando mensajes...</p>
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
