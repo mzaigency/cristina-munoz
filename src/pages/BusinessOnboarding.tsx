@@ -45,6 +45,9 @@ export default function BusinessOnboarding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  
+  // Admin mode: create tenant directly without Stripe
+  const isAdminMode = searchParams.get("admin") === "true";
 
   const form = useForm<BusinessFormValues>({
     resolver: zodResolver(businessSchema),
@@ -111,8 +114,66 @@ export default function BusinessOnboarding() {
   }, [searchParams, toast]);
 
   const handleSubmit = async (values: BusinessFormValues) => {
+    // Admin mode: require auth but create directly
+    if (isAdminMode) {
+      if (!user) {
+        navigate(`/auth?redirect=/onboarding?admin=true&mode=register`);
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        // Create tenant directly
+        const { data: tenant, error: tenantError } = await supabase
+          .from("tenants")
+          .insert({
+            name: values.businessName,
+            slug: values.businessSlug,
+            email: values.email,
+            phone: values.phone || null,
+          })
+          .select()
+          .single();
+
+        if (tenantError) {
+          if (tenantError.code === "23505") {
+            throw new Error(`El slug "${values.businessSlug}" ya existe`);
+          }
+          throw tenantError;
+        }
+
+        // Create tenant admin
+        const { error: adminError } = await supabase
+          .from("tenant_admins")
+          .insert({
+            tenant_id: tenant.id,
+            user_id: user.id,
+            is_owner: true,
+          });
+
+        if (adminError) throw adminError;
+
+        toast({
+          title: "¡Tenant creado!",
+          description: `${values.businessName} ha sido creado correctamente`,
+        });
+
+        navigate("/superadmin");
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Error al crear el tenant";
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Normal user flow: redirect to Stripe
     if (!user) {
-      // Redirect to auth with return URL
       navigate(`/auth?redirect=/onboarding&mode=register`);
       return;
     }
@@ -169,10 +230,12 @@ export default function BusinessOnboarding() {
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(isAdminMode ? "/superadmin" : "/")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-semibold text-foreground">Unirse a GlowApp</h1>
+          <h1 className="font-semibold text-foreground">
+            {isAdminMode ? "Crear Nuevo Tenant" : "Unirse a GlowApp"}
+          </h1>
         </div>
       </div>
 
@@ -180,126 +243,152 @@ export default function BusinessOnboarding() {
         <div className="max-w-4xl mx-auto">
           {/* Hero Section */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
-              <Sparkles className="h-4 w-4" />
-              <span className="text-sm font-medium">30 días gratis de prueba</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Haz crecer tu negocio con GlowApp</h2>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Crea tu landing page profesional y empieza a recibir reservas online hoy mismo.
-            </p>
+            {isAdminMode ? (
+              <>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+                  <Building2 className="h-4 w-4" />
+                  <span className="text-sm font-medium">Modo Administrador</span>
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Crear Tenant Demo</h2>
+                <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+                  Crea un nuevo salón sin necesidad de pago. Ideal para demos y pruebas.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-sm font-medium">30 días gratis de prueba</span>
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Haz crecer tu negocio con GlowApp</h2>
+                <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+                  Crea tu landing page profesional y empieza a recibir reservas online hoy mismo.
+                </p>
+              </>
+            )}
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Plan Selection */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="space-y-4"
-            >
-              <h3 className="font-semibold text-lg text-foreground mb-4">Elige tu plan</h3>
-
-              {/* Monthly */}
-              <button
-                type="button"
-                onClick={() => setSelectedPlan("monthly")}
-                className={`w-full text-left ios-card p-5 transition-all ${
-                  selectedPlan === "monthly" ? "border-2 border-primary ring-2 ring-primary/20" : "hover:border-border"
-                }`}
+          <div className={isAdminMode ? "" : "grid lg:grid-cols-2 gap-8"}>
+            {/* Plan Selection - Only show for non-admin */}
+            {!isAdminMode && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="space-y-4"
               >
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`h-12 w-12 rounded-xl flex items-center justify-center ${
-                      selectedPlan === "monthly" ? "bg-primary text-primary-foreground" : "bg-secondary"
-                    }`}
-                  >
-                    <Zap className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold text-foreground">Plan Mensual</h4>
-                      {selectedPlan === "monthly" && (
-                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                          <Check className="h-3 w-3 text-primary-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">Flexibilidad total</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-foreground">39,99€</span>
-                      <span className="text-muted-foreground">/mes</span>
-                    </div>
-                  </div>
-                </div>
-              </button>
+                <h3 className="font-semibold text-lg text-foreground mb-4">Elige tu plan</h3>
 
-              {/* Annual */}
-              <button
-                type="button"
-                onClick={() => setSelectedPlan("annual")}
-                className={`w-full text-left ios-card p-5 transition-all relative ${
-                  selectedPlan === "annual" ? "border-2 border-primary ring-2 ring-primary/20" : "hover:border-border"
-                }`}
-              >
-                <div className="absolute -top-3 left-4">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-semibold">
-                    <Crown className="h-3 w-3" />
-                    Más popular
-                  </span>
-                </div>
-                <div className="flex items-start gap-4 mt-2">
-                  <div
-                    className={`h-12 w-12 rounded-xl flex items-center justify-center ${
-                      selectedPlan === "annual" ? "gradient-primary text-primary-foreground" : "bg-secondary"
-                    }`}
-                  >
-                    <Building2 className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold text-foreground">Plan Anual</h4>
-                      {selectedPlan === "annual" && (
-                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                          <Check className="h-3 w-3 text-primary-foreground" />
-                        </div>
-                      )}
+                {/* Monthly */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan("monthly")}
+                  className={`w-full text-left ios-card p-5 transition-all ${
+                    selectedPlan === "monthly" ? "border-2 border-primary ring-2 ring-primary/20" : "hover:border-border"
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={`h-12 w-12 rounded-xl flex items-center justify-center ${
+                        selectedPlan === "monthly" ? "bg-primary text-primary-foreground" : "bg-secondary"
+                      }`}
+                    >
+                      <Zap className="h-6 w-6" />
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">Ahorra 2 meses</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-foreground">399,99€</span>
-                      <span className="text-muted-foreground">/año</span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-foreground">Plan Mensual</h4>
+                        {selectedPlan === "monthly" && (
+                          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="h-3 w-3 text-primary-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">Flexibilidad total</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-bold text-foreground">39,99€</span>
+                        <span className="text-muted-foreground">/mes</span>
+                      </div>
                     </div>
-                    <p className="text-xs text-success font-medium mt-1">Ahorras 79,89€</p>
                   </div>
-                </div>
-              </button>
+                </button>
 
-              {/* Features */}
-              <div className="ios-card p-5 mt-6">
-                <h4 className="font-semibold text-foreground mb-4">Incluido en todos los planes:</h4>
-                <ul className="space-y-3">
-                  {features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-3 text-sm">
-                      <Check className="h-4 w-4 text-success shrink-0" />
-                      <span className="text-foreground">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </motion.div>
+                {/* Annual */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan("annual")}
+                  className={`w-full text-left ios-card p-5 transition-all relative ${
+                    selectedPlan === "annual" ? "border-2 border-primary ring-2 ring-primary/20" : "hover:border-border"
+                  }`}
+                >
+                  <div className="absolute -top-3 left-4">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-semibold">
+                      <Crown className="h-3 w-3" />
+                      Más popular
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-4 mt-2">
+                    <div
+                      className={`h-12 w-12 rounded-xl flex items-center justify-center ${
+                        selectedPlan === "annual" ? "gradient-primary text-primary-foreground" : "bg-secondary"
+                      }`}
+                    >
+                      <Building2 className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-foreground">Plan Anual</h4>
+                        {selectedPlan === "annual" && (
+                          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="h-3 w-3 text-primary-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">Ahorra 2 meses</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-bold text-foreground">399,99€</span>
+                        <span className="text-muted-foreground">/año</span>
+                      </div>
+                      <p className="text-xs text-success font-medium mt-1">Ahorras 79,89€</p>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Features */}
+                <div className="ios-card p-5 mt-6">
+                  <h4 className="font-semibold text-foreground mb-4">Incluido en todos los planes:</h4>
+                  <ul className="space-y-3">
+                    {features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-3 text-sm">
+                        <Check className="h-4 w-4 text-success shrink-0" />
+                        <span className="text-foreground">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </motion.div>
+            )}
 
             {/* Form */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              transition={{ delay: 0.2 }}
+              className={isAdminMode ? "max-w-md mx-auto" : ""}
+            >
               <Card className="ios-card">
                 <CardHeader>
                   <CardTitle className="text-xl">Datos de tu negocio</CardTitle>
                   <CardDescription>
-                    {user ? "Completa la información de tu salón" : "Crea una cuenta para continuar"}
+                    {isAdminMode 
+                      ? "Ingresa los datos básicos del nuevo tenant" 
+                      : user 
+                        ? "Completa la información de tu salón" 
+                        : "Crea una cuenta para continuar"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {!user ? (
+                  {!user && !isAdminMode ? (
                     <div className="space-y-4">
                       <p className="text-sm text-muted-foreground">Necesitas una cuenta para crear tu salón.</p>
                       <div className="flex flex-col gap-3">
@@ -408,8 +497,10 @@ export default function BusinessOnboarding() {
                             {loading ? (
                               <>
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Procesando...
+                                {isAdminMode ? "Creando tenant..." : "Procesando..."}
                               </>
+                            ) : isAdminMode ? (
+                              "Crear Tenant"
                             ) : (
                               <>
                                 Continuar al pago
@@ -419,9 +510,11 @@ export default function BusinessOnboarding() {
                           </Button>
                         </div>
 
-                        <p className="text-xs text-center text-muted-foreground">
-                          No se te cobrará hasta que termine tu período de prueba. Puedes cancelar en cualquier momento.
-                        </p>
+                        {!isAdminMode && (
+                          <p className="text-xs text-center text-muted-foreground">
+                            No se te cobrará hasta que termine tu período de prueba. Puedes cancelar en cualquier momento.
+                          </p>
+                        )}
                       </form>
                     </Form>
                   )}
