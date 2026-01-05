@@ -86,7 +86,7 @@ export default function TenantAdmin() {
 
   // El badge se oculta inmediatamente al hacer click en handleTabClick
 
-  // Navigation items - filter based on role (stylists don't see Settings)
+  // Navigation items - filter based on role (stylists don't see Settings or Team)
   const navItems: NavItem[] = useMemo(() => {
     const allItems: NavItem[] = [
       { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -98,9 +98,9 @@ export default function TenantAdmin() {
       { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" /> },
     ];
 
-    // If user is stylist but not admin, hide Settings tab
+    // If user is stylist but not admin, hide Settings and Team tabs
     if (isStylist && !isAdmin) {
-      return allItems.filter(item => item.value !== "settings");
+      return allItems.filter(item => item.value !== "settings" && item.value !== "team");
     }
 
     return allItems;
