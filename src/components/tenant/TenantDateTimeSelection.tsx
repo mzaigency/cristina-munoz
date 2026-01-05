@@ -383,7 +383,11 @@ export const TenantDateTimeSelection = ({
 
   // Handle waitlist submission
   const handleWaitlistSubmit = async () => {
-    if (!waitlistName.trim() || !waitlistPhone.trim() || !date) {
+    // Use currentUser data if available, otherwise use form fields
+    const nameToUse = (currentUser?.name || waitlistName).trim();
+    const phoneToUse = (currentUser?.phone || waitlistPhone).trim();
+    
+    if (!nameToUse || !phoneToUse || !date) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos",
@@ -402,8 +406,8 @@ export const TenantDateTimeSelection = ({
         .from("waitlist")
         .insert({
           tenant_id: tenantId,
-          client_name: waitlistName.trim(),
-          client_phone: waitlistPhone.trim(),
+          client_name: nameToUse,
+          client_phone: phoneToUse,
           preferred_date: format(date, "yyyy-MM-dd"),
           preferred_stylist_id: preferredStylistId,
           services: services.map(s => ({ id: s.id, name: s.name })),
@@ -658,7 +662,7 @@ export const TenantDateTimeSelection = ({
             </Button>
             <Button 
               onClick={handleWaitlistSubmit}
-              disabled={waitlistSubmitting || !waitlistName.trim() || !waitlistPhone.trim()}
+              disabled={waitlistSubmitting || (!(currentUser?.name && currentUser?.phone) && (!waitlistName.trim() || !waitlistPhone.trim()))}
             >
               {waitlistSubmitting ? (
                 <>
