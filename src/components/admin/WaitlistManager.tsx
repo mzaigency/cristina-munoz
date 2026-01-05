@@ -15,15 +15,24 @@ import {
   Plus,
   Clock,
   Phone,
-  Mail,
   Calendar,
   Trash2,
   Bell,
   CheckCircle,
   Loader2,
   ListOrdered,
-  User
+  Smartphone,
+  MessageCircle,
+  ChevronRight,
+  User,
+  MoreVertical
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface WaitlistEntry {
   id: string;
@@ -149,7 +158,6 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   };
 
   const handleNotify = async (entry: WaitlistEntry) => {
-    // In production, this would send a notification (SMS, WhatsApp, etc.)
     try {
       const { error } = await supabase
         .from("waitlist" as any)
@@ -199,21 +207,47 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
     }
   };
 
-  const getPriorityBadge = (priority: number) => {
-    if (priority >= 2) return <Badge className="bg-red-500/20 text-red-700 border-red-500/30">Alta</Badge>;
-    if (priority === 1) return <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30">Media</Badge>;
-    return <Badge variant="outline">Normal</Badge>;
+  const getPriorityIndicator = (priority: number) => {
+    if (priority >= 2) return <div className="w-1 h-full bg-red-500 absolute left-0 top-0 rounded-l-xl" />;
+    if (priority === 1) return <div className="w-1 h-full bg-amber-500 absolute left-0 top-0 rounded-l-xl" />;
+    return null;
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "notified":
-        return <Badge className="bg-blue-500/20 text-blue-700 border-blue-500/30">Notificado</Badge>;
-      case "booked":
-        return <Badge className="bg-green-500/20 text-green-700 border-green-500/30">Reservado</Badge>;
-      default:
-        return <Badge variant="secondary">Esperando</Badge>;
+  const getStatusBadge = (entry: WaitlistEntry) => {
+    if (entry.status === "notified") {
+      return (
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-600 border-blue-500/30">
+          <Bell className="h-2.5 w-2.5 mr-0.5" />
+          Avisado
+        </Badge>
+      );
     }
+    return null;
+  };
+
+  const getContactIcon = (entry: WaitlistEntry) => {
+    if (entry.user_id) {
+      return (
+        <div className="flex items-center gap-1 text-emerald-600">
+          <Smartphone className="h-3.5 w-3.5" />
+          <span className="text-xs">App</span>
+        </div>
+      );
+    }
+    if (entry.client_phone) {
+      return (
+        <a href={`tel:${entry.client_phone}`} className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
+          <Phone className="h-3.5 w-3.5" />
+          <span className="text-xs">{entry.client_phone}</span>
+        </a>
+      );
+    }
+    return (
+      <div className="flex items-center gap-1 text-muted-foreground">
+        <User className="h-3.5 w-3.5" />
+        <span className="text-xs">Sin contacto</span>
+      </div>
+    );
   };
 
   if (loading) {
@@ -226,93 +260,131 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/10">
             <ListOrdered className="h-5 w-5 text-primary" />
-            Lista de Espera
-          </h2>
-          <p className="text-sm text-muted-foreground">{entries.length} en espera</p>
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">Lista de Espera</h2>
+            <p className="text-xs text-muted-foreground">{entries.length} esperando</p>
+          </div>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} size="sm">
+        <Button onClick={() => setIsDialogOpen(true)} size="sm" className="rounded-full h-9 px-4">
           <Plus className="h-4 w-4 mr-1" />
           Añadir
         </Button>
       </div>
 
+      {/* Empty state */}
       {entries.length === 0 ? (
-        <Card>
+        <Card className="border-dashed">
           <CardContent className="py-12 text-center">
-            <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">No hay clientes en lista de espera</p>
+            <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Clock className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground font-medium">Sin clientes en espera</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Los clientes pueden unirse cuando no haya huecos disponibles
+            </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        /* List */
+        <div className="space-y-2">
           {entries.map((entry, index) => (
-            <Card key={entry.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-3">
+            <Card key={entry.id} className="relative overflow-hidden">
+              {getPriorityIndicator(entry.priority)}
+              <CardContent className="p-3 pl-4">
+                <div className="flex items-center gap-3">
+                  {/* Position indicator */}
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-bold text-primary">{index + 1}</span>
+                  </div>
+
+                  {/* Main content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-bold text-primary">#{index + 1}</span>
-                      <h3 className="font-semibold truncate">{entry.client_name}</h3>
-                      {getPriorityBadge(entry.priority)}
-                      {getStatusBadge(entry.status)}
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="font-semibold text-sm truncate">{entry.client_name}</h3>
+                      {getStatusBadge(entry)}
                     </div>
                     
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                      {entry.client_phone ? (
-                        <a href={`tel:${entry.client_phone}`} className="flex items-center gap-1 hover:text-foreground">
-                          <Phone className="h-3 w-3" />
-                          {entry.client_phone}
-                        </a>
-                      ) : (
-                        <span className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          Glowapp
-                        </span>
-                      )}
-                      {entry.client_email && (
-                        <a href={`mailto:${entry.client_email}`} className="flex items-center gap-1 hover:text-foreground">
-                          <Mail className="h-3 w-3" />
-                          {entry.client_email}
-                        </a>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      {getContactIcon(entry)}
+                      
+                      {entry.preferred_date && (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span className="text-xs">
+                            {format(new Date(entry.preferred_date), "d MMM", { locale: es })}
+                            {entry.preferred_time_start && ` · ${entry.preferred_time_start.slice(0, 5)}`}
+                          </span>
+                        </div>
                       )}
                     </div>
 
-                    {entry.preferred_date && (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                        <Calendar className="h-3 w-3" />
-                        Prefiere: {format(new Date(entry.preferred_date), "d MMM", { locale: es })}
-                        {entry.preferred_time_start && ` ${entry.preferred_time_start}`}
-                        {entry.preferred_time_end && `-${entry.preferred_time_end}`}
-                      </div>
-                    )}
-
                     {entry.notes && (
-                      <p className="text-xs text-muted-foreground mt-1 italic">"{entry.notes}"</p>
+                      <p className="text-[11px] text-muted-foreground mt-1 truncate italic">
+                        "{entry.notes}"
+                      </p>
                     )}
-
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Añadido {format(new Date(entry.created_at), "d MMM HH:mm", { locale: es })}
-                    </p>
                   </div>
-                  
-                  <div className="flex flex-col gap-1">
-                    {entry.status === "waiting" && (
-                      <Button variant="outline" size="sm" onClick={() => handleNotify(entry)}>
-                        <Bell className="h-4 w-4 mr-1" />
-                        Notificar
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {entry.user_id && entry.status === "waiting" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                        onClick={() => handleNotify(entry)}
+                        title="Enviar mensaje"
+                      >
+                        <MessageCircle className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button variant="outline" size="sm" onClick={() => handleMarkBooked(entry.id)}>
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      Reservado
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                      onClick={() => handleMarkBooked(entry.id)}
+                      title="Marcar como reservado"
+                    >
+                      <CheckCircle className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(entry.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        {entry.client_phone && (
+                          <DropdownMenuItem asChild>
+                            <a href={`tel:${entry.client_phone}`} className="flex items-center">
+                              <Phone className="h-4 w-4 mr-2" />
+                              Llamar
+                            </a>
+                          </DropdownMenuItem>
+                        )}
+                        {entry.status === "waiting" && !entry.user_id && entry.client_phone && (
+                          <DropdownMenuItem onClick={() => handleNotify(entry)}>
+                            <Bell className="h-4 w-4 mr-2" />
+                            Marcar notificado
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(entry.id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardContent>
@@ -321,74 +393,95 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
         </div>
       )}
 
+      {/* Info card */}
+      {entries.length > 0 && (
+        <Card className="bg-muted/30 border-dashed">
+          <CardContent className="p-3">
+            <div className="flex items-start gap-2">
+              <div className="p-1.5 rounded-lg bg-primary/10 mt-0.5">
+                <Bell className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs font-medium">Aviso automático</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Cuando se cancele una cita, los clientes con la app recibirán un mensaje automático si hay hueco para su fecha preferida.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Add Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Añadir a Lista de Espera</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" />
+              Añadir a Lista de Espera
+            </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-2">
             <div>
-              <Label>Nombre *</Label>
+              <Label className="text-xs">Nombre del cliente *</Label>
               <Input
                 value={formData.client_name}
                 onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-                placeholder="Nombre del cliente"
+                placeholder="Nombre completo"
+                className="mt-1"
               />
             </div>
 
             <div>
-              <Label>Teléfono</Label>
+              <Label className="text-xs">Teléfono</Label>
               <Input
                 value={formData.client_phone}
                 onChange={(e) => setFormData({ ...formData, client_phone: e.target.value })}
                 placeholder="612 345 678 (opcional)"
                 type="tel"
+                className="mt-1"
               />
             </div>
 
             <div>
-              <Label>Email</Label>
-              <Input
-                value={formData.client_email}
-                onChange={(e) => setFormData({ ...formData, client_email: e.target.value })}
-                placeholder="email@ejemplo.com"
-                type="email"
-              />
-            </div>
-
-            <div>
-              <Label>Fecha preferida</Label>
+              <Label className="text-xs">Fecha preferida</Label>
               <Input
                 type="date"
                 value={formData.preferred_date}
                 onChange={(e) => setFormData({ ...formData, preferred_date: e.target.value })}
+                className="mt-1"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Hora desde</Label>
+                <Label className="text-xs">Desde</Label>
                 <Input
                   type="time"
                   value={formData.preferred_time_start}
                   onChange={(e) => setFormData({ ...formData, preferred_time_start: e.target.value })}
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label>Hora hasta</Label>
+                <Label className="text-xs">Hasta</Label>
                 <Input
                   type="time"
                   value={formData.preferred_time_end}
                   onChange={(e) => setFormData({ ...formData, preferred_time_end: e.target.value })}
+                  className="mt-1"
                 />
               </div>
             </div>
 
             <div>
-              <Label>Estilista preferido</Label>
-              <Select value={formData.preferred_stylist_id || "none"} onValueChange={(v) => setFormData({ ...formData, preferred_stylist_id: v === "none" ? "" : v })}>
-                <SelectTrigger>
+              <Label className="text-xs">Profesional preferido</Label>
+              <Select 
+                value={formData.preferred_stylist_id || "none"} 
+                onValueChange={(v) => setFormData({ ...formData, preferred_stylist_id: v === "none" ? "" : v })}
+              >
+                <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Sin preferencia" />
                 </SelectTrigger>
                 <SelectContent>
@@ -401,33 +494,54 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
             </div>
 
             <div>
-              <Label>Prioridad</Label>
-              <Select value={formData.priority.toString()} onValueChange={(v) => setFormData({ ...formData, priority: parseInt(v) })}>
-                <SelectTrigger>
+              <Label className="text-xs">Prioridad</Label>
+              <Select 
+                value={formData.priority.toString()} 
+                onValueChange={(v) => setFormData({ ...formData, priority: parseInt(v) })}
+              >
+                <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">Normal</SelectItem>
-                  <SelectItem value="1">Media</SelectItem>
-                  <SelectItem value="2">Alta</SelectItem>
+                  <SelectItem value="0">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-muted-foreground" />
+                      Normal
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="1">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      Media
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="2">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-red-500" />
+                      Alta
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label>Notas</Label>
+              <Label className="text-xs">Notas</Label>
               <Textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Observaciones..."
+                placeholder="Observaciones adicionales..."
                 rows={2}
+                className="mt-1"
               />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving}>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none">
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none">
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Añadir
             </Button>
