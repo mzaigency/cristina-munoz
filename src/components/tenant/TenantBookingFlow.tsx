@@ -215,17 +215,17 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                 </CardTitle>
                 <CardDescription>
                   {step === 1 && (
-                    <div>
-                      <p>Puedes seleccionar varios servicios</p>
+                    <>
+                      <span>Puedes seleccionar varios servicios</span>
                       {!user && (
-                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2 animate-fade-in">
+                        <span className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2 animate-fade-in">
                           <User className="h-4 w-4" />
                           <span className="text-sm">
                             Debes <Link to="/auth" className="underline hover:text-amber-700 dark:hover:text-amber-400 transition-colors">iniciar sesión</Link> para continuar
                           </span>
-                        </div>
+                        </span>
                       )}
-                    </div>
+                    </>
                   )}
                   {step === 2 && "Elige quien te atenderá o deja que decidamos nosotros"}
                   {step === 3 && `Duración total: ${totalDuration} minutos`}
