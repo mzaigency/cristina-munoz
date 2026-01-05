@@ -18,7 +18,7 @@ const baseNavItems = [
 export function BottomNavigation() {
   const location = useLocation();
   const { unreadCount } = useUnreadMessages();
-  const { tenant, isAdmin } = useCurrentUserTenant();
+  const { tenant, isAdmin, loading } = useCurrentUserTenant();
   const [showPostCreator, setShowPostCreator] = useState(false);
   const haptic = useHaptic();
 
@@ -36,7 +36,8 @@ export function BottomNavigation() {
     setShowPostCreator(true);
   };
 
-  // Check if we should show the center buttons (after index 1 = Citas)
+  // Mostrar botones de admin inmediatamente si tenemos los datos (sin esperar loading)
+  // Esto evita que desaparezcan y reaparezcan al navegar
   const showCenterButtons = isAdmin && tenant;
   const centerButtonIndex = 2; // After "Citas"
 
