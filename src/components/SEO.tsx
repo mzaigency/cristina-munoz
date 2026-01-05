@@ -54,7 +54,7 @@ export const SEO = ({
   title = "GlowApp - La Red Social de Belleza y Bienestar",
   description = "Descubre los mejores salones de belleza cerca de ti, conecta con estilistas profesionales y reserva citas al instante. GlowApp es tu red social de belleza y bienestar.",
   keywords = "salones de belleza, peluquería, reservas online, estética, bienestar, estilistas, manicura, spa, tratamientos, GlowApp",
-  ogImage = "https://glowapp.app/og-image.png",
+  ogImage = "https://www.glowapp.app/og-image.png",
   canonicalUrl,
   noindex = false,
   type = "website",
@@ -66,7 +66,7 @@ export const SEO = ({
   localBusiness,
   alternateLanguages,
 }: SEOProps) => {
-  const baseUrl = "https://glowapp.app";
+  const baseUrl = "https://www.glowapp.app";
   const fullCanonicalUrl = canonicalUrl ? `${baseUrl}${canonicalUrl}` : baseUrl;
   
   // Ensure title is under 60 characters for SEO
