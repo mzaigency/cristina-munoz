@@ -289,7 +289,7 @@ export const TenantsManager = () => {
           </p>
         </div>
 
-        <Button className="gap-2 w-full sm:w-auto" onClick={() => navigate("/onboarding?admin=true")}>
+        <Button className="gap-2 w-full sm:w-auto" onClick={() => navigate("/onboarding/setup?demo=true")}>
           <Sparkles className="h-4 w-4" />
           Nuevo Tenant
         </Button>
