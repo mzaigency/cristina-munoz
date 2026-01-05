@@ -10,7 +10,7 @@ const corsHeaders = {
 }
 
 const APP_URL = 'https://glowapp.app'
-const FROM_EMAIL = 'GlowApp <no-reply@glowapp.app>'
+const FROM_EMAIL = 'GlowApp <contacto@glowapp.app>'
 
 type EmailType = 'welcome' | 'booking-confirmation' | 'booking-reminder' | 'new-message'
 
