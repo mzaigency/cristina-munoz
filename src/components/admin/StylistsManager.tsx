@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2, User, Upload, Clock } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, User, Upload, Clock, Search, Link2, Unlink, Mail, Copy, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StylistScheduleEditor } from "./StylistScheduleEditor";
+import { Badge } from "@/components/ui/badge";
 
 interface Stylist {
   id: string;
@@ -19,6 +20,14 @@ interface Stylist {
   avatar_url: string | null;
   google_calendar_id: string | null;
   is_active: boolean;
+  user_id: string | null;
+}
+
+interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
 }
 
 interface StylistsManagerProps {
@@ -34,6 +43,15 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [scheduleEditorOpen, setScheduleEditorOpen] = useState(false);
   const [selectedStylistForSchedule, setSelectedStylistForSchedule] = useState<Stylist | null>(null);
+  
+  // User linking state
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [selectedStylistForLink, setSelectedStylistForLink] = useState<Stylist | null>(null);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [userSearchResults, setUserSearchResults] = useState<UserProfile[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [linkedUsers, setLinkedUsers] = useState<Record<string, UserProfile>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -66,8 +84,129 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
       });
     } else {
       setStylists(data || []);
+      
+      // Fetch linked user profiles
+      const linkedUserIds = (data || []).filter(s => s.user_id).map(s => s.user_id as string);
+      if (linkedUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, email, full_name, avatar_url")
+          .in("id", linkedUserIds);
+        
+        if (profiles) {
+          const usersMap: Record<string, UserProfile> = {};
+          profiles.forEach(p => { usersMap[p.id] = p; });
+          setLinkedUsers(usersMap);
+        }
+      }
     }
     setLoading(false);
+  };
+
+  // Search users by email or ID
+  const handleUserSearch = async () => {
+    if (!userSearchQuery.trim() || userSearchQuery.trim().length < 3) {
+      toast({
+        title: "Búsqueda inválida",
+        description: "Introduce al menos 3 caracteres",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSearchingUsers(true);
+    const query = userSearchQuery.trim();
+    
+    // Check if it's a UUID (user ID)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(query);
+    
+    let searchQuery = supabase
+      .from("profiles")
+      .select("id, email, full_name, avatar_url");
+    
+    if (isUUID) {
+      searchQuery = searchQuery.eq("id", query);
+    } else {
+      searchQuery = searchQuery.ilike("email", `%${query}%`);
+    }
+    
+    const { data, error } = await searchQuery.limit(10);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo buscar usuarios",
+        variant: "destructive"
+      });
+    } else {
+      setUserSearchResults(data || []);
+      if (!data || data.length === 0) {
+        toast({
+          title: "Sin resultados",
+          description: "No se encontraron usuarios"
+        });
+      }
+    }
+    setSearchingUsers(false);
+  };
+
+  // Link user to stylist
+  const handleLinkUser = async (userId: string) => {
+    if (!selectedStylistForLink) return;
+    
+    setSaving(true);
+    const { error } = await supabase
+      .from("tenant_stylists")
+      .update({ user_id: userId })
+      .eq("id", selectedStylistForLink.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo vincular el usuario",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Vinculado",
+        description: "Usuario vinculado correctamente. Ahora puede acceder al panel de admin."
+      });
+      setLinkDialogOpen(false);
+      setUserSearchQuery("");
+      setUserSearchResults([]);
+      fetchStylists();
+    }
+    setSaving(false);
+  };
+
+  // Unlink user from stylist
+  const handleUnlinkUser = async (stylist: Stylist) => {
+    const { error } = await supabase
+      .from("tenant_stylists")
+      .update({ user_id: null })
+      .eq("id", stylist.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo desvincular el usuario",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Desvinculado",
+        description: "Usuario desvinculado del estilista"
+      });
+      fetchStylists();
+    }
+  };
+
+  // Copy user ID to clipboard
+  const handleCopyId = async (userId: string) => {
+    await navigator.clipboard.writeText(userId);
+    setCopiedId(userId);
+    toast({ title: "Copiado", description: "ID copiado al portapapeles" });
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const generateSlug = (name: string) => {
@@ -371,73 +510,146 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
           </div>
         ) : (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {stylists.map((stylist) => (
-              <Card key={stylist.id} className={!stylist.is_active ? "opacity-60" : ""}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Avatar className="h-12 w-12 shrink-0">
-                      <AvatarImage src={stylist.avatar_url || undefined} />
-                      <AvatarFallback style={{ backgroundColor: stylist.color || "#8B5CF6" }}>
-                        {stylist.name.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{stylist.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">@{stylist.slug}</p>
-                      {!stylist.is_active && (
-                        <span className="text-xs text-destructive">Inactivo</span>
+            {stylists.map((stylist) => {
+              const linkedUser = stylist.user_id ? linkedUsers[stylist.user_id] : null;
+              
+              return (
+                <Card key={stylist.id} className={!stylist.is_active ? "opacity-60" : ""}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Avatar className="h-12 w-12 shrink-0">
+                        <AvatarImage src={stylist.avatar_url || undefined} />
+                        <AvatarFallback style={{ backgroundColor: stylist.color || "#8B5CF6" }}>
+                          {stylist.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{stylist.name}</p>
+                        <p className="text-sm text-muted-foreground truncate">@{stylist.slug}</p>
+                        {!stylist.is_active && (
+                          <span className="text-xs text-destructive">Inactivo</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* User link status */}
+                    <div className="mb-3 p-2 rounded-lg bg-muted/50">
+                      {linkedUser ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={linkedUser.avatar_url || undefined} />
+                            <AvatarFallback className="text-[10px]">
+                              {linkedUser.full_name?.substring(0, 2).toUpperCase() || linkedUser.email.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">{linkedUser.full_name || "Sin nombre"}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{linkedUser.email}</p>
+                          </div>
+                          <Badge variant="secondary" className="text-[10px] shrink-0">
+                            <Link2 className="h-3 w-3 mr-1" />
+                            Vinculado
+                          </Badge>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Unlink className="h-4 w-4" />
+                          <span className="text-xs">Sin usuario vinculado</span>
+                        </div>
                       )}
                     </div>
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-10 w-10"
-                      onClick={() => {
-                        setSelectedStylistForSchedule(stylist);
-                        setScheduleEditorOpen(true);
-                      }}
-                      title="Editar horarios"
-                    >
-                      <Clock className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-10 w-10"
-                      onClick={() => openEditDialog(stylist)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-10 w-10 text-destructive border-destructive/50">
-                          <Trash2 className="h-4 w-4" />
+                    
+                    <div className="flex gap-2 justify-end flex-wrap">
+                      {/* Link/Unlink button */}
+                      {linkedUser ? (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-9 text-amber-600 border-amber-200">
+                              <Unlink className="h-3.5 w-3.5 mr-1" />
+                              Desvincular
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Desvincular usuario?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                El usuario {linkedUser.email} ya no podrá acceder al panel de administración como estilista.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleUnlinkUser(stylist)}>
+                                Desvincular
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-9"
+                          onClick={() => {
+                            setSelectedStylistForLink(stylist);
+                            setUserSearchQuery("");
+                            setUserSearchResults([]);
+                            setLinkDialogOpen(true);
+                          }}
+                        >
+                          <Link2 className="h-3.5 w-3.5 mr-1" />
+                          Vincular
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>¿Eliminar estilista?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Se eliminará permanentemente a {stylist.name}.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(stylist)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Eliminar
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      )}
+                      
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={() => {
+                          setSelectedStylistForSchedule(stylist);
+                          setScheduleEditorOpen(true);
+                        }}
+                        title="Editar horarios"
+                      >
+                        <Clock className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={() => openEditDialog(stylist)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="icon" className="h-9 w-9 text-destructive border-destructive/50">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar estilista?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción no se puede deshacer. Se eliminará permanentemente a {stylist.name}.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(stylist)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </CardContent>
@@ -455,6 +667,106 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
           tenantId={tenantId}
         />
       )}
+
+      {/* Link User Dialog */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5" />
+              Vincular Usuario
+            </DialogTitle>
+            <DialogDescription>
+              Busca un usuario por email o ID para darle acceso al panel como <strong>{selectedStylistForLink?.name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Search input */}
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por email o ID de usuario..."
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleUserSearch()}
+                  className="pl-9"
+                />
+              </div>
+              <Button onClick={handleUserSearch} disabled={searchingUsers}>
+                {searchingUsers ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buscar"}
+              </Button>
+            </div>
+
+            {/* Search results */}
+            {userSearchResults.length > 0 && (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                <p className="text-xs text-muted-foreground">
+                  {userSearchResults.length} usuario(s) encontrado(s)
+                </p>
+                {userSearchResults.map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.avatar_url || undefined} />
+                      <AvatarFallback>
+                        {user.full_name?.substring(0, 2).toUpperCase() || user.email.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{user.full_name || "Sin nombre"}</p>
+                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        {user.email}
+                      </p>
+                      <button
+                        onClick={() => handleCopyId(user.id)}
+                        className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 mt-0.5"
+                      >
+                        {copiedId === user.id ? (
+                          <>
+                            <Check className="h-3 w-3 text-green-500" />
+                            Copiado
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3" />
+                            {user.id.substring(0, 8)}...
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleLinkUser(user.id)}
+                      disabled={saving}
+                    >
+                      {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vincular"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Help text */}
+            <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg space-y-1">
+              <p><strong>¿Cómo funciona?</strong></p>
+              <p>• El usuario debe tener una cuenta en GlowApp</p>
+              <p>• Busca por email o pega el ID de usuario</p>
+              <p>• Una vez vinculado, podrá acceder al panel de admin del salón</p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
