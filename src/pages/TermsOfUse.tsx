@@ -162,7 +162,7 @@ export default function TermsOfUse() {
             <section>
               <h2 className="text-xl font-semibold mt-8 mb-4">12. Contacto</h2>
               <p className="text-foreground/80 leading-relaxed">
-                Para cualquier consulta sobre estos términos, puedes contactarnos en: <a href="mailto:mzaigency@gmail.com" className="text-primary hover:underline">mzaigency@gmail.com</a>
+                Para cualquier consulta sobre estos términos, puedes contactarnos en: <a href="mailto:contacto@glowapp.app" className="text-primary hover:underline">contacto@glowapp.app</a>
               </p>
             </section>
           </div>
