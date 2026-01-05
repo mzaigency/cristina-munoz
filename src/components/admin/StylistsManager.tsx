@@ -161,13 +161,14 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
 
       if (stylistError) throw stylistError;
 
-      // Always add "stylist" role to user_roles
+      // Always add "stylist" role to user_roles with tenant_id
       const { error: roleError } = await supabase
         .from("user_roles")
         .upsert({ 
           user_id: userId, 
-          role: "stylist" as const
-        }, { onConflict: "user_id,role" });
+          role: "stylist" as const,
+          tenant_id: tenantId
+        }, { onConflict: "user_id,role,tenant_id" });
 
       if (roleError) {
         console.error("Error adding stylist role:", roleError);
@@ -239,21 +240,13 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
       return;
     }
 
-    // Check if user is still linked to any other stylist in ANY tenant
-    const { data: otherLinks } = await supabase
-      .from("tenant_stylists")
-      .select("id")
+    // Remove stylist role for this specific tenant
+    await supabase
+      .from("user_roles")
+      .delete()
       .eq("user_id", userId)
-      .limit(1);
-
-    // If no other stylist links, remove stylist role
-    if (!otherLinks || otherLinks.length === 0) {
-      await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId)
-        .eq("role", "stylist");
-    }
+      .eq("role", "stylist")
+      .eq("tenant_id", tenantId);
 
     toast({
       title: "Desvinculado",
