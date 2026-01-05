@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -47,12 +46,14 @@ export const UsersManager = () => {
     try {
       setLoading(true);
 
-      // Fetch user roles
+      // Fetch user roles WITH tenant_id and tenant name
       const { data: rolesData, error: rolesError } = await supabase
         .from("user_roles")
         .select(`
           user_id,
-          role
+          role,
+          tenant_id,
+          tenants:tenant_id (name)
         `);
 
       if (rolesError) throw rolesError;
@@ -64,13 +65,22 @@ export const UsersManager = () => {
 
       if (profilesError) throw profilesError;
 
-      // Fetch tenant admins to get tenant associations
+      // Fetch tenant admins to get tenant associations for admins
       const { data: tenantAdminsData } = await supabase
         .from("tenant_admins")
         .select(`
           user_id,
           tenants:tenant_id (name)
         `);
+
+      // Fetch tenant stylists to get tenant associations for stylists
+      const { data: tenantStylistsData } = await supabase
+        .from("tenant_stylists")
+        .select(`
+          user_id,
+          tenants:tenant_id (name)
+        `)
+        .not("user_id", "is", null);
 
       // Combine data
       const usersMap = new Map<string, UserWithRoles>();
@@ -89,13 +99,27 @@ export const UsersManager = () => {
         const user = usersMap.get(role.user_id);
         if (user) {
           user.roles.push(role.role);
+          // Get tenant name from role's tenant_id if available
+          if (role.tenants && !user.tenant_name) {
+            user.tenant_name = (role.tenants as any).name;
+          }
         }
       }
 
+      // Fallback: get tenant from tenant_admins
       for (const admin of tenantAdminsData || []) {
         const user = usersMap.get(admin.user_id);
-        if (user && admin.tenants) {
+        if (user && admin.tenants && !user.tenant_name) {
           user.tenant_name = (admin.tenants as any).name;
+        }
+      }
+
+      // Fallback: get tenant from tenant_stylists
+      for (const stylist of tenantStylistsData || []) {
+        if (!stylist.user_id) continue;
+        const user = usersMap.get(stylist.user_id);
+        if (user && stylist.tenants && !user.tenant_name) {
+          user.tenant_name = (stylist.tenants as any).name;
         }
       }
 
