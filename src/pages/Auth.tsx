@@ -204,6 +204,19 @@ export default function Auth() {
           return;
         }
 
+        // Send welcome email (fire and forget)
+        if (data.user) {
+          supabase.functions.invoke('send-email', {
+            body: {
+              type: 'welcome',
+              to: signUpValues.email,
+              data: {
+                userName: signUpValues.firstName
+              }
+            }
+          }).catch(err => console.error('Error sending welcome email:', err));
+        }
+
         toast({
           title: "¡Cuenta creada!",
           description: "Redirigiendo...",
