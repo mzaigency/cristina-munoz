@@ -135,8 +135,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   }, [customerName, wantsInvoice, savedFiscalData]);
 
   const fetchSavedFiscalData = async () => {
-    const { data } = await supabase.from("customer_fiscal_data").select("*").eq("tenant_id", tenantId);
-    if (data) setSavedFiscalData(data);
+    // Fiscal data functionality removed - no longer saving customer fiscal data
+    setSavedFiscalData([]);
   };
 
   const fetchData = async () => {
@@ -368,20 +368,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         });
       }
 
-      // Save fiscal data for future use
-      if (wantsInvoice && invoiceData.fiscalName && invoiceData.nif) {
-        await supabase.from("customer_fiscal_data").upsert(
-          {
-            tenant_id: tenantId,
-            customer_name: customerName.trim() || "Cliente",
-            fiscal_name: invoiceData.fiscalName,
-            nif: invoiceData.nif,
-            fiscal_address: invoiceData.fiscalAddress,
-            email: customerEmail || null,
-          },
-          { onConflict: "tenant_id,customer_name" },
-        );
-      }
+      // Fiscal data is no longer saved to database
 
       setLastTransaction({
         ...transactionData,
@@ -472,35 +459,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       year: "numeric",
     });
 
-    // Save invoice to database (doesn't block rendering the print window)
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const { error } = await supabase.from("invoices").insert({
-          tenant_id: tenantId,
-          invoice_number: invoiceNumber,
-          customer_name: lastTransaction.customer_name,
-          fiscal_name: lastTransaction.invoiceData?.fiscalName || null,
-          nif: lastTransaction.invoiceData?.nif || null,
-          fiscal_address: lastTransaction.invoiceData?.fiscalAddress || null,
-          items: lastTransaction.items,
-          subtotal: lastTransaction.subtotal,
-          discount: lastTransaction.discount || 0,
-          tip_amount: lastTransaction.tip_amount || 0,
-          total: lastTransaction.grandTotal,
-          payment_method: lastTransaction.payment_method,
-          stylist_name: lastTransaction.stylistName,
-          created_by: user.id,
-        });
-
-        if (error) throw error;
-      }
-    } catch (error) {
-      // If saving fails (permissions, etc.) we still allow printing.
-      console.error("Error saving invoice:", error);
-    }
+    // Invoice is printed but not saved to database (invoices table removed)
 
     const itemsHtml = lastTransaction.items
       .map(

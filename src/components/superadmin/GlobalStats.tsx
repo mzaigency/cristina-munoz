@@ -42,14 +42,12 @@ export const GlobalStats = () => {
         activeTenantsRes,
         bookingsRes,
         reviewsRes,
-        contactsRes,
         transactionsRes,
       ] = await Promise.all([
         supabase.from("tenants").select("id", { count: "exact", head: true }),
         supabase.from("tenants").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("bookings").select("id", { count: "exact", head: true }),
         supabase.from("reviews").select("rating"),
-        supabase.from("whatsapp_contacts").select("id", { count: "exact", head: true }),
         supabase.from("transactions").select("total").eq("voided", false),
       ]);
 
@@ -66,7 +64,7 @@ export const GlobalStats = () => {
         activeTenants: activeTenantsRes.count || 0,
         totalBookings: bookingsRes.count || 0,
         totalReviews: reviews.length,
-        totalContacts: contactsRes.count || 0,
+        totalContacts: 0, // WhatsApp contacts table removed
         avgRating: Math.round(avgRating * 10) / 10,
         totalTransactions: transactions.length,
         totalRevenue,

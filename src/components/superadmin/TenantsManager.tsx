@@ -106,17 +106,16 @@ export const TenantsManager = () => {
       // Fetch stats for each tenant
       const statsMap: Record<string, TenantStats> = {};
       for (const tenant of tenantsData) {
-        const [bookingsRes, reviewsRes, contactsRes] = await Promise.all([
+        const [bookingsRes, reviewsRes] = await Promise.all([
           supabase.from("bookings").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id),
           supabase.from("reviews").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id),
-          supabase.from("whatsapp_contacts").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id),
         ]);
 
         statsMap[tenant.id] = {
           tenant_id: tenant.id,
           bookings_count: bookingsRes.count || 0,
           reviews_count: reviewsRes.count || 0,
-          contacts_count: contactsRes.count || 0,
+          contacts_count: 0, // WhatsApp contacts table removed
         };
       }
       setStats(statsMap);
@@ -219,8 +218,6 @@ export const TenantsManager = () => {
       setDeleting(true);
 
       // Delete related data first (in order of dependencies)
-      await supabase.from("whatsapp_messages").delete().eq("tenant_id", tenantToDelete.id);
-      await supabase.from("whatsapp_contacts").delete().eq("tenant_id", tenantToDelete.id);
       await supabase.from("transactions").delete().eq("tenant_id", tenantToDelete.id);
       await supabase.from("cash_register").delete().eq("tenant_id", tenantToDelete.id);
       await supabase.from("reviews").delete().eq("tenant_id", tenantToDelete.id);
