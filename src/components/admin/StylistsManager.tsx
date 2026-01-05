@@ -161,6 +161,18 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
 
       if (stylistError) throw stylistError;
 
+      // Always add "stylist" role to user_roles
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .upsert({ 
+          user_id: userId, 
+          role: "stylist" as const
+        }, { onConflict: "user_id,role" });
+
+      if (roleError) {
+        console.error("Error adding stylist role:", roleError);
+      }
+
       // If admin role selected, also add to tenant_admins
       if (selectedRole === "admin") {
         const { error: adminError } = await supabase
@@ -173,7 +185,6 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
 
         if (adminError) {
           console.error("Error adding admin role:", adminError);
-          // Don't throw, user is still linked as stylist
         }
       }
 
@@ -202,12 +213,14 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
   // Unlink user from stylist
   const handleUnlinkUser = async (stylist: Stylist) => {
     if (!stylist.user_id) return;
+
+    const userId = stylist.user_id;
     
     // First remove from tenant_admins if they were admin
     await supabase
       .from("tenant_admins")
       .delete()
-      .eq("user_id", stylist.user_id)
+      .eq("user_id", userId)
       .eq("tenant_id", tenantId)
       .eq("is_owner", false);
 
@@ -223,13 +236,30 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
         description: "No se pudo desvincular el usuario",
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Desvinculado",
-        description: "Usuario desvinculado del estilista"
-      });
-      fetchStylists();
+      return;
     }
+
+    // Check if user is still linked to any other stylist in ANY tenant
+    const { data: otherLinks } = await supabase
+      .from("tenant_stylists")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1);
+
+    // If no other stylist links, remove stylist role
+    if (!otherLinks || otherLinks.length === 0) {
+      await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "stylist");
+    }
+
+    toast({
+      title: "Desvinculado",
+      description: "Usuario desvinculado del estilista"
+    });
+    fetchStylists();
   };
 
   // Toggle admin role for linked user

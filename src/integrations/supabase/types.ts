@@ -2176,6 +2176,16 @@ export type Database = {
           total_duration: number
         }[]
       }
+      get_public_tenant_by_id: {
+        Args: { _id: string }
+        Returns: {
+          id: string
+          logo_url: string
+          name: string
+          primary_color: string
+          slug: string
+        }[]
+      }
       get_public_tenant_by_slug: {
         Args: { _slug: string }
         Returns: {
