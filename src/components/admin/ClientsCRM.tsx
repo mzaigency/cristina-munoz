@@ -42,6 +42,7 @@ interface Client {
   last_visit_at: string | null;
   favorite_stylist_id: string | null;
   created_at: string;
+  is_blocked: boolean;
 }
 
 interface Booking {
@@ -98,6 +99,7 @@ export function ClientsCRM({ tenantId }: ClientsCRMProps) {
         .from("clients" as any)
         .select("*")
         .eq("tenant_id", tenantId)
+        .neq("is_blocked", true) // Filter out blocked clients
         .order("last_visit_at", { ascending: false, nullsFirst: false });
 
       if (error) throw error;
