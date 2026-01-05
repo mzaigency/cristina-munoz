@@ -28,8 +28,9 @@ import {
 interface WaitlistEntry {
   id: string;
   client_name: string;
-  client_phone: string;
+  client_phone: string | null;
   client_email: string | null;
+  user_id: string | null;
   preferred_date: string | null;
   preferred_time_start: string | null;
   preferred_time_end: string | null;
@@ -261,10 +262,17 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                      <a href={`tel:${entry.client_phone}`} className="flex items-center gap-1 hover:text-foreground">
-                        <Phone className="h-3 w-3" />
-                        {entry.client_phone}
-                      </a>
+                      {entry.client_phone ? (
+                        <a href={`tel:${entry.client_phone}`} className="flex items-center gap-1 hover:text-foreground">
+                          <Phone className="h-3 w-3" />
+                          {entry.client_phone}
+                        </a>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          Glowapp
+                        </span>
+                      )}
                       {entry.client_email && (
                         <a href={`mailto:${entry.client_email}`} className="flex items-center gap-1 hover:text-foreground">
                           <Mail className="h-3 w-3" />
