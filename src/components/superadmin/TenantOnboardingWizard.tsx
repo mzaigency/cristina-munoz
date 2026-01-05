@@ -6,33 +6,32 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Loader2,
   Building2,
   Users,
   Clock,
-  Calendar,
-  Webhook,
   ChevronRight,
   ChevronLeft,
   Check,
   Plus,
   Trash2,
-  Eye,
-  EyeOff,
   Palette,
   Scissors,
   Upload,
-  Image,
   UserPlus,
-  Mail,
   Sparkles,
-  ExternalLink,
-  Copy,
+  MapPin,
+  Phone,
+  Mail,
+  Instagram,
+  ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "motion/react";
 
 interface TenantOnboardingWizardProps {
   open: boolean;
@@ -44,7 +43,6 @@ interface Stylist {
   name: string;
   slug: string;
   color: string;
-  calendarId: string;
 }
 
 interface BusinessHours {
@@ -64,53 +62,41 @@ interface Service {
   durationPart1: number;
   durationPause: number;
   durationPart2: number;
+  price: number;
 }
 
 const DAYS = [
-  { day: 0, name: "Domingo" },
   { day: 1, name: "Lunes" },
   { day: 2, name: "Martes" },
   { day: 3, name: "Miércoles" },
   { day: 4, name: "Jueves" },
   { day: 5, name: "Viernes" },
   { day: 6, name: "Sábado" },
+  { day: 0, name: "Domingo" },
 ];
 
 const COLORS = [
-  "#8B5CF6",
-  "#EC4899",
-  "#3B82F6",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#6366F1",
-  "#14B8A6",
-  "#F97316",
-  "#84CC16",
+  "#8B5CF6", "#EC4899", "#3B82F6", "#10B981", "#F59E0B",
+  "#EF4444", "#6366F1", "#14B8A6", "#F97316", "#84CC16",
 ];
 
 const SERVICE_CATEGORIES = ["Corte", "Coloración", "Peinados", "Tratamientos", "Mechas", "Alisados", "Barba", "Otros"];
 
 const STEPS = [
-  { id: 1, title: "Datos básicos", icon: Building2 },
-  { id: 2, title: "Personalización", icon: Palette },
-  { id: 3, title: "Administrador", icon: UserPlus },
-  { id: 4, title: "Estilistas", icon: Users },
-  { id: 5, title: "Servicios", icon: Scissors },
-  { id: 6, title: "Horarios", icon: Clock },
-  { id: 7, title: "Integraciones", icon: Calendar },
+  { id: 1, title: "Datos básicos", subtitle: "Nombre y contacto", icon: Building2 },
+  { id: 2, title: "Personalización", subtitle: "Colores y branding", icon: Palette },
+  { id: 3, title: "Administrador", subtitle: "Credenciales de acceso", icon: UserPlus },
+  { id: 4, title: "Equipo", subtitle: "Estilistas del salón", icon: Users },
+  { id: 5, title: "Servicios", subtitle: "Catálogo de servicios", icon: Scissors },
+  { id: 6, title: "Horarios", subtitle: "Horario de apertura", icon: Clock },
 ];
 
 export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: TenantOnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
-  const [showSecrets, setShowSecrets] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
   const [generatingBranding, setGeneratingBranding] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [generatingPreview, setGeneratingPreview] = useState(false);
   const { toast } = useToast();
 
   // Step 1: Basic Info
@@ -123,9 +109,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     city: "",
     postalCode: "",
     instagramUrl: "",
-    facebookUrl: "",
     whatsappNumber: "",
-    googleMapsUrl: "",
   });
 
   // Step 2: Customization
@@ -136,10 +120,6 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     secondaryColor: "#EC4899",
     logoUrl: "",
     heroImageUrl: "",
-    seoTitle: "",
-    seoDescription: "",
-    faqs: [] as Array<{ question: string; answer: string }>,
-    brandTone: "",
   });
 
   // Step 3: Admin
@@ -150,11 +130,13 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
   });
 
   // Step 4: Stylists
-  const [stylists, setStylists] = useState<Stylist[]>([{ name: "", slug: "", color: COLORS[0], calendarId: "" }]);
+  const [stylists, setStylists] = useState<Stylist[]>([
+    { name: "", slug: "", color: COLORS[0] }
+  ]);
 
   // Step 5: Services
   const [services, setServices] = useState<Service[]>([
-    { name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0 },
+    { name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0, price: 0 },
   ]);
 
   // Step 6: Business Hours
@@ -170,70 +152,17 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     })),
   );
 
-  // Step 7: Integrations
-  const [gcalEnabled, setGcalEnabled] = useState(false);
-  const [gcalCredentials, setGcalCredentials] = useState({
-    clientId: "",
-    clientSecret: "",
-    refreshToken: "",
-  });
-
-  const [n8nEnabled, setN8nEnabled] = useState(false);
-  const [n8nWebhooks, setN8nWebhooks] = useState({
-    webhookUrl: "",
-    cancelWebhookUrl: "",
-    whatsappWebhookUrl: "",
-  });
-
   const resetForm = () => {
     setCurrentStep(1);
-    setBasicInfo({
-      name: "",
-      slug: "",
-      email: "",
-      phone: "",
-      address: "",
-      city: "",
-      postalCode: "",
-      instagramUrl: "",
-      facebookUrl: "",
-      whatsappNumber: "",
-      googleMapsUrl: "",
-    });
-    setCustomization({
-      tagline: "",
-      description: "",
-      primaryColor: "#8B5CF6",
-      secondaryColor: "#EC4899",
-      logoUrl: "",
-      heroImageUrl: "",
-      seoTitle: "",
-      seoDescription: "",
-      faqs: [],
-      brandTone: "",
-    });
+    setBasicInfo({ name: "", slug: "", email: "", phone: "", address: "", city: "", postalCode: "", instagramUrl: "", whatsappNumber: "" });
+    setCustomization({ tagline: "", description: "", primaryColor: "#8B5CF6", secondaryColor: "#EC4899", logoUrl: "", heroImageUrl: "" });
     setAdminInfo({ email: "", name: "", sendWelcomeEmail: true });
-    setStylists([{ name: "", slug: "", color: COLORS[0], calendarId: "" }]);
-    setServices([
-      { name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0 },
-    ]);
-    setBusinessHours(
-      DAYS.map((d) => ({
-        day: d.day,
-        dayName: d.name,
-        isOpen: d.day >= 1 && d.day <= 5,
-        openTime: "09:00",
-        closeTime: "19:00",
-        breakStart: "14:00",
-        breakEnd: "15:00",
-      })),
-    );
-    setGcalEnabled(false);
-    setGcalCredentials({ clientId: "", clientSecret: "", refreshToken: "" });
-    setN8nEnabled(false);
-    setN8nWebhooks({ webhookUrl: "", cancelWebhookUrl: "", whatsappWebhookUrl: "" });
-    setShowPreview(false);
-    setPreviewUrl(null);
+    setStylists([{ name: "", slug: "", color: COLORS[0] }]);
+    setServices([{ name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0, price: 0 }]);
+    setBusinessHours(DAYS.map((d) => ({
+      day: d.day, dayName: d.name, isOpen: d.day >= 1 && d.day <= 5,
+      openTime: "09:00", closeTime: "19:00", breakStart: "14:00", breakEnd: "15:00",
+    })));
   };
 
   const handleClose = () => {
@@ -243,54 +172,29 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
   // Stylists handlers
   const addStylist = () => {
-    setStylists([
-      ...stylists,
-      {
-        name: "",
-        slug: "",
-        color: COLORS[stylists.length % COLORS.length],
-        calendarId: "",
-      },
-    ]);
+    setStylists([...stylists, { name: "", slug: "", color: COLORS[stylists.length % COLORS.length] }]);
   };
 
   const removeStylist = (index: number) => {
-    if (stylists.length > 1) {
-      setStylists(stylists.filter((_, i) => i !== index));
-    }
+    if (stylists.length > 1) setStylists(stylists.filter((_, i) => i !== index));
   };
 
   const updateStylist = (index: number, field: keyof Stylist, value: string) => {
     const updated = [...stylists];
     updated[index] = { ...updated[index], [field]: value };
     if (field === "name") {
-      updated[index].slug = value
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "");
+      updated[index].slug = value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     }
     setStylists(updated);
   };
 
   // Services handlers
   const addService = () => {
-    setServices([
-      ...services,
-      {
-        name: "",
-        category: "Corte",
-        type: "Simple",
-        durationPart1: 30,
-        durationPause: 0,
-        durationPart2: 0,
-      },
-    ]);
+    setServices([...services, { name: "", category: "Corte", type: "Simple", durationPart1: 30, durationPause: 0, durationPart2: 0, price: 0 }]);
   };
 
   const removeService = (index: number) => {
-    if (services.length > 1) {
-      setServices(services.filter((_, i) => i !== index));
-    }
+    if (services.length > 1) setServices(services.filter((_, i) => i !== index));
   };
 
   const updateService = (index: number, field: keyof Service, value: any) => {
@@ -306,22 +210,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     setBusinessHours(updated);
   };
 
-  const copyFirstDayToAll = () => {
-    const firstOpenDay = businessHours.find((h) => h.isOpen);
-    if (firstOpenDay) {
-      setBusinessHours(
-        businessHours.map((h) => ({
-          ...h,
-          openTime: firstOpenDay.openTime,
-          closeTime: firstOpenDay.closeTime,
-          breakStart: firstOpenDay.breakStart,
-          breakEnd: firstOpenDay.breakEnd,
-        })),
-      );
-    }
-  };
-
-  // Image upload handlers
+  // Image upload
   const handleImageUpload = async (file: File, type: "logo" | "hero") => {
     if (type === "logo") setUploadingLogo(true);
     else setUploadingHero(true);
@@ -329,15 +218,10 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${basicInfo.slug || "temp"}-${type}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage.from("tenant-assets").upload(filePath, file);
-
+      const { error: uploadError } = await supabase.storage.from("tenant-assets").upload(fileName, file);
       if (uploadError) throw uploadError;
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("tenant-assets").getPublicUrl(filePath);
+      const { data: { publicUrl } } = supabase.storage.from("tenant-assets").getPublicUrl(fileName);
 
       if (type === "logo") {
         setCustomization({ ...customization, logoUrl: publicUrl });
@@ -345,16 +229,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         setCustomization({ ...customization, heroImageUrl: publicUrl });
       }
 
-      toast({
-        title: "Imagen subida",
-        description: `${type === "logo" ? "Logo" : "Imagen hero"} subida correctamente`,
-      });
+      toast({ title: "Imagen subida", description: `${type === "logo" ? "Logo" : "Imagen hero"} subida correctamente` });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al subir la imagen",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "Error al subir la imagen", variant: "destructive" });
     } finally {
       if (type === "logo") setUploadingLogo(false);
       else setUploadingHero(false);
@@ -370,104 +247,34 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     return password;
   };
 
-  // AI Branding Generation
+  // AI Branding
   const handleGenerateBranding = async () => {
     if (!basicInfo.name) {
-      toast({
-        title: "Error",
-        description: "Primero añade el nombre del salón",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Primero añade el nombre del salón", variant: "destructive" });
       return;
     }
 
     setGeneratingBranding(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-tenant-branding", {
-        body: {
-          name: basicInfo.name,
-          city: basicInfo.city,
-          address: basicInfo.address,
-          services: services.filter((s) => s.name).map((s) => s.name),
-          stylists: stylists.filter((s) => s.name).map((s) => s.name),
-        },
+        body: { name: basicInfo.name, city: basicInfo.city, address: basicInfo.address },
       });
 
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Error al generar branding");
 
       const branding = data.branding;
-
       setCustomization((prev) => ({
         ...prev,
         tagline: branding.tagline || prev.tagline,
         description: branding.description || prev.description,
-        seoTitle: branding.seoTitle || prev.seoTitle,
-        seoDescription: branding.seoDescription || prev.seoDescription,
-        faqs: branding.faqs || prev.faqs,
-        brandTone: branding.brandTone || prev.brandTone,
       }));
 
-      toast({
-        title: "Contenido generado",
-        description: "La IA ha creado tagline, descripción y FAQs",
-      });
+      toast({ title: "Contenido generado", description: "La IA ha creado el tagline y descripción" });
     } catch (error: any) {
-      console.error("Error generating branding:", error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo generar el contenido",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "No se pudo generar el contenido", variant: "destructive" });
     } finally {
       setGeneratingBranding(false);
-    }
-  };
-
-  // Generate Preview URL
-  const generatePreviewToken = () => {
-    return crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-  };
-
-  const handleGeneratePreviewUrl = async () => {
-    if (!basicInfo.slug) {
-      toast({
-        title: "Error",
-        description: "Primero añade el slug del salón",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setGeneratingPreview(true);
-    try {
-      const token = generatePreviewToken();
-      const baseUrl = window.location.origin;
-      const url = `${baseUrl}/salon/${basicInfo.slug.toLowerCase().replace(/\s+/g, "-")}?preview=${token}`;
-      setPreviewUrl(url);
-
-      toast({
-        title: "URL de preview generada",
-        description: "Copia la URL para compartirla (válida 24h)",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo generar la URL de preview",
-        variant: "destructive",
-      });
-    } finally {
-      setGeneratingPreview(false);
-    }
-  };
-
-  const copyPreviewUrl = () => {
-    if (previewUrl) {
-      navigator.clipboard.writeText(previewUrl);
-      toast({
-        title: "URL copiada",
-        description: "La URL de preview se ha copiado al portapapeles",
-      });
     }
   };
 
@@ -475,52 +282,32 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
     switch (currentStep) {
       case 1:
         if (!basicInfo.name || !basicInfo.slug) {
-          toast({
-            title: "Error",
-            description: "Nombre y slug son obligatorios",
-            variant: "destructive",
-          });
+          toast({ title: "Error", description: "Nombre y slug son obligatorios", variant: "destructive" });
           return false;
         }
         return true;
       case 3:
         if (!adminInfo.email) {
-          toast({
-            title: "Error",
-            description: "El email del administrador es obligatorio",
-            variant: "destructive",
-          });
+          toast({ title: "Error", description: "El email del administrador es obligatorio", variant: "destructive" });
           return false;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(adminInfo.email)) {
-          toast({
-            title: "Error",
-            description: "Email no válido",
-            variant: "destructive",
-          });
+          toast({ title: "Error", description: "Email no válido", variant: "destructive" });
           return false;
         }
         return true;
       case 4:
         const validStylists = stylists.filter((s) => s.name && s.slug);
         if (validStylists.length === 0) {
-          toast({
-            title: "Error",
-            description: "Añade al menos un estilista",
-            variant: "destructive",
-          });
+          toast({ title: "Error", description: "Añade al menos un estilista", variant: "destructive" });
           return false;
         }
         return true;
       case 5:
         const validServices = services.filter((s) => s.name && s.category);
         if (validServices.length === 0) {
-          toast({
-            title: "Error",
-            description: "Añade al menos un servicio",
-            variant: "destructive",
-          });
+          toast({ title: "Error", description: "Añade al menos un servicio", variant: "destructive" });
           return false;
         }
         return true;
@@ -530,9 +317,7 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
   };
 
   const nextStep = () => {
-    if (validateStep()) {
-      setCurrentStep(Math.min(currentStep + 1, STEPS.length));
-    }
+    if (validateStep()) setCurrentStep(Math.min(currentStep + 1, STEPS.length));
   };
 
   const prevStep = () => {
@@ -544,10 +329,9 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
     setSaving(true);
     try {
-      // Generate password for admin
       const adminPassword = generatePassword();
 
-      // 1. Create tenant with all customization data
+      // 1. Create tenant
       const { data: tenant, error: tenantError } = await supabase
         .from("tenants")
         .insert({
@@ -565,23 +349,21 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           logo_url: customization.logoUrl || null,
           hero_image_url: customization.heroImageUrl || null,
           instagram_url: basicInfo.instagramUrl || null,
-          facebook_url: basicInfo.facebookUrl || null,
           whatsapp_number: basicInfo.whatsappNumber || null,
-          google_maps_url: basicInfo.googleMapsUrl || null,
         })
         .select()
         .single();
 
       if (tenantError) {
         if (tenantError.code === "23505") {
-          throw new Error(`El slug "${basicInfo.slug}" ya existe. Por favor, elige otro.`);
+          throw new Error(`El slug "${basicInfo.slug}" ya existe`);
         }
         throw tenantError;
       }
 
       const tenantId = tenant.id;
 
-      // 2. Create tenant admin WITHOUT changing the current session
+      // 2. Create admin
       const { data: adminProvision, error: adminProvisionError } = await supabase.functions.invoke(
         "provision-tenant-admin",
         {
@@ -598,40 +380,25 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
       );
 
       if (adminProvisionError) throw adminProvisionError;
-      if (!adminProvision?.success) {
-        throw new Error(adminProvision?.error || "No se pudo crear el administrador");
-      }
+      if (!adminProvision?.success) throw new Error(adminProvision?.error || "No se pudo crear el administrador");
 
       if (adminInfo.sendWelcomeEmail && adminProvision?.emailSent) {
-        toast({
-          title: "Administrador creado",
-          description: `Email enviado a ${adminInfo.email} con las credenciales`,
-        });
+        toast({ title: "Administrador creado", description: `Email enviado a ${adminInfo.email}` });
       } else {
-        toast({
-          title: adminProvision?.emailSent ? "Administrador creado" : "Administrador creado (email no enviado)",
-          description: `Credenciales: ${adminInfo.email} / ${adminPassword}`,
-          duration: 30000,
-        });
+        toast({ title: "Administrador creado", description: `Credenciales: ${adminInfo.email} / ${adminPassword}`, duration: 30000 });
       }
 
-      // 6. Create stylists
+      // 3. Create stylists
       const validStylists = stylists.filter((s) => s.name && s.slug);
       if (validStylists.length > 0) {
         const stylistsData = validStylists.map((s) => ({
-          tenant_id: tenantId,
-          name: s.name,
-          slug: s.slug,
-          color: s.color,
-          google_calendar_id: s.calendarId || null,
+          tenant_id: tenantId, name: s.name, slug: s.slug, color: s.color,
         }));
-
         const { error: stylistsError } = await supabase.from("tenant_stylists").insert(stylistsData);
-
         if (stylistsError) throw stylistsError;
       }
 
-      // 7. Create services
+      // 4. Create services
       const validServices = services.filter((s) => s.name && s.category);
       if (validServices.length > 0) {
         const servicesData = validServices.map((s) => ({
@@ -642,14 +409,13 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
           duration_part1_active: s.durationPart1,
           duration_exposure_pause: s.type === "Compuesto" ? s.durationPause : 0,
           duration_part2_active: s.type === "Compuesto" ? s.durationPart2 : 0,
+          price: s.price || null,
         }));
-
         const { error: servicesError } = await supabase.from("services").insert(servicesData);
-
         if (servicesError) throw servicesError;
       }
 
-      // 8. Create business hours
+      // 5. Create business hours
       const hoursData = businessHours.map((h) => ({
         tenant_id: tenantId,
         day_of_week: h.day,
@@ -659,663 +425,383 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
         break_start: h.isOpen ? h.breakStart : null,
         break_end: h.isOpen ? h.breakEnd : null,
       }));
-
       const { error: hoursError } = await supabase.from("tenant_business_hours").insert(hoursData);
-
       if (hoursError) throw hoursError;
 
-      // 9. Create Google Calendar integration if enabled
-      if (gcalEnabled && gcalCredentials.clientId) {
-        const credentials = JSON.stringify({
-          client_id: gcalCredentials.clientId,
-          client_secret: gcalCredentials.clientSecret,
-          refresh_token: gcalCredentials.refreshToken,
-        });
-
-        const { data: encrypted } = await supabase.rpc("encrypt_sensitive_data", {
-          _plaintext: credentials,
-          _tenant_id: tenantId,
-        });
-
-        const calendarSettings: Record<string, string> = {};
-        validStylists.forEach((s) => {
-          if (s.calendarId) {
-            calendarSettings[`calendar_id_${s.slug}`] = s.calendarId;
-          }
-        });
-
-        const { error: gcalError } = await supabase.from("tenant_integrations").insert({
-          tenant_id: tenantId,
-          integration_type: "google_calendar",
-          is_enabled: true,
-          credentials_encrypted: encrypted,
-          settings: calendarSettings,
-        });
-
-        if (gcalError) throw gcalError;
-      }
-
-      // 10. Create n8n integration if enabled
-      if (n8nEnabled && (n8nWebhooks.webhookUrl || n8nWebhooks.cancelWebhookUrl)) {
-        const { error: n8nError } = await supabase.from("tenant_integrations").insert({
-          tenant_id: tenantId,
-          integration_type: "n8n",
-          is_enabled: true,
-          settings: {
-            webhook_url: n8nWebhooks.webhookUrl || null,
-            cancel_webhook_url: n8nWebhooks.cancelWebhookUrl || null,
-            whatsapp_webhook_url: n8nWebhooks.whatsappWebhookUrl || null,
-          },
-        });
-
-        if (n8nError) throw n8nError;
-      }
-
-      toast({
-        title: "¡Tenant creado!",
-        description: `${basicInfo.name} ha sido configurado correctamente`,
-      });
-
+      toast({ title: "¡Tenant creado!", description: `${basicInfo.name} ha sido configurado correctamente` });
       handleClose();
       onComplete();
     } catch (error: any) {
       console.error("Error creating tenant:", error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo crear el tenant",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "No se pudo crear el tenant", variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
 
-  // Live Preview Component
-  const LandingPreview = () => (
-    <div className="border rounded-lg overflow-hidden bg-background shadow-lg">
-      {/* Hero Section Preview */}
-      <div
-        className="relative h-48 flex items-center justify-center"
-        style={{
-          background: customization.heroImageUrl
-            ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${customization.heroImageUrl}) center/cover`
-            : `linear-gradient(135deg, ${customization.primaryColor}, ${customization.secondaryColor})`,
-        }}
-      >
-        <div className="text-center text-white z-10">
-          {customization.logoUrl && <img src={customization.logoUrl} alt="Logo" className="h-12 mx-auto mb-2" />}
-          <h2 className="text-2xl font-bold">{basicInfo.name || "Nombre del Salón"}</h2>
-          <p className="text-sm opacity-90">{customization.tagline || "Tu eslogan aquí"}</p>
-          {basicInfo.city && (
-            <p className="text-xs opacity-75 mt-1">
-              {basicInfo.address}, {basicInfo.city}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Services Preview */}
-      <div className="p-4">
-        <h3 className="font-semibold mb-3" style={{ color: customization.primaryColor }}>
-          Nuestros Servicios
-        </h3>
-        <div className="grid grid-cols-2 gap-2">
-          {services
-            .filter((s) => s.name)
-            .slice(0, 4)
-            .map((service, i) => (
-              <div
-                key={i}
-                className="p-2 rounded text-xs border"
-                style={{ borderColor: `${customization.primaryColor}30` }}
-              >
-                <span className="font-medium">{service.name}</span>
-                <span className="text-muted-foreground ml-1">({service.durationPart1}min)</span>
-              </div>
-            ))}
-        </div>
-      </div>
-
-      {/* Stylists Preview */}
-      {stylists.filter((s) => s.name).length > 0 && (
-        <div className="p-4 border-t">
-          <h3 className="font-semibold mb-3" style={{ color: customization.primaryColor }}>
-            Nuestro Equipo
-          </h3>
-          <div className="flex gap-3">
-            {stylists
-              .filter((s) => s.name)
-              .slice(0, 3)
-              .map((stylist, i) => (
-                <div key={i} className="text-center">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold mx-auto"
-                    style={{ backgroundColor: stylist.color }}
-                  >
-                    {stylist.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-xs mt-1 block">{stylist.name}</span>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-
-      {/* CTA Button Preview */}
-      <div className="p-4 border-t">
-        <Button className="w-full text-white" style={{ backgroundColor: customization.primaryColor }}>
-          Reservar Cita
-        </Button>
-      </div>
-    </div>
-  );
+  const currentStepData = STEPS[currentStep - 1];
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Crear Nuevo Tenant
-          </DialogTitle>
-          <DialogDescription>Configura todos los aspectos de la nueva peluquería</DialogDescription>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={handleClose}>
+      <SheetContent side="bottom" className="h-[95vh] rounded-t-3xl p-0 overflow-hidden">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+          <div className="px-4 py-3 flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={currentStep > 1 ? prevStep : handleClose}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex-1">
+              <h1 className="font-semibold text-foreground">{currentStepData.title}</h1>
+              <p className="text-xs text-muted-foreground">{currentStepData.subtitle}</p>
+            </div>
+            <span className="text-sm text-muted-foreground">{currentStep}/{STEPS.length}</span>
+          </div>
 
-        {/* Toggle Preview */}
-        <div className="flex justify-end mb-2">
-          <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)} className="gap-2">
-            <Eye className="h-4 w-4" />
-            {showPreview ? "Ocultar vista previa" : "Ver vista previa"}
-          </Button>
+          {/* Progress bar */}
+          <div className="h-1 bg-muted">
+            <motion.div
+              className="h-full bg-primary"
+              initial={{ width: 0 }}
+              animate={{ width: `${(currentStep / STEPS.length) * 100}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
         </div>
 
-        <div className={cn("grid gap-6", showPreview ? "md:grid-cols-2" : "grid-cols-1")}>
-          {/* Main Content */}
-          <div>
-            {/* Step Indicator */}
-            <div className="flex items-center justify-between mb-6 px-2 overflow-x-auto">
-              {STEPS.map((step, index) => (
-                <div key={step.id} className="flex items-center flex-shrink-0">
-                  <div
-                    className={cn(
-                      "flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors",
-                      currentStep === step.id
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : currentStep > step.id
-                          ? "border-primary bg-primary/20 text-primary"
-                          : "border-muted-foreground/30 text-muted-foreground",
-                    )}
-                  >
-                    {currentStep > step.id ? <Check className="h-4 w-4" /> : <step.icon className="h-4 w-4" />}
-                  </div>
-                  {index < STEPS.length - 1 && (
-                    <div
-                      className={cn(
-                        "w-4 h-0.5 mx-0.5",
-                        currentStep > step.id ? "bg-primary" : "bg-muted-foreground/30",
-                      )}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="text-center mb-4">
-              <h3 className="font-semibold">{STEPS[currentStep - 1].title}</h3>
-              <p className="text-sm text-muted-foreground">
-                Paso {currentStep} de {STEPS.length}
-              </p>
-            </div>
-
-            {/* Step Content */}
-            <div className="min-h-[300px]">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 pb-32">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+            >
               {/* Step 1: Basic Info */}
               {currentStep === 1 && (
-                <div className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nombre del negocio *</Label>
-                      <Input
-                        id="name"
-                        placeholder="Salón GlowApp"
-                        value={basicInfo.name}
-                        onChange={(e) =>
-                          setBasicInfo({
+                <div className="space-y-4 max-w-lg mx-auto">
+                  <Card className="ios-card">
+                    <CardContent className="p-4 space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium">Nombre del negocio *</Label>
+                        <Input
+                          placeholder="Mi Salón de Belleza"
+                          value={basicInfo.name}
+                          onChange={(e) => setBasicInfo({
                             ...basicInfo,
                             name: e.target.value,
-                            slug: e.target.value
-                              .toLowerCase()
-                              .replace(/\s+/g, "-")
-                              .replace(/[^a-z0-9-]/g, ""),
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="slug">Slug (URL) *</Label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">/salon/</span>
-                        <Input
-                          id="slug"
-                          placeholder="salon-glowapp"
-                          value={basicInfo.slug}
-                          onChange={(e) => setBasicInfo({ ...basicInfo, slug: e.target.value })}
+                            slug: e.target.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-"),
+                          })}
+                          className="h-12 rounded-xl mt-1.5"
                         />
                       </div>
-                    </div>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email de contacto</Label>
+                      <div>
+                        <Label className="text-sm font-medium">URL del salón *</Label>
+                        <div className="flex items-center mt-1.5">
+                          <span className="text-sm text-muted-foreground mr-2">glowapp.app/salon/</span>
+                          <Input
+                            placeholder="mi-salon"
+                            value={basicInfo.slug}
+                            onChange={(e) => setBasicInfo({ ...basicInfo, slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") })}
+                            className="h-12 rounded-xl flex-1"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="ios-card">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-center gap-3 text-muted-foreground mb-2">
+                        <MapPin className="h-4 w-4" />
+                        <span className="text-sm font-medium">Ubicación</span>
+                      </div>
                       <Input
-                        id="email"
+                        placeholder="Dirección"
+                        value={basicInfo.address}
+                        onChange={(e) => setBasicInfo({ ...basicInfo, address: e.target.value })}
+                        className="h-12 rounded-xl"
+                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          placeholder="Ciudad"
+                          value={basicInfo.city}
+                          onChange={(e) => setBasicInfo({ ...basicInfo, city: e.target.value })}
+                          className="h-12 rounded-xl"
+                        />
+                        <Input
+                          placeholder="C.P."
+                          value={basicInfo.postalCode}
+                          onChange={(e) => setBasicInfo({ ...basicInfo, postalCode: e.target.value })}
+                          className="h-12 rounded-xl"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="ios-card">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-center gap-3 text-muted-foreground mb-2">
+                        <Phone className="h-4 w-4" />
+                        <span className="text-sm font-medium">Contacto</span>
+                      </div>
+                      <Input
                         type="email"
-                        placeholder="contacto@peluqueria.com"
+                        placeholder="email@salon.com"
                         value={basicInfo.email}
                         onChange={(e) => setBasicInfo({ ...basicInfo, email: e.target.value })}
+                        className="h-12 rounded-xl"
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Teléfono</Label>
                       <Input
-                        id="phone"
-                        placeholder="612 345 678"
+                        type="tel"
+                        placeholder="Teléfono"
                         value={basicInfo.phone}
                         onChange={(e) => setBasicInfo({ ...basicInfo, phone: e.target.value })}
+                        className="h-12 rounded-xl"
                       />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Dirección completa</Label>
-                    <Input
-                      id="address"
-                      placeholder="Calle Principal, 123"
-                      value={basicInfo.address}
-                      onChange={(e) => setBasicInfo({ ...basicInfo, address: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="city">Ciudad</Label>
                       <Input
-                        id="city"
-                        placeholder="Madrid"
-                        value={basicInfo.city}
-                        onChange={(e) => setBasicInfo({ ...basicInfo, city: e.target.value })}
+                        placeholder="WhatsApp (con prefijo +34)"
+                        value={basicInfo.whatsappNumber}
+                        onChange={(e) => setBasicInfo({ ...basicInfo, whatsappNumber: e.target.value })}
+                        className="h-12 rounded-xl"
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="postalCode">Código Postal</Label>
                       <Input
-                        id="postalCode"
-                        placeholder="28001"
-                        value={basicInfo.postalCode}
-                        onChange={(e) => setBasicInfo({ ...basicInfo, postalCode: e.target.value })}
+                        placeholder="Instagram URL"
+                        value={basicInfo.instagramUrl}
+                        onChange={(e) => setBasicInfo({ ...basicInfo, instagramUrl: e.target.value })}
+                        className="h-12 rounded-xl"
                       />
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
 
               {/* Step 2: Customization */}
               {currentStep === 2 && (
-                <div className="space-y-4">
-                  {/* AI Generation Button */}
-                  <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg border border-primary/20">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Sparkles className="h-5 w-5 text-primary" />
+                <div className="space-y-4 max-w-lg mx-auto">
+                  <Card className="ios-card">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">Contenido con IA</Label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleGenerateBranding}
+                          disabled={generatingBranding || !basicInfo.name}
+                          className="gap-2"
+                        >
+                          {generatingBranding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                          Generar
+                        </Button>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Tagline</Label>
+                        <Input
+                          placeholder="Tu eslogan aquí"
+                          value={customization.tagline}
+                          onChange={(e) => setCustomization({ ...customization, tagline: e.target.value })}
+                          className="h-12 rounded-xl mt-1.5"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Descripción</Label>
+                        <Textarea
+                          placeholder="Describe tu salón..."
+                          value={customization.description}
+                          onChange={(e) => setCustomization({ ...customization, description: e.target.value })}
+                          className="rounded-xl mt-1.5 min-h-[100px]"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="ios-card">
+                    <CardContent className="p-4 space-y-4">
+                      <Label className="text-sm font-medium">Colores</Label>
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <h4 className="font-medium">Generar con IA</h4>
-                          <p className="text-sm text-muted-foreground">
-                            Crea tagline, descripción y FAQs automáticamente
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleGenerateBranding}
-                        disabled={generatingBranding || !basicInfo.name}
-                        className="gap-2"
-                      >
-                        {generatingBranding ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Generando...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-4 w-4" />
-                            Generar
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="tagline">Tagline / Eslogan</Label>
-                    <Input
-                      id="tagline"
-                      placeholder="Tu estilo, nuestra pasión"
-                      value={customization.tagline}
-                      onChange={(e) => setCustomization({ ...customization, tagline: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Descripción</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Describe tu peluquería..."
-                      value={customization.description}
-                      onChange={(e) => setCustomization({ ...customization, description: e.target.value })}
-                      rows={2}
-                    />
-                  </div>
-
-                  {/* Brand Tone (if generated) */}
-                  {customization.brandTone && (
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <Label className="text-sm text-muted-foreground">Tono de marca sugerido</Label>
-                      <p className="text-sm mt-1">{customization.brandTone}</p>
-                    </div>
-                  )}
-
-                  {/* FAQs (if generated) */}
-                  {customization.faqs.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>FAQs generadas</Label>
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {customization.faqs.map((faq, i) => (
-                          <div key={i} className="p-2 bg-muted/30 rounded text-sm">
-                            <p className="font-medium">{faq.question}</p>
-                            <p className="text-muted-foreground">{faq.answer}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>Color Principal</Label>
-                      <div className="flex items-center gap-2">
-                        <div className="flex flex-wrap gap-1">
-                          {COLORS.slice(0, 5).map((color) => (
-                            <button
-                              key={color}
-                              type="button"
-                              className={cn(
-                                "w-6 h-6 rounded-full border-2 transition-all",
-                                customization.primaryColor === color
-                                  ? "border-foreground scale-110"
-                                  : "border-transparent",
-                              )}
-                              style={{ backgroundColor: color }}
-                              onClick={() => setCustomization({ ...customization, primaryColor: color })}
+                          <Label className="text-xs text-muted-foreground">Principal</Label>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <input
+                              type="color"
+                              value={customization.primaryColor}
+                              onChange={(e) => setCustomization({ ...customization, primaryColor: e.target.value })}
+                              className="w-12 h-12 rounded-xl border-0 cursor-pointer"
                             />
-                          ))}
-                        </div>
-                        <Input
-                          type="color"
-                          value={customization.primaryColor}
-                          onChange={(e) => setCustomization({ ...customization, primaryColor: e.target.value })}
-                          className="w-10 h-8 p-1"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Color Secundario</Label>
-                      <div className="flex items-center gap-2">
-                        <div className="flex flex-wrap gap-1">
-                          {COLORS.slice(0, 5).map((color) => (
-                            <button
-                              key={color}
-                              type="button"
-                              className={cn(
-                                "w-6 h-6 rounded-full border-2 transition-all",
-                                customization.secondaryColor === color
-                                  ? "border-foreground scale-110"
-                                  : "border-transparent",
-                              )}
-                              style={{ backgroundColor: color }}
-                              onClick={() => setCustomization({ ...customization, secondaryColor: color })}
+                            <Input
+                              value={customization.primaryColor}
+                              onChange={(e) => setCustomization({ ...customization, primaryColor: e.target.value })}
+                              className="h-12 rounded-xl flex-1 font-mono text-sm"
                             />
-                          ))}
-                        </div>
-                        <Input
-                          type="color"
-                          value={customization.secondaryColor}
-                          onChange={(e) => setCustomization({ ...customization, secondaryColor: e.target.value })}
-                          className="w-10 h-8 p-1"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>Logo</Label>
-                      <div className="border-2 border-dashed rounded-lg p-3 text-center">
-                        {customization.logoUrl ? (
-                          <div className="space-y-2">
-                            <img src={customization.logoUrl} alt="Logo" className="max-h-16 mx-auto" />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setCustomization({ ...customization, logoUrl: "" })}
-                            >
-                              Cambiar
-                            </Button>
                           </div>
-                        ) : (
-                          <label className="cursor-pointer">
-                            <div className="flex flex-col items-center gap-1">
-                              {uploadingLogo ? (
-                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                              ) : (
-                                <Upload className="h-6 w-6 text-muted-foreground" />
-                              )}
-                              <span className="text-xs text-muted-foreground">Subir logo</span>
-                            </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Secundario</Label>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <input
+                              type="color"
+                              value={customization.secondaryColor}
+                              onChange={(e) => setCustomization({ ...customization, secondaryColor: e.target.value })}
+                              className="w-12 h-12 rounded-xl border-0 cursor-pointer"
+                            />
+                            <Input
+                              value={customization.secondaryColor}
+                              onChange={(e) => setCustomization({ ...customization, secondaryColor: e.target.value })}
+                              className="h-12 rounded-xl flex-1 font-mono text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="ios-card">
+                    <CardContent className="p-4 space-y-4">
+                      <Label className="text-sm font-medium">Imágenes</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">Logo</Label>
+                          <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted/50 transition-colors">
+                            {customization.logoUrl ? (
+                              <img src={customization.logoUrl} alt="Logo" className="h-full object-contain p-2" />
+                            ) : uploadingLogo ? (
+                              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            ) : (
+                              <Upload className="h-6 w-6 text-muted-foreground" />
+                            )}
                             <input
                               type="file"
                               accept="image/*"
                               className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleImageUpload(file, "logo");
-                              }}
-                              disabled={uploadingLogo}
+                              onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], "logo")}
                             />
                           </label>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Imagen Hero</Label>
-                      <div className="border-2 border-dashed rounded-lg p-3 text-center">
-                        {customization.heroImageUrl ? (
-                          <div className="space-y-2">
-                            <img
-                              src={customization.heroImageUrl}
-                              alt="Hero"
-                              className="max-h-16 mx-auto object-cover rounded"
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setCustomization({ ...customization, heroImageUrl: "" })}
-                            >
-                              Cambiar
-                            </Button>
-                          </div>
-                        ) : (
-                          <label className="cursor-pointer">
-                            <div className="flex flex-col items-center gap-1">
-                              {uploadingHero ? (
-                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                              ) : (
-                                <Image className="h-6 w-6 text-muted-foreground" />
-                              )}
-                              <span className="text-xs text-muted-foreground">Subir hero</span>
-                            </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-2 block">Hero</Label>
+                          <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted/50 transition-colors">
+                            {customization.heroImageUrl ? (
+                              <img src={customization.heroImageUrl} alt="Hero" className="h-full w-full object-cover rounded-lg" />
+                            ) : uploadingHero ? (
+                              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            ) : (
+                              <Upload className="h-6 w-6 text-muted-foreground" />
+                            )}
                             <input
                               type="file"
                               accept="image/*"
                               className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleImageUpload(file, "hero");
-                              }}
-                              disabled={uploadingHero}
+                              onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], "hero")}
                             />
                           </label>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Preview URL Section */}
-                  <div className="p-4 border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        <Label>URL de Vista Previa</Label>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleGeneratePreviewUrl}
-                        disabled={generatingPreview || !basicInfo.slug}
-                        className="gap-2"
-                      >
-                        {generatingPreview ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <ExternalLink className="h-4 w-4" />
-                        )}
-                        Generar URL
-                      </Button>
-                    </div>
-                    {previewUrl && (
-                      <div className="flex items-center gap-2 p-2 bg-muted rounded">
-                        <code className="text-xs flex-1 truncate">{previewUrl}</code>
-                        <Button variant="ghost" size="sm" onClick={copyPreviewUrl}>
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" asChild>
-                          <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        </Button>
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Esta URL permite previsualizar la landing antes de activar el tenant
-                    </p>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
 
               {/* Step 3: Admin */}
               {currentStep === 3 && (
-                <div className="space-y-6">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-3 mb-3">
-                      <UserPlus className="h-5 w-5 text-primary" />
+                <div className="space-y-4 max-w-lg mx-auto">
+                  <Card className="ios-card">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-center gap-3 text-muted-foreground mb-2">
+                        <UserPlus className="h-4 w-4" />
+                        <span className="text-sm font-medium">Credenciales del administrador</span>
+                      </div>
                       <div>
-                        <h4 className="font-medium">Administrador del Tenant</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Se creará una cuenta de administrador con acceso completo al panel
-                        </p>
+                        <Label className="text-sm text-muted-foreground">Email *</Label>
+                        <Input
+                          type="email"
+                          placeholder="admin@salon.com"
+                          value={adminInfo.email}
+                          onChange={(e) => setAdminInfo({ ...adminInfo, email: e.target.value })}
+                          className="h-12 rounded-xl mt-1.5"
+                        />
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="adminEmail">Email del administrador *</Label>
-                      <Input
-                        id="adminEmail"
-                        type="email"
-                        placeholder="admin@peluqueria.com"
-                        value={adminInfo.email}
-                        onChange={(e) => setAdminInfo({ ...adminInfo, email: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="adminName">Nombre del administrador</Label>
-                      <Input
-                        id="adminName"
-                        placeholder="Juan García"
-                        value={adminInfo.name}
-                        onChange={(e) => setAdminInfo({ ...adminInfo, name: e.target.value })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Mail className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Nombre</Label>
+                        <Input
+                          placeholder="Nombre del administrador"
+                          value={adminInfo.name}
+                          onChange={(e) => setAdminInfo({ ...adminInfo, name: e.target.value })}
+                          className="h-12 rounded-xl mt-1.5"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between pt-2">
                         <div>
-                          <Label className="cursor-pointer">Enviar email de bienvenida</Label>
-                          <p className="text-sm text-muted-foreground">
-                            Se enviará un email con las credenciales de acceso
-                          </p>
+                          <Label className="text-sm font-medium">Enviar email de bienvenida</Label>
+                          <p className="text-xs text-muted-foreground">Incluye las credenciales de acceso</p>
                         </div>
+                        <Switch
+                          checked={adminInfo.sendWelcomeEmail}
+                          onCheckedChange={(checked) => setAdminInfo({ ...adminInfo, sendWelcomeEmail: checked })}
+                        />
                       </div>
-                      <Switch
-                        checked={adminInfo.sendWelcomeEmail}
-                        onCheckedChange={(checked) => setAdminInfo({ ...adminInfo, sendWelcomeEmail: checked })}
-                      />
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
+
+                  <p className="text-xs text-center text-muted-foreground px-4">
+                    Se generará una contraseña segura automáticamente. El administrador podrá cambiarla después.
+                  </p>
                 </div>
               )}
 
               {/* Step 4: Stylists */}
               {currentStep === 4 && (
-                <div className="space-y-3">
+                <div className="space-y-4 max-w-lg mx-auto">
                   {stylists.map((stylist, index) => (
-                    <div key={index} className="p-3 border rounded-lg space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">Estilista {index + 1}</span>
-                        {stylists.length > 1 && (
-                          <Button variant="ghost" size="sm" onClick={() => removeStylist(index)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
-                      </div>
-                      <div className="grid gap-2 md:grid-cols-3">
-                        <Input
-                          placeholder="Nombre *"
-                          value={stylist.name}
-                          onChange={(e) => updateStylist(index, "name", e.target.value)}
-                        />
-                        <Input
-                          placeholder="Slug *"
-                          value={stylist.slug}
-                          onChange={(e) => updateStylist(index, "slug", e.target.value)}
-                        />
-                        <div className="flex gap-1">
-                          {COLORS.slice(0, 6).map((color) => (
-                            <button
-                              key={color}
-                              type="button"
-                              className={cn(
-                                "w-6 h-6 rounded-full border-2 transition-all",
-                                stylist.color === color ? "border-foreground scale-110" : "border-transparent",
-                              )}
-                              style={{ backgroundColor: color }}
-                              onClick={() => updateStylist(index, "color", color)}
+                    <Card key={index} className="ios-card">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0"
+                            style={{ backgroundColor: stylist.color }}
+                          >
+                            {stylist.name ? stylist.name.charAt(0).toUpperCase() : (index + 1)}
+                          </div>
+                          <div className="flex-1 space-y-3">
+                            <Input
+                              placeholder="Nombre del estilista"
+                              value={stylist.name}
+                              onChange={(e) => updateStylist(index, "name", e.target.value)}
+                              className="h-11 rounded-xl"
                             />
-                          ))}
+                            <div className="flex gap-2">
+                              <div className="flex gap-1">
+                                {COLORS.slice(0, 5).map((color) => (
+                                  <button
+                                    key={color}
+                                    type="button"
+                                    className={cn(
+                                      "w-6 h-6 rounded-full transition-transform",
+                                      stylist.color === color && "ring-2 ring-offset-2 ring-primary scale-110"
+                                    )}
+                                    style={{ backgroundColor: color }}
+                                    onClick={() => updateStylist(index, "color", color)}
+                                  />
+                                ))}
+                              </div>
+                              {stylists.length > 1 && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="ml-auto h-8 w-8 text-destructive"
+                                  onClick={() => removeStylist(index)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                  <Button variant="outline" onClick={addStylist} className="w-full gap-2" size="sm">
+
+                  <Button variant="outline" className="w-full h-12 rounded-xl gap-2" onClick={addStylist}>
                     <Plus className="h-4 w-4" />
                     Añadir estilista
                   </Button>
@@ -1324,94 +810,97 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
               {/* Step 5: Services */}
               {currentStep === 5 && (
-                <div className="space-y-3">
+                <div className="space-y-4 max-w-lg mx-auto">
                   {services.map((service, index) => (
-                    <div key={index} className="p-3 border rounded-lg space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">Servicio {index + 1}</span>
-                        {services.length > 1 && (
-                          <Button variant="ghost" size="sm" onClick={() => removeService(index)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
-                      </div>
-                      <div className="grid gap-2 md:grid-cols-4">
-                        <Input
-                          placeholder="Nombre *"
-                          value={service.name}
-                          onChange={(e) => updateService(index, "name", e.target.value)}
-                        />
-                        <Select
-                          value={service.category}
-                          onValueChange={(value) => updateService(index, "category", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {SERVICE_CATEGORIES.map((cat) => (
-                              <SelectItem key={cat} value={cat}>
-                                {cat}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Select
-                          value={service.type}
-                          onValueChange={(value) => updateService(index, "type", value as "Simple" | "Compuesto")}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Simple">Simple</SelectItem>
-                            <SelectItem value="Compuesto">Compuesto (3 fases)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          min={5}
-                          step={5}
-                          placeholder={service.type === "Compuesto" ? "Fase 1 (min)" : "Duración (min)"}
-                          value={service.durationPart1}
-                          onChange={(e) => updateService(index, "durationPart1", parseInt(e.target.value) || 0)}
-                        />
-                      </div>
-                      {/* Show extra duration fields for compound services */}
-                      {service.type === "Compuesto" && (
-                        <div className="grid gap-2 md:grid-cols-2 pt-2 border-t border-dashed">
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Pausa/Exposición (min)</Label>
+                    <Card key={index} className="ios-card">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="Nombre del servicio"
+                            value={service.name}
+                            onChange={(e) => updateService(index, "name", e.target.value)}
+                            className="h-11 rounded-xl flex-1"
+                          />
+                          {services.length > 1 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive shrink-0"
+                              onClick={() => removeService(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Select value={service.category} onValueChange={(v) => updateService(index, "category", v)}>
+                            <SelectTrigger className="h-11 rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SERVICE_CATEGORIES.map((cat) => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={service.type} onValueChange={(v) => updateService(index, "type", v as "Simple" | "Compuesto")}>
+                            <SelectTrigger className="h-11 rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Simple">Simple</SelectItem>
+                              <SelectItem value="Compuesto">Compuesto</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Duración</Label>
                             <Input
                               type="number"
-                              min={0}
-                              step={5}
-                              placeholder="Tiempo de espera"
-                              value={service.durationPause}
-                              onChange={(e) => updateService(index, "durationPause", parseInt(e.target.value) || 0)}
+                              value={service.durationPart1}
+                              onChange={(e) => updateService(index, "durationPart1", parseInt(e.target.value) || 0)}
+                              className="h-10 rounded-xl mt-1"
                             />
                           </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Fase 2 - Finalización (min)</Label>
+                          {service.type === "Compuesto" && (
+                            <>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Pausa</Label>
+                                <Input
+                                  type="number"
+                                  value={service.durationPause}
+                                  onChange={(e) => updateService(index, "durationPause", parseInt(e.target.value) || 0)}
+                                  className="h-10 rounded-xl mt-1"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Parte 2</Label>
+                                <Input
+                                  type="number"
+                                  value={service.durationPart2}
+                                  onChange={(e) => updateService(index, "durationPart2", parseInt(e.target.value) || 0)}
+                                  className="h-10 rounded-xl mt-1"
+                                />
+                              </div>
+                            </>
+                          )}
+                          <div className={service.type === "Simple" ? "col-span-2" : ""}>
+                            <Label className="text-xs text-muted-foreground">Precio €</Label>
                             <Input
                               type="number"
-                              min={0}
-                              step={5}
-                              placeholder="Duración fase 2"
-                              value={service.durationPart2}
-                              onChange={(e) => updateService(index, "durationPart2", parseInt(e.target.value) || 0)}
+                              placeholder="0.00"
+                              value={service.price || ""}
+                              onChange={(e) => updateService(index, "price", parseFloat(e.target.value) || 0)}
+                              className="h-10 rounded-xl mt-1"
                             />
-                          </div>
-                          <div className="md:col-span-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                            Total: {service.durationPart1 + service.durationPause + service.durationPart2} min (Fase 1:{" "}
-                            {service.durationPart1}min → Pausa: {service.durationPause}min → Fase 2:{" "}
-                            {service.durationPart2}min)
                           </div>
                         </div>
-                      )}
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                  <Button variant="outline" onClick={addService} className="w-full gap-2" size="sm">
+
+                  <Button variant="outline" className="w-full h-12 rounded-xl gap-2" onClick={addService}>
                     <Plus className="h-4 w-4" />
                     Añadir servicio
                   </Button>
@@ -1420,155 +909,95 @@ export function TenantOnboardingWizard({ open, onOpenChange, onComplete }: Tenan
 
               {/* Step 6: Business Hours */}
               {currentStep === 6 && (
-                <div className="space-y-2">
-                  <div className="flex justify-end mb-2">
-                    <Button variant="outline" size="sm" onClick={copyFirstDayToAll}>
-                      Copiar a todos
-                    </Button>
-                  </div>
-                  {businessHours.map((hour, index) => (
-                    <div key={hour.day} className="flex items-center gap-2 p-2 border rounded-lg text-sm">
-                      <div className="w-20 flex-shrink-0">
-                        <span className="font-medium">{hour.dayName}</span>
-                      </div>
-                      <Switch
-                        checked={hour.isOpen}
-                        onCheckedChange={(checked) => updateBusinessHours(index, "isOpen", checked)}
-                      />
-                      {hour.isOpen ? (
-                        <div className="flex items-center gap-1 flex-1 flex-wrap">
-                          <Input
-                            type="time"
-                            value={hour.openTime}
-                            onChange={(e) => updateBusinessHours(index, "openTime", e.target.value)}
-                            className="w-24 h-8"
+                <div className="space-y-3 max-w-lg mx-auto">
+                  {businessHours.map((hours, index) => (
+                    <Card key={hours.day} className={cn("ios-card transition-opacity", !hours.isOpen && "opacity-60")}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            checked={hours.isOpen}
+                            onCheckedChange={(checked) => updateBusinessHours(index, "isOpen", checked)}
                           />
-                          <span>-</span>
-                          <Input
-                            type="time"
-                            value={hour.closeTime}
-                            onChange={(e) => updateBusinessHours(index, "closeTime", e.target.value)}
-                            className="w-24 h-8"
-                          />
+                          <span className="font-medium w-20">{hours.dayName}</span>
+                          {hours.isOpen ? (
+                            <div className="flex-1 grid grid-cols-2 gap-2 text-sm">
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  type="time"
+                                  value={hours.openTime}
+                                  onChange={(e) => updateBusinessHours(index, "openTime", e.target.value)}
+                                  className="h-9 rounded-lg text-xs"
+                                />
+                                <span className="text-muted-foreground">-</span>
+                                <Input
+                                  type="time"
+                                  value={hours.breakStart}
+                                  onChange={(e) => updateBusinessHours(index, "breakStart", e.target.value)}
+                                  className="h-9 rounded-lg text-xs"
+                                />
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  type="time"
+                                  value={hours.breakEnd}
+                                  onChange={(e) => updateBusinessHours(index, "breakEnd", e.target.value)}
+                                  className="h-9 rounded-lg text-xs"
+                                />
+                                <span className="text-muted-foreground">-</span>
+                                <Input
+                                  type="time"
+                                  value={hours.closeTime}
+                                  onChange={(e) => updateBusinessHours(index, "closeTime", e.target.value)}
+                                  className="h-9 rounded-lg text-xs"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Cerrado</span>
+                          )}
                         </div>
-                      ) : (
-                        <span className="text-muted-foreground">Cerrado</span>
-                      )}
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-              {/* Step 7: Integrations */}
-              {currentStep === 7 && (
-                <div className="space-y-4">
-                  <div className="border rounded-lg p-3 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <Label>Google Calendar</Label>
-                      </div>
-                      <Switch checked={gcalEnabled} onCheckedChange={setGcalEnabled} />
-                    </div>
-                    {gcalEnabled && (
-                      <div className="space-y-2 pt-2 border-t">
-                        <div className="flex justify-end">
-                          <Button variant="ghost" size="sm" onClick={() => setShowSecrets(!showSecrets)}>
-                            {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                        <Input
-                          type={showSecrets ? "text" : "password"}
-                          placeholder="Client ID"
-                          value={gcalCredentials.clientId}
-                          onChange={(e) => setGcalCredentials({ ...gcalCredentials, clientId: e.target.value })}
-                        />
-                        <Input
-                          type={showSecrets ? "text" : "password"}
-                          placeholder="Client Secret"
-                          value={gcalCredentials.clientSecret}
-                          onChange={(e) => setGcalCredentials({ ...gcalCredentials, clientSecret: e.target.value })}
-                        />
-                        <Input
-                          type={showSecrets ? "text" : "password"}
-                          placeholder="Refresh Token"
-                          value={gcalCredentials.refreshToken}
-                          onChange={(e) => setGcalCredentials({ ...gcalCredentials, refreshToken: e.target.value })}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="border rounded-lg p-3 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Webhook className="h-4 w-4" />
-                        <Label>n8n Webhooks</Label>
-                      </div>
-                      <Switch checked={n8nEnabled} onCheckedChange={setN8nEnabled} />
-                    </div>
-                    {n8nEnabled && (
-                      <div className="space-y-2 pt-2 border-t">
-                        <Input
-                          placeholder="Webhook URL (nueva reserva)"
-                          value={n8nWebhooks.webhookUrl}
-                          onChange={(e) => setN8nWebhooks({ ...n8nWebhooks, webhookUrl: e.target.value })}
-                        />
-                        <Input
-                          placeholder="Cancel Webhook URL"
-                          value={n8nWebhooks.cancelWebhookUrl}
-                          onChange={(e) => setN8nWebhooks({ ...n8nWebhooks, cancelWebhookUrl: e.target.value })}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <p className="text-xs text-muted-foreground text-center">
-                    Las integraciones se pueden modificar después desde el panel
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Navigation */}
-            <div className="flex items-center justify-between pt-4 border-t">
-              <Button variant="outline" onClick={currentStep === 1 ? handleClose : prevStep} disabled={saving}>
-                {currentStep === 1 ? (
-                  "Cancelar"
+        {/* Footer Actions */}
+        <div
+          className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-xl border-t"
+          style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+        >
+          <div className="max-w-lg mx-auto">
+            {currentStep < STEPS.length ? (
+              <Button onClick={nextStep} className="w-full h-12 rounded-xl gradient-primary text-primary-foreground gap-2">
+                Continuar
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleComplete}
+                disabled={saving}
+                className="w-full h-12 rounded-xl gradient-primary text-primary-foreground gap-2"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creando tenant...
+                  </>
                 ) : (
                   <>
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Anterior
+                    <Check className="h-4 w-4" />
+                    Crear Tenant
                   </>
                 )}
               </Button>
-
-              {currentStep < STEPS.length ? (
-                <Button onClick={nextStep} disabled={saving}>
-                  Siguiente
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              ) : (
-                <Button onClick={handleComplete} disabled={saving} className="gap-2">
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  Crear Tenant
-                </Button>
-              )}
-            </div>
+            )}
           </div>
-
-          {/* Preview Panel */}
-          {showPreview && (
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm flex items-center gap-2">
-                <Eye className="h-4 w-4" />
-                Vista previa de la landing
-              </h4>
-              <LandingPreview />
-            </div>
-          )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
