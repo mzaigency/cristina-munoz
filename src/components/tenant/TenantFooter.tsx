@@ -1,4 +1,5 @@
 import { MapPin, Phone, Mail, Clock, Instagram, Facebook } from "lucide-react";
+import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
 
 interface Tenant {
   id: string;
@@ -17,8 +18,95 @@ interface TenantFooterProps {
   tenant: Tenant;
 }
 
+const DAYS_SHORT = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+const formatMinutesToTime = (minutes: number) => {
+  if (!minutes) return "";
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+};
+
 export const TenantFooter = ({ tenant }: TenantFooterProps) => {
   const currentYear = new Date().getFullYear();
+  const { businessHours, loading: loadingHours } = useTenantBusinessHours(tenant.id);
+
+  // Agrupar días con el mismo horario
+  const getGroupedHours = () => {
+    if (!businessHours) return [];
+    
+    const groups: { days: number[]; hours: string }[] = [];
+    
+    // Ordenar días: 1-5 (Lun-Vie), luego 6 (Sáb), luego 0 (Dom)
+    const orderedDays = [1, 2, 3, 4, 5, 6, 0];
+    
+    orderedDays.forEach(day => {
+      const hours = businessHours[day];
+      if (!hours) return;
+      
+      let hoursStr: string;
+      if (hours.isClosed) {
+        hoursStr = "Cerrado";
+      } else {
+        const morning = hours.morningStart && hours.morningEnd 
+          ? `${formatMinutesToTime(hours.morningStart)}-${formatMinutesToTime(hours.morningEnd)}`
+          : null;
+        const afternoon = hours.afternoonStart && hours.afternoonEnd
+          ? `${formatMinutesToTime(hours.afternoonStart)}-${formatMinutesToTime(hours.afternoonEnd)}`
+          : null;
+        
+        if (morning && afternoon) {
+          hoursStr = `${morning}, ${afternoon}`;
+        } else if (morning) {
+          hoursStr = morning;
+        } else if (afternoon) {
+          hoursStr = afternoon;
+        } else {
+          hoursStr = "Cerrado";
+        }
+      }
+      
+      // Buscar grupo existente con el mismo horario
+      const existingGroup = groups.find(g => g.hours === hoursStr);
+      if (existingGroup) {
+        existingGroup.days.push(day);
+      } else {
+        groups.push({ days: [day], hours: hoursStr });
+      }
+    });
+    
+    return groups;
+  };
+
+  const formatDaysRange = (days: number[]) => {
+    if (days.length === 1) {
+      return DAYS_SHORT[days[0] === 0 ? 6 : days[0] - 1];
+    }
+    
+    // Verificar si son consecutivos
+    const sortedDays = [...days].sort((a, b) => {
+      const orderA = a === 0 ? 7 : a;
+      const orderB = b === 0 ? 7 : b;
+      return orderA - orderB;
+    });
+    
+    const isConsecutive = sortedDays.every((day, i) => {
+      if (i === 0) return true;
+      const prevOrder = sortedDays[i - 1] === 0 ? 7 : sortedDays[i - 1];
+      const currOrder = day === 0 ? 7 : day;
+      return currOrder - prevOrder === 1;
+    });
+    
+    if (isConsecutive && days.length > 2) {
+      const first = sortedDays[0];
+      const last = sortedDays[sortedDays.length - 1];
+      return `${DAYS_SHORT[first === 0 ? 6 : first - 1]}-${DAYS_SHORT[last === 0 ? 6 : last - 1]}`;
+    }
+    
+    return days.map(d => DAYS_SHORT[d === 0 ? 6 : d - 1]).join(", ");
+  };
+
+  const groupedHours = getGroupedHours();
 
   return (
     <footer className="py-16 bg-primary/5" style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom))" }}>
@@ -102,9 +190,21 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
             <h4 className="font-semibold mb-4">Horario</h4>
             <div className="flex items-start gap-3 text-muted-foreground">
               <Clock className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
-              <div>
-                <p>Consulta disponibilidad</p>
-                <p>al reservar tu cita</p>
+              <div className="space-y-1 text-sm">
+                {loadingHours ? (
+                  <p>Cargando horarios...</p>
+                ) : groupedHours.length > 0 ? (
+                  groupedHours.map((group, idx) => (
+                    <div key={idx} className="flex justify-between gap-4">
+                      <span className="font-medium">{formatDaysRange(group.days)}</span>
+                      <span className={group.hours === "Cerrado" ? "text-muted-foreground/60" : ""}>
+                        {group.hours}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p>Consulta disponibilidad al reservar</p>
+                )}
               </div>
             </div>
           </div>
