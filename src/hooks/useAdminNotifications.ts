@@ -9,6 +9,35 @@ interface AdminNotificationCounts {
   reviews: number;
 }
 
+// Helper para obtener la clave de localStorage única por tenant y día
+const getStorageKey = (tenantId: string) => {
+  const today = new Date().toISOString().split('T')[0];
+  return `admin-viewed-sections-${tenantId}-${today}`;
+};
+
+// Cargar secciones visitadas desde localStorage
+const loadViewedSections = (tenantId: string | null): Set<string> => {
+  if (!tenantId) return new Set();
+  try {
+    const stored = localStorage.getItem(getStorageKey(tenantId));
+    if (stored) {
+      return new Set(JSON.parse(stored));
+    }
+  } catch (e) {
+    console.error('Error loading viewed sections:', e);
+  }
+  return new Set();
+};
+
+// Guardar secciones visitadas en localStorage
+const saveViewedSections = (tenantId: string, sections: Set<string>) => {
+  try {
+    localStorage.setItem(getStorageKey(tenantId), JSON.stringify([...sections]));
+  } catch (e) {
+    console.error('Error saving viewed sections:', e);
+  }
+};
+
 export function useAdminNotifications(tenantId: string | null) {
   const [counts, setCounts] = useState<AdminNotificationCounts>({
     agenda: 0,
@@ -18,7 +47,7 @@ export function useAdminNotifications(tenantId: string | null) {
     reviews: 0
   });
   const [loading, setLoading] = useState(true);
-  const [viewedSections, setViewedSections] = useState<Set<string>>(new Set());
+  const [viewedSections, setViewedSections] = useState<Set<string>>(() => loadViewedSections(tenantId));
 
   const fetchCounts = useCallback(async () => {
     if (!tenantId) return;
@@ -82,9 +111,13 @@ export function useAdminNotifications(tenantId: string | null) {
 
   // Mark a section as viewed (clears its notification)
   const markSectionViewed = useCallback((section: string) => {
+    if (!tenantId) return;
+    
     setViewedSections(prev => {
       const newSet = new Set(prev);
       newSet.add(section);
+      // Persistir en localStorage
+      saveViewedSections(tenantId, newSet);
       return newSet;
     });
     
@@ -99,12 +132,22 @@ export function useAdminNotifications(tenantId: string | null) {
       }
       return newCounts;
     });
-  }, []);
+  }, [tenantId]);
 
   // Reset viewed sections (e.g., on new day or refresh)
   const resetViewedSections = useCallback(() => {
+    if (tenantId) {
+      localStorage.removeItem(getStorageKey(tenantId));
+    }
     setViewedSections(new Set());
-  }, []);
+  }, [tenantId]);
+
+  // Cargar secciones visitadas cuando cambia el tenantId
+  useEffect(() => {
+    if (tenantId) {
+      setViewedSections(loadViewedSections(tenantId));
+    }
+  }, [tenantId]);
 
   useEffect(() => {
     fetchCounts();
