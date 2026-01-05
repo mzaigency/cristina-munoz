@@ -502,6 +502,37 @@ serve(async (req) => {
 
     console.log('Created bookings:', createdBookings.length);
 
+    // Mark any waitlist entries as booked for this user/phone and date
+    if (bookingData.user_id || normalizedPhone) {
+      try {
+        let waitlistQuery = supabase
+          .from('waitlist')
+          .update({ status: 'booked' })
+          .eq('tenant_id', tenantId)
+          .eq('status', 'waiting');
+
+        // Match by user_id or phone
+        if (bookingData.user_id) {
+          waitlistQuery = waitlistQuery.eq('user_id', bookingData.user_id);
+        } else if (normalizedPhone) {
+          // Match by phone - need to check if phone matches
+          waitlistQuery = waitlistQuery.ilike('client_phone', `%${normalizedPhone}%`);
+        }
+
+        // Also match preferred date if it matches the booking date
+        const { data: updatedWaitlist, error: waitlistError } = await waitlistQuery
+          .or(`preferred_date.is.null,preferred_date.eq.${bookingDate}`);
+
+        if (waitlistError) {
+          console.error('Error updating waitlist:', waitlistError);
+        } else if (updatedWaitlist) {
+          console.log('Marked waitlist entries as booked');
+        }
+      } catch (waitlistErr) {
+        console.error('Error marking waitlist as booked:', waitlistErr);
+      }
+    }
+
     // Send internal message confirmation (if user has account)
     if (bookingData.user_id) {
       try {

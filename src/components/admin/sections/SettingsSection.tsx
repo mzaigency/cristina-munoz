@@ -4,24 +4,27 @@ import {
   Settings, 
   Bell, 
   Shield,
-  Store
+  Store,
+  CreditCard
 } from "lucide-react";
 import TenantSettings from "../TenantSettings";
 import { NotificationSettings } from "../NotificationSettings";
 import { SecurityMonitor } from "../SecurityMonitor";
+import { SubscriptionManager } from "../SubscriptionManager";
 
 interface SettingsSectionProps {
   tenantId: string;
   tenantSlug: string;
 }
 
-type SettingsTab = "general" | "notifications" | "security";
+type SettingsTab = "general" | "notifications" | "security" | "subscription";
 
 const SettingsSection = ({ tenantId, tenantSlug }: SettingsSectionProps) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
   const tabs = [
     { id: "general" as SettingsTab, label: "General", icon: Store },
+    { id: "subscription" as SettingsTab, label: "Plan", icon: CreditCard },
     { id: "notifications" as SettingsTab, label: "Alertas", icon: Bell },
     { id: "security" as SettingsTab, label: "Seguridad", icon: Shield },
   ];
@@ -44,6 +47,10 @@ const SettingsSection = ({ tenantId, tenantSlug }: SettingsSectionProps) => {
 
         <TabsContent value="general" className="mt-4">
           <TenantSettings tenantId={tenantId} tenantSlug={tenantSlug} />
+        </TabsContent>
+
+        <TabsContent value="subscription" className="mt-4">
+          <SubscriptionManager tenantId={tenantId} />
         </TabsContent>
 
         <TabsContent value="notifications" className="mt-4">
