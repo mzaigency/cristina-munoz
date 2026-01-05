@@ -315,54 +315,56 @@ export default function TenantAdmin() {
 
   const renderNavButton = (item: NavItem) => {
     const isActive = activeTab === item.value;
+    const badgeCount = typeof item.badge === "number" ? item.badge : 0;
     // Solo mostrar badge si NO es el tab activo (desaparece al instante)
-    const showBadge = item.badge && item.badge > 0 && activeTab !== item.value;
-    
+    const showBadge = badgeCount > 0 && activeTab !== item.value;
+
     return (
       <button
         key={item.value}
         onClick={() => handleTabClick(item.value)}
         role="tab"
         aria-selected={isActive}
-        aria-label={`${item.label}${showBadge ? `, ${item.badge} pendientes` : ''}`}
+        aria-label={`${item.label}${showBadge ? `, ${badgeCount} pendientes` : ""}`}
         data-tour-step={`nav-${item.value}`}
         className={cn(
           "relative flex flex-col items-center justify-center gap-1 transition-all duration-200 shrink-0",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           isMobile ? [
             "px-2 py-1.5 rounded-xl min-w-[48px] h-[56px]",
-            isActive 
-              ? "bg-primary text-primary-foreground shadow-lg scale-105" 
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            isActive
+              ? "bg-primary text-primary-foreground shadow-lg scale-105"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
           ] : [
             "px-4 py-2.5 rounded-xl min-w-[80px] h-[60px]",
-            isActive 
-              ? "bg-primary text-primary-foreground shadow-lg" 
-              : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+            isActive
+              ? "bg-primary text-primary-foreground shadow-lg"
+              : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
           ]
         )}
       >
         <div className="relative">
           {item.icon}
           {showBadge && (
-            <span 
-              className="absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white"
+            <span
+              className="absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground"
               aria-hidden="true"
             >
-              {item.badge! > 9 ? "9+" : item.badge}
+              {badgeCount > 9 ? "9+" : badgeCount}
             </span>
           )}
         </div>
-        <span className={cn(
-          "font-medium leading-none whitespace-nowrap",
-          isMobile ? "text-[10px]" : "text-xs"
-        )}>{item.label}</span>
+        <span
+          className={cn(
+            "font-medium leading-none whitespace-nowrap",
+            isMobile ? "text-[10px]" : "text-xs"
+          )}
+        >
+          {item.label}
+        </span>
       </button>
     );
   };
-
-  // Debug: remover cuando no sea necesario
-  // console.log('notificationCounts:', notificationCounts);
 
   if (loading) {
     return (
