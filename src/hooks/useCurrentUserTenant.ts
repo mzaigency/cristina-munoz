@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface CurrentUserTenant {
   tenantId: string | null;
   isAdmin: boolean;
+  isStylist: boolean;
   loading: boolean;
   tenant: {
     id: string;
@@ -27,6 +28,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
     return {
       tenantId: null,
       isAdmin: false,
+      isStylist: false,
       loading: true,
       tenant: null,
     };
@@ -77,6 +79,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
         const newState = {
           tenantId: null,
           isAdmin: false,
+          isStylist: false,
           loading: false,
           tenant: null,
         };
@@ -108,6 +111,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
         const newState = {
           tenantId: adminData.tenant_id,
           isAdmin: true,
+          isStylist: false,
           loading: false,
           tenant: adminData.tenant as CurrentUserTenant["tenant"],
         };
@@ -138,6 +142,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
         const newState = {
           tenantId: stylistData.tenant_id,
           isAdmin: false,
+          isStylist: true,
           loading: false,
           tenant: stylistData.tenant as CurrentUserTenant["tenant"],
         };
@@ -150,6 +155,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
       const newState = {
         tenantId: null,
         isAdmin: false,
+        isStylist: false,
         loading: false,
         tenant: null,
       };
@@ -161,6 +167,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
       const newState = {
         tenantId: null,
         isAdmin: false,
+        isStylist: false,
         loading: false,
         tenant: null,
       };
