@@ -215,7 +215,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
           <div className="flex flex-col items-center gap-4 text-sm text-muted-foreground">
             {/* GlowApp Badge - Prominent on mobile */}
             <a
-              href="https://glowapp.app"
+              href="https://www.glowapp.app"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-500/20 transition-all touch-manipulation"
