@@ -80,12 +80,7 @@ export default function TenantAdmin() {
   // Use admin notifications hook
   const { counts: notificationCounts, getCommunicationCount, refetch: refetchNotifications, markSectionViewed } = useAdminNotifications(tenant?.id || null);
 
-  // Mark section as viewed when tab changes
-  useEffect(() => {
-    if (activeTab && activeTab !== 'dashboard') {
-      markSectionViewed(activeTab);
-    }
-  }, [activeTab, markSectionViewed]);
+  // El badge se oculta inmediatamente al hacer click en handleTabClick
 
   // Simplified navigation - only 6 main tabs with notification badges
   const navItems: NavItem[] = [
@@ -310,15 +305,26 @@ export default function TenantAdmin() {
     }
   };
 
+  const handleTabClick = (tab: TabValue) => {
+    // Marcar como visto INMEDIATAMENTE al hacer click
+    if (tab !== 'dashboard') {
+      markSectionViewed(tab);
+    }
+    setActiveTab(tab);
+  };
+
   const renderNavButton = (item: NavItem) => {
     const isActive = activeTab === item.value;
+    // Solo mostrar badge si NO es el tab activo (desaparece al instante)
+    const showBadge = item.badge && item.badge > 0 && activeTab !== item.value;
+    
     return (
       <button
         key={item.value}
-        onClick={() => setActiveTab(item.value)}
+        onClick={() => handleTabClick(item.value)}
         role="tab"
         aria-selected={isActive}
-        aria-label={`${item.label}${item.badge ? `, ${item.badge} pendientes` : ''}`}
+        aria-label={`${item.label}${showBadge ? `, ${item.badge} pendientes` : ''}`}
         data-tour-step={`nav-${item.value}`}
         className={cn(
           "relative flex flex-col items-center justify-center gap-1 transition-all duration-200 shrink-0",
@@ -338,12 +344,12 @@ export default function TenantAdmin() {
       >
         <div className="relative">
           {item.icon}
-          {item.badge && item.badge > 0 && (
+          {showBadge && (
             <span 
               className="absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white"
               aria-hidden="true"
             >
-              {item.badge > 9 ? "9+" : item.badge}
+              {item.badge! > 9 ? "9+" : item.badge}
             </span>
           )}
         </div>
