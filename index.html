@@ -33,17 +33,31 @@
     <meta http-equiv="content-language" content="es-ES" />
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://glowapp.app/" />
-    <link rel="alternate" hreflang="es" href="https://glowapp.app/" />
-    <link rel="alternate" hreflang="x-default" href="https://glowapp.app/" />
+    <link rel="canonical" href="https://www.glowapp.app/" />
+    <link rel="alternate" hreflang="es" href="https://www.glowapp.app/" />
+    <link rel="alternate" hreflang="x-default" href="https://www.glowapp.app/" />
+
+    <script>
+      // Force redirect from apex to www (client-side fallback)
+      (function () {
+        if (window.location.hostname === "glowapp.app") {
+          window.location.replace(
+            "https://www.glowapp.app" +
+              window.location.pathname +
+              window.location.search +
+              window.location.hash
+          );
+        }
+      })();
+    </script>
 
     <!-- Open Graph / Facebook - Enhanced -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://glowapp.app/" />
+    <meta property="og:url" content="https://www.glowapp.app/" />
     <meta property="og:title" content="GlowApp - Reserva Cita en los Mejores Salones de Belleza" />
     <meta property="og:description" content="Descubre salones de belleza cerca de ti y reserva cita online al instante. Peluquerías, spas, estética y bienestar." />
-    <meta property="og:image" content="https://glowapp.app/og-image.png" />
-    <meta property="og:image:secure_url" content="https://glowapp.app/og-image.png" />
+    <meta property="og:image" content="https://www.glowapp.app/og-image.png" />
+    <meta property="og:image:secure_url" content="https://www.glowapp.app/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -56,10 +70,10 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@glowapp_es" />
     <meta name="twitter:creator" content="@glowapp_es" />
-    <meta name="twitter:url" content="https://glowapp.app/" />
+    <meta name="twitter:url" content="https://www.glowapp.app/" />
     <meta name="twitter:title" content="GlowApp - Reserva Cita en Salones de Belleza" />
     <meta name="twitter:description" content="Descubre salones cerca de ti y reserva cita online. Peluquerías, spas y estética." />
-    <meta name="twitter:image" content="https://glowapp.app/og-image.png" />
+    <meta name="twitter:image" content="https://www.glowapp.app/og-image.png" />
     <meta name="twitter:image:alt" content="GlowApp - La app de belleza #1" />
 
     <!-- Premium Fonts - Async Loading with font-display swap -->
