@@ -346,11 +346,9 @@ export default function TenantAdmin() {
           {item.icon}
           {showBadge && (
             <span 
-              className="absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white"
+              className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive"
               aria-hidden="true"
-            >
-              {item.badge! > 9 ? "9+" : item.badge}
-            </span>
+            />
           )}
         </div>
         <span className={cn(
