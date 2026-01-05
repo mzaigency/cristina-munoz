@@ -1876,7 +1876,7 @@ export type Database = {
         Row: {
           client_email: string | null
           client_name: string
-          client_phone: string
+          client_phone: string | null
           created_at: string | null
           id: string
           notes: string | null
@@ -1890,11 +1890,12 @@ export type Database = {
           status: string | null
           tenant_id: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           client_email?: string | null
           client_name: string
-          client_phone: string
+          client_phone?: string | null
           created_at?: string | null
           id?: string
           notes?: string | null
@@ -1908,11 +1909,12 @@ export type Database = {
           status?: string | null
           tenant_id: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           client_email?: string | null
           client_name?: string
-          client_phone?: string
+          client_phone?: string | null
           created_at?: string | null
           id?: string
           notes?: string | null
@@ -1926,6 +1928,7 @@ export type Database = {
           status?: string | null
           tenant_id?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {

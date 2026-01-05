@@ -382,6 +382,8 @@ export const TenantDateTimeSelection = ({
       return;
     }
 
+    const nameToUse = (currentUser.name || "").trim() || "Usuario";
+
     setWaitlistSubmitting(true);
     try {
       const preferredStylistId = stylist !== 'any' 
@@ -389,15 +391,16 @@ export const TenantDateTimeSelection = ({
         : null;
 
       const { error } = await supabase
-        .from("waitlist")
+        .from("waitlist" as any)
         .insert({
           tenant_id: tenantId,
-          client_name: currentUser.name,
-          client_phone: currentUser.id, // Usamos el user_id como referencia para mensajes directos
+          user_id: currentUser.id,
+          client_name: nameToUse,
+          client_phone: null,
           preferred_date: format(date, "yyyy-MM-dd"),
           preferred_stylist_id: preferredStylistId,
           services: services.map(s => ({ id: s.id, name: s.name })),
-          notes: `user_id:${currentUser.id} | Duración: ${totalDuration} min`,
+          notes: `Duración: ${totalDuration} min`,
           status: "waiting",
           priority: 3
         });
