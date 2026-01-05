@@ -122,7 +122,6 @@ export const BookingConfirmation = ({
         return;
       }
 
-      console.log('Booking created:', data);
       setLoading(false);
       setConfirmed(true);
       onConfirm(userProfile.full_name, userProfile.phone);
