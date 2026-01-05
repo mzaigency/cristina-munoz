@@ -7,6 +7,7 @@ interface TenantAccess {
   hasAccess: boolean;
   loading: boolean;
   userId: string | null;
+  stylistId: string | null;
 }
 
 export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
@@ -16,6 +17,7 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
     hasAccess: false,
     loading: true,
     userId: null,
+    stylistId: null,
   });
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
           hasAccess: false,
           loading: false,
           userId: null,
+          stylistId: null,
         });
         return;
       }
@@ -59,6 +62,7 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
           hasAccess: true,
           loading: false,
           userId,
+          stylistId: null,
         });
         return;
       }
@@ -89,6 +93,7 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
         hasAccess: isAdmin || isStylist,
         loading: false,
         userId,
+        stylistId: stylistData?.id || null,
       });
     } catch (error) {
       console.error("Error checking tenant access:", error);
@@ -98,6 +103,7 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
         hasAccess: false,
         loading: false,
         userId: null,
+        stylistId: null,
       });
     }
   };

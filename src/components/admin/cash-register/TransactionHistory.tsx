@@ -9,7 +9,8 @@ import {
   CreditCard, 
   XCircle,
   MoreVertical,
-  AlertTriangle
+  AlertTriangle,
+  UserCircle
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -59,6 +60,9 @@ interface Transaction {
   voided: boolean;
   voided_at: string | null;
   voided_by: string | null;
+  // Enriched audit data
+  created_by_name?: string;
+  voided_by_name?: string;
 }
 
 interface TransactionHistoryProps {
@@ -147,6 +151,25 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
                 {formatCurrency(transaction.total)}
               </span>
             </div>
+            
+            {/* Audit info - who did what */}
+            <div className="mb-2 space-y-1 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <UserCircle className="h-3 w-3" />
+                <span>Atendió: <strong className="text-foreground">{transaction.stylist}</strong></span>
+              </div>
+              {transaction.created_by_name && (
+                <div className="flex items-center gap-1.5">
+                  <span className="ml-4">Cobró: <strong className="text-foreground">{transaction.created_by_name}</strong></span>
+                </div>
+              )}
+              {transaction.voided && transaction.voided_by_name && (
+                <div className="flex items-center gap-1.5 text-destructive">
+                  <span className="ml-4">Anuló: <strong>{transaction.voided_by_name}</strong></span>
+                </div>
+              )}
+            </div>
+            
             <div className="flex items-center justify-between">
               {transaction.payment_method === "cash" ? (
                 <Badge variant="outline" className="gap-1">
@@ -189,9 +212,10 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
           <TableHeader>
             <TableRow>
               <TableHead>Hora</TableHead>
+              <TableHead>Atendió</TableHead>
+              <TableHead>Cobró</TableHead>
               <TableHead>Método</TableHead>
               <TableHead className="text-right">Importe</TableHead>
-              <TableHead>Notas</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -208,6 +232,19 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
                       Anulado
                     </Badge>
                   )}
+                </TableCell>
+                <TableCell className="text-sm">
+                  {transaction.stylist}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  <div>
+                    {transaction.created_by_name || "-"}
+                    {transaction.voided && transaction.voided_by_name && (
+                      <div className="text-xs text-destructive mt-0.5">
+                        Anuló: {transaction.voided_by_name}
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   {transaction.payment_method === "cash" ? (
@@ -230,9 +267,6 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
                 </TableCell>
                 <TableCell className="text-right font-semibold text-lg">
                   {formatCurrency(transaction.total)}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {transaction.notes || "-"}
                 </TableCell>
                 <TableCell>
                   {!transaction.voided && (

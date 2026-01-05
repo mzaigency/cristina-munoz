@@ -34,6 +34,9 @@ export interface Transaction {
   voided: boolean;
   voided_at: string | null;
   voided_by: string | null;
+  // Enriched data for audit display
+  created_by_name?: string;
+  voided_by_name?: string;
 }
 
 export interface DaySummary {
@@ -104,6 +107,28 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
 
       if (transactionsError) throw transactionsError;
 
+      // Collect unique user IDs for audit info
+      const userIds = new Set<string>();
+      (transactionsData || []).forEach(tx => {
+        if (tx.created_by) userIds.add(tx.created_by);
+        if (tx.voided_by) userIds.add(tx.voided_by);
+      });
+
+      // Fetch profiles for audit display
+      let profilesMap: Record<string, string> = {};
+      if (userIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", Array.from(userIds));
+        
+        if (profiles) {
+          profiles.forEach(p => {
+            profilesMap[p.id] = p.full_name || p.email;
+          });
+        }
+      }
+
       const txs = (transactionsData || []).map(tx => ({
         ...tx,
         services: (tx.services as unknown as Transaction['services']) || [],
@@ -111,6 +136,8 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
         discount: tx.discount ?? 0,
         voided: tx.voided ?? false,
         payment_details: tx.payment_details as Record<string, unknown> | null,
+        created_by_name: profilesMap[tx.created_by] || "Desconocido",
+        voided_by_name: tx.voided_by ? (profilesMap[tx.voided_by] || "Desconocido") : undefined,
       })) as Transaction[];
       setTransactions(txs);
 

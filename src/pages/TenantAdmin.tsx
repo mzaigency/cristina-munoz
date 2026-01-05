@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
+import { useTenantAccess } from "@/hooks/useTenantAccess";
 
 // Import consolidated sections
 import { 
@@ -77,21 +78,33 @@ export default function TenantAdmin() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
+  // Use tenant access hook to check permissions
+  const { isAdmin, isStylist, stylistId } = useTenantAccess(tenant?.id);
+
   // Use admin notifications hook
   const { counts: notificationCounts, getCommunicationCount, refetch: refetchNotifications, markSectionViewed } = useAdminNotifications(tenant?.id || null);
 
   // El badge se oculta inmediatamente al hacer click en handleTabClick
 
-  // Simplified navigation - only 6 main tabs with notification badges
-  const navItems: NavItem[] = [
-    { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
-    { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
-    { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: notificationCounts.clients },
-    { value: "business", label: "Negocio", icon: <Wallet className="h-4 w-4" /> },
-    { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
-    { value: "communication", label: "Comunica", icon: <MessageCircle className="h-4 w-4" />, badge: getCommunicationCount() },
-    { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" /> },
-  ];
+  // Navigation items - filter based on role (stylists don't see Settings)
+  const navItems: NavItem[] = useMemo(() => {
+    const allItems: NavItem[] = [
+      { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
+      { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
+      { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: notificationCounts.clients },
+      { value: "business", label: "Negocio", icon: <Wallet className="h-4 w-4" /> },
+      { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
+      { value: "communication", label: "Comunica", icon: <MessageCircle className="h-4 w-4" />, badge: getCommunicationCount() },
+      { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" /> },
+    ];
+
+    // If user is stylist but not admin, hide Settings tab
+    if (isStylist && !isAdmin) {
+      return allItems.filter(item => item.value !== "settings");
+    }
+
+    return allItems;
+  }, [notificationCounts.agenda, notificationCounts.clients, getCommunicationCount, isAdmin, isStylist]);
 
   const tabOrder = navItems.map(item => item.value);
   
