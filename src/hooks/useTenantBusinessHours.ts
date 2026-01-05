@@ -106,7 +106,6 @@ export function useTenantBusinessHours(tenantId: string) {
           data.forEach((record) => {
             const parsed = parseBusinessHours(record as TenantBusinessHoursRecord);
             hoursMap[record.day_of_week] = parsed;
-            console.log(`Day ${record.day_of_week}: open=${record.open_time} close=${record.close_time} -> morningStart=${parsed.morningStart} morningEnd=${parsed.morningEnd}`);
           });
 
           setBusinessHours(hoursMap);

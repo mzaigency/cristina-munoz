@@ -81,10 +81,6 @@ export function StoryCreatorFlow({
         await videoRef.current.play();
         setCameraReady(true);
         
-        // Log actual resolution
-        const track = stream.getVideoTracks()[0];
-        const settings = track.getSettings();
-        console.log(`Camera resolution: ${settings.width}x${settings.height}`);
       }
     } catch (err) {
       console.error("Camera error:", err);

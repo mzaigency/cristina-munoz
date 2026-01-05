@@ -208,7 +208,6 @@ export function MobileStoryEditor({
           thumbnailImage
         );
         
-        console.log("Video story published:", storyId, imageUrl, videoUrl);
         toast.success("¡Video publicado!", { icon: "🎬" });
       } else {
         // Image mode
@@ -224,7 +223,6 @@ export function MobileStoryEditor({
           tenantId,
         });
         
-        console.log("Story published:", storyId, imageUrl);
         toast.success("¡Historia publicada!", { icon: "🎉" });
       }
       
