@@ -12,7 +12,7 @@ const corsHeaders = {
 const APP_URL = 'https://glowapp.app'
 const FROM_EMAIL = 'GlowApp <contacto@glowapp.app>'
 
-type EmailType = 'welcome' | 'booking-confirmation' | 'booking-reminder' | 'new-message'
+type EmailType = 'welcome' | 'booking-confirmation' | 'booking-reminder' | 'new-message' | 'password-reset'
 
 interface EmailRequest {
   type: EmailType
@@ -236,6 +236,60 @@ const templates = {
           
           <p style="color: #9ca3af; font-size: 13px; text-align: center;">
             No respondas a este email. Para enviar un mensaje, usa el botón de arriba.
+          </p>
+        </div>
+      </body>
+      </html>
+    `
+  }),
+
+  'password-reset': (data: { 
+    userName?: string; 
+    resetLink: string;
+  }) => ({
+    subject: '🔐 Recupera tu contraseña de GlowApp',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f6f9fc; padding: 40px 20px;">
+        <div style="max-width: 560px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 40px;">
+          <div style="text-align: center; margin-bottom: 16px;">
+            <img src="${APP_URL}/og-image.png" width="120" alt="GlowApp" />
+          </div>
+          <div style="background: #f59e0b; border-radius: 20px; padding: 8px 16px; text-align: center; max-width: 200px; margin: 0 auto 24px;">
+            <span style="color: #fff; font-weight: 600;">🔐 Recuperar contraseña</span>
+          </div>
+          <h1 style="color: #1a1a2e; font-size: 24px; text-align: center;">Restablece tu contraseña</h1>
+          <p style="color: #4a4a68; font-size: 16px;">Hola ${data.userName || 'usuario'},</p>
+          <p style="color: #4a4a68; font-size: 16px;">
+            Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en GlowApp.
+          </p>
+          <p style="color: #4a4a68; font-size: 16px;">
+            Haz clic en el siguiente botón para crear una nueva contraseña:
+          </p>
+          
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${data.resetLink}" style="background: #6366f1; color: #fff; padding: 16px 40px; border-radius: 12px; text-decoration: none; font-weight: 600; display: inline-block;">
+              Restablecer contraseña
+            </a>
+          </div>
+
+          <div style="background: #fef3c7; border-radius: 12px; padding: 16px; margin: 24px 0;">
+            <p style="color: #92400e; font-weight: 600; margin: 0 0 8px;">⏰ Importante:</p>
+            <p style="color: #92400e; font-size: 13px; margin: 4px 0;">• Este enlace expira en 1 hora</p>
+            <p style="color: #92400e; font-size: 13px; margin: 4px 0;">• Si no solicitaste este cambio, ignora este email</p>
+          </div>
+
+          <p style="color: #9ca3af; font-size: 13px; text-align: center;">
+            Si el botón no funciona, copia y pega este enlace en tu navegador:<br />
+            <a href="${data.resetLink}" style="color: #6366f1; word-break: break-all;">${data.resetLink}</a>
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+          
+          <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+            Este email fue enviado automáticamente. Por favor, no respondas a este mensaje.
           </p>
         </div>
       </body>

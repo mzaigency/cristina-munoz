@@ -402,6 +402,18 @@ export default function Auth() {
                     )}
                   />
 
+                  {!isSignUp && (
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/recuperar-contrasena')}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
+                  )}
+
                   {isSignUp && (
                     <>
                       <FormField
