@@ -42,12 +42,14 @@ export default function BusinessOnboarding() {
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">("annual");
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
-  // Admin mode: create tenant directly without Stripe
-  const isAdminMode = searchParams.get("admin") === "true";
+  // Admin mode: only for superadmins, create tenant directly without Stripe
+  const adminParam = searchParams.get("admin") === "true";
+  const isAdminMode = adminParam && isSuperAdmin;
 
   const form = useForm<BusinessFormValues>({
     resolver: zodResolver(businessSchema),
@@ -83,6 +85,18 @@ export default function BusinessOnboarding() {
       if (session?.user) {
         setUser({ id: session.user.id, email: session.user.email || "" });
         form.setValue("email", session.user.email || "");
+        
+        // Check if user is superadmin
+        if (adminParam) {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .eq("role", "superadmin")
+            .maybeSingle();
+          
+          setIsSuperAdmin(!!roleData);
+        }
       }
       setCheckingAuth(false);
     };
@@ -91,17 +105,30 @@ export default function BusinessOnboarding() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setUser({ id: session.user.id, email: session.user.email || "" });
         form.setValue("email", session.user.email || "");
+        
+        // Check if user is superadmin
+        if (adminParam) {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .eq("role", "superadmin")
+            .maybeSingle();
+          
+          setIsSuperAdmin(!!roleData);
+        }
       } else {
         setUser(null);
+        setIsSuperAdmin(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [form]);
+  }, [form, adminParam]);
 
   useEffect(() => {
     if (searchParams.get("canceled") === "true") {
