@@ -7,10 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2, User, Upload, Clock, Search, Link2, Unlink } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, User, Upload, Clock, Search, Link2, Unlink, Shield, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StylistScheduleEditor } from "./StylistScheduleEditor";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface Stylist {
   id: string;
@@ -52,6 +53,8 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
   const [userSearchResults, setUserSearchResults] = useState<UserProfile[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [linkedUsers, setLinkedUsers] = useState<Record<string, UserProfile>>({});
+  const [selectedRole, setSelectedRole] = useState<"stylist" | "admin">("stylist");
+  const [adminUserIds, setAdminUserIds] = useState<Set<string>>(new Set());
   
   
   const [formData, setFormData] = useState({
@@ -99,6 +102,17 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
           profiles.forEach(p => { usersMap[p.id] = p; });
           setLinkedUsers(usersMap);
         }
+
+        // Check which linked users are also admins
+        const { data: admins } = await supabase
+          .from("tenant_admins")
+          .select("user_id")
+          .eq("tenant_id", tenantId)
+          .in("user_id", linkedUserIds);
+
+        if (admins) {
+          setAdminUserIds(new Set(admins.map(a => a.user_id)));
+        }
       }
     }
     setLoading(false);
@@ -137,32 +151,67 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
     if (!selectedStylistForLink) return;
     
     setSaving(true);
-    const { error } = await supabase
-      .from("tenant_stylists")
-      .update({ user_id: userId })
-      .eq("id", selectedStylistForLink.id);
+    
+    try {
+      // Update stylist with user_id
+      const { error: stylistError } = await supabase
+        .from("tenant_stylists")
+        .update({ user_id: userId })
+        .eq("id", selectedStylistForLink.id);
 
-    if (error) {
+      if (stylistError) throw stylistError;
+
+      // If admin role selected, also add to tenant_admins
+      if (selectedRole === "admin") {
+        const { error: adminError } = await supabase
+          .from("tenant_admins")
+          .upsert({ 
+            user_id: userId, 
+            tenant_id: tenantId, 
+            is_owner: false 
+          }, { onConflict: "user_id,tenant_id" });
+
+        if (adminError) {
+          console.error("Error adding admin role:", adminError);
+          // Don't throw, user is still linked as stylist
+        }
+      }
+
+      toast({
+        title: "Vinculado",
+        description: selectedRole === "admin" 
+          ? "Usuario vinculado como Administrador. Tiene acceso completo."
+          : "Usuario vinculado como Estilista. No puede acceder a Ajustes."
+      });
+      setLinkDialogOpen(false);
+      setUserSearchQuery("");
+      setUserSearchResults([]);
+      setSelectedRole("stylist");
+      fetchStylists();
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "No se pudo vincular el usuario",
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Vinculado",
-        description: "Usuario vinculado correctamente. Ahora puede acceder al panel de admin."
-      });
-      setLinkDialogOpen(false);
-      setUserSearchQuery("");
-      setUserSearchResults([]);
-      fetchStylists();
     }
+    
     setSaving(false);
   };
 
   // Unlink user from stylist
   const handleUnlinkUser = async (stylist: Stylist) => {
+    if (!stylist.user_id) return;
+    
+    // First remove from tenant_admins if they were admin
+    await supabase
+      .from("tenant_admins")
+      .delete()
+      .eq("user_id", stylist.user_id)
+      .eq("tenant_id", tenantId)
+      .eq("is_owner", false);
+
+    // Then unlink from stylist
     const { error } = await supabase
       .from("tenant_stylists")
       .update({ user_id: null })
@@ -180,6 +229,48 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
         description: "Usuario desvinculado del estilista"
       });
       fetchStylists();
+    }
+  };
+
+  // Toggle admin role for linked user
+  const handleToggleAdminRole = async (stylist: Stylist) => {
+    if (!stylist.user_id) return;
+
+    const isCurrentlyAdmin = adminUserIds.has(stylist.user_id);
+
+    if (isCurrentlyAdmin) {
+      // Remove admin role
+      const { error } = await supabase
+        .from("tenant_admins")
+        .delete()
+        .eq("user_id", stylist.user_id)
+        .eq("tenant_id", tenantId)
+        .eq("is_owner", false);
+
+      if (!error) {
+        toast({
+          title: "Rol actualizado",
+          description: "Ahora es solo Estilista (sin acceso a Ajustes)"
+        });
+        fetchStylists();
+      }
+    } else {
+      // Add admin role
+      const { error } = await supabase
+        .from("tenant_admins")
+        .upsert({ 
+          user_id: stylist.user_id, 
+          tenant_id: tenantId, 
+          is_owner: false 
+        }, { onConflict: "user_id,tenant_id" });
+
+      if (!error) {
+        toast({
+          title: "Rol actualizado",
+          description: "Ahora es Administrador (acceso completo)"
+        });
+        fetchStylists();
+      }
     }
   };
 
@@ -510,21 +601,50 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
                     {/* User link status */}
                     <div className="mb-3 p-2 rounded-lg bg-muted/50">
                       {linkedUser ? (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={linkedUser.avatar_url || undefined} />
-                            <AvatarFallback className="text-[10px]">
-                              {linkedUser.full_name?.substring(0, 2).toUpperCase() || linkedUser.email.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium truncate">{linkedUser.full_name || "Sin nombre"}</p>
-                            <p className="text-[10px] text-muted-foreground truncate">{linkedUser.email}</p>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={linkedUser.avatar_url || undefined} />
+                              <AvatarFallback className="text-[10px]">
+                                {linkedUser.full_name?.substring(0, 2).toUpperCase() || linkedUser.email.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate">{linkedUser.full_name || "Sin nombre"}</p>
+                              <p className="text-[10px] text-muted-foreground truncate">{linkedUser.email}</p>
+                            </div>
+                            {/* Role badge */}
+                            {adminUserIds.has(stylist.user_id!) ? (
+                              <Badge className="text-[10px] shrink-0 bg-primary">
+                                <ShieldCheck className="h-3 w-3 mr-1" />
+                                Admin
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-[10px] shrink-0">
+                                <User className="h-3 w-3 mr-1" />
+                                Estilista
+                              </Badge>
+                            )}
                           </div>
-                          <Badge variant="secondary" className="text-[10px] shrink-0">
-                            <Link2 className="h-3 w-3 mr-1" />
-                            Vinculado
-                          </Badge>
+                          {/* Toggle role button */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-full text-xs"
+                            onClick={() => handleToggleAdminRole(stylist)}
+                          >
+                            {adminUserIds.has(stylist.user_id!) ? (
+                              <>
+                                <Shield className="h-3 w-3 mr-1" />
+                                Cambiar a Estilista
+                              </>
+                            ) : (
+                              <>
+                                <ShieldCheck className="h-3 w-3 mr-1" />
+                                Dar rol de Admin
+                              </>
+                            )}
+                          </Button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 text-muted-foreground">
@@ -672,9 +792,40 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
               )}
             </div>
 
+            {/* Role selector */}
+            <div className="p-3 rounded-lg border bg-muted/30">
+              <Label className="text-sm font-medium mb-3 block">Asignar como:</Label>
+              <RadioGroup 
+                value={selectedRole} 
+                onValueChange={(v) => setSelectedRole(v as "stylist" | "admin")}
+                className="space-y-2"
+              >
+                <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="stylist" id="role-stylist" />
+                  <Label htmlFor="role-stylist" className="flex-1 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Estilista</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">Sin acceso a Ajustes</p>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="admin" id="role-admin" />
+                  <Label htmlFor="role-admin" className="flex-1 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-primary" />
+                      <span className="font-medium">Administrador/a</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">Acceso completo al panel</p>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             {/* Search results - Instagram style */}
             {userSearchQuery.length >= 2 && (
-              <div className="space-y-1 max-h-72 overflow-y-auto -mx-2 px-2">
+              <div className="space-y-1 max-h-52 overflow-y-auto -mx-2 px-2">
                 {userSearchResults.length === 0 && !searchingUsers ? (
                   <div className="py-8 text-center text-muted-foreground">
                     <User className="h-10 w-10 mx-auto mb-2 opacity-50" />
@@ -706,8 +857,8 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
                         {saving ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            Vincular
+                          <Badge variant={selectedRole === "admin" ? "default" : "secondary"} className="text-xs">
+                            {selectedRole === "admin" ? "Admin" : "Estilista"}
                           </Badge>
                         )}
                       </div>
@@ -719,7 +870,7 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
 
             {/* Initial state */}
             {userSearchQuery.length < 2 && (
-              <div className="py-6 text-center text-muted-foreground">
+              <div className="py-4 text-center text-muted-foreground">
                 <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">Escribe al menos 2 caracteres</p>
                 <p className="text-xs mt-1">Los resultados aparecerán automáticamente</p>
@@ -728,9 +879,9 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
 
             {/* Help text */}
             <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg space-y-1">
-              <p><strong>¿Cómo funciona?</strong></p>
-              <p>• El usuario debe tener una cuenta en GlowApp con username</p>
-              <p>• Una vez vinculado, podrá acceder al panel de admin del salón</p>
+              <p><strong>Diferencias de permisos:</strong></p>
+              <p>• <strong>Estilista:</strong> Puede ver agenda, clientes, caja y equipo</p>
+              <p>• <strong>Admin:</strong> Además puede acceder a Ajustes del salón</p>
             </div>
           </div>
 
