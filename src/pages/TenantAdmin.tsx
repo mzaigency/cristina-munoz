@@ -361,6 +361,9 @@ export default function TenantAdmin() {
     );
   };
 
+  // Debug: remover cuando no sea necesario
+  // console.log('notificationCounts:', notificationCounts);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
