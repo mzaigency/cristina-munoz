@@ -42,8 +42,8 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUserId = session?.user?.id || null;
       
-      // Si el usuario es el mismo y ya tenemos cache, usar cache
-      if (globalCache && cacheUserId === currentUserId && !state.loading) {
+      // Si el usuario es el mismo y ya tenemos cache con isStylist definido, usar cache
+      if (globalCache && cacheUserId === currentUserId && !state.loading && globalCache.isStylist !== undefined) {
         return;
       }
       
