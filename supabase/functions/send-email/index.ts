@@ -137,7 +137,7 @@ const warningBox = (title: string, items: string[]) => `
   </div>
 `
 
-type EmailType = 'welcome' | 'booking-confirmation' | 'booking-reminder' | 'new-message' | 'password-reset'
+type EmailType = 'welcome' | 'password-reset'
 
 interface EmailRequest {
   type: EmailType
@@ -145,7 +145,7 @@ interface EmailRequest {
   data: Record<string, unknown>
 }
 
-// Email templates
+// Email templates - Solo bienvenida y recuperación de contraseña
 const templates = {
   welcome: (data: { userName?: string }) => ({
     subject: '¡Bienvenido a GlowApp! ✨',
@@ -197,274 +197,6 @@ const templates = {
           <p style="color: ${BRAND.textMuted}; font-size: 14px; text-align: center;">
             Con cariño,<br />
             <strong style="color: ${BRAND.text};">El equipo de GlowApp</strong> 💜
-          </p>
-          
-          ${emailFooter}
-        </div>
-      </body>
-      </html>
-    `
-  }),
-
-  'booking-confirmation': (data: { 
-    customerName: string; 
-    salonName: string; 
-    date: string; 
-    time: string; 
-    services?: string[]; 
-    stylist: string;
-    address?: string;
-    totalDuration?: number;
-  }) => ({
-    subject: `✓ Cita confirmada en ${data.salonName} - ${data.date}`,
-    html: `
-      ${emailWrapper}
-        ${emailContainer}
-          ${logoHeader}
-          
-          ${badge('✓ Reserva confirmada', BRAND.success)}
-          
-          <h1 style="
-            color: ${BRAND.text};
-            font-size: 24px;
-            text-align: center;
-            margin: 0 0 16px;
-            font-weight: 700;
-          ">
-            ¡Tu cita está lista!
-          </h1>
-          
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center; margin: 0 0 8px;">
-            Hola <strong style="color: ${BRAND.text}">${data.customerName}</strong>,
-          </p>
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center; margin: 0;">
-            Tu cita en <strong style="color: ${BRAND.primary}">${data.salonName}</strong> ha sido confirmada.
-          </p>
-          
-          ${infoBox(`
-            <p style="
-              color: ${BRAND.text};
-              font-size: 20px;
-              font-weight: 700;
-              margin: 0 0 20px;
-              text-align: center;
-            ">${data.salonName}</p>
-            
-            <div style="text-align: center;">
-              <p style="color: ${BRAND.textMuted}; margin: 8px 0; font-size: 15px;">
-                📅 <strong style="color: ${BRAND.text}">${data.date}</strong> a las <strong style="color: ${BRAND.text}">${data.time}</strong>
-              </p>
-              <p style="color: ${BRAND.textMuted}; margin: 8px 0; font-size: 15px;">
-                💇 Profesional: <strong style="color: ${BRAND.text}">${data.stylist}</strong>
-              </p>
-              <p style="color: ${BRAND.textMuted}; margin: 8px 0; font-size: 15px;">
-                ⏱️ Duración: <strong style="color: ${BRAND.text}">${data.totalDuration || 60} min</strong>
-              </p>
-            </div>
-            
-            ${data.services?.length ? `
-              <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid ${BRAND.border};">
-                <p style="color: ${BRAND.textLight}; font-size: 11px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Servicios</p>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                  ${data.services.map(s => `
-                    <span style="
-                      background: linear-gradient(135deg, ${BRAND.primary}15 0%, ${BRAND.accent}15 100%);
-                      color: ${BRAND.primary};
-                      padding: 6px 14px;
-                      border-radius: 100px;
-                      font-size: 13px;
-                      font-weight: 500;
-                    ">${s}</span>
-                  `).join('')}
-                </div>
-              </div>
-            ` : ''}
-            
-            ${data.address ? `
-              <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid ${BRAND.border};">
-                <p style="color: ${BRAND.textLight}; font-size: 11px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">📍 Dirección</p>
-                <p style="color: ${BRAND.text}; margin: 0; font-size: 14px;">${data.address}</p>
-                <a href="https://maps.google.com/?q=${encodeURIComponent(data.address)}" style="color: ${BRAND.primary}; font-size: 13px; margin-top: 8px; display: inline-block;">
-                  Ver en Google Maps →
-                </a>
-              </div>
-            ` : ''}
-          `)}
-
-          ${button('Ver mis citas', `${APP_URL}/mis-citas`)}
-
-          ${warningBox('💡 Recuerda:', [
-            'Llega 5 minutos antes de tu cita',
-            'Si necesitas cancelar, hazlo con 24h de anticipación'
-          ])}
-          
-          ${emailFooter}
-        </div>
-      </body>
-      </html>
-    `
-  }),
-
-  'booking-reminder': (data: { 
-    customerName: string; 
-    salonName: string; 
-    date: string; 
-    time: string; 
-    services?: string[];
-    stylist: string;
-    address?: string;
-    hoursUntil?: number;
-  }) => {
-    const isUrgent = (data.hoursUntil || 24) <= 1
-    return {
-      subject: isUrgent 
-        ? `⏰ ¡Tu cita es en 1 hora! - ${data.salonName}`
-        : `📅 Recordatorio: Tu cita mañana en ${data.salonName}`,
-      html: `
-        ${emailWrapper}
-          ${emailContainer}
-            ${logoHeader}
-            
-            ${badge(
-              isUrgent ? '⏰ ¡Ya casi!' : '📅 Recordatorio',
-              isUrgent ? BRAND.warning : `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%)`
-            )}
-            
-            <h1 style="
-              color: ${BRAND.text};
-              font-size: 22px;
-              text-align: center;
-              margin: 0 0 16px;
-              font-weight: 700;
-            ">
-              ${isUrgent ? '¡Tu cita es en 1 hora!' : `Tu cita es mañana a las ${data.time}`}
-            </h1>
-            
-            <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center;">
-              Hola <strong style="color: ${BRAND.text}">${data.customerName}</strong>,
-            </p>
-            <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center; margin: 0;">
-              ${isUrgent 
-                ? `No olvides tu cita en <strong style="color: ${BRAND.primary}">${data.salonName}</strong>. ¡Te esperamos!`
-                : `Te recordamos que mañana tienes una cita en <strong style="color: ${BRAND.primary}">${data.salonName}</strong>.`
-              }
-            </p>
-            
-            ${infoBox(`
-              <p style="color: ${BRAND.text}; font-size: 20px; font-weight: 700; margin: 0 0 16px; text-align: center;">
-                ${data.salonName}
-              </p>
-              <p style="color: ${BRAND.textMuted}; margin: 8px 0; text-align: center; font-size: 15px;">
-                📅 ${data.date} • 🕐 ${data.time}
-              </p>
-              <p style="color: ${BRAND.textMuted}; margin: 8px 0; text-align: center; font-size: 15px;">
-                💇 ${data.stylist}
-              </p>
-              ${data.services?.length ? `
-                <div style="margin-top: 16px; text-align: center;">
-                  ${data.services.map(s => `
-                    <span style="
-                      background: ${BRAND.white};
-                      border: 1px solid ${BRAND.border};
-                      border-radius: 100px;
-                      color: ${BRAND.primary};
-                      padding: 6px 14px;
-                      margin: 4px;
-                      display: inline-block;
-                      font-size: 13px;
-                    ">${s}</span>
-                  `).join('')}
-                </div>
-              ` : ''}
-              ${data.address ? `
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid ${BRAND.border}; text-align: center;">
-                  <p style="color: ${BRAND.textLight}; font-size: 11px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">📍 Dirección</p>
-                  <p style="color: ${BRAND.text}; margin: 0 0 8px; font-size: 14px;">${data.address}</p>
-                  <a href="https://maps.google.com/?q=${encodeURIComponent(data.address)}" style="color: ${BRAND.primary}; font-size: 13px;">
-                    Ver en Google Maps →
-                  </a>
-                </div>
-              ` : ''}
-            `)}
-
-            ${button('Ver detalles de la cita', `${APP_URL}/mis-citas`)}
-            
-            ${emailFooter}
-          </div>
-        </body>
-        </html>
-      `
-    }
-  },
-
-  'new-message': (data: { 
-    recipientName: string; 
-    senderName: string; 
-    messagePreview: string;
-    conversationId: string;
-  }) => ({
-    subject: `💬 ${data.senderName} te ha enviado un mensaje`,
-    html: `
-      ${emailWrapper}
-        ${emailContainer}
-          ${logoHeader}
-          
-          ${badge('💬 Nuevo mensaje', BRAND.primary)}
-          
-          <h1 style="
-            color: ${BRAND.text};
-            font-size: 24px;
-            text-align: center;
-            margin: 0 0 16px;
-            font-weight: 700;
-          ">
-            Tienes un mensaje nuevo
-          </h1>
-          
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center;">
-            Hola <strong style="color: ${BRAND.text}">${data.recipientName}</strong>,
-          </p>
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center; margin: 0;">
-            <strong style="color: ${BRAND.primary}">${data.senderName}</strong> te ha enviado un mensaje en GlowApp.
-          </p>
-          
-          ${infoBox(`
-            <div style="display: flex; align-items: center; margin-bottom: 16px;">
-              <div style="
-                background: linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%);
-                width: 48px;
-                height: 48px;
-                border-radius: 14px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: ${BRAND.white};
-                font-weight: 700;
-                font-size: 18px;
-              ">
-                ${data.senderName.charAt(0).toUpperCase()}
-              </div>
-              <div style="margin-left: 14px;">
-                <p style="color: ${BRAND.text}; font-weight: 600; margin: 0; font-size: 15px;">${data.senderName}</p>
-                <p style="color: ${BRAND.textLight}; font-size: 12px; margin: 4px 0 0;">Hace unos momentos</p>
-              </div>
-            </div>
-            <div style="
-              background: ${BRAND.white};
-              border-radius: 14px;
-              border-left: 4px solid ${BRAND.primary};
-              padding: 16px;
-            ">
-              <p style="color: ${BRAND.textMuted}; font-style: italic; margin: 0; font-size: 14px; line-height: 22px;">
-                "${data.messagePreview.length > 150 ? data.messagePreview.substring(0, 150) + '...' : data.messagePreview}"
-              </p>
-            </div>
-          `)}
-
-          ${button('Responder mensaje', `${APP_URL}/mensajes?chat=${data.conversationId}`)}
-          
-          <p style="color: ${BRAND.textLight}; font-size: 13px; text-align: center;">
-            No respondas a este email. Para enviar un mensaje, usa el botón de arriba.
           </p>
           
           ${emailFooter}
@@ -542,7 +274,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const template = templates[type]
     if (!template) {
-      throw new Error(`Unknown email type: ${type}`)
+      throw new Error(`Unknown email type: ${type}. Available types: welcome, password-reset`)
     }
 
     const { subject, html } = template(data as never)
