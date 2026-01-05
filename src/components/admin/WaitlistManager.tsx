@@ -103,8 +103,8 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   };
 
   const handleSave = async () => {
-    if (!formData.client_name.trim() || !formData.client_phone.trim()) {
-      toast({ title: "Error", description: "Nombre y teléfono son obligatorios", variant: "destructive" });
+    if (!formData.client_name.trim()) {
+      toast({ title: "Error", description: "El nombre es obligatorio", variant: "destructive" });
       return;
     }
 
@@ -115,7 +115,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
         .insert({
           tenant_id: tenantId,
           client_name: formData.client_name.trim(),
-          client_phone: formData.client_phone.trim(),
+          client_phone: formData.client_phone.trim() || null,
           client_email: formData.client_email.trim() || null,
           preferred_date: formData.preferred_date || null,
           preferred_time_start: formData.preferred_time_start || null,
@@ -338,11 +338,11 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
             </div>
 
             <div>
-              <Label>Teléfono *</Label>
+              <Label>Teléfono</Label>
               <Input
                 value={formData.client_phone}
                 onChange={(e) => setFormData({ ...formData, client_phone: e.target.value })}
-                placeholder="612 345 678"
+                placeholder="612 345 678 (opcional)"
                 type="tel"
               />
             </div>

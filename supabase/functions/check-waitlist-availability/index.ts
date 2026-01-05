@@ -9,8 +9,9 @@ const corsHeaders = {
 interface WaitlistEntry {
   id: string;
   client_name: string;
-  client_phone: string;
+  client_phone: string | null;
   client_email: string | null;
+  user_id: string | null;
   preferred_date: string | null;
   preferred_time_start: string | null;
   preferred_time_end: string | null;
@@ -36,6 +37,88 @@ function minutesToTimeString(minutes: number): string {
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
 }
 
+function formatDateSpanish(dateStr: string): string {
+  const date = new Date(dateStr);
+  const day = date.getDate();
+  const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  return `${day} de ${months[date.getMonth()]}`;
+}
+
+async function getOrCreateConversation(
+  supabase: any, 
+  tenantId: string, 
+  userId: string
+): Promise<string | null> {
+  try {
+    // Check if conversation already exists
+    const { data: existing, error: fetchError } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error("Error fetching conversation:", fetchError);
+      return null;
+    }
+
+    if (existing) {
+      return existing.id;
+    }
+
+    // Create new conversation
+    const { data: newConvo, error: createError } = await supabase
+      .from("conversations")
+      .insert({
+        tenant_id: tenantId,
+        user_id: userId,
+      })
+      .select("id")
+      .single();
+
+    if (createError) {
+      console.error("Error creating conversation:", createError);
+      return null;
+    }
+
+    return newConvo.id;
+  } catch (err) {
+    console.error("Error in getOrCreateConversation:", err);
+    return null;
+  }
+}
+
+async function sendDirectMessage(
+  supabase: any,
+  conversationId: string,
+  tenantId: string,
+  message: string
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("direct_messages")
+      .insert({
+        conversation_id: conversationId,
+        sender_id: tenantId,
+        sender_type: "salon",
+        content: message,
+        message_type: "waitlist_availability",
+      });
+
+    if (error) {
+      console.error("Error sending direct message:", error);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Error in sendDirectMessage:", err);
+    return false;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -48,6 +131,7 @@ serve(async (req) => {
     );
 
     const { tenant_id, date } = await req.json();
+    console.log(`Checking waitlist availability for tenant ${tenant_id} on ${date}`);
 
     if (!tenant_id || !date) {
       return new Response(
@@ -55,6 +139,16 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Get tenant name for the message
+    const { data: tenantData } = await supabase
+      .from("tenants")
+      .select("name, slug")
+      .eq("id", tenant_id)
+      .single();
+
+    const tenantName = tenantData?.name || "el salón";
+    const tenantSlug = tenantData?.slug || "";
 
     // Get waitlist entries for this tenant that match the date
     const { data: waitlistEntries, error: waitlistError } = await supabase
@@ -67,6 +161,9 @@ serve(async (req) => {
       .order("created_at", { ascending: true });
 
     if (waitlistError) throw waitlistError;
+    
+    console.log(`Found ${waitlistEntries?.length || 0} waitlist entries`);
+    
     if (!waitlistEntries || waitlistEntries.length === 0) {
       return new Response(
         JSON.stringify({ message: "No waitlist entries to check", notified: [] }),
@@ -120,6 +217,7 @@ serve(async (req) => {
     const slotInterval = 15; // 15 minute slots
 
     const notifiedEntries: string[] = [];
+    const messagesDelivered: string[] = [];
 
     for (const entry of waitlistEntries as WaitlistEntry[]) {
       // Estimate duration from services or use default
@@ -181,6 +279,8 @@ serve(async (req) => {
 
       // If we found a slot, notify the client
       if (foundSlot) {
+        console.log(`Found slot for ${entry.client_name} at ${availableSlotTime}`);
+        
         // Update waitlist entry status
         await supabase
           .from("waitlist")
@@ -189,6 +289,37 @@ serve(async (req) => {
             notified_at: new Date().toISOString() 
           })
           .eq("id", entry.id);
+
+        // If user has an account, send direct message
+        if (entry.user_id) {
+          const conversationId = await getOrCreateConversation(supabase, tenant_id, entry.user_id);
+          
+          if (conversationId) {
+            const formattedDate = formatDateSpanish(date);
+            const message = `📢 ¡Buenas noticias!\n\nHay disponibilidad el ${formattedDate} a las ${availableSlotTime} para tu solicitud en lista de espera.\n\nReserva ahora antes de que otro cliente ocupe el hueco 🗓️`;
+            
+            const sent = await sendDirectMessage(supabase, conversationId, tenant_id, message);
+            if (sent) {
+              messagesDelivered.push(entry.id);
+              console.log(`Direct message sent to user ${entry.user_id}`);
+            }
+          }
+
+          // Also create in-app notification for the user
+          await supabase.from("notifications").insert({
+            user_id: entry.user_id,
+            tenant_id: tenant_id,
+            type: "waitlist_availability",
+            title: "¡Hueco disponible!",
+            message: `Hay disponibilidad en ${tenantName} el ${formatDateSpanish(date)} a las ${availableSlotTime}. ¡Reserva antes de que lo ocupen!`,
+            metadata: { 
+              waitlist_id: entry.id, 
+              available_time: availableSlotTime,
+              date: date
+            },
+            action_url: `/${tenantSlug}`
+          });
+        }
 
         // Create notification for admin
         const { data: adminData } = await supabase
@@ -204,11 +335,12 @@ serve(async (req) => {
             tenant_id: tenant_id,
             type: "waitlist_availability",
             title: "¡Hueco disponible!",
-            message: `Hay un hueco disponible para ${entry.client_name} el ${date} a las ${availableSlotTime}. Se le ha notificado automáticamente.`,
+            message: `Hay un hueco disponible para ${entry.client_name} el ${formatDateSpanish(date)} a las ${availableSlotTime}. ${entry.user_id ? 'Se le ha enviado un mensaje.' : `Contacta al ${entry.client_phone || 'cliente'}.`}`,
             metadata: { 
               waitlist_id: entry.id, 
               available_time: availableSlotTime,
-              client_phone: entry.client_phone
+              client_phone: entry.client_phone,
+              has_user_account: !!entry.user_id
             },
             action_url: "/admin?tab=waitlist"
           });
@@ -218,10 +350,13 @@ serve(async (req) => {
       }
     }
 
+    console.log(`Notified ${notifiedEntries.length} entries, ${messagesDelivered.length} messages delivered`);
+
     return new Response(
       JSON.stringify({ 
         message: `Checked ${waitlistEntries.length} entries, notified ${notifiedEntries.length}`,
-        notified: notifiedEntries 
+        notified: notifiedEntries,
+        messages_delivered: messagesDelivered
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
