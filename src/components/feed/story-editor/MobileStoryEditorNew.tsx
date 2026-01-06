@@ -51,17 +51,42 @@ export function MobileStoryEditorNew({
   
   // Editing existing item
   const [editingItem, setEditingItem] = useState<OverlayItem | null>(null);
+
+  const isVideoMode = !!videoData;
+  const isEditing = activePanel !== "none";
+
+  // Toggle PiP image shape
+  const handlePiPTap = useCallback((itemId: string) => {
+    setOverlays(prev => prev.map(item => {
+      if (item.id === itemId && item.type === "image") {
+        const shapes: ("rect" | "circle" | "rounded")[] = ["rect", "circle", "rounded"];
+        const currentIdx = shapes.indexOf(item.clipShape || "rect");
+        const nextShape = shapes[(currentIdx + 1) % shapes.length];
+        if (navigator.vibrate) navigator.vibrate(10);
+        return { ...item, clipShape: nextShape };
+      }
+      return item;
+    }));
+  }, []);
+
+  // Double tap to edit text - defined before useGestureEngine
+  const handleDoubleTap = useCallback((item: OverlayItem) => {
+    if (item.type === "text") {
+      setEditingItem(item);
+      setActivePanel("text");
+    } else if (item.type === "image") {
+      handlePiPTap(item.id);
+    }
+  }, [handlePiPTap]);
   
-  // Gesture engine
+  // Gesture engine with double-tap support
   const { gestureState, handleTouchStart, handleTouchMove, handleTouchEnd } = useGestureEngine(
     containerRef,
     overlays,
     setOverlays,
-    (id) => toast.success("Eliminado")
+    (id) => toast.success("Eliminado"),
+    handleDoubleTap
   );
-
-  const isVideoMode = !!videoData;
-  const isEditing = activePanel !== "none";
 
   // Toggle video playback
   const toggleVideoPlayback = useCallback(() => {
@@ -147,30 +172,6 @@ export function MobileStoryEditorNew({
     reader.readAsDataURL(file);
     e.target.value = "";
   }, []);
-
-  // Toggle PiP image shape
-  const handlePiPTap = useCallback((itemId: string) => {
-    setOverlays(prev => prev.map(item => {
-      if (item.id === itemId && item.type === "image") {
-        const shapes: ("rect" | "circle" | "rounded")[] = ["rect", "circle", "rounded"];
-        const currentIdx = shapes.indexOf(item.clipShape || "rect");
-        const nextShape = shapes[(currentIdx + 1) % shapes.length];
-        if (navigator.vibrate) navigator.vibrate(10);
-        return { ...item, clipShape: nextShape };
-      }
-      return item;
-    }));
-  }, []);
-
-  // Double tap to edit text
-  const handleDoubleTap = useCallback((item: OverlayItem) => {
-    if (item.type === "text") {
-      setEditingItem(item);
-      setActivePanel("text");
-    } else if (item.type === "image") {
-      handlePiPTap(item.id);
-    }
-  }, [handlePiPTap]);
 
   // Save drawing
   const handleSaveDrawing = useCallback((dataUrl: string) => {

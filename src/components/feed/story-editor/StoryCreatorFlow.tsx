@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Camera, ImagePlus, RotateCcw, Video, Square } from "lucide-react";
-import { MobileStoryEditor } from "./MobileStoryEditor";
+import { MobileStoryEditorNew } from "./MobileStoryEditorNew";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useHaptic } from "@/hooks/useHaptic";
 
@@ -496,7 +496,7 @@ export function StoryCreatorFlow({
 
       {/* Editor Screen */}
       {step === "edit" && (imageData || videoData) && (
-        <MobileStoryEditor
+        <MobileStoryEditorNew
           isOpen={true}
           onClose={handleEditorClose}
           imageData={imageData || undefined}
