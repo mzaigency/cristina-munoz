@@ -32,7 +32,8 @@ export function ToolsSidebar({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
-      className="absolute right-3 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-4"
+      className="absolute top-1/2 -translate-y-1/2 z-40 flex flex-col gap-4"
+      style={{ right: 'max(env(safe-area-inset-right), 12px)' }}
     >
       {tools.map((tool, index) => (
         <motion.button

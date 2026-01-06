@@ -21,7 +21,12 @@ export function PublishBar({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="absolute bottom-4 left-4 right-4 z-40"
+      className="absolute left-0 right-0 z-40"
+      style={{ 
+        bottom: 'max(env(safe-area-inset-bottom), 16px)',
+        paddingLeft: 'max(env(safe-area-inset-left), 16px)',
+        paddingRight: 'max(env(safe-area-inset-right), 16px)'
+      }}
     >
       <div className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 p-3 flex items-center gap-3">
         {/* Tu historia */}
