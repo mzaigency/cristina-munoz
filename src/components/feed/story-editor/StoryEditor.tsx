@@ -1,20 +1,41 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Canvas } from 'fabric';
+import { Canvas, Textbox, FabricObject, FabricImage, Shadow } from 'fabric';
 import { motion, AnimatePresence } from 'motion/react';
-import { FabricCanvas, addTextToCanvas, addShapeToCanvas, addStickerToCanvas } from './canvas/FabricCanvas';
-import { TopBar } from './toolbar/TopBar';
-import { BottomToolbar } from './toolbar/BottomToolbar';
-import { TextPanel } from './panels/TextPanel';
-import { ShapesPanel } from './panels/ShapesPanel';
-import { StickersPanel } from './panels/StickersPanel';
-import { FiltersPanel } from './panels/FiltersPanel';
-import { LayersPanel } from './panels/LayersPanel';
-import { WidgetsPanel } from './panels/WidgetsPanel';
+import { X, Undo2, Redo2, Download, ChevronRight, Type, Smile, Sparkles, Palette } from 'lucide-react';
 import { useEditorStore } from './store/useEditorStore';
 import { exportAsJPG } from './utils/exportUtils';
 import { publishStoryFromCanvas } from './storyPublisher';
+import { loadFont } from './utils/fontLoader';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from './utils/constants';
 import { toast } from 'sonner';
-import type { ShapeType, WidgetType } from './store/types';
+import { useHaptic } from '@/hooks/useHaptic';
+import { TrashZone } from './components/TrashZone';
+
+// Filter presets - Instagram style
+const FILTERS = [
+  { id: 'none', name: 'Normal', filter: '' },
+  { id: 'clarendon', name: 'Clarendon', filter: 'contrast(1.2) saturate(1.35)' },
+  { id: 'gingham', name: 'Gingham', filter: 'brightness(1.05) hue-rotate(-10deg)' },
+  { id: 'moon', name: 'Moon', filter: 'grayscale(1) contrast(1.1) brightness(1.1)' },
+  { id: 'lark', name: 'Lark', filter: 'contrast(0.9) saturate(1.25) brightness(1.1)' },
+  { id: 'reyes', name: 'Reyes', filter: 'sepia(0.22) contrast(0.85) brightness(1.1) saturate(0.75)' },
+  { id: 'juno', name: 'Juno', filter: 'saturate(1.4) contrast(1.15) brightness(1.1)' },
+  { id: 'slumber', name: 'Slumber', filter: 'saturate(0.66) brightness(1.05) sepia(0.1)' },
+];
+
+// Font options
+const FONTS = [
+  'Inter', 'Playfair Display', 'Bebas Neue', 'Dancing Script', 'Roboto Mono', 'Pacifico'
+];
+
+// Color palette
+const COLORS = [
+  '#FFFFFF', '#000000', '#FF3B30', '#FF9500', '#FFCC00', 
+  '#34C759', '#5AC8FA', '#007AFF', '#5856D6', '#AF52DE', '#FF2D55'
+];
+
+// Stickers/Emojis
+const STICKERS = ['❤️', '🔥', '✨', '💯', '🎉', '😍', '🙌', '💪', '⭐', '🌟', '💕', '🎊'];
 
 interface StoryEditorProps {
   isOpen: boolean;
@@ -31,15 +52,23 @@ export function StoryEditor({
   tenantId,
   onSuccess,
 }: StoryEditorProps) {
-  const canvasRef = useRef<Canvas | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const fabricRef = useRef<Canvas | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
-  
-  const { 
-    initWithBackground, 
-    reset, 
-    addElement,
-    setActivePanel,
-  } = useEditorStore();
+  const [scale, setScale] = useState(1);
+  const [activeFilter, setActiveFilter] = useState('none');
+  const [activePanel, setActivePanel] = useState<'none' | 'text' | 'stickers' | 'filters' | 'colors'>('none');
+  const [isTextEditing, setIsTextEditing] = useState(false);
+  const [editingText, setEditingText] = useState('');
+  const [textStyle, setTextStyle] = useState({ font: 'Inter', color: '#FFFFFF', size: 56 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isOverTrash, setIsOverTrash] = useState(false);
+  const draggedObjectRef = useRef<FabricObject | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const haptic = useHaptic();
+
+  const { initWithBackground, reset, undo, redo, canUndo, canRedo, saveToHistory } = useEditorStore();
 
   // Initialize editor with background
   useEffect(() => {
@@ -48,128 +77,256 @@ export function StoryEditor({
     }
   }, [isOpen, backgroundImage, initWithBackground]);
 
-  // Reset on close
+  // Calculate responsive scale
   useEffect(() => {
-    if (!isOpen) {
-      reset();
+    const updateScale = () => {
+      if (!containerRef.current) return;
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight;
+      const scaleX = containerWidth / CANVAS_WIDTH;
+      const scaleY = containerHeight / CANVAS_HEIGHT;
+      setScale(Math.min(scaleX, scaleY));
+    };
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [isOpen]);
+
+  // Initialize canvas
+  useEffect(() => {
+    if (!canvasRef.current || !isOpen) return;
+    if (fabricRef.current) return;
+
+    const canvas = new Canvas(canvasRef.current, {
+      width: CANVAS_WIDTH,
+      height: CANVAS_HEIGHT,
+      backgroundColor: '#000000',
+      selection: true,
+      preserveObjectStacking: true,
+      allowTouchScrolling: false,
+    });
+
+    // Minimal iOS-style controls
+    FabricObject.prototype.set({
+      cornerColor: '#FFFFFF',
+      cornerStrokeColor: 'rgba(255,255,255,0.8)',
+      cornerSize: 12,
+      transparentCorners: false,
+      cornerStyle: 'circle',
+      borderColor: 'rgba(255,255,255,0.5)',
+      borderScaleFactor: 1,
+      padding: 8,
+      rotatingPointOffset: 40,
+      lockScalingFlip: true,
+      borderDashArray: [0],
+    });
+
+    fabricRef.current = canvas;
+
+    // Touch/Mouse events for drag to delete
+    canvas.on('object:moving', (e) => {
+      const obj = e.target;
+      if (!obj) return;
+
+      if (!draggedObjectRef.current) {
+        setIsDragging(true);
+        draggedObjectRef.current = obj;
+        haptic.light();
+      }
+
+      // Check if over trash zone
+      const objCenterY = (obj.top || 0) + (obj.getScaledHeight() / 2);
+      const normalizedY = objCenterY / CANVAS_HEIGHT;
+      const nowOverTrash = normalizedY > 0.85;
+
+      setIsOverTrash((prev) => {
+        if (nowOverTrash !== prev && nowOverTrash) haptic.warning();
+        return nowOverTrash;
+      });
+    });
+
+    canvas.on('object:modified', (e) => {
+      const obj = e.target;
+      if (isOverTrash && obj) {
+        canvas.remove(obj);
+        haptic.success();
+      }
+      setIsDragging(false);
+      setIsOverTrash(false);
+      draggedObjectRef.current = null;
+      saveToHistory();
+    });
+
+    canvas.on('mouse:up', () => {
+      if (isOverTrash && draggedObjectRef.current) {
+        canvas.remove(draggedObjectRef.current);
+        haptic.success();
+      }
+      setIsDragging(false);
+      draggedObjectRef.current = null;
+    });
+
+    // Double tap to edit text
+    let lastTap = 0;
+    canvas.on('mouse:down', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 300 && e.target instanceof Textbox) {
+        e.target.enterEditing();
+        haptic.light();
+      }
+      lastTap = now;
+    });
+
+    return () => {
+      canvas.dispose();
+      fabricRef.current = null;
+    };
+  }, [isOpen, haptic, isOverTrash, saveToHistory]);
+
+  // Load background
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || !backgroundImage || !isOpen) return;
+
+    FabricImage.fromURL(backgroundImage, { crossOrigin: 'anonymous' }).then((img) => {
+      const scaleX = CANVAS_WIDTH / img.width!;
+      const scaleY = CANVAS_HEIGHT / img.height!;
+      const imgScale = Math.max(scaleX, scaleY);
+
+      img.set({
+        scaleX: imgScale,
+        scaleY: imgScale,
+        left: (CANVAS_WIDTH - img.width! * imgScale) / 2,
+        top: (CANVAS_HEIGHT - img.height! * imgScale) / 2,
+        selectable: false,
+        evented: false,
+      });
+
+      canvas.backgroundImage = img;
+      canvas.renderAll();
+    });
+  }, [backgroundImage, isOpen]);
+
+  // Handle canvas tap - open text editor
+  const handleCanvasTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    if ((e.target as HTMLElement).tagName === 'CANVAS') {
+      const canvas = fabricRef.current;
+      if (canvas && !canvas.getActiveObject()) {
+        setIsTextEditing(true);
+        setEditingText('');
+        setTimeout(() => inputRef.current?.focus(), 100);
+        haptic.light();
+      }
     }
-  }, [isOpen, reset]);
+  }, [haptic]);
 
-  const handleCanvasReady = useCallback((canvas: Canvas) => {
-    canvasRef.current = canvas;
-  }, []);
+  // Add text to canvas
+  const addText = useCallback(() => {
+    if (!editingText.trim() || !fabricRef.current) return;
 
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
+    loadFont(textStyle.font);
 
-  const handleSave = async () => {
-    // TODO: Save draft
-    toast.success('Historia guardada');
-  };
+    const textbox = new Textbox(editingText, {
+      left: CANVAS_WIDTH / 2,
+      top: CANVAS_HEIGHT / 2,
+      originX: 'center',
+      originY: 'center',
+      fontFamily: textStyle.font,
+      fontSize: textStyle.size,
+      fill: textStyle.color,
+      textAlign: 'center',
+      width: 800,
+      editable: true,
+      shadow: new Shadow({
+        color: 'rgba(0,0,0,0.5)',
+        blur: 20,
+        offsetX: 0,
+        offsetY: 4,
+      }),
+    });
 
-  const handleDownload = async () => {
-    if (!canvasRef.current) return;
-    
-    try {
-      const blob = await exportAsJPG(canvasRef.current);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `story-${Date.now()}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      toast.success('Historia descargada');
-    } catch (error) {
-      toast.error('Error al descargar');
-    }
-  };
+    fabricRef.current.add(textbox);
+    fabricRef.current.setActiveObject(textbox);
+    fabricRef.current.renderAll();
+    saveToHistory();
 
+    setIsTextEditing(false);
+    setEditingText('');
+    haptic.success();
+  }, [editingText, textStyle, saveToHistory, haptic]);
+
+  // Add sticker
+  const addSticker = useCallback((emoji: string) => {
+    if (!fabricRef.current) return;
+
+    const text = new Textbox(emoji, {
+      left: CANVAS_WIDTH / 2,
+      top: CANVAS_HEIGHT / 2,
+      originX: 'center',
+      originY: 'center',
+      fontSize: 100,
+      fontFamily: 'Apple Color Emoji, Segoe UI Emoji, sans-serif',
+      editable: false,
+    });
+
+    fabricRef.current.add(text);
+    fabricRef.current.setActiveObject(text);
+    fabricRef.current.renderAll();
+    saveToHistory();
+    setActivePanel('none');
+    haptic.success();
+  }, [saveToHistory, haptic]);
+
+  // Apply filter
+  const applyFilter = useCallback((filterId: string) => {
+    setActiveFilter(filterId);
+    haptic.light();
+  }, [haptic]);
+
+  // Publish
   const handlePublish = async () => {
-    if (!canvasRef.current) return;
-    
+    if (!fabricRef.current) return;
+
     setIsPublishing(true);
     try {
-      const blob = await exportAsJPG(canvasRef.current);
+      const blob = await exportAsJPG(fabricRef.current);
       await publishStoryFromCanvas(blob, tenantId);
       toast.success('¡Historia publicada!');
       onSuccess();
-      handleClose();
+      reset();
+      onClose();
     } catch (error) {
-      console.error('Publish error:', error);
       toast.error('Error al publicar');
     } finally {
       setIsPublishing(false);
     }
   };
 
-  const handleAddText = (text: string, options: any) => {
-    if (!canvasRef.current) return;
-    const obj = addTextToCanvas(canvasRef.current, text, options);
-    addElement({
-      type: 'text',
-      name: 'Texto',
-      x: obj.left || 0,
-      y: obj.top || 0,
-      width: obj.getScaledWidth(),
-      height: obj.getScaledHeight(),
-      rotation: 0,
-      opacity: 1,
-      scaleX: 1,
-      scaleY: 1,
-      locked: false,
-      visible: true,
-      properties: options,
-    });
+  // Download
+  const handleDownload = async () => {
+    if (!fabricRef.current) return;
+    try {
+      const blob = await exportAsJPG(fabricRef.current);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `story-${Date.now()}.jpg`;
+      link.click();
+      URL.revokeObjectURL(url);
+      haptic.success();
+    } catch {
+      toast.error('Error al descargar');
+    }
   };
 
-  const handleAddShape = (shapeType: ShapeType, options: any) => {
-    if (!canvasRef.current) return;
-    const obj = addShapeToCanvas(canvasRef.current, shapeType, options);
-    addElement({
-      type: 'shape',
-      name: `Forma ${shapeType}`,
-      x: obj.left || 0,
-      y: obj.top || 0,
-      width: obj.getScaledWidth(),
-      height: obj.getScaledHeight(),
-      rotation: 0,
-      opacity: 1,
-      scaleX: 1,
-      scaleY: 1,
-      locked: false,
-      visible: true,
-      properties: { shapeType, ...options },
-    });
+  const handleClose = () => {
+    reset();
+    onClose();
   };
 
-  const handleAddSticker = (emoji: string) => {
-    if (!canvasRef.current) return;
-    const obj = addStickerToCanvas(canvasRef.current, emoji);
-    addElement({
-      type: 'sticker',
-      name: emoji,
-      x: obj.left || 0,
-      y: obj.top || 0,
-      width: obj.getScaledWidth(),
-      height: obj.getScaledHeight(),
-      rotation: 0,
-      opacity: 1,
-      scaleX: 1,
-      scaleY: 1,
-      locked: false,
-      visible: true,
-      properties: { emoji },
-    });
-  };
-
-  const handleAddWidget = (widgetType: WidgetType, config: any) => {
-    // Widgets se añaden como stickers especiales por ahora
-    handleAddSticker('📊');
-    toast.info('Widget añadido - próximamente interactivo');
+  const getFilterStyle = () => {
+    const filter = FILTERS.find(f => f.id === activeFilter);
+    return filter?.filter || '';
   };
 
   if (!isOpen) return null;
@@ -180,35 +337,352 @@ export function StoryEditor({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black flex flex-col"
+        className="fixed inset-0 z-[200] bg-black flex"
       >
-        {/* Top Bar */}
-        <TopBar
-          onClose={handleClose}
-          onSave={handleSave}
-          onDownload={handleDownload}
-          onPublish={handlePublish}
-          isPublishing={isPublishing}
-        />
-
         {/* Canvas Area */}
-        <div className="flex-1 relative overflow-hidden">
-          <FabricCanvas
-            backgroundImage={backgroundImage}
-            onReady={handleCanvasReady}
+        <div
+          ref={containerRef}
+          className="flex-1 relative flex items-center justify-center"
+          onClick={handleCanvasTap}
+          onTouchEnd={handleCanvasTap}
+        >
+          <div
+            className="relative"
+            style={{
+              width: CANVAS_WIDTH * scale,
+              height: CANVAS_HEIGHT * scale,
+              filter: getFilterStyle(),
+            }}
+          >
+            <canvas
+              ref={canvasRef}
+              className="touch-none"
+              style={{
+                transform: `scale(${scale})`,
+                transformOrigin: 'top left',
+              }}
+            />
+          </div>
+
+          {/* Trash Zone */}
+          <TrashZone
+            isVisible={isDragging}
+            isHovering={isOverTrash}
+            onDrop={() => {}}
           />
+
+          {/* Top Bar - Minimal */}
+          <div
+            className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 z-50"
+            style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
+          >
+            {/* Close */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handleClose}
+              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center"
+            >
+              <X size={24} className="text-white" />
+            </motion.button>
+
+            {/* Undo/Redo */}
+            <div className="flex items-center gap-1 bg-black/40 backdrop-blur-xl rounded-full p-1">
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => { haptic.light(); undo(); }}
+                disabled={!canUndo()}
+                className="w-9 h-9 rounded-full flex items-center justify-center disabled:opacity-30"
+              >
+                <Undo2 size={18} className="text-white" />
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => { haptic.light(); redo(); }}
+                disabled={!canRedo()}
+                className="w-9 h-9 rounded-full flex items-center justify-center disabled:opacity-30"
+              >
+                <Redo2 size={18} className="text-white" />
+              </motion.button>
+            </div>
+
+            {/* Download */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handleDownload}
+              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center"
+            >
+              <Download size={20} className="text-white" />
+            </motion.button>
+          </div>
+
+          {/* Publish Button - Bottom Right */}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handlePublish}
+            disabled={isPublishing}
+            className="absolute bottom-6 right-4 h-12 px-6 rounded-full bg-white flex items-center gap-2 shadow-2xl z-50"
+            style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            {isPublishing ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full"
+              />
+            ) : (
+              <>
+                <span className="text-black font-semibold">Publicar</span>
+                <ChevronRight size={20} className="text-black" />
+              </>
+            )}
+          </motion.button>
         </div>
 
-        {/* Bottom Toolbar */}
-        <BottomToolbar />
+        {/* Right Sidebar - Vertical Tools */}
+        <div
+          className="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center gap-3 px-3 z-40"
+          style={{
+            paddingTop: 'max(env(safe-area-inset-top), 80px)',
+            paddingBottom: 'max(env(safe-area-inset-bottom), 100px)',
+          }}
+        >
+          {[
+            { id: 'text', icon: Type, label: 'Texto' },
+            { id: 'stickers', icon: Smile, label: 'Stickers' },
+            { id: 'filters', icon: Sparkles, label: 'Filtros' },
+            { id: 'colors', icon: Palette, label: 'Colores' },
+          ].map((tool) => (
+            <motion.button
+              key={tool.id}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => {
+                haptic.light();
+                if (tool.id === 'text') {
+                  setIsTextEditing(true);
+                  setTimeout(() => inputRef.current?.focus(), 100);
+                } else {
+                  setActivePanel(activePanel === tool.id as any ? 'none' : tool.id as any);
+                }
+              }}
+              className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all ${
+                activePanel === tool.id
+                  ? 'bg-white text-black'
+                  : 'bg-black/40 backdrop-blur-xl text-white'
+              }`}
+            >
+              <tool.icon size={22} />
+            </motion.button>
+          ))}
+        </div>
 
-        {/* Panels */}
-        <TextPanel onAddText={handleAddText} />
-        <ShapesPanel onAddShape={handleAddShape} />
-        <StickersPanel onAddSticker={handleAddSticker} />
-        <FiltersPanel />
-        <LayersPanel />
-        <WidgetsPanel onAddWidget={handleAddWidget} />
+        {/* Text Editor Overlay */}
+        <AnimatePresence>
+          {isTextEditing && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-[300] px-6"
+              style={{
+                paddingTop: 'env(safe-area-inset-top)',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+              }}
+            >
+              {/* Close text editor */}
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsTextEditing(false)}
+                className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+                style={{ marginTop: 'env(safe-area-inset-top)' }}
+              >
+                <X size={24} className="text-white" />
+              </motion.button>
+
+              {/* Done button */}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={addText}
+                className="absolute top-4 right-4 px-5 h-10 rounded-full bg-white flex items-center justify-center"
+                style={{ marginTop: 'env(safe-area-inset-top)' }}
+              >
+                <span className="text-black font-semibold text-sm">Listo</span>
+              </motion.button>
+
+              {/* Live Preview Text */}
+              <div
+                className="w-full max-w-lg text-center mb-8"
+                style={{
+                  fontFamily: textStyle.font,
+                  fontSize: `${textStyle.size * 0.5}px`,
+                  color: textStyle.color,
+                  textShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                  minHeight: '60px',
+                }}
+              >
+                {editingText || 'Escribe algo...'}
+              </div>
+
+              {/* Text Input */}
+              <input
+                ref={inputRef}
+                type="text"
+                value={editingText}
+                onChange={(e) => setEditingText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addText()}
+                placeholder="Escribe aquí..."
+                className="w-full max-w-lg bg-transparent border-b-2 border-white/30 text-white text-center text-xl py-3 outline-none placeholder:text-white/40"
+                autoFocus
+              />
+
+              {/* Font Selector */}
+              <div className="flex gap-2 mt-8 overflow-x-auto pb-4 w-full max-w-lg justify-center">
+                {FONTS.map((font) => (
+                  <motion.button
+                    key={font}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setTextStyle(s => ({ ...s, font }));
+                      loadFont(font);
+                      haptic.light();
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all ${
+                      textStyle.font === font
+                        ? 'bg-white text-black'
+                        : 'bg-white/10 text-white'
+                    }`}
+                    style={{ fontFamily: font }}
+                  >
+                    {font.split(' ')[0]}
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* Color Selector */}
+              <div className="flex gap-3 mt-4">
+                {COLORS.slice(0, 8).map((color) => (
+                  <motion.button
+                    key={color}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => {
+                      setTextStyle(s => ({ ...s, color }));
+                      haptic.light();
+                    }}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      textStyle.color === color ? 'border-white scale-110' : 'border-transparent'
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Stickers Panel */}
+        <AnimatePresence>
+          {activePanel === 'stickers' && (
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl rounded-t-3xl z-[250] p-6"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+            >
+              <div className="w-12 h-1 bg-white/30 rounded-full mx-auto mb-6" />
+              <div className="grid grid-cols-6 gap-4 max-w-sm mx-auto">
+                {STICKERS.map((emoji) => (
+                  <motion.button
+                    key={emoji}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => addSticker(emoji)}
+                    className="text-4xl p-2 rounded-xl active:bg-white/10 transition-colors"
+                  >
+                    {emoji}
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Filters Panel */}
+        <AnimatePresence>
+          {activePanel === 'filters' && (
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl rounded-t-3xl z-[250] p-6"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+            >
+              <div className="w-12 h-1 bg-white/30 rounded-full mx-auto mb-6" />
+              <div className="flex gap-4 overflow-x-auto pb-2">
+                {FILTERS.map((filter) => (
+                  <motion.button
+                    key={filter.id}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => applyFilter(filter.id)}
+                    className="flex flex-col items-center gap-2 min-w-[70px]"
+                  >
+                    <div
+                      className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
+                        activeFilter === filter.id ? 'border-white' : 'border-transparent'
+                      }`}
+                    >
+                      <img
+                        src={backgroundImage}
+                        alt={filter.name}
+                        className="w-full h-full object-cover"
+                        style={{ filter: filter.filter }}
+                      />
+                    </div>
+                    <span className={`text-xs ${
+                      activeFilter === filter.id ? 'text-white font-semibold' : 'text-white/60'
+                    }`}>
+                      {filter.name}
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Colors Panel */}
+        <AnimatePresence>
+          {activePanel === 'colors' && (
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl rounded-t-3xl z-[250] p-6"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+            >
+              <div className="w-12 h-1 bg-white/30 rounded-full mx-auto mb-6" />
+              <p className="text-white/60 text-center text-sm mb-4">Selecciona un elemento y elige un color</p>
+              <div className="flex justify-center gap-3 flex-wrap max-w-xs mx-auto">
+                {COLORS.map((color) => (
+                  <motion.button
+                    key={color}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => {
+                      const canvas = fabricRef.current;
+                      const active = canvas?.getActiveObject();
+                      if (active && 'set' in active) {
+                        active.set('fill', color);
+                        canvas?.renderAll();
+                        saveToHistory();
+                        haptic.light();
+                      }
+                    }}
+                    className="w-10 h-10 rounded-full border-2 border-white/20"
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </AnimatePresence>
   );
