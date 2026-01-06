@@ -14,15 +14,16 @@ const getMidpoint = (p1: React.Touch, p2: React.Touch) => ({
 });
 
 // Constants
-const SNAP_CENTER_THRESHOLD = 0.04; // 4% of container for center snapping
-const SNAP_EDGE_THRESHOLD = 0.05; // 5% for edge snapping
-const EDGE_MARGIN = 0.08; // 8% margin from edges
-const TRASH_ZONE_START = 0.85;
+const SNAP_CENTER_THRESHOLD = 0.04;
+const SNAP_EDGE_THRESHOLD = 0.05;
+const EDGE_MARGIN = 0.08;
+const TRASH_ZONE_START = 0.82;
 const TRASH_ZONE_DELETE = 0.92;
+const DOUBLE_TAP_DELAY = 300;
 
 // Rotation snap angles
 const ROTATION_SNAP_ANGLES = [0, 45, 90, 135, 180, -45, -90, -135, -180];
-const ROTATION_SNAP_THRESHOLD = 5; // degrees
+const ROTATION_SNAP_THRESHOLD = 5;
 
 interface GestureRef {
   startX: number;
@@ -42,7 +43,9 @@ interface GestureRef {
   wasSnappedTop: boolean;
   wasSnappedBottom: boolean;
   wasSnappedRotation: boolean;
-  lastDoubleTapTime: number;
+  lastTapTime: number;
+  lastTapItemId: string | null;
+  hasMoved: boolean;
 }
 
 export interface EnhancedGestureState extends GestureState {
@@ -56,7 +59,8 @@ export function useGestureEngine(
   containerRef: React.RefObject<HTMLDivElement>,
   overlays: OverlayItem[],
   setOverlays: React.Dispatch<React.SetStateAction<OverlayItem[]>>,
-  onDelete?: (id: string) => void
+  onDelete?: (id: string) => void,
+  onDoubleTap?: (item: OverlayItem) => void
 ) {
   const [gestureState, setGestureState] = useState<EnhancedGestureState>({
     isDragging: false,
@@ -90,7 +94,9 @@ export function useGestureEngine(
     wasSnappedTop: false,
     wasSnappedBottom: false,
     wasSnappedRotation: false,
-    lastDoubleTapTime: 0,
+    lastTapTime: 0,
+    lastTapItemId: null,
+    hasMoved: false,
   });
 
   const haptic = useCallback((pattern: number | number[], minInterval = 40) => {
@@ -107,6 +113,21 @@ export function useGestureEngine(
     if (!item || !containerRef.current) return;
 
     const g = gestureRef.current;
+    const now = Date.now();
+    
+    // Detect double-tap for mobile
+    if (now - g.lastTapTime < DOUBLE_TAP_DELAY && g.lastTapItemId === itemId) {
+      // Double-tap detected
+      g.lastTapTime = 0;
+      g.lastTapItemId = null;
+      onDoubleTap?.(item);
+      haptic([10, 20, 10]);
+      return;
+    }
+    
+    g.lastTapTime = now;
+    g.lastTapItemId = itemId;
+    g.hasMoved = false;
     
     // Reset snap states
     g.wasSnappedH = false;
@@ -117,7 +138,7 @@ export function useGestureEngine(
     g.wasSnappedBottom = false;
     g.wasSnappedRotation = false;
 
-    // Bring to front by reordering
+    // Bring to front
     setOverlays(prev => {
       const idx = prev.findIndex(o => o.id === itemId);
       if (idx === -1) return prev;
@@ -156,7 +177,7 @@ export function useGestureEngine(
     }));
 
     haptic(5);
-  }, [overlays, setOverlays, containerRef, haptic]);
+  }, [overlays, setOverlays, containerRef, haptic, onDoubleTap]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!gestureState.isDragging || !gestureState.activeItemId || !containerRef.current) return;
@@ -165,11 +186,34 @@ export function useGestureEngine(
     const container = containerRef.current.getBoundingClientRect();
     const g = gestureRef.current;
     const itemId = gestureState.activeItemId;
+    
+    // Mark as moved (not a tap)
+    g.hasMoved = true;
 
     let newX: number, newY: number, newScale: number, newRotation: number;
+    
+    // Get current item for multi-touch that starts after initial touch
+    const currentItem = overlays.find(o => o.id === itemId);
+    if (!currentItem) return;
 
-    if (e.touches.length >= 2 && g.isMultiTouch) {
+    if (e.touches.length >= 2) {
       // Multi-touch: simultaneous pan, pinch, rotate
+      // If we just got a second finger, initialize multi-touch state
+      if (!g.isMultiTouch) {
+        g.isMultiTouch = true;
+        g.startDist = getDistance(e.touches[0], e.touches[1]);
+        g.startAngle = getAngle(e.touches[0], e.touches[1]);
+        g.initialScale = currentItem.scale;
+        g.initialRotation = currentItem.rotation;
+        const mid = getMidpoint(e.touches[0], e.touches[1]);
+        g.startX = mid.x;
+        g.startY = mid.y;
+        g.initialX = currentItem.x;
+        g.initialY = currentItem.y;
+        
+        setGestureState(prev => ({ ...prev, isMultiTouch: true }));
+      }
+      
       const currentDist = getDistance(e.touches[0], e.touches[1]);
       const currentAngle = getAngle(e.touches[0], e.touches[1]);
       const mid = getMidpoint(e.touches[0], e.touches[1]);
@@ -178,12 +222,12 @@ export function useGestureEngine(
       newScale = Math.max(0.3, Math.min(5, g.initialScale * scaleFactor));
       newRotation = g.initialRotation + (currentAngle - g.startAngle);
 
-      // Snap rotation to common angles
+      // Snap rotation
       for (const snapAngle of ROTATION_SNAP_ANGLES) {
         if (Math.abs(newRotation - snapAngle) < ROTATION_SNAP_THRESHOLD) {
           newRotation = snapAngle;
           if (!g.wasSnappedRotation) {
-            haptic(10);
+            haptic(15);
             g.wasSnappedRotation = true;
           }
           break;
@@ -197,7 +241,6 @@ export function useGestureEngine(
       newX = g.initialX + deltaX;
       newY = g.initialY + deltaY;
 
-      // Haptic at scale limits
       if (newScale <= 0.31 || newScale >= 4.99) {
         haptic(20);
       }
@@ -209,8 +252,8 @@ export function useGestureEngine(
       
       newX = g.initialX + deltaX;
       newY = g.initialY + deltaY;
-      newScale = g.initialScale;
-      newRotation = g.initialRotation;
+      newScale = currentItem.scale;
+      newRotation = currentItem.rotation;
     }
 
     // Snap logic
@@ -243,9 +286,8 @@ export function useGestureEngine(
       g.wasSnappedV = false;
     }
 
-    // Edge snaps (only if not center snapped)
+    // Edge snaps
     if (!snapH) {
-      // Left edge
       if (Math.abs(newX - EDGE_MARGIN) < SNAP_EDGE_THRESHOLD) {
         newX = EDGE_MARGIN;
         snapLeft = true;
@@ -257,7 +299,6 @@ export function useGestureEngine(
         g.wasSnappedLeft = false;
       }
       
-      // Right edge
       if (Math.abs(newX - (1 - EDGE_MARGIN)) < SNAP_EDGE_THRESHOLD) {
         newX = 1 - EDGE_MARGIN;
         snapRight = true;
@@ -271,7 +312,6 @@ export function useGestureEngine(
     }
 
     if (!snapV) {
-      // Top edge
       if (Math.abs(newY - EDGE_MARGIN) < SNAP_EDGE_THRESHOLD) {
         newY = EDGE_MARGIN;
         snapTop = true;
@@ -283,7 +323,6 @@ export function useGestureEngine(
         g.wasSnappedTop = false;
       }
       
-      // Bottom edge (before trash zone)
       if (Math.abs(newY - (TRASH_ZONE_START - 0.05)) < SNAP_EDGE_THRESHOLD && newY < TRASH_ZONE_START) {
         newY = TRASH_ZONE_START - 0.05;
         snapBottom = true;
@@ -313,7 +352,6 @@ export function useGestureEngine(
         : o
     ));
 
-    // Update gesture state
     setGestureState(prev => ({
       ...prev,
       showCenterGuideH: snapH,
@@ -324,18 +362,22 @@ export function useGestureEngine(
       showBottomGuide: snapBottom,
       isInTrashZone: inTrash,
       trashIntensity,
+      isMultiTouch: e.touches.length >= 2,
     }));
-  }, [gestureState.isDragging, gestureState.activeItemId, containerRef, setOverlays, haptic]);
+  }, [gestureState.isDragging, gestureState.activeItemId, containerRef, overlays, setOverlays, haptic]);
 
   const handleTouchEnd = useCallback(() => {
     const itemId = gestureState.activeItemId;
+    const g = gestureRef.current;
     
     if (itemId && gestureState.trashIntensity >= 0.8) {
-      // Delete the item
       setOverlays(prev => prev.filter(o => o.id !== itemId));
       haptic([30, 40, 30, 40, 30]);
       onDelete?.(itemId);
     }
+
+    // Reset multi-touch flag on touch end
+    g.isMultiTouch = false;
 
     setGestureState({
       isDragging: false,
