@@ -1,12 +1,14 @@
-// Mobile Story Editor - Rebuilt for optimal mobile UX
-export { MobileStoryEditor } from "./MobileStoryEditor";
+// Mobile Story Editor - Instagram-style
+export { MobileStoryEditorNew as MobileStoryEditor } from "./MobileStoryEditorNew";
 export { StoryCreatorFlow } from "./StoryCreatorFlow";
 export { useGestureEngine } from "./useGestureEngine";
-export { TopBar } from "./TopBar";
+export { TopBarMinimal } from "./TopBarMinimal";
+export { ToolsSidebar } from "./ToolsSidebar";
+export { PublishBar } from "./PublishBar";
 export { TrashZone } from "./TrashZone";
 export { GuideLines } from "./GuideLines";
-export { TextEditor, type TextConfig } from "./TextEditor";
+export { TextEditorNew as TextEditor, type TextConfig } from "./TextEditorNew";
 export { DrawingCanvas } from "./DrawingCanvasNew";
-export { StickerPicker } from "./StickerPickerNew";
+export { StickerDrawer } from "./stickers/StickerDrawer";
 export { publishStory, downloadStoryImage, flattenStoryLayers } from "./storyPublisher";
 export * from "./types";
