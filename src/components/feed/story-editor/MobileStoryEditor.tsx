@@ -286,6 +286,12 @@ export function MobileStoryEditor({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[200] bg-black flex flex-col overflow-hidden touch-none select-none"
+        style={{ 
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)'
+        }}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
