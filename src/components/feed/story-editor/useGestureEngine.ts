@@ -14,9 +14,15 @@ const getMidpoint = (p1: React.Touch, p2: React.Touch) => ({
 });
 
 // Constants
-const SNAP_THRESHOLD = 0.04; // 4% of container for snapping
+const SNAP_CENTER_THRESHOLD = 0.04; // 4% of container for center snapping
+const SNAP_EDGE_THRESHOLD = 0.05; // 5% for edge snapping
+const EDGE_MARGIN = 0.08; // 8% margin from edges
 const TRASH_ZONE_START = 0.85;
 const TRASH_ZONE_DELETE = 0.92;
+
+// Rotation snap angles
+const ROTATION_SNAP_ANGLES = [0, 45, 90, 135, 180, -45, -90, -135, -180];
+const ROTATION_SNAP_THRESHOLD = 5; // degrees
 
 interface GestureRef {
   startX: number;
@@ -31,6 +37,19 @@ interface GestureRef {
   lastHapticTime: number;
   wasSnappedH: boolean;
   wasSnappedV: boolean;
+  wasSnappedLeft: boolean;
+  wasSnappedRight: boolean;
+  wasSnappedTop: boolean;
+  wasSnappedBottom: boolean;
+  wasSnappedRotation: boolean;
+  lastDoubleTapTime: number;
+}
+
+export interface EnhancedGestureState extends GestureState {
+  showLeftGuide: boolean;
+  showRightGuide: boolean;
+  showTopGuide: boolean;
+  showBottomGuide: boolean;
 }
 
 export function useGestureEngine(
@@ -39,7 +58,7 @@ export function useGestureEngine(
   setOverlays: React.Dispatch<React.SetStateAction<OverlayItem[]>>,
   onDelete?: (id: string) => void
 ) {
-  const [gestureState, setGestureState] = useState<GestureState>({
+  const [gestureState, setGestureState] = useState<EnhancedGestureState>({
     isDragging: false,
     isMultiTouch: false,
     activeItemId: null,
@@ -47,6 +66,10 @@ export function useGestureEngine(
     showCenterGuideV: false,
     isInTrashZone: false,
     trashIntensity: 0,
+    showLeftGuide: false,
+    showRightGuide: false,
+    showTopGuide: false,
+    showBottomGuide: false,
   });
 
   const gestureRef = useRef<GestureRef>({
@@ -62,6 +85,12 @@ export function useGestureEngine(
     lastHapticTime: 0,
     wasSnappedH: false,
     wasSnappedV: false,
+    wasSnappedLeft: false,
+    wasSnappedRight: false,
+    wasSnappedTop: false,
+    wasSnappedBottom: false,
+    wasSnappedRotation: false,
+    lastDoubleTapTime: 0,
   });
 
   const haptic = useCallback((pattern: number | number[], minInterval = 40) => {
@@ -78,8 +107,15 @@ export function useGestureEngine(
     if (!item || !containerRef.current) return;
 
     const g = gestureRef.current;
+    
+    // Reset snap states
     g.wasSnappedH = false;
     g.wasSnappedV = false;
+    g.wasSnappedLeft = false;
+    g.wasSnappedRight = false;
+    g.wasSnappedTop = false;
+    g.wasSnappedBottom = false;
+    g.wasSnappedRotation = false;
 
     // Bring to front by reordering
     setOverlays(prev => {
@@ -142,6 +178,20 @@ export function useGestureEngine(
       newScale = Math.max(0.3, Math.min(5, g.initialScale * scaleFactor));
       newRotation = g.initialRotation + (currentAngle - g.startAngle);
 
+      // Snap rotation to common angles
+      for (const snapAngle of ROTATION_SNAP_ANGLES) {
+        if (Math.abs(newRotation - snapAngle) < ROTATION_SNAP_THRESHOLD) {
+          newRotation = snapAngle;
+          if (!g.wasSnappedRotation) {
+            haptic(10);
+            g.wasSnappedRotation = true;
+          }
+          break;
+        } else {
+          g.wasSnappedRotation = false;
+        }
+      }
+
       const deltaX = (mid.x - g.startX) / container.width;
       const deltaY = (mid.y - g.startY) / container.height;
       newX = g.initialX + deltaX;
@@ -163,14 +213,17 @@ export function useGestureEngine(
       newRotation = g.initialRotation;
     }
 
-    // Snap-to-center logic
+    // Snap logic
+    let snapH = false, snapV = false;
+    let snapLeft = false, snapRight = false, snapTop = false, snapBottom = false;
+
+    // Center snap
     const distFromCenterH = Math.abs(newX - 0.5);
     const distFromCenterV = Math.abs(newY - 0.5);
-    const snapH = distFromCenterH < SNAP_THRESHOLD;
-    const snapV = distFromCenterV < SNAP_THRESHOLD;
-
-    if (snapH) {
+    
+    if (distFromCenterH < SNAP_CENTER_THRESHOLD) {
       newX = 0.5;
+      snapH = true;
       if (!g.wasSnappedH) {
         haptic(15);
         g.wasSnappedH = true;
@@ -179,14 +232,68 @@ export function useGestureEngine(
       g.wasSnappedH = false;
     }
 
-    if (snapV) {
+    if (distFromCenterV < SNAP_CENTER_THRESHOLD) {
       newY = 0.5;
+      snapV = true;
       if (!g.wasSnappedV) {
         haptic(15);
         g.wasSnappedV = true;
       }
     } else {
       g.wasSnappedV = false;
+    }
+
+    // Edge snaps (only if not center snapped)
+    if (!snapH) {
+      // Left edge
+      if (Math.abs(newX - EDGE_MARGIN) < SNAP_EDGE_THRESHOLD) {
+        newX = EDGE_MARGIN;
+        snapLeft = true;
+        if (!g.wasSnappedLeft) {
+          haptic(10);
+          g.wasSnappedLeft = true;
+        }
+      } else {
+        g.wasSnappedLeft = false;
+      }
+      
+      // Right edge
+      if (Math.abs(newX - (1 - EDGE_MARGIN)) < SNAP_EDGE_THRESHOLD) {
+        newX = 1 - EDGE_MARGIN;
+        snapRight = true;
+        if (!g.wasSnappedRight) {
+          haptic(10);
+          g.wasSnappedRight = true;
+        }
+      } else {
+        g.wasSnappedRight = false;
+      }
+    }
+
+    if (!snapV) {
+      // Top edge
+      if (Math.abs(newY - EDGE_MARGIN) < SNAP_EDGE_THRESHOLD) {
+        newY = EDGE_MARGIN;
+        snapTop = true;
+        if (!g.wasSnappedTop) {
+          haptic(10);
+          g.wasSnappedTop = true;
+        }
+      } else {
+        g.wasSnappedTop = false;
+      }
+      
+      // Bottom edge (before trash zone)
+      if (Math.abs(newY - (TRASH_ZONE_START - 0.05)) < SNAP_EDGE_THRESHOLD && newY < TRASH_ZONE_START) {
+        newY = TRASH_ZONE_START - 0.05;
+        snapBottom = true;
+        if (!g.wasSnappedBottom) {
+          haptic(10);
+          g.wasSnappedBottom = true;
+        }
+      } else {
+        g.wasSnappedBottom = false;
+      }
     }
 
     // Trash zone detection
@@ -211,6 +318,10 @@ export function useGestureEngine(
       ...prev,
       showCenterGuideH: snapH,
       showCenterGuideV: snapV,
+      showLeftGuide: snapLeft,
+      showRightGuide: snapRight,
+      showTopGuide: snapTop,
+      showBottomGuide: snapBottom,
       isInTrashZone: inTrash,
       trashIntensity,
     }));
@@ -234,6 +345,10 @@ export function useGestureEngine(
       showCenterGuideV: false,
       isInTrashZone: false,
       trashIntensity: 0,
+      showLeftGuide: false,
+      showRightGuide: false,
+      showTopGuide: false,
+      showBottomGuide: false,
     });
   }, [gestureState.activeItemId, gestureState.trashIntensity, setOverlays, haptic, onDelete]);
 

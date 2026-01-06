@@ -2,7 +2,7 @@
 
 export interface OverlayItem {
   id: string;
-  type: "text" | "sticker" | "image";
+  type: "text" | "sticker" | "image" | "widget";
   content: string;
   x: number; // 0-1 relative position
   y: number;
@@ -15,6 +15,9 @@ export interface OverlayItem {
   textAlign?: "left" | "center" | "right";
   fontStyle?: string;
   clipShape?: "rect" | "circle" | "rounded";
+  // Widget-specific config
+  widgetType?: string;
+  widgetConfig?: Record<string, any>;
 }
 
 export interface GestureState {
