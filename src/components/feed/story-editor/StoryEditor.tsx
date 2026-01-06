@@ -337,17 +337,18 @@ export function StoryEditor({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] bg-black flex"
+        className="fixed inset-0 z-[200] bg-black"
       >
-        {/* Canvas Area */}
+        {/* Canvas Area - Full Screen */}
         <div
           ref={containerRef}
-          className="flex-1 relative flex items-center justify-center"
+          className="absolute inset-0 flex items-center justify-center"
           onClick={handleCanvasTap}
           onTouchEnd={handleCanvasTap}
         >
+          {/* Canvas Container */}
           <div
-            className="relative"
+            className="relative overflow-hidden"
             style={{
               width: CANVAS_WIDTH * scale,
               height: CANVAS_HEIGHT * scale,
@@ -356,8 +357,10 @@ export function StoryEditor({
           >
             <canvas
               ref={canvasRef}
-              className="touch-none"
+              className="touch-none block"
               style={{
+                width: CANVAS_WIDTH,
+                height: CANVAS_HEIGHT,
                 transform: `scale(${scale})`,
                 transformOrigin: 'top left',
               }}
@@ -370,87 +373,61 @@ export function StoryEditor({
             isHovering={isOverTrash}
             onDrop={() => {}}
           />
+        </div>
 
-          {/* Top Bar - Minimal */}
-          <div
-            className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 z-50"
-            style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
+        {/* Top Bar - Fixed */}
+        <div
+          className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 z-50"
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}
+        >
+          {/* Close */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={handleClose}
+            className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl flex items-center justify-center"
           >
-            {/* Close */}
+            <X size={22} className="text-white" />
+          </motion.button>
+
+          {/* Undo/Redo */}
+          <div className="flex items-center gap-1 bg-black/50 backdrop-blur-xl rounded-full p-1">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={handleClose}
-              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center"
+              onClick={() => { haptic.light(); undo(); }}
+              disabled={!canUndo()}
+              className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-30"
             >
-              <X size={24} className="text-white" />
+              <Undo2 size={18} className="text-white" />
             </motion.button>
-
-            {/* Undo/Redo */}
-            <div className="flex items-center gap-1 bg-black/40 backdrop-blur-xl rounded-full p-1">
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => { haptic.light(); undo(); }}
-                disabled={!canUndo()}
-                className="w-9 h-9 rounded-full flex items-center justify-center disabled:opacity-30"
-              >
-                <Undo2 size={18} className="text-white" />
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => { haptic.light(); redo(); }}
-                disabled={!canRedo()}
-                className="w-9 h-9 rounded-full flex items-center justify-center disabled:opacity-30"
-              >
-                <Redo2 size={18} className="text-white" />
-              </motion.button>
-            </div>
-
-            {/* Download */}
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={handleDownload}
-              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center"
+              onClick={() => { haptic.light(); redo(); }}
+              disabled={!canRedo()}
+              className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-30"
             >
-              <Download size={20} className="text-white" />
+              <Redo2 size={18} className="text-white" />
             </motion.button>
           </div>
 
-          {/* Publish Button - Bottom Right */}
+          {/* Download */}
           <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={handlePublish}
-            disabled={isPublishing}
-            className="absolute bottom-6 right-4 h-12 px-6 rounded-full bg-white flex items-center gap-2 shadow-2xl z-50"
-            style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleDownload}
+            className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl flex items-center justify-center"
           >
-            {isPublishing ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full"
-              />
-            ) : (
-              <>
-                <span className="text-black font-semibold">Publicar</span>
-                <ChevronRight size={20} className="text-black" />
-              </>
-            )}
+            <Download size={18} className="text-white" />
           </motion.button>
         </div>
 
-        {/* Right Sidebar - Vertical Tools */}
+        {/* Right Sidebar - Vertical Tools - Positioned safely */}
         <div
-          className="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center gap-3 px-3 z-40"
-          style={{
-            paddingTop: 'max(env(safe-area-inset-top), 80px)',
-            paddingBottom: 'max(env(safe-area-inset-bottom), 100px)',
-          }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 z-40"
         >
           {[
-            { id: 'text', icon: Type, label: 'Texto' },
-            { id: 'stickers', icon: Smile, label: 'Stickers' },
-            { id: 'filters', icon: Sparkles, label: 'Filtros' },
-            { id: 'colors', icon: Palette, label: 'Colores' },
+            { id: 'text', icon: Type },
+            { id: 'stickers', icon: Smile },
+            { id: 'filters', icon: Sparkles },
+            { id: 'colors', icon: Palette },
           ].map((tool) => (
             <motion.button
               key={tool.id}
@@ -464,15 +441,41 @@ export function StoryEditor({
                   setActivePanel(activePanel === tool.id as any ? 'none' : tool.id as any);
                 }
               }}
-              className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all ${
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
                 activePanel === tool.id
                   ? 'bg-white text-black'
-                  : 'bg-black/40 backdrop-blur-xl text-white'
+                  : 'bg-black/50 backdrop-blur-xl text-white'
               }`}
             >
-              <tool.icon size={22} />
+              <tool.icon size={20} />
             </motion.button>
           ))}
+        </div>
+
+        {/* Publish Button - Bottom Center */}
+        <div
+          className="absolute bottom-0 left-0 right-0 flex justify-center pb-4 z-50"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}
+        >
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handlePublish}
+            disabled={isPublishing}
+            className="h-11 px-8 rounded-full bg-white flex items-center gap-2 shadow-2xl"
+          >
+            {isPublishing ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full"
+              />
+            ) : (
+              <>
+                <span className="text-black font-semibold text-sm">Publicar</span>
+                <ChevronRight size={18} className="text-black" />
+              </>
+            )}
+          </motion.button>
         </div>
 
         {/* Text Editor Overlay */}
