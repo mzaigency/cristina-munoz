@@ -123,6 +123,10 @@ export function PostCreator({ isOpen, onClose }: PostCreatorProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] bg-background"
+          style={{ 
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)'
+          }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
@@ -147,7 +151,7 @@ export function PostCreator({ isOpen, onClose }: PostCreatorProps) {
             </Button>
           </div>
 
-          <div className="flex flex-col h-[calc(100vh-60px)] overflow-y-auto">
+          <div className="flex flex-col flex-1 overflow-y-auto">
             {/* Image Section */}
             <div className="relative aspect-square bg-muted flex items-center justify-center">
               {imagePreview ? (
