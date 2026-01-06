@@ -1,14 +1,9 @@
-// Mobile Story Editor - Instagram-style
-export { MobileStoryEditorNew } from "./MobileStoryEditorNew";
-export { StoryCreatorFlow } from "./StoryCreatorFlow";
-export { useGestureEngine } from "./useGestureEngine";
-export { TopBarMinimal } from "./TopBarMinimal";
-export { ToolsSidebar } from "./ToolsSidebar";
-export { PublishBar } from "./PublishBar";
-export { TrashZone } from "./TrashZone";
-export { GuideLines } from "./GuideLines";
-export { TextEditorNew, type TextConfig } from "./TextEditorNew";
-export { DrawingCanvas } from "./DrawingCanvasNew";
-export { StickerDrawer } from "./stickers/StickerDrawer";
-export { publishStory, downloadStoryImage, flattenStoryLayers } from "./storyPublisher";
-export * from "./types";
+// Story Editor - Instagram-style with Fabric.js
+export { StoryEditor } from './StoryEditor';
+export { StoryCreatorFlow } from './StoryCreatorFlow';
+export { FabricCanvas } from './canvas/FabricCanvas';
+export { TopBar } from './toolbar/TopBar';
+export { BottomToolbar } from './toolbar/BottomToolbar';
+export { useEditorStore } from './store/useEditorStore';
+export { publishStory, publishStoryFromCanvas, downloadStoryImage } from './storyPublisher';
+export * from './store/types';

@@ -1,10 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { OverlayItem } from "./types";
 
 interface FlattenOptions {
   imageData: string;
-  overlays: OverlayItem[];
-  drawingDataUrl: string | null;
   width?: number;
   height?: number;
 }
@@ -26,11 +23,9 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-// Flatten all story layers into a single canvas
+// Flatten story to a single canvas
 export async function flattenStoryLayers({
   imageData,
-  overlays,
-  drawingDataUrl,
   width = 1080,
   height = 1920,
 }: FlattenOptions): Promise<HTMLCanvasElement> {
@@ -41,7 +36,7 @@ export async function flattenStoryLayers({
   
   if (!ctx) throw new Error("Could not get canvas context");
 
-  // 1. Draw background image
+  // Draw background image
   const bgImage = await loadImage(imageData);
   
   // Calculate cover fit
@@ -63,99 +58,6 @@ export async function flattenStoryLayers({
   }
   
   ctx.drawImage(bgImage, drawX, drawY, drawWidth, drawHeight);
-
-  // 2. Draw drawing layer
-  if (drawingDataUrl) {
-    const drawingImage = await loadImage(drawingDataUrl);
-    ctx.drawImage(drawingImage, 0, 0, width, height);
-  }
-
-  // 3. Draw overlays (text, stickers, images)
-  for (const item of overlays) {
-    const x = item.x * width;
-    const y = item.y * height;
-
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate((item.rotation * Math.PI) / 180);
-    ctx.scale(item.scale, item.scale);
-
-    if (item.type === "text" && item.content) {
-      // Text rendering
-      const fontSize = item.fontSize || 32;
-      ctx.font = `${fontSize}px ${item.fontFamily || "Inter"}`;
-      ctx.textAlign = (item.textAlign as CanvasTextAlign) || "center";
-      ctx.textBaseline = "middle";
-
-      // Background styles
-      if (item.backgroundColor === "solid" || item.backgroundColor === "translucent") {
-        const metrics = ctx.measureText(item.content);
-        const textWidth = metrics.width;
-        const textHeight = fontSize * 1.4;
-        const padding = 16;
-
-        if (item.backgroundColor === "solid") {
-          const isLight = item.color === "#FFFFFF" || item.color === "#FFCC00";
-          ctx.fillStyle = isLight ? "#000000" : "#FFFFFF";
-        } else {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        }
-
-        ctx.beginPath();
-        ctx.roundRect(
-          -textWidth / 2 - padding,
-          -textHeight / 2 - padding / 2,
-          textWidth + padding * 2,
-          textHeight + padding,
-          8
-        );
-        ctx.fill();
-      }
-
-      // Text shadow for normal text
-      if (item.backgroundColor === "none") {
-        ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
-        ctx.shadowBlur = 8;
-        ctx.shadowOffsetY = 2;
-      }
-
-      ctx.fillStyle = item.color || "#FFFFFF";
-      ctx.fillText(item.content, 0, 0);
-    } else if (item.type === "sticker" && item.content) {
-      // Emoji/sticker rendering
-      ctx.font = "64px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(item.content, 0, 0);
-    } else if (item.type === "image" && item.content) {
-      // Picture-in-picture rendering
-      try {
-        const pipImage = await loadImage(item.content);
-        const size = 150; // Base size
-        
-        ctx.save();
-        
-        // Apply clip shape
-        if (item.clipShape === "circle") {
-          ctx.beginPath();
-          ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
-          ctx.clip();
-        } else if (item.clipShape === "rounded") {
-          ctx.beginPath();
-          ctx.roundRect(-size / 2, -size / 2, size, size, 20);
-          ctx.clip();
-        }
-        
-        // Draw the image centered
-        ctx.drawImage(pipImage, -size / 2, -size / 2, size, size);
-        ctx.restore();
-      } catch (e) {
-        console.error("Error loading PiP image:", e);
-      }
-    }
-
-    ctx.restore();
-  }
 
   return canvas;
 }
@@ -246,63 +148,60 @@ export async function createStoryRecord(
   return data.id;
 }
 
-// Full publish flow for image stories
-export async function publishStory(
-  options: PublishOptions
+// Publish story with Fabric canvas
+export async function publishStoryFromCanvas(
+  canvasBlob: Blob,
+  tenantId: string,
+  caption?: string,
+  videoBlob?: Blob
 ): Promise<{ storyId: string; imageUrl: string; videoUrl?: string }> {
-  const { tenantId, caption, videoBlob } = options;
+  // Upload image to storage
+  const imageUrl = await uploadStoryImage(canvasBlob, tenantId);
   
-  // 1. Flatten all layers for thumbnail
-  const canvas = await flattenStoryLayers(options);
-  
-  // 2. Convert to blob
-  const imageBlob = await canvasToBlob(canvas);
-  
-  // 3. Upload thumbnail/image to storage
-  const imageUrl = await uploadStoryImage(imageBlob, tenantId);
-  
-  // 4. Upload video if present
+  // Upload video if present
   let videoUrl: string | undefined;
   if (videoBlob) {
     videoUrl = await uploadStoryVideo(videoBlob, tenantId);
   }
   
-  // 5. Create database record
+  // Create database record
   const storyType = videoBlob ? "video" : "image";
   const storyId = await createStoryRecord(tenantId, imageUrl, storyType, videoUrl, caption);
   
   return { storyId, imageUrl, videoUrl };
 }
 
-// Publish video story from blob URL
-export async function publishVideoStory(
-  tenantId: string,
-  videoObjectUrl: string,
-  thumbnailDataUrl: string,
-  caption?: string
-): Promise<{ storyId: string; imageUrl: string; videoUrl: string }> {
-  // 1. Fetch the video blob from object URL
-  const videoResponse = await fetch(videoObjectUrl);
-  const videoBlob = await videoResponse.blob();
+// Full publish flow for image stories (legacy)
+export async function publishStory(
+  options: PublishOptions
+): Promise<{ storyId: string; imageUrl: string; videoUrl?: string }> {
+  const { tenantId, caption, videoBlob } = options;
   
-  // 2. Create thumbnail blob from data URL
-  const thumbnailBlob = await fetch(thumbnailDataUrl).then(r => r.blob());
+  // Flatten all layers for thumbnail
+  const canvas = await flattenStoryLayers(options);
   
-  // 3. Upload thumbnail
-  const imageUrl = await uploadStoryImage(thumbnailBlob, tenantId);
+  // Convert to blob
+  const imageBlob = await canvasToBlob(canvas);
   
-  // 4. Upload video
-  const videoUrl = await uploadStoryVideo(videoBlob, tenantId);
+  // Upload thumbnail/image to storage
+  const imageUrl = await uploadStoryImage(imageBlob, tenantId);
   
-  // 5. Create database record
-  const storyId = await createStoryRecord(tenantId, imageUrl, "video", videoUrl, caption);
+  // Upload video if present
+  let videoUrl: string | undefined;
+  if (videoBlob) {
+    videoUrl = await uploadStoryVideo(videoBlob, tenantId);
+  }
+  
+  // Create database record
+  const storyType = videoBlob ? "video" : "image";
+  const storyId = await createStoryRecord(tenantId, imageUrl, storyType, videoUrl, caption);
   
   return { storyId, imageUrl, videoUrl };
 }
 
 // Download story as image (for local save)
-export async function downloadStoryImage(options: FlattenOptions, filename: string): Promise<void> {
-  const canvas = await flattenStoryLayers(options);
+export async function downloadStoryImage(imageData: string, filename: string): Promise<void> {
+  const canvas = await flattenStoryLayers({ imageData });
   const blob = await canvasToBlob(canvas);
   
   const url = URL.createObjectURL(blob);
