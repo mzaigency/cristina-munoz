@@ -161,8 +161,8 @@ const SuperAdmin = () => {
           </button>)}
       </nav>
     </>;
-  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
-      <div className="flex h-screen overflow-hidden">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div className="flex h-screen overflow-hidden" style={{ height: 'calc(100vh - env(safe-area-inset-top))' }}>
         {/* Desktop Sidebar */}
         {!isMobile && <motion.aside initial={false} animate={{
         width: sidebarCollapsed ? 72 : 240
@@ -192,9 +192,7 @@ const SuperAdmin = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Top Header */}
-          <header className="h-14 md:h-16 border-b border-border/50 bg-card/30 backdrop-blur-xl flex items-center justify-between px-3 md:px-6" style={{
-          paddingTop: "env(safe-area-inset-top)"
-        }}>
+          <header className="h-14 md:h-16 border-b border-border/50 bg-card/30 backdrop-blur-xl flex items-center justify-between px-3 md:px-6">
             <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
               {/* Mobile Menu Button */}
               {isMobile && <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -242,7 +240,7 @@ const SuperAdmin = () => {
           </header>
 
           {/* Content Area */}
-          <main className="flex-1 overflow-y-auto p-3 md:p-6 safe-area-bottom">
+          <main className="flex-1 overflow-y-auto p-3 md:p-6" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{
               opacity: 0,
