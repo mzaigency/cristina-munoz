@@ -1,8 +1,10 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { Canvas, FabricImage, Rect, Circle, Textbox, FabricObject, Triangle, Line, Shadow } from 'fabric';
 import { useEditorStore } from '../store/useEditorStore';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, SAFE_ZONE } from '../utils/constants';
 import { loadFont } from '../utils/fontLoader';
+import { TrashZone } from '../components/TrashZone';
+import { useHaptic } from '@/hooks/useHaptic';
 import type { EditorElement, ShapeType } from '../store/types';
 
 interface FabricCanvasProps {
@@ -15,16 +17,35 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const [scale, setScale] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isOverTrash, setIsOverTrash] = useState(false);
+  const draggedObjectRef = useRef<FabricObject | null>(null);
+  const haptic = useHaptic();
 
   const {
-    elements,
     selectedElementId,
     showSafeZones,
     zoom,
     selectElement,
     updateElement,
+    deleteElement,
     saveToHistory,
   } = useEditorStore();
+
+  // Handle delete when dropped on trash
+  const handleTrashDrop = useCallback(() => {
+    if (draggedObjectRef.current && selectedElementId) {
+      const canvas = fabricRef.current;
+      if (canvas) {
+        canvas.remove(draggedObjectRef.current);
+        deleteElement(selectedElementId);
+        haptic.success();
+      }
+    }
+    setIsDragging(false);
+    setIsOverTrash(false);
+    draggedObjectRef.current = null;
+  }, [selectedElementId, deleteElement, haptic]);
 
   // Initialize canvas
   useEffect(() => {
@@ -38,18 +59,27 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
       preserveObjectStacking: true,
       renderOnAddRemove: true,
       enableRetinaScaling: true,
+      allowTouchScrolling: false,
     });
 
-    // Configure object controls (iOS style)
+    // Configure object controls (iOS style - minimalist and clean)
     FabricObject.prototype.set({
       cornerColor: '#FFFFFF',
-      cornerStrokeColor: '#007AFF',
-      cornerSize: 14,
+      cornerStrokeColor: 'rgba(0, 122, 255, 0.8)',
+      cornerSize: 16,
       transparentCorners: false,
       cornerStyle: 'circle',
-      borderColor: '#007AFF',
-      borderScaleFactor: 2,
-      padding: 10,
+      borderColor: 'rgba(0, 122, 255, 0.6)',
+      borderScaleFactor: 1.5,
+      padding: 12,
+      rotatingPointOffset: 50,
+      lockScalingFlip: true,
+    });
+
+    // Custom control styling for iOS feel
+    FabricObject.prototype.set({
+      borderDashArray: [0],
+      borderOpacityWhenMoving: 0.4,
     });
 
     fabricRef.current = canvas;
@@ -60,6 +90,7 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
       const selected = e.selected?.[0];
       if (selected?.get('id')) {
         selectElement(selected.get('id') as string);
+        haptic.selection();
       }
     });
 
@@ -67,6 +98,7 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
       const selected = e.selected?.[0];
       if (selected?.get('id')) {
         selectElement(selected.get('id') as string);
+        haptic.selection();
       }
     });
 
@@ -74,8 +106,46 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
       selectElement(null);
     });
 
+    // Drag start - show trash zone
+    canvas.on('object:moving', (e) => {
+      const obj = e.target;
+      if (!obj) return;
+
+      // First move triggers drag start
+      if (!draggedObjectRef.current && obj) {
+        setIsDragging(true);
+        draggedObjectRef.current = obj;
+        haptic.light();
+      }
+
+      // Check if over trash zone (bottom 20% of canvas)
+      const objCenterY = (obj.top || 0) + (obj.getScaledHeight() / 2);
+      const normalizedY = objCenterY / CANVAS_HEIGHT;
+      
+      const nowOverTrash = normalizedY > 0.8;
+      
+      setIsOverTrash((prev) => {
+        if (nowOverTrash !== prev) {
+          if (nowOverTrash) {
+            haptic.warning();
+          }
+        }
+        return nowOverTrash;
+      });
+
+      // Update store
+      if (obj.get('id')) {
+        updateElement(obj.get('id') as string, {
+          x: obj.left || 0,
+          y: obj.top || 0,
+        });
+      }
+    });
+
     canvas.on('object:modified', (e) => {
       const obj = e.target;
+      
+      // Normal modification
       if (obj?.get('id')) {
         updateElement(obj.get('id') as string, {
           x: obj.left || 0,
@@ -88,6 +158,9 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
         });
         saveToHistory();
       }
+
+      setIsDragging(false);
+      draggedObjectRef.current = null;
     });
 
     canvas.on('object:scaling', (e) => {
@@ -109,25 +182,25 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
           rotation: obj.angle || 0,
         });
       }
+      haptic.light();
     });
 
-    canvas.on('object:moving', (e) => {
-      const obj = e.target;
-      if (obj?.get('id')) {
-        updateElement(obj.get('id') as string, {
-          x: obj.left || 0,
-          y: obj.top || 0,
-        });
+    // Touch-optimized: Double tap to edit text
+    let lastTap = 0;
+    canvas.on('mouse:down', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 300 && e.target instanceof Textbox) {
+        e.target.enterEditing();
+        e.target.selectAll();
+        haptic.light();
       }
+      lastTap = now;
     });
 
-    // Double click to edit text
-    canvas.on('mouse:dblclick', (e) => {
-      const target = e.target;
-      if (target && target instanceof Textbox) {
-        target.enterEditing();
-        target.selectAll();
-      }
+    // Cancel drag on touch end without move
+    canvas.on('mouse:up', () => {
+      setIsDragging(false);
+      draggedObjectRef.current = null;
     });
 
     return () => {
@@ -135,6 +208,13 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
       fabricRef.current = null;
     };
   }, []);
+
+  // Handle trash drop when isOverTrash changes and dragging ends
+  useEffect(() => {
+    if (!isDragging && isOverTrash && draggedObjectRef.current) {
+      handleTrashDrop();
+    }
+  }, [isDragging, isOverTrash, handleTrashDrop]);
 
   // Load background image
   useEffect(() => {
@@ -145,19 +225,18 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
       // Scale to cover canvas
       const scaleX = CANVAS_WIDTH / img.width!;
       const scaleY = CANVAS_HEIGHT / img.height!;
-      const scale = Math.max(scaleX, scaleY);
+      const imgScale = Math.max(scaleX, scaleY);
 
       img.set({
-        scaleX: scale,
-        scaleY: scale,
-        left: (CANVAS_WIDTH - img.width! * scale) / 2,
-        top: (CANVAS_HEIGHT - img.height! * scale) / 2,
+        scaleX: imgScale,
+        scaleY: imgScale,
+        left: (CANVAS_WIDTH - img.width! * imgScale) / 2,
+        top: (CANVAS_HEIGHT - img.height! * imgScale) / 2,
         selectable: false,
         evented: false,
         excludeFromExport: false,
       });
 
-      // Set as background
       canvas.backgroundImage = img;
       canvas.renderAll();
     });
@@ -171,7 +250,6 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
       const containerWidth = containerRef.current.clientWidth;
       const containerHeight = containerRef.current.clientHeight;
       
-      // Calculate scale to fit container while maintaining aspect ratio
       const scaleX = containerWidth / CANVAS_WIDTH;
       const scaleY = containerHeight / CANVAS_HEIGHT;
       const newScale = Math.min(scaleX, scaleY) * zoom;
@@ -191,27 +269,22 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
     return (
       <div 
         className="absolute inset-0 pointer-events-none"
-        style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
+        style={{ 
+          width: CANVAS_WIDTH,
+          height: CANVAS_HEIGHT,
+          transform: `scale(${scale})`, 
+          transformOrigin: 'top left' 
+        }}
       >
         {/* Top safe zone */}
         <div 
-          className="absolute left-0 right-0 top-0 bg-red-500/10 border-b border-dashed border-red-500/30"
+          className="absolute left-0 right-0 top-0 bg-red-500/5 border-b border-dashed border-red-500/20"
           style={{ height: SAFE_ZONE.top }}
         />
         {/* Bottom safe zone */}
         <div 
-          className="absolute left-0 right-0 bottom-0 bg-red-500/10 border-t border-dashed border-red-500/30"
+          className="absolute left-0 right-0 bottom-0 bg-red-500/5 border-t border-dashed border-red-500/20"
           style={{ height: SAFE_ZONE.bottom }}
-        />
-        {/* Left safe zone */}
-        <div 
-          className="absolute left-0 top-0 bottom-0 bg-red-500/10 border-r border-dashed border-red-500/30"
-          style={{ width: SAFE_ZONE.left }}
-        />
-        {/* Right safe zone */}
-        <div 
-          className="absolute right-0 top-0 bottom-0 bg-red-500/10 border-l border-dashed border-red-500/30"
-          style={{ width: SAFE_ZONE.right }}
         />
       </div>
     );
@@ -231,6 +304,7 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
       >
         <canvas
           ref={canvasRef}
+          className="touch-none"
           style={{
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
@@ -238,6 +312,13 @@ export function FabricCanvas({ backgroundImage, onReady }: FabricCanvasProps) {
         />
         {renderSafeZones()}
       </div>
+
+      {/* Trash Zone */}
+      <TrashZone
+        isVisible={isDragging}
+        isHovering={isOverTrash}
+        onDrop={handleTrashDrop}
+      />
     </div>
   );
 }
@@ -250,7 +331,6 @@ export function addTextToCanvas(
 ): FabricObject {
   const fontFamily = options.fontFamily || 'Inter';
   
-  // Ensure font is loaded
   loadFont(fontFamily);
 
   const textbox = new Textbox(text, {
@@ -259,8 +339,8 @@ export function addTextToCanvas(
     originX: 'center',
     originY: 'center',
     fontFamily,
-    fontSize: options.fontSize || 48,
-    fontWeight: options.fontWeight || 400,
+    fontSize: options.fontSize || 56,
+    fontWeight: options.fontWeight || 600,
     fill: options.fill || '#FFFFFF',
     textAlign: options.textAlign || 'center',
     width: 800,
@@ -273,12 +353,16 @@ export function addTextToCanvas(
           offsetY: options.textShadow.offsetY,
         }) 
       : new Shadow({
-          color: 'rgba(0,0,0,0.5)',
-          blur: 8,
+          color: 'rgba(0,0,0,0.4)',
+          blur: 12,
           offsetX: 0,
-          offsetY: 2,
+          offsetY: 4,
         }),
+    charSpacing: 20,
   });
+
+  const id = `text_${Date.now()}`;
+  textbox.set('id', id);
 
   canvas.add(textbox);
   canvas.setActiveObject(textbox);
@@ -335,11 +419,14 @@ export function addShapeToCanvas(
         ...baseOptions,
         width: 200,
         height: 200,
-        rx: options.borderRadius || 0,
-        ry: options.borderRadius || 0,
+        rx: options.borderRadius || 16,
+        ry: options.borderRadius || 16,
       });
       break;
   }
+
+  const id = `shape_${Date.now()}`;
+  shape.set('id', id);
 
   canvas.add(shape);
   canvas.setActiveObject(shape);
@@ -358,10 +445,13 @@ export function addStickerToCanvas(
     top: CANVAS_HEIGHT / 2,
     originX: 'center',
     originY: 'center',
-    fontSize: 80,
-    fontFamily: 'Arial',
+    fontSize: 100,
+    fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif',
     editable: false,
   });
+
+  const id = `sticker_${Date.now()}`;
+  text.set('id', id);
 
   canvas.add(text);
   canvas.setActiveObject(text);
@@ -377,18 +467,20 @@ export async function addImageToCanvas(
 ): Promise<FabricObject> {
   const img = await FabricImage.fromURL(imageUrl, { crossOrigin: 'anonymous' });
   
-  // Scale to reasonable size
   const maxSize = 400;
-  const scale = Math.min(maxSize / img.width!, maxSize / img.height!);
+  const imgScale = Math.min(maxSize / img.width!, maxSize / img.height!);
   
   img.set({
     left: CANVAS_WIDTH / 2,
     top: CANVAS_HEIGHT / 2,
     originX: 'center',
     originY: 'center',
-    scaleX: scale,
-    scaleY: scale,
+    scaleX: imgScale,
+    scaleY: imgScale,
   });
+
+  const id = `image_${Date.now()}`;
+  img.set('id', id);
 
   canvas.add(img);
   canvas.setActiveObject(img);
