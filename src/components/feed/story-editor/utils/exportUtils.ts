@@ -3,17 +3,26 @@
 import type { Canvas as FabricCanvas } from 'fabric';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, EXPORT_SETTINGS } from './constants';
 
-// Export canvas as JPEG
+// Export canvas as JPEG - reset viewport to get full resolution
 export async function exportAsJPG(canvas: FabricCanvas): Promise<Blob> {
   return new Promise((resolve, reject) => {
     try {
-      // Get the canvas element
+      // Save current viewport
+      const currentVpt = canvas.viewportTransform?.slice() || [1, 0, 0, 1, 0, 0];
+      
+      // Reset to identity for export at full resolution
+      canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      
+      // Get the canvas element at full resolution
       const canvasElement = canvas.toCanvasElement(1, {
         width: CANVAS_WIDTH,
         height: CANVAS_HEIGHT,
         left: 0,
         top: 0,
       });
+
+      // Restore viewport
+      canvas.setViewportTransform(currentVpt as [number, number, number, number, number, number]);
 
       canvasElement.toBlob(
         (blob) => {

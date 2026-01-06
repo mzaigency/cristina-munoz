@@ -85,7 +85,17 @@ export function StoryEditor({
       const containerHeight = containerRef.current.clientHeight;
       const scaleX = containerWidth / CANVAS_WIDTH;
       const scaleY = containerHeight / CANVAS_HEIGHT;
-      setScale(Math.min(scaleX, scaleY));
+      const newScale = Math.min(scaleX, scaleY, 1); // Max 1 to not upscale
+      setScale(newScale);
+      
+      // Update Fabric canvas viewport transform for proper scaling
+      if (fabricRef.current) {
+        fabricRef.current.setDimensions({
+          width: CANVAS_WIDTH * newScale,
+          height: CANVAS_HEIGHT * newScale,
+        });
+        fabricRef.current.setViewportTransform([newScale, 0, 0, newScale, 0, 0]);
+      }
     };
     updateScale();
     window.addEventListener('resize', updateScale);
@@ -183,7 +193,7 @@ export function StoryEditor({
     };
   }, [isOpen, haptic, isOverTrash, saveToHistory]);
 
-  // Load background into Fabric (for export/publish)
+  // Load background into Fabric (for export/publish) and apply scale
   useEffect(() => {
     const canvas = fabricRef.current;
     if (!canvas || !backgroundImage || !isOpen) return;
@@ -205,13 +215,19 @@ export function StoryEditor({
 
         canvas.backgroundColor = 'transparent';
         canvas.backgroundImage = img;
+        
+        // Apply current scale
+        canvas.setDimensions({
+          width: CANVAS_WIDTH * scale,
+          height: CANVAS_HEIGHT * scale,
+        });
+        canvas.setViewportTransform([scale, 0, 0, scale, 0, 0]);
         canvas.requestRenderAll();
       })
       .catch((err) => {
         console.error('Error loading story background:', err);
-        toast.error('No se pudo cargar la imagen');
       });
-  }, [backgroundImage, isOpen]);
+  }, [backgroundImage, isOpen, scale]);
 
   // Handle canvas tap - open text editor
   const handleCanvasTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -358,24 +374,25 @@ export function StoryEditor({
             style={{
               width: CANVAS_WIDTH * scale,
               height: CANVAS_HEIGHT * scale,
+              filter: getFilterStyle(),
             }}
           >
-            {/* Always show the photo via DOM (avoids black screen while Fabric loads) */}
+            {/* Background image as fallback while Fabric loads */}
             <img
               src={backgroundImage}
               alt="Foto para editar"
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-              style={{ filter: getFilterStyle() }}
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none z-0"
               loading="eager"
               decoding="async"
             />
 
+            {/* Fabric canvas for editing - on top */}
             <canvas
               ref={canvasRef}
-              className="touch-none block absolute inset-0"
+              className="touch-none block absolute inset-0 z-10"
               style={{
-                transform: `scale(${scale})`,
-                transformOrigin: 'top left',
+                width: CANVAS_WIDTH * scale,
+                height: CANVAS_HEIGHT * scale,
               }}
             />
           </div>
