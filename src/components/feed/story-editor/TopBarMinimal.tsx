@@ -25,7 +25,12 @@ export function TopBarMinimal({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),16px)] pb-3"
+      className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between pb-3"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 16px)',
+        paddingLeft: 'max(env(safe-area-inset-left), 16px)',
+        paddingRight: 'max(env(safe-area-inset-right), 16px)'
+      }}
     >
       {/* Left: Close */}
       <button
