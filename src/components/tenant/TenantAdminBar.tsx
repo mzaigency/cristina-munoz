@@ -19,7 +19,10 @@ export const TenantAdminBar = ({
   const navigate = useNavigate();
 
   return (
-    <div className="fixed bottom-6 right-6 z-[60] flex flex-col gap-2">
+    <div 
+      className="fixed right-6 z-[60] flex flex-col gap-2"
+      style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+    >
       {/* Edit Mode Toggle - Only for admins */}
       {isAdmin && (
         <Button

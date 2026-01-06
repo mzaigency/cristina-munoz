@@ -25,7 +25,13 @@ const NotFound = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/20 flex items-center justify-center p-4">
+    <div 
+      className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/20 flex items-center justify-center p-4"
+      style={{ 
+        paddingTop: 'max(1rem, env(safe-area-inset-top))', 
+        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' 
+      }}
+    >
       <div className="max-w-lg w-full text-center space-y-8">
         {/* Logo */}
         <motion.div

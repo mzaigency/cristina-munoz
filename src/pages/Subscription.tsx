@@ -140,7 +140,10 @@ export default function Subscription() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div 
+      className="min-h-screen bg-background"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       {/* Safe area spacer for iPhone */}
       <div style={{ paddingTop: "env(safe-area-inset-top)" }} />
       <div className="container max-w-4xl mx-auto px-4 py-8">

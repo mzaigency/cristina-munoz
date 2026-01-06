@@ -215,9 +215,18 @@ const TenantLanding = () => {
       buttonStyle={tenant.button_style}
     >
       <div className="min-h-screen bg-background overflow-x-hidden">
+        {/* Safe area spacer for top notch */}
+        <div 
+          className="fixed top-0 left-0 right-0 bg-background z-[99]" 
+          style={{ height: 'env(safe-area-inset-top)' }} 
+        />
+        
         {/* Preview Banner */}
         {isPreview && (
-          <div className="fixed top-0 left-0 right-0 z-[100] bg-yellow-500 text-yellow-900 text-center py-2 text-sm font-medium">
+          <div 
+            className="fixed left-0 right-0 z-[100] bg-yellow-500 text-yellow-900 text-center py-2 text-sm font-medium"
+            style={{ top: 'env(safe-area-inset-top)' }}
+          >
             Vista previa - Esta página no está publicada
             <meta name="robots" content="noindex, nofollow" />
           </div>

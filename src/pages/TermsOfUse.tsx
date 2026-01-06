@@ -169,7 +169,10 @@ export default function TermsOfUse() {
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-border/50 py-6 mt-12">
+        <footer 
+          className="border-t border-border/50 py-6 mt-12"
+          style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
+        >
           <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} Todos los derechos reservados.</p>
             <div className="flex justify-center gap-4 mt-2">
