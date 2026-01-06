@@ -289,13 +289,78 @@
     transform: scale(0.95);
   }
 
-  /* Safe area padding */
+  /* Safe area utilities for iPhone notch and home indicator */
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
   }
 
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .safe-area-inset {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Safe area with margin instead of padding */
+  .safe-area-top-margin {
+    margin-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom-margin {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Fixed header/footer with safe area */
+  .fixed-header-safe {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding-top: env(safe-area-inset-top);
+    z-index: 50;
+  }
+
+  .fixed-footer-safe {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 50;
+  }
+
+  /* Sticky header with safe area */
+  .sticky-header-safe {
+    position: sticky;
+    top: 0;
+    padding-top: env(safe-area-inset-top);
+    z-index: 50;
+  }
+
+  /* Content area that accounts for fixed navigation */
+  .content-with-nav {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
+  /* Minimum height accounting for safe areas */
+  .min-h-safe {
+    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+
+  .h-screen-safe {
+    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   }
 
   /* Glass morphism effect */
