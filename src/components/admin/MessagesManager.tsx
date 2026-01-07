@@ -50,50 +50,36 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
     }
   };
 
-  const handleSearchUser = async () => {
-    if (!searchUsername.trim() || searchUsername.trim().length < 2) {
-      toast({
-        title: 'Búsqueda inválida',
-        description: 'Escribe al menos 2 caracteres para buscar',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSearching(true);
-    setSearchResults([]);
-    try {
-      const searchTerm = searchUsername.trim().toLowerCase();
-      
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, email, avatar_url')
-        .or(`username.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`)
-        .limit(10);
-
-      if (error) throw error;
-
-      if (!profiles || profiles.length === 0) {
-        toast({
-          title: 'Sin resultados',
-          description: 'No se encontraron usuarios con ese nombre',
-          variant: 'destructive',
-        });
+  // Real-time search as user types
+  useEffect(() => {
+    const searchUsers = async () => {
+      const term = searchUsername.trim();
+      if (term.length < 2) {
+        setSearchResults([]);
         return;
       }
 
-      setSearchResults(profiles);
-    } catch (error) {
-      console.error('Error searching users:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo buscar usuarios',
-        variant: 'destructive',
-      });
-    } finally {
-      setSearching(false);
-    }
-  };
+      setSearching(true);
+      try {
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, email, avatar_url')
+          .or(`username.ilike.%${term}%,full_name.ilike.%${term}%`)
+          .limit(10);
+
+        if (error) throw error;
+        setSearchResults(profiles || []);
+      } catch (error) {
+        console.error('Error searching users:', error);
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchUsers, 300);
+    return () => clearTimeout(debounce);
+  }, [searchUsername]);
 
   const handleSelectUser = async (profile: any) => {
     try {
@@ -177,23 +163,16 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
                       <label className="text-sm font-medium mb-2 block">
                         Buscar cliente por nombre o username
                       </label>
-                      <div className="flex flex-col gap-2">
-                        <Input
-                          type="text"
-                          placeholder="Nombre o @username"
-                          value={searchUsername}
-                          onChange={(e) => setSearchUsername(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSearchUser()}
-                          className="h-12"
-                        />
-                        <Button 
-                          onClick={handleSearchUser} 
-                          disabled={searching}
-                          className="h-12 w-full"
-                        >
-                          {searching ? 'Buscando...' : 'Buscar cliente'}
-                        </Button>
-                      </div>
+                      <Input
+                        type="text"
+                        placeholder="Nombre o @username"
+                        value={searchUsername}
+                        onChange={(e) => setSearchUsername(e.target.value)}
+                        className="h-12"
+                      />
+                      {searching && (
+                        <p className="text-xs text-muted-foreground">Buscando...</p>
+                      )}
                       <p className="text-xs text-muted-foreground mt-2">
                         El cliente debe tener una cuenta registrada
                       </p>
@@ -290,18 +269,15 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
                 <label className="text-sm font-medium mb-2 block">
                   Buscar cliente por nombre o username
                 </label>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    placeholder="Nombre o @username"
-                    value={searchUsername}
-                    onChange={(e) => setSearchUsername(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearchUser()}
-                  />
-                  <Button onClick={handleSearchUser} disabled={searching}>
-                    {searching ? 'Buscando...' : 'Buscar'}
-                  </Button>
-                </div>
+                <Input
+                  type="text"
+                  placeholder="Nombre o @username"
+                  value={searchUsername}
+                  onChange={(e) => setSearchUsername(e.target.value)}
+                />
+                {searching && (
+                  <p className="text-xs text-muted-foreground">Buscando...</p>
+                )}
                 <p className="text-xs text-muted-foreground mt-2">
                   El cliente debe tener una cuenta registrada
                 </p>
