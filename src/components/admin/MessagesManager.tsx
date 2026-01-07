@@ -189,9 +189,17 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
                               onClick={() => handleSelectUser(profile)}
                               className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
                             >
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                                {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
-                              </div>
+                              {profile.avatar_url ? (
+                                <img 
+                                  src={profile.avatar_url} 
+                                  alt="" 
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                                  {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
+                                </div>
+                              )}
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium truncate">
                                   {profile.full_name || profile.username || 'Usuario'}
@@ -294,9 +302,17 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
                         onClick={() => handleSelectUser(profile)}
                         className="w-full flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
                       >
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
-                          {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
-                        </div>
+                        {profile.avatar_url ? (
+                          <img 
+                            src={profile.avatar_url} 
+                            alt="" 
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
+                            {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate text-sm">
                             {profile.full_name || profile.username || 'Usuario'}
