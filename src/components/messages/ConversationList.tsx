@@ -224,12 +224,12 @@ export function ConversationList({
                         </span>
                       </div>
 
-                      {/* Fila 2: Mensaje + Badge no leídos */}
+                      {/* Fila 2: Mensaje */}
                       <div className="flex items-center gap-2 mt-0.5">
                         <p
                           className={cn(
                             'flex-1 truncate text-[13px] leading-tight',
-                            hasUnread ? 'text-foreground/70' : 'text-muted-foreground/60'
+                            hasUnread ? 'text-foreground/70' : 'text-muted-foreground/50'
                           )}
                         >
                           {conv.last_message ? (
