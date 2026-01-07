@@ -21,8 +21,9 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
   const [user, setUser] = useState<any>(null);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [newMessageDialog, setNewMessageDialog] = useState(false);
-  const [searchEmail, setSearchEmail] = useState('');
+  const [searchUsername, setSearchUsername] = useState('');
   const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   const { conversations, loading: loadingConversations, refetch } = useConversations('salon', tenantId);
   const { messages, loading: loadingMessages, sendMessage, markAsRead } = useMessages(
@@ -49,26 +50,53 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
     }
   };
 
-  const handleStartConversation = async () => {
-    if (!searchEmail.trim()) return;
+  const handleSearchUser = async () => {
+    if (!searchUsername.trim() || searchUsername.trim().length < 2) {
+      toast({
+        title: 'Búsqueda inválida',
+        description: 'Escribe al menos 2 caracteres para buscar',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setSearching(true);
+    setSearchResults([]);
     try {
-      const { data: profile, error } = await supabase
+      const searchTerm = searchUsername.trim().toLowerCase();
+      
+      const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, email, full_name')
-        .eq('email', searchEmail.trim().toLowerCase())
-        .single();
+        .select('id, username, full_name, email, avatar_url')
+        .or(`username.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`)
+        .limit(10);
 
-      if (error || !profile) {
+      if (error) throw error;
+
+      if (!profiles || profiles.length === 0) {
         toast({
-          title: 'Usuario no encontrado',
-          description: 'No se encontró ningún usuario con ese email',
+          title: 'Sin resultados',
+          description: 'No se encontraron usuarios con ese nombre',
           variant: 'destructive',
         });
         return;
       }
 
+      setSearchResults(profiles);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo buscar usuarios',
+        variant: 'destructive',
+      });
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSelectUser = async (profile: any) => {
+    try {
       const conversationId = await getOrCreateConversation(tenantId, profile.id);
       
       if (conversationId) {
@@ -78,10 +106,11 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
           setSelectedConversation(newConv);
         }
         setNewMessageDialog(false);
-        setSearchEmail('');
+        setSearchUsername('');
+        setSearchResults([]);
         toast({
           title: 'Conversación creada',
-          description: `Ahora puedes enviar mensajes a ${profile.full_name || profile.email}`,
+          description: `Ahora puedes enviar mensajes a ${profile.full_name || profile.username || profile.email}`,
         });
       }
     } catch (error) {
@@ -91,8 +120,6 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
         description: 'No se pudo iniciar la conversación',
         variant: 'destructive',
       });
-    } finally {
-      setSearching(false);
     }
   };
 
@@ -148,19 +175,19 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
                   <div className="space-y-4 pt-4">
                     <div>
                       <label className="text-sm font-medium mb-2 block">
-                        Email del cliente
+                        Buscar cliente por nombre o username
                       </label>
                       <div className="flex flex-col gap-2">
                         <Input
-                          type="email"
-                          placeholder="cliente@email.com"
-                          value={searchEmail}
-                          onChange={(e) => setSearchEmail(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleStartConversation()}
+                          type="text"
+                          placeholder="Nombre o @username"
+                          value={searchUsername}
+                          onChange={(e) => setSearchUsername(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSearchUser()}
                           className="h-12"
                         />
                         <Button 
-                          onClick={handleStartConversation} 
+                          onClick={handleSearchUser} 
                           disabled={searching}
                           className="h-12 w-full"
                         >
@@ -171,6 +198,36 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
                         El cliente debe tener una cuenta registrada
                       </p>
                     </div>
+                    
+                    {/* Search Results */}
+                    {searchResults.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Resultados:</p>
+                        <div className="max-h-[200px] overflow-y-auto space-y-1">
+                          {searchResults.map((profile) => (
+                            <button
+                              key={profile.id}
+                              onClick={() => handleSelectUser(profile)}
+                              className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
+                            >
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                                {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">
+                                  {profile.full_name || profile.username || 'Usuario'}
+                                </p>
+                                {profile.username && (
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    @{profile.username}
+                                  </p>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </DialogContent>
               </Dialog>
@@ -231,17 +288,17 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
             <div className="space-y-4 pt-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Email del cliente
+                  Buscar cliente por nombre o username
                 </label>
                 <div className="flex gap-2">
                   <Input
-                    type="email"
-                    placeholder="cliente@email.com"
-                    value={searchEmail}
-                    onChange={(e) => setSearchEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleStartConversation()}
+                    type="text"
+                    placeholder="Nombre o @username"
+                    value={searchUsername}
+                    onChange={(e) => setSearchUsername(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearchUser()}
                   />
-                  <Button onClick={handleStartConversation} disabled={searching}>
+                  <Button onClick={handleSearchUser} disabled={searching}>
                     {searching ? 'Buscando...' : 'Buscar'}
                   </Button>
                 </div>
@@ -249,6 +306,36 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
                   El cliente debe tener una cuenta registrada
                 </p>
               </div>
+              
+              {/* Search Results */}
+              {searchResults.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Resultados:</p>
+                  <div className="max-h-[200px] overflow-y-auto space-y-1">
+                    {searchResults.map((profile) => (
+                      <button
+                        key={profile.id}
+                        onClick={() => handleSelectUser(profile)}
+                        className="w-full flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
+                          {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate text-sm">
+                            {profile.full_name || profile.username || 'Usuario'}
+                          </p>
+                          {profile.username && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              @{profile.username}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
