@@ -186,12 +186,18 @@ export function ConversationList({
                       'transition-colors duration-150 active:bg-muted/50',
                       'focus:outline-none focus-visible:bg-muted/30',
                       isSelected ? 'bg-muted/40' : 'hover:bg-muted/20',
-                      isFocused && !isSelected && 'bg-muted/15'
+                      isFocused && !isSelected && 'bg-muted/15',
+                      // Fondo sutil para no leídos
+                      hasUnread && !isSelected && 'bg-primary/5'
                     )}
                   >
                     {/* Avatar estilo Instagram */}
                     <div className="relative shrink-0">
-                      <Avatar className="h-14 w-14">
+                      <Avatar className={cn(
+                        "h-14 w-14",
+                        // Ring de color para no leídos
+                        hasUnread && "ring-[3px] ring-primary ring-offset-2 ring-offset-background"
+                      )}>
                         <AvatarImage src={avatarUrl || undefined} alt={displayName} className="object-cover" />
                         <AvatarFallback className="bg-muted text-muted-foreground font-medium text-base">
                           {role === 'user' ? <Building2 className="h-5 w-5" /> : displayName.charAt(0).toUpperCase()}

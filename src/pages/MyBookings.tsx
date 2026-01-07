@@ -41,6 +41,9 @@ type Booking = {
   tenant_logo_url?: string;
   tenant_phone?: string;
   tenant_address?: string;
+  is_part_of_compound?: boolean;
+  compound_part?: string;
+  related_booking_id?: string;
 };
 
 const TABS = [
@@ -165,8 +168,19 @@ export default function MyBookings() {
   };
 
   const today = format(new Date(), 'yyyy-MM-dd');
-  const upcomingBookings = bookings.filter((b) => b.Fecha >= today);
-  const pastBookings = bookings.filter((b) => b.Fecha < today);
+  
+  // Filtrar citas compuestas: solo mostrar la cita principal (part1), no la secundaria (part2)
+  // Para el cliente, un servicio compuesto es UNA sola cita
+  const visibleBookings = bookings.filter((b) => {
+    // Si es parte de un compuesto y es la parte 2, no mostrar
+    if (b.is_part_of_compound && b.compound_part === 'part2') {
+      return false;
+    }
+    return true;
+  });
+  
+  const upcomingBookings = visibleBookings.filter((b) => b.Fecha >= today);
+  const pastBookings = visibleBookings.filter((b) => b.Fecha < today);
   const displayedBookings = activeTab === "upcoming" ? upcomingBookings : pastBookings;
 
   // Group by date
