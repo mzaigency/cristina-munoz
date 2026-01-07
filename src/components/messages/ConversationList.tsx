@@ -181,22 +181,17 @@ export function ConversationList({
                     }}
                     onFocus={() => setFocusedIndex(index)}
                     className={cn(
-                      'w-full flex items-center gap-3 px-4 py-3 text-left',
-                      'border-b border-border/15 last:border-b-0',
-                      'transition-colors duration-150 active:bg-muted/60',
-                      'focus:outline-none focus-visible:bg-muted/40',
-                      isSelected ? 'bg-muted/50' : 'hover:bg-muted/30',
-                      isFocused && !isSelected && 'bg-muted/20'
+                      'w-full flex items-center gap-3 px-4 py-3 text-left overflow-hidden',
+                      'border-b border-border/10 last:border-b-0',
+                      'transition-colors duration-150 active:bg-muted/50',
+                      'focus:outline-none focus-visible:bg-muted/30',
+                      isSelected ? 'bg-muted/40' : 'hover:bg-muted/20',
+                      isFocused && !isSelected && 'bg-muted/15'
                     )}
                   >
-                    {/* Avatar (Instagram-like) */}
+                    {/* Avatar estilo Instagram */}
                     <div className="relative shrink-0">
-                      <Avatar
-                        className={cn(
-                          'h-14 w-14',
-                          hasUnread && role === 'user' && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
-                        )}
-                      >
+                      <Avatar className="h-14 w-14">
                         <AvatarImage src={avatarUrl || undefined} alt={displayName} className="object-cover" />
                         <AvatarFallback className="bg-muted text-muted-foreground font-medium text-base">
                           {role === 'user' ? <Building2 className="h-5 w-5" /> : displayName.charAt(0).toUpperCase()}
@@ -204,56 +199,54 @@ export function ConversationList({
                       </Avatar>
                     </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0 py-0.5">
-                      <div className="flex items-center justify-between gap-2">
+                    {/* Content - con overflow controlado */}
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      {/* Fila 1: Nombre + Tiempo */}
+                      <div className="flex items-center gap-2">
                         <p
                           className={cn(
-                            'truncate text-[15px] leading-tight',
-                            hasUnread ? 'font-semibold text-foreground' : 'font-medium text-foreground/90'
+                            'flex-1 truncate text-[15px] leading-tight',
+                            hasUnread ? 'font-semibold text-foreground' : 'font-normal text-foreground/90'
                           )}
                         >
                           {displayName}
                         </p>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span
-                            className={cn(
-                              'text-[11px] tabular-nums',
-                              hasUnread ? 'text-foreground/80' : 'text-muted-foreground/60'
-                            )}
-                          >
-                            {formatDistanceToNow(new Date(conv.last_message_at), {
-                              addSuffix: false,
-                              locale: es,
-                            })}
-                          </span>
-
-                          {/* Unread indicator (user side) */}
-                          {hasUnread && role === 'user' && (
-                            <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+                        <span
+                          className={cn(
+                            'shrink-0 text-[11px] tabular-nums',
+                            hasUnread ? 'text-foreground/70' : 'text-muted-foreground/50'
                           )}
-                        </div>
+                        >
+                          {formatDistanceToNow(new Date(conv.last_message_at), {
+                            addSuffix: false,
+                            locale: es,
+                          })}
+                        </span>
                       </div>
 
+                      {/* Fila 2: Mensaje + Badge no leídos */}
                       <div className="flex items-center gap-2 mt-0.5">
-                        {conv.last_message && (
-                          <p
-                            className={cn(
-                              'text-[13px] truncate flex-1 leading-tight',
-                              hasUnread ? 'text-foreground/80 font-medium' : 'text-muted-foreground/70'
-                            )}
-                          >
-                            {conv.last_message.sender_type === (role === 'user' ? 'user' : 'salon') && (
-                              <span className="text-muted-foreground/50">Tú: </span>
-                            )}
-                            {conv.last_message.content}
-                          </p>
-                        )}
+                        <p
+                          className={cn(
+                            'flex-1 truncate text-[13px] leading-tight',
+                            hasUnread ? 'text-foreground/70' : 'text-muted-foreground/60'
+                          )}
+                        >
+                          {conv.last_message ? (
+                            <>
+                              {conv.last_message.sender_type === (role === 'user' ? 'user' : 'salon') && (
+                                <span className="text-muted-foreground/40">Tú: </span>
+                              )}
+                              {conv.last_message.content}
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground/40">Sin mensajes</span>
+                          )}
+                        </p>
 
-                        {/* Unread count (keep for salon side) */}
-                        {hasUnread && role !== 'user' && (
-                          <span className="shrink-0 min-w-[20px] h-5 flex items-center justify-center bg-primary text-primary-foreground text-[11px] font-semibold rounded-full px-1.5">
+                        {/* Badge de no leídos estilo Instagram */}
+                        {hasUnread && (
+                          <span className="shrink-0 min-w-[18px] h-[18px] flex items-center justify-center bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1">
                             {unreadCount > 99 ? '99+' : unreadCount}
                           </span>
                         )}
