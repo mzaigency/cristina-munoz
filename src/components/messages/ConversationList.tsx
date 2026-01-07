@@ -1,10 +1,8 @@
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { MessageCircle, Building2, ChevronRight, Search } from 'lucide-react';
+import { MessageCircle, Building2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
 import { Conversation } from '@/hooks/useConversations';
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
@@ -24,39 +22,29 @@ export function ConversationList({
   onSelect,
   role,
 }: ConversationListProps) {
-  const [searchTerm, setSearchTerm] = useState('');
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const listRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Filter conversations based on search
-  const filteredConversations = conversations.filter((conv) => {
-    const displayName =
-      role === 'user'
-        ? conv.tenant?.name || 'Salón'
-        : conv.user?.full_name || conv.user?.email || 'Cliente';
-    return displayName.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-
   // Update focused index when selected changes
   useEffect(() => {
     if (selectedId) {
-      const index = filteredConversations.findIndex((c) => c.id === selectedId);
+      const index = conversations.findIndex((c) => c.id === selectedId);
       if (index !== -1) {
         setFocusedIndex(index);
       }
     }
-  }, [selectedId, filteredConversations]);
+  }, [selectedId, conversations]);
 
   // Handle keyboard navigation
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (filteredConversations.length === 0) return;
+    if (conversations.length === 0) return;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
         setFocusedIndex((prev) => {
-          const next = prev < filteredConversations.length - 1 ? prev + 1 : 0;
+          const next = prev < conversations.length - 1 ? prev + 1 : 0;
           itemRefs.current[next]?.focus();
           return next;
         });
@@ -64,40 +52,28 @@ export function ConversationList({
       case 'ArrowUp':
         e.preventDefault();
         setFocusedIndex((prev) => {
-          const next = prev > 0 ? prev - 1 : filteredConversations.length - 1;
+          const next = prev > 0 ? prev - 1 : conversations.length - 1;
           itemRefs.current[next]?.focus();
           return next;
         });
         break;
       case 'Enter':
       case ' ':
-        if (focusedIndex >= 0 && focusedIndex < filteredConversations.length) {
+        if (focusedIndex >= 0 && focusedIndex < conversations.length) {
           e.preventDefault();
-          onSelect(filteredConversations[focusedIndex]);
+          onSelect(conversations[focusedIndex]);
         }
-        break;
-      case 'Home':
-        e.preventDefault();
-        setFocusedIndex(0);
-        itemRefs.current[0]?.focus();
-        break;
-      case 'End':
-        e.preventDefault();
-        const lastIndex = filteredConversations.length - 1;
-        setFocusedIndex(lastIndex);
-        itemRefs.current[lastIndex]?.focus();
         break;
     }
   };
 
-  // No mostrar skeleton, mostrar lista vacía mientras carga
   if (loading && conversations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-          <MessageCircle className="h-10 w-10 text-muted-foreground/50" />
+        <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-3">
+          <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
         </div>
-        <p className="text-sm text-muted-foreground">Cargando conversaciones...</p>
+        <p className="text-sm text-muted-foreground/60">Cargando...</p>
       </div>
     );
   }
@@ -105,161 +81,121 @@ export function ConversationList({
   if (conversations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-          <MessageCircle className="h-10 w-10 text-muted-foreground/50" />
+        <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-3">
+          <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
         </div>
-        <p className="font-semibold text-lg text-foreground mb-1">Sin conversaciones</p>
-        <p className="text-sm text-muted-foreground max-w-xs">
+        <p className="font-medium text-foreground/80 mb-1">Sin mensajes</p>
+        <p className="text-xs text-muted-foreground/60 max-w-[200px]">
           {role === 'user'
-            ? 'Cuando reserves una cita, podrás chatear con el salón desde aquí'
-            : 'Los mensajes con tus clientes aparecerán aquí'}
+            ? 'Tus conversaciones aparecerán aquí'
+            : 'Los mensajes con clientes aparecerán aquí'}
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Search bar for desktop */}
-      <div className="p-3 border-b border-border/30 hidden md:block shrink-0">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar conversación..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/50"
-            aria-label="Buscar conversaciones"
-          />
-        </div>
-      </div>
-
-      {/* Conversation count for screen readers */}
-      <div className="sr-only" role="status" aria-live="polite">
-        {filteredConversations.length} conversaciones disponibles
-        {searchTerm && ` para "${searchTerm}"`}
-      </div>
-
-      <div className="flex-1 overflow-hidden min-h-0">
-        <ScrollArea className="h-full">
+    <div className="flex flex-col h-full overflow-hidden bg-background">
+      <ScrollArea className="flex-1">
         <div
           ref={listRef}
           role="listbox"
-          aria-label="Lista de conversaciones"
-          aria-activedescendant={selectedId ? `conversation-${selectedId}` : undefined}
+          aria-label="Conversaciones"
           onKeyDown={handleKeyDown}
-          className="divide-y divide-border/30"
         >
-          {filteredConversations.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              <p>No se encontraron conversaciones</p>
-            </div>
-          ) : (
-            filteredConversations.map((conv, index) => {
-              const unreadCount = role === 'user' ? conv.unread_count_user : conv.unread_count_salon;
-              const displayName =
-                role === 'user'
-                  ? conv.tenant?.name || 'Salón'
-                  : conv.user?.full_name || conv.user?.email || 'Cliente';
-              const avatarUrl = role === 'user' 
-                ? conv.tenant?.logo_url 
-                : conv.user?.avatar_url;
-              const isSelected = selectedId === conv.id;
-              const isFocused = focusedIndex === index;
+          {conversations.map((conv, index) => {
+            const unreadCount = role === 'user' ? conv.unread_count_user : conv.unread_count_salon;
+            const displayName =
+              role === 'user'
+                ? conv.tenant?.name || 'Salón'
+                : conv.user?.full_name || conv.user?.email || 'Cliente';
+            const avatarUrl = role === 'user' 
+              ? conv.tenant?.logo_url 
+              : conv.user?.avatar_url;
+            const isSelected = selectedId === conv.id;
+            const hasUnread = unreadCount > 0;
 
-              return (
-                <button
-                  key={conv.id}
-                  ref={(el) => (itemRefs.current[index] = el)}
-                  id={`conversation-${conv.id}`}
-                  role="option"
-                  aria-selected={isSelected}
-                  aria-label={`Conversación con ${displayName}${unreadCount > 0 ? `, ${unreadCount} mensajes sin leer` : ''}`}
-                  onClick={() => {
-                    setFocusedIndex(index);
-                    onSelect(conv);
-                  }}
-                  onFocus={() => setFocusedIndex(index)}
-                  className={cn(
-                    'w-full flex items-center gap-3 p-4 text-left transition-all duration-200',
-                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary',
-                    isSelected && 'bg-primary/10 border-l-4 border-l-primary',
-                    !isSelected && 'hover:bg-muted/50 border-l-4 border-l-transparent',
-                    isFocused && !isSelected && 'bg-muted/30',
-                    unreadCount > 0 && !isSelected && 'bg-blue-50/50 dark:bg-blue-950/20'
-                  )}
-                >
-                  {/* Avatar con indicador de no leído */}
-                  <div className="relative shrink-0">
-                    <Avatar className="h-14 w-14 border-2 border-background shadow-sm">
-                      <AvatarImage src={avatarUrl || undefined} alt={displayName} />
-                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-semibold text-lg">
-                        {role === 'user' ? (
-                          <Building2 className="h-6 w-6" aria-hidden="true" />
-                        ) : (
-                          displayName.charAt(0).toUpperCase()
+            return (
+              <button
+                key={conv.id}
+                ref={(el) => (itemRefs.current[index] = el)}
+                id={`conversation-${conv.id}`}
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => {
+                  setFocusedIndex(index);
+                  onSelect(conv);
+                }}
+                className={cn(
+                  'w-full flex items-center gap-3 px-4 py-3 text-left',
+                  'transition-colors duration-150 active:bg-muted/60',
+                  'focus:outline-none focus-visible:bg-muted/40',
+                  isSelected ? 'bg-muted/50' : 'hover:bg-muted/30'
+                )}
+              >
+                {/* Avatar minimalista estilo Instagram */}
+                <div className="relative shrink-0">
+                  <Avatar className={cn(
+                    "h-14 w-14",
+                    hasUnread && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                  )}>
+                    <AvatarImage src={avatarUrl || undefined} alt="" className="object-cover" />
+                    <AvatarFallback className="bg-muted text-muted-foreground font-medium text-base">
+                      {role === 'user' ? (
+                        <Building2 className="h-5 w-5" />
+                      ) : (
+                        displayName.charAt(0).toUpperCase()
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+
+                {/* Contenido */}
+                <div className="flex-1 min-w-0 py-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className={cn(
+                      'truncate text-[15px] leading-tight',
+                      hasUnread ? 'font-semibold text-foreground' : 'font-normal text-foreground/90'
+                    )}>
+                      {displayName}
+                    </p>
+                    <span className={cn(
+                      'text-[11px] shrink-0 tabular-nums',
+                      hasUnread ? 'text-primary font-medium' : 'text-muted-foreground/60'
+                    )}>
+                      {formatDistanceToNow(new Date(conv.last_message_at), {
+                        addSuffix: false,
+                        locale: es,
+                      })}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {conv.last_message && (
+                      <p className={cn(
+                        'text-[13px] truncate flex-1 leading-tight',
+                        hasUnread ? 'text-foreground/80' : 'text-muted-foreground/70'
+                      )}>
+                        {conv.last_message.sender_type === (role === 'user' ? 'user' : 'salon') && (
+                          <span className="text-muted-foreground/50">Tú: </span>
                         )}
-                      </AvatarFallback>
-                    </Avatar>
-                    {unreadCount > 0 && (
-                      <span 
-                        className="absolute -top-1 -right-1 min-w-[22px] h-[22px] flex items-center justify-center bg-destructive text-destructive-foreground text-xs font-bold rounded-full px-1.5 shadow-lg animate-in zoom-in-50 duration-200"
-                        aria-hidden="true"
-                      >
+                        {conv.last_message.content}
+                      </p>
+                    )}
+                    
+                    {/* Badge de no leídos estilo iOS */}
+                    {hasUnread && (
+                      <span className="shrink-0 min-w-[20px] h-5 flex items-center justify-center bg-primary text-primary-foreground text-[11px] font-semibold rounded-full px-1.5">
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
                     )}
                   </div>
-
-                  {/* Contenido */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-0.5">
-                      <p className={cn(
-                        'font-semibold truncate text-[15px]',
-                        unreadCount > 0 && 'text-foreground'
-                      )}>
-                        {displayName}
-                      </p>
-                      <span className={cn(
-                        'text-xs shrink-0',
-                        unreadCount > 0 ? 'text-primary font-medium' : 'text-muted-foreground'
-                      )}>
-                        {formatDistanceToNow(new Date(conv.last_message_at), {
-                          addSuffix: false,
-                          locale: es,
-                        })}
-                      </span>
-                    </div>
-
-                    {conv.last_message && (
-                      <p className={cn(
-                        'text-sm truncate leading-relaxed',
-                        unreadCount > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'
-                      )}>
-                        {conv.last_message.sender_type === (role === 'user' ? 'user' : 'salon')
-                          ? 'Tú: '
-                          : ''}
-                        {conv.last_message.content}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Flecha iOS */}
-                  <ChevronRight className="h-5 w-5 text-muted-foreground/50 shrink-0 hidden md:block" aria-hidden="true" />
-                </button>
-              );
-            })
-          )}
+                </div>
+              </button>
+            );
+          })}
         </div>
-        </ScrollArea>
-      </div>
-
-      {/* Keyboard shortcuts hint */}
-      <div className="hidden md:flex items-center justify-center gap-4 p-2 border-t border-border/30 text-xs text-muted-foreground shrink-0">
-        <span><kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">↑↓</kbd> Navegar</span>
-        <span><kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">Enter</kbd> Seleccionar</span>
-      </div>
+      </ScrollArea>
     </div>
   );
 }
