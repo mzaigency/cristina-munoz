@@ -4,32 +4,24 @@ import { Resend } from "https://esm.sh/resend@2.0.0"
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-}
-
 const APP_URL = 'https://www.glowapp.app'
 const FROM_EMAIL = 'GlowApp <contacto@glowapp.app>'
 const LOGO_URL = `${APP_URL}/og-image.png`
 
-// Brand Colors (HSL to HEX)
+// Brand Colors
 const BRAND = {
-  primary: '#4169E1',      // Blue - hsl(230, 85%, 60%)
-  accent: '#9333EA',       // Purple - hsl(270, 80%, 60%)
-  success: '#10B981',      // Green
-  warning: '#F59E0B',      // Amber
-  danger: '#EF4444',       // Red
-  text: '#1a1a2e',         // Dark text
-  textMuted: '#6B7280',    // Gray text
-  textLight: '#9CA3AF',    // Light gray
-  bgLight: '#F8F7FF',      // Light purple bg
-  bgGray: '#F6F9FC',       // Gray bg
+  primary: '#4169E1',
+  accent: '#9333EA',
+  warning: '#F59E0B',
+  text: '#1a1a2e',
+  textMuted: '#6B7280',
+  textLight: '#9CA3AF',
+  bgLight: '#F8F7FF',
+  bgGray: '#F6F9FC',
   white: '#FFFFFF',
   border: '#E5E7EB',
 }
 
-// Shared email styles
 const emailWrapper = `
   <!DOCTYPE html>
   <html>
@@ -137,20 +129,9 @@ const warningBox = (title: string, items: string[]) => `
   </div>
 `
 
-type EmailType = 'welcome' | 'password-reset' | 'email-verification'
-
-interface EmailRequest {
-  type: EmailType
-  to: string
-  data: Record<string, unknown>
-}
-
 // Email templates
-const templates = {
-  'email-verification': (data: { 
-    userName?: string; 
-    confirmationUrl: string;
-  }) => ({
+function getConfirmationEmail(userName: string, confirmationUrl: string) {
+  return {
     subject: '✨ Verifica tu cuenta de GlowApp',
     html: `
       ${emailWrapper}
@@ -170,13 +151,13 @@ const templates = {
           </h1>
           
           <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center;">
-            Hola <strong style="color: ${BRAND.text}">${data.userName || 'amante de la belleza'}</strong>,
+            Hola <strong style="color: ${BRAND.text}">${userName || 'amante de la belleza'}</strong>,
           </p>
           <p style="color: ${BRAND.textMuted}; font-size: 16px; line-height: 26px; text-align: center; margin: 0 0 8px;">
             Gracias por unirte a GlowApp. Para activar tu cuenta, solo necesitas verificar tu email haciendo clic en el botón:
           </p>
           
-          ${button('Verificar mi cuenta', data.confirmationUrl)}
+          ${button('Verificar mi cuenta', confirmationUrl)}
           
           ${infoBox(`
             <div style="text-align: center;">
@@ -193,8 +174,8 @@ const templates = {
 
           <p style="color: ${BRAND.textLight}; font-size: 12px; text-align: center; line-height: 20px;">
             Si el botón no funciona, copia y pega este enlace:<br />
-            <a href="${data.confirmationUrl}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 11px;">
-              ${data.confirmationUrl}
+            <a href="${confirmationUrl}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 11px;">
+              ${confirmationUrl}
             </a>
           </p>
           
@@ -203,71 +184,11 @@ const templates = {
       </body>
       </html>
     `
-  }),
+  }
+}
 
-  welcome: (data: { userName?: string }) => ({
-    subject: '¡Bienvenido a GlowApp! ✨',
-    html: `
-      ${emailWrapper}
-        ${emailContainer}
-          ${logoHeader}
-          
-          ${badge('✨ Bienvenido a GlowApp', `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%)`)}
-          
-          <h1 style="
-            color: ${BRAND.text};
-            font-size: 26px;
-            text-align: center;
-            margin: 0 0 16px;
-            font-weight: 700;
-          ">
-            ¡Hola ${data.userName || 'amante de la belleza'}!
-          </h1>
-          
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; line-height: 26px; text-align: center; margin: 0 0 24px;">
-            Nos alegra que te hayas unido a la comunidad de GlowApp. Ahora tienes acceso a los mejores salones de belleza cerca de ti.
-          </p>
-          
-          ${infoBox(`
-            <p style="color: ${BRAND.text}; font-weight: 600; margin: 0 0 16px; font-size: 15px;">Con GlowApp puedes:</p>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="background: linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%); width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">✨</span>
-                <span style="color: ${BRAND.textMuted}; font-size: 14px;">Descubrir salones increíbles cerca de ti</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="background: linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%); width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">📅</span>
-                <span style="color: ${BRAND.textMuted}; font-size: 14px;">Reservar citas en segundos</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="background: linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%); width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">💬</span>
-                <span style="color: ${BRAND.textMuted}; font-size: 14px;">Chatear directamente con los salones</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="background: linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%); width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">⭐</span>
-                <span style="color: ${BRAND.textMuted}; font-size: 14px;">Leer y dejar reseñas</span>
-              </div>
-            </div>
-          `)}
-          
-          ${button('Explorar salones', APP_URL)}
-          
-          <p style="color: ${BRAND.textMuted}; font-size: 14px; text-align: center;">
-            Con cariño,<br />
-            <strong style="color: ${BRAND.text};">El equipo de GlowApp</strong> 💜
-          </p>
-          
-          ${emailFooter}
-        </div>
-      </body>
-      </html>
-    `
-  }),
-
-  'password-reset': (data: { 
-    userName?: string; 
-    resetLink: string;
-  }) => ({
+function getRecoveryEmail(userName: string, recoveryUrl: string) {
+  return {
     subject: '🔐 Recupera tu contraseña de GlowApp',
     html: `
       ${emailWrapper}
@@ -287,7 +208,7 @@ const templates = {
           </h1>
           
           <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center;">
-            Hola <strong style="color: ${BRAND.text}">${data.userName || 'usuario'}</strong>,
+            Hola <strong style="color: ${BRAND.text}">${userName || 'usuario'}</strong>,
           </p>
           <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center; line-height: 26px; margin: 0;">
             Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en GlowApp.
@@ -296,7 +217,7 @@ const templates = {
             Haz clic en el siguiente botón para crear una nueva contraseña:
           </p>
           
-          ${button('Restablecer contraseña', data.resetLink)}
+          ${button('Restablecer contraseña', recoveryUrl)}
 
           ${warningBox('⏰ Importante:', [
             'Este enlace expira en 1 hora',
@@ -305,8 +226,8 @@ const templates = {
 
           <p style="color: ${BRAND.textLight}; font-size: 12px; text-align: center; line-height: 20px;">
             Si el botón no funciona, copia y pega este enlace en tu navegador:<br />
-            <a href="${data.resetLink}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 11px;">
-              ${data.resetLink}
+            <a href="${recoveryUrl}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 11px;">
+              ${recoveryUrl}
             </a>
           </p>
           
@@ -315,53 +236,76 @@ const templates = {
       </body>
       </html>
     `
-  })
+  }
 }
 
+// Auth hook handler
 serve(async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders })
-  }
-
   try {
-    const { type, to, data }: EmailRequest = await req.json()
+    const payload = await req.json()
+    console.log('Auth email hook received:', JSON.stringify(payload, null, 2))
 
-    if (!type || !to) {
-      throw new Error('Missing required fields: type, to')
+    const { email_data } = payload
+    
+    if (!email_data) {
+      console.log('No email_data in payload')
+      return new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
     }
 
-    const template = templates[type]
-    if (!template) {
-      throw new Error(`Unknown email type: ${type}. Available types: welcome, password-reset, email-verification`)
+    const { token_hash, redirect_to, email_action_type } = email_data
+    const userEmail = payload.user?.email
+    const userName = payload.user?.user_metadata?.full_name || payload.user?.user_metadata?.name || ''
+
+    if (!token_hash || !userEmail) {
+      console.log('Missing token_hash or email')
+      return new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
     }
 
-    const { subject, html } = template(data as never)
+    // Build the confirmation URL
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const baseRedirect = redirect_to || `${APP_URL}/auth`
+    const confirmationUrl = `${supabaseUrl}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${encodeURIComponent(baseRedirect)}`
 
+    let emailContent: { subject: string; html: string }
+
+    if (email_action_type === 'signup' || email_action_type === 'email_change') {
+      emailContent = getConfirmationEmail(userName, confirmationUrl)
+    } else if (email_action_type === 'recovery') {
+      emailContent = getRecoveryEmail(userName, confirmationUrl)
+    } else {
+      console.log('Unknown email_action_type:', email_action_type)
+      return new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Send the email via Resend
     const emailResponse = await resend.emails.send({
       from: FROM_EMAIL,
-      to: [to],
-      subject,
-      html,
+      to: [userEmail],
+      subject: emailContent.subject,
+      html: emailContent.html,
     })
 
-    console.log(`Email sent successfully: ${type} to ${to}`, emailResponse)
+    console.log('Email sent successfully:', emailResponse)
 
-    return new Response(
-      JSON.stringify({ success: true, data: emailResponse }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    )
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error("Error in send-email function:", error)
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    )
+    return new Response(JSON.stringify({}), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (error) {
+    console.error('Error in auth-email-hook:', error)
+    // Return 200 to not block auth flow, but log the error
+    return new Response(JSON.stringify({ error: String(error) }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 })

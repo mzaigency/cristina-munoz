@@ -9,7 +9,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Moon, Sun, Monitor, Users, AtSign } from "lucide-react";
+import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Moon, Sun, Monitor, Users, AtSign, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
@@ -155,6 +156,34 @@ export default function Profile() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
+  };
+
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-account');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Cuenta eliminada",
+        description: "Tu cuenta ha sido eliminada correctamente",
+      });
+      
+      await supabase.auth.signOut();
+      navigate("/");
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar la cuenta",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingAccount(false);
+    }
   };
 
   if (initialLoading) {
@@ -489,6 +518,57 @@ export default function Profile() {
                 </div>
                 <p className="text-sm font-medium text-destructive">Cerrar sesión</p>
               </button>
+            </div>
+
+            {/* Delete Account */}
+            <div className="ios-card overflow-hidden mt-8">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button 
+                    className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+                      <Trash2 className="h-5 w-5 text-destructive" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-destructive">Eliminar cuenta</p>
+                      <p className="text-xs text-muted-foreground">Esta acción es permanente</p>
+                    </div>
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-2">
+                      <p>Esta acción eliminará permanentemente tu cuenta y todos tus datos:</p>
+                      <ul className="list-disc list-inside text-sm space-y-1 mt-2">
+                        <li>Tu perfil e información personal</li>
+                        <li>Historial de reservas</li>
+                        <li>Reseñas y comentarios</li>
+                        <li>Salones seguidos y favoritos</li>
+                      </ul>
+                      <p className="font-medium pt-2">Esta acción no se puede deshacer.</p>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      disabled={deletingAccount}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deletingAccount ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Eliminando...
+                        </>
+                      ) : (
+                        "Sí, eliminar mi cuenta"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         )}
