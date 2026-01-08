@@ -10,8 +10,14 @@ import { StylistSelection } from "@/components/booking/StylistSelection";
 import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { RecurrenceSelector, RecurrenceConfig } from "@/components/admin/RecurrenceSelector";
 import { Loader2 } from "lucide-react";
-import { phoneSchema } from "@/lib/phoneValidation";
 import { Service, Stylist } from "@/types/booking";
+
+interface UserProfile {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+}
 
 interface AdminBookingData {
   services: Service[];
@@ -19,7 +25,8 @@ interface AdminBookingData {
   date: Date | null;
   time: string;
   customerName: string;
-  customerPhone: string;
+  customerUsername: string;
+  selectedUser: UserProfile | null;
   skipAvailabilityCheck?: boolean;
   recurrence: RecurrenceConfig;
 }
@@ -34,21 +41,71 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchUsername, setSearchUsername] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
+  const [showResults, setShowResults] = useState(false);
   const [bookingData, setBookingData] = useState<AdminBookingData>({
     services: [],
     stylist: null,
     date: null,
     time: "",
     customerName: "",
-    customerPhone: "",
+    customerUsername: "",
+    selectedUser: null,
     recurrence: {
       enabled: false,
       intervalValue: 2,
-      intervalUnit: 'weeks',
+      intervalUnit: "weeks",
       occurrences: 4,
     },
   });
   const { toast } = useToast();
+
+  // Real-time search for users as admin types
+  useEffect(() => {
+    const searchUsers = async () => {
+      const term = searchUsername.trim();
+      if (term.length < 2) {
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
+
+      setSearching(true);
+      try {
+        const { data: profiles, error } = await supabase
+          .from("profiles")
+          .select("id, username, full_name, avatar_url")
+          .or(`username.ilike.%${term}%,full_name.ilike.%${term}%`)
+          .limit(10);
+
+        if (error) throw error;
+        setSearchResults(profiles || []);
+        setShowResults(true);
+      } catch (error) {
+        console.error("Error searching users:", error);
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchUsers, 300);
+    return () => clearTimeout(debounce);
+  }, [searchUsername]);
+
+  const handleSelectUser = (profile: UserProfile) => {
+    setBookingData((prev) => ({
+      ...prev,
+      customerName: profile.full_name || profile.username || "",
+      customerUsername: profile.username || "",
+      selectedUser: profile,
+    }));
+    setSearchUsername(profile.username || profile.full_name || "");
+    setShowResults(false);
+    setSearchResults([]);
+  };
 
   useEffect(() => {
     fetchServices();
@@ -67,10 +124,10 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     }
 
     // Add computed duration field and type cast
-    const servicesWithDuration = (data || []).map(service => ({
+    const servicesWithDuration = (data || []).map((service) => ({
       ...service,
-      type: service.type as 'Simple' | 'Compuesto',
-      duration: service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active
+      type: service.type as "Simple" | "Compuesto",
+      duration: service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active,
     }));
 
     setServices(servicesWithDuration);
@@ -79,7 +136,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
   const totalDuration = bookingData.services.reduce(
     (sum, service) =>
       sum + service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active,
-    0
+    0,
   );
 
   const handleServicesSelect = (selectedServices: Service[]) => {
@@ -92,7 +149,12 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     setStep(3);
   };
 
-  const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: Stylist, skipAvailabilityCheck?: boolean) => {
+  const handleDateTimeSelect = (
+    date: Date,
+    time: string,
+    resolvedStylist?: Stylist,
+    skipAvailabilityCheck?: boolean,
+  ) => {
     // If a resolved stylist is provided (from 'any' selection), use it instead
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist, skipAvailabilityCheck });
@@ -100,19 +162,6 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
   };
 
   const handleConfirmBooking = async () => {
-    // Validate phone only if provided
-    if (bookingData.customerPhone.trim()) {
-      const phoneValidation = phoneSchema.safeParse(bookingData.customerPhone);
-      if (!phoneValidation.success) {
-        toast({
-          title: "Error",
-          description: phoneValidation.error.errors[0].message,
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
     if (!bookingData.customerName.trim()) {
       toast({
         title: "Error",
@@ -131,7 +180,8 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
       const bookingPayload = {
         customer_name: bookingData.customerName,
-        phone: bookingData.customerPhone,
+        username: bookingData.customerUsername || null,
+        user_id: bookingData.selectedUser?.id || null,
         services: bookingData.services.map((s) => ({
           id: s.id,
           name: s.name,
@@ -141,19 +191,21 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
           type: s.type,
         })),
         // Format date in local timezone to avoid timezone issues
-        date: `${bookingData.date!.getFullYear()}-${String(bookingData.date!.getMonth() + 1).padStart(2, '0')}-${String(bookingData.date!.getDate()).padStart(2, '0')}`,
+        date: `${bookingData.date!.getFullYear()}-${String(bookingData.date!.getMonth() + 1).padStart(2, "0")}-${String(bookingData.date!.getDate()).padStart(2, "0")}`,
         time: bookingData.time,
         stylist: bookingData.stylist,
         total_duration: totalDuration,
         skipAvailabilityCheck, // Pass the flag to skip validations
         tenant_id: tenantId,
-        canal: 'crm' as const, // Reservas desde el CRM
+        canal: "crm" as const, // Reservas desde el CRM
         // Recurrence configuration
-        recurrence: bookingData.recurrence.enabled ? {
-          intervalValue: bookingData.recurrence.intervalValue,
-          intervalUnit: bookingData.recurrence.intervalUnit,
-          occurrences: bookingData.recurrence.occurrences,
-        } : null,
+        recurrence: bookingData.recurrence.enabled
+          ? {
+              intervalValue: bookingData.recurrence.intervalValue,
+              intervalUnit: bookingData.recurrence.intervalUnit,
+              occurrences: bookingData.recurrence.occurrences,
+            }
+          : null,
       };
 
       const { data, error } = await supabase.functions.invoke("create-booking", {
@@ -163,7 +215,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
       if (error) throw error;
 
       const totalCreated = data?.bookings?.length || 1;
-      const message = bookingData.recurrence.enabled 
+      const message = bookingData.recurrence.enabled
         ? `Se han creado ${totalCreated} citas recurrentes`
         : "La cita se ha creado correctamente";
 
@@ -219,19 +271,11 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
         {/* Step Content */}
         {step === 1 && (
-          <ServiceSelection
-            services={services}
-            selectedServices={bookingData.services}
-            onNext={handleServicesSelect}
-          />
+          <ServiceSelection services={services} selectedServices={bookingData.services} onNext={handleServicesSelect} />
         )}
 
         {step === 2 && (
-          <StylistSelection
-            selectedStylist={bookingData.stylist}
-            onNext={handleStylistSelect}
-            onBack={handleBack}
-          />
+          <StylistSelection selectedStylist={bookingData.stylist} onNext={handleStylistSelect} onBack={handleBack} />
         )}
 
         {step === 3 && (
@@ -252,7 +296,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
           <div className="space-y-6">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Datos del cliente</h3>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="customerName">Nombre completo</Label>
                 <Input
@@ -263,16 +307,56 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="customerPhone">Teléfono (opcional)</Label>
+              <div className="space-y-2 relative">
+                <Label htmlFor="customerUsername">Usuario (opcional)</Label>
                 <Input
-                  id="customerPhone"
-                  type="tel"
-                  value={bookingData.customerPhone}
-                  onChange={(e) => setBookingData({ ...bookingData, customerPhone: e.target.value })}
-                  placeholder="Ej: 612345678"
+                  id="customerUsername"
+                  type="text"
+                  value={searchUsername}
+                  onChange={(e) => {
+                    setSearchUsername(e.target.value);
+                    // Clear selected user if typing again
+                    if (bookingData.selectedUser) {
+                      setBookingData((prev) => ({ ...prev, selectedUser: null, customerUsername: "" }));
+                    }
+                  }}
+                  onFocus={() => searchResults.length > 0 && setShowResults(true)}
+                  placeholder="Buscar por nombre o @username"
                 />
-                <p className="text-xs text-muted-foreground">Si se proporciona, se enviará recordatorio por WhatsApp</p>
+                {searching && <p className="text-xs text-muted-foreground">Buscando...</p>}
+                <p className="text-xs text-muted-foreground">
+                  {bookingData.selectedUser
+                    ? `Usuario vinculado: @${bookingData.selectedUser.username || bookingData.selectedUser.full_name}`
+                    : "Vincula la cita a un usuario registrado"}
+                </p>
+
+                {/* Search Results Dropdown */}
+                {showResults && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-card border rounded-lg shadow-lg max-h-[250px] overflow-y-auto">
+                    {searchResults.map((profile) => (
+                      <button
+                        key={profile.id}
+                        type="button"
+                        onClick={() => handleSelectUser(profile)}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors text-left border-b last:border-b-0"
+                      >
+                        {profile.avatar_url ? (
+                          <img src={profile.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                            {(profile.full_name || profile.username || "U").charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{profile.full_name || profile.username || "Usuario"}</p>
+                          {profile.username && (
+                            <p className="text-xs text-muted-foreground truncate">@{profile.username}</p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Recurrence Options */}
@@ -287,20 +371,25 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                   <strong>Servicios:</strong> {bookingData.services.map((s) => s.name).join(", ")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  <strong>Peluquera:</strong> {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist === "cris" ? "Cris" : "Desi"}
+                  <strong>Peluquera:</strong>{" "}
+                  {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist === "cris" ? "Cris" : "Desi"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  <strong>Fecha y hora:</strong> {bookingData.date?.toLocaleDateString("es-ES")} a las {bookingData.time}
+                  <strong>Fecha y hora:</strong> {bookingData.date?.toLocaleDateString("es-ES")} a las{" "}
+                  {bookingData.time}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   <strong>Duración total:</strong> {totalDuration} minutos
                 </p>
                 {bookingData.recurrence.enabled && (
                   <p className="text-sm text-primary font-medium">
-                    <strong>Repetición:</strong> Cada {bookingData.recurrence.intervalValue}{' '}
-                    {bookingData.recurrence.intervalUnit === 'days' ? 'días' : 
-                     bookingData.recurrence.intervalUnit === 'weeks' ? 'semanas' : 'meses'},{' '}
-                    {bookingData.recurrence.occurrences} citas en total
+                    <strong>Repetición:</strong> Cada {bookingData.recurrence.intervalValue}{" "}
+                    {bookingData.recurrence.intervalUnit === "days"
+                      ? "días"
+                      : bookingData.recurrence.intervalUnit === "weeks"
+                        ? "semanas"
+                        : "meses"}
+                    , {bookingData.recurrence.occurrences} citas en total
                   </p>
                 )}
               </div>
@@ -316,10 +405,10 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creando...
                   </>
+                ) : bookingData.recurrence.enabled ? (
+                  `Crear ${bookingData.recurrence.occurrences} Citas`
                 ) : (
-                  bookingData.recurrence.enabled 
-                    ? `Crear ${bookingData.recurrence.occurrences} Citas`
-                    : "Crear Cita"
+                  "Crear Cita"
                 )}
               </Button>
             </div>
