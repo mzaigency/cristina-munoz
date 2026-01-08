@@ -52,6 +52,9 @@ export function useAdminNotifications(tenantId: string | null) {
   const fetchCounts = useCallback(async () => {
     if (!tenantId) return;
 
+    // Cargar secciones vistas directamente desde localStorage para evitar race condition
+    const currentViewedSections = loadViewedSections(tenantId);
+
     try {
       const today = new Date().toISOString().split('T')[0];
       const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -96,18 +99,18 @@ export function useAdminNotifications(tenantId: string | null) {
         .reduce((sum, conv) => sum + (conv.unread_count_salon || 0), 0);
 
       setCounts({
-        agenda: viewedSections.has('agenda') ? 0 : (newBookingsResult.count || 0),
-        clients: viewedSections.has('clients') ? 0 : (newClientsResult.count || 0),
+        agenda: currentViewedSections.has('agenda') ? 0 : (newBookingsResult.count || 0),
+        clients: currentViewedSections.has('clients') ? 0 : (newClientsResult.count || 0),
         business: 0,
-        messages: viewedSections.has('communication') ? 0 : unreadMessages,
-        reviews: viewedSections.has('communication') ? 0 : (pendingReviewsResult.count || 0)
+        messages: currentViewedSections.has('communication') ? 0 : unreadMessages,
+        reviews: currentViewedSections.has('communication') ? 0 : (pendingReviewsResult.count || 0)
       });
     } catch (error) {
       console.error('Error fetching admin notifications:', error);
     } finally {
       setLoading(false);
     }
-  }, [tenantId, viewedSections]);
+  }, [tenantId]);
 
   // Mark a section as viewed (clears its notification)
   const markSectionViewed = useCallback((section: string) => {
