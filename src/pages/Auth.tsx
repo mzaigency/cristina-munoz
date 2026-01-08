@@ -15,7 +15,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Eye, EyeOff, ArrowLeft, Mail, CheckCircle } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Country, State, City } from "country-state-city";
 import { cities as getCitiesES, provinces as getProvincesES } from "all-spanish-cities";
 
 const signInSchema = z.object({
@@ -34,7 +33,6 @@ const signUpSchema = signInSchema
       .max(30, "Máximo 30 caracteres")
       .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guion bajo"),
     phone: phoneSchema,
-    country: z.string().min(1, "Selecciona un país"),
     province: z.string().min(1, "Selecciona una provincia"),
     city: z.string().min(1, "Selecciona una ciudad"),
     confirmPassword: z.string().min(6),
@@ -67,56 +65,31 @@ export default function Auth() {
       email: "",
       password: "",
       ...(isSignUp
-        ? { firstName: "", lastName: "", username: "", phone: "", country: "España", province: "", city: "", confirmPassword: "", acceptTerms: false }
+        ? { firstName: "", lastName: "", username: "", phone: "", province: "", city: "", confirmPassword: "", acceptTerms: false }
         : {}),
     },
   });
 
-  const selectedCountry = form.watch("country" as any) || "España";
   const selectedProvince = form.watch("province" as any) || "";
 
-  // Get countries list
-  const countries = useMemo(() => {
-    return Country.getAllCountries().map(c => ({
-      code: c.isoCode,
-      name: c.name
-    }));
-  }, []);
-
-  // Get provinces/states based on country
+  // Get provinces list for Spain
   const provincesList = useMemo(() => {
-    if (selectedCountry === "España") {
-      return getProvincesES().map(p => ({
-        code: p.code,
-        name: p.name
-      }));
-    }
-    const countryCode = countries.find(c => c.name === selectedCountry)?.code;
-    if (!countryCode) return [];
-    return State.getStatesOfCountry(countryCode).map(s => ({
-      code: s.isoCode,
-      name: s.name
-    }));
-  }, [selectedCountry, countries]);
+    return getProvincesES().map(p => ({
+      code: p.code,
+      name: p.name
+    })).sort((a, b) => a.name.localeCompare(b.name));
+  }, []);
 
   // Get cities based on province
   const citiesList = useMemo(() => {
     if (!selectedProvince) return [];
     
-    if (selectedCountry === "España") {
-      const province = getProvincesES().find(p => p.name === selectedProvince);
-      if (!province) return [];
-      return getCitiesES({ code_province: province.code })
-        .map(c => c.name)
-        .sort();
-    }
-    
-    const countryCode = countries.find(c => c.name === selectedCountry)?.code;
-    const stateCode = provincesList.find(p => p.name === selectedProvince)?.code;
-    if (!countryCode || !stateCode) return [];
-    
-    return City.getCitiesOfState(countryCode, stateCode).map(c => c.name).sort();
-  }, [selectedCountry, selectedProvince, countries, provincesList]);
+    const province = getProvincesES().find(p => p.name === selectedProvince);
+    if (!province) return [];
+    return getCitiesES({ code_province: province.code })
+      .map(c => c.name)
+      .sort();
+  }, [selectedProvince]);
 
   const filteredCities = useMemo(() => {
     if (!citySearch) return citiesList.slice(0, 50);
@@ -250,7 +223,7 @@ export default function Auth() {
               full_name: `${signUpValues.firstName} ${signUpValues.lastName}`,
               username: signUpValues.username.toLowerCase(),
               phone: cleanPhoneNumber(signUpValues.phone),
-              country: signUpValues.country,
+              country: "España",
               province: signUpValues.province,
               city: signUpValues.city,
             },
@@ -459,40 +432,7 @@ export default function Auth() {
                         )}
                       />
 
-                      {/* Location Fields */}
-                      <FormField
-                        control={form.control}
-                        name="country"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>País</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={(value) => {
-                                field.onChange(value);
-                                form.setValue("province" as any, "");
-                                form.setValue("city" as any, "");
-                              }}
-                              disabled={loading}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="h-12 rounded-xl">
-                                  <SelectValue placeholder="Selecciona país" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="España">España</SelectItem>
-                                {countries.filter(c => c.name !== "Spain").map((country) => (
-                                  <SelectItem key={country.code} value={country.name}>
-                                    {country.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {/* Location Fields - Spain only */}
 
                       <div className="grid grid-cols-2 gap-3">
                         <FormField
