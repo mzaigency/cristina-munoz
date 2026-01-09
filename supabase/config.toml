@@ -72,7 +72,10 @@ verify_jwt = true
 [functions.get-recommendations]
 verify_jwt = true
 
-[functions.auth-email-hook]
+[functions.send-verification-email]
+verify_jwt = false
+
+[functions.verify-email]
 verify_jwt = false
 
 [functions.delete-account]
