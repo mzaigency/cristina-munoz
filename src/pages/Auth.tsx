@@ -244,6 +244,9 @@ export default function Auth() {
 
         // Send custom verification email via Resend
         if (data.user) {
+          // Sign out immediately - user must verify email first
+          await supabase.auth.signOut();
+
           try {
             await supabase.functions.invoke("send-verification-email", {
               body: {
@@ -262,12 +265,25 @@ export default function Auth() {
           return;
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: values.email,
           password: values.password,
         });
 
         if (error) throw error;
+
+        // Check if email is verified
+        const emailVerified = data.user?.user_metadata?.email_verified;
+        if (!emailVerified) {
+          // Sign out and show error
+          await supabase.auth.signOut();
+          toast({
+            title: "Email no verificado",
+            description: "Por favor verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.",
+            variant: "destructive",
+          });
+          return;
+        }
 
         toast({
           title: "Bienvenido",
