@@ -1,7 +1,7 @@
 // Utilidades de lógica de negocio para reservas
 
-import { Service, TimeRange } from '@/types/booking';
-import { BUSINESS_HOURS, SLOT_INTERVAL, BusinessHours } from '@/constants/business';
+import { Service, TimeRange } from "@/types/booking";
+import { BUSINESS_HOURS, SLOT_INTERVAL, BusinessHours } from "@/constants/business";
 
 /**
  * Obtiene los horarios de negocio para un día específico
@@ -25,24 +25,24 @@ export function getActiveWindows(startMin: number, services: Service[]): TimeRan
   let currentTime = startMin;
 
   for (const service of services) {
-    if (service.type === 'Compuesto') {
+    if (service.type === "Compuesto") {
       // Ventana activa parte 1
       windows.push({
         start: currentTime,
-        end: currentTime + service.duration_part1_active
+        end: currentTime + service.duration_part1_active,
       });
       currentTime += service.duration_part1_active + service.duration_exposure_pause;
       // Ventana activa parte 2
       windows.push({
         start: currentTime,
-        end: currentTime + service.duration_part2_active
+        end: currentTime + service.duration_part2_active,
       });
       currentTime += service.duration_part2_active;
     } else {
       // Servicio simple - toda la duración es activa
       windows.push({
         start: currentTime,
-        end: currentTime + service.duration
+        end: currentTime + service.duration,
       });
       currentTime += service.duration;
     }
@@ -83,14 +83,14 @@ export function generateBaseSlots(dayOfWeek: number): Set<number> {
 export function minutesToTimeString(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
 }
 
 /**
  * Parsea string HH:MM a minutos
  */
 export function timeStringToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
@@ -101,7 +101,7 @@ export function calculateAvailableSlots(
   date: Date,
   bookedRanges: TimeRange[],
   services: Service[],
-  totalDuration: number
+  totalDuration: number,
 ): string[] {
   const dayOfWeek = date.getDay();
   const hours = getBusinessHours(dayOfWeek);
@@ -115,7 +115,7 @@ export function calculateAvailableSlots(
   const slotsSet = generateBaseSlots(dayOfWeek);
 
   // Añadir slots flexibles después de cada reserva existente
-  bookedRanges.forEach(booking => {
+  bookedRanges.forEach((booking) => {
     const endTime = booking.end;
     const inMorning = endTime >= hours.morningStart && endTime < hours.morningEnd;
     const inAfternoon = endTime >= hours.afternoonStart && endTime < hours.afternoonEnd;
@@ -130,23 +130,37 @@ export function calculateAvailableSlots(
     .map(minutesToTimeString);
 
   // Filtrar slots disponibles
-  return allSlots.filter(slot => {
+  return allSlots.filter((slot) => {
     const startMinutes = timeStringToMinutes(slot);
     const endMinutes = startMinutes + totalDuration;
 
     // Filtrar slots pasados si es hoy
     if (isToday && startMinutes <= currentMinutes) return false;
 
-    // Verificar límites de horario
+    // Verificar límites de horario básicos
     const inMorning = startMinutes >= hours.morningStart && startMinutes < hours.morningEnd;
     const inAfternoon = startMinutes >= hours.afternoonStart && startMinutes < hours.afternoonEnd;
 
     if (inMorning && endMinutes > hours.morningEnd) return false;
     if (inAfternoon && endMinutes > hours.afternoonEnd) return false;
 
-    // Verificar solapamiento con reservas existentes
+    // Calcular las ventanas activas para verificar que ninguna exceda el horario de cierre
     const activeWindows = getActiveWindows(startMinutes, services);
+
+    // Para servicios compuestos, verificar que CADA ventana activa esté dentro del horario
+    // Esto es importante porque la parte 2 podría caer después del cierre
     for (const window of activeWindows) {
+      const windowInMorning = window.start >= hours.morningStart && window.start < hours.morningEnd;
+      const windowInAfternoon = window.start >= hours.afternoonStart && window.start < hours.afternoonEnd;
+
+      // Si la ventana comienza en el periodo de mañana, debe terminar antes del cierre de mañana
+      if (windowInMorning && window.end > hours.morningEnd) return false;
+      // Si la ventana comienza en el periodo de tarde, debe terminar antes del cierre de tarde
+      if (windowInAfternoon && window.end > hours.afternoonEnd) return false;
+      // Si la ventana no está ni en mañana ni en tarde (ej: durante la pausa o fuera de horario), no es válida
+      if (!windowInMorning && !windowInAfternoon) return false;
+
+      // Verificar solapamiento con reservas existentes
       for (const booking of bookedRanges) {
         if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
           return false;
@@ -162,5 +176,5 @@ export function calculateAvailableSlots(
  * Formatea fecha a string YYYY-MM-DD
  */
 export function formatDateToISO(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
