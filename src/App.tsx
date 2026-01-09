@@ -30,6 +30,7 @@ const Subscription = lazy(() => import("./pages/Subscription"));
 const ForBusiness = lazy(() => import("./pages/ForBusiness"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 
 const queryClient = new QueryClient();
 
@@ -72,7 +73,9 @@ const App = () => (
                   <Route path="/para-negocios" element={<ForBusiness />} />
                   <Route path="/recuperar-contrasena" element={<ForgotPassword />} />
                   <Route path="/nueva-contrasena" element={<ResetPassword />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/privacidad" element={<PrivacyPolicy />} />
+                  <Route path="/terminos" element={<TermsOfUse />} />
                   <Route path="/terminos" element={<TermsOfUse />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

@@ -218,7 +218,6 @@ export default function Auth() {
           email: signUpValues.email,
           password: signUpValues.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth`,
             data: {
               full_name: `${signUpValues.firstName} ${signUpValues.lastName}`,
               username: signUpValues.username.toLowerCase(),
@@ -226,6 +225,7 @@ export default function Auth() {
               country: "España",
               province: signUpValues.province,
               city: signUpValues.city,
+              email_verified: false,
             },
           },
         });
@@ -233,7 +233,7 @@ export default function Auth() {
         if (error) throw error;
 
         // Check if user was actually created (Supabase returns user even if email exists in some cases)
-        if (data.user && !data.session && data.user.identities?.length === 0) {
+        if (data.user && data.user.identities?.length === 0) {
           form.setError("email", {
             type: "manual",
             message: "Ya existe una cuenta con este email",
@@ -242,20 +242,24 @@ export default function Auth() {
           return;
         }
 
-        // Email verification is required - show confirmation screen
-        if (data.user && !data.session) {
+        // Send custom verification email via Resend
+        if (data.user) {
+          try {
+            await supabase.functions.invoke("send-verification-email", {
+              body: {
+                userId: data.user.id,
+                email: signUpValues.email,
+                userName: signUpValues.firstName,
+              },
+            });
+          } catch (emailError) {
+            console.error("Error sending verification email:", emailError);
+            // Still show the confirmation screen, email might just be delayed
+          }
+
           setSentEmail(signUpValues.email);
           setEmailSent(true);
           return;
-        }
-
-        // If session exists (auto-confirm enabled in dev), redirect
-        if (data.session) {
-          toast({
-            title: "¡Cuenta creada!",
-            description: "Redirigiendo...",
-          });
-          navigate("/mis-citas");
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
