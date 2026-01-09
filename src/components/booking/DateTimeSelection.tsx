@@ -9,12 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Stylist, Service, TimeRange } from "@/types/booking";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
 import { Loader2, Clock, Bell } from "lucide-react";
-import { 
-  hasOverlap, 
-  getActiveWindows, 
+import {
+  hasOverlap,
+  getActiveWindows,
   formatDateToISO,
   timeStringToMinutes,
-  minutesToTimeString 
+  minutesToTimeString,
 } from "@/lib/booking-utils";
 import {
   Dialog,
@@ -42,11 +42,11 @@ interface DateTimeSelectionProps {
 
 /** Convierte los slots reservados de la API a rangos de tiempo */
 function parseBookedSlotsToRanges(bookedSlots: Array<{ Hora: string; total_duration: number }>): TimeRange[] {
-  return bookedSlots.map(booking => {
+  return bookedSlots.map((booking) => {
     const startMinutes = timeStringToMinutes(booking.Hora.substring(0, 5));
-    return { 
-      start: startMinutes, 
-      end: startMinutes + booking.total_duration 
+    return {
+      start: startMinutes,
+      end: startMinutes + booking.total_duration,
     };
   });
 }
@@ -70,44 +70,44 @@ export const DateTimeSelection = ({
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [stylists, setStylists] = useState<Array<{ slug: string; id: string; name: string }>>([]);
-  
+
   // Waitlist state
   const [showWaitlistDialog, setShowWaitlistDialog] = useState(false);
   const [waitlistName, setWaitlistName] = useState("");
   const [waitlistPhone, setWaitlistPhone] = useState("");
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
-  
+
   const { toast } = useToast();
 
   // Use tenant business hours
-  const { 
-    loading: hoursLoading, 
-    generateBaseSlots, 
-    getBusinessHoursForDay, 
-    getClosedDays 
-  } = useTenantBusinessHours(tenantId || '');
+  const {
+    loading: hoursLoading,
+    generateBaseSlots,
+    getBusinessHoursForDay,
+    getClosedDays,
+  } = useTenantBusinessHours(tenantId || "");
 
   // Fetch tenant stylists
   useEffect(() => {
     if (!tenantId) return;
-    
+
     const fetchStylists = async () => {
       const { data } = await supabase
         .from("tenant_stylists")
         .select("id, slug, name")
         .eq("tenant_id", tenantId)
         .eq("is_active", true);
-      
+
       setStylists(data || []);
     };
-    
+
     fetchStylists();
   }, [tenantId]);
 
   // Calculate available slots using tenant business hours
   const computeAvailableSlotsForStylist = (
     selectedDate: Date,
-    bookedData: { bookedSlots?: Array<{ Hora: string; total_duration: number }> }
+    bookedData: { bookedSlots?: Array<{ Hora: string; total_duration: number }> },
   ): string[] => {
     const ranges = parseBookedSlotsToRanges(bookedData?.bookedSlots || []);
     const dayOfWeek = selectedDate.getDay();
@@ -122,7 +122,7 @@ export const DateTimeSelection = ({
     const slotsSet = generateBaseSlots(dayOfWeek);
 
     // Add flexible slots after existing bookings
-    ranges.forEach(booking => {
+    ranges.forEach((booking) => {
       const endTime = booking.end;
       const inMorning = endTime >= hours.morningStart && endTime < hours.morningEnd;
       const inAfternoon = endTime >= hours.afternoonStart && endTime < hours.afternoonEnd;
@@ -132,10 +132,12 @@ export const DateTimeSelection = ({
     });
 
     // Convert to sorted array
-    const allSlots = Array.from(slotsSet).sort((a, b) => a - b).map(minutesToTimeString);
+    const allSlots = Array.from(slotsSet)
+      .sort((a, b) => a - b)
+      .map(minutesToTimeString);
 
     // Filter available slots
-    return allSlots.filter(slot => {
+    return allSlots.filter((slot) => {
       const startMinutes = timeStringToMinutes(slot);
       const endMinutes = startMinutes + totalDuration;
 
@@ -147,9 +149,23 @@ export const DateTimeSelection = ({
       if (inMorning && endMinutes > hours.morningEnd) return false;
       if (inAfternoon && endMinutes > hours.afternoonEnd) return false;
 
-      // Check overlap with bookings
+      // Calcular las ventanas activas para verificar cada una
       const activeWindows = getActiveWindows(startMinutes, services);
+
+      // Para servicios compuestos, verificar que CADA ventana activa esté dentro del horario
+      // Esto es importante porque la parte 2 podría caer después del cierre
       for (const window of activeWindows) {
+        const windowInMorning = window.start >= hours.morningStart && window.start < hours.morningEnd;
+        const windowInAfternoon = window.start >= hours.afternoonStart && window.start < hours.afternoonEnd;
+
+        // Si la ventana comienza en el periodo de mañana, debe terminar antes del cierre de mañana
+        if (windowInMorning && window.end > hours.morningEnd) return false;
+        // Si la ventana comienza en el periodo de tarde, debe terminar antes del cierre de tarde
+        if (windowInAfternoon && window.end > hours.afternoonEnd) return false;
+        // Si la ventana no está ni en mañana ni en tarde (ej: durante la pausa o fuera de horario), no es válida
+        if (!windowInMorning && !windowInAfternoon) return false;
+
+        // Check overlap with bookings
         for (const booking of ranges) {
           if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
             return false;
@@ -169,15 +185,15 @@ export const DateTimeSelection = ({
       setLoading(true);
       try {
         const dateStr = formatDateToISO(date);
-        
-        if (stylist === 'any' && stylists.length > 0) {
+
+        if (stylist === "any" && stylists.length > 0) {
           // Fetch all stylists and merge availability
           const responses = await Promise.all(
-            stylists.map(s => 
-              supabase.functions.invoke('check-availability', {
+            stylists.map((s) =>
+              supabase.functions.invoke("check-availability", {
                 body: { date: dateStr, stylist: s.slug, totalDuration, tenant_id: tenantId },
-              })
-            )
+              }),
+            ),
           );
 
           // Merge all available slots
@@ -185,7 +201,7 @@ export const DateTimeSelection = ({
           responses.forEach((response) => {
             if (!response.error && response.data) {
               const slots = computeAvailableSlotsForStylist(date, response.data);
-              slots.forEach(slot => allSlotsSet.add(slot));
+              slots.forEach((slot) => allSlotsSet.add(slot));
             }
           });
 
@@ -194,7 +210,7 @@ export const DateTimeSelection = ({
           setBookedRanges([]);
         } else {
           // Regular handling for specific stylist
-          const { data, error } = await supabase.functions.invoke('check-availability', {
+          const { data, error } = await supabase.functions.invoke("check-availability", {
             body: { date: dateStr, stylist, totalDuration, tenant_id: tenantId },
           });
 
@@ -221,18 +237,20 @@ export const DateTimeSelection = ({
   // Generate available time slots for specific stylist
   const getAvailableTimeSlots = (selectedDate: Date | undefined): string[] => {
     if (!selectedDate) return [];
-    return computeAvailableSlotsForStylist(selectedDate, { bookedSlots: bookedRanges.map(r => ({
-      Hora: minutesToTimeString(r.start) + ':00',
-      total_duration: r.end - r.start
-    }))});
+    return computeAvailableSlotsForStylist(selectedDate, {
+      bookedSlots: bookedRanges.map((r) => ({
+        Hora: minutesToTimeString(r.start) + ":00",
+        total_duration: r.end - r.start,
+      })),
+    });
   };
 
-  const timeSlots = stylist === 'any' ? fusedAvailableSlots : getAvailableTimeSlots(date);
+  const timeSlots = stylist === "any" ? fusedAvailableSlots : getAvailableTimeSlots(date);
 
   // Update time when custom hour or minute changes
   useEffect(() => {
     if (customHour && customMinute) {
-      const formattedTime = `${customHour.padStart(2, '0')}:${customMinute.padStart(2, '0')}`;
+      const formattedTime = `${customHour.padStart(2, "0")}:${customMinute.padStart(2, "0")}`;
       setTime(formattedTime);
     }
   }, [customHour, customMinute]);
@@ -243,13 +261,13 @@ export const DateTimeSelection = ({
     // In admin mode with custom time, skip availability checks
     if (isAdmin && (customHour || customMinute)) {
       // For 'any' stylist, pick the first available
-      const defaultStylist = stylists.length > 0 ? stylists[0].slug : 'cris';
-      onNext(date, time, (stylist === 'any' ? defaultStylist : stylist) as Stylist, true);
+      const defaultStylist = stylists.length > 0 ? stylists[0].slug : "cris";
+      onNext(date, time, (stylist === "any" ? defaultStylist : stylist) as Stylist, true);
       return;
     }
 
     // If stylist is 'any', determine which specific stylist is available
-    if (stylist === 'any' && stylists.length > 0) {
+    if (stylist === "any" && stylists.length > 0) {
       try {
         const dateStr = formatDateToISO(date);
         const selectedStartMinutes = timeStringToMinutes(time);
@@ -258,23 +276,23 @@ export const DateTimeSelection = ({
         // Check each stylist's availability
         const availabilityResults = await Promise.all(
           stylists.map(async (s) => {
-            const { data, error } = await supabase.functions.invoke('check-availability', {
+            const { data, error } = await supabase.functions.invoke("check-availability", {
               body: { date: dateStr, stylist: s.slug, tenant_id: tenantId },
             });
 
             if (error) return { slug: s.slug, available: false };
 
             const ranges = parseBookedSlotsToRanges(data?.bookedSlots || []);
-            const isAvailable = !activeWindows.some(window => 
-              ranges.some(booking => hasOverlap(window.start, window.end, booking.start, booking.end))
+            const isAvailable = !activeWindows.some((window) =>
+              ranges.some((booking) => hasOverlap(window.start, window.end, booking.start, booking.end)),
             );
 
             return { slug: s.slug, available: isAvailable };
-          })
+          }),
         );
 
         // Find first available stylist
-        const availableStylist = availabilityResults.find(r => r.available);
+        const availableStylist = availabilityResults.find((r) => r.available);
         if (availableStylist) {
           onNext(date, time, availableStylist.slug as Stylist);
         }
@@ -292,39 +310,35 @@ export const DateTimeSelection = ({
       toast({
         title: "Error",
         description: "Por favor completa todos los campos",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     setWaitlistSubmitting(true);
     try {
-      const serviceNames = services.map(s => s.name).join(", ");
-      const preferredStylistId = stylist !== 'any' 
-        ? stylists.find(s => s.slug === stylist)?.id 
-        : null;
+      const serviceNames = services.map((s) => s.name).join(", ");
+      const preferredStylistId = stylist !== "any" ? stylists.find((s) => s.slug === stylist)?.id : null;
 
-      const { error } = await supabase
-        .from("waitlist")
-        .insert({
-          tenant_id: tenantId,
-          client_name: waitlistName.trim(),
-          client_phone: waitlistPhone.trim(),
-          preferred_date: format(date, "yyyy-MM-dd"),
-          preferred_stylist_id: preferredStylistId,
-          services: services.map(s => ({ id: s.id, name: s.name })),
-          notes: `Duración total: ${totalDuration} min`,
-          status: "waiting",
-          priority: 3
-        });
+      const { error } = await supabase.from("waitlist").insert({
+        tenant_id: tenantId,
+        client_name: waitlistName.trim(),
+        client_phone: waitlistPhone.trim(),
+        preferred_date: format(date, "yyyy-MM-dd"),
+        preferred_stylist_id: preferredStylistId,
+        services: services.map((s) => ({ id: s.id, name: s.name })),
+        notes: `Duración total: ${totalDuration} min`,
+        status: "waiting",
+        priority: 3,
+      });
 
       if (error) throw error;
 
       toast({
         title: "¡Añadido a la lista de espera!",
-        description: "Te avisaremos cuando haya disponibilidad para esta fecha"
+        description: "Te avisaremos cuando haya disponibilidad para esta fecha",
       });
-      
+
       setShowWaitlistDialog(false);
       setWaitlistName("");
       setWaitlistPhone("");
@@ -332,7 +346,7 @@ export const DateTimeSelection = ({
       toast({
         title: "Error",
         description: error.message || "No se pudo añadir a la lista de espera",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setWaitlistSubmitting(false);
@@ -343,11 +357,8 @@ export const DateTimeSelection = ({
   const closedDays = getClosedDays();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
-  const disabledDays = [
-    { dayOfWeek: closedDays },
-    { before: today },
-  ];
+
+  const disabledDays = [{ dayOfWeek: closedDays }, { before: today }];
 
   if (hoursLoading) {
     return (
@@ -376,9 +387,7 @@ export const DateTimeSelection = ({
         <div>
           <h3 className="mb-4 font-semibold text-foreground">Selecciona una hora</h3>
           {!date ? (
-            <p className="text-sm text-muted-foreground">
-              Primero selecciona una fecha
-            </p>
+            <p className="text-sm text-muted-foreground">Primero selecciona una fecha</p>
           ) : loading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -388,16 +397,14 @@ export const DateTimeSelection = ({
             <>
               {isAdmin && (
                 <div className="mb-4 space-y-3 p-4 bg-accent/20 rounded-lg border border-accent">
-                  <label className="text-sm font-medium text-foreground">
-                    Hora personalizada (SIN RESTRICCIONES)
-                  </label>
+                  <label className="text-sm font-medium text-foreground">Hora personalizada (SIN RESTRICCIONES)</label>
                   <div className="flex gap-2 items-center">
                     <Select value={customHour} onValueChange={setCustomHour}>
                       <SelectTrigger className="w-[100px] transition-colors duration-200 hover:border-primary">
                         <SelectValue placeholder="Hora" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(hour => (
+                        {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((hour) => (
                           <SelectItem key={hour} value={hour}>
                             {hour}
                           </SelectItem>
@@ -410,7 +417,7 @@ export const DateTimeSelection = ({
                         <SelectValue placeholder="Min" />
                       </SelectTrigger>
                       <SelectContent>
-                        {['00', '15', '30', '45'].map(minute => (
+                        {["00", "15", "30", "45"].map((minute) => (
                           <SelectItem key={minute} value={minute}>
                             {minute}
                           </SelectItem>
@@ -423,21 +430,21 @@ export const DateTimeSelection = ({
                   </p>
                 </div>
               )}
-              
+
               {timeSlots.length === 0 ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-border/50">
                     <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
                     <p className="text-sm text-muted-foreground">
-                      {isAdmin 
+                      {isAdmin
                         ? "No hay horarios predefinidos disponibles. Puedes usar el campo de hora personalizada arriba."
                         : "No hay horarios disponibles para este día. Todos los slots están reservados."}
                     </p>
                   </div>
-                  
+
                   {!isAdmin && (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
                       onClick={() => setShowWaitlistDialog(true)}
                     >
@@ -453,23 +460,24 @@ export const DateTimeSelection = ({
                     const dayOfWeek = date.getDay();
                     const hours = getBusinessHoursForDay(dayOfWeek);
                     const hasAfternoon = hours.afternoonStart > 0 && hours.afternoonEnd > 0;
-                    
+
                     // Split slots into morning and afternoon
-                    const morningSlots = timeSlots.filter(slot => {
+                    const morningSlots = timeSlots.filter((slot) => {
                       const minutes = timeStringToMinutes(slot);
                       return minutes < hours.morningEnd;
                     });
-                    const afternoonSlots = timeSlots.filter(slot => {
+                    const afternoonSlots = timeSlots.filter((slot) => {
                       const minutes = timeStringToMinutes(slot);
                       return minutes >= hours.afternoonStart;
                     });
-                    
+
                     return (
                       <div className="space-y-4 max-h-[300px] overflow-y-auto">
                         {morningSlots.length > 0 && (
                           <div>
                             <p className="text-xs text-muted-foreground mb-2 font-medium">
-                              ☀️ Mañana ({minutesToTimeString(hours.morningStart)} - {minutesToTimeString(hours.morningEnd)})
+                              ☀️ Mañana ({minutesToTimeString(hours.morningStart)} -{" "}
+                              {minutesToTimeString(hours.morningEnd)})
                             </p>
                             <div className="grid grid-cols-3 gap-2">
                               {morningSlots.map((slot) => (
@@ -484,7 +492,7 @@ export const DateTimeSelection = ({
                                   }}
                                   className={cn(
                                     "transition-all duration-200 hover:shadow-md",
-                                    time === slot && !customHour && !customMinute && "shadow-glow"
+                                    time === slot && !customHour && !customMinute && "shadow-glow",
                                   )}
                                 >
                                   {slot}
@@ -493,21 +501,23 @@ export const DateTimeSelection = ({
                             </div>
                           </div>
                         )}
-                        
+
                         {hasAfternoon && morningSlots.length > 0 && afternoonSlots.length > 0 && (
                           <div className="flex items-center gap-2 py-1">
                             <div className="flex-1 h-px bg-border" />
                             <span className="text-xs text-muted-foreground px-2">
-                              Descanso ({minutesToTimeString(hours.morningEnd)} - {minutesToTimeString(hours.afternoonStart)})
+                              Descanso ({minutesToTimeString(hours.morningEnd)} -{" "}
+                              {minutesToTimeString(hours.afternoonStart)})
                             </span>
                             <div className="flex-1 h-px bg-border" />
                           </div>
                         )}
-                        
+
                         {afternoonSlots.length > 0 && hasAfternoon && (
                           <div>
                             <p className="text-xs text-muted-foreground mb-2 font-medium">
-                              🌙 Tarde ({minutesToTimeString(hours.afternoonStart)} - {minutesToTimeString(hours.afternoonEnd)})
+                              🌙 Tarde ({minutesToTimeString(hours.afternoonStart)} -{" "}
+                              {minutesToTimeString(hours.afternoonEnd)})
                             </p>
                             <div className="grid grid-cols-3 gap-2">
                               {afternoonSlots.map((slot) => (
@@ -522,7 +532,7 @@ export const DateTimeSelection = ({
                                   }}
                                   className={cn(
                                     "transition-all duration-200 hover:shadow-md",
-                                    time === slot && !customHour && !customMinute && "shadow-glow"
+                                    time === slot && !customHour && !customMinute && "shadow-glow",
                                   )}
                                 >
                                   {slot}
@@ -555,8 +565,8 @@ export const DateTimeSelection = ({
         <Button variant="outline" onClick={onBack} className="transition-transform duration-200 hover:scale-105">
           Volver
         </Button>
-        <Button 
-          onClick={handleNext} 
+        <Button
+          onClick={handleNext}
           disabled={!date || !time}
           className="transition-transform duration-200 hover:scale-105 disabled:scale-100"
         >
@@ -573,10 +583,11 @@ export const DateTimeSelection = ({
               Lista de espera
             </DialogTitle>
             <DialogDescription>
-              Te avisaremos cuando haya disponibilidad para el {date ? format(date, "d 'de' MMMM", { locale: es }) : ""}.
+              Te avisaremos cuando haya disponibilidad para el {date ? format(date, "d 'de' MMMM", { locale: es }) : ""}
+              .
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="waitlist-name">Nombre</Label>
@@ -597,17 +608,17 @@ export const DateTimeSelection = ({
                 onChange={(e) => setWaitlistPhone(e.target.value)}
               />
             </div>
-            
+
             <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
               <p className="font-medium text-foreground mb-1">Servicios solicitados:</p>
               <ul className="list-disc list-inside space-y-0.5">
-                {services.map(s => (
+                {services.map((s) => (
                   <li key={s.id}>{s.name}</li>
                 ))}
               </ul>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowWaitlistDialog(false)}>
               Cancelar
