@@ -37,18 +37,18 @@ interface TenantDateTimeSelectionProps {
 
 // Utility functions
 function timeStringToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + (minutes || 0);
 }
 
 function minutesToTimeString(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
 }
 
 function formatDateToISO(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function hasOverlap(start1: number, end1: number, start2: number, end2: number): boolean {
@@ -60,7 +60,7 @@ function getActiveWindows(startMin: number, services: Service[]): TimeRange[] {
   let currentTime = startMin;
 
   for (const service of services) {
-    if (service.type === 'Compuesto') {
+    if (service.type === "Compuesto") {
       windows.push({ start: currentTime, end: currentTime + service.duration_part1_active });
       currentTime += service.duration_part1_active + service.duration_exposure_pause;
       windows.push({ start: currentTime, end: currentTime + service.duration_part2_active });
@@ -75,7 +75,7 @@ function getActiveWindows(startMin: number, services: Service[]): TimeRange[] {
 }
 
 function parseBookedSlotsToRanges(bookedSlots: Array<{ Hora: string; total_duration: number }>): TimeRange[] {
-  return bookedSlots.map(booking => {
+  return bookedSlots.map((booking) => {
     const startMinutes = timeStringToMinutes(booking.Hora.substring(0, 5));
     return { start: startMinutes, end: startMinutes + booking.total_duration };
   });
@@ -98,34 +98,38 @@ export const TenantDateTimeSelection = ({
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [stylistsLoading, setStylistsLoading] = useState(true);
-  
+
   // Waitlist state
   const [showWaitlistDialog, setShowWaitlistDialog] = useState(false);
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
-  
+
   // User authentication state
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string } | null>(null);
   const [userLoading, setUserLoading] = useState(true);
-  
+
   const { toast } = useToast();
 
-  const { businessHours, loading: hoursLoading, generateBaseSlots, getBusinessHoursForDay, getClosedDays } = useTenantBusinessHours(tenantId);
+  const {
+    businessHours,
+    loading: hoursLoading,
+    generateBaseSlots,
+    getBusinessHoursForDay,
+    getClosedDays,
+  } = useTenantBusinessHours(tenantId);
 
   // Fetch current user profile
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name")
-            .eq("id", user.id)
-            .single();
-          
+          const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+
           setCurrentUser({
             id: user.id,
-            name: profile?.full_name || user.email || ""
+            name: profile?.full_name || user.email || "",
           });
         }
       } catch (error) {
@@ -165,7 +169,7 @@ export const TenantDateTimeSelection = ({
   // Calculate available slots for a specific stylist
   const computeAvailableSlotsForStylist = (
     selectedDate: Date,
-    bookedData: { bookedSlots?: Array<{ Hora: string; total_duration: number }> }
+    bookedData: { bookedSlots?: Array<{ Hora: string; total_duration: number }> },
   ): string[] => {
     const ranges = parseBookedSlotsToRanges(bookedData?.bookedSlots || []);
     const dayOfWeek = selectedDate.getDay();
@@ -180,7 +184,7 @@ export const TenantDateTimeSelection = ({
     const slotsSet = generateBaseSlots(dayOfWeek);
 
     // Add flexible slots after existing bookings
-    ranges.forEach(booking => {
+    ranges.forEach((booking) => {
       const endTime = booking.end;
       const inMorning = endTime >= hours.morningStart && endTime < hours.morningEnd;
       const inAfternoon = endTime >= hours.afternoonStart && endTime < hours.afternoonEnd;
@@ -190,10 +194,12 @@ export const TenantDateTimeSelection = ({
     });
 
     // Convert to sorted array
-    const allSlots = Array.from(slotsSet).sort((a, b) => a - b).map(minutesToTimeString);
+    const allSlots = Array.from(slotsSet)
+      .sort((a, b) => a - b)
+      .map(minutesToTimeString);
 
     // Filter available slots
-    return allSlots.filter(slot => {
+    return allSlots.filter((slot) => {
       const startMinutes = timeStringToMinutes(slot);
       const endMinutes = startMinutes + totalDuration;
 
@@ -205,9 +211,23 @@ export const TenantDateTimeSelection = ({
       if (inMorning && endMinutes > hours.morningEnd) return false;
       if (inAfternoon && endMinutes > hours.afternoonEnd) return false;
 
-      // Check overlap with bookings
+      // Calcular las ventanas activas para verificar cada una
       const activeWindows = getActiveWindows(startMinutes, services);
+
+      // Para servicios compuestos, verificar que CADA ventana activa esté dentro del horario
+      // Esto es importante porque la parte 2 podría caer después del cierre
       for (const window of activeWindows) {
+        const windowInMorning = window.start >= hours.morningStart && window.start < hours.morningEnd;
+        const windowInAfternoon = window.start >= hours.afternoonStart && window.start < hours.afternoonEnd;
+
+        // Si la ventana comienza en el periodo de mañana, debe terminar antes del cierre de mañana
+        if (windowInMorning && window.end > hours.morningEnd) return false;
+        // Si la ventana comienza en el periodo de tarde, debe terminar antes del cierre de tarde
+        if (windowInAfternoon && window.end > hours.afternoonEnd) return false;
+        // Si la ventana no está ni en mañana ni en tarde (ej: durante la pausa o fuera de horario), no es válida
+        if (!windowInMorning && !windowInAfternoon) return false;
+
+        // Check overlap with bookings
         for (const booking of ranges) {
           if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
             return false;
@@ -228,14 +248,14 @@ export const TenantDateTimeSelection = ({
       try {
         const dateStr = formatDateToISO(date);
 
-        if (stylist === 'any' && stylists.length > 0) {
+        if (stylist === "any" && stylists.length > 0) {
           // Fetch all stylists and merge availability
           const responses = await Promise.all(
-            stylists.map(s => 
-              supabase.functions.invoke('check-availability', {
+            stylists.map((s) =>
+              supabase.functions.invoke("check-availability", {
                 body: { date: dateStr, stylist: s.slug, totalDuration, tenant_id: tenantId },
-              })
-            )
+              }),
+            ),
           );
 
           // Merge all available slots
@@ -243,7 +263,7 @@ export const TenantDateTimeSelection = ({
           responses.forEach((response, index) => {
             if (!response.error && response.data) {
               const slots = computeAvailableSlotsForStylist(date, response.data);
-              slots.forEach(slot => allSlotsSet.add(slot));
+              slots.forEach((slot) => allSlotsSet.add(slot));
             }
           });
 
@@ -252,7 +272,7 @@ export const TenantDateTimeSelection = ({
           setBookedRanges([]);
         } else {
           // Regular handling for specific stylist
-          const { data, error } = await supabase.functions.invoke('check-availability', {
+          const { data, error } = await supabase.functions.invoke("check-availability", {
             body: { date: dateStr, stylist, totalDuration, tenant_id: tenantId },
           });
 
@@ -279,7 +299,7 @@ export const TenantDateTimeSelection = ({
   // Generate available time slots for specific stylist
   const getAvailableTimeSlots = (selectedDate: Date | undefined): string[] => {
     if (!selectedDate) return [];
-    
+
     const dayOfWeek = selectedDate.getDay();
     const hours = getBusinessHoursForDay(dayOfWeek);
 
@@ -292,7 +312,7 @@ export const TenantDateTimeSelection = ({
     const slotsSet = generateBaseSlots(dayOfWeek);
 
     // Add flexible slots after bookings
-    bookedRanges.forEach(booking => {
+    bookedRanges.forEach((booking) => {
       const endTime = booking.end;
       const inMorning = endTime >= hours.morningStart && endTime < hours.morningEnd;
       const inAfternoon = endTime >= hours.afternoonStart && endTime < hours.afternoonEnd;
@@ -301,9 +321,11 @@ export const TenantDateTimeSelection = ({
       }
     });
 
-    const allSlots = Array.from(slotsSet).sort((a, b) => a - b).map(minutesToTimeString);
+    const allSlots = Array.from(slotsSet)
+      .sort((a, b) => a - b)
+      .map(minutesToTimeString);
 
-    return allSlots.filter(slot => {
+    return allSlots.filter((slot) => {
       const startMinutes = timeStringToMinutes(slot);
       const endMinutes = startMinutes + totalDuration;
 
@@ -315,8 +337,23 @@ export const TenantDateTimeSelection = ({
       if (inMorning && endMinutes > hours.morningEnd) return false;
       if (inAfternoon && endMinutes > hours.afternoonEnd) return false;
 
+      // Calcular las ventanas activas para verificar cada una
       const activeWindows = getActiveWindows(startMinutes, services);
+
+      // Para servicios compuestos, verificar que CADA ventana activa esté dentro del horario
+      // Esto es importante porque la parte 2 podría caer después del cierre
       for (const window of activeWindows) {
+        const windowInMorning = window.start >= hours.morningStart && window.start < hours.morningEnd;
+        const windowInAfternoon = window.start >= hours.afternoonStart && window.start < hours.afternoonEnd;
+
+        // Si la ventana comienza en el periodo de mañana, debe terminar antes del cierre de mañana
+        if (windowInMorning && window.end > hours.morningEnd) return false;
+        // Si la ventana comienza en el periodo de tarde, debe terminar antes del cierre de tarde
+        if (windowInAfternoon && window.end > hours.afternoonEnd) return false;
+        // Si la ventana no está ni en mañana ni en tarde (ej: durante la pausa o fuera de horario), no es válida
+        if (!windowInMorning && !windowInAfternoon) return false;
+
+        // Check overlap with bookings
         for (const booking of bookedRanges) {
           if (hasOverlap(window.start, window.end, booking.start, booking.end)) {
             return false;
@@ -328,13 +365,13 @@ export const TenantDateTimeSelection = ({
     });
   };
 
-  const timeSlots = stylist === 'any' ? fusedAvailableSlots : getAvailableTimeSlots(date);
+  const timeSlots = stylist === "any" ? fusedAvailableSlots : getAvailableTimeSlots(date);
 
   const handleNext = async () => {
     if (!date || !time) return;
 
     // If stylist is 'any', determine which specific stylist is available
-    if (stylist === 'any' && stylists.length > 0) {
+    if (stylist === "any" && stylists.length > 0) {
       try {
         const dateStr = formatDateToISO(date);
         const selectedStartMinutes = timeStringToMinutes(time);
@@ -343,23 +380,23 @@ export const TenantDateTimeSelection = ({
         // Check each stylist's availability
         const availabilityResults = await Promise.all(
           stylists.map(async (s) => {
-            const { data, error } = await supabase.functions.invoke('check-availability', {
+            const { data, error } = await supabase.functions.invoke("check-availability", {
               body: { date: dateStr, stylist: s.slug, tenant_id: tenantId },
             });
 
             if (error) return { slug: s.slug, available: false };
 
             const ranges = parseBookedSlotsToRanges(data?.bookedSlots || []);
-            const isAvailable = !activeWindows.some(window => 
-              ranges.some(booking => hasOverlap(window.start, window.end, booking.start, booking.end))
+            const isAvailable = !activeWindows.some((window) =>
+              ranges.some((booking) => hasOverlap(window.start, window.end, booking.start, booking.end)),
             );
 
             return { slug: s.slug, available: isAvailable };
-          })
+          }),
         );
 
         // Find first available stylist
-        const availableStylist = availabilityResults.find(r => r.available);
+        const availableStylist = availabilityResults.find((r) => r.available);
         if (availableStylist) {
           onNext(date, time, availableStylist.slug);
         }
@@ -377,7 +414,7 @@ export const TenantDateTimeSelection = ({
       toast({
         title: "Error",
         description: "Debes iniciar sesión para unirte a la lista de espera",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -386,38 +423,34 @@ export const TenantDateTimeSelection = ({
 
     setWaitlistSubmitting(true);
     try {
-      const preferredStylistId = stylist !== 'any' 
-        ? stylists.find(s => s.slug === stylist)?.id 
-        : null;
+      const preferredStylistId = stylist !== "any" ? stylists.find((s) => s.slug === stylist)?.id : null;
 
-      const { error } = await supabase
-        .from("waitlist" as any)
-        .insert({
-          tenant_id: tenantId,
-          user_id: currentUser.id,
-          client_name: nameToUse,
-          client_phone: null,
-          preferred_date: format(date, "yyyy-MM-dd"),
-          preferred_stylist_id: preferredStylistId,
-          services: services.map(s => ({ id: s.id, name: s.name })),
-          notes: `Duración: ${totalDuration} min`,
-          status: "waiting",
-          priority: 3
-        });
+      const { error } = await supabase.from("waitlist" as any).insert({
+        tenant_id: tenantId,
+        user_id: currentUser.id,
+        client_name: nameToUse,
+        client_phone: null,
+        preferred_date: format(date, "yyyy-MM-dd"),
+        preferred_stylist_id: preferredStylistId,
+        services: services.map((s) => ({ id: s.id, name: s.name })),
+        notes: `Duración: ${totalDuration} min`,
+        status: "waiting",
+        priority: 3,
+      });
 
       if (error) throw error;
 
       toast({
         title: "¡Añadido a la lista de espera!",
-        description: "Te notificaremos cuando haya disponibilidad"
+        description: "Te notificaremos cuando haya disponibilidad",
       });
-      
+
       setShowWaitlistDialog(false);
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "No se pudo añadir a la lista de espera",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setWaitlistSubmitting(false);
@@ -429,10 +462,7 @@ export const TenantDateTimeSelection = ({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const disabledDays = [
-    { dayOfWeek: closedDays },
-    { before: today },
-  ];
+  const disabledDays = [{ dayOfWeek: closedDays }, { before: today }];
 
   if (stylistsLoading || hoursLoading) {
     return (
@@ -461,9 +491,7 @@ export const TenantDateTimeSelection = ({
         <div>
           <h3 className="mb-4 font-semibold text-foreground">Selecciona una hora</h3>
           {!date ? (
-            <p className="text-sm text-muted-foreground">
-              Primero selecciona una fecha
-            </p>
+            <p className="text-sm text-muted-foreground">Primero selecciona una fecha</p>
           ) : loading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -477,9 +505,9 @@ export const TenantDateTimeSelection = ({
                   No hay horarios disponibles para este día. Todos los slots están reservados.
                 </p>
               </div>
-              
-              <Button 
-                variant="outline" 
+
+              <Button
+                variant="outline"
                 className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
                 onClick={() => setShowWaitlistDialog(true)}
               >
@@ -492,17 +520,17 @@ export const TenantDateTimeSelection = ({
               const dayOfWeek = date.getDay();
               const hours = getBusinessHoursForDay(dayOfWeek);
               const hasAfternoon = hours.afternoonStart > 0 && hours.afternoonEnd > 0;
-              
+
               // Split slots into morning and afternoon
-              const morningSlots = timeSlots.filter(slot => {
+              const morningSlots = timeSlots.filter((slot) => {
                 const minutes = timeStringToMinutes(slot);
                 return minutes < hours.morningEnd;
               });
-              const afternoonSlots = timeSlots.filter(slot => {
+              const afternoonSlots = timeSlots.filter((slot) => {
                 const minutes = timeStringToMinutes(slot);
                 return minutes >= hours.afternoonStart;
               });
-              
+
               return (
                 <div className="space-y-4 max-h-[300px] overflow-y-auto">
                   {morningSlots.length > 0 && (
@@ -519,7 +547,7 @@ export const TenantDateTimeSelection = ({
                             onClick={() => setTime(slot)}
                             className={cn(
                               "h-11 text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation",
-                              time === slot && "shadow-glow"
+                              time === slot && "shadow-glow",
                             )}
                           >
                             {slot}
@@ -528,7 +556,7 @@ export const TenantDateTimeSelection = ({
                       </div>
                     </div>
                   )}
-                  
+
                   {hasAfternoon && morningSlots.length > 0 && afternoonSlots.length > 0 && (
                     <div className="flex items-center gap-2 py-1">
                       <div className="flex-1 h-px bg-border" />
@@ -538,11 +566,12 @@ export const TenantDateTimeSelection = ({
                       <div className="flex-1 h-px bg-border" />
                     </div>
                   )}
-                  
+
                   {afternoonSlots.length > 0 && hasAfternoon && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-2 font-medium">
-                        🌙 Tarde ({minutesToTimeString(hours.afternoonStart)} - {minutesToTimeString(hours.afternoonEnd)})
+                        🌙 Tarde ({minutesToTimeString(hours.afternoonStart)} -{" "}
+                        {minutesToTimeString(hours.afternoonEnd)})
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {afternoonSlots.map((slot) => (
@@ -553,7 +582,7 @@ export const TenantDateTimeSelection = ({
                             onClick={() => setTime(slot)}
                             className={cn(
                               "h-11 text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation",
-                              time === slot && "shadow-glow"
+                              time === slot && "shadow-glow",
                             )}
                           >
                             {slot}
@@ -568,7 +597,8 @@ export const TenantDateTimeSelection = ({
           )}
           {date && time && (
             <p className="mt-4 text-xs text-muted-foreground">
-              Duración estimada: {totalDuration} minutos (finaliza a las {minutesToTimeString(timeStringToMinutes(time) + totalDuration)})
+              Duración estimada: {totalDuration} minutos (finaliza a las{" "}
+              {minutesToTimeString(timeStringToMinutes(time) + totalDuration)})
             </p>
           )}
         </div>
@@ -596,10 +626,11 @@ export const TenantDateTimeSelection = ({
               Lista de espera
             </DialogTitle>
             <DialogDescription>
-              Te notificaremos dentro de la app cuando haya disponibilidad para {date ? format(date, "d 'de' MMMM", { locale: es }) : "esta fecha"}.
+              Te notificaremos dentro de la app cuando haya disponibilidad para{" "}
+              {date ? format(date, "d 'de' MMMM", { locale: es }) : "esta fecha"}.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             {currentUser ? (
               <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
@@ -608,30 +639,21 @@ export const TenantDateTimeSelection = ({
               </div>
             ) : (
               <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
-                <p className="text-sm text-destructive">
-                  Debes iniciar sesión para unirte a la lista de espera
-                </p>
+                <p className="text-sm text-destructive">Debes iniciar sesión para unirte a la lista de espera</p>
               </div>
             )}
-            
+
             <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
               <p className="font-medium mb-1">Servicios solicitados:</p>
-              <p>{services.map(s => s.name).join(", ")}</p>
+              <p>{services.map((s) => s.name).join(", ")}</p>
             </div>
           </div>
-          
+
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowWaitlistDialog(false)}
-              disabled={waitlistSubmitting}
-            >
+            <Button variant="outline" onClick={() => setShowWaitlistDialog(false)} disabled={waitlistSubmitting}>
               Cancelar
             </Button>
-            <Button 
-              onClick={handleWaitlistSubmit}
-              disabled={waitlistSubmitting || !currentUser}
-            >
+            <Button onClick={handleWaitlistSubmit} disabled={waitlistSubmitting || !currentUser}>
               {waitlistSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
