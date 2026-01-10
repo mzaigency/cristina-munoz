@@ -11,130 +11,309 @@ const corsHeaders = {
 
 const APP_URL = 'https://www.glowapp.app'
 const FROM_EMAIL = 'GlowApp <contacto@glowapp.app>'
-const LOGO_URL = `${APP_URL}/og-image.png`
 
-// Brand Colors (HSL to HEX)
+// Logos de GlowApp (públicos en /public)
+const LOGO_ICON_URL = `${APP_URL}/email-assets/glowapp-icon.png`
+const LOGO_TEXT_URL = `${APP_URL}/email-assets/glowapp-logo.png`
+
+// Brand Colors - GlowApp Design System
 const BRAND = {
-  primary: '#4169E1',      // Blue - hsl(230, 85%, 60%)
-  accent: '#9333EA',       // Purple - hsl(270, 80%, 60%)
-  success: '#10B981',      // Green
-  warning: '#F59E0B',      // Amber
-  danger: '#EF4444',       // Red
-  text: '#1a1a2e',         // Dark text
-  textMuted: '#6B7280',    // Gray text
-  textLight: '#9CA3AF',    // Light gray
-  bgLight: '#F8F7FF',      // Light purple bg
-  bgGray: '#F6F9FC',       // Gray bg
+  // Primary gradient
+  primaryStart: '#6366F1',    // Indigo
+  primaryEnd: '#8B5CF6',      // Violet
+  primary: '#7C3AED',         // Purple main
+  
+  // Accent
+  accent: '#A855F7',          // Purple lighter
+  accentSoft: '#C4B5FD',      // Soft violet
+  
+  // Status colors
+  success: '#10B981',
+  warning: '#F59E0B',
+  danger: '#EF4444',
+  
+  // Text hierarchy
+  textPrimary: '#1E1B4B',     // Deep indigo - títulos
+  textSecondary: '#4B5563',   // Gray 600 - body
+  textMuted: '#6B7280',       // Gray 500
+  textLight: '#9CA3AF',       // Gray 400
+  
+  // Backgrounds
+  bgGradientStart: '#FAF5FF', // Purple 50
+  bgGradientEnd: '#F3E8FF',   // Purple 100
+  bgCard: '#FFFFFF',
+  bgSoft: '#F5F3FF',          // Violet 50
+  bgHighlight: '#EDE9FE',     // Violet 100
+  
+  // Others
   white: '#FFFFFF',
   border: '#E5E7EB',
+  borderSoft: '#DDD6FE',      // Violet 200
 }
 
-// Shared email styles
+// Email base wrapper con gradiente de fondo
 const emailWrapper = `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-  <body style="
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(135deg, ${BRAND.bgLight} 0%, ${BRAND.bgGray} 100%);
-    margin: 0;
-    padding: 40px 20px;
-    -webkit-font-smoothing: antialiased;
-  ">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>GlowApp</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+</head>
+<body style="
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(180deg, ${BRAND.bgGradientStart} 0%, ${BRAND.bgGradientEnd} 50%, ${BRAND.bgGradientStart} 100%);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="min-height: 100vh;">
+    <tr>
+      <td align="center" style="padding: 40px 16px;">
 `
 
-const emailContainer = `
-  <div style="
-    max-width: 560px;
-    margin: 0 auto;
-    background: ${BRAND.white};
-    border-radius: 24px;
-    padding: 40px;
-    box-shadow: 0 4px 24px rgba(65, 105, 225, 0.08);
-  ">
+const emailContainerStart = `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px;">
+          <tr>
+            <td style="
+              background: ${BRAND.bgCard};
+              border-radius: 28px;
+              padding: 48px 40px;
+              box-shadow: 
+                0 0 0 1px rgba(124, 58, 237, 0.05),
+                0 4px 6px -1px rgba(124, 58, 237, 0.05),
+                0 20px 40px -8px rgba(124, 58, 237, 0.12);
+            ">
 `
 
+const emailContainerEnd = `
+            </td>
+          </tr>
+        </table>
+`
+
+const emailFooterWrapper = `
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`
+
+// Logo header con imagotipo y tipográfico
 const logoHeader = `
-  <div style="text-align: center; margin-bottom: 32px;">
-    <img src="${LOGO_URL}" width="140" alt="GlowApp" style="border-radius: 12px;" />
-  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding-bottom: 32px;">
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            <td align="center">
+              <!-- Imagotipo (icono) -->
+              <img 
+                src="${LOGO_ICON_URL}" 
+                width="56" 
+                height="56" 
+                alt="GlowApp" 
+                style="display: block; border-radius: 14px; margin-bottom: 12px;"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td align="center">
+              <!-- Logotipo tipográfico -->
+              <img 
+                src="${LOGO_TEXT_URL}" 
+                width="130" 
+                height="auto" 
+                alt="GlowApp" 
+                style="display: block;"
+              />
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 `
 
+// Footer del email
 const emailFooter = `
-  <div style="
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid ${BRAND.border};
-    text-align: center;
-  ">
-    <p style="color: ${BRAND.textLight}; font-size: 12px; margin: 0 0 8px;">
-      © ${new Date().getFullYear()} GlowApp. Todos los derechos reservados.
-    </p>
-    <p style="color: ${BRAND.textLight}; font-size: 11px; margin: 0;">
-      Este email fue enviado desde <a href="${APP_URL}" style="color: ${BRAND.primary}; text-decoration: none;">glowapp.app</a>
-    </p>
-  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 36px;">
+    <tr>
+      <td style="padding-top: 28px; border-top: 1px solid ${BRAND.border};">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td align="center" style="padding-bottom: 16px;">
+              <img 
+                src="${LOGO_ICON_URL}" 
+                width="32" 
+                height="32" 
+                alt="GlowApp" 
+                style="display: block; border-radius: 8px; opacity: 0.8;"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td align="center">
+              <p style="color: ${BRAND.textLight}; font-size: 13px; margin: 0 0 8px; line-height: 1.5;">
+                © ${new Date().getFullYear()} GlowApp. Todos los derechos reservados.
+              </p>
+              <p style="color: ${BRAND.textLight}; font-size: 12px; margin: 0; line-height: 1.5;">
+                Enviado con 💜 desde 
+                <a href="${APP_URL}" style="color: ${BRAND.primary}; text-decoration: none; font-weight: 500;">glowapp.app</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 `
 
-const button = (text: string, href: string, color: string = BRAND.primary) => `
-  <div style="text-align: center; margin: 32px 0;">
-    <a href="${href}" style="
-      display: inline-block;
-      background: linear-gradient(135deg, ${color} 0%, ${color === BRAND.primary ? BRAND.accent : color} 100%);
-      color: ${BRAND.white};
-      padding: 16px 40px;
-      border-radius: 14px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 15px;
-      box-shadow: 0 4px 14px rgba(65, 105, 225, 0.3);
-    ">
-      ${text}
-    </a>
-  </div>
+// Botón con gradiente
+const button = (text: string, href: string, variant: 'primary' | 'warning' = 'primary') => {
+  const bgGradient = variant === 'primary' 
+    ? `linear-gradient(135deg, ${BRAND.primaryStart} 0%, ${BRAND.primaryEnd} 100%)`
+    : `linear-gradient(135deg, ${BRAND.warning} 0%, #F97316 100%)`
+  
+  const shadowColor = variant === 'primary' ? 'rgba(99, 102, 241, 0.35)' : 'rgba(245, 158, 11, 0.35)'
+  
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
+    <tr>
+      <td align="center">
+        <a href="${href}" target="_blank" style="
+          display: inline-block;
+          background: ${bgGradient};
+          color: ${BRAND.white};
+          padding: 16px 44px;
+          border-radius: 14px;
+          text-decoration: none;
+          font-weight: 700;
+          font-size: 15px;
+          letter-spacing: -0.01em;
+          box-shadow: 0 8px 20px -4px ${shadowColor};
+          transition: transform 0.2s;
+        ">
+          ${text}
+        </a>
+      </td>
+    </tr>
+  </table>
+`}
+
+// Badge/chip
+const badge = (text: string, variant: 'primary' | 'success' | 'warning' = 'primary') => {
+  const bgGradient = variant === 'primary' 
+    ? `linear-gradient(135deg, ${BRAND.primaryStart} 0%, ${BRAND.primaryEnd} 100%)`
+    : variant === 'success'
+    ? `linear-gradient(135deg, ${BRAND.success} 0%, #059669 100%)`
+    : `linear-gradient(135deg, ${BRAND.warning} 0%, #F97316 100%)`
+  
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+    <tr>
+      <td align="center">
+        <span style="
+          display: inline-block;
+          background: ${bgGradient};
+          color: ${BRAND.white};
+          padding: 10px 24px;
+          border-radius: 100px;
+          font-weight: 700;
+          font-size: 13px;
+          letter-spacing: 0.02em;
+          text-transform: uppercase;
+        ">
+          ${text}
+        </span>
+      </td>
+    </tr>
+  </table>
+`}
+
+// Caja de información
+const infoBox = (content: string) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 28px 0;">
+    <tr>
+      <td style="
+        background: ${BRAND.bgSoft};
+        border-radius: 18px;
+        padding: 28px;
+        border: 1px solid ${BRAND.borderSoft};
+      ">
+        ${content}
+      </td>
+    </tr>
+  </table>
 `
 
-const badge = (text: string, bgColor: string) => `
-  <div style="text-align: center; margin-bottom: 24px;">
-    <span style="
-      display: inline-block;
-      background: ${bgColor};
-      color: ${BRAND.white};
-      padding: 8px 20px;
-      border-radius: 100px;
-      font-weight: 600;
-      font-size: 13px;
-    ">
-      ${text}
-    </span>
-  </div>
-`
-
-const infoBox = (content: string, bgColor: string = BRAND.bgLight) => `
-  <div style="
-    background: ${bgColor};
-    border-radius: 16px;
-    padding: 24px;
-    margin: 24px 0;
-  ">
-    ${content}
-  </div>
-`
-
+// Caja de advertencia
 const warningBox = (title: string, items: string[]) => `
-  <div style="
-    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-    border-radius: 14px;
-    padding: 20px;
-    margin: 24px 0;
-  ">
-    <p style="color: #92400E; font-weight: 600; margin: 0 0 12px; font-size: 14px;">${title}</p>
-    ${items.map(item => `<p style="color: #92400E; font-size: 13px; margin: 4px 0;">• ${item}</p>`).join('')}
-  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+    <tr>
+      <td style="
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        border-radius: 16px;
+        padding: 22px;
+        border: 1px solid #FCD34D;
+      ">
+        <p style="color: #92400E; font-weight: 700; margin: 0 0 12px; font-size: 14px; letter-spacing: -0.01em;">${title}</p>
+        ${items.map(item => `<p style="color: #92400E; font-size: 13px; margin: 4px 0; line-height: 1.5;">• ${item}</p>`).join('')}
+      </td>
+    </tr>
+  </table>
+`
+
+// Feature item con icono
+const featureItem = (emoji: string, text: string) => `
+  <tr>
+    <td style="padding: 10px 0;">
+      <table role="presentation" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="vertical-align: middle; padding-right: 14px;">
+            <div style="
+              background: linear-gradient(135deg, ${BRAND.primaryStart} 0%, ${BRAND.primaryEnd} 100%);
+              width: 40px;
+              height: 40px;
+              border-radius: 12px;
+              text-align: center;
+              line-height: 40px;
+              font-size: 18px;
+            ">${emoji}</div>
+          </td>
+          <td style="vertical-align: middle;">
+            <span style="color: ${BRAND.textSecondary}; font-size: 14px; line-height: 1.4;">${text}</span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
 `
 
 type EmailType = 'welcome' | 'password-reset' | 'email-verification'
@@ -145,7 +324,8 @@ interface EmailRequest {
   data: Record<string, unknown>
 }
 
-// Email templates
+// ============ EMAIL TEMPLATES ============
+
 const templates = {
   'email-verification': (data: { 
     userName?: string; 
@@ -154,113 +334,107 @@ const templates = {
     subject: '✨ Verifica tu cuenta de GlowApp',
     html: `
       ${emailWrapper}
-        ${emailContainer}
+        ${emailContainerStart}
           ${logoHeader}
           
-          ${badge('✉️ Verifica tu email', `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%)`)}
+          ${badge('✉️ Verifica tu email')}
           
           <h1 style="
-            color: ${BRAND.text};
-            font-size: 26px;
+            color: ${BRAND.textPrimary};
+            font-size: 28px;
             text-align: center;
-            margin: 0 0 16px;
-            font-weight: 700;
+            margin: 0 0 20px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
           ">
             ¡Ya casi estás!
           </h1>
           
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center;">
-            Hola <strong style="color: ${BRAND.text}">${data.userName || 'amante de la belleza'}</strong>,
+          <p style="color: ${BRAND.textSecondary}; font-size: 16px; text-align: center; margin: 0 0 8px; line-height: 1.6;">
+            Hola <strong style="color: ${BRAND.textPrimary}; font-weight: 600;">${data.userName || 'amante de la belleza'}</strong>,
           </p>
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; line-height: 26px; text-align: center; margin: 0 0 8px;">
-            Gracias por unirte a GlowApp. Para activar tu cuenta, solo necesitas verificar tu email haciendo clic en el botón:
+          <p style="color: ${BRAND.textSecondary}; font-size: 16px; line-height: 1.7; text-align: center; margin: 0;">
+            Gracias por unirte a <strong style="color: ${BRAND.primary};">GlowApp</strong>. Para activar tu cuenta, solo necesitas verificar tu email haciendo clic en el botón:
           </p>
           
           ${button('Verificar mi cuenta', data.confirmationUrl)}
           
           ${infoBox(`
-            <div style="text-align: center;">
-              <p style="color: ${BRAND.text}; font-weight: 600; margin: 0 0 8px; font-size: 15px;">¿Qué sigue después?</p>
-              <p style="color: ${BRAND.textMuted}; font-size: 14px; margin: 0; line-height: 22px;">
-                Una vez verificado, podrás descubrir salones, reservar citas y conectar con profesionales de belleza cerca de ti.
-              </p>
-            </div>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <p style="color: ${BRAND.textPrimary}; font-weight: 700; margin: 0 0 10px; font-size: 16px;">¿Qué sigue después?</p>
+                  <p style="color: ${BRAND.textSecondary}; font-size: 14px; margin: 0; line-height: 1.6;">
+                    Una vez verificado, podrás descubrir salones, reservar citas y conectar con profesionales de belleza cerca de ti.
+                  </p>
+                </td>
+              </tr>
+            </table>
           `)}
 
           ${warningBox('⏰ Este enlace expira en 24 horas', [
-            'Si no creaste una cuenta en GlowApp, ignora este email'
+            'Si no creaste una cuenta en GlowApp, puedes ignorar este email'
           ])}
 
-          <p style="color: ${BRAND.textLight}; font-size: 12px; text-align: center; line-height: 20px;">
+          <p style="color: ${BRAND.textLight}; font-size: 12px; text-align: center; line-height: 1.6; margin: 24px 0 0;">
             Si el botón no funciona, copia y pega este enlace:<br />
-            <a href="${data.confirmationUrl}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 11px;">
+            <a href="${data.confirmationUrl}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 11px; font-weight: 500;">
               ${data.confirmationUrl}
             </a>
           </p>
           
           ${emailFooter}
-        </div>
-      </body>
-      </html>
+        ${emailContainerEnd}
+      ${emailFooterWrapper}
     `
   }),
 
   welcome: (data: { userName?: string }) => ({
-    subject: '¡Bienvenido a GlowApp! ✨',
+    subject: '🎉 ¡Bienvenido a GlowApp!',
     html: `
       ${emailWrapper}
-        ${emailContainer}
+        ${emailContainerStart}
           ${logoHeader}
           
-          ${badge('✨ Bienvenido a GlowApp', `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%)`)}
+          ${badge('🎉 Bienvenido', 'success')}
           
           <h1 style="
-            color: ${BRAND.text};
-            font-size: 26px;
+            color: ${BRAND.textPrimary};
+            font-size: 28px;
             text-align: center;
-            margin: 0 0 16px;
-            font-weight: 700;
+            margin: 0 0 20px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
           ">
             ¡Hola ${data.userName || 'amante de la belleza'}!
           </h1>
           
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; line-height: 26px; text-align: center; margin: 0 0 24px;">
-            Nos alegra que te hayas unido a la comunidad de GlowApp. Ahora tienes acceso a los mejores salones de belleza cerca de ti.
+          <p style="color: ${BRAND.textSecondary}; font-size: 16px; line-height: 1.7; text-align: center; margin: 0 0 28px;">
+            Nos alegra que te hayas unido a la comunidad de <strong style="color: ${BRAND.primary};">GlowApp</strong>. Ahora tienes acceso a los mejores salones de belleza cerca de ti.
           </p>
           
           ${infoBox(`
-            <p style="color: ${BRAND.text}; font-weight: 600; margin: 0 0 16px; font-size: 15px;">Con GlowApp puedes:</p>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="background: linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%); width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">✨</span>
-                <span style="color: ${BRAND.textMuted}; font-size: 14px;">Descubrir salones increíbles cerca de ti</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="background: linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%); width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">📅</span>
-                <span style="color: ${BRAND.textMuted}; font-size: 14px;">Reservar citas en segundos</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="background: linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%); width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">💬</span>
-                <span style="color: ${BRAND.textMuted}; font-size: 14px;">Chatear directamente con los salones</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="background: linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.accent} 100%); width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">⭐</span>
-                <span style="color: ${BRAND.textMuted}; font-size: 14px;">Leer y dejar reseñas</span>
-              </div>
-            </div>
+            <p style="color: ${BRAND.textPrimary}; font-weight: 700; margin: 0 0 16px; font-size: 16px; text-align: center;">Con GlowApp puedes:</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              ${featureItem('✨', 'Descubrir salones increíbles cerca de ti')}
+              ${featureItem('📅', 'Reservar citas en segundos')}
+              ${featureItem('💬', 'Chatear directamente con los salones')}
+              ${featureItem('⭐', 'Leer y dejar reseñas')}
+            </table>
           `)}
           
           ${button('Explorar salones', APP_URL)}
           
-          <p style="color: ${BRAND.textMuted}; font-size: 14px; text-align: center;">
+          <p style="color: ${BRAND.textSecondary}; font-size: 15px; text-align: center; line-height: 1.6; margin: 0;">
             Con cariño,<br />
-            <strong style="color: ${BRAND.text};">El equipo de GlowApp</strong> 💜
+            <strong style="color: ${BRAND.textPrimary}; font-weight: 600;">El equipo de GlowApp</strong> 💜
           </p>
           
           ${emailFooter}
-        </div>
-      </body>
-      </html>
+        ${emailContainerEnd}
+      ${emailFooterWrapper}
     `
   }),
 
@@ -271,49 +445,51 @@ const templates = {
     subject: '🔐 Recupera tu contraseña de GlowApp',
     html: `
       ${emailWrapper}
-        ${emailContainer}
+        ${emailContainerStart}
           ${logoHeader}
           
-          ${badge('🔐 Recuperar contraseña', BRAND.warning)}
+          ${badge('🔐 Recuperar contraseña', 'warning')}
           
           <h1 style="
-            color: ${BRAND.text};
-            font-size: 24px;
+            color: ${BRAND.textPrimary};
+            font-size: 26px;
             text-align: center;
-            margin: 0 0 16px;
-            font-weight: 700;
+            margin: 0 0 20px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
           ">
             Restablece tu contraseña
           </h1>
           
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center;">
-            Hola <strong style="color: ${BRAND.text}">${data.userName || 'usuario'}</strong>,
+          <p style="color: ${BRAND.textSecondary}; font-size: 16px; text-align: center; margin: 0 0 8px; line-height: 1.6;">
+            Hola <strong style="color: ${BRAND.textPrimary}; font-weight: 600;">${data.userName || 'usuario'}</strong>,
           </p>
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center; line-height: 26px; margin: 0;">
-            Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en GlowApp.
+          <p style="color: ${BRAND.textSecondary}; font-size: 16px; text-align: center; line-height: 1.7; margin: 0;">
+            Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en <strong style="color: ${BRAND.primary};">GlowApp</strong>.
           </p>
-          <p style="color: ${BRAND.textMuted}; font-size: 16px; text-align: center; line-height: 26px;">
+          <p style="color: ${BRAND.textSecondary}; font-size: 16px; text-align: center; line-height: 1.7; margin: 16px 0 0;">
             Haz clic en el siguiente botón para crear una nueva contraseña:
           </p>
           
-          ${button('Restablecer contraseña', data.resetLink)}
+          ${button('Restablecer contraseña', data.resetLink, 'warning')}
 
           ${warningBox('⏰ Importante:', [
             'Este enlace expira en 1 hora',
-            'Si no solicitaste este cambio, ignora este email'
+            'Si no solicitaste este cambio, ignora este email',
+            'Tu contraseña actual seguirá siendo válida'
           ])}
 
-          <p style="color: ${BRAND.textLight}; font-size: 12px; text-align: center; line-height: 20px;">
+          <p style="color: ${BRAND.textLight}; font-size: 12px; text-align: center; line-height: 1.6; margin: 24px 0 0;">
             Si el botón no funciona, copia y pega este enlace en tu navegador:<br />
-            <a href="${data.resetLink}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 11px;">
+            <a href="${data.resetLink}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 11px; font-weight: 500;">
               ${data.resetLink}
             </a>
           </p>
           
           ${emailFooter}
-        </div>
-      </body>
-      </html>
+        ${emailContainerEnd}
+      ${emailFooterWrapper}
     `
   })
 }
