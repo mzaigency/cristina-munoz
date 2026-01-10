@@ -1,5 +1,5 @@
 import { SEO } from "@/components/SEO";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -53,9 +53,17 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [sentEmail, setSentEmail] = useState("");
+
+  // Persist "verify your email" screen across redirect/reload on mobile
+  const [emailSent, setEmailSent] = useState(() => Boolean(sessionStorage.getItem("pendingVerificationEmail")));
+  const [sentEmail, setSentEmail] = useState(() => sessionStorage.getItem("pendingVerificationEmail") ?? "");
+
   const [citySearch, setCitySearch] = useState("");
+
+  // Prevent redirect race: signUp creates a session briefly before we signOut.
+  // Initialize from emailSent so if user refreshes, we still don't redirect away.
+  const suppressSessionRedirectRef = useRef(emailSent);
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -91,6 +99,11 @@ export default function Auth() {
       .sort();
   }, [selectedProvince]);
 
+  useEffect(() => {
+    // Keep redirect suppression in sync with persisted state
+    suppressSessionRedirectRef.current = emailSent || suppressSessionRedirectRef.current;
+  }, [emailSent]);
+
   const filteredCities = useMemo(() => {
     if (!citySearch) return citiesList.slice(0, 50);
     return citiesList
@@ -106,7 +119,8 @@ export default function Auth() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (session && !emailSent) {
+
+      if (session && !suppressSessionRedirectRef.current) {
         navigate("/mis-citas");
       }
     };
@@ -116,7 +130,7 @@ export default function Auth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && !emailSent) {
+      if (session && !suppressSessionRedirectRef.current) {
         navigate("/mis-citas");
       }
     });
@@ -217,6 +231,9 @@ export default function Auth() {
           return;
         }
 
+        // Block auto-redirect while signup is in progress (avoids race with auth listener)
+        suppressSessionRedirectRef.current = true;
+
         const { data, error } = await supabase.auth.signUp({
           email: signUpValues.email,
           password: signUpValues.password,
@@ -249,6 +266,7 @@ export default function Auth() {
         if (data.user) {
           // Set email sent state FIRST to show verification screen
           // This prevents the auth listener from redirecting
+          sessionStorage.setItem("pendingVerificationEmail", signUpValues.email);
           setSentEmail(signUpValues.email);
           setEmailSent(true);
 
@@ -298,6 +316,9 @@ export default function Auth() {
         });
       }
     } catch (error: any) {
+      // If signup failed, re-enable redirects
+      if (isSignUp) suppressSessionRedirectRef.current = false;
+
       const { title, description } = getErrorMessage(error);
       toast({
         title,
@@ -356,6 +377,8 @@ export default function Auth() {
                       variant="outline"
                       className="w-full"
                       onClick={() => {
+                        sessionStorage.removeItem("pendingVerificationEmail");
+                        suppressSessionRedirectRef.current = false;
                         setEmailSent(false);
                         setIsSignUp(false);
                         form.reset();
