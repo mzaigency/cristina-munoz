@@ -99,11 +99,14 @@ export default function Auth() {
   }, [citiesList, citySearch]);
 
   useEffect(() => {
+    // Don't redirect if we're showing the email verification screen
+    if (emailSent) return;
+
     const checkSession = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (session) {
+      if (session && !emailSent) {
         navigate("/mis-citas");
       }
     };
@@ -113,13 +116,13 @@ export default function Auth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
+      if (session && !emailSent) {
         navigate("/mis-citas");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, emailSent]);
 
   const getErrorMessage = (error: any): { title: string; description: string } => {
     const errorMessage = error?.message?.toLowerCase() || "";
@@ -244,6 +247,11 @@ export default function Auth() {
 
         // Send custom verification email via Resend
         if (data.user) {
+          // Set email sent state FIRST to show verification screen
+          // This prevents the auth listener from redirecting
+          setSentEmail(signUpValues.email);
+          setEmailSent(true);
+
           // Sign out immediately - user must verify email first
           await supabase.auth.signOut();
 
@@ -260,8 +268,7 @@ export default function Auth() {
             // Still show the confirmation screen, email might just be delayed
           }
 
-          setSentEmail(signUpValues.email);
-          setEmailSent(true);
+          setLoading(false);
           return;
         }
       } else {
