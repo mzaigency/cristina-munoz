@@ -154,6 +154,44 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // --- SECURITY CHECK START ---
+    const authHeader = req.headers.get('Authorization');
+    let callerUser = null;
+    let callerRoles: string[] = [];
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user) {
+        callerUser = user;
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+        if (roles) {
+           callerRoles = roles.map(r => r.role);
+        }
+      }
+    }
+
+    const isAdminOrStylist = callerRoles.some(r => ['admin', 'stylist', 'superadmin'].includes(r));
+
+    // 1. Prevent IDOR on user_id
+    if (bookingData.user_id) {
+       if (!callerUser) {
+           throw new Error('User must be authenticated to create a booking with user_id');
+       }
+       if (callerUser.id !== bookingData.user_id && !isAdminOrStylist) {
+           throw new Error('Unauthorized to create booking for another user');
+       }
+    }
+
+    // 2. Prevent unauthorized availability skip
+    if (bookingData.skipAvailabilityCheck && !isAdminOrStylist) {
+        throw new Error('Unauthorized to skip availability check');
+    }
+    // --- SECURITY CHECK END ---
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
