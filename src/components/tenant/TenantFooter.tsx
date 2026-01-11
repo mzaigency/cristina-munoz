@@ -12,6 +12,8 @@ interface Tenant {
   postal_code: string | null;
   instagram_url?: string | null;
   facebook_url?: string | null;
+  description?: string | null;
+  tagline?: string | null;
 }
 
 interface TenantFooterProps {
@@ -116,8 +118,9 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
           <div className="md:col-span-2">
             <h3 className="text-2xl font-bold mb-4 text-primary">{tenant.name}</h3>
             <p className="text-muted-foreground mb-4">
-              Tu peluquería de confianza{tenant.city && ` en ${tenant.city}`}. Profesionales dedicados a realzar tu
-              belleza con los mejores tratamientos y técnicas.
+              {tenant.description || tenant.tagline || (
+                <>Tu espacio de confianza{tenant.city && ` en ${tenant.city}`}. Profesionales dedicados a ofrecerte la mejor experiencia.</>
+              )}
             </p>
             {/* Social Links */}
             {(tenant.instagram_url || tenant.facebook_url) && (
