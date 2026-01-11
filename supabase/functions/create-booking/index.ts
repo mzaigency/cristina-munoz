@@ -154,6 +154,44 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Verify authentication if user_id is provided
+    if (bookingData.user_id) {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized', details: 'Missing Authorization header' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+      if (userError || !user) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized', details: 'Invalid token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (user.id !== bookingData.user_id) {
+        // Check if user is admin or stylist
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const role = userRole?.role;
+        if (!['admin', 'stylist', 'superadmin'].includes(role)) {
+          return new Response(
+            JSON.stringify({ error: 'Unauthorized', details: 'You can only create bookings for yourself' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
