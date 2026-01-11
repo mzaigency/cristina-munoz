@@ -85,20 +85,20 @@ export function AISearchBar({
     setShowResults(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('ai-search-assistant', {
-        body: { query: searchText }
+      const { data, error } = await supabase.functions.invoke("ai-search-assistant", {
+        body: { query: searchText },
       });
 
       if (error) throw error;
 
       setSearchResults(data?.results || []);
       setResultMessage(data?.message || "");
-      
+
       if (data?.results?.length > 0) {
         toast.success(data.message);
       }
     } catch (error) {
-      console.error('AI Search error:', error);
+      console.error("AI Search error:", error);
       toast.error("Error al buscar. Inténtalo de nuevo.");
       setSearchResults([]);
       setResultMessage("Error al buscar");
@@ -108,7 +108,7 @@ export function AISearchBar({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
+    if (e.key === "Enter" && searchQuery.trim()) {
       handleAISearch();
     }
   };
@@ -119,11 +119,7 @@ export function AISearchBar({
     navigate(`/salon/${slug}`);
   };
 
-  const suggestions = [
-    "Mejores balayage en Manresa",
-    "Peluquerías cerca de mí",
-    "Tratamientos keratina Barcelona",
-  ];
+  const suggestions = ["Mejores balayage en Manresa", "Peluquerías cerca de mí", "Tratamientos keratina Barcelona"];
 
   const showDropdown = isFocused && !searchQuery && !showResults;
   const showResultsDropdown = showResults && (searchResults.length > 0 || resultMessage);
@@ -133,9 +129,7 @@ export function AISearchBar({
       <div
         className={cn(
           "relative flex items-center rounded-2xl transition-all duration-300",
-          isFocused
-            ? "bg-card ring-2 ring-primary/40 shadow-lg shadow-primary/10"
-            : "bg-secondary/60"
+          isFocused ? "bg-card ring-2 ring-primary/40 shadow-lg shadow-primary/10" : "bg-secondary/60",
         )}
       >
         {/* AI/Search Icon */}
@@ -152,7 +146,7 @@ export function AISearchBar({
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Busca con IA: 'mejores balayage en Manresa'"
+          placeholder="Busca con IA servicios o salones..."
           value={searchQuery}
           onChange={(e) => {
             onSearchChange(e.target.value);
@@ -176,12 +170,7 @@ export function AISearchBar({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
               >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleClear}
-                  className="h-8 w-8 rounded-full"
-                >
+                <Button variant="ghost" size="icon" onClick={handleClear} className="h-8 w-8 rounded-full">
                   <X className="h-4 w-4" />
                 </Button>
               </motion.div>
@@ -194,10 +183,7 @@ export function AISearchBar({
               variant="ghost"
               size="icon"
               onClick={handleVoiceSearch}
-              className={cn(
-                "h-8 w-8 rounded-full",
-                isListening && "bg-primary text-primary-foreground animate-pulse"
-              )}
+              className={cn("h-8 w-8 rounded-full", isListening && "bg-primary text-primary-foreground animate-pulse")}
             >
               <Mic className="h-4 w-4" />
             </Button>
@@ -210,11 +196,7 @@ export function AISearchBar({
             disabled={!searchQuery.trim() || isAISearching}
             className="h-9 w-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
           >
-            {isAISearching ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
+            {isAISearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </div>
@@ -264,10 +246,7 @@ export function AISearchBar({
                       Recientes
                     </span>
                     {onClearRecents && (
-                      <button
-                        onClick={onClearRecents}
-                        className="text-[10px] text-primary font-semibold"
-                      >
+                      <button onClick={onClearRecents} className="text-[10px] text-primary font-semibold">
                         Borrar
                       </button>
                     )}
@@ -305,21 +284,15 @@ export function AISearchBar({
                 <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
-                <span className="text-xs font-semibold text-foreground">
-                  {resultMessage}
-                </span>
+                <span className="text-xs font-semibold text-foreground">{resultMessage}</span>
               </div>
 
               {/* No results */}
               {searchResults.length === 0 && !isAISearching && (
                 <div className="py-6 text-center">
                   <Store className="h-10 w-10 mx-auto text-muted-foreground/40 mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    No encontré salones con esos criterios
-                  </p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    Prueba con otra búsqueda
-                  </p>
+                  <p className="text-sm text-muted-foreground">No encontré salones con esos criterios</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Prueba con otra búsqueda</p>
                 </div>
               )}
 
@@ -332,22 +305,16 @@ export function AISearchBar({
                     className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-secondary/60 active:scale-[0.98] transition-all text-left group"
                   >
                     {/* Salon logo */}
-                    <div 
+                    <div
                       className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
-                      style={{ 
-                        backgroundColor: salon.primary_color || 'hsl(var(--primary))' 
+                      style={{
+                        backgroundColor: salon.primary_color || "hsl(var(--primary))",
                       }}
                     >
                       {salon.logo_url ? (
-                        <img 
-                          src={salon.logo_url} 
-                          alt={salon.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={salon.logo_url} alt={salon.name} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-white font-bold text-sm">
-                          {salon.name.charAt(0).toUpperCase()}
-                        </span>
+                        <span className="text-white font-bold text-sm">{salon.name.charAt(0).toUpperCase()}</span>
                       )}
                     </div>
 
@@ -356,7 +323,7 @@ export function AISearchBar({
                       <h4 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
                         {salon.name}
                       </h4>
-                      
+
                       {/* City */}
                       {salon.city && (
                         <div className="flex items-center gap-1 mt-0.5">
@@ -364,12 +331,12 @@ export function AISearchBar({
                           <span className="text-xs text-muted-foreground">{salon.city}</span>
                         </div>
                       )}
-                      
+
                       {/* Matched services */}
                       {salon.matchedServices.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {salon.matchedServices.map((service, i) => (
-                            <span 
+                            <span
                               key={i}
                               className="text-[10px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-medium"
                             >
