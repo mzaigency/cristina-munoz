@@ -3,26 +3,27 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  LogOut, 
-  Loader2, 
-  Home, 
-  Calendar, 
-  MessageCircle, 
-  Wallet, 
-  ExternalLink, 
-  Settings, 
-  Scissors, 
-  Users, 
+import {
+  LogOut,
+  Loader2,
+  Home,
+  Calendar,
+  MessageCircle,
+  Wallet,
+  ExternalLink,
+  Settings,
+  Scissors,
+  Users,
   LayoutDashboard,
-  UserCircle
+  UserCircle,
+  BarChart3,
 } from "lucide-react";
+import { DashboardSkeleton } from "@/components/ui/Skeletons";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { ClientsCRM } from "@/components/admin/ClientsCRM";
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
 
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
-import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -31,12 +32,13 @@ import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
 
 // Import consolidated sections
-import { 
-  BusinessSection, 
-  TeamSection, 
-  SettingsSection, 
+import {
+  BusinessSection,
+  TeamSection,
+  SettingsSection,
   AgendaSection,
-  CommunicationSection 
+  CommunicationSection,
+  StatsSection,
 } from "@/components/admin/sections";
 
 interface Tenant {
@@ -55,7 +57,7 @@ interface Stylist {
 }
 
 // Simplified to 6 main tabs
-type TabValue = "dashboard" | "agenda" | "clients" | "business" | "team" | "communication" | "settings";
+type TabValue = "dashboard" | "agenda" | "clients" | "business" | "stats" | "team" | "communication" | "settings";
 
 interface NavItem {
   value: TabValue;
@@ -71,8 +73,7 @@ export default function TenantAdmin() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [hasAccess, setHasAccess] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  
+
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
@@ -82,7 +83,12 @@ export default function TenantAdmin() {
   const { isAdmin, isStylist, stylistId } = useTenantAccess(tenant?.id);
 
   // Use admin notifications hook
-  const { counts: notificationCounts, getCommunicationCount, refetch: refetchNotifications, markSectionViewed } = useAdminNotifications(tenant?.id || null);
+  const {
+    counts: notificationCounts,
+    getCommunicationCount,
+    refetch: refetchNotifications,
+    markSectionViewed,
+  } = useAdminNotifications(tenant?.id || null);
 
   // El badge se oculta inmediatamente al hacer click en handleTabClick
 
@@ -91,28 +97,39 @@ export default function TenantAdmin() {
     const allItems: NavItem[] = [
       { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
       { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
-      { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: notificationCounts.clients },
+      {
+        value: "clients",
+        label: "Clientes",
+        icon: <UserCircle className="h-4 w-4" />,
+        badge: notificationCounts.clients,
+      },
       { value: "business", label: "Negocio", icon: <Wallet className="h-4 w-4" /> },
+      { value: "stats", label: "Stats", icon: <BarChart3 className="h-4 w-4" /> },
       { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
-      { value: "communication", label: "Comunica", icon: <MessageCircle className="h-4 w-4" />, badge: getCommunicationCount() },
+      {
+        value: "communication",
+        label: "Comunica",
+        icon: <MessageCircle className="h-4 w-4" />,
+        badge: getCommunicationCount(),
+      },
       { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" /> },
     ];
 
-    // If user is stylist but not admin, hide Settings and Team tabs
+    // If user is stylist but not admin, hide Settings, Team and Stats tabs
     if (isStylist && !isAdmin) {
-      return allItems.filter(item => item.value !== "settings" && item.value !== "team");
+      return allItems.filter((item) => item.value !== "settings" && item.value !== "team" && item.value !== "stats");
     }
 
     return allItems;
   }, [notificationCounts.agenda, notificationCounts.clients, getCommunicationCount, isAdmin, isStylist]);
 
-  const tabOrder = navItems.map(item => item.value);
-  
+  const tabOrder = navItems.map((item) => item.value);
+
   const { handlers: swipeHandlers } = useSwipeNavigation({
     tabs: tabOrder,
     currentTab: activeTab,
     onTabChange: (tab) => setActiveTab(tab as TabValue),
-    enabled: isMobile
+    enabled: isMobile,
   });
 
   useEffect(() => {
@@ -127,7 +144,7 @@ export default function TenantAdmin() {
 
   const fetchStylists = async () => {
     if (!tenant?.id) return;
-    
+
     const { data, error } = await supabase
       .from("tenant_stylists")
       .select("id, name, slug, color")
@@ -135,12 +152,14 @@ export default function TenantAdmin() {
       .eq("is_active", true);
 
     if (!error && data) {
-      setStylists(data.map(s => ({
-        id: s.id,
-        name: s.name,
-        slug: s.slug,
-        color: s.color || "#8B5CF6"
-      })));
+      setStylists(
+        data.map((s) => ({
+          id: s.id,
+          name: s.name,
+          slug: s.slug,
+          color: s.color || "#8B5CF6",
+        })),
+      );
     }
   };
 
@@ -150,7 +169,9 @@ export default function TenantAdmin() {
       return;
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       navigate("/auth");
@@ -170,7 +191,7 @@ export default function TenantAdmin() {
       toast({
         title: "Error",
         description: "No se encontró el salón",
-        variant: "destructive"
+        variant: "destructive",
       });
       navigate("/");
       return;
@@ -222,7 +243,7 @@ export default function TenantAdmin() {
     toast({
       title: "Acceso denegado",
       description: "No tienes permisos para acceder a este panel",
-      variant: "destructive"
+      variant: "destructive",
     });
     navigate("/");
   };
@@ -242,20 +263,6 @@ export default function TenantAdmin() {
 
     navigate("/auth", { replace: true });
   };
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshKey(prev => prev + 1);
-    if (tenant?.id) {
-      await Promise.all([
-        refetchNotifications(),
-        fetchStylists()
-      ]);
-    }
-    toast({
-      title: "Actualizado",
-      description: "Datos actualizados correctamente",
-    });
-  }, [tenant?.id, refetchNotifications]);
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -278,41 +285,42 @@ export default function TenantAdmin() {
 
   const renderContent = () => {
     if (!tenant) return null;
-    
+
     switch (activeTab) {
       case "dashboard":
         return (
-          <AdminDashboard 
-            key={refreshKey} 
-            tenantId={tenant.id} 
+          <AdminDashboard
+            tenantId={tenant.id}
             onNavigate={(tab) => {
               // Map old tab names to new ones
               const tabMap: Record<string, TabValue> = {
-                "calendar": "agenda",
-                "cash": "business",
-                "services": "team",
-                "stylists": "team",
-                "messages": "communication",
-                "settings": "settings",
-                "clients": "clients"
+                calendar: "agenda",
+                cash: "business",
+                services: "team",
+                stylists: "team",
+                messages: "communication",
+                settings: "settings",
+                clients: "clients",
               };
-              setActiveTab(tabMap[tab] || tab as TabValue);
+              setActiveTab(tabMap[tab] || (tab as TabValue));
             }}
             onQuickAction={handleQuickAction}
           />
         );
       case "agenda":
-        return <AgendaSection key={refreshKey} tenantId={tenant.id} />;
+        return <AgendaSection tenantId={tenant.id} />;
       case "clients":
-        return <ClientsCRM key={refreshKey} tenantId={tenant.id} />;
+        return <ClientsCRM tenantId={tenant.id} />;
       case "business":
-        return <BusinessSection key={refreshKey} tenantId={tenant.id} />;
+        return <BusinessSection tenantId={tenant.id} />;
+      case "stats":
+        return <StatsSection tenantId={tenant.id} />;
       case "team":
-        return <TeamSection key={refreshKey} tenantId={tenant.id} />;
+        return <TeamSection tenantId={tenant.id} />;
       case "communication":
-        return <CommunicationSection key={refreshKey} tenantId={tenant.id} />;
+        return <CommunicationSection tenantId={tenant.id} />;
       case "settings":
-        return <SettingsSection key={refreshKey} tenantId={tenant.id} tenantSlug={tenant.slug} />;
+        return <SettingsSection tenantId={tenant.id} tenantSlug={tenant.slug} />;
       default:
         return null;
     }
@@ -320,7 +328,7 @@ export default function TenantAdmin() {
 
   const handleTabClick = (tab: TabValue) => {
     // Marcar como visto INMEDIATAMENTE al hacer click
-    if (tab !== 'dashboard') {
+    if (tab !== "dashboard") {
       markSectionViewed(tab);
     }
     setActiveTab(tab);
@@ -343,17 +351,19 @@ export default function TenantAdmin() {
         className={cn(
           "relative flex flex-col items-center justify-center gap-1 transition-all duration-200 shrink-0",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          isMobile ? [
-            "px-2 py-1.5 rounded-xl min-w-[48px] h-[56px]",
-            isActive
-              ? "bg-primary text-primary-foreground shadow-lg scale-105"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-          ] : [
-            "px-4 py-2.5 rounded-xl min-w-[80px] h-[60px]",
-            isActive
-              ? "bg-primary text-primary-foreground shadow-lg"
-              : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-          ]
+          isMobile
+            ? [
+                "px-2 py-1.5 rounded-xl min-w-[48px] h-[56px]",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-lg scale-105"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              ]
+            : [
+                "px-4 py-2.5 rounded-xl min-w-[80px] h-[60px]",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-lg"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+              ],
         )}
       >
         <div className="relative">
@@ -367,12 +377,7 @@ export default function TenantAdmin() {
             </span>
           )}
         </div>
-        <span
-          className={cn(
-            "font-medium leading-none whitespace-nowrap",
-            isMobile ? "text-[10px]" : "text-xs"
-          )}
-        >
+        <span className={cn("font-medium leading-none whitespace-nowrap", isMobile ? "text-[10px]" : "text-xs")}>
           {item.label}
         </span>
       </button>
@@ -381,8 +386,10 @@ export default function TenantAdmin() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-muted/30">
+        <div className="mx-auto max-w-7xl px-4 py-6">
+          <DashboardSkeleton />
+        </div>
       </div>
     );
   }
@@ -394,7 +401,7 @@ export default function TenantAdmin() {
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <header 
+      <header
         className="sticky top-0 z-50 bg-background border-b shadow-sm"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
@@ -403,10 +410,10 @@ export default function TenantAdmin() {
           <div className="flex items-center justify-between py-2.5 sm:py-3 border-b border-border/50">
             <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
               {tenant.logo_url ? (
-                <img 
-                  src={tenant.logo_url} 
-                  alt={tenant.name} 
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl object-cover ring-2 ring-primary/20 shrink-0" 
+                <img
+                  src={tenant.logo_url}
+                  alt={tenant.name}
+                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl object-cover ring-2 ring-primary/20 shrink-0"
                 />
               ) : (
                 <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -420,25 +427,27 @@ export default function TenantAdmin() {
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <InteractiveTour onTabChange={(tab) => {
-                // Map old tab names to new ones for tour
-                const tabMap: Record<string, TabValue> = {
-                  "calendar": "agenda",
-                  "cash": "business",
-                  "services": "team",
-                  "stylists": "team",
-                  "messages": "communication",
-                  "settings": "settings",
-                  "clients": "clients",
-                  "dashboard": "dashboard"
-                };
-                setActiveTab(tabMap[tab] || tab as TabValue);
-              }} />
+              <InteractiveTour
+                onTabChange={(tab) => {
+                  // Map old tab names to new ones for tour
+                  const tabMap: Record<string, TabValue> = {
+                    calendar: "agenda",
+                    cash: "business",
+                    services: "team",
+                    stylists: "team",
+                    messages: "communication",
+                    settings: "settings",
+                    clients: "clients",
+                    dashboard: "dashboard",
+                  };
+                  setActiveTab(tabMap[tab] || (tab as TabValue));
+                }}
+              />
               <HelpTutorial />
-              
-              <Button 
-                onClick={() => navigate(`/salon/${slug}`)} 
-                variant="outline" 
+
+              <Button
+                onClick={() => navigate(`/salon/${slug}`)}
+                variant="outline"
                 size="sm"
                 className="gap-1 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                 aria-label="Ver página web del salón"
@@ -446,21 +455,21 @@ export default function TenantAdmin() {
                 <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Ver web</span>
               </Button>
-              <Button 
-                onClick={() => navigate("/")} 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 sm:h-9 sm:w-9" 
+              <Button
+                onClick={() => navigate("/")}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:h-9 sm:w-9"
                 title="Inicio"
                 aria-label="Ir a inicio"
               >
                 <Home className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-              <Button 
-                onClick={handleSignOut} 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 sm:h-9 sm:w-9" 
+              <Button
+                onClick={handleSignOut}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:h-9 sm:w-9"
                 title="Cerrar sesión"
                 aria-label="Cerrar sesión"
               >
@@ -470,20 +479,14 @@ export default function TenantAdmin() {
           </div>
 
           {/* Navigation - Clean horizontal tabs for both mobile and desktop */}
-          <nav 
-            className="flex items-center py-2"
-            aria-label="Navegación del panel de administración"
-            role="tablist"
-          >
+          <nav className="flex items-center py-2" aria-label="Navegación del panel de administración" role="tablist">
             {isMobile ? (
               <div className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar pb-1">
                 {navItems.map((item) => renderNavButton(item))}
               </div>
             ) : (
               <ScrollArea className="w-full">
-                <div className="flex items-center gap-2 pb-2">
-                  {navItems.map((item) => renderNavButton(item))}
-                </div>
+                <div className="flex items-center gap-2 pb-2">{navItems.map((item) => renderNavButton(item))}</div>
                 <ScrollBar orientation="horizontal" className="h-1.5" />
               </ScrollArea>
             )}
@@ -491,22 +494,14 @@ export default function TenantAdmin() {
         </div>
       </header>
 
-      {/* Content with Pull to Refresh on mobile + Swipe navigation */}
+      {/* Content with Swipe navigation on mobile */}
       {isMobile ? (
-        <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
-          <main 
-            className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 safe-area-bottom pb-24"
-            {...swipeHandlers}
-          >
-            {renderContent()}
-          </main>
-        </PullToRefresh>
-      ) : (
-        <main className="mx-auto max-w-7xl px-4 py-6 safe-area-bottom">
+        <main className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 safe-area-bottom pb-24" {...swipeHandlers}>
           {renderContent()}
         </main>
+      ) : (
+        <main className="mx-auto max-w-7xl px-4 py-6 safe-area-bottom">{renderContent()}</main>
       )}
-
     </div>
   );
 }
