@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Camera, Star } from "lucide-react";
+import { 
+  MessageCircle, 
+  Camera,
+  Star
+} from "lucide-react";
 import { MessagesManager } from "../MessagesManager";
 import { StoriesAnalytics } from "../StoriesAnalytics";
 import { ReviewsManager } from "../ReviewsManager";
