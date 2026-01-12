@@ -64,4 +64,3 @@ const TeamSection = ({ tenantId }: TeamSectionProps) => {
 };
 
 export default TeamSection;
-<
