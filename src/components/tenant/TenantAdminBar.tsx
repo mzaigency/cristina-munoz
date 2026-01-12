@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Settings, Edit3, Eye, X } from "lucide-react";
+import { Edit3, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TenantAdminBarProps {
@@ -10,18 +8,11 @@ interface TenantAdminBarProps {
   onToggleEditMode: () => void;
 }
 
-export const TenantAdminBar = ({ 
-  tenantSlug, 
-  isAdmin, 
-  isEditMode, 
-  onToggleEditMode 
-}: TenantAdminBarProps) => {
-  const navigate = useNavigate();
-
+export const TenantAdminBar = ({ isAdmin, isEditMode, onToggleEditMode }: TenantAdminBarProps) => {
   return (
-    <div 
-      className="fixed right-6 z-[60] flex flex-col gap-2"
-      style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+    <div
+      className="fixed right-4 z-[60] flex flex-col gap-2"
+      style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
     >
       {/* Edit Mode Toggle - Only for admins */}
       {isAdmin && (
@@ -29,9 +20,7 @@ export const TenantAdminBar = ({
           onClick={onToggleEditMode}
           size="lg"
           className={`rounded-full shadow-lg transition-all duration-300 ${
-            isEditMode 
-              ? "bg-destructive hover:bg-destructive/90" 
-              : "bg-primary hover:bg-primary/90"
+            isEditMode ? "bg-destructive hover:bg-destructive/90" : "bg-primary hover:bg-primary/90"
           }`}
         >
           {isEditMode ? (
@@ -47,17 +36,6 @@ export const TenantAdminBar = ({
           )}
         </Button>
       )}
-
-      {/* Admin Panel Button */}
-      <Button
-        onClick={() => navigate(`/admin/${tenantSlug}`)}
-        size="lg"
-        variant="secondary"
-        className="rounded-full shadow-lg"
-      >
-        <Settings className="h-5 w-5 mr-2" />
-        Panel Admin
-      </Button>
     </div>
   );
 };
