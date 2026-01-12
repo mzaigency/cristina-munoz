@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, 
-  Clock
-} from "lucide-react";
+import { Calendar, Clock } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
 import { WaitlistManager } from "../WaitlistManager";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,16 +24,18 @@ const AgendaSection = ({ tenantId }: AgendaSectionProps) => {
         .select("slug, name, color")
         .eq("tenant_id", tenantId)
         .eq("is_active", true);
-      
+
       if (data) {
-        setStylists(data.map(s => ({
-          slug: s.slug,
-          name: s.name,
-          color: s.color || "#6366f1"
-        })));
+        setStylists(
+          data.map((s) => ({
+            slug: s.slug,
+            name: s.name,
+            color: s.color || "#6366f1",
+          })),
+        );
       }
     };
-    
+
     fetchStylists();
   }, [tenantId]);
 
@@ -48,7 +47,7 @@ const AgendaSection = ({ tenantId }: AgendaSectionProps) => {
         .select("id", { count: "exact", head: true })
         .eq("tenant_id", tenantId)
         .eq("status", "waiting");
-      
+
       setWaitlistCount(count || 0);
     };
 
@@ -60,7 +59,7 @@ const AgendaSection = ({ tenantId }: AgendaSectionProps) => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "waitlist", filter: `tenant_id=eq.${tenantId}` },
-        () => fetchWaitlistCount()
+        () => fetchWaitlistCount(),
       )
       .subscribe();
 
@@ -92,8 +91,8 @@ const AgendaSection = ({ tenantId }: AgendaSectionProps) => {
               <tab.icon className="h-4 w-4" />
               <span>{tab.label}</span>
               {tab.badge > 0 && activeTab !== tab.id && (
-                <Badge 
-                  variant="destructive" 
+                <Badge
+                  variant="destructive"
                   className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center text-xs px-1.5"
                 >
                   {tab.badge > 99 ? "99+" : tab.badge}
