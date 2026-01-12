@@ -154,6 +154,54 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Security Check: Verify User & Permissions
+    const authHeader = req.headers.get('Authorization');
+    let authenticatedUser = null;
+    let isAdminOrStylist = false;
+
+    if (authHeader) {
+      const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+      const { data: { user } } = await userClient.auth.getUser();
+      authenticatedUser = user;
+
+      if (authenticatedUser) {
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', authenticatedUser.id);
+
+        const userRoles = roles?.map(r => r.role) || [];
+        isAdminOrStylist = userRoles.includes('admin') || userRoles.includes('stylist');
+      }
+    }
+
+    if (bookingData.skipAvailabilityCheck) {
+      if (!isAdminOrStylist) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Only admins/stylists can skip availability checks' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    if (bookingData.user_id) {
+      if (!authenticatedUser) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Authentication required to book for a user' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (authenticatedUser.id !== bookingData.user_id && !isAdminOrStylist) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: You can only book for yourself' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
