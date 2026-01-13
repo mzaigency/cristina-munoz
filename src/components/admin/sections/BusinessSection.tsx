@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Wallet, 
-  Percent, 
-  Package, 
-  ShoppingBag, 
-  Target,
-  BarChart3
-} from "lucide-react";
+import { Wallet, Percent, Package, ShoppingBag, Target, BarChart3 } from "lucide-react";
 import { CashRegisterManager } from "../CashRegisterManager";
 import { PromotionsManager } from "../PromotionsManager";
 import { ServicePackagesManager } from "../ServicePackagesManager";

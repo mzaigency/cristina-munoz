@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Users, 
-  Scissors, 
-  Percent, 
-  Clock
-} from "lucide-react";
+import { Users, Scissors, Percent, Clock } from "lucide-react";
 import { StylistsManager } from "../StylistsManager";
 import { ServicesManager } from "../ServicesManager";
 import { CommissionsManager } from "../CommissionsManager";
