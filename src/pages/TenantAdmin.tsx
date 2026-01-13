@@ -326,6 +326,8 @@ export default function TenantAdmin() {
         return <ClientsCRM key={refreshKey} tenantId={tenant.id} />;
       case "business":
         return <BusinessSection key={refreshKey} tenantId={tenant.id} />;
+      case "stats":
+        return <StatsSection key={refreshKey} tenantId={tenant.id} />;
       case "team":
         return <TeamSection key={refreshKey} tenantId={tenant.id} />;
       case "communication":
