@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TenantHeaderStats } from "./TenantHeaderStats";
 
 interface Tenant {
   id: string;
@@ -172,6 +173,9 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
               </span>
             )}
           </div>
+
+          {/* Admin Stats - Only visible for admins */}
+          {isAdmin && <TenantHeaderStats tenantId={tenant.id} isScrolled={isScrolled} />}
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
