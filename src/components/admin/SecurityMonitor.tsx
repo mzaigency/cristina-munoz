@@ -127,8 +127,21 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
     
     try {
       const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const currentMonth = now.getMonth() + 1; // 1-12
+      const currentYear = now.getFullYear();
+      const startOfMonth = new Date(currentYear, now.getMonth(), 1);
+      const endOfMonth = new Date(currentYear, now.getMonth() + 1, 0);
+      
+      // Fetch monthly goal for this tenant
+      const { data: goalData } = await supabase
+        .from("monthly_goals")
+        .select("revenue_goal")
+        .eq("tenant_id", tenantId)
+        .eq("month", currentMonth)
+        .eq("year", currentYear)
+        .maybeSingle();
+
+      const monthlyGoal = goalData?.revenue_goal || 3000; // Default 3000 if no goal set
       
       const { data, error } = await supabase
         .from("transactions")
@@ -148,11 +161,11 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
       const dailyAverage = dayOfMonth > 0 ? monthlyRevenue / dayOfMonth : 0;
       const projectedRevenue = dailyAverage * daysInMonth;
 
-      setRevenueData(prev => ({
-        ...prev,
+      setRevenueData({
         monthlyRevenue,
+        monthlyGoal,
         projectedRevenue,
-      }));
+      });
     } catch (error) {
       console.error("Error fetching monthly revenue:", error);
     }
