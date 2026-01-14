@@ -45,7 +45,7 @@ export function SmartSearchHeader() {
               <motion.img 
                 src={glowappLogo} 
                 alt="GlowApp" 
-                className="h-8 object-contain"
+                className="h-8 object-contain rounded-xl"
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.1, type: "spring", stiffness: 200 }}

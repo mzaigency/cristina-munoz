@@ -102,7 +102,7 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
               transition={{ duration: 0.8, delay: 0.2 }}
               src={tenant.logo_url}
               alt={tenant.name}
-              className="w-16 h-16 md:w-20 md:h-20 object-contain mx-auto mb-12"
+              className="w-16 h-16 md:w-20 md:h-20 object-contain mx-auto mb-12 rounded-xl"
             />
           )}
 

@@ -96,7 +96,7 @@ class ErrorBoundary extends Component<Props, State> {
             <motion.img
               src={glowAppLogo}
               alt="GlowApp"
-              className="h-8 mx-auto"
+              className="h-8 mx-auto rounded-xl"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             />
