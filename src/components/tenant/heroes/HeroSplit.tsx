@@ -33,11 +33,11 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
   const { data: followerCount = 0 } = useFollowerCount(tenant.id);
 
   const formatFollowers = (count: number) => {
-    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, "") + "K";
     return count.toString();
   };
-  
+
   useEffect(() => {
     const fetchStats = async () => {
       const { data: reviewsData } = await supabase
@@ -45,35 +45,28 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
         .select("rating")
         .eq("tenant_id", tenant.id)
         .eq("approved", true);
-      
-      const avgRating = reviewsData?.length 
+
+      const avgRating = reviewsData?.length
         ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
         : 0;
-      
-      const { data: bookingsData } = await supabase
-        .from("bookings")
-        .select("customer_name")
-        .eq("tenant_id", tenant.id);
-      
-      const uniqueClients = new Set(bookingsData?.map(b => b.customer_name.toLowerCase().trim()) || []).size;
-      
-      const { data: tenantData } = await supabase
-        .from("tenants")
-        .select("created_at")
-        .eq("id", tenant.id)
-        .single();
-      
-      const createdYear = tenantData?.created_at 
+
+      const { data: bookingsData } = await supabase.from("bookings").select("customer_name").eq("tenant_id", tenant.id);
+
+      const uniqueClients = new Set(bookingsData?.map((b) => b.customer_name.toLowerCase().trim()) || []).size;
+
+      const { data: tenantData } = await supabase.from("tenants").select("created_at").eq("id", tenant.id).single();
+
+      const createdYear = tenantData?.created_at
         ? new Date(tenantData.created_at).getFullYear()
         : new Date().getFullYear();
-      
+
       setStats({
         rating: Number(avgRating),
         clients: uniqueClients,
-        since: createdYear
+        since: createdYear,
       });
     };
-    
+
     if (tenant.id) {
       fetchStats();
     }
@@ -92,18 +85,14 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
         {/* Background Image */}
         {heroImage ? (
           <div className="absolute inset-0">
-            <img
-              src={heroImage}
-              alt={tenant.name}
-              className="w-full h-full object-cover"
-            />
+            <img src={heroImage} alt={tenant.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
           </div>
         ) : (
-          <div 
+          <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(180deg, ${tenant.primary_color || '#0EA5E9'} 0%, ${tenant.secondary_color || '#06B6D4'} 100%)`
+              background: `linear-gradient(180deg, ${tenant.primary_color || "#0EA5E9"} 0%, ${tenant.secondary_color || "#06B6D4"} 100%)`,
             }}
           />
         )}
@@ -191,15 +180,15 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
               size="lg"
               className="w-full py-5 text-base rounded-xl shadow-xl"
               style={{
-                backgroundColor: tenant.primary_color || 'hsl(var(--primary))'
+                backgroundColor: tenant.primary_color || "hsl(var(--primary))",
               }}
             >
               <Calendar className="w-5 h-5 mr-2" />
               Reservar cita
             </Button>
-            <FollowButton 
-              tenantId={tenant.id} 
-              variant="default" 
+            <FollowButton
+              tenantId={tenant.id}
+              variant="default"
               className="w-full bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 rounded-xl py-5"
             />
           </motion.div>
@@ -209,32 +198,28 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
       {/* Desktop: Split layout with asymmetric design */}
       <div className="hidden lg:flex min-h-screen">
         {/* Image Side - Larger portion */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 1.02 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           className="w-[55%] h-screen relative overflow-hidden"
         >
           {heroImage ? (
-            <img
-              src={heroImage}
-              alt={tenant.name}
-              className="w-full h-full object-cover"
-            />
+            <img src={heroImage} alt={tenant.name} className="w-full h-full object-cover" />
           ) : (
-            <div 
+            <div
               className="w-full h-full"
               style={{
-                background: `linear-gradient(135deg, ${tenant.primary_color || '#0EA5E9'} 0%, ${tenant.secondary_color || '#06B6D4'} 100%)`
+                background: `linear-gradient(135deg, ${tenant.primary_color || "#0EA5E9"} 0%, ${tenant.secondary_color || "#06B6D4"} 100%)`,
               }}
             />
           )}
-          
+
           {/* Diagonal overlay */}
-          <div 
+          <div
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(105deg, transparent 60%, rgba(255,255,255,1) 100%)'
+              background: "linear-gradient(105deg, transparent 60%, rgba(255,255,255,1) 100%)",
             }}
           />
 
@@ -257,14 +242,14 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
               </div>
             )}
             <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
-              <img src={glowappIcon} alt="Glowapp" className="w-4 h-4 object-contain" />
+              <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
               <span className="text-gray-700 text-sm">Desde {stats.since}</span>
             </div>
           </motion.div>
         </motion.div>
 
         {/* Content Side */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
@@ -323,17 +308,13 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
               transition={{ duration: 0.6, delay: 0.8 }}
               className="flex items-center gap-3"
             >
-              <FollowButton 
-                tenantId={tenant.id} 
-                variant="default" 
-                className="rounded-full px-6 py-5"
-              />
+              <FollowButton tenantId={tenant.id} variant="default" className="rounded-full px-6 py-5" />
               <Button
                 onClick={onBookNow}
                 size="lg"
                 className="px-8 py-5 text-base rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
                 style={{
-                  backgroundColor: tenant.primary_color || 'hsl(var(--primary))'
+                  backgroundColor: tenant.primary_color || "hsl(var(--primary))",
                 }}
               >
                 <Calendar className="w-5 h-5 mr-2" />
