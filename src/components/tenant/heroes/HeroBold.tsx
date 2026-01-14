@@ -31,11 +31,11 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
   const { data: followerCount = 0 } = useFollowerCount(tenant.id);
 
   const formatFollowers = (count: number) => {
-    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, "") + "K";
     return count.toString();
   };
-  
+
   useEffect(() => {
     const fetchStats = async () => {
       const { data: reviewsData } = await supabase
@@ -43,24 +43,20 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
         .select("rating")
         .eq("tenant_id", tenant.id)
         .eq("approved", true);
-      
-      const avgRating = reviewsData?.length 
+
+      const avgRating = reviewsData?.length
         ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
         : 0;
-      
-      const { data: tenantData } = await supabase
-        .from("tenants")
-        .select("created_at")
-        .eq("id", tenant.id)
-        .single();
-      
-      const createdYear = tenantData?.created_at 
+
+      const { data: tenantData } = await supabase.from("tenants").select("created_at").eq("id", tenant.id).single();
+
+      const createdYear = tenantData?.created_at
         ? new Date(tenantData.created_at).getFullYear()
         : new Date().getFullYear();
-      
+
       setStats({ rating: Number(avgRating), since: createdYear });
     };
-    
+
     if (tenant.id) fetchStats();
   }, [tenant.id]);
 
@@ -69,13 +65,13 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
 
   const displayTagline = tenant.tagline || tenant.description || "Tu espacio de belleza y bienestar";
 
-  const primaryColor = tenant.primary_color || '#F97316';
-  const secondaryColor = tenant.secondary_color || '#EAB308';
+  const primaryColor = tenant.primary_color || "#F97316";
+  const secondaryColor = tenant.secondary_color || "#EAB308";
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Full Gradient Hero */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
@@ -85,23 +81,19 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
         <div className="absolute inset-0">
           {heroImage ? (
             <>
-              <img
-                src={heroImage}
-                alt={tenant.name}
-                className="w-full h-full object-cover"
-              />
-              <div 
+              <img src={heroImage} alt={tenant.name} className="w-full h-full object-cover" />
+              <div
                 className="absolute inset-0"
                 style={{
-                  background: `linear-gradient(180deg, ${primaryColor}CC 0%, ${secondaryColor}99 50%, ${primaryColor}EE 100%)`
+                  background: `linear-gradient(180deg, ${primaryColor}CC 0%, ${secondaryColor}99 50%, ${primaryColor}EE 100%)`,
                 }}
               />
             </>
           ) : (
-            <div 
+            <div
               className="w-full h-full"
               style={{
-                background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 50%, ${primaryColor} 100%)`
+                background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 50%, ${primaryColor} 100%)`,
               }}
             />
           )}
@@ -110,9 +102,9 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
         {/* Animated Background Shapes */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
-            animate={{ 
+            animate={{
               rotate: 360,
-              scale: [1, 1.1, 1]
+              scale: [1, 1.1, 1],
             }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             className="absolute -top-20 -right-20 w-64 h-64 border-[3px] border-white/20 rounded-full"
@@ -139,10 +131,7 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
               transition={{ duration: 0.8, delay: 0.2, type: "spring", bounce: 0.4 }}
               className="relative mb-6"
             >
-              <div 
-                className="absolute inset-0 blur-2xl opacity-50 rounded-3xl"
-                style={{ backgroundColor: 'white' }}
-              />
+              <div className="absolute inset-0 blur-2xl opacity-50 rounded-3xl" style={{ backgroundColor: "white" }} />
               <img
                 src={tenant.logo_url}
                 alt={tenant.name}
@@ -198,7 +187,7 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
               </div>
             )}
             <div className="flex items-center gap-1.5 bg-white/25 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
-              <img src={glowappIcon} alt="Glowapp" className="w-4 h-4 object-contain" />
+              <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
               <span className="text-white font-medium text-sm">Desde {stats.since}</span>
             </div>
           </motion.div>
@@ -210,9 +199,9 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
             transition={{ duration: 0.6, delay: 0.8, type: "spring" }}
             className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs"
           >
-            <FollowButton 
-              tenantId={tenant.id} 
-              variant="default" 
+            <FollowButton
+              tenantId={tenant.id}
+              variant="default"
               className="w-full sm:w-auto bg-white/20 backdrop-blur-md border-white/30 text-white hover:bg-white/30 rounded-xl px-6 py-5"
             />
             <Button
@@ -233,10 +222,7 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
           transition={{ delay: 1.2 }}
           className="relative z-10 flex flex-col items-center pb-8"
         >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
+          <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
             <ArrowDown className="w-6 h-6 text-white/70" />
           </motion.div>
         </motion.div>
