@@ -65,8 +65,8 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
   }, [tenant.id]);
 
   const formatFollowers = (count: number) => {
-    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, "") + "K";
     return count.toString();
   };
 
@@ -146,7 +146,7 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
             <span className="text-white font-medium text-sm">{formatFollowers(followerCount)}</span>
             <span className="text-white/70 text-sm">seguidores</span>
           </div>
-          
+
           {stats.rating > 0 && (
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
               <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
@@ -154,7 +154,7 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
             </div>
           )}
           <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
-            <img src={glowappIcon} alt="Glowapp" className="w-4 h-4 object-contain" />
+            <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
             <span className="text-white/90 text-sm">Desde {stats.since}</span>
           </div>
         </motion.div>
@@ -166,9 +166,9 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
           transition={{ duration: 0.8, delay: 0.9 }}
           className="flex items-center gap-3"
         >
-          <FollowButton 
-            tenantId={tenant.id} 
-            variant="default" 
+          <FollowButton
+            tenantId={tenant.id}
+            variant="default"
             className="bg-white/15 backdrop-blur-md border-white/20 text-white hover:bg-white/25"
           />
           <Button
