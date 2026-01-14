@@ -223,7 +223,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-500/20 transition-all touch-manipulation"
             >
-              <img src="/favicon.png" alt="GlowApp" className="h-5 w-5" />
+              <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
               <span className="text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
                 Creado con GlowApp
               </span>
