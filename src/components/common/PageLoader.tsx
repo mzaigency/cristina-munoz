@@ -23,7 +23,7 @@ const PageLoader = ({ message = "Cargando...", fullScreen = true }: PageLoaderPr
         <motion.img
           src={glowAppLogo}
           alt="GlowApp"
-          className="h-10"
+          className="h-10 rounded-xl"
           animate={{ opacity: [1, 0.5, 1] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
         />

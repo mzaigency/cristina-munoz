@@ -105,7 +105,7 @@ export default function ForBusiness() {
             ease: [0.22, 1, 0.36, 1]
           }} className="flex items-center justify-between">
               <Link to="/">
-                <motion.img src={glowappLogo} alt="GlowApp" className="h-8 object-contain" initial={{
+                <motion.img src={glowappLogo} alt="GlowApp" className="h-8 object-contain rounded-xl" initial={{
                 scale: 0.9,
                 opacity: 0
               }} animate={{

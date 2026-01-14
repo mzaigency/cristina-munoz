@@ -156,8 +156,8 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
               </TooltipContent>
             </Tooltip>
 
-            {tenant.logo_url ? (
-              <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-auto" />
+          {tenant.logo_url ? (
+              <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-auto rounded-xl" />
             ) : (
               <span
                 className={`text-xl font-bold transition-colors duration-300 ${

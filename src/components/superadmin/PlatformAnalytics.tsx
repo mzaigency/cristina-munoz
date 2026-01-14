@@ -313,10 +313,10 @@ export const PlatformAnalytics = () => {
                     <img 
                       src={tenant.logo_url} 
                       alt={tenant.name}
-                      className="w-10 h-10 rounded-full object-cover"
+                      className="w-10 h-10 rounded-xl object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold">
                       {tenant.name.charAt(0)}
                     </div>
                   )}

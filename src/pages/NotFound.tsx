@@ -42,7 +42,7 @@ const NotFound = () => {
           <img 
             src={glowAppLogo} 
             alt="GlowApp" 
-            className="h-10 mx-auto mb-6"
+            className="h-10 mx-auto mb-6 rounded-xl"
           />
         </motion.div>
 
