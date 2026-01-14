@@ -30,11 +30,11 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
   const { data: followerCount = 0 } = useFollowerCount(tenant.id);
 
   const formatFollowers = (count: number) => {
-    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, "") + "K";
     return count.toString();
   };
-  
+
   useEffect(() => {
     const fetchStats = async () => {
       const { data: reviewsData } = await supabase
@@ -42,24 +42,20 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
         .select("rating")
         .eq("tenant_id", tenant.id)
         .eq("approved", true);
-      
-      const avgRating = reviewsData?.length 
+
+      const avgRating = reviewsData?.length
         ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
         : 0;
 
-      const { data: tenantData } = await supabase
-        .from("tenants")
-        .select("created_at")
-        .eq("id", tenant.id)
-        .single();
-      
-      const createdYear = tenantData?.created_at 
+      const { data: tenantData } = await supabase.from("tenants").select("created_at").eq("id", tenant.id).single();
+
+      const createdYear = tenantData?.created_at
         ? new Date(tenantData.created_at).getFullYear()
         : new Date().getFullYear();
-      
+
       setStats({ rating: Number(avgRating), since: createdYear });
     };
-    
+
     if (tenant.id) fetchStats();
   }, [tenant.id]);
 
@@ -72,19 +68,13 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
       {/* Background Image - Very dark overlay */}
       {heroImage && (
         <div className="absolute inset-0">
-          <img 
-            src={heroImage} 
-            alt={tenant.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={heroImage} alt={tenant.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/85" />
         </div>
       )}
-      
+
       {/* Fallback dark background */}
-      {!heroImage && (
-        <div className="absolute inset-0 bg-gray-950" />
-      )}
+      {!heroImage && <div className="absolute inset-0 bg-gray-950" />}
 
       {/* Main Content - Centered vertically */}
       <div className="relative z-10 flex-1 flex flex-col justify-center items-center px-6 py-20">
@@ -134,7 +124,7 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
               </div>
             )}
             <div className="flex items-center gap-1.5">
-              <img src={glowappIcon} alt="Glowapp" className="w-3.5 h-3.5 object-contain opacity-70" />
+              <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
               <span>Desde {stats.since}</span>
             </div>
           </motion.div>
@@ -166,9 +156,9 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
             transition={{ duration: 0.8, delay: 0.7 }}
             className="flex flex-col sm:flex-row items-center gap-4"
           >
-            <FollowButton 
-              tenantId={tenant.id} 
-              variant="default" 
+            <FollowButton
+              tenantId={tenant.id}
+              variant="default"
               className="px-8 py-5 text-sm font-medium tracking-wide uppercase border-white/30 text-white hover:bg-white/10 rounded-none transition-all duration-300 bg-transparent"
             />
             <Button
@@ -182,7 +172,6 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
           </motion.div>
         </motion.div>
       </div>
-
     </div>
   );
 }
