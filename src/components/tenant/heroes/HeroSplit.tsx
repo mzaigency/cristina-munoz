@@ -163,7 +163,7 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
               </div>
             )}
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-3 py-1.5">
-              <img src={glowappIcon} alt="Glowapp" className="w-3.5 h-3.5 object-contain" />
+              <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
               <span className="text-white/90 text-xs">Desde {stats.since}</span>
             </div>
           </motion.div>
