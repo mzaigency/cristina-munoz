@@ -30,11 +30,11 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
   const { data: followerCount = 0 } = useFollowerCount(tenant.id);
 
   const formatFollowers = (count: number) => {
-    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, "") + "K";
     return count.toString();
   };
-  
+
   useEffect(() => {
     const fetchStats = async () => {
       const { data: reviewsData } = await supabase
@@ -42,24 +42,20 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
         .select("rating")
         .eq("tenant_id", tenant.id)
         .eq("approved", true);
-      
-      const avgRating = reviewsData?.length 
+
+      const avgRating = reviewsData?.length
         ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
         : 0;
-      
-      const { data: tenantData } = await supabase
-        .from("tenants")
-        .select("created_at")
-        .eq("id", tenant.id)
-        .single();
-      
-      const createdYear = tenantData?.created_at 
+
+      const { data: tenantData } = await supabase.from("tenants").select("created_at").eq("id", tenant.id).single();
+
+      const createdYear = tenantData?.created_at
         ? new Date(tenantData.created_at).getFullYear()
         : new Date().getFullYear();
-      
+
       setStats({ rating: Number(avgRating), since: createdYear });
     };
-    
+
     if (tenant.id) fetchStats();
   }, [tenant.id]);
 
@@ -72,11 +68,7 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
       {/* Background Image */}
       {mainImage && (
         <div className="absolute inset-0">
-          <img 
-            src={mainImage} 
-            alt={tenant.name}
-            className="w-full h-full object-cover scale-105"
-          />
+          <img src={mainImage} alt={tenant.name} className="w-full h-full object-cover scale-105" />
           <div className="absolute inset-0 bg-black/30" />
         </div>
       )}
@@ -84,22 +76,22 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
       {/* Animated gradient orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, 50, 0],
             y: [0, -30, 0],
           }}
           transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -top-1/4 -left-1/4 w-[60%] h-[60%] rounded-full blur-3xl opacity-30"
-          style={{ backgroundColor: tenant.primary_color || 'hsl(var(--primary))' }}
+          style={{ backgroundColor: tenant.primary_color || "hsl(var(--primary))" }}
         />
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, -40, 0],
             y: [0, 40, 0],
           }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute -bottom-1/4 -right-1/4 w-[50%] h-[50%] rounded-full blur-3xl opacity-25"
-          style={{ backgroundColor: tenant.primary_color || 'hsl(var(--primary))' }}
+          style={{ backgroundColor: tenant.primary_color || "hsl(var(--primary))" }}
         />
       </div>
 
@@ -119,9 +111,7 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
               className="absolute -top-3 -right-3"
             >
-              <div 
-                className="p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30"
-              >
+              <div className="p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
             </motion.div>
@@ -135,11 +125,7 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
                 className="flex justify-center mb-6"
               >
                 <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 p-3 shadow-lg">
-                  <img 
-                    src={tenant.logo_url} 
-                    alt={tenant.name}
-                    className="w-full h-full object-contain"
-                  />
+                  <img src={tenant.logo_url} alt={tenant.name} className="w-full h-full object-contain" />
                 </div>
               </motion.div>
             )}
@@ -150,9 +136,7 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
             </h1>
 
             {/* Tagline */}
-            <p className="text-sm md:text-base text-white/80 text-center mb-6 leading-relaxed">
-              {displayTagline}
-            </p>
+            <p className="text-sm md:text-base text-white/80 text-center mb-6 leading-relaxed">{displayTagline}</p>
 
             {/* Stats in glass pills */}
             <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
@@ -168,7 +152,7 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
                 </div>
               )}
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
-                <img src={glowappIcon} alt="Glowapp" className="w-3.5 h-3.5 object-contain" />
+                <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
                 <span className="text-xs text-white/80">Desde {stats.since}</span>
               </div>
             </div>
@@ -183,9 +167,9 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
                 Reservar cita
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
-              <FollowButton 
-                tenantId={tenant.id} 
-                variant="default" 
+              <FollowButton
+                tenantId={tenant.id}
+                variant="default"
                 className="w-full bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 rounded-2xl py-5"
               />
             </div>
