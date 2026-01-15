@@ -33,6 +33,8 @@ export type Database = {
           recurrence_group_id: string | null
           recurrence_pattern: Json | null
           related_booking_id: string | null
+          reminder_sent: string | null
+          review_request_sent: string | null
           services: Json
           skip_availability_check: boolean
           status: string
@@ -63,6 +65,8 @@ export type Database = {
           recurrence_group_id?: string | null
           recurrence_pattern?: Json | null
           related_booking_id?: string | null
+          reminder_sent?: string | null
+          review_request_sent?: string | null
           services: Json
           skip_availability_check?: boolean
           status?: string
@@ -93,6 +97,8 @@ export type Database = {
           recurrence_group_id?: string | null
           recurrence_pattern?: Json | null
           related_booking_id?: string | null
+          reminder_sent?: string | null
+          review_request_sent?: string | null
           services?: Json
           skip_availability_check?: boolean
           status?: string
