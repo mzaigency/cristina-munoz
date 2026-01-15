@@ -154,6 +154,62 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // --- SECURITY CHECKS START ---
+    const authHeader = req.headers.get('Authorization');
+    let authenticatedUser = null;
+    let authenticatedUserRole = null;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(token);
+      if (user) {
+        authenticatedUser = user;
+        // Check role
+        const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .maybeSingle();
+        authenticatedUserRole = roleData?.role;
+      }
+    }
+
+    const isAdminOrStylist = ['admin', 'stylist'].includes(authenticatedUserRole || '');
+
+    // 1. Protect user_id (IDOR)
+    if (bookingData.user_id) {
+        if (!authenticatedUser) {
+            return new Response(JSON.stringify({
+                error: 'Authentication required to book for a registered user'
+            }), {
+                status: 401,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+
+        if (authenticatedUser.id !== bookingData.user_id && !isAdminOrStylist) {
+             return new Response(JSON.stringify({
+                 error: 'Unauthorized: Cannot book for another user'
+             }), {
+                 status: 403,
+                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+             });
+        }
+    }
+
+    // 2. Protect skipAvailabilityCheck
+    if (bookingData.skipAvailabilityCheck) {
+        if (!isAdminOrStylist) {
+             return new Response(JSON.stringify({
+                 error: 'Unauthorized: Only admins can skip availability checks'
+             }), {
+                 status: 403,
+                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+             });
+        }
+    }
+    // --- SECURITY CHECKS END ---
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
