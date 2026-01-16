@@ -13,97 +13,64 @@ interface PushNotificationRequest {
   data?: Record<string, string>;
 }
 
-interface ServiceAccount {
-  type: string;
-  project_id: string;
-  private_key_id: string;
-  private_key: string;
-  client_email: string;
-  client_id: string;
-  auth_uri: string;
-  token_uri: string;
-  auth_provider_x509_cert_url: string;
-  client_x509_cert_url: string;
-}
-
-// Generate JWT for Google OAuth2
-async function createJWT(serviceAccount: ServiceAccount): Promise<string> {
-  const header = {
-    alg: "RS256",
-    typ: "JWT",
-  };
-
+// Generate OAuth2 access token from service account
+async function getAccessToken(serviceAccount: any): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
+  const exp = now + 3600;
+
+  // Create JWT header and payload
+  const header = { alg: "RS256", typ: "JWT" };
   const payload = {
     iss: serviceAccount.client_email,
     scope: "https://www.googleapis.com/auth/firebase.messaging",
-    aud: serviceAccount.token_uri,
+    aud: "https://oauth2.googleapis.com/token",
     iat: now,
-    exp: now + 3600, // 1 hour
+    exp: exp,
   };
 
+  // Encode to base64url
   const encoder = new TextEncoder();
   const headerB64 = btoa(JSON.stringify(header)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
   const payloadB64 = btoa(JSON.stringify(payload)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-  const signatureInput = `${headerB64}.${payloadB64}`;
 
-  // Import the private key
+  // Import private key
   const pemContents = serviceAccount.private_key
     .replace("-----BEGIN PRIVATE KEY-----", "")
     .replace("-----END PRIVATE KEY-----", "")
     .replace(/\n/g, "");
-  
-  const binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
-  
+
+  const binaryKey = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
+
   const cryptoKey = await crypto.subtle.importKey(
     "pkcs8",
     binaryKey,
-    {
-      name: "RSASSA-PKCS1-v1_5",
-      hash: "SHA-256",
-    },
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
     false,
-    ["sign"]
+    ["sign"],
   );
 
   // Sign the JWT
-  const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    cryptoKey,
-    encoder.encode(signatureInput)
-  );
-
+  const signatureInput = encoder.encode(`${headerB64}.${payloadB64}`);
+  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, signatureInput);
   const signatureB64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
     .replace(/=/g, "")
     .replace(/\+/g, "-")
     .replace(/\//g, "_");
 
-  return `${signatureInput}.${signatureB64}`;
-}
+  const jwt = `${headerB64}.${payloadB64}.${signatureB64}`;
 
-// Get OAuth2 access token from Google
-async function getAccessToken(serviceAccount: ServiceAccount): Promise<string> {
-  const jwt = await createJWT(serviceAccount);
-
-  const response = await fetch(serviceAccount.token_uri, {
+  // Exchange JWT for access token
+  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to get access token: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.access_token;
+  const tokenData = await tokenResponse.json();
+  return tokenData.access_token;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -114,14 +81,13 @@ serve(async (req) => {
     const firebaseServiceAccountJson = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     const { user_id, title, body, data }: PushNotificationRequest = await req.json();
 
     if (!user_id || !title || !body) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields: user_id, title, body" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Missing required fields: user_id, title, body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Get user's push tokens
@@ -132,145 +98,119 @@ serve(async (req) => {
 
     if (tokensError) {
       console.error("Error fetching tokens:", tokensError);
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch push tokens" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Failed to fetch push tokens" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (!tokens || tokens.length === 0) {
-      console.log("No push tokens found for user:", user_id);
+      return new Response(JSON.stringify({ message: "No push tokens registered for this user", sent: 0 }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check user notification preferences
+    const notificationType = data?.type || "general";
+    const { data: preferences } = await supabase
+      .from("user_notification_preferences")
+      .select("*")
+      .eq("user_id", user_id)
+      .maybeSingle();
+
+    // Map notification types to preference fields
+    const preferenceMap: Record<string, string> = {
+      message: "messages",
+      reminder_24h: "reminder_24h",
+      reminder_2h: "reminder_2h",
+      review: "review_request",
+      booking_confirmed: "booking_confirmed",
+      booking_cancelled: "booking_cancelled",
+      promotion: "promotions",
+      new_booking: "new_booking",
+      client_cancellation: "client_cancellation",
+      new_review: "new_review",
+      client_message: "client_messages",
+    };
+
+    const preferenceField = preferenceMap[notificationType];
+    if (preferences && preferenceField && preferences[preferenceField] === false) {
+      console.log(`User ${user_id} has disabled ${notificationType} notifications`);
       return new Response(
-        JSON.stringify({ message: "No push tokens registered for this user", sent: 0 }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ message: "User has disabled this notification type", sent: 0, skipped: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // If Firebase is not configured, just log and return
     if (!firebaseServiceAccountJson) {
       console.log("Firebase not configured. Would send to tokens:", tokens.length);
       return new Response(
-        JSON.stringify({ 
-          message: "Push notifications not configured (missing FIREBASE_SERVICE_ACCOUNT)", 
-          tokens_found: tokens.length 
+        JSON.stringify({
+          message: "Push notifications not configured (missing FIREBASE_SERVICE_ACCOUNT)",
+          tokens_found: tokens.length,
         }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Parse service account JSON
-    let serviceAccount: ServiceAccount;
-    try {
-      serviceAccount = JSON.parse(firebaseServiceAccountJson);
-    } catch (e) {
-      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT:", e);
-      return new Response(
-        JSON.stringify({ error: "Invalid FIREBASE_SERVICE_ACCOUNT JSON" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const serviceAccount = JSON.parse(firebaseServiceAccountJson);
+    const accessToken = await getAccessToken(serviceAccount);
+    const projectId = serviceAccount.project_id;
 
-    // Get OAuth2 access token
-    let accessToken: string;
-    try {
-      accessToken = await getAccessToken(serviceAccount);
-    } catch (e) {
-      console.error("Failed to get access token:", e);
-      return new Response(
-        JSON.stringify({ error: "Failed to authenticate with Firebase" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const fcmUrl = `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`;
-
-    // Send to each token via FCM v1 API
+    // Send to each token via FCM V1 API
     const results = await Promise.allSettled(
-      tokens.map(async ({ token, platform }) => {
-        const message: Record<string, unknown> = {
+      tokens.map(async ({ token }) => {
+        const message = {
           message: {
             token: token,
-            notification: {
-              title,
-              body,
+            notification: { title, body },
+            data: data || {},
+            android: {
+              priority: "high",
+              notification: { sound: "default", channel_id: "default" },
             },
-            data: {
-              ...data,
-              click_action: "FLUTTER_NOTIFICATION_CLICK",
+            apns: {
+              payload: { aps: { sound: "default", badge: 1 } },
             },
           },
         };
 
-        // Add platform-specific configuration
-        if (platform === "android") {
-          (message.message as Record<string, unknown>).android = {
-            priority: "high",
-            notification: {
-              sound: "default",
-              channel_id: "default",
-            },
-          };
-        } else if (platform === "ios") {
-          (message.message as Record<string, unknown>).apns = {
-            payload: {
-              aps: {
-                sound: "default",
-                badge: 1,
-              },
-            },
-          };
-        }
-
-        const response = await fetch(fcmUrl, {
+        const response = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify(message),
         });
 
         const result = await response.json();
-        
-        // Handle invalid tokens (unregistered devices)
-        if (!response.ok) {
-          const errorCode = result.error?.details?.[0]?.errorCode;
-          if (errorCode === "UNREGISTERED" || errorCode === "INVALID_ARGUMENT") {
-            // Remove invalid token
-            await supabase
-              .from("push_tokens")
-              .delete()
-              .eq("token", token);
-            console.log("Removed invalid token:", token.substring(0, 20));
-          }
-          throw new Error(result.error?.message || "FCM request failed");
+
+        // Handle invalid tokens
+        if (result.error?.details?.some((d: any) => d.errorCode === "UNREGISTERED")) {
+          await supabase.from("push_tokens").delete().eq("token", token);
+          console.log("Removed invalid token");
         }
 
-        return { token: token.substring(0, 20), platform, result };
-      })
+        return { token: token.substring(0, 20), result };
+      }),
     );
 
-    const successful = results.filter(r => r.status === "fulfilled").length;
-    const failed = results.filter(r => r.status === "rejected").length;
+    const successful = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
 
     console.log(`Push notifications sent: ${successful} success, ${failed} failed`);
 
-    return new Response(
-      JSON.stringify({ 
-        message: "Push notifications processed",
-        sent: successful,
-        failed,
-        details: results
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-
+    return new Response(JSON.stringify({ message: "Push notifications processed", sent: successful, failed }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Error in send-push-notification:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
