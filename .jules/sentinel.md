@@ -1,0 +1,4 @@
+## 2025-02-19 - Critical IDOR in Edge Functions
+**Vulnerability:** The `create-booking` edge function used a Service Role key to bypass RLS but failed to manually verify the user's identity from the Authorization header. It blindly trusted the `user_id` in the request body, allowing any user to book appointments on behalf of others.
+**Learning:** When using `SUPABASE_SERVICE_ROLE_KEY` in Edge Functions, RLS policies are bypassed. The developer MUST manually implement authentication using `supabase.auth.getUser()` and authorization checks. Trusting input `user_id` without verification is a dangerous pattern.
+**Prevention:** Always verify the JWT token in Edge Functions. If `user_id` is passed in the body, validate it against `auth.getUser()`. Prefer RLS-enabled clients where possible, or treat the Edge Function as a privileged backend that must enforce its own security policy.

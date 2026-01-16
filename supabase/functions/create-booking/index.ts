@@ -154,6 +154,58 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    let user = null;
+    let isAdminOrStylist = false;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+
+      if (!authError && authUser) {
+        user = authUser;
+
+        // Check roles
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .in('role', ['admin', 'stylist', 'superadmin']);
+
+        isAdminOrStylist = roleData && roleData.length > 0;
+      }
+    }
+
+    // Authorization checks
+
+    // 1. If user_id is provided, it must match the authenticated user OR caller must be admin
+    if (bookingData.user_id) {
+      if (!user) {
+         return new Response(
+          JSON.stringify({ error: 'Authentication required for user booking' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (user.id !== bookingData.user_id && !isAdminOrStylist) {
+         return new Response(
+          JSON.stringify({ error: 'Unauthorized to create booking for this user' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // 2. If skipAvailabilityCheck is true, caller must be admin/stylist
+    if (bookingData.skipAvailabilityCheck) {
+      if (!isAdminOrStylist) {
+         return new Response(
+          JSON.stringify({ error: 'Unauthorized to skip availability check' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
