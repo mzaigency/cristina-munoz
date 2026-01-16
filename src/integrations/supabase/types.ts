@@ -1905,6 +1905,60 @@ export type Database = {
           },
         ]
       }
+      user_notification_preferences: {
+        Row: {
+          booking_cancelled: boolean | null
+          booking_confirmed: boolean | null
+          client_cancellation: boolean | null
+          client_messages: boolean | null
+          created_at: string | null
+          id: string
+          messages: boolean | null
+          new_booking: boolean | null
+          new_review: boolean | null
+          promotions: boolean | null
+          reminder_24h: boolean | null
+          reminder_2h: boolean | null
+          review_request: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_cancelled?: boolean | null
+          booking_confirmed?: boolean | null
+          client_cancellation?: boolean | null
+          client_messages?: boolean | null
+          created_at?: string | null
+          id?: string
+          messages?: boolean | null
+          new_booking?: boolean | null
+          new_review?: boolean | null
+          promotions?: boolean | null
+          reminder_24h?: boolean | null
+          reminder_2h?: boolean | null
+          review_request?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_cancelled?: boolean | null
+          booking_confirmed?: boolean | null
+          client_cancellation?: boolean | null
+          client_messages?: boolean | null
+          created_at?: string | null
+          id?: string
+          messages?: boolean | null
+          new_booking?: boolean | null
+          new_review?: boolean | null
+          promotions?: boolean | null
+          reminder_24h?: boolean | null
+          reminder_2h?: boolean | null
+          review_request?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -2244,6 +2298,32 @@ export type Database = {
           tenant_slug: string
           total_duration: number
         }[]
+      }
+      get_notification_preferences: {
+        Args: { p_user_id: string }
+        Returns: {
+          booking_cancelled: boolean | null
+          booking_confirmed: boolean | null
+          client_cancellation: boolean | null
+          client_messages: boolean | null
+          created_at: string | null
+          id: string
+          messages: boolean | null
+          new_booking: boolean | null
+          new_review: boolean | null
+          promotions: boolean | null
+          reminder_24h: boolean | null
+          reminder_2h: boolean | null
+          review_request: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_notification_preferences"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_public_tenant_by_id: {
         Args: { _id: string }
