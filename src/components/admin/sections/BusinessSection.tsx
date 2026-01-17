@@ -108,14 +108,8 @@ const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
           })}
         </TabsList>
 
-        <TabsContent value="cash" className="mt-4 space-y-4">
-          {renderTabContent(tabs[0], (
-            <>
-              <CashRegisterManager tenantId={tenantId} />
-              <AdvancedCashStats tenantId={tenantId} />
-              <PDFReportsGenerator tenantId={tenantId} />
-            </>
-          ))}
+        <TabsContent value="cash" className="mt-4">
+          {renderTabContent(tabs[0], <CashRegisterManager tenantId={tenantId} />)}
         </TabsContent>
 
         <TabsContent value="promos" className="mt-4">
@@ -134,8 +128,13 @@ const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
           {renderTabContent(tabs[4], <MonthlyGoals tenantId={tenantId} />)}
         </TabsContent>
 
-        <TabsContent value="stats" className="mt-4">
-          {renderTabContent(tabs[5], <AdvancedCashStats tenantId={tenantId} />)}
+        <TabsContent value="stats" className="mt-4 space-y-6">
+          {renderTabContent(tabs[5], (
+            <>
+              <AdvancedCashStats tenantId={tenantId} />
+              <PDFReportsGenerator tenantId={tenantId} tenantName="" />
+            </>
+          ))}
         </TabsContent>
       </Tabs>
     </div>
