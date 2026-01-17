@@ -698,9 +698,9 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
               </Card>
             </div>
 
-            {/* Revenue by Stylist */}
+            {/* Revenue by Stylist - Pie Chart */}
             {stylistStats.length > 0 && (
-              <Card>
+              <Card className="overflow-hidden">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Users className="h-4 w-4 text-violet-500" />
@@ -708,67 +708,89 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[220px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stylistStats} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" horizontal={false} />
-                        <XAxis 
-                          type="number" 
-                          tickFormatter={(v) => formatCompact(v)} 
-                          fontSize={10} 
-                          tickLine={false}
-                          axisLine={false}
-                        />
-                        <YAxis 
-                          type="category" 
-                          dataKey="name" 
-                          width={80} 
-                          fontSize={11} 
-                          tickLine={false}
-                          axisLine={false}
-                        />
-                        <Tooltip
-                          content={({ active, payload }) =>
-                            active && payload?.length ? (
-                              <div className="bg-background/95 backdrop-blur border rounded-lg p-3 shadow-lg">
-                                <p className="font-semibold mb-1">{payload[0].payload.name}</p>
-                                <p className="text-sm">{formatCurrency(payload[0].value as number)}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {payload[0].payload.transactions} transacciones
-                                </p>
-                              </div>
-                            ) : null
-                          }
-                        />
-                        <Bar 
-                          dataKey="revenue" 
-                          radius={[0, 6, 6, 0]}
-                        >
-                          {stylistStats.map((s, i) => (
-                            <Cell key={s.id} fill={s.color || COLORS[i % COLORS.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  {/* Quick summary under chart */}
-                  <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t">
-                    {stylistStats.slice(0, 3).map((s, i) => {
-                      const totalRevenue = stylistStats.reduce((sum, st) => sum + st.revenue, 0);
-                      const percent = totalRevenue > 0 ? (s.revenue / totalRevenue) * 100 : 0;
-                      return (
-                        <div key={s.id} className="text-center">
-                          <div className="flex items-center justify-center gap-1 mb-1">
-                            <div 
-                              className="w-2.5 h-2.5 rounded-full" 
-                              style={{ backgroundColor: s.color || COLORS[i] }} 
-                            />
-                            <span className="text-xs font-medium truncate">{s.name}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{percent.toFixed(0)}% del total</p>
-                        </div>
-                      );
-                    })}
+                  <div className="flex flex-col md:flex-row items-center gap-4">
+                    {/* Pie Chart */}
+                    <div className="h-[200px] w-full md:w-1/2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <defs>
+                            {stylistStats.map((s, i) => (
+                              <linearGradient key={s.id} id={`gradient-${s.id}`} x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stopColor={s.color || COLORS[i % COLORS.length]} stopOpacity={1} />
+                                <stop offset="100%" stopColor={s.color || COLORS[i % COLORS.length]} stopOpacity={0.7} />
+                              </linearGradient>
+                            ))}
+                          </defs>
+                          <Pie
+                            data={stylistStats}
+                            dataKey="revenue"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={45}
+                            outerRadius={75}
+                            paddingAngle={3}
+                            strokeWidth={0}
+                          >
+                            {stylistStats.map((s, i) => (
+                              <Cell 
+                                key={s.id} 
+                                fill={`url(#gradient-${s.id})`}
+                                className="drop-shadow-sm"
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            content={({ active, payload }) =>
+                              active && payload?.length ? (
+                                <div className="bg-background/95 backdrop-blur border rounded-xl p-3 shadow-xl">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <div 
+                                      className="w-3 h-3 rounded-full" 
+                                      style={{ backgroundColor: payload[0].payload.color || COLORS[0] }} 
+                                    />
+                                    <p className="font-semibold">{payload[0].payload.name}</p>
+                                  </div>
+                                  <p className="text-lg font-bold">{formatCurrency(payload[0].value as number)}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {payload[0].payload.transactions} transacciones
+                                  </p>
+                                </div>
+                              ) : null
+                            }
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    
+                    {/* Legend with stats */}
+                    <div className="w-full md:w-1/2 space-y-2">
+                      {stylistStats.map((s, i) => {
+                        const totalRevenue = stylistStats.reduce((sum, st) => sum + st.revenue, 0);
+                        const percent = totalRevenue > 0 ? (s.revenue / totalRevenue) * 100 : 0;
+                        return (
+                          <motion.div
+                            key={s.id}
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="flex items-center justify-between p-2.5 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div 
+                                className="w-4 h-4 rounded-full shadow-sm" 
+                                style={{ backgroundColor: s.color || COLORS[i % COLORS.length] }} 
+                              />
+                              <span className="text-sm font-medium">{s.name}</span>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-bold">{formatCurrency(s.revenue)}</p>
+                              <p className="text-[10px] text-muted-foreground">{percent.toFixed(0)}%</p>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
