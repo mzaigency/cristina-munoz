@@ -97,22 +97,22 @@ export default function ForBusiness() {
           {
             question: "¿Cuánto cuesta GlowApp para negocios?",
             answer:
-              "GlowApp ofrece un plan mensual de 39,99€ y un plan anual de 399,99€ (ahorra 2 meses). El primer mes es gratis sin compromiso.",
+              "GlowApp ofrece 3 planes: Starter desde 29€/mes, Pro desde 49€/mes y Business desde 89€/mes. Todos incluyen 30 días de prueba gratis.",
           },
           {
             question: "¿Qué incluye la plataforma para negocios?",
             answer:
-              "Incluye landing page profesional, sistema de reservas 24/7, gestión de calendario, reseñas verificadas, stories y promociones, y un panel de administración completo.",
+              "Incluye landing page profesional, sistema de reservas 24/7, gestión de calendario, stories y promociones, y un panel de administración completo. Las funcionalidades varían según el plan.",
           },
           {
             question: "¿Puedo gestionar varios estilistas?",
             answer:
-              "Sí, puedes añadir múltiples estilistas o profesionales a tu cuenta, cada uno con su propio calendario y servicios.",
+              "Sí, dependiendo de tu plan: Starter incluye 1 profesional, Pro hasta 3 y Business profesionales ilimitados.",
           },
           {
             question: "¿Cómo empiezo a usar GlowApp?",
             answer:
-              "Regístrate gratis y configura tu negocio en minutos. No necesitas conocimientos técnicos y tendrás 1 mes de prueba sin compromiso.",
+              "Regístrate gratis y configura tu negocio en minutos. No necesitas conocimientos técnicos y tendrás 30 días de prueba sin compromiso.",
           },
         ]}
       />
