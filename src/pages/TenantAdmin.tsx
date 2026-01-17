@@ -30,6 +30,8 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
+import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
+import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpiredScreen";
 
 // Import consolidated sections
 import {
@@ -82,6 +84,9 @@ export default function TenantAdmin() {
 
   // Use tenant access hook to check permissions
   const { isAdmin, isStylist, stylistId } = useTenantAccess(tenant?.id);
+
+  // Check subscription status
+  const { isExpired: subscriptionExpired, plan: subscriptionPlan, loading: subscriptionLoading } = useSubscriptionStatus(tenant?.id);
 
   // Use admin notifications hook
   const {
@@ -397,7 +402,7 @@ export default function TenantAdmin() {
     );
   };
 
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -407,6 +412,17 @@ export default function TenantAdmin() {
 
   if (!hasAccess || !tenant) {
     return null;
+  }
+
+  // Block access if subscription is expired
+  if (subscriptionExpired) {
+    return (
+      <SubscriptionExpiredScreen
+        tenantId={tenant.id}
+        tenantName={tenant.name}
+        currentPlan={subscriptionPlan || "starter"}
+      />
+    );
   }
 
   return (

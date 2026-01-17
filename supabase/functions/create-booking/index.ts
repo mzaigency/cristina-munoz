@@ -177,6 +177,34 @@ serve(async (req) => {
     }
     console.log("Using tenant_id:", tenantId);
 
+    // Check if tenant subscription is active
+    const { data: tenantData, error: tenantError } = await supabase
+      .from("tenants")
+      .select("subscription_expires_at, is_active")
+      .eq("id", tenantId)
+      .single();
+
+    if (tenantError || !tenantData) {
+      throw new Error("Tenant not found");
+    }
+
+    if (!tenantData.is_active) {
+      return new Response(
+        JSON.stringify({ error: "Este negocio no está activo" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (tenantData.subscription_expires_at) {
+      const expiresAt = new Date(tenantData.subscription_expires_at);
+      if (expiresAt < new Date()) {
+        return new Response(
+          JSON.stringify({ error: "Este negocio tiene la suscripción expirada y no puede recibir reservas" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // Get customer data - either from user profile or from direct input
     let customer_name: string;
     let customer_email: string | null = null;
