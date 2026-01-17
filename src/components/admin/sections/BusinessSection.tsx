@@ -6,7 +6,7 @@ import { PromotionsManager } from "../PromotionsManager";
 import { ServicePackagesManager } from "../ServicePackagesManager";
 import { ProductsManager } from "../ProductsManager";
 import { MonthlyGoals } from "../MonthlyGoals";
-import { AdvancedCashStats } from "../AdvancedCashStats";
+import { BusinessStats } from "../BusinessStats";
 import { PDFReportsGenerator } from "../PDFReportsGenerator";
 import { LockedFeature } from "../LockedFeature";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
@@ -131,7 +131,7 @@ const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
         <TabsContent value="stats" className="mt-4 space-y-6">
           {renderTabContent(tabs[5], (
             <>
-              <AdvancedCashStats tenantId={tenantId} />
+              <BusinessStats tenantId={tenantId} />
               <PDFReportsGenerator tenantId={tenantId} tenantName="" />
             </>
           ))}
