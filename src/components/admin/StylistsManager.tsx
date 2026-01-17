@@ -7,11 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2, User, Upload, Clock, Search, Link2, Unlink, Shield, ShieldCheck } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, User, Upload, Clock, Search, Link2, Unlink, Shield, ShieldCheck, Crown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StylistScheduleEditor } from "./StylistScheduleEditor";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { PlanUsageBar } from "./PlanUsageBar";
+import { UpgradePrompt } from "./UpgradePrompt";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 interface Stylist {
   id: string;
@@ -67,6 +70,16 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
   });
   
   const { toast } = useToast();
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  
+  const { 
+    canAddStylist, 
+    maxStylists, 
+    currentStylists, 
+    planSlug, 
+    getUpgradePlanForLimit,
+    refetch: refetchPlanLimits 
+  } = usePlanLimits(tenantId);
 
   useEffect(() => {
     fetchStylists();
@@ -441,6 +454,12 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
   };
 
   const openCreateDialog = () => {
+    // Check if can add more stylists
+    if (!canAddStylist()) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+    
     setEditingStylist(null);
     setFormData({
       name: "",
@@ -474,26 +493,54 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
     );
   }
 
+  // Refetch limits when stylists change
+  useEffect(() => {
+    refetchPlanLimits();
+  }, [stylists.length]);
+
+  const upgradePlan = getUpgradePlanForLimit("stylists");
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Gestión de Estilistas
-            </CardTitle>
-            <CardDescription>
-              Añade, edita o elimina los estilistas de tu salón
-            </CardDescription>
-          </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openCreateDialog} className="w-full md:w-auto h-11 md:h-10">
-                <Plus className="mr-2 h-4 w-4" />
-                Añadir Estilista
-              </Button>
-            </DialogTrigger>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex-1">
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Gestión de Estilistas
+              </CardTitle>
+              <CardDescription>
+                Añade, edita o elimina los estilistas de tu salón
+              </CardDescription>
+              <div className="mt-3">
+                <PlanUsageBar
+                  current={currentStylists}
+                  max={maxStylists}
+                  label="Estilistas"
+                />
+              </div>
+            </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  onClick={openCreateDialog} 
+                  className="w-full md:w-auto h-11 md:h-10"
+                  variant={canAddStylist() ? "default" : "outline"}
+                >
+                  {canAddStylist() ? (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Añadir Estilista
+                    </>
+                  ) : (
+                    <>
+                      <Crown className="mr-2 h-4 w-4 text-amber-500" />
+                      Mejorar plan
+                    </>
+                  )}
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
@@ -926,6 +973,16 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+      </Card>
+
+      <UpgradePrompt
+        open={showUpgradePrompt}
+        onOpenChange={setShowUpgradePrompt}
+        currentPlan={planSlug}
+        targetPlan={upgradePlan || "pro"}
+        feature="más estilistas"
+        tenantId={tenantId}
+      />
+    </>
   );
 }
