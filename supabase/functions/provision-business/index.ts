@@ -11,6 +11,62 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[PROVISION-BUSINESS] ${step}${detailsStr}`);
 };
 
+// Plan limits and features
+const PLAN_CONFIG: Record<string, {
+  max_stylists: number;
+  max_services: number;
+  features: Record<string, boolean>;
+}> = {
+  starter: {
+    max_stylists: 1,
+    max_services: 15,
+    features: {
+      stories: true,
+      messages: true,
+      cash_register: false,
+      commissions: false,
+      advanced_analytics: false,
+      pdf_reports: false,
+      promotions: false,
+      packages: false,
+      monthly_goals: false,
+      waitlist: false,
+    },
+  },
+  pro: {
+    max_stylists: 3,
+    max_services: 50,
+    features: {
+      stories: true,
+      messages: true,
+      cash_register: true,
+      commissions: false,
+      advanced_analytics: true,
+      pdf_reports: true,
+      promotions: true,
+      packages: true,
+      monthly_goals: false,
+      waitlist: false,
+    },
+  },
+  business: {
+    max_stylists: 999,
+    max_services: 999,
+    features: {
+      stories: true,
+      messages: true,
+      cash_register: true,
+      commissions: true,
+      advanced_analytics: true,
+      pdf_reports: true,
+      promotions: true,
+      packages: true,
+      monthly_goals: true,
+      waitlist: true,
+    },
+  },
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -53,16 +109,18 @@ serve(async (req) => {
       secondaryColor,
       tagline,
       description,
-      plan,
+      planSlug = "starter",
       skipStripe,
     } = body;
 
-    logStep("Request body", { businessName, businessSlug, plan, skipStripe });
+    logStep("Request body", { businessName, businessSlug, planSlug, skipStripe });
+
+    // Validate plan
+    const validPlanSlug = PLAN_CONFIG[planSlug] ? planSlug : "starter";
+    const planConfig = PLAN_CONFIG[validPlanSlug];
 
     // If skipStripe is true, verify user is superadmin
     if (skipStripe) {
-      const { data: isSuperadmin } = await supabaseAdmin.rpc('is_superadmin');
-      // Also check via direct query since RPC runs with user context
       const { data: roleCheck } = await supabaseAdmin
         .from("user_roles")
         .select("role")
@@ -91,18 +149,15 @@ serve(async (req) => {
     const now = new Date();
     let subscriptionEnd: Date;
     
-    if (skipStripe || plan === "demo") {
+    if (skipStripe) {
       // Demo mode: 7 days only
       subscriptionEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     } else {
-      // Normal mode: 30 days trial + plan duration
-      const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-      subscriptionEnd = plan === "annual" 
-        ? new Date(trialEnd.getTime() + 365 * 24 * 60 * 60 * 1000)
-        : new Date(trialEnd.getTime() + 30 * 24 * 60 * 60 * 1000);
+      // Normal mode: 30 days trial
+      subscriptionEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     }
 
-    // Create tenant
+    // Create tenant with plan limits
     const { data: tenant, error: tenantError } = await supabaseAdmin
       .from("tenants")
       .insert({
@@ -116,8 +171,11 @@ serve(async (req) => {
         secondary_color: secondaryColor || "#D946EF",
         tagline: tagline || null,
         description: description || null,
-        subscription_plan: skipStripe ? "demo" : (plan === "annual" ? "annual" : "monthly"),
+        subscription_plan: validPlanSlug,
         subscription_expires_at: subscriptionEnd.toISOString(),
+        max_stylists: planConfig.max_stylists,
+        max_services: planConfig.max_services,
+        features: planConfig.features,
         is_active: true,
       })
       .select()
@@ -128,7 +186,7 @@ serve(async (req) => {
       throw new Error(`Error al crear el negocio: ${tenantError.message}`);
     }
 
-    logStep("Tenant created", { tenantId: tenant.id });
+    logStep("Tenant created", { tenantId: tenant.id, planSlug: validPlanSlug });
 
     // Assign admin role to user
     const { error: roleError } = await supabaseAdmin
@@ -190,7 +248,13 @@ serve(async (req) => {
       logStep("Warning: Could not create default hours", { error: hoursError.message });
     }
 
-    logStep("Business provisioned successfully", { tenantId: tenant.id, slug: tenant.slug });
+    logStep("Business provisioned successfully", { 
+      tenantId: tenant.id, 
+      slug: tenant.slug,
+      plan: validPlanSlug,
+      maxStylists: planConfig.max_stylists,
+      maxServices: planConfig.max_services,
+    });
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -198,6 +262,9 @@ serve(async (req) => {
         id: tenant.id,
         name: tenant.name,
         slug: tenant.slug,
+        subscription_plan: validPlanSlug,
+        max_stylists: planConfig.max_stylists,
+        max_services: planConfig.max_services,
       }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
