@@ -1,5 +1,5 @@
 import { SEO } from "@/components/SEO";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -87,6 +87,15 @@ export default function BusinessOnboarding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const handlePlanSelect = (slug: PlanSlug) => {
+    setSelectedPlan(slug);
+    // Scroll al formulario después de seleccionar
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
 
   const form = useForm<BusinessFormValues>({
     resolver: zodResolver(businessSchema),
@@ -315,7 +324,7 @@ export default function BusinessOnboarding() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + idx * 0.05 }}
-                  onClick={() => setSelectedPlan(slug)}
+                  onClick={() => handlePlanSelect(slug)}
                   className={`relative text-left ios-card p-4 transition-all ${
                     isSelected 
                       ? "border-2 border-primary ring-2 ring-primary/20" 
@@ -400,10 +409,11 @@ export default function BusinessOnboarding() {
 
           {/* Form - Ahora después de los planes */}
           <motion.div 
+            ref={formRef}
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.25 }}
-            className="max-w-md mx-auto"
+            className="max-w-md mx-auto scroll-mt-4"
           >
             <Card className="ios-card">
               <CardHeader className="text-center pb-4">
