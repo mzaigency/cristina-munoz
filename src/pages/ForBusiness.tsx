@@ -74,38 +74,6 @@ const stats = [
     icon: Clock,
   },
 ];
-const allBenefits = [
-  "Landing page profesional personalizable",
-  "Sistema de reservas online 24/7",
-  "Gestión de calendario inteligente",
-  "Reseñas y valoraciones de clientes",
-  "Stories para promocionar tu trabajo",
-  "Panel de administración completo",
-  "Múltiples estilistas/profesionales",
-  "Recordatorios automáticos a clientes",
-  "Estadísticas y métricas del negocio",
-  "Soporte técnico prioritario",
-];
-const testimonials = [
-  {
-    name: "María García",
-    business: "Salón Elegance",
-    text: "Desde que usamos GlowApp, nuestras reservas han aumentado un 40%. ¡Increíble!",
-    rating: 5,
-  },
-  {
-    name: "Carlos Ruiz",
-    business: "Barbería Vintage",
-    text: "La mejor inversión para mi negocio. Mis clientes adoran poder reservar online.",
-    rating: 5,
-  },
-  {
-    name: "Laura Martínez",
-    business: "Centro Bienestar Zen",
-    text: "El panel de administración es súper intuitivo. Ahorro horas cada semana.",
-    rating: 5,
-  },
-];
 export default function ForBusiness() {
   const currentYear = new Date().getFullYear();
   return (
@@ -307,12 +275,6 @@ export default function ForBusiness() {
                 <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
               </Link>
             </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="font-bold text-base h-12 md:h-14 px-6 md:px-8 rounded-xl md:rounded-2xl border-2"
-            ></Button>
           </motion.div>
         </div>
       </section>
@@ -411,64 +373,6 @@ export default function ForBusiness() {
         </div>
       </section>
 
-      {/* Testimonials - Mobile optimized */}
-      <section className="py-12 md:py-20 px-4 bg-secondary/30">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 20,
-            }}
-            whileInView={{
-              opacity: 1,
-              y: 0,
-            }}
-            viewport={{
-              once: true,
-            }}
-            className="text-center mb-8 md:mb-14"
-          >
-            <h2 className="text-2xl md:text-4xl font-black text-foreground mb-2 md:mb-4">
-              Lo que dicen nuestros clientes
-            </h2>
-            <p className="text-muted-foreground text-sm md:text-base">Negocios reales, resultados reales.</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.name}
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                }}
-                transition={{
-                  delay: index * 0.1,
-                }}
-                className="p-4 md:p-6 rounded-2xl md:rounded-3xl bg-card border border-border/50"
-              >
-                <div className="flex gap-0.5 mb-3 md:mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 md:h-5 md:w-5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-foreground mb-3 md:mb-4 italic text-sm md:text-base">"{testimonial.text}"</p>
-                <div>
-                  <div className="font-bold text-foreground text-sm md:text-base">{testimonial.name}</div>
-                  <div className="text-xs md:text-sm text-muted-foreground">{testimonial.business}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Pricing Section - Mobile optimized */}
       <section className="py-12 md:py-20 px-4">
