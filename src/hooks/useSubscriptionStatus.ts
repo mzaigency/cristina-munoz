@@ -21,43 +21,48 @@ export function useSubscriptionStatus(tenantId: string | undefined): Subscriptio
 
   const fetchStatus = useCallback(async () => {
     if (!tenantId) {
+      // No tenant yet - keep defaults (active, not expired) and wait
       setLoading(false);
+      setIsActive(true);
+      setIsExpired(false);
       return;
     }
 
     try {
       const { data: tenant, error } = await supabase
         .from("tenants")
-        .select("subscription_plan, subscription_expires_at")
+        .select("subscription_plan, subscription_expires_at, is_active")
         .eq("id", tenantId)
         .single();
 
       if (error) throw error;
 
       const expDate = tenant?.subscription_expires_at;
+      const isActiveFlag = tenant?.is_active !== false; // Default to true if not set
       setPlan(tenant?.subscription_plan || "starter");
       setExpiresAt(expDate);
 
       if (expDate) {
         const expireDate = new Date(expDate);
         const now = new Date();
-        const active = expireDate > now;
+        const active = expireDate > now && isActiveFlag;
         const days = Math.ceil((expireDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         
         setIsActive(active);
         setIsExpired(!active);
         setDaysRemaining(active ? days : 0);
       } else {
-        // No expiration date set - treat as expired for safety
-        setIsActive(false);
-        setIsExpired(true);
-        setDaysRemaining(0);
+        // No expiration date set - check is_active flag
+        // For pilot tenants without Stripe, is_active=true means they're active
+        setIsActive(isActiveFlag);
+        setIsExpired(!isActiveFlag);
+        setDaysRemaining(null);
       }
     } catch (error) {
       console.error("Error checking subscription status:", error);
-      // On error, default to expired for safety
-      setIsActive(false);
-      setIsExpired(true);
+      // On error, default to active to not block access unnecessarily
+      setIsActive(true);
+      setIsExpired(false);
     } finally {
       setLoading(false);
     }
