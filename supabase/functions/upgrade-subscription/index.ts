@@ -7,12 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: Record<string, unknown>) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-BUSINESS-CHECKOUT] ${step}${detailsStr}`);
-};
-
-// Price IDs for subscription plans - 3 tiers
+// Mapeo de planes a price IDs de Stripe
 const PRICE_IDS: Record<string, Record<string, string>> = {
   starter: { 
     monthly: "price_1SqgCKRte0Pe7Hk3Zo6Fj68s", 
@@ -28,11 +23,9 @@ const PRICE_IDS: Record<string, Record<string, string>> = {
   },
 };
 
-// Plan limits
-const PLAN_LIMITS: Record<string, { max_stylists: number; max_services: number }> = {
-  starter: { max_stylists: 1, max_services: 15 },
-  pro: { max_stylists: 3, max_services: 50 },
-  business: { max_stylists: 999, max_services: 999 },
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[UPGRADE-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -40,29 +33,21 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
-
   try {
     logStep("Function started");
 
-    const { planSlug = "starter", billingCycle = "monthly", businessName, businessSlug } = await req.json();
-    logStep("Request body parsed", { planSlug, billingCycle, businessName, businessSlug });
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    logStep("Stripe key verified");
 
-    if (!PRICE_IDS[planSlug]) {
-      throw new Error(`Invalid plan: ${planSlug}. Must be 'starter', 'pro', or 'business'`);
-    }
-
-    if (!["monthly", "annual"].includes(billingCycle)) {
-      throw new Error("Invalid billing cycle. Must be 'monthly' or 'annual'");
-    }
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
-
+    
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
@@ -71,25 +56,37 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    const { tenantId, planSlug, billingCycle = "monthly" } = await req.json();
+    logStep("Request body parsed", { tenantId, planSlug, billingCycle });
+
+    if (!tenantId || !planSlug) {
+      throw new Error("Missing required fields: tenantId and planSlug");
+    }
+
+    if (!PRICE_IDS[planSlug]) {
+      throw new Error(`Invalid plan: ${planSlug}`);
+    }
+
+    const priceId = PRICE_IDS[planSlug][billingCycle];
+    if (!priceId) {
+      throw new Error(`Invalid billing cycle: ${billingCycle}`);
+    }
+    logStep("Price ID resolved", { priceId });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Check if customer already exists
+    // Buscar cliente existente
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
     
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      logStep("Existing customer found", { customerId });
+      logStep("Found existing customer", { customerId });
     }
 
-    const priceId = PRICE_IDS[planSlug][billingCycle];
-    const limits = PLAN_LIMITS[planSlug];
-    logStep("Using price", { priceId, planSlug, billingCycle, limits });
-
-    // Create checkout session with trial period
+    // Crear sesión de checkout
+    const origin = req.headers.get("origin") || "https://cristina-munoz.lovable.app";
+    
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -100,26 +97,20 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      subscription_data: {
-        trial_period_days: 30, // 1 month free trial
-        metadata: {
-          business_name: businessName,
-          business_slug: businessSlug,
-          user_id: user.id,
-          plan_slug: planSlug,
-        },
-      },
+      success_url: `${origin}/admin?upgrade=success&plan=${planSlug}`,
+      cancel_url: `${origin}/admin?upgrade=canceled`,
       metadata: {
-        business_name: businessName,
-        business_slug: businessSlug,
+        tenant_id: tenantId,
         user_id: user.id,
         plan_slug: planSlug,
         billing_cycle: billingCycle,
-        max_stylists: String(limits.max_stylists),
-        max_services: String(limits.max_services),
       },
-      success_url: `${req.headers.get("origin")}/onboarding/setup?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/onboarding?canceled=true`,
+      subscription_data: {
+        metadata: {
+          tenant_id: tenantId,
+          plan_slug: planSlug,
+        },
+      },
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
