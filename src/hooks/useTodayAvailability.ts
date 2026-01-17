@@ -8,19 +8,7 @@ interface TenantAvailability {
   availableSlots: number;
 }
 
-// Working hours configuration (9:00 - 20:00 with 30-min slots)
-const WORKING_START = 9 * 60; // 9:00 in minutes
-const WORKING_END = 20 * 60; // 20:00 in minutes
 const SLOT_DURATION = 30; // 30 minutes per slot
-
-// Generate all possible time slots for a working day
-function generateAllSlots(startMinutes: number, endMinutes: number): number[] {
-  const slots: number[] = [];
-  for (let min = startMinutes; min < endMinutes; min += SLOT_DURATION) {
-    slots.push(min);
-  }
-  return slots;
-}
 
 // Convert "HH:MM:SS" to minutes since midnight
 function timeToMinutes(time: string): number {
@@ -36,7 +24,7 @@ export function useTodayAvailability(tenantIds: string[]) {
 
   const checkAvailability = useCallback(async () => {
     if (tenantIds.length === 0) return;
-    
+
     setLoading(true);
     setHasChecked(true);
     const today = format(new Date(), "yyyy-MM-dd");
@@ -47,27 +35,13 @@ export function useTodayAvailability(tenantIds: string[]) {
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const nextSlotStart = Math.ceil(currentMinutes / SLOT_DURATION) * SLOT_DURATION;
-    
-    // If it's past working hours, no availability today
-    if (nextSlotStart >= WORKING_END) {
-      setAvailabilityMap(newMap);
-      setTenantsWithAvailability([]);
-      setLoading(false);
-      return;
-    }
-
-    // Generate remaining slots for today (from now until closing)
-    const remainingSlots = generateAllSlots(
-      Math.max(nextSlotStart, WORKING_START), 
-      WORKING_END
-    );
 
     try {
       // Check availability for each tenant in parallel (batch of 5 to avoid rate limits)
       const batchSize = 5;
       for (let i = 0; i < tenantIds.length; i += batchSize) {
         const batch = tenantIds.slice(i, i + batchSize);
-        
+
         const results = await Promise.all(
           batch.map(async (tenantId) => {
             try {
@@ -85,7 +59,7 @@ export function useTodayAvailability(tenantIds: string[]) {
               }
 
               const bookedSlots = data?.bookedSlots || [];
-              
+
               // Convert booked slots to a Set of blocked minute ranges
               const blockedMinutes = new Set<number>();
               bookedSlots.forEach((slot: { Hora: string; total_duration: number }) => {
@@ -97,10 +71,15 @@ export function useTodayAvailability(tenantIds: string[]) {
                 }
               });
 
-              // Count available slots (remaining slots that are NOT blocked)
-              const availableSlotsCount = remainingSlots.filter(
-                slotMin => !blockedMinutes.has(slotMin)
-              ).length;
+              // Count available slots from now until midnight (24:00)
+              // The check-availability function already returns blocked slots based on tenant's actual hours
+              // so slots outside working hours will already be blocked
+              let availableSlotsCount = 0;
+              for (let slotMin = nextSlotStart; slotMin < 24 * 60; slotMin += SLOT_DURATION) {
+                if (!blockedMinutes.has(slotMin)) {
+                  availableSlotsCount++;
+                }
+              }
 
               // Has availability if there's at least 1 free slot today
               const hasAvailability = availableSlotsCount > 0;
@@ -110,7 +89,7 @@ export function useTodayAvailability(tenantIds: string[]) {
               console.error(`Exception checking availability for ${tenantId}:`, err);
               return { tenantId, hasAvailability: false, availableSlots: 0 };
             }
-          })
+          }),
         );
 
         results.forEach((result) => {

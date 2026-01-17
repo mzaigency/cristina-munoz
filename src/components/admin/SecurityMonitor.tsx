@@ -113,10 +113,22 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
   };
 
   const fetchTotalProfiles = async () => {
+    if (!tenantId) return;
+
     try {
-      const { count, error } = await supabase.from("profiles").select("*", { count: "exact", head: true });
+      // Count unique customers who have booked with this tenant
+      // Using bookings table to get unique user_ids for this tenant
+      const { data: bookings, error } = await supabase
+        .from("bookings")
+        .select("user_id")
+        .eq("tenant_id", tenantId)
+        .not("user_id", "is", null);
+
       if (error) throw error;
-      setTotalProfiles(count || 0);
+
+      // Count unique user IDs
+      const uniqueUserIds = new Set(bookings?.map((b) => b.user_id) || []);
+      setTotalProfiles(uniqueUserIds.size);
     } catch (error) {
       console.error("Error fetching profiles count:", error);
     }
@@ -124,25 +136,25 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
 
   const fetchMonthlyRevenue = async () => {
     if (!tenantId) return;
-    
+
     try {
       const now = new Date();
-      const currentMonth = now.getMonth() + 1; // 1-12
+      const currentMonth = now.getMonth() + 1;
       const currentYear = now.getFullYear();
-      const startOfMonth = new Date(currentYear, now.getMonth(), 1);
-      const endOfMonth = new Date(currentYear, now.getMonth() + 1, 0);
-      
-      // Fetch monthly goal for this tenant
-      const { data: goalData } = await supabase
-        .from("monthly_goals")
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      // Fetch monthly goal from monthly_goals table
+      const { data: goalsData } = await supabase
+        .from("monthly_goals" as any)
         .select("revenue_goal")
         .eq("tenant_id", tenantId)
         .eq("month", currentMonth)
         .eq("year", currentYear)
         .maybeSingle();
 
-      const monthlyGoal = goalData?.revenue_goal || 3000; // Default 3000 if no goal set
-      
+      const monthlyGoal = (goalsData as any)?.revenue_goal || 0;
+
       const { data, error } = await supabase
         .from("transactions")
         .select("total, created_at")
@@ -154,7 +166,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
       if (error) throw error;
 
       const monthlyRevenue = data?.reduce((sum, t) => sum + (t.total || 0), 0) || 0;
-      
+
       // Calculate projection based on current pace
       const dayOfMonth = getDate(now);
       const daysInMonth = getDaysInMonth(now);
@@ -228,7 +240,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
                 "flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200",
                 activeTab === tab
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
               )}
             >
               {tab === "daily" ? "Día" : tab === "weekly" ? "Semana" : "Mes"}
@@ -257,14 +269,10 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
                   "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold",
                   bookingsChange > 0
                     ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
                 )}
               >
-                {bookingsChange > 0 ? (
-                  <TrendingUp className="h-3.5 w-3.5" />
-                ) : (
-                  <TrendingDown className="h-3.5 w-3.5" />
-                )}
+                {bookingsChange > 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                 {bookingsChange > 0 ? "+" : ""}
                 {bookingsChange}%
               </div>
@@ -303,14 +311,14 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
       </div>
 
       {/* Monthly Goal Progress */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="ios-card p-4 overflow-hidden relative"
       >
         {/* Background decoration */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
-        
+
         <div className="relative">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -319,15 +327,20 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Objetivo mensual</p>
-                <p className="text-sm font-semibold text-foreground">{format(new Date(), "MMMM yyyy", { locale: es })}</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {format(new Date(), "MMMM yyyy", { locale: es })}
+                </p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-foreground">
-                {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(revenueData.monthlyRevenue)}
+                {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(
+                  revenueData.monthlyRevenue,
+                )}
               </p>
               <p className="text-xs text-muted-foreground">
-                de {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(revenueData.monthlyGoal)}
+                de{" "}
+                {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(revenueData.monthlyGoal)}
               </p>
             </div>
           </div>
@@ -342,27 +355,32 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
                 "h-full rounded-full",
                 revenueData.monthlyRevenue >= revenueData.monthlyGoal
                   ? "bg-gradient-to-r from-emerald-500 to-green-400"
-                  : "bg-gradient-to-r from-primary to-violet-400"
+                  : "bg-gradient-to-r from-primary to-violet-400",
               )}
             />
           </div>
 
           <div className="flex items-center justify-between text-xs">
-            <span className={cn(
-              "font-medium",
-              revenueData.monthlyRevenue >= revenueData.monthlyGoal
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-muted-foreground"
-            )}>
+            <span
+              className={cn(
+                "font-medium",
+                revenueData.monthlyRevenue >= revenueData.monthlyGoal
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-muted-foreground",
+              )}
+            >
               {Math.round((revenueData.monthlyRevenue / revenueData.monthlyGoal) * 100)}% completado
             </span>
-            
+
             {/* Projection */}
             {revenueData.projectedRevenue > 0 && (
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Sparkles className="h-3 w-3" />
                 <span>
-                  Proyección: {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(revenueData.projectedRevenue)}
+                  Proyección:{" "}
+                  {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(
+                    revenueData.projectedRevenue,
+                  )}
                 </span>
               </div>
             )}
@@ -375,9 +393,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
               animate={{ opacity: 1, scale: 1 }}
               className="mt-3 p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-center"
             >
-              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                🎉 ¡Objetivo alcanzado!
-              </p>
+              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">🎉 ¡Objetivo alcanzado!</p>
             </motion.div>
           )}
         </div>
@@ -386,7 +402,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
       {/* Channel Breakdown */}
       <div className="ios-card p-4">
         <h3 className="text-sm font-semibold text-foreground mb-4">Origen de reservas</h3>
-        
+
         <div className="space-y-4">
           {/* CRM Channel */}
           <div className="space-y-2">
@@ -397,7 +413,9 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-foreground">{currentPeriodData.byChannel.crm}</span>
-                <span className="text-xs text-muted-foreground">({getPercentage(currentPeriodData.byChannel.crm)}%)</span>
+                <span className="text-xs text-muted-foreground">
+                  ({getPercentage(currentPeriodData.byChannel.crm)}%)
+                </span>
               </div>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -417,7 +435,9 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-foreground">{currentPeriodData.byChannel.web}</span>
-                <span className="text-xs text-muted-foreground">({getPercentage(currentPeriodData.byChannel.web)}%)</span>
+                <span className="text-xs text-muted-foreground">
+                  ({getPercentage(currentPeriodData.byChannel.web)}%)
+                </span>
               </div>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
