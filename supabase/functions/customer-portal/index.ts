@@ -43,16 +43,26 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    
+    // If no customer found, return a specific response instead of throwing an error
     if (customers.data.length === 0) {
-      throw new Error("No Stripe customer found for this user");
+      logStep("No Stripe customer found, returning no_customer response");
+      return new Response(JSON.stringify({ 
+        error: "no_customer",
+        message: "No tienes una suscripción activa en Stripe. Puedes crear una nueva suscripción."
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, // Return 200 so frontend can handle gracefully
+      });
     }
+    
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/subscription`,
+      return_url: `${origin}/admin`,
     });
     logStep("Customer portal session created", { sessionId: portalSession.id, url: portalSession.url });
 

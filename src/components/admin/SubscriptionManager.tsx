@@ -149,6 +149,16 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
       const { data, error } = await supabase.functions.invoke('customer-portal');
 
       if (error) throw error;
+      
+      // Handle case where user has no Stripe customer record
+      if (data?.error === "no_customer") {
+        toast({
+          title: "Sin suscripción en Stripe",
+          description: "Tu suscripción fue configurada manualmente. Contacta con soporte para gestionar cambios.",
+        });
+        return;
+      }
+      
       if (data?.url) {
         window.open(data.url, '_blank');
       }
