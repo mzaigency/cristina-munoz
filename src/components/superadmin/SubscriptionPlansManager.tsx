@@ -21,13 +21,39 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
+interface PlanFeatures {
+  stories?: boolean;
+  messages?: boolean;
+  packages?: boolean;
+  waitlist?: boolean;
+  promotions?: boolean;
+  commissions?: boolean;
+  pdf_reports?: boolean;
+  cash_register?: boolean;
+  monthly_goals?: boolean;
+  advanced_analytics?: boolean;
+}
+
+const FEATURE_LABELS: Record<keyof PlanFeatures, string> = {
+  stories: 'Stories',
+  messages: 'Mensajes directos',
+  packages: 'Paquetes de servicios',
+  waitlist: 'Lista de espera',
+  promotions: 'Promociones',
+  commissions: 'Gestión de comisiones',
+  pdf_reports: 'Informes PDF',
+  cash_register: 'Caja registradora',
+  monthly_goals: 'Objetivos mensuales',
+  advanced_analytics: 'Analytics avanzados'
+};
+
 interface SubscriptionPlan {
   id: string;
   name: string;
   slug: string;
   monthly_price: number;
   annual_price: number | null;
-  features: string[];
+  features: PlanFeatures;
   max_stylists: number;
   max_services: number;
   is_active: boolean;
@@ -57,7 +83,9 @@ export const SubscriptionPlansManager = () => {
       
       setPlans(data?.map(p => ({
         ...p,
-        features: Array.isArray(p.features) ? p.features : JSON.parse(p.features as string || '[]')
+        features: (typeof p.features === 'object' && p.features !== null && !Array.isArray(p.features) 
+          ? p.features 
+          : {}) as PlanFeatures
       })) || []);
     } catch (error) {
       console.error('Error fetching plans:', error);
@@ -81,7 +109,7 @@ export const SubscriptionPlansManager = () => {
         slug: editingPlan.slug,
         monthly_price: editingPlan.monthly_price,
         annual_price: editingPlan.annual_price,
-        features: editingPlan.features,
+        features: editingPlan.features as unknown as Record<string, boolean>,
         max_stylists: editingPlan.max_stylists,
         max_services: editingPlan.max_services,
         is_active: editingPlan.is_active,
@@ -154,7 +182,18 @@ export const SubscriptionPlansManager = () => {
       slug: '',
       monthly_price: 0,
       annual_price: null,
-      features: [],
+      features: {
+        stories: false,
+        messages: false,
+        packages: false,
+        waitlist: false,
+        promotions: false,
+        commissions: false,
+        pdf_reports: false,
+        cash_register: false,
+        monthly_goals: false,
+        advanced_analytics: false
+      },
       max_stylists: 5,
       max_services: 50,
       is_active: true,
@@ -168,30 +207,21 @@ export const SubscriptionPlansManager = () => {
     setIsDialogOpen(true);
   };
 
-  const addFeature = () => {
+  const toggleFeature = (featureKey: keyof PlanFeatures) => {
     if (!editingPlan) return;
     setEditingPlan({
       ...editingPlan,
-      features: [...editingPlan.features, '']
+      features: {
+        ...editingPlan.features,
+        [featureKey]: !editingPlan.features[featureKey]
+      }
     });
   };
 
-  const updateFeature = (index: number, value: string) => {
-    if (!editingPlan) return;
-    const newFeatures = [...editingPlan.features];
-    newFeatures[index] = value;
-    setEditingPlan({
-      ...editingPlan,
-      features: newFeatures
-    });
-  };
-
-  const removeFeature = (index: number) => {
-    if (!editingPlan) return;
-    setEditingPlan({
-      ...editingPlan,
-      features: editingPlan.features.filter((_, i) => i !== index)
-    });
+  const getEnabledFeatures = (features: PlanFeatures): string[] => {
+    return Object.entries(features)
+      .filter(([_, enabled]) => enabled)
+      .map(([key]) => FEATURE_LABELS[key as keyof PlanFeatures]);
   };
 
   if (loading) {
@@ -299,15 +329,15 @@ export const SubscriptionPlansManager = () => {
 
                   {/* Features */}
                   <div className="space-y-1">
-                    {plan.features.slice(0, 3).map((feature, i) => (
+                    {getEnabledFeatures(plan.features).slice(0, 3).map((feature, i) => (
                       <div key={i} className="flex items-center gap-2 text-sm">
                         <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
                         <span className="truncate">{feature}</span>
                       </div>
                     ))}
-                    {plan.features.length > 3 && (
+                    {getEnabledFeatures(plan.features).length > 3 && (
                       <p className="text-xs text-muted-foreground">
-                        +{plan.features.length - 3} más
+                        +{getEnabledFeatures(plan.features).length - 3} más
                       </p>
                     )}
                   </div>
@@ -407,39 +437,22 @@ export const SubscriptionPlansManager = () => {
 
               {/* Features */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Características
-                  </Label>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={addFeature}
-                    className="gap-1"
-                  >
-                    <Plus className="h-3 w-3" />
-                    Añadir
-                  </Button>
-                </div>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {editingPlan.features.map((feature, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        value={feature}
-                        onChange={(e) => updateFeature(index, e.target.value)}
-                        placeholder="Ej: Reservas ilimitadas"
+                <Label className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Características
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(Object.keys(FEATURE_LABELS) as Array<keyof PlanFeatures>).map((featureKey) => (
+                    <div 
+                      key={featureKey}
+                      className="flex items-center justify-between p-2 rounded-lg border bg-card hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => toggleFeature(featureKey)}
+                    >
+                      <span className="text-sm">{FEATURE_LABELS[featureKey]}</span>
+                      <Switch
+                        checked={editingPlan.features[featureKey] || false}
+                        onCheckedChange={() => toggleFeature(featureKey)}
                       />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeFeature(index)}
-                        className="flex-shrink-0 text-destructive hover:text-destructive"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                     </div>
                   ))}
                 </div>
