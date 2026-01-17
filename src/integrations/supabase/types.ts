@@ -393,6 +393,42 @@ export type Database = {
         }
         Relationships: []
       }
+      error_logs: {
+        Row: {
+          component_stack: string | null
+          created_at: string | null
+          error_message: string
+          error_stack: string | null
+          error_type: string | null
+          id: string
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          component_stack?: string | null
+          created_at?: string | null
+          error_message: string
+          error_stack?: string | null
+          error_type?: string | null
+          id?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          component_stack?: string | null
+          created_at?: string | null
+          error_message?: string
+          error_stack?: string | null
+          error_type?: string | null
+          id?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -2234,6 +2270,7 @@ export type Database = {
       }
       cleanup_expired_notifications: { Args: never; Returns: undefined }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: undefined }
+      cleanup_old_error_logs: { Args: never; Returns: undefined }
       create_notification: {
         Args: {
           _action_url?: string
