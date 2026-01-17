@@ -1044,6 +1044,17 @@ export default function OnboardingSetup() {
     }
   };
 
+  const canGoToStep = (targetStep: number) => {
+    // Allow going back to any previous step, but not forward past current
+    return targetStep <= step;
+  };
+
+  const handleStepClick = (targetStep: number) => {
+    if (canGoToStep(targetStep) && targetStep < totalSteps) {
+      setStep(targetStep);
+    }
+  };
+
   return (
     <AppLayout hideNavigation>
       <SEO
@@ -1053,54 +1064,131 @@ export default function OnboardingSetup() {
         noindex
       />
 
-      {/* Header */}
+      {/* Header mejorado */}
       <div 
-        className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50"
+        className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/30"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        <div className="px-4 py-3 flex items-center gap-3">
-          {step < totalSteps && (
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
-          <div className="flex-1">
-            <h1 className="font-semibold text-foreground">Configura tu salón</h1>
+        <div className="px-4 py-4">
+          {/* Top row */}
+          <div className="flex items-center gap-3 mb-4">
+            {step < totalSteps && step > 0 && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setStep(step - 1)}
+                className="h-9 w-9 rounded-full"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            {step === 0 && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => navigate("/")}
+                className="h-9 w-9 rounded-full"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <div className="flex-1">
+              <h1 className="font-bold text-lg text-foreground">
+                {step < totalSteps ? steps[step].title : "¡Completado!"}
+              </h1>
+              {step < totalSteps && (
+                <p className="text-xs text-muted-foreground">
+                  Paso {step + 1} de {totalSteps} • {Math.round(((step + 1) / totalSteps) * 100)}% completado
+                </p>
+              )}
+            </div>
             {step < totalSteps && (
-              <p className="text-xs text-muted-foreground">
-                Paso {step + 1} de {totalSteps}
-              </p>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
+                {(() => {
+                  const StepIcon = steps[step].icon;
+                  return <StepIcon className="h-4 w-4 text-primary" />;
+                })()}
+                <span className="text-xs font-semibold text-primary">
+                  {step + 1}/{totalSteps}
+                </span>
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Progress */}
-        {step < totalSteps && (
-          <div className="px-4 pb-3">
-            <div className="flex gap-1">
-              {steps.slice(0, totalSteps).map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-1 flex-1 rounded-full transition-colors ${
-                    index <= step ? "bg-primary" : "bg-secondary"
-                  }`}
-                />
-              ))}
+          {/* Steps visual indicator - horizontal scroll */}
+          {step < totalSteps && (
+            <div className="relative">
+              {/* Progress bar background */}
+              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-secondary -translate-y-1/2 z-0" />
+              <div 
+                className="absolute top-1/2 left-0 h-0.5 bg-gradient-to-r from-primary to-primary/60 -translate-y-1/2 z-0 transition-all duration-500"
+                style={{ width: `${(step / (totalSteps - 1)) * 100}%` }}
+              />
+              
+              {/* Step circles */}
+              <div className="flex justify-between relative z-10">
+                {steps.slice(0, totalSteps).map((s, index) => {
+                  const StepIcon = s.icon;
+                  const isCompleted = index < step;
+                  const isCurrent = index === step;
+                  const isClickable = canGoToStep(index);
+                  
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => handleStepClick(index)}
+                      disabled={!isClickable}
+                      className={`
+                        relative flex flex-col items-center transition-all duration-300
+                        ${isClickable ? 'cursor-pointer' : 'cursor-default'}
+                      `}
+                    >
+                      <motion.div
+                        initial={false}
+                        animate={{
+                          scale: isCurrent ? 1.15 : 1,
+                          backgroundColor: isCompleted 
+                            ? 'hsl(var(--primary))' 
+                            : isCurrent 
+                              ? 'hsl(var(--primary))' 
+                              : 'hsl(var(--secondary))',
+                        }}
+                        className={`
+                          w-8 h-8 rounded-full flex items-center justify-center
+                          ${isCurrent ? 'ring-4 ring-primary/20' : ''}
+                          ${isClickable && !isCurrent ? 'hover:ring-2 hover:ring-primary/30' : ''}
+                        `}
+                      >
+                        {isCompleted ? (
+                          <Check className="h-4 w-4 text-primary-foreground" />
+                        ) : (
+                          <StepIcon className={`h-3.5 w-3.5 ${isCurrent ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                        )}
+                      </motion.div>
+                      
+                      {/* Step label - only show for current and adjacent */}
+                      {(isCurrent || index === step - 1 || index === step + 1) && (
+                        <motion.span
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`
+                            absolute -bottom-5 text-[10px] font-medium whitespace-nowrap
+                            ${isCurrent ? 'text-primary' : 'text-muted-foreground'}
+                          `}
+                        >
+                          {s.title}
+                        </motion.span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex items-center justify-center mt-2 gap-1">
-              {(() => {
-                const StepIcon = steps[step].icon;
-                return <StepIcon className="h-4 w-4 text-primary" />;
-              })()}
-              <span className="text-sm font-medium text-primary">
-                {steps[step].title}
-              </span>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="px-4 py-6 pb-24">
+      <div className="px-4 py-8 pb-24">
         <div className="max-w-lg mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
@@ -1108,6 +1196,7 @@ export default function OnboardingSetup() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
             >
               {renderStep()}
             </motion.div>
