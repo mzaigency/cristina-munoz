@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { HelpCircle, MessageCircle, Mail, X, ExternalLink } from "lucide-react";
+import { HelpCircle, Mail, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SupportButtonProps {
@@ -11,8 +11,7 @@ interface SupportButtonProps {
 export function SupportButton({ variant = "floating", context }: SupportButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const supportEmail = "soporte@glowapp.es";
-  const whatsappNumber = "34600000000"; // Reemplazar con número real
+  const supportEmail = "contacto@glowapp.app";
 
   const handleEmailClick = () => {
     const subject = context 
@@ -21,16 +20,9 @@ export function SupportButton({ variant = "floating", context }: SupportButtonPr
     window.location.href = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}`;
   };
 
-  const handleWhatsappClick = () => {
-    const message = context 
-      ? `Hola, necesito ayuda con: ${context}` 
-      : "Hola, necesito ayuda con GlowApp";
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, "_blank");
-  };
-
   if (variant === "inline") {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
         <HelpCircle className="h-4 w-4" />
         <span>¿Necesitas ayuda?</span>
         <button
@@ -57,26 +49,15 @@ export function SupportButton({ variant = "floating", context }: SupportButtonPr
             <p className="text-xs text-muted-foreground mb-3">
               Nuestro equipo está disponible para resolver tus dudas
             </p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleEmailClick}
-                className="h-8 text-xs rounded-lg"
-              >
-                <Mail className="h-3.5 w-3.5 mr-1.5" />
-                Email
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleWhatsappClick}
-                className="h-8 text-xs rounded-lg text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-              >
-                <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
-                WhatsApp
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleEmailClick}
+              className="h-8 text-xs rounded-lg"
+            >
+              <Mail className="h-3.5 w-3.5 mr-1.5" />
+              {supportEmail}
+            </Button>
           </div>
         </div>
       </div>
@@ -148,38 +129,23 @@ export function SupportButton({ variant = "floating", context }: SupportButtonPr
               </div>
 
               <p className="text-sm text-muted-foreground mb-4">
-                Estamos aquí para ayudarte. Elige cómo prefieres contactarnos:
+                Estamos aquí para ayudarte con cualquier duda.
               </p>
 
-              <div className="space-y-2">
-                <Button
-                  onClick={handleEmailClick}
-                  variant="outline"
-                  className="w-full justify-start h-11 rounded-xl"
-                >
-                  <Mail className="h-4 w-4 mr-3 text-primary" />
-                  <div className="text-left">
-                    <p className="text-sm font-medium">Email</p>
-                    <p className="text-[10px] text-muted-foreground">{supportEmail}</p>
-                  </div>
-                </Button>
-
-                <Button
-                  onClick={handleWhatsappClick}
-                  variant="outline"
-                  className="w-full justify-start h-11 rounded-xl border-emerald-200 hover:bg-emerald-50"
-                >
-                  <MessageCircle className="h-4 w-4 mr-3 text-emerald-600" />
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-emerald-700">WhatsApp</p>
-                    <p className="text-[10px] text-muted-foreground">Respuesta rápida</p>
-                  </div>
-                  <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
-                </Button>
-              </div>
+              <Button
+                onClick={handleEmailClick}
+                variant="outline"
+                className="w-full justify-start h-11 rounded-xl"
+              >
+                <Mail className="h-4 w-4 mr-3 text-primary" />
+                <div className="text-left">
+                  <p className="text-sm font-medium">Escríbenos</p>
+                  <p className="text-[10px] text-muted-foreground">{supportEmail}</p>
+                </div>
+              </Button>
 
               <p className="text-[10px] text-center text-muted-foreground mt-4">
-                Lunes a Viernes, 9:00 - 18:00
+                Te responderemos lo antes posible
               </p>
             </motion.div>
           </>
