@@ -26,7 +26,7 @@ const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BusinessOnboarding = lazy(() => import("./pages/BusinessOnboarding"));
 const OnboardingSetup = lazy(() => import("./pages/OnboardingSetup"));
-const Subscription = lazy(() => import("./pages/Subscription"));
+
 const ForBusiness = lazy(() => import("./pages/ForBusiness"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -69,7 +69,7 @@ const App = () => (
                   <Route path="/salon/:slug" element={<TenantLanding />} />
                   <Route path="/onboarding" element={<BusinessOnboarding />} />
                   <Route path="/onboarding/setup" element={<OnboardingSetup />} />
-                  <Route path="/subscription" element={<Subscription />} />
+                  
                   <Route path="/para-negocios" element={<ForBusiness />} />
                   <Route path="/recuperar-contrasena" element={<ForgotPassword />} />
                   <Route path="/nueva-contrasena" element={<ResetPassword />} />
