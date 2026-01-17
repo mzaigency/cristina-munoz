@@ -381,23 +381,21 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
         </Card>
       )}
 
-      {/* Manage Subscription Button */}
-      {isActive && (
-        <Button
-          onClick={handleManageSubscription}
-          disabled={portalLoading}
-          variant="outline"
-          className="w-full h-11 gap-2"
-        >
-          {portalLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Settings className="h-4 w-4" />
-          )}
-          Gestionar suscripción
-          <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
-        </Button>
-      )}
+      {/* Manage Subscription Button - Always visible */}
+      <Button
+        onClick={handleManageSubscription}
+        disabled={portalLoading}
+        variant={isActive ? "outline" : "default"}
+        className="w-full h-11 gap-2"
+      >
+        {portalLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Settings className="h-4 w-4" />
+        )}
+        {isActive ? "Gestionar suscripción" : "Reactivar suscripción"}
+        <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
+      </Button>
 
       {/* Help text */}
       <Card className="bg-muted/30 border-dashed">
