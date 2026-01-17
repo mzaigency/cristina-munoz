@@ -340,8 +340,8 @@ export default function ForBusiness() {
             <p className="text-muted-foreground text-sm md:text-base">Sin costes ocultos. Cancela cuando quieras.</p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto">
-            {/* Monthly Plan */}
+          <div className="grid md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
+            {/* Starter Plan */}
             <motion.div initial={{
             opacity: 0,
             y: 20
@@ -356,24 +356,36 @@ export default function ForBusiness() {
                   <Zap className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground text-lg md:text-xl">Plan Mensual</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">Flexibilidad total</p>
+                  <h3 className="font-bold text-foreground text-lg md:text-xl">Starter</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground">Para empezar</p>
                 </div>
               </div>
 
               <div className="mb-5 md:mb-8">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl md:text-5xl font-black text-foreground">39,99€</span>
+                  <span className="text-4xl md:text-5xl font-black text-foreground">29€</span>
                   <span className="text-muted-foreground text-base md:text-lg">/mes</span>
                 </div>
-                <p className="text-xs md:text-sm text-muted-foreground mt-1 md:mt-2">Después del mes de prueba</p>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1 md:mt-2">290€/año (ahorra 2 meses)</p>
               </div>
 
               <ul className="space-y-2 md:space-y-3 mb-5 md:mb-8">
-                {allBenefits.slice(0, 5).map((benefit, index) => <li key={index} className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
-                    <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-foreground">{benefit}</span>
-                  </li>)}
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">1 estilista</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Hasta 10 servicios</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Agenda online</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Página web personalizada</span>
+                </li>
               </ul>
 
               <Button asChild variant="outline" className="w-full h-11 md:h-12 rounded-xl font-bold text-sm md:text-base border-2">
@@ -381,7 +393,7 @@ export default function ForBusiness() {
               </Button>
             </motion.div>
 
-            {/* Annual Plan - Featured */}
+            {/* Pro Plan - Featured */}
             <motion.div initial={{
             opacity: 0,
             y: 20
@@ -403,32 +415,104 @@ export default function ForBusiness() {
 
               <div className="flex items-center gap-3 mb-4 md:mb-6 mt-3 md:mt-4">
                 <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                  <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground text-lg md:text-xl">Plan Anual</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">Ahorra 2 meses</p>
+                  <h3 className="font-bold text-foreground text-lg md:text-xl">Pro</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground">El más elegido</p>
                 </div>
               </div>
 
               <div className="mb-5 md:mb-8">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl md:text-5xl font-black text-foreground">399,99€</span>
-                  <span className="text-muted-foreground text-base md:text-lg">/año</span>
+                  <span className="text-4xl md:text-5xl font-black text-foreground">49€</span>
+                  <span className="text-muted-foreground text-base md:text-lg">/mes</span>
                 </div>
-                <p className="text-xs md:text-sm text-muted-foreground mt-1 md:mt-2">
-                  33,33€/mes · <span className="text-primary font-bold">Ahorras 79,89€</span>
-                </p>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1 md:mt-2">490€/año (ahorra 2 meses)</p>
               </div>
 
               <ul className="space-y-2 md:space-y-3 mb-5 md:mb-8">
-                {allBenefits.slice(0, 6).map((benefit, index) => <li key={index} className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
-                    <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-foreground">{benefit}</span>
-                  </li>)}
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Hasta 3 estilistas</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Servicios ilimitados</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Todo lo de Starter</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Caja registradora</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Estadísticas avanzadas</span>
+                </li>
               </ul>
 
               <Button asChild className="w-full h-11 md:h-12 rounded-xl font-bold text-sm md:text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
+                <Link to="/onboarding">Empezar gratis</Link>
+              </Button>
+            </motion.div>
+
+            {/* Business Plan */}
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} viewport={{
+            once: true
+          }} transition={{
+            delay: 0.2
+          }} className="p-5 md:p-8 rounded-2xl md:rounded-3xl bg-card border border-border/50">
+              <div className="flex items-center gap-3 mb-4 md:mb-6">
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-secondary flex items-center justify-center">
+                  <Building2 className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground text-lg md:text-xl">Business</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground">Para equipos</p>
+                </div>
+              </div>
+
+              <div className="mb-5 md:mb-8">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl md:text-5xl font-black text-foreground">89€</span>
+                  <span className="text-muted-foreground text-base md:text-lg">/mes</span>
+                </div>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1 md:mt-2">890€/año (ahorra 2 meses)</p>
+              </div>
+
+              <ul className="space-y-2 md:space-y-3 mb-5 md:mb-8">
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Estilistas ilimitados</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Servicios ilimitados</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Todo lo de Pro</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Comisiones por estilista</span>
+                </li>
+                <li className="flex items-start gap-2 md:gap-3 text-xs md:text-sm">
+                  <Check className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground">Soporte prioritario</span>
+                </li>
+              </ul>
+
+              <Button asChild variant="outline" className="w-full h-11 md:h-12 rounded-xl font-bold text-sm md:text-base border-2">
                 <Link to="/onboarding">Empezar gratis</Link>
               </Button>
             </motion.div>
