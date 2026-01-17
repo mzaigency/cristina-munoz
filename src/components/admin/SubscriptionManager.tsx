@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -16,8 +16,14 @@ import {
   Sparkles,
   Crown,
   Zap,
-  Settings
+  Settings,
+  Users,
+  Scissors,
+  ArrowRight
 } from "lucide-react";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { PlanUsageBar } from "./PlanUsageBar";
+import { UpgradePrompt } from "./UpgradePrompt";
 
 interface SubscriptionInfo {
   plan: string | null;
@@ -29,32 +35,55 @@ interface SubscriptionManagerProps {
   tenantId: string;
 }
 
-const PLAN_FEATURES: Record<string, { name: string; icon: React.ReactNode; color: string; features: string[] }> = {
-  'starter': {
-    name: 'Starter',
+type PlanSlug = "starter" | "pro" | "business";
+
+interface PlanDetails {
+  name: string;
+  icon: React.ReactNode;
+  color: string;
+  bgColor: string;
+  monthlyPrice: number;
+  annualPrice: number;
+}
+
+const PLAN_DETAILS: Record<PlanSlug, PlanDetails> = {
+  starter: {
+    name: "Starter",
     icon: <Zap className="h-5 w-5" />,
-    color: 'text-blue-500',
-    features: ['1 profesional', 'Reservas ilimitadas', 'Calendario básico']
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
+    monthlyPrice: 29,
+    annualPrice: 290
   },
-  'pro': {
-    name: 'Profesional',
+  pro: {
+    name: "Pro",
     icon: <Crown className="h-5 w-5" />,
-    color: 'text-amber-500',
-    features: ['3 profesionales', 'CRM de clientes', 'Estadísticas', 'Mensajes directos']
+    color: "text-amber-500",
+    bgColor: "bg-amber-500/10",
+    monthlyPrice: 49,
+    annualPrice: 490
   },
-  'business': {
-    name: 'Business',
+  business: {
+    name: "Business",
     icon: <Sparkles className="h-5 w-5" />,
-    color: 'text-purple-500',
-    features: ['Profesionales ilimitados', 'Caja registradora', 'Comisiones', 'Soporte prioritario']
+    color: "text-purple-500",
+    bgColor: "bg-purple-500/10",
+    monthlyPrice: 89,
+    annualPrice: 890
   }
 };
+
+const PLAN_ORDER: PlanSlug[] = ["starter", "pro", "business"];
 
 export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [targetPlan, setTargetPlan] = useState<PlanSlug>("pro");
   const { toast } = useToast();
+  
+  const planLimits = usePlanLimits(tenantId);
 
   useEffect(() => {
     fetchSubscription();
@@ -106,28 +135,12 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
     }
   };
 
-  const handleUpgrade = async () => {
-    setPortalLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-business-checkout');
-
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error: any) {
-      console.error("Error creating checkout:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo iniciar el proceso. Inténtalo de nuevo.",
-        variant: "destructive"
-      });
-    } finally {
-      setPortalLoading(false);
-    }
+  const handleUpgradeClick = (plan: PlanSlug) => {
+    setTargetPlan(plan);
+    setUpgradeOpen(true);
   };
 
-  if (loading) {
+  if (loading || planLimits.loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -135,8 +148,9 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
     );
   }
 
-  const currentPlan = subscription?.plan?.toLowerCase() || 'starter';
-  const planInfo = PLAN_FEATURES[currentPlan] || PLAN_FEATURES['starter'];
+  const currentPlan = (subscription?.plan?.toLowerCase() || 'starter') as PlanSlug;
+  const planInfo = PLAN_DETAILS[currentPlan] || PLAN_DETAILS.starter;
+  const currentPlanIndex = PLAN_ORDER.indexOf(currentPlan);
   const daysRemaining = subscription?.expiresAt 
     ? Math.max(0, Math.ceil((new Date(subscription.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : null;
@@ -150,7 +164,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
         </div>
         <div>
           <h2 className="text-lg font-bold">Tu Suscripción</h2>
-          <p className="text-xs text-muted-foreground">Gestiona tu plan</p>
+          <p className="text-xs text-muted-foreground">Gestiona tu plan y límites</p>
         </div>
       </div>
 
@@ -160,7 +174,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-xl bg-muted ${planInfo.color}`}>
+              <div className={`p-2.5 rounded-xl ${planInfo.bgColor} ${planInfo.color}`}>
                 {planInfo.icon}
               </div>
               <div>
@@ -195,24 +209,68 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
               </div>
             </div>
           </div>
-
-          {/* Features */}
-          <div className="mt-4 pt-3 border-t border-border">
-            <p className="text-xs text-muted-foreground mb-2">Incluye:</p>
-            <div className="flex flex-wrap gap-1.5">
-              {planInfo.features.map((feature, idx) => (
-                <Badge key={idx} variant="secondary" className="text-[10px] font-normal">
-                  {feature}
-                </Badge>
-              ))}
-            </div>
-          </div>
         </CardContent>
       </Card>
 
+      {/* Usage Stats */}
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <h4 className="font-semibold text-sm flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            Uso del Plan
+          </h4>
+          
+          <PlanUsageBar
+            current={planLimits.currentStylists}
+            max={planLimits.maxStylists}
+            label="Profesionales"
+          />
+          
+          <PlanUsageBar
+            current={planLimits.currentServices}
+            max={planLimits.maxServices}
+            label="Servicios"
+          />
+        </CardContent>
+      </Card>
+
+      {/* Upgrade Options */}
+      {currentPlanIndex < PLAN_ORDER.length - 1 && (
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm mb-3">Mejora tu plan</h4>
+            <div className="space-y-2">
+              {PLAN_ORDER.slice(currentPlanIndex + 1).map((slug) => {
+                const plan = PLAN_DETAILS[slug];
+                return (
+                  <button
+                    key={slug}
+                    onClick={() => handleUpgradeClick(slug)}
+                    className="w-full flex items-center justify-between p-3 rounded-xl bg-background border border-border hover:border-primary/50 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${plan.bgColor} ${plan.color}`}>
+                        {plan.icon}
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium text-sm">{plan.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Desde {plan.monthlyPrice}€/mes
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Actions */}
       <div className="space-y-2">
-        {subscription?.isActive ? (
+        {subscription?.isActive && (
           <Button
             onClick={handleManageSubscription}
             disabled={portalLoading}
@@ -227,30 +285,6 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
             Gestionar suscripción
             <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
           </Button>
-        ) : (
-          <Button
-            onClick={handleUpgrade}
-            disabled={portalLoading}
-            className="w-full h-11 gap-2"
-          >
-            {portalLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            Renovar suscripción
-          </Button>
-        )}
-
-        {subscription?.isActive && currentPlan !== 'business' && (
-          <Button
-            onClick={handleUpgrade}
-            disabled={portalLoading}
-            className="w-full h-11 gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-          >
-            <Crown className="h-4 w-4" />
-            Mejorar plan
-          </Button>
         )}
       </div>
 
@@ -258,10 +292,19 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
       <Card className="bg-muted/30 border-dashed">
         <CardContent className="p-3">
           <p className="text-[11px] text-muted-foreground">
-            Desde el portal de gestión puedes cambiar tu plan, actualizar el método de pago o cancelar tu suscripción.
+            Desde el portal de gestión puedes cambiar tu método de pago o cancelar tu suscripción.
           </p>
         </CardContent>
       </Card>
+
+      {/* Upgrade Modal */}
+      <UpgradePrompt
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        currentPlan={currentPlan}
+        targetPlan={targetPlan}
+        tenantId={tenantId}
+      />
     </div>
   );
 }
