@@ -398,154 +398,181 @@ export default function BusinessOnboarding() {
             })}
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-8">
-
-            {/* Form */}
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              transition={{ delay: 0.2 }}
-            >
-              <Card className="ios-card">
-                <CardHeader>
-                  <CardTitle className="text-xl">Datos de tu negocio</CardTitle>
-                  <CardDescription>
-                    {user 
-                      ? "Completa la información de tu salón" 
-                      : "Crea una cuenta para continuar"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {!user ? (
-                    <div className="space-y-4">
-                      <p className="text-sm text-muted-foreground">Necesitas una cuenta para crear tu salón.</p>
-                      <div className="flex flex-col gap-3">
-                        <Button onClick={() => navigate("/auth?redirect=/onboarding&mode=register")} className="w-full">
-                          Crear cuenta
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => navigate("/auth?redirect=/onboarding")}
-                          className="w-full"
-                        >
-                          Ya tengo cuenta
-                        </Button>
-                      </div>
+          {/* Form - Ahora después de los planes */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ delay: 0.25 }}
+            className="max-w-md mx-auto"
+          >
+            <Card className="ios-card">
+              <CardHeader className="text-center pb-4">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className={`p-2 rounded-lg bg-gradient-to-br ${PLANS[selectedPlan].color} text-white`}>
+                    {PLANS[selectedPlan].icon}
+                  </div>
+                  <CardTitle className="text-xl">Plan {PLANS[selectedPlan].name}</CardTitle>
+                </div>
+                <CardDescription>
+                  {user 
+                    ? "Completa la información de tu salón" 
+                    : "Crea una cuenta para continuar"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!user ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground text-center">Necesitas una cuenta para crear tu salón.</p>
+                    <div className="flex flex-col gap-3">
+                      <Button onClick={() => navigate("/auth?redirect=/onboarding&mode=register")} className="w-full h-12 rounded-xl">
+                        Crear cuenta
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => navigate("/auth?redirect=/onboarding")}
+                        className="w-full h-12 rounded-xl"
+                      >
+                        Ya tengo cuenta
+                      </Button>
                     </div>
-                  ) : (
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="businessName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nombre del salón</FormLabel>
-                              <FormControl>
+                  </div>
+                ) : (
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="businessName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nombre del salón</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Mi Salón de Belleza"
+                                {...field}
+                                disabled={loading}
+                                className="h-12 rounded-xl"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="businessSlug"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>URL de tu salón</FormLabel>
+                            <FormControl>
+                              <div className="flex items-center">
+                                <span className="text-sm text-muted-foreground mr-2">glowapp.app/</span>
                                 <Input
-                                  placeholder="Mi Salón de Belleza"
+                                  placeholder="mi-salon"
                                   {...field}
                                   disabled={loading}
-                                  className="h-12 rounded-xl"
+                                  className="h-12 rounded-xl flex-1"
                                 />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                        <FormField
-                          control={form.control}
-                          name="businessSlug"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>URL de tu salón</FormLabel>
-                              <FormControl>
-                                <div className="flex items-center">
-                                  <span className="text-sm text-muted-foreground mr-2">glowapp.app/</span>
-                                  <Input
-                                    placeholder="mi-salon"
-                                    {...field}
-                                    disabled={loading}
-                                    className="h-12 rounded-xl flex-1"
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email de contacto</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="contacto@misalon.com"
+                                {...field}
+                                disabled={loading}
+                                className="h-12 rounded-xl"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email de contacto</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="email"
-                                  placeholder="contacto@misalon.com"
-                                  {...field}
-                                  disabled={loading}
-                                  className="h-12 rounded-xl"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Teléfono (opcional)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="tel"
+                                placeholder="600 000 000"
+                                {...field}
+                                disabled={loading}
+                                className="h-12 rounded-xl"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                        <FormField
-                          control={form.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Teléfono (opcional)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="tel"
-                                  placeholder="600 000 000"
-                                  {...field}
-                                  disabled={loading}
-                                  className="h-12 rounded-xl"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="pt-4">
-                          <Button
-                            type="submit"
-                            className="w-full h-12 rounded-xl gradient-primary text-primary-foreground"
-                            disabled={loading}
-                          >
-                            {loading ? (
-                              <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Procesando...
-                              </>
-                            ) : (
-                              <>
-                                Continuar al pago
-                                <span className="ml-2 text-xs opacity-80">(30 días gratis)</span>
-                              </>
-                            )}
-                          </Button>
+                      <div className="pt-4 space-y-3">
+                        {/* Resumen del precio */}
+                        <div className="p-3 rounded-xl bg-muted/50 border border-border/50">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Plan seleccionado</span>
+                            <span className="font-semibold">{PLANS[selectedPlan].name} ({billingCycle === "annual" ? "Anual" : "Mensual"})</span>
+                          </div>
+                          <div className="flex justify-between items-center mt-1">
+                            <span className="text-sm text-muted-foreground">Precio</span>
+                            <div className="text-right">
+                              <span className="font-bold text-lg">
+                                {billingCycle === "annual" 
+                                  ? `${PLANS[selectedPlan].annualPrice}€/año`
+                                  : `${PLANS[selectedPlan].monthlyPrice}€/mes`
+                                }
+                              </span>
+                              {billingCycle === "annual" && (
+                                <p className="text-xs text-success">
+                                  Ahorras {Math.round(PLANS[selectedPlan].monthlyPrice * 12 - PLANS[selectedPlan].annualPrice)}€
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
-                        <p className="text-xs text-center text-muted-foreground">
-                          No se te cobrará hasta que termine tu período de prueba. Puedes cancelar en cualquier momento.
-                        </p>
-                      </form>
-                    </Form>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
+                        <Button
+                          type="submit"
+                          className="w-full h-12 rounded-xl gradient-primary text-primary-foreground"
+                          disabled={loading}
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Procesando...
+                            </>
+                          ) : (
+                            <>
+                              Continuar al pago
+                              <span className="ml-2 text-xs opacity-80">(30 días gratis)</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-center text-muted-foreground">
+                        No se te cobrará hasta que termine tu período de prueba. Puedes cancelar en cualquier momento.
+                      </p>
+                    </form>
+                  </Form>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
     </AppLayout>
