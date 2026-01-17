@@ -24,8 +24,8 @@ const signInSchema = z.object({
 
 const signUpSchema = signInSchema
   .extend({
-    firstName: z.string().trim().min(1, "El nombre es requerido").max(50),
-    lastName: z.string().trim().min(1, "El apellido es requerido").max(50),
+    firstName: z.string().trim().min(1, "El nombre es requerido").max(50, "Máximo 50 caracteres"),
+    lastName: z.string().trim().min(1, "El apellido es requerido").max(50, "Máximo 50 caracteres"),
     username: z
       .string()
       .trim()
@@ -35,7 +35,7 @@ const signUpSchema = signInSchema
     phone: phoneSchema,
     province: z.string().min(1, "Selecciona una provincia"),
     city: z.string().min(1, "Selecciona una ciudad"),
-    confirmPassword: z.string().min(6),
+    confirmPassword: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
     acceptTerms: z.boolean().refine((val) => val === true, {
       message: "Debes aceptar los términos",
     }),
@@ -160,7 +160,7 @@ export default function Auth() {
     if (errorMessage.includes("password") && errorMessage.includes("weak")) {
       return {
         title: "Contraseña débil",
-        description: "La contraseña debe tener al menos 6 caracteres.",
+        description: "La contraseña debe tener al menos 8 caracteres.",
       };
     }
     if (errorMessage.includes("invalid login credentials") || errorMessage.includes("invalid credentials")) {
