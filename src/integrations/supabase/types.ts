@@ -51,6 +51,7 @@ export type Database = {
           recurrence_group_id: string | null
           recurrence_pattern: Json | null
           related_booking_id: string | null
+          reminder_2h_sent: string | null
           reminder_sent: string | null
           review_request_sent: string | null
           services: Json
@@ -83,6 +84,7 @@ export type Database = {
           recurrence_group_id?: string | null
           recurrence_pattern?: Json | null
           related_booking_id?: string | null
+          reminder_2h_sent?: string | null
           reminder_sent?: string | null
           review_request_sent?: string | null
           services: Json
@@ -115,6 +117,7 @@ export type Database = {
           recurrence_group_id?: string | null
           recurrence_pattern?: Json | null
           related_booking_id?: string | null
+          reminder_2h_sent?: string | null
           reminder_sent?: string | null
           review_request_sent?: string | null
           services?: Json
@@ -2442,6 +2445,7 @@ export type Database = {
             }
             Returns: boolean
           }
+      invoke_booking_notifications: { Args: never; Returns: undefined }
       is_superadmin: { Args: never; Returns: boolean }
       is_tenant_active: { Args: { _tenant_id: string }; Returns: boolean }
       search_my_bookings: {
