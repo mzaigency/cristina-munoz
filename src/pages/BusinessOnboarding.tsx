@@ -12,7 +12,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2, ArrowLeft, Zap, Crown, Check, Sparkles, Users, Scissors, TrendingUp, MessageCircle, CalendarCheck, Gift } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 
 const businessSchema = z.object({
@@ -235,20 +235,20 @@ export default function BusinessOnboarding() {
             </p>
           </motion.div>
 
-          {/* Billing Toggle */}
+          {/* Billing Toggle - Mejorado con descuento destacado */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex justify-center mb-8"
+            className="flex flex-col items-center gap-3 mb-8"
           >
-            <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-muted">
+            <div className="relative inline-flex items-center gap-1 p-1.5 rounded-2xl bg-muted/80 border border-border/50">
               <button
                 type="button"
                 onClick={() => setBillingCycle("monthly")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   billingCycle === "monthly"
-                    ? "bg-background shadow-sm text-foreground"
+                    ? "bg-background shadow-lg text-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -257,16 +257,43 @@ export default function BusinessOnboarding() {
               <button
                 type="button"
                 onClick={() => setBillingCycle("annual")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                className={`relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   billingCycle === "annual"
-                    ? "bg-background shadow-sm text-foreground"
+                    ? "bg-gradient-to-r from-primary to-primary/90 shadow-lg text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Anual
-                <Badge className="bg-success/10 text-success text-[10px] px-1.5">-17%</Badge>
               </button>
+              
+              {/* Badge de descuento flotante */}
+              <motion.div 
+                initial={{ scale: 0, rotate: -10 }}
+                animate={{ scale: 1, rotate: 0 }}
+                className="absolute -top-3 -right-2 z-10"
+              >
+                <Badge className="bg-gradient-to-r from-success to-emerald-500 text-white text-[11px] px-2 py-0.5 shadow-lg font-bold">
+                  -17%
+                </Badge>
+              </motion.div>
             </div>
+
+            {/* Mensaje de ahorro cuando está en anual */}
+            <AnimatePresence mode="wait">
+              {billingCycle === "annual" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -10, height: 0 }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 border border-success/20"
+                >
+                  <Gift className="h-4 w-4 text-success" />
+                  <span className="text-sm font-medium text-success">
+                    ¡Ahorras {Math.round((PLANS[selectedPlan].monthlyPrice * 12 - PLANS[selectedPlan].annualPrice))}€/año con el plan {PLANS[selectedPlan].name}!
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
 
           {/* Plans Grid */}
@@ -316,15 +343,30 @@ export default function BusinessOnboarding() {
 
                   <h4 className="font-bold text-foreground mb-1">{plan.name}</h4>
                   
-                  <div className="flex items-baseline gap-1 mb-3">
+                  <div className="flex items-baseline gap-1 mb-1">
                     <span className="text-2xl font-bold text-foreground">{monthlyEquivalent}€</span>
                     <span className="text-xs text-muted-foreground">/mes</span>
                   </div>
 
                   {billingCycle === "annual" && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs text-muted-foreground line-through">
+                        {plan.monthlyPrice}€/mes
+                      </span>
+                      <Badge className="bg-success/15 text-success text-[10px] px-1.5 font-semibold">
+                        Ahorras {Math.round(plan.monthlyPrice * 12 - plan.annualPrice)}€
+                      </Badge>
+                    </div>
+                  )}
+
+                  {billingCycle === "annual" && (
                     <p className="text-[10px] text-muted-foreground mb-3">
                       Facturado {price}€/año
                     </p>
+                  )}
+                  
+                  {billingCycle === "monthly" && (
+                    <div className="mb-3" />
                   )}
 
                   <div className="space-y-1.5 text-xs">
