@@ -1,7 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw, Home, MessageCircle, WifiOff, Bug, ShieldAlert } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import glowAppLogo from "@/assets/glowapp-logo.png";
 
 interface Props {
@@ -55,7 +55,7 @@ class ErrorBoundary extends Component<Props, State> {
   public static getDerivedStateFromError(error: Error): State {
     // Detectar tipo de error
     let errorType: State["errorType"] = "general";
-    
+
     const message = error.message.toLowerCase();
     if (message.includes("network") || message.includes("fetch") || message.includes("offline")) {
       errorType = "network";
@@ -70,6 +70,40 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Error capturado por ErrorBoundary:", error, errorInfo);
+
+    // Report error to backend (only in production to avoid noise)
+    if (import.meta.env.PROD) {
+      this.reportErrorToBackend(error, errorInfo);
+    }
+  }
+
+  private async reportErrorToBackend(error: Error, errorInfo: ErrorInfo) {
+    try {
+      // Dynamic import to avoid loading supabase client unless needed
+      const { supabase } = await import("@/integrations/supabase/client");
+
+      // Get current user if available
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // Insert error log
+      await supabase.from("error_logs" as any).insert({
+        error_message: error.message,
+        error_stack: error.stack?.substring(0, 5000), // Limit stack trace size
+        error_type: this.state.errorType,
+        component_stack: errorInfo.componentStack?.substring(0, 5000),
+        url: window.location.href,
+        user_agent: navigator.userAgent,
+        user_id: user?.id || null,
+        created_at: new Date().toISOString(),
+      });
+
+      console.log("Error reported to backend successfully");
+    } catch (reportError) {
+      // Silent fail - don't want error reporting to cause more errors
+      console.error("Failed to report error to backend:", reportError);
+    }
   }
 
   private handleReload = () => {
@@ -88,7 +122,7 @@ class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       const config = errorConfigs[this.state.errorType];
       const IconComponent = config.icon;
-      
+
       return (
         <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/20 flex items-center justify-center p-4">
           <div className="max-w-md w-full text-center space-y-6">
@@ -96,40 +130,33 @@ class ErrorBoundary extends Component<Props, State> {
             <motion.img
               src={glowAppLogo}
               alt="GlowApp"
-              className="h-8 mx-auto rounded-xl"
+              className="h-8 mx-auto"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             />
 
             {/* Icon animado */}
-            <motion.div 
+            <motion.div
               className={`mx-auto w-24 h-24 rounded-3xl bg-${config.color}/10 flex items-center justify-center`}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
             >
-              <motion.div
-                animate={{ rotate: [0, 5, -5, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
+              <motion.div animate={{ rotate: [0, 5, -5, 0] }} transition={{ duration: 2, repeat: Infinity }}>
                 <IconComponent className={`w-12 h-12 text-${config.color}`} />
               </motion.div>
             </motion.div>
 
             {/* Mensaje */}
-            <motion.div 
+            <motion.div
               className="space-y-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <h1 className="text-2xl font-bold text-foreground">
-                {config.title}
-              </h1>
-              <p className="text-muted-foreground">
-                {config.description}
-              </p>
-              
+              <h1 className="text-2xl font-bold text-foreground">{config.title}</h1>
+              <p className="text-muted-foreground">{config.description}</p>
+
               {/* Sugerencia */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-sm text-muted-foreground">
                 <span>💡</span>
@@ -139,20 +166,18 @@ class ErrorBoundary extends Component<Props, State> {
 
             {/* Error details (development only) */}
             {import.meta.env.DEV && this.state.error && (
-              <motion.div 
+              <motion.div
                 className="bg-muted/50 rounded-xl p-4 text-left border border-border/50"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <p className="text-xs font-mono text-muted-foreground break-all">
-                  {this.state.error.message}
-                </p>
+                <p className="text-xs font-mono text-muted-foreground break-all">{this.state.error.message}</p>
               </motion.div>
             )}
 
             {/* Actions */}
-            <motion.div 
+            <motion.div
               className="space-y-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -162,21 +187,13 @@ class ErrorBoundary extends Component<Props, State> {
                 <RefreshCw className="w-4 h-4" />
                 Recargar página
               </Button>
-              
+
               <div className="flex gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={this.handleGoHome} 
-                  className="flex-1 h-12 gap-2 rounded-xl"
-                >
+                <Button variant="outline" onClick={this.handleGoHome} className="flex-1 h-12 gap-2 rounded-xl">
                   <Home className="w-4 h-4" />
                   Inicio
                 </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={this.handleContact} 
-                  className="flex-1 h-12 gap-2 rounded-xl"
-                >
+                <Button variant="outline" onClick={this.handleContact} className="flex-1 h-12 gap-2 rounded-xl">
                   <MessageCircle className="w-4 h-4" />
                   Contactar
                 </Button>
@@ -184,7 +201,7 @@ class ErrorBoundary extends Component<Props, State> {
             </motion.div>
 
             {/* Brand */}
-            <motion.p 
+            <motion.p
               className="text-xs text-muted-foreground pt-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

@@ -14,25 +14,25 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-motion': ['motion'],
-          'vendor-carousel': ['embla-carousel-react'],
-          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-popover', '@radix-ui/react-select'],
-          'vendor-query': ['@tanstack/react-query'],
-        }
-      }
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-motion": ["motion"],
+          "vendor-carousel": ["embla-carousel-react"],
+          "vendor-ui": ["@radix-ui/react-dialog", "@radix-ui/react-popover", "@radix-ui/react-select"],
+          "vendor-query": ["@tanstack/react-query"],
+        },
+      },
     },
-    target: 'esnext',
-    minify: 'esbuild',
+    target: "esnext",
+    minify: "esbuild",
   },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "prompt",
-      injectRegister: 'auto',
+      injectRegister: "auto",
       devOptions: {
-        enabled: false
+        enabled: false,
       },
       includeAssets: ["favicon.ico", "robots.txt", "logo.png"],
       manifest: {
@@ -66,7 +66,8 @@ export default defineConfig(({ mode }) => ({
         clientsClaim: true,
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        navigateFallback: null,
+        navigateFallback: "/offline.html",
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
