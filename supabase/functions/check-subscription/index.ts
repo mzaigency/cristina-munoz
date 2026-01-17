@@ -45,19 +45,24 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    
+
     if (customers.data.length === 0) {
       logStep("No customer found, returning unsubscribed state");
-      return new Response(JSON.stringify({ 
-        subscribed: false,
-        plan: null,
-        subscription_end: null,
-        trial_end: null,
-        cancel_at_period_end: false
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({
+          subscribed: false,
+          has_customer: false,
+          has_subscription: false,
+          plan: null,
+          subscription_end: null,
+          trial_end: null,
+          cancel_at_period_end: false,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
     }
 
     const customerId = customers.data[0].id;
@@ -71,23 +76,28 @@ serve(async (req) => {
 
     if (subscriptions.data.length === 0) {
       logStep("No subscription found");
-      return new Response(JSON.stringify({ 
-        subscribed: false,
-        plan: null,
-        subscription_end: null,
-        trial_end: null,
-        cancel_at_period_end: false
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({
+          subscribed: false,
+          has_customer: true,
+          has_subscription: false,
+          plan: null,
+          subscription_end: null,
+          trial_end: null,
+          cancel_at_period_end: false,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
     }
 
     const subscription = subscriptions.data[0];
     const isActive = ["active", "trialing"].includes(subscription.status);
     const priceId = subscription.items.data[0]?.price?.id;
     const interval = subscription.items.data[0]?.price?.recurring?.interval;
-    
+
     // Determine plan based on interval
     let plan = null;
     if (interval === "month") {
@@ -97,30 +107,33 @@ serve(async (req) => {
     }
 
     const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-    const trialEnd = subscription.trial_end 
-      ? new Date(subscription.trial_end * 1000).toISOString() 
-      : null;
+    const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null;
 
-    logStep("Subscription found", { 
-      status: subscription.status, 
-      plan, 
-      subscriptionEnd,
-      trialEnd,
-      cancelAtPeriodEnd: subscription.cancel_at_period_end
-    });
-
-    return new Response(JSON.stringify({
-      subscribed: isActive,
+    logStep("Subscription found", {
       status: subscription.status,
       plan,
-      price_id: priceId,
-      subscription_end: subscriptionEnd,
-      trial_end: trialEnd,
-      cancel_at_period_end: subscription.cancel_at_period_end
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+      subscriptionEnd,
+      trialEnd,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
     });
+
+    return new Response(
+      JSON.stringify({
+        subscribed: isActive,
+        has_customer: true,
+        has_subscription: true,
+        status: subscription.status,
+        plan,
+        price_id: priceId,
+        subscription_end: subscriptionEnd,
+        trial_end: trialEnd,
+        cancel_at_period_end: subscription.cancel_at_period_end,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in check-subscription", { message: errorMessage });

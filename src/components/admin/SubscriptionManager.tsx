@@ -29,6 +29,8 @@ import { UpgradePrompt } from "./UpgradePrompt";
 
 interface StripeSubscriptionData {
   subscribed: boolean;
+  has_customer?: boolean;
+  has_subscription?: boolean;
   status?: string;
   plan?: "monthly" | "annual" | null;
   price_id?: string;
@@ -84,6 +86,7 @@ const PLAN_ORDER: PlanSlug[] = ["starter", "pro", "business"];
 export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
   const [tenantExpires, setTenantExpires] = useState<string | null>(null);
+  const [tenantIsActive, setTenantIsActive] = useState<boolean>(true);
   const [stripeData, setStripeData] = useState<StripeSubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -98,7 +101,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
     try {
       const { data: tenant, error } = await supabase
         .from("tenants")
-        .select("subscription_plan, subscription_expires_at")
+        .select("subscription_plan, subscription_expires_at, is_active")
         .eq("id", tenantId)
         .single();
 
@@ -106,6 +109,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
       setTenantPlan(tenant?.subscription_plan || "starter");
       setTenantExpires(tenant?.subscription_expires_at || null);
+      setTenantIsActive(tenant?.is_active !== false);
     } catch (error) {
       console.error("Error fetching tenant:", error);
     }
@@ -191,17 +195,19 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   const planInfo = PLAN_DETAILS[currentPlan] || PLAN_DETAILS.starter;
   const currentPlanIndex = PLAN_ORDER.indexOf(currentPlan);
   
-  // Use Stripe data if available, fallback to tenant data
-  const subscriptionEnd = stripeData?.subscription_end || tenantExpires;
+  // Stripe tiene prioridad SOLO si existe cliente en Stripe.
+  // Si no hay cliente (pilotos / configuración manual), usamos el estado del tenant.
+  const stripeHasCustomer = stripeData?.has_customer === true;
+
+  const subscriptionEnd = stripeHasCustomer ? (stripeData?.subscription_end || null) : tenantExpires;
   const isTrialing = stripeData?.status === "trialing";
   const cancelAtPeriodEnd = stripeData?.cancel_at_period_end || false;
-  const isActive = stripeData?.subscribed ?? (tenantExpires ? new Date(tenantExpires) > new Date() : false);
+
+  const isTenantDateActive = tenantExpires ? new Date(tenantExpires) > new Date() : tenantIsActive;
+  const isActive = stripeHasCustomer ? (stripeData?.subscribed ?? false) : (isTenantDateActive && tenantIsActive);
+
   const trialEnd = stripeData?.trial_end;
   const billingCycle = stripeData?.plan;
-  
-  const daysRemaining = subscriptionEnd 
-    ? Math.max(0, Math.ceil((new Date(subscriptionEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : null;
 
   const getStatusBadge = () => {
     if (isTrialing) {
