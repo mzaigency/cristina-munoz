@@ -14,6 +14,7 @@ import { Loader2, ArrowLeft, Zap, Crown, Check, Sparkles, Users, Scissors, Trend
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { motion, AnimatePresence } from "motion/react";
 import { Badge } from "@/components/ui/badge";
+import { SupportButton } from "@/components/common/SupportButton";
 
 const businessSchema = z.object({
   businessName: z.string().trim().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
@@ -577,6 +578,11 @@ export default function BusinessOnboarding() {
                       <p className="text-xs text-center text-muted-foreground">
                         No se te cobrará hasta que termine tu período de prueba. Puedes cancelar en cualquier momento.
                       </p>
+
+                      {/* Ayuda inline */}
+                      <div className="pt-2">
+                        <SupportButton variant="inline" context="Registro de negocio" />
+                      </div>
                     </form>
                   </Form>
                 )}
