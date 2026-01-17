@@ -26,6 +26,7 @@ import {
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { PlanUsageBar } from "./PlanUsageBar";
 import { UpgradePrompt } from "./UpgradePrompt";
+import { SupportButton } from "@/components/common/SupportButton";
 
 interface StripeSubscriptionData {
   subscribed: boolean;
@@ -429,6 +430,9 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Ayuda con suscripción */}
+      <SupportButton variant="card" context="Suscripción y facturación" />
 
       {/* Upgrade Modal */}
       <UpgradePrompt

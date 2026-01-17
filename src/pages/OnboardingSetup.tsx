@@ -55,6 +55,7 @@ import {
   ServiceForm,
 } from "@/components/onboarding";
 import { ThemeStep } from "@/components/onboarding/ThemeStep";
+import { SupportButton } from "@/components/common/SupportButton";
 
 // Step: Colors only (AI generation moved to end)
 function ColorsStep({ onNext, tenantId, loading, setLoading }: StepProps) {
@@ -1203,6 +1204,9 @@ export default function OnboardingSetup() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Botón flotante de soporte */}
+      <SupportButton variant="floating" context="Configuración de salón" />
     </AppLayout>
   );
 }
