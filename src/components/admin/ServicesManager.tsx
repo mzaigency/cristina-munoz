@@ -10,8 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Pencil, Trash2, Upload, Image, X, GripVertical } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Upload, Image, X, GripVertical, Crown } from "lucide-react";
 import { ImageCropper } from "./ImageCropper";
+import { PlanUsageBar } from "./PlanUsageBar";
+import { UpgradePrompt } from "./UpgradePrompt";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import {
   DndContext,
   closestCenter,
@@ -94,6 +97,17 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     price: "" as string | number,
   });
   const { toast } = useToast();
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  
+  // Plan limits
+  const { 
+    canAddService, 
+    maxServices, 
+    currentServices, 
+    planSlug, 
+    getUpgradePlanForLimit,
+    refetch: refetchPlanLimits 
+  } = usePlanLimits(tenantId);
   
   // Cropper state
   const [cropperOpen, setCropperOpen] = useState(false);
@@ -141,6 +155,12 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
   };
 
   const handleOpenCreate = () => {
+    // Check if can add more services
+    if (!canAddService()) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+    
     setSelectedService(null);
     setFormData({
       name: "",
@@ -438,18 +458,41 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     );
   }
 
+  const upgradePlan = getUpgradePlanForLimit("services");
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold">Gestión de Servicios</h2>
-          <p className="text-sm md:text-base text-muted-foreground">Añade, edita o elimina los servicios de tu negocio</p>
+    <>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex-1">
+            <h2 className="text-xl md:text-2xl font-bold">Gestión de Servicios</h2>
+            <p className="text-sm md:text-base text-muted-foreground">Añade, edita o elimina los servicios de tu negocio</p>
+            <div className="mt-3 max-w-xs">
+              <PlanUsageBar
+                current={currentServices}
+                max={maxServices}
+                label="Servicios"
+              />
+            </div>
+          </div>
+          <Button 
+            onClick={handleOpenCreate} 
+            className="w-full md:w-auto h-11 md:h-10"
+            variant={canAddService() ? "default" : "outline"}
+          >
+            {canAddService() ? (
+              <>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Servicio
+              </>
+            ) : (
+              <>
+                <Crown className="h-4 w-4 mr-2 text-amber-500" />
+                Mejorar plan
+              </>
+            )}
+          </Button>
         </div>
-        <Button onClick={handleOpenCreate} className="w-full md:w-auto h-11 md:h-10">
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Servicio
-        </Button>
-      </div>
 
       {categories.length === 0 ? (
         <Card>
@@ -851,8 +894,17 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
         outputSize={512}
         onCropComplete={handleCroppedImage}
       />
-    </div>
+      </div>
+
+      <UpgradePrompt
+        open={showUpgradePrompt}
+        onOpenChange={setShowUpgradePrompt}
+        currentPlan={planSlug}
+        targetPlan={upgradePlan || "pro"}
+        feature="más servicios"
+        tenantId={tenantId}
+      />
+    </>
   );
 };
-
 export default ServicesManager;
