@@ -81,6 +81,11 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
     refetch: refetchPlanLimits 
   } = usePlanLimits(tenantId);
 
+  // Refetch limits when stylists change
+  useEffect(() => {
+    refetchPlanLimits();
+  }, [stylists.length, refetchPlanLimits]);
+
   useEffect(() => {
     fetchStylists();
   }, [tenantId]);
@@ -492,11 +497,6 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
       </div>
     );
   }
-
-  // Refetch limits when stylists change
-  useEffect(() => {
-    refetchPlanLimits();
-  }, [stylists.length]);
 
   const upgradePlan = getUpgradePlanForLimit("stylists");
 
