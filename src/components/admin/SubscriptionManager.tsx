@@ -209,6 +209,10 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   const trialEnd = stripeData?.trial_end;
   const billingCycle = stripeData?.plan;
 
+  const daysRemaining = subscriptionEnd 
+    ? Math.max(0, Math.ceil((new Date(subscriptionEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+
   const getStatusBadge = () => {
     if (isTrialing) {
       return (
