@@ -10,9 +10,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, ArrowLeft, Building2, Zap, Crown, Check, Sparkles } from "lucide-react";
+import { Loader2, ArrowLeft, Zap, Crown, Check, Sparkles, Users, Scissors, TrendingUp, MessageCircle, CalendarCheck, Gift } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { motion } from "motion/react";
+import { Badge } from "@/components/ui/badge";
 
 const businessSchema = z.object({
   businessName: z.string().trim().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
@@ -28,18 +29,59 @@ const businessSchema = z.object({
 
 type BusinessFormValues = z.infer<typeof businessSchema>;
 
-const features = [
-  "Landing page profesional personalizable",
-  "Sistema de reservas online 24/7",
-  "Gestión de calendario inteligente",
-  "Reseñas y valoraciones de clientes",
-  "Stories para promocionar tu trabajo",
-  "Panel de administración completo",
-];
+type PlanSlug = "starter" | "pro" | "business";
+type BillingCycle = "monthly" | "annual";
+
+interface PlanInfo {
+  name: string;
+  icon: React.ReactNode;
+  monthlyPrice: number;
+  annualPrice: number;
+  stylists: string;
+  services: string;
+  features: string[];
+  color: string;
+  popular?: boolean;
+}
+
+const PLANS: Record<PlanSlug, PlanInfo> = {
+  starter: {
+    name: "Starter",
+    icon: <Zap className="h-5 w-5" />,
+    monthlyPrice: 29,
+    annualPrice: 290,
+    stylists: "1 profesional",
+    services: "15 servicios",
+    features: ["Landing profesional", "Reservas 24/7", "Calendario", "Reseñas", "Stories"],
+    color: "from-blue-500 to-cyan-500"
+  },
+  pro: {
+    name: "Pro",
+    icon: <Crown className="h-5 w-5" />,
+    monthlyPrice: 49,
+    annualPrice: 490,
+    stylists: "3 profesionales",
+    services: "50 servicios",
+    features: ["Todo de Starter", "Caja registradora", "Stats avanzados", "Promociones", "Paquetes"],
+    color: "from-amber-500 to-orange-500",
+    popular: true
+  },
+  business: {
+    name: "Business",
+    icon: <Sparkles className="h-5 w-5" />,
+    monthlyPrice: 89,
+    annualPrice: 890,
+    stylists: "Ilimitados",
+    services: "Ilimitados",
+    features: ["Todo de Pro", "Comisiones", "Objetivos", "Lista de espera", "Soporte prioritario"],
+    color: "from-purple-500 to-pink-500"
+  }
+};
 
 export default function BusinessOnboarding() {
   const [loading, setLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual">("annual");
+  const [selectedPlan, setSelectedPlan] = useState<PlanSlug>("pro");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("annual");
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const navigate = useNavigate();
@@ -121,7 +163,8 @@ export default function BusinessOnboarding() {
     try {
       const { data, error } = await supabase.functions.invoke("create-business-checkout", {
         body: {
-          plan: selectedPlan,
+          planSlug: selectedPlan,
+          billingCycle: billingCycle,
           businessName: values.businessName,
           businessSlug: values.businessSlug,
         },
@@ -192,104 +235,128 @@ export default function BusinessOnboarding() {
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Plan Selection */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="space-y-4"
-            >
-              <h3 className="font-semibold text-lg text-foreground mb-4">Elige tu plan</h3>
+          {/* Billing Toggle */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex justify-center mb-8"
+          >
+            <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-muted">
+              <button
+                type="button"
+                onClick={() => setBillingCycle("monthly")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  billingCycle === "monthly"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Mensual
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingCycle("annual")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                  billingCycle === "annual"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Anual
+                <Badge className="bg-success/10 text-success text-[10px] px-1.5">-17%</Badge>
+              </button>
+            </div>
+          </motion.div>
 
-                {/* Monthly */}
-                <button
+          {/* Plans Grid */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="grid md:grid-cols-3 gap-4 mb-8"
+          >
+            {(Object.entries(PLANS) as [PlanSlug, PlanInfo][]).map(([slug, plan], idx) => {
+              const isSelected = selectedPlan === slug;
+              const price = billingCycle === "annual" ? plan.annualPrice : plan.monthlyPrice;
+              const monthlyEquivalent = billingCycle === "annual" ? Math.round(plan.annualPrice / 12) : plan.monthlyPrice;
+              
+              return (
+                <motion.button
+                  key={slug}
                   type="button"
-                  onClick={() => setSelectedPlan("monthly")}
-                  className={`w-full text-left ios-card p-5 transition-all ${
-                    selectedPlan === "monthly" ? "border-2 border-primary ring-2 ring-primary/20" : "hover:border-border"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + idx * 0.05 }}
+                  onClick={() => setSelectedPlan(slug)}
+                  className={`relative text-left ios-card p-4 transition-all ${
+                    isSelected 
+                      ? "border-2 border-primary ring-2 ring-primary/20" 
+                      : "hover:border-border"
                   }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`h-12 w-12 rounded-xl flex items-center justify-center ${
-                        selectedPlan === "monthly" ? "bg-primary text-primary-foreground" : "bg-secondary"
-                      }`}
-                    >
-                      <Zap className="h-6 w-6" />
+                  {plan.popular && (
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                      <Badge className={`bg-gradient-to-r ${plan.color} text-white text-[10px] px-2`}>
+                        Popular
+                      </Badge>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-foreground">Plan Mensual</h4>
-                        {selectedPlan === "monthly" && (
-                          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                            <Check className="h-3 w-3 text-primary-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">Flexibilidad total</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold text-foreground">39,99€</span>
-                        <span className="text-muted-foreground">/mes</span>
-                      </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between mb-3 mt-1">
+                    <div className={`p-2 rounded-lg bg-gradient-to-br ${plan.color} text-white`}>
+                      {plan.icon}
                     </div>
+                    {isSelected && (
+                      <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
                   </div>
-                </button>
 
-                {/* Annual */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedPlan("annual")}
-                  className={`w-full text-left ios-card p-5 transition-all relative ${
-                    selectedPlan === "annual" ? "border-2 border-primary ring-2 ring-primary/20" : "hover:border-border"
-                  }`}
-                >
-                  <div className="absolute -top-3 left-4">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-semibold">
-                      <Crown className="h-3 w-3" />
-                      Más popular
-                    </span>
+                  <h4 className="font-bold text-foreground mb-1">{plan.name}</h4>
+                  
+                  <div className="flex items-baseline gap-1 mb-3">
+                    <span className="text-2xl font-bold text-foreground">{monthlyEquivalent}€</span>
+                    <span className="text-xs text-muted-foreground">/mes</span>
                   </div>
-                  <div className="flex items-start gap-4 mt-2">
-                    <div
-                      className={`h-12 w-12 rounded-xl flex items-center justify-center ${
-                        selectedPlan === "annual" ? "gradient-primary text-primary-foreground" : "bg-secondary"
-                      }`}
-                    >
-                      <Building2 className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-foreground">Plan Anual</h4>
-                        {selectedPlan === "annual" && (
-                          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                            <Check className="h-3 w-3 text-primary-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">Ahorra 2 meses</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold text-foreground">399,99€</span>
-                        <span className="text-muted-foreground">/año</span>
-                      </div>
-                      <p className="text-xs text-success font-medium mt-1">Ahorras 79,89€</p>
-                    </div>
-                  </div>
-                </button>
 
-                {/* Features */}
-                <div className="ios-card p-5 mt-6">
-                  <h4 className="font-semibold text-foreground mb-4">Incluido en todos los planes:</h4>
-                  <ul className="space-y-3">
-                    {features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-3 text-sm">
-                        <Check className="h-4 w-4 text-success shrink-0" />
-                        <span className="text-foreground">{feature}</span>
-                      </li>
+                  {billingCycle === "annual" && (
+                    <p className="text-[10px] text-muted-foreground mb-3">
+                      Facturado {price}€/año
+                    </p>
+                  )}
+
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Users className="h-3 w-3" />
+                      <span>{plan.stylists}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Scissors className="h-3 w-3" />
+                      <span>{plan.services}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-border space-y-1">
+                    {plan.features.slice(0, 3).map((feature, fidx) => (
+                      <div key={fidx} className="flex items-center gap-1.5 text-[11px]">
+                        <Check className="h-3 w-3 text-success shrink-0" />
+                        <span className="text-muted-foreground">{feature}</span>
+                      </div>
                     ))}
-                  </ul>
-                </div>
-              </motion.div>
+                    {plan.features.length > 3 && (
+                      <p className="text-[10px] text-primary font-medium pl-4">
+                        +{plan.features.length - 3} más
+                      </p>
+                    )}
+                  </div>
+                </motion.button>
+              );
+            })}
+          </motion.div>
+
+          <div className="grid lg:grid-cols-2 gap-8">
 
             {/* Form */}
             <motion.div 
