@@ -611,8 +611,8 @@ export default function ForBusiness() {
       {/* Footer */}
       <footer className="py-8 px-5 border-t border-border safe-area-bottom">
         <div className="container mx-auto max-w-6xl flex flex-col items-center gap-4 md:flex-row md:justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="GlowApp" className="h-6 w-6" />
+          <div className="flex items-center gap-2 rounded-none">
+            <img src="/favicon.png" alt="GlowApp" className="h-6 w-6 rounded-xl" />
             <p className="text-sm text-muted-foreground">© {currentYear} GlowApp. Todos los derechos reservados.</p>
           </div>
           <div className="flex gap-6">
