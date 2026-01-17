@@ -698,6 +698,82 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
               </Card>
             </div>
 
+            {/* Revenue by Stylist */}
+            {stylistStats.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Users className="h-4 w-4 text-violet-500" />
+                    Ingresos por estilista
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[220px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stylistStats} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" horizontal={false} />
+                        <XAxis 
+                          type="number" 
+                          tickFormatter={(v) => formatCompact(v)} 
+                          fontSize={10} 
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis 
+                          type="category" 
+                          dataKey="name" 
+                          width={80} 
+                          fontSize={11} 
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <Tooltip
+                          content={({ active, payload }) =>
+                            active && payload?.length ? (
+                              <div className="bg-background/95 backdrop-blur border rounded-lg p-3 shadow-lg">
+                                <p className="font-semibold mb-1">{payload[0].payload.name}</p>
+                                <p className="text-sm">{formatCurrency(payload[0].value as number)}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {payload[0].payload.transactions} transacciones
+                                </p>
+                              </div>
+                            ) : null
+                          }
+                        />
+                        <Bar 
+                          dataKey="revenue" 
+                          radius={[0, 6, 6, 0]}
+                        >
+                          {stylistStats.map((s, i) => (
+                            <Cell key={s.id} fill={s.color || COLORS[i % COLORS.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {/* Quick summary under chart */}
+                  <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t">
+                    {stylistStats.slice(0, 3).map((s, i) => {
+                      const totalRevenue = stylistStats.reduce((sum, st) => sum + st.revenue, 0);
+                      const percent = totalRevenue > 0 ? (s.revenue / totalRevenue) * 100 : 0;
+                      return (
+                        <div key={s.id} className="text-center">
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <div 
+                              className="w-2.5 h-2.5 rounded-full" 
+                              style={{ backgroundColor: s.color || COLORS[i] }} 
+                            />
+                            <span className="text-xs font-medium truncate">{s.name}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{percent.toFixed(0)}% del total</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Peak Hours */}
             {peakHours.length > 0 && (
               <Card>
