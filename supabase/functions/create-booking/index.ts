@@ -166,6 +166,45 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // 🛡️ SENTINEL: Security & Authorization Checks
+    const authHeader = req.headers.get("Authorization");
+    let user = null;
+    let isAdminOrStylist = false;
+
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const {
+        data: { user: authUser },
+        error: authError,
+      } = await supabase.auth.getUser(token);
+
+      if (!authError && authUser) {
+        user = authUser;
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .in("role", ["admin", "stylist", "superadmin"]); // Check for privileged roles
+
+        isAdminOrStylist = roles && roles.length > 0;
+      }
+    }
+
+    // Verify User Identity for Booking
+    if (bookingData.user_id) {
+      if (!user) {
+        throw new Error("Authentication required to link booking to a user account");
+      }
+      if (user.id !== bookingData.user_id && !isAdminOrStylist) {
+        throw new Error("Unauthorized: You can only create bookings for yourself");
+      }
+    }
+
+    // Verify Privileges for Skipping Availability
+    if (bookingData.skipAvailabilityCheck && !isAdminOrStylist) {
+      throw new Error("Unauthorized: Only admins can skip availability checks");
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
