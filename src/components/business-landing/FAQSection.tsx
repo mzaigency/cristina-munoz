@@ -39,7 +39,7 @@ export const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-20 bg-muted/30">
+    <section id="faq" className="py-20 bg-[hsl(230,20%,6%)]">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -51,8 +51,8 @@ export const FAQSection = () => {
             <HelpCircle className="w-5 h-5" />
             <span className="text-sm font-medium uppercase tracking-wider">Preguntas frecuentes</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">¿Tienes dudas?</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">¿Tienes dudas?</h2>
+          <p className="text-white/50 max-w-2xl mx-auto">
             Aquí respondemos las preguntas más comunes. Si no encuentras lo que buscas, escríbenos y te ayudamos.
           </p>
         </motion.div>
@@ -71,16 +71,16 @@ export const FAQSection = () => {
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
                   className={`w-full text-left p-5 rounded-xl transition-all ${
                     openIndex === index
-                      ? "bg-background shadow-lg border border-primary/20"
-                      : "bg-background border border-border hover:border-primary/30"
+                      ? "bg-[hsl(230,15%,14%)] shadow-lg border border-primary/30"
+                      : "bg-[hsl(230,15%,12%)] border border-white/5 hover:border-primary/20"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-4">
-                    <span className="font-medium">{faq.question}</span>
+                    <span className="font-medium text-white">{faq.question}</span>
                     <motion.div animate={{ rotate: openIndex === index ? 180 : 0 }} transition={{ duration: 0.2 }}>
                       <ChevronDown
                         className={`w-5 h-5 flex-shrink-0 ${
-                          openIndex === index ? "text-primary" : "text-muted-foreground"
+                          openIndex === index ? "text-primary" : "text-white/40"
                         }`}
                       />
                     </motion.div>
@@ -95,7 +95,7 @@ export const FAQSection = () => {
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                       >
-                        <p className="mt-4 text-muted-foreground text-sm leading-relaxed">{faq.answer}</p>
+                        <p className="mt-4 text-white/50 text-sm leading-relaxed">{faq.answer}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
