@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -111,6 +112,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
   // Series cancellation dialog
   const [seriesCancelDialogOpen, setSeriesCancelDialogOpen] = useState(false);
   const [pendingCancelBooking, setPendingCancelBooking] = useState<LocalBooking | null>(null);
+
+  // Mobile action buttons state
+  const [activeBookingActions, setActiveBookingActions] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const { toast } = useToast();
   
@@ -1283,10 +1288,25 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                             backgroundColor: isBlocked ? "#FEE2E2" : `${bookingColor}15`,
                                             borderLeft: `3px solid ${bookingColor}`,
                                           }}
-                                          onClick={() => {
+                                          onClick={(e) => {
                                             if (!isBlocked && !isResizing) {
-                                              setSelectedBooking(booking);
-                                              setIsEditDialogOpen(true);
+                                              if (isMobile) {
+                                                // On mobile: toggle action buttons on tap
+                                                e.stopPropagation();
+                                                if (activeBookingActions === booking.id) {
+                                                  // Second tap opens edit dialog
+                                                  setActiveBookingActions(null);
+                                                  setSelectedBooking(booking);
+                                                  setIsEditDialogOpen(true);
+                                                } else {
+                                                  // First tap shows action buttons
+                                                  setActiveBookingActions(booking.id);
+                                                }
+                                              } else {
+                                                // On desktop: directly open edit dialog
+                                                setSelectedBooking(booking);
+                                                setIsEditDialogOpen(true);
+                                              }
                                             }
                                           }}
                                         >
@@ -1338,14 +1358,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                             )}
                                           </div>
 
-                                          {/* Compact floating action buttons - top right corner */}
-                                          {!isBlocked && (
-                                            <div className="absolute top-0.5 right-0.5 flex items-center gap-0.5 z-20 opacity-70 hover:opacity-100 transition-opacity">
+                                          {/* Action buttons - Desktop: always visible, Mobile: only when tapped */}
+                                          {!isBlocked && (!isMobile || activeBookingActions === booking.id) && (
+                                            <div className={cn(
+                                              "absolute top-0.5 right-0.5 flex items-center gap-0.5 z-20 transition-opacity",
+                                              isMobile ? "opacity-100" : "opacity-70 hover:opacity-100"
+                                            )}>
                                               {/* Completar */}
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   handleMarkCompleted(booking);
+                                                  if (isMobile) setActiveBookingActions(null);
                                                 }}
                                                 className={cn(
                                                   "p-1 rounded transition-all",
@@ -1371,6 +1395,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                       fecha: booking.Fecha,
                                                       hora: booking.Hora
                                                     }));
+                                                    if (isMobile) setActiveBookingActions(null);
                                                     onNavigateToCash();
                                                   }}
                                                   className="p-1 rounded bg-black/20 text-white hover:bg-emerald-500 transition-all"
@@ -1384,6 +1409,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation();
+                                                  if (isMobile) setActiveBookingActions(null);
                                                   handleDeleteBooking(booking);
                                                 }}
                                                 className="p-1 rounded bg-black/20 text-white hover:bg-red-500 transition-all"
