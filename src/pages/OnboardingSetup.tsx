@@ -846,19 +846,23 @@ export default function OnboardingSetup() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  // Define all steps with their icons
+  // Define all steps with their icons - Orden lógico:
+  // 1. Info básica (negocio, ubicación, contacto, redes)
+  // 2. Contenido (imágenes, equipo, servicios, horarios)  
+  // 3. Diseño (tema, colores, tipografía) - con datos reales para preview
+  // 4. IA y finalización
   const steps = [
     { title: "Negocio", icon: Building2 },
-    { title: "Tema", icon: Layers },
-    { title: "Colores", icon: Palette },
-    { title: "Tipografía", icon: Type },
-    { title: "Imágenes", icon: Image },
     { title: "Ubicación", icon: MapPin },
     { title: "Contacto", icon: Phone },
     { title: "Redes", icon: Share2 },
-    { title: "Horarios", icon: Clock },
-    { title: "Servicios", icon: Scissors },
+    { title: "Imágenes", icon: Image },
     { title: "Equipo", icon: Users },
+    { title: "Servicios", icon: Scissors },
+    { title: "Horarios", icon: Clock },
+    { title: "Tema", icon: Layers },
+    { title: "Colores", icon: Palette },
+    { title: "Tipografía", icon: Type },
     { title: "IA", icon: Sparkles },
     { title: "¡Listo!", icon: PartyPopper },
   ];
@@ -1013,29 +1017,30 @@ export default function OnboardingSetup() {
       setLoading,
     };
 
+    // Orden lógico: Info básica → Contenido → Diseño → IA
     switch (step) {
       case 0:
         return <BusinessTypeStep {...stepProps} tenantName={tenantName} setTenantName={setTenantName} />;
       case 1:
-        return <ThemeStep {...stepProps} tenantName={tenantName} />;
+        return <LocationStep {...stepProps} />;
       case 2:
-        return <ColorsStep {...stepProps} />;
+        return <ContactStep {...stepProps} />;
       case 3:
-        return <TypographyStep {...stepProps} />;
+        return <SocialStep {...stepProps} />;
       case 4:
         return <ImagesStep {...stepProps} />;
       case 5:
-        return <LocationStep {...stepProps} />;
-      case 6:
-        return <ContactStep {...stepProps} />;
-      case 7:
-        return <SocialStep {...stepProps} />;
-      case 8:
-        return <HoursStep {...stepProps} />;
-      case 9:
-        return <ServicesStep {...stepProps} />;
-      case 10:
         return <StylistsStep {...stepProps} />;
+      case 6:
+        return <ServicesStep {...stepProps} />;
+      case 7:
+        return <HoursStep {...stepProps} />;
+      case 8:
+        return <ThemeStep {...stepProps} tenantName={tenantName} />;
+      case 9:
+        return <ColorsStep {...stepProps} />;
+      case 10:
+        return <TypographyStep {...stepProps} />;
       case 11:
         return <AIGenerationStep {...stepProps} />;
       case 12:
