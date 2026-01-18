@@ -16,22 +16,12 @@ const faqs = [
   {
     question: "¿Cómo funciona el período de prueba?",
     answer:
-      "Tienes 30 días completamente gratis con todas las funciones del plan Pro. No necesitas tarjeta de crédito para empezar. Al terminar la prueba, eliges si continuar o no.",
-  },
-  {
-    question: "¿Puedo migrar mis datos actuales?",
-    answer:
-      "Sí. Puedes añadir tu lista de clientes, servicios y precios fácilmente. También te ayudamos a importar citas existentes si las tienes en otro formato.",
-  },
-  {
-    question: "¿Hay contratos de permanencia?",
-    answer:
-      "No. Puedes cancelar tu suscripción en cualquier momento. Si pagas anual y cancelas, te devolvemos la parte proporcional no usada.",
+      "Tienes 30 días completamente gratis con todas las funciones del plan. Al terminar la prueba, eliges si continuar o no.",
   },
   {
     question: "¿Mis clientes tienen que instalar algo?",
     answer:
-      "No. Tus clientes acceden a tu página web y reservan directamente desde el navegador de su móvil. No necesitan descargar ninguna app.",
+      "No. Tus clientes acceden a tu página web y reservan directamente desde el navegador de su móvil. No necesitan descargar nada aunque es aconsegable Glowapp.",
   },
   {
     question: "¿Funciona con mi equipo de estilistas?",
