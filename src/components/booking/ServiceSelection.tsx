@@ -103,9 +103,9 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
       return;
     }
     
-    setSelectedPackage(pkg.id);
+  setSelectedPackage(pkg.id);
     // Mapear servicios del pack a los servicios reales con sus duraciones
-    const packageServiceIds = (pkg.services as any[]).map((s: any) => s.id);
+    const packageServiceIds = (pkg.services as any[]).map((s: any) => s.service_id);
     const matchedServices = services.filter(s => packageServiceIds.includes(s.id));
     setSelected(matchedServices);
   };
