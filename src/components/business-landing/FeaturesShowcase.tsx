@@ -10,7 +10,7 @@ const features = [
     icon: Globe,
     title: "Tu web profesional",
     shortTitle: "Web",
-    headline: "Tu salón en internet en 15 minutos",
+    headline: "Tu salón en internet en 5 minutos",
     description:
       "Una página web profesional con tu marca, servicios y precios. Tus clientes te encontrarán en Google y podrán ver todo sobre tu negocio.",
     benefits: [

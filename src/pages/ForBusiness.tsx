@@ -1,4 +1,4 @@
-import { SEO } from '@/components/SEO';
+import { SEO } from "@/components/SEO";
 import {
   StickyHeader,
   HeroSection,
@@ -10,7 +10,7 @@ import {
   FinalCTASection,
   Footer,
   FloatingMobileCTA,
-} from '@/components/business-landing';
+} from "@/components/business-landing";
 
 export default function ForBusiness() {
   return (
@@ -27,23 +27,27 @@ export default function ForBusiness() {
         faq={[
           {
             question: "¿Cuánto cuesta GlowApp para negocios?",
-            answer: "GlowApp ofrece 3 planes: Starter desde 19€/mes, Pro desde 39€/mes y Business desde 79€/mes. Todos incluyen 30 días de prueba gratis sin tarjeta.",
+            answer:
+              "GlowApp ofrece 3 planes: Starter desde 19€/mes, Pro desde 39€/mes y Business desde 79€/mes. Todos incluyen 30 días de prueba gratis sin tarjeta.",
           },
           {
             question: "¿Qué incluye la plataforma para negocios?",
-            answer: "Incluye landing page profesional, sistema de reservas 24/7, gestión de calendario, caja registradora, analytics y stories. Las funcionalidades varían según el plan.",
+            answer:
+              "Incluye landing page profesional, sistema de reservas 24/7, gestión de calendario, caja registradora, analytics y stories. Las funcionalidades varían según el plan.",
           },
           {
             question: "¿Puedo gestionar varios estilistas?",
-            answer: "Sí, dependiendo de tu plan: Starter incluye 1 profesional, Pro hasta 5 y Business profesionales ilimitados.",
+            answer:
+              "Sí, dependiendo de tu plan: Starter incluye 1 profesional, Pro hasta 5 y Business profesionales ilimitados.",
           },
           {
             question: "¿Cómo empiezo a usar GlowApp?",
-            answer: "Regístrate gratis y configura tu negocio en 15 minutos. No necesitas conocimientos técnicos y tendrás 30 días de prueba sin compromiso ni tarjeta.",
+            answer:
+              "Regístrate gratis y configura tu negocio en 5 minutos. No necesitas conocimientos técnicos y tendrás 30 días de prueba sin compromiso ni tarjeta.",
           },
         ]}
       />
-      
+
       <div className="min-h-screen bg-background">
         <StickyHeader />
         <HeroSection />
