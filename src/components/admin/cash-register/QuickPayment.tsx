@@ -25,11 +25,25 @@ import {
   Sparkles,
   FileText,
   Download,
+  Calendar,
+  Clock,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+
+interface TodayBooking {
+  id: string;
+  customer_name: string;
+  Telefono: string;
+  Hora: string;
+  stylist: string;
+  services: any;
+  notes: string | null;
+}
 
 interface Service {
   id: string;
@@ -113,13 +127,114 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   const [tenantData, setTenantData] = useState<any>(null);
   const [savedFiscalData, setSavedFiscalData] = useState<any[]>([]);
   const [lowStockAlerts, setLowStockAlerts] = useState<string[]>([]);
+  
+  // Today's bookings for quick charge
+  const [todayBookings, setTodayBookings] = useState<TodayBooking[]>([]);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [loadingBookings, setLoadingBookings] = useState(false);
 
   const { toast } = useToast();
 
   useEffect(() => {
     fetchData();
     fetchSavedFiscalData();
+    fetchTodayBookings();
+    checkPendingCharge();
   }, [tenantId]);
+
+  // Check for pending booking from agenda navigation
+  const checkPendingCharge = () => {
+    const pendingBooking = sessionStorage.getItem('pendingChargeBooking');
+    if (pendingBooking) {
+      try {
+        const booking = JSON.parse(pendingBooking);
+        // We need to wait for services and stylists to be loaded
+        setTimeout(() => loadBookingData(booking), 500);
+        sessionStorage.removeItem('pendingChargeBooking');
+      } catch (e) {
+        console.error('Error parsing pending booking:', e);
+        sessionStorage.removeItem('pendingChargeBooking');
+      }
+    }
+  };
+
+  const fetchTodayBookings = async () => {
+    setLoadingBookings(true);
+    try {
+      const today = format(new Date(), "yyyy-MM-dd");
+      
+      // Get confirmed bookings for today
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from("bookings")
+        .select("id, customer_name, Telefono, Hora, stylist, services, notes")
+        .eq("tenant_id", tenantId)
+        .eq("Fecha", today)
+        .eq("status", "confirmed")
+        .order("Hora", { ascending: true });
+      
+      if (bookingsError) throw bookingsError;
+      
+      // Get already charged bookings
+      const { data: chargedData } = await supabase
+        .from("transactions")
+        .select("booking_id")
+        .eq("tenant_id", tenantId)
+        .not("booking_id", "is", null);
+      
+      const chargedIds = new Set((chargedData || []).map(t => t.booking_id));
+      
+      // Filter out already charged, completed and blocked bookings
+      const pendingBookings = (bookingsData || []).filter(b => {
+        const isCharged = chargedIds.has(b.id);
+        const isCompleted = b.notes?.includes('[✓ COMPLETADA]') || b.notes?.includes('[💳 COBRADA]');
+        const isBlocked = b.customer_name.includes('BLOQUEADO') || b.customer_name.includes('VACACIONES');
+        return !isCharged && !isCompleted && !isBlocked;
+      });
+      
+      setTodayBookings(pendingBookings);
+    } catch (error) {
+      console.error('Error fetching today bookings:', error);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  const loadBookingData = (booking: any) => {
+    // Clear current selection
+    clearAll();
+    
+    // Set customer name
+    setCustomerName(booking.customer_name || "Cliente");
+    
+    // Find and preselect stylist
+    const matchedStylist = stylists.find(s => s.slug === booking.stylist);
+    if (matchedStylist) {
+      setSelectedStylistId(matchedStylist.id);
+    }
+    
+    // Load services from booking
+    if (Array.isArray(booking.services)) {
+      const bookingServices: SelectedItem[] = booking.services.map((s: any) => {
+        // Find the actual service to get the correct price
+        const realService = services.find(srv => srv.id === s.id || srv.name === s.name);
+        return {
+          id: s.id || `booking-${Date.now()}-${Math.random()}`,
+          name: s.name,
+          price: realService?.price || s.price || 0,
+          quantity: 1,
+          type: "service" as const
+        };
+      });
+      setSelectedItems(bookingServices);
+    }
+    
+    setSelectedBookingId(booking.id);
+    
+    toast({
+      title: "Cita cargada",
+      description: `Servicios de ${booking.customer_name} listos para cobrar`,
+    });
+  };
 
   useEffect(() => {
     if (customerName.trim() && wantsInvoice) {
@@ -283,6 +398,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     setShowTip(false);
     setWantsInvoice(false);
     setInvoiceData({ fiscalName: "", nif: "", fiscalAddress: "" });
+    setSelectedBookingId(null);
   };
 
   const handleSubmit = async () => {
@@ -341,10 +457,26 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         payment_details: paymentDetails,
         created_by: user.id,
         tenant_id: tenantId,
+        booking_id: selectedBookingId || null,
       };
 
       const { error } = await supabase.from("transactions").insert(transactionData as never);
       if (error) throw error;
+
+      // If this was from a booking, mark it as completed and charged
+      if (selectedBookingId) {
+        const today = new Date().toLocaleDateString('es-ES');
+        await supabase
+          .from("bookings")
+          .update({ 
+            notes: `[✓ COMPLETADA] [💳 COBRADA] ${today}`,
+            status: "confirmed" // Keep as confirmed, the notes indicate completion
+          })
+          .eq("id", selectedBookingId);
+        
+        // Refresh today's bookings list
+        fetchTodayBookings();
+      }
 
       // Reduce stock for products and check for low stock
       const productItems = selectedItems.filter((item) => item.type === "product");
@@ -629,6 +761,52 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:min-h-[calc(100vh-220px)] lg:items-stretch">
       {/* Left: Items Grid */}
       <div className="flex-1 flex flex-col min-h-0 lg:min-w-0">
+        {/* Today's Bookings - Quick Charge */}
+        {todayBookings.length > 0 && (
+          <div className="mb-3 sm:mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Citas de hoy</span>
+              <Badge variant="secondary" className="text-xs">
+                {todayBookings.length}
+              </Badge>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+              {todayBookings.map((booking) => {
+                const isSelected = selectedBookingId === booking.id;
+                const servicesText = Array.isArray(booking.services)
+                  ? booking.services.map((s: any) => s.name || s).join(", ")
+                  : "";
+                
+                return (
+                  <button
+                    key={booking.id}
+                    onClick={() => loadBookingData(booking)}
+                    className={cn(
+                      "shrink-0 flex flex-col items-start p-2.5 sm:p-3 rounded-xl border-2 transition-all min-w-[140px] max-w-[180px]",
+                      isSelected
+                        ? "border-primary bg-primary/10 shadow-md"
+                        : "border-muted bg-muted/30 hover:border-primary/50 hover:bg-muted/50"
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5 w-full">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="font-bold text-sm">{booking.Hora.slice(0, 5)}</span>
+                      {isSelected && <CheckCircle2 className="h-3.5 w-3.5 text-primary ml-auto" />}
+                    </div>
+                    <span className="font-medium text-sm truncate w-full text-left mt-1">
+                      {booking.customer_name}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground truncate w-full text-left">
+                      {servicesText.slice(0, 40)}{servicesText.length > 40 ? "..." : ""}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Category Pills */}
         <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 sm:pb-3 scrollbar-hide -mx-1 px-1">
           {categories.map((cat) => (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Percent, Package, ShoppingBag, Target, BarChart3, Lock } from "lucide-react";
 import { CashRegisterManager } from "../CashRegisterManager";
@@ -29,6 +29,17 @@ interface TabConfig {
 const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
   const [activeTab, setActiveTab] = useState<BusinessTab>("products");
   const { hasFeature, planSlug, loading } = usePlanLimits(tenantId);
+
+  // Check for pending charge from agenda and auto-open cash tab
+  useEffect(() => {
+    const openCashTab = sessionStorage.getItem('openCashTab');
+    const pendingBooking = sessionStorage.getItem('pendingChargeBooking');
+    
+    if ((openCashTab || pendingBooking) && hasFeature('cash_register')) {
+      setActiveTab("cash");
+      sessionStorage.removeItem('openCashTab');
+    }
+  }, [hasFeature]);
 
   const tabs: TabConfig[] = [
     { id: "cash", label: "Caja", icon: Wallet, requiredFeature: "cash_register", requiredPlan: "pro" },

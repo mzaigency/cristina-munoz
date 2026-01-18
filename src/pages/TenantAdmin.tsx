@@ -323,7 +323,17 @@ export default function TenantAdmin() {
           />
         );
       case "agenda":
-        return <AgendaSection key={refreshKey} tenantId={tenant.id} />;
+        return (
+          <AgendaSection 
+            key={refreshKey} 
+            tenantId={tenant.id}
+            onNavigateToCash={() => {
+              setActiveTab("business");
+              // Signal to open cash tab
+              sessionStorage.setItem('openCashTab', 'true');
+            }}
+          />
+        );
       case "clients":
         return <ClientsCRM key={refreshKey} tenantId={tenant.id} />;
       case "business":
