@@ -335,6 +335,7 @@ const TenantLanding = () => {
             email={tenant.email}
             instagramUrl={tenant.instagram_url}
             facebookUrl={tenant.facebook_url}
+            tiktokUrl={tenant.tiktok_url}
             googleMapsUrl={tenant.google_maps_url}
             primaryColor={primaryColor}
           />

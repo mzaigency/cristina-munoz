@@ -3,6 +3,12 @@ import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 
+const TikTokIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+  </svg>
+);
+
 interface TenantLocationSectionProps {
   tenantName: string;
   address?: string | null;
@@ -12,8 +18,9 @@ interface TenantLocationSectionProps {
   email?: string | null;
   instagramUrl?: string | null;
   facebookUrl?: string | null;
+  tiktokUrl?: string | null;
   googleMapsUrl?: string | null;
-  primaryColor?: string; // kept for backwards compatibility but not used
+  primaryColor?: string;
 }
 
 export const TenantLocationSection = ({
@@ -25,6 +32,7 @@ export const TenantLocationSection = ({
   email,
   instagramUrl,
   facebookUrl,
+  tiktokUrl,
   googleMapsUrl,
 }: TenantLocationSectionProps) => {
   const fullAddress = [address, city, postalCode].filter(Boolean).join(", ");
@@ -104,7 +112,7 @@ export const TenantLocationSection = ({
                 )}
 
                 {/* Social Links */}
-                {(instagramUrl || facebookUrl) && (
+                {(instagramUrl || facebookUrl || tiktokUrl) && (
                   <div className="pt-4 border-t">
                     <p className="font-medium mb-3">Síguenos</p>
                     <div className="flex gap-3">
@@ -129,6 +137,18 @@ export const TenantLocationSection = ({
                         >
                           <a href={facebookUrl} target="_blank" rel="noopener noreferrer">
                             <Facebook className="h-5 w-5" />
+                          </a>
+                        </Button>
+                      )}
+                      {tiktokUrl && (
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          asChild
+                          className="hover:bg-black hover:text-white hover:border-transparent"
+                        >
+                          <a href={tiktokUrl} target="_blank" rel="noopener noreferrer">
+                            <TikTokIcon className="h-5 w-5" />
                           </a>
                         </Button>
                       )}
