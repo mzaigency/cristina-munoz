@@ -195,7 +195,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
                 >
                   {pkg.discount_percentage && pkg.discount_percentage > 0 && (
                     <Badge className="absolute -top-2 -right-2 bg-green-500 text-white">
-                      -{pkg.discount_percentage}%
+                      -{Math.round(pkg.discount_percentage)}%
                     </Badge>
                   )}
                   <div className="flex items-start justify-between gap-3">
@@ -247,7 +247,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
           {services.map((service) => renderServiceItem(service, !!selectedPackage))}
         </div>
       ) : (
-        <Accordion type="multiple" className="w-full" defaultValue={categories}>
+        <Accordion type="multiple" className="w-full">
           {categories.map((category) => {
             const categoryServices = groupedServices[category];
             if (!categoryServices || categoryServices.length === 0) return null;
