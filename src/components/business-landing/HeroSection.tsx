@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, Play, Sparkles, Calendar, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Play, Sparkles, Calendar, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const HeroSection = () => {
   const navigate = useNavigate();
@@ -49,8 +49,8 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
           >
-            Tu salón de belleza merece más que una libreta. Reservas automáticas 24/7, 
-            cero llamadas perdidas y clientes que vuelven.
+            Tu salón de belleza merece más que una libreta. Reservas automáticas 24/7, cero llamadas perdidas y clientes
+            que vuelven.
           </motion.p>
 
           {/* Key benefits pills */}
@@ -61,14 +61,11 @@ export const HeroSection = () => {
             className="flex flex-wrap justify-center gap-3 mb-10"
           >
             {[
-              { icon: Calendar, text: 'Tu propia web' },
-              { icon: Clock, text: 'Reservas 24/7' },
-              { icon: Sparkles, text: 'Listo en 15 min' },
+              { icon: Calendar, text: "Tu propia web" },
+              { icon: Clock, text: "Reservas 24/7" },
+              { icon: Sparkles, text: "Listo en 5 min" },
             ].map((item, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border"
-              >
+              <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border">
                 <item.icon className="w-4 h-4 text-primary" />
                 <span className="text-sm font-medium">{item.text}</span>
               </div>
@@ -85,7 +82,7 @@ export const HeroSection = () => {
             <Button
               size="lg"
               className="w-full sm:w-auto text-lg px-8 py-6 rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
-              onClick={() => navigate('/auth?mode=register&business=true')}
+              onClick={() => navigate("/auth?mode=register&business=true")}
             >
               Empezar gratis
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -95,7 +92,7 @@ export const HeroSection = () => {
               variant="outline"
               className="w-full sm:w-auto text-lg px-8 py-6 rounded-full"
               onClick={() => {
-                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
               }}
             >
               <Play className="mr-2 w-5 h-5" />
@@ -124,7 +121,7 @@ export const HeroSection = () => {
           <div className="relative">
             {/* Glow effect */}
             <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-primary/5 to-transparent rounded-2xl blur-2xl transform scale-95" />
-            
+
             {/* Mockup frame */}
             <div className="relative bg-gradient-to-b from-muted/80 to-muted/40 backdrop-blur-sm rounded-2xl border border-border/50 p-2 shadow-2xl">
               {/* Browser bar */}
@@ -140,7 +137,7 @@ export const HeroSection = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Dashboard preview placeholder */}
               <div className="aspect-[16/9] bg-gradient-to-br from-background to-muted/50 rounded-lg overflow-hidden">
                 <div className="w-full h-full flex items-center justify-center">
