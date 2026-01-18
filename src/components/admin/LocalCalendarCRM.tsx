@@ -1293,13 +1293,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                           {/* Content - always visible, adaptive layout */}
                                           <div
                                             className={cn(
-                                              "h-full flex flex-col px-2 py-1 pr-14",
+                                              "h-full flex flex-col px-2 py-1",
                                               isCompact ? "justify-center" : "justify-between",
                                             )}
                                           >
                                             {isCompact ? (
                                               // Ultra compact: single line with all info
-                                              <div className="flex items-center gap-1 min-w-0">
+                                              <div className="flex items-center gap-1 min-w-0 pr-10">
                                                 {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
                                                 <span className="font-semibold text-xs truncate text-foreground">
                                                   {booking.customer_name}
@@ -1311,7 +1311,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                             ) : (
                                               // Normal/expanded layout
                                               <>
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 pr-10">
                                                   <div className="flex items-center gap-1">
                                                     {isCompleted && (
                                                       <Check className="h-3 w-3 text-green-600 shrink-0" />
@@ -1319,9 +1319,6 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                     <p className="font-semibold text-sm truncate text-foreground leading-tight">
                                                       {booking.customer_name}
                                                     </p>
-                                                    {!isBlocked && (
-                                                      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 ml-auto" />
-                                                    )}
                                                   </div>
                                                   <p
                                                     className="text-xs font-medium truncate"
@@ -1341,9 +1338,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                             )}
                                           </div>
 
-                                          {/* Floating action buttons - always visible */}
+                                          {/* Compact floating action buttons - top right corner */}
                                           {!isBlocked && (
-                                            <div className="absolute top-1 right-1 flex gap-1 z-20">
+                                            <div className="absolute top-0.5 right-0.5 flex items-center gap-0.5 z-20 opacity-70 hover:opacity-100 transition-opacity">
                                               {/* Completar */}
                                               <button
                                                 onClick={(e) => {
@@ -1351,14 +1348,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                   handleMarkCompleted(booking);
                                                 }}
                                                 className={cn(
-                                                  "p-1.5 rounded-full shadow-sm border transition-all",
+                                                  "p-1 rounded transition-all",
                                                   isCompleted
-                                                    ? "bg-green-100 text-green-600 border-green-200"
-                                                    : "bg-white/90 text-gray-500 hover:text-green-600 hover:bg-green-50 border-gray-200"
+                                                    ? "bg-green-500 text-white"
+                                                    : "bg-black/20 text-white hover:bg-green-500"
                                                 )}
                                                 title={isCompleted ? "Desmarcar" : "Completar"}
                                               >
-                                                <Check className="h-3.5 w-3.5" />
+                                                <Check className="h-3 w-3" />
                                               </button>
 
                                               {/* Cobrar - solo si no completada */}
@@ -1376,10 +1373,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                     }));
                                                     onNavigateToCash();
                                                   }}
-                                                  className="p-1.5 rounded-full bg-white/90 shadow-sm border border-gray-200 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+                                                  className="p-1 rounded bg-black/20 text-white hover:bg-emerald-500 transition-all"
                                                   title="Cobrar"
                                                 >
-                                                  <Banknote className="h-3.5 w-3.5" />
+                                                  <Banknote className="h-3 w-3" />
                                                 </button>
                                               )}
 
@@ -1389,10 +1386,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                   e.stopPropagation();
                                                   handleDeleteBooking(booking);
                                                 }}
-                                                className="p-1.5 rounded-full bg-white/90 shadow-sm border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all"
+                                                className="p-1 rounded bg-black/20 text-white hover:bg-red-500 transition-all"
                                                 title="Eliminar"
                                               >
-                                                <Trash2 className="h-3.5 w-3.5" />
+                                                <Trash2 className="h-3 w-3" />
                                               </button>
                                             </div>
                                           )}
