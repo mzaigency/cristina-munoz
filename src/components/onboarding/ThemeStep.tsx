@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, Layers, ChevronLeft, ChevronRight, Eye, Star, MapPin, Clock, Calendar, X } from "lucide-react";
+import { Check, Layers, ChevronLeft, ChevronRight, Expand, Star, MapPin, Clock, X, Users, Scissors } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { landingThemes, LandingTheme } from "./landing-themes";
@@ -12,9 +12,53 @@ interface ThemeStepProps extends StepProps {
   tenantName?: string;
 }
 
+interface TenantData {
+  name: string;
+  tagline: string | null;
+  city: string | null;
+  hero_image_url: string | null;
+  logo_url: string | null;
+  address: string | null;
+}
+
+interface StylistData {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
+interface ServiceData {
+  id: string;
+  name: string;
+  price: number | null;
+  duration_part1_active: number;
+}
+
 export function ThemeStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading }: ThemeStepProps) {
   const [selectedTheme, setSelectedTheme] = useState<string>("immersive");
   const [previewTheme, setPreviewTheme] = useState<LandingTheme | null>(null);
+  const [tenantData, setTenantData] = useState<TenantData | null>(null);
+  const [stylists, setStylists] = useState<StylistData[]>([]);
+  const [services, setServices] = useState<ServiceData[]>([]);
+
+  // Cargar datos reales del salón
+  useEffect(() => {
+    const loadTenantData = async () => {
+      if (!tenantId) return;
+
+      const [tenantRes, stylistsRes, servicesRes] = await Promise.all([
+        supabase.from("tenants").select("name, tagline, city, hero_image_url, logo_url, address").eq("id", tenantId).single(),
+        supabase.from("tenant_stylists").select("id, name, avatar_url").eq("tenant_id", tenantId).eq("is_active", true).limit(4),
+        supabase.from("services").select("id, name, price, duration_part1_active").eq("tenant_id", tenantId).limit(4),
+      ]);
+
+      if (tenantRes.data) setTenantData(tenantRes.data);
+      if (stylistsRes.data) setStylists(stylistsRes.data);
+      if (servicesRes.data) setServices(servicesRes.data);
+    };
+
+    loadTenantData();
+  }, [tenantId]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -46,6 +90,8 @@ export function ThemeStep({ onNext, onPrev, tenantId, tenantName, loading, setLo
     }
   };
 
+  const displayName = tenantData?.name || tenantName || "Tu Negocio";
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -62,11 +108,11 @@ export function ThemeStep({ onNext, onPrev, tenantId, tenantName, loading, setLo
           Elige tu estilo de landing
         </h3>
         <p className="text-muted-foreground text-sm">
-          Cada tema tiene una composición visual única
+          Vista previa con los datos de <span className="font-medium text-foreground">{displayName}</span>
         </p>
       </div>
 
-      {/* Theme Grid */}
+      {/* Theme Grid - 2 columns on mobile */}
       <div className="grid grid-cols-2 gap-3">
         {landingThemes.map((theme) => (
           <ThemeCard
@@ -75,7 +121,9 @@ export function ThemeStep({ onNext, onPrev, tenantId, tenantName, loading, setLo
             selected={selectedTheme === theme.id}
             onSelect={() => setSelectedTheme(theme.id)}
             onPreview={() => setPreviewTheme(theme)}
-            tenantName={tenantName}
+            tenantData={tenantData}
+            stylists={stylists}
+            services={services}
           />
         ))}
       </div>
@@ -87,7 +135,7 @@ export function ThemeStep({ onNext, onPrev, tenantId, tenantName, loading, setLo
             variant="outline"
             onClick={onPrev}
             disabled={loading}
-            className="flex-1"
+            className="flex-1 h-12 rounded-xl"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             Anterior
@@ -96,7 +144,7 @@ export function ThemeStep({ onNext, onPrev, tenantId, tenantName, loading, setLo
         <Button
           onClick={handleSave}
           disabled={loading}
-          className="flex-1"
+          className="flex-1 h-12 rounded-xl"
         >
           {loading ? "Guardando..." : "Continuar"}
           <ChevronRight className="w-4 h-4 ml-1" />
@@ -108,7 +156,9 @@ export function ThemeStep({ onNext, onPrev, tenantId, tenantName, loading, setLo
         {previewTheme && (
           <ThemePreviewModal
             theme={previewTheme}
-            tenantName={tenantName || "Tu Negocio"}
+            tenantData={tenantData}
+            stylists={stylists}
+            services={services}
             onClose={() => setPreviewTheme(null)}
             onSelect={() => {
               setSelectedTheme(previewTheme.id);
@@ -127,16 +177,17 @@ interface ThemeCardProps {
   selected: boolean;
   onSelect: () => void;
   onPreview: () => void;
-  tenantName?: string;
+  tenantData: TenantData | null;
+  stylists: StylistData[];
+  services: ServiceData[];
 }
 
-function ThemeCard({ theme, selected, onSelect, onPreview, tenantName }: ThemeCardProps) {
+function ThemeCard({ theme, selected, onSelect, onPreview, tenantData, stylists, services }: ThemeCardProps) {
   return (
-    <motion.button
-      onClick={onSelect}
+    <motion.div
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "relative p-2 rounded-2xl border-2 transition-all text-left",
+        "relative rounded-2xl border-2 transition-all overflow-hidden",
         selected 
           ? "border-primary ring-2 ring-primary/20 bg-primary/5" 
           : "border-border hover:border-primary/50"
@@ -147,134 +198,137 @@ function ThemeCard({ theme, selected, onSelect, onPreview, tenantName }: ThemeCa
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg z-10"
+          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg z-20"
         >
           <Check className="w-4 h-4 text-primary-foreground" />
         </motion.div>
       )}
 
-      {/* iPhone Frame Mini Preview */}
-      <div className="relative mx-auto w-full max-w-[120px]">
-        <PhoneFrame size="mini">
-          <ThemeMiniPreview theme={theme} tenantName={tenantName} />
-        </PhoneFrame>
+      {/* Clickable area for selection */}
+      <button
+        onClick={onSelect}
+        className="w-full text-left"
+      >
+        {/* Mini Preview */}
+        <div className="relative aspect-[9/14] overflow-hidden">
+          <ThemeMiniPreview 
+            theme={theme} 
+            tenantData={tenantData}
+            services={services}
+          />
+        </div>
+      </button>
+
+      {/* Info bar with preview button */}
+      <div className="p-2.5 bg-background border-t border-border/50 flex items-center justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate">{theme.name}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{theme.description}</p>
+        </div>
         
-        {/* Preview button */}
+        {/* Preview button - prominent */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             onPreview();
           }}
-          className="absolute bottom-3 right-0 p-1.5 rounded-full bg-white/95 backdrop-blur-sm shadow-md hover:bg-white transition-colors border border-border/50"
+          className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
         >
-          <Eye className="w-3.5 h-3.5 text-foreground" />
+          <Expand className="w-3.5 h-3.5" />
+          <span className="text-xs font-medium">Ver</span>
         </button>
       </div>
-
-      {/* Info */}
-      <div className="mt-2 text-center">
-        <p className="text-sm font-semibold text-foreground">{theme.name}</p>
-        <p className="text-[10px] text-muted-foreground line-clamp-1">{theme.description}</p>
-      </div>
-    </motion.button>
+    </motion.div>
   );
 }
 
-// Phone Frame Component
-function PhoneFrame({ children, size = "normal" }: { children: React.ReactNode; size?: "mini" | "normal" }) {
-  const isMini = size === "mini";
-  
-  return (
-    <div className={cn(
-      "relative bg-[#1a1a1a] rounded-[24px] p-[3px] shadow-xl",
-      isMini ? "rounded-[16px] p-[2px]" : ""
-    )}>
-      {/* Notch */}
-      <div className={cn(
-        "absolute top-0 left-1/2 -translate-x-1/2 bg-[#1a1a1a] rounded-b-xl z-10",
-        isMini ? "w-12 h-3" : "w-20 h-5"
-      )} />
-      
-      {/* Screen */}
-      <div className={cn(
-        "relative bg-white overflow-hidden",
-        isMini ? "rounded-[14px] aspect-[9/17]" : "rounded-[22px] aspect-[9/19]"
-      )}>
-        {children}
-      </div>
-      
-      {/* Home indicator */}
-      <div className={cn(
-        "absolute bottom-1 left-1/2 -translate-x-1/2 bg-white/50 rounded-full",
-        isMini ? "w-8 h-0.5" : "w-20 h-1"
-      )} />
-    </div>
-  );
-}
-
-// Mini Preview Component
+// Mini Preview Component with real data
 interface ThemeMiniPreviewProps {
   theme: LandingTheme;
-  tenantName?: string;
+  tenantData: TenantData | null;
+  services: ServiceData[];
 }
 
-function ThemeMiniPreview({ theme, tenantName = "Tu Salón" }: ThemeMiniPreviewProps) {
+function ThemeMiniPreview({ theme, tenantData, services }: ThemeMiniPreviewProps) {
   const { heroLayout, defaultColors } = theme;
+  const name = tenantData?.name || "Tu Salón";
+  const hasImage = !!tenantData?.hero_image_url;
+  const hasLogo = !!tenantData?.logo_url;
 
-  // Status bar
-  const StatusBar = () => (
-    <div className="absolute top-0 left-0 right-0 h-4 flex items-center justify-between px-2 z-20">
-      <span className="text-[6px] font-medium text-white/90">9:41</span>
-      <div className="flex items-center gap-0.5">
-        <div className="w-2 h-1.5 bg-white/90 rounded-sm" />
-      </div>
-    </div>
-  );
+  // Base gradient style
+  const gradientBg = `linear-gradient(135deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 100%)`;
 
   if (heroLayout === "fullscreen") {
     return (
       <div 
-        className="w-full h-full flex flex-col items-center justify-center relative"
-        style={{ background: `linear-gradient(135deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 100%)` }}
+        className="w-full h-full flex flex-col items-center justify-center relative p-3"
+        style={{ 
+          background: hasImage 
+            ? `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url(${tenantData?.hero_image_url}) center/cover` 
+            : gradientBg 
+        }}
       >
-        <StatusBar />
-        <div className="w-5 h-5 rounded-lg bg-white/30 mb-1.5" />
-        <div className="w-14 h-1.5 rounded bg-white/95 mb-0.5" />
-        <div className="w-10 h-1 rounded bg-white/60 mb-2" />
-        <div className="flex items-center gap-0.5 mb-2">
+        {/* Logo or placeholder */}
+        {hasLogo ? (
+          <img src={tenantData?.logo_url!} alt="" className="w-8 h-8 rounded-lg object-cover mb-2" />
+        ) : (
+          <div className="w-8 h-8 rounded-lg bg-white/20 mb-2" />
+        )}
+        
+        <div className="w-full max-w-[90%] h-2 rounded bg-white/90 mb-1" />
+        <div className="w-2/3 h-1.5 rounded bg-white/60 mb-2" />
+        
+        {/* Stars */}
+        <div className="flex gap-0.5 mb-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="w-1.5 h-1.5 rounded-full bg-yellow-300" />
+            <div key={i} className="w-2 h-2 rounded-full bg-yellow-400" />
           ))}
         </div>
-        <div className="w-12 h-3 rounded-full bg-white/90" />
+        
+        <div className="w-16 h-4 rounded-full bg-white/90" />
+        
+        {/* Service pills */}
+        {services.length > 0 && (
+          <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+            {services.slice(0, 2).map((s, i) => (
+              <div key={i} className="flex-1 h-3 rounded bg-white/20 backdrop-blur-sm" />
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
   if (heroLayout === "minimal") {
     return (
-      <div className="w-full h-full bg-white flex flex-col relative">
-        <div className="absolute top-0 left-0 right-0 h-4 flex items-center justify-between px-2 z-20">
-          <span className="text-[6px] font-medium text-foreground/70">9:41</span>
-          <div className="flex items-center gap-0.5">
-            <div className="w-2 h-1.5 bg-foreground/70 rounded-sm" />
+      <div className="w-full h-full bg-white flex flex-col p-3">
+        {/* Header */}
+        <div className="flex flex-col items-center pt-4 pb-3">
+          <div className="w-full max-w-[85%] h-2.5 rounded bg-foreground/80 mb-1" />
+          <div className="w-12 h-0.5 mb-1" style={{ backgroundColor: defaultColors.primary }} />
+          <div className="w-2/3 h-1.5 rounded bg-muted-foreground/40 mb-3" />
+          
+          <div 
+            className="px-4 py-1.5 rounded border-[1.5px] text-[8px] font-medium"
+            style={{ borderColor: defaultColors.primary, color: defaultColors.primary }}
+          >
+            Reservar
           </div>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center pt-4">
-          <div className="w-16 h-2 rounded bg-foreground/85 mb-1" />
-          <div 
-            className="w-6 h-0.5 mb-1" 
-            style={{ backgroundColor: defaultColors.primary }} 
-          />
-          <div className="w-12 h-1 rounded bg-muted-foreground/40 mb-2" />
-          <div 
-            className="w-10 h-2.5 rounded border-[1.5px]" 
-            style={{ borderColor: defaultColors.primary }} 
-          />
-        </div>
-        <div className="p-1.5 flex gap-1">
-          <div className="flex-1 aspect-square rounded-md bg-muted" />
-          <div className="flex-1 aspect-square rounded-md bg-muted" />
+        
+        {/* Gallery grid */}
+        <div className="flex-1 grid grid-cols-2 gap-1.5 mt-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div 
+              key={i} 
+              className="rounded-md overflow-hidden"
+              style={{ 
+                background: hasImage && i === 0 
+                  ? `url(${tenantData?.hero_image_url}) center/cover` 
+                  : 'linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(var(--muted)/0.5) 100%)' 
+              }}
+            />
+          ))}
         </div>
       </div>
     );
@@ -282,18 +336,30 @@ function ThemeMiniPreview({ theme, tenantName = "Tu Salón" }: ThemeMiniPreviewP
 
   if (heroLayout === "split") {
     return (
-      <div className="w-full h-full flex flex-col relative">
-        <StatusBar />
+      <div className="w-full h-full flex flex-col">
+        {/* Top image */}
         <div 
-          className="h-[45%]"
-          style={{ background: `linear-gradient(135deg, ${defaultColors.primary}90 0%, ${defaultColors.secondary}90 100%)` }}
+          className="h-[40%]"
+          style={{ 
+            background: hasImage 
+              ? `url(${tenantData?.hero_image_url}) center/cover` 
+              : gradientBg 
+          }}
         />
-        <div className="flex-1 bg-white flex flex-col items-start justify-center px-2">
-          <div className="w-4 h-4 rounded bg-muted mb-1" />
-          <div className="w-12 h-1.5 rounded bg-foreground/80 mb-0.5" />
-          <div className="w-8 h-1 rounded bg-muted-foreground/40 mb-1.5" />
+        
+        {/* Content */}
+        <div className="flex-1 bg-white p-3 flex flex-col justify-center">
+          {hasLogo && (
+            <img src={tenantData?.logo_url!} alt="" className="w-6 h-6 rounded object-cover mb-1.5" />
+          )}
+          <div className="w-full h-2 rounded bg-foreground/80 mb-1" />
+          <div className="flex gap-0.5 mb-1.5">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+            ))}
+          </div>
           <div 
-            className="w-8 h-2.5 rounded"
+            className="w-full h-4 rounded-lg"
             style={{ backgroundColor: defaultColors.primary }}
           />
         </div>
@@ -301,38 +367,91 @@ function ThemeMiniPreview({ theme, tenantName = "Tu Salón" }: ThemeMiniPreviewP
     );
   }
 
-  // Bold
-  return (
-    <div className="w-full h-full bg-white flex flex-col p-1.5 relative">
-      <div className="absolute top-0 left-0 right-0 h-4 flex items-center justify-between px-2 z-20">
-        <span className="text-[6px] font-medium text-white/90">9:41</span>
-        <div className="flex items-center gap-0.5">
-          <div className="w-2 h-1.5 bg-white/90 rounded-sm" />
+  if (heroLayout === "bold") {
+    return (
+      <div className="w-full h-full bg-muted/30 p-2 flex flex-col">
+        {/* Hero card */}
+        <div 
+          className="flex-1 rounded-xl flex flex-col items-center justify-center p-2 relative overflow-hidden"
+          style={{ 
+            background: hasImage 
+              ? `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.5)), url(${tenantData?.hero_image_url}) center/cover` 
+              : gradientBg 
+          }}
+        >
+          {/* Decorative */}
+          <div className="absolute top-2 right-2 w-8 h-8 border border-white/20 rounded-full" />
+          
+          {hasLogo ? (
+            <img src={tenantData?.logo_url!} alt="" className="w-6 h-6 rounded object-cover mb-1" />
+          ) : (
+            <div className="w-6 h-6 rounded bg-white/20 mb-1" />
+          )}
+          <div className="w-14 h-1.5 rounded bg-white mb-0.5" />
+          <div className="w-8 h-1 rounded bg-white/60 mb-2" />
+          <div className="w-12 h-3.5 rounded-lg bg-white" />
+        </div>
+        
+        {/* Info card */}
+        <div className="mt-1.5 p-2 rounded-lg bg-card border border-border">
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-primary/10" />
+            <div className="flex-1">
+              <div className="w-full h-1 rounded bg-muted-foreground/30" />
+            </div>
+          </div>
         </div>
       </div>
-      <div 
-        className="flex-1 rounded-lg flex flex-col items-center justify-center"
-        style={{ background: `linear-gradient(135deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 100%)` }}
-      >
-        <div className="w-4 h-4 rounded-md bg-white/30 mb-1" />
-        <div className="w-10 h-1.5 rounded bg-white mb-0.5" />
-        <div className="w-6 h-1 rounded bg-white/60 mb-1.5" />
-        <div className="w-8 h-2.5 rounded bg-white" />
+    );
+  }
+
+  // Glass (default)
+  return (
+    <div 
+      className="w-full h-full flex flex-col items-center justify-center relative p-3"
+      style={{ 
+        background: hasImage 
+          ? `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url(${tenantData?.hero_image_url}) center/cover` 
+          : gradientBg 
+      }}
+    >
+      {/* Glass card */}
+      <div className="w-[90%] p-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex flex-col items-center">
+        {hasLogo ? (
+          <img src={tenantData?.logo_url!} alt="" className="w-6 h-6 rounded-lg object-cover mb-1.5" />
+        ) : (
+          <div className="w-6 h-6 rounded-lg bg-white/30 mb-1.5" />
+        )}
+        <div className="w-full h-1.5 rounded bg-white/90 mb-0.5" />
+        <div className="w-2/3 h-1 rounded bg-white/60 mb-2" />
+        <div className="w-10 h-3 rounded-full bg-white/90" />
       </div>
-      <div className="h-6 mt-1 rounded-md bg-muted" />
+      
+      {/* Bottom services */}
+      {services.length > 0 && (
+        <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+          {services.slice(0, 2).map((s, i) => (
+            <div key={i} className="flex-1 h-3 rounded bg-white/20 backdrop-blur-sm" />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-// Preview Modal
+// Preview Modal with real data
 interface ThemePreviewModalProps {
   theme: LandingTheme;
-  tenantName: string;
+  tenantData: TenantData | null;
+  stylists: StylistData[];
+  services: ServiceData[];
   onClose: () => void;
   onSelect: () => void;
 }
 
-function ThemePreviewModal({ theme, tenantName, onClose, onSelect }: ThemePreviewModalProps) {
+function ThemePreviewModal({ theme, tenantData, stylists, services, onClose, onSelect }: ThemePreviewModalProps) {
+  const displayName = tenantData?.name || "Tu Negocio";
+  
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -342,12 +461,12 @@ function ThemePreviewModal({ theme, tenantName, onClose, onSelect }: ThemePrevie
       onClick={onClose}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[280px]"
+        className="relative w-full max-w-[300px]"
       >
         {/* Close button */}
         <button
@@ -358,14 +477,44 @@ function ThemePreviewModal({ theme, tenantName, onClose, onSelect }: ThemePrevie
         </button>
 
         {/* Phone Frame */}
-        <PhoneFrame size="normal">
-          <ThemeLargePreview theme={theme} tenantName={tenantName} />
-        </PhoneFrame>
+        <div className="relative bg-[#1a1a1a] rounded-[28px] p-[4px] shadow-2xl">
+          {/* Notch */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#1a1a1a] rounded-b-2xl z-10" />
+          
+          {/* Screen */}
+          <div className="relative bg-white rounded-[24px] overflow-hidden aspect-[9/19]">
+            <ThemeFullPreview 
+              theme={theme} 
+              tenantData={tenantData}
+              stylists={stylists}
+              services={services}
+            />
+          </div>
+          
+          {/* Home indicator */}
+          <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-24 h-1 bg-white/50 rounded-full" />
+        </div>
 
         {/* Theme Info & Actions */}
         <div className="mt-6 text-center">
           <h4 className="font-semibold text-lg text-white">{theme.name}</h4>
           <p className="text-sm text-white/70 mb-4">{theme.description}</p>
+          
+          {/* Stats from real data */}
+          <div className="flex justify-center gap-4 mb-4 text-white/60 text-xs">
+            {services.length > 0 && (
+              <div className="flex items-center gap-1">
+                <Scissors className="w-3 h-3" />
+                <span>{services.length} servicios</span>
+              </div>
+            )}
+            {stylists.length > 0 && (
+              <div className="flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                <span>{stylists.length} profesionales</span>
+              </div>
+            )}
+          </div>
           
           <div className="flex gap-2">
             <Button 
@@ -389,74 +538,84 @@ function ThemePreviewModal({ theme, tenantName, onClose, onSelect }: ThemePrevie
   );
 }
 
-// Large Preview Component with realistic UI elements
-function ThemeLargePreview({ theme, tenantName }: { theme: LandingTheme; tenantName: string }) {
-  const { heroLayout, defaultColors, recommendedFonts } = theme;
+// Full Preview Component with real data
+interface ThemeFullPreviewProps {
+  theme: LandingTheme;
+  tenantData: TenantData | null;
+  stylists: StylistData[];
+  services: ServiceData[];
+}
 
-  // Realistic status bar
+function ThemeFullPreview({ theme, tenantData, stylists, services }: ThemeFullPreviewProps) {
+  const { heroLayout, defaultColors, recommendedFonts } = theme;
+  const name = tenantData?.name || "Tu Negocio";
+  const tagline = tenantData?.tagline || "Tu espacio de belleza y bienestar";
+  const city = tenantData?.city || "Centro";
+  const address = tenantData?.address || "Calle Principal, 123";
+  const hasImage = !!tenantData?.hero_image_url;
+  const hasLogo = !!tenantData?.logo_url;
+
+  const gradientBg = `linear-gradient(135deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 100%)`;
+
+  // Status bar
   const StatusBar = ({ light = true }: { light?: boolean }) => (
     <div className={cn(
       "absolute top-0 left-0 right-0 h-7 flex items-center justify-between px-5 z-20",
       light ? "text-white" : "text-foreground"
     )}>
       <span className="text-[11px] font-semibold">9:41</span>
-      <div className="flex items-center gap-1">
-        <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor" className="opacity-90">
-          <path d="M1.5 4.5h1v4h-1zm2.5-1h1v5H4zm2.5-1h1v6H6.5zm2.5-1h1v7H9z"/>
-        </svg>
-        <svg width="14" height="11" viewBox="0 0 14 11" fill="currentColor" className="opacity-90">
-          <path d="M7 0C4.24 0 1.81 1.24.12 3.2l1.06 1.06C2.52 2.72 4.6 1.8 7 1.8s4.48.92 5.82 2.46l1.06-1.06C12.19 1.24 9.76 0 7 0zm0 3.6c-1.6 0-3.04.64-4.1 1.68l1.06 1.06C4.76 5.56 5.8 5.1 7 5.1s2.24.46 3.04 1.24l1.06-1.06C10.04 4.24 8.6 3.6 7 3.6zM7 7a2.25 2.25 0 100 4.5A2.25 2.25 0 007 7z"/>
-        </svg>
-        <div className="flex items-center">
-          <div className="w-5 h-2.5 bg-current opacity-90 rounded-sm relative">
-            <div className="absolute right-0.5 top-0.5 bottom-0.5 left-0.5 bg-current rounded-[1px]" style={{ width: '80%' }} />
-          </div>
-          <div className="w-[1.5px] h-1 bg-current opacity-90 rounded-r-sm ml-[1px]" />
-        </div>
+      <div className="flex items-center gap-1.5">
+        <div className={cn("w-4 h-2.5 rounded-sm", light ? "bg-white/80" : "bg-foreground/80")} />
       </div>
     </div>
   );
 
-  // Service card component
-  const ServiceCard = ({ name, price }: { name: string; price: string }) => (
-    <div className="flex items-center justify-between p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm">
+  // Service card with real data
+  const ServiceCard = ({ service }: { service: ServiceData }) => (
+    <div className="flex items-center justify-between p-3 bg-white/90 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm">
       <div>
-        <p className="text-sm font-medium text-foreground">{name}</p>
-        <p className="text-xs text-muted-foreground">45 min</p>
+        <p className="text-sm font-medium text-foreground">{service.name}</p>
+        <p className="text-xs text-muted-foreground">{service.duration_part1_active} min</p>
       </div>
-      <span className="text-sm font-semibold" style={{ color: defaultColors.primary }}>{price}</span>
+      {service.price && (
+        <span className="text-sm font-semibold" style={{ color: defaultColors.primary }}>
+          {service.price}€
+        </span>
+      )}
     </div>
   );
 
   if (heroLayout === "fullscreen") {
     return (
       <div className="w-full h-full overflow-y-auto">
-        {/* Hero Section */}
         <div 
           className="min-h-[85%] flex flex-col items-center justify-center p-6 text-center relative"
-          style={{ background: `linear-gradient(135deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 100%)` }}
+          style={{ 
+            background: hasImage 
+              ? `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url(${tenantData?.hero_image_url}) center/cover` 
+              : gradientBg 
+          }}
         >
           <StatusBar light />
           
           {/* Decorative elements */}
           <div className="absolute top-20 right-6 w-20 h-20 border border-white/10 rounded-full" />
-          <div className="absolute bottom-20 left-6 w-14 h-14 border border-white/10 rounded-full" />
           
-          <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm mb-4 flex items-center justify-center">
-            <span className="text-2xl">✨</span>
-          </div>
+          {hasLogo ? (
+            <img src={tenantData?.logo_url!} alt="" className="w-16 h-16 rounded-2xl object-cover mb-4 shadow-lg" />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm mb-4 flex items-center justify-center">
+              <span className="text-2xl">✨</span>
+            </div>
+          )}
           
-          <h3 
-            className="text-2xl font-bold text-white mb-2"
-            style={{ fontFamily: recommendedFonts.heading }}
-          >
-            {tenantName}
+          <h3 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: recommendedFonts.heading }}>
+            {name}
           </h3>
           <p className="text-white/80 text-sm mb-4" style={{ fontFamily: recommendedFonts.body }}>
-            Tu espacio de belleza y bienestar
+            {tagline}
           </p>
           
-          {/* Rating */}
           <div className="flex items-center gap-1 mb-6">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -471,11 +630,10 @@ function ThemeLargePreview({ theme, tenantName }: { theme: LandingTheme; tenantN
             Reservar cita
           </button>
           
-          {/* Quick info */}
           <div className="flex items-center gap-4 mt-8 text-white/70 text-xs">
             <div className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
-              <span>Centro</span>
+              <span>{city}</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
@@ -484,12 +642,14 @@ function ThemeLargePreview({ theme, tenantName }: { theme: LandingTheme; tenantN
           </div>
         </div>
         
-        {/* Services preview */}
-        <div className="p-4 bg-background space-y-2">
-          <h4 className="text-sm font-semibold text-foreground mb-2">Servicios populares</h4>
-          <ServiceCard name="Corte de cabello" price="25€" />
-          <ServiceCard name="Tinte completo" price="65€" />
-        </div>
+        {services.length > 0 && (
+          <div className="p-4 bg-background space-y-2">
+            <h4 className="text-sm font-semibold text-foreground mb-2">Servicios populares</h4>
+            {services.slice(0, 2).map((service) => (
+              <ServiceCard key={service.id} service={service} />
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -499,23 +659,15 @@ function ThemeLargePreview({ theme, tenantName }: { theme: LandingTheme; tenantN
       <div className="w-full h-full bg-white overflow-y-auto">
         <StatusBar light={false} />
         
-        {/* Hero */}
         <div className="flex flex-col items-center justify-center pt-16 pb-8 px-6 text-center">
-          <h3 
-            className="text-3xl font-light text-foreground mb-2 tracking-tight"
-            style={{ fontFamily: recommendedFonts.heading }}
-          >
-            {tenantName}
+          <h3 className="text-2xl font-light text-foreground mb-2 tracking-tight" style={{ fontFamily: recommendedFonts.heading }}>
+            {name}
           </h3>
-          <div 
-            className="w-16 h-[2px] mb-3" 
-            style={{ backgroundColor: defaultColors.primary }} 
-          />
+          <div className="w-16 h-[2px] mb-3" style={{ backgroundColor: defaultColors.primary }} />
           <p className="text-muted-foreground text-sm mb-6" style={{ fontFamily: recommendedFonts.body }}>
-            Tu espacio de belleza y bienestar
+            {tagline}
           </p>
           
-          {/* Rating */}
           <div className="flex items-center gap-1 mb-4">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
@@ -524,7 +676,7 @@ function ThemeLargePreview({ theme, tenantName }: { theme: LandingTheme; tenantN
           </div>
           
           <button 
-            className="px-8 py-2.5 rounded border-2 text-sm font-medium transition-colors"
+            className="px-8 py-2.5 rounded border-2 text-sm font-medium"
             style={{ borderColor: defaultColors.primary, color: defaultColors.primary }}
           >
             Reservar cita
@@ -533,25 +685,36 @@ function ThemeLargePreview({ theme, tenantName }: { theme: LandingTheme; tenantN
         
         {/* Gallery */}
         <div className="px-4 grid grid-cols-2 gap-2">
-          <div className="aspect-[4/5] rounded-xl bg-gradient-to-br from-muted to-muted/50" />
+          <div 
+            className="aspect-[4/5] rounded-xl"
+            style={{ 
+              background: hasImage 
+                ? `url(${tenantData?.hero_image_url}) center/cover` 
+                : 'linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(var(--muted)/0.5) 100%)' 
+            }}
+          />
           <div className="aspect-[4/5] rounded-xl bg-gradient-to-br from-muted to-muted/50" />
         </div>
         
-        {/* Services */}
-        <div className="p-4 space-y-2 mt-4">
-          <h4 className="text-sm font-medium text-foreground">Nuestros servicios</h4>
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            <div className="flex-shrink-0 px-4 py-2 rounded-full border" style={{ borderColor: defaultColors.primary, color: defaultColors.primary }}>
-              <span className="text-xs font-medium">Corte</span>
-            </div>
-            <div className="flex-shrink-0 px-4 py-2 rounded-full bg-muted">
-              <span className="text-xs text-muted-foreground">Color</span>
-            </div>
-            <div className="flex-shrink-0 px-4 py-2 rounded-full bg-muted">
-              <span className="text-xs text-muted-foreground">Peinado</span>
+        {services.length > 0 && (
+          <div className="p-4 space-y-2 mt-4">
+            <h4 className="text-sm font-medium text-foreground">Nuestros servicios</h4>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {services.map((s, i) => (
+                <div 
+                  key={s.id}
+                  className={cn(
+                    "flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium",
+                    i === 0 ? "border" : "bg-muted text-muted-foreground"
+                  )}
+                  style={i === 0 ? { borderColor: defaultColors.primary, color: defaultColors.primary } : {}}
+                >
+                  {s.name}
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
@@ -561,30 +724,27 @@ function ThemeLargePreview({ theme, tenantName }: { theme: LandingTheme; tenantN
       <div className="w-full h-full flex flex-col overflow-y-auto">
         <StatusBar light />
         
-        {/* Hero image */}
         <div 
           className="h-[40%] relative"
-          style={{ background: `linear-gradient(135deg, ${defaultColors.primary}95 0%, ${defaultColors.secondary}95 100%)` }}
-        >
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-              <Calendar className="w-8 h-8 text-white/80" />
-            </div>
-          </div>
-        </div>
+          style={{ 
+            background: hasImage 
+              ? `url(${tenantData?.hero_image_url}) center/cover` 
+              : gradientBg 
+          }}
+        />
         
-        {/* Content */}
         <div className="flex-1 bg-white p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
-              <span className="text-lg">💇</span>
-            </div>
+            {hasLogo ? (
+              <img src={tenantData?.logo_url!} alt="" className="w-12 h-12 rounded-xl object-cover" />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+                <span className="text-lg">💇</span>
+              </div>
+            )}
             <div>
-              <h3 
-                className="text-xl font-bold text-foreground"
-                style={{ fontFamily: recommendedFonts.heading }}
-              >
-                {tenantName}
+              <h3 className="text-xl font-bold text-foreground" style={{ fontFamily: recommendedFonts.heading }}>
+                {name}
               </h3>
               <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
@@ -596,7 +756,7 @@ function ThemeLargePreview({ theme, tenantName }: { theme: LandingTheme; tenantN
           </div>
           
           <p className="text-muted-foreground text-sm mb-5" style={{ fontFamily: recommendedFonts.body }}>
-            Tu espacio de belleza y bienestar personal
+            {tagline}
           </p>
           
           <button 
@@ -606,85 +766,145 @@ function ThemeLargePreview({ theme, tenantName }: { theme: LandingTheme; tenantN
             Reservar cita
           </button>
           
-          {/* Location */}
           <div className="flex items-center gap-2 mt-6 text-muted-foreground">
             <MapPin className="w-4 h-4" />
-            <span className="text-xs">Calle Principal, 123 • Centro</span>
+            <span className="text-xs">{address} • {city}</span>
           </div>
         </div>
       </div>
     );
   }
 
-  // Bold
-  return (
-    <div className="w-full h-full bg-background flex flex-col p-3 overflow-y-auto">
-      <div className="absolute top-0 left-0 right-0 h-7 flex items-center justify-between px-5 z-20 text-white">
-        <span className="text-[11px] font-semibold">9:41</span>
-      </div>
-      
-      {/* Hero Card */}
-      <div 
-        className="flex-shrink-0 rounded-3xl flex flex-col items-center justify-center p-6 text-center relative overflow-hidden"
-        style={{ 
-          background: `linear-gradient(135deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 100%)`,
-          minHeight: '55%'
-        }}
-      >
-        {/* Decorative circles */}
-        <div className="absolute top-4 right-4 w-24 h-24 border-2 border-white/15 rounded-full" />
-        <div className="absolute top-8 right-8 w-16 h-16 border border-white/10 rounded-full" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/5 rounded-full" />
-        
-        <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm mb-3 flex items-center justify-center">
-          <span className="text-xl">✨</span>
-        </div>
-        
-        <h3 
-          className="text-xl font-black text-white uppercase tracking-wide mb-1"
-          style={{ fontFamily: recommendedFonts.heading }}
+  if (heroLayout === "bold") {
+    return (
+      <div className="w-full h-full bg-background flex flex-col p-3 overflow-y-auto">
+        <div 
+          className="flex-shrink-0 rounded-3xl flex flex-col items-center justify-center p-6 text-center relative overflow-hidden"
+          style={{ 
+            background: hasImage 
+              ? `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.5)), url(${tenantData?.hero_image_url}) center/cover` 
+              : gradientBg,
+            minHeight: '55%'
+          }}
         >
-          {tenantName}
-        </h3>
-        <div className="w-12 h-0.5 bg-white/40 mb-2 rounded-full" />
-        <p className="text-white/80 text-sm mb-4" style={{ fontFamily: recommendedFonts.body }}>
-          Tu espacio de belleza
-        </p>
-        
-        {/* Rating */}
-        <div className="flex items-center gap-1 mb-4">
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} className="w-3.5 h-3.5 fill-yellow-300 text-yellow-300" />
-          ))}
+          <StatusBar light />
+          
+          <div className="absolute top-4 right-4 w-24 h-24 border-2 border-white/15 rounded-full" />
+          
+          {hasLogo ? (
+            <img src={tenantData?.logo_url!} alt="" className="w-14 h-14 rounded-2xl object-cover mb-3 shadow-lg" />
+          ) : (
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm mb-3 flex items-center justify-center">
+              <span className="text-xl">✨</span>
+            </div>
+          )}
+          
+          <h3 className="text-xl font-black text-white uppercase tracking-wide mb-1" style={{ fontFamily: recommendedFonts.heading }}>
+            {name}
+          </h3>
+          <div className="w-12 h-0.5 bg-white/40 mb-2 rounded-full" />
+          <p className="text-white/80 text-sm mb-4" style={{ fontFamily: recommendedFonts.body }}>
+            {tagline}
+          </p>
+          
+          <div className="flex items-center gap-1 mb-4">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="w-3.5 h-3.5 fill-yellow-300 text-yellow-300" />
+            ))}
+          </div>
+          
+          <button className="px-8 py-2.5 rounded-xl bg-white text-sm font-bold shadow-lg">
+            ¡Reservar Ahora!
+          </button>
         </div>
         
-        <button className="px-8 py-2.5 rounded-xl bg-white text-sm font-bold shadow-lg">
-          ¡Reservar Ahora!
-        </button>
-      </div>
-      
-      {/* Info Card */}
-      <div className="mt-3 p-4 rounded-2xl bg-card border border-border space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="mt-3 p-4 rounded-2xl bg-card border border-border space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Clock className="w-4 h-4" style={{ color: defaultColors.primary }} />
+              </div>
+              <div>
+                <p className="text-xs font-medium">Hoy</p>
+                <p className="text-[10px] text-muted-foreground">10:00 - 20:00</p>
+              </div>
+            </div>
+            <span className="text-xs text-green-500 font-medium bg-green-500/10 px-2 py-1 rounded-full">Abierto</span>
+          </div>
+          
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Clock className="w-4 h-4" style={{ color: defaultColors.primary }} />
+              <MapPin className="w-4 h-4" style={{ color: defaultColors.primary }} />
             </div>
-            <div>
-              <p className="text-xs font-medium">Hoy</p>
-              <p className="text-[10px] text-muted-foreground">10:00 - 20:00</p>
-            </div>
+            <p className="text-xs text-muted-foreground">{address}</p>
           </div>
-          <span className="text-xs text-green-500 font-medium bg-green-500/10 px-2 py-1 rounded-full">Abierto</span>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <MapPin className="w-4 h-4" style={{ color: defaultColors.primary }} />
-          </div>
-          <p className="text-xs text-muted-foreground">Calle Principal, 123</p>
         </div>
       </div>
+    );
+  }
+
+  // Glass (default)
+  return (
+    <div 
+      className="w-full h-full overflow-y-auto"
+      style={{ 
+        background: hasImage 
+          ? `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.5)), url(${tenantData?.hero_image_url}) center/cover` 
+          : gradientBg 
+      }}
+    >
+      <StatusBar light />
+      
+      <div className="min-h-[85%] flex flex-col items-center justify-center p-6">
+        {/* Glass card */}
+        <div className="w-full p-6 rounded-3xl bg-white/15 backdrop-blur-lg border border-white/20 flex flex-col items-center text-center">
+          {hasLogo ? (
+            <img src={tenantData?.logo_url!} alt="" className="w-16 h-16 rounded-2xl object-cover mb-4 shadow-lg" />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl bg-white/20 mb-4 flex items-center justify-center">
+              <span className="text-2xl">✨</span>
+            </div>
+          )}
+          
+          <h3 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: recommendedFonts.heading }}>
+            {name}
+          </h3>
+          <p className="text-white/80 text-sm mb-4" style={{ fontFamily: recommendedFonts.body }}>
+            {tagline}
+          </p>
+          
+          <div className="flex items-center gap-1 mb-6">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            ))}
+          </div>
+          
+          <button className="w-full py-3 rounded-2xl bg-white/90 text-sm font-semibold shadow-lg" style={{ color: defaultColors.primary }}>
+            Reservar cita
+          </button>
+        </div>
+        
+        {/* Quick info */}
+        <div className="flex items-center gap-4 mt-6 text-white/70 text-xs">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
+            <MapPin className="w-3 h-3" />
+            <span>{city}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
+            <Clock className="w-3 h-3" />
+            <span>Abierto</span>
+          </div>
+        </div>
+      </div>
+      
+      {services.length > 0 && (
+        <div className="p-4 bg-background/95 backdrop-blur-sm space-y-2">
+          <h4 className="text-sm font-semibold text-foreground mb-2">Servicios</h4>
+          {services.slice(0, 2).map((service) => (
+            <ServiceCard key={service.id} service={service} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
