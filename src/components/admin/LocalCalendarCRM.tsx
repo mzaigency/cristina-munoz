@@ -1293,12 +1293,12 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                           {/* Content - always visible, adaptive layout */}
                                           <div
                                             className={cn(
-                                              "h-full flex flex-col px-2 py-1",
+                                              "h-full flex flex-col px-2 py-1 pr-14",
                                               isCompact ? "justify-center" : "justify-between",
                                             )}
                                           >
                                             {isCompact ? (
-                                              // Ultra compact: single line with all info + actions
+                                              // Ultra compact: single line with all info
                                               <div className="flex items-center gap-1 min-w-0">
                                                 {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
                                                 <span className="font-semibold text-xs truncate text-foreground">
@@ -1307,57 +1307,6 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                 <span className="text-[10px] truncate" style={{ color: bookingColor }}>
                                                   · {firstService}
                                                 </span>
-                                                <div className="flex gap-0.5 ml-auto shrink-0">
-                                                {!isBlocked && (
-                                                    <>
-                                                      <button
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          handleMarkCompleted(booking);
-                                                        }}
-                                                        className={cn(
-                                                          "p-0.5 rounded transition-colors",
-                                                          isCompleted
-                                                            ? "bg-green-100 text-green-600"
-                                                            : "text-muted-foreground hover:text-green-600",
-                                                        )}
-                                                        title={isCompleted ? "Desmarcar" : "Marcar completada"}
-                                                      >
-                                                        <Check className="h-3 w-3" />
-                                                      </button>
-                                                      {!isCompleted && onNavigateToCash && (
-                                                        <button
-                                                          onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            sessionStorage.setItem('pendingChargeBooking', JSON.stringify({
-                                                              id: booking.id,
-                                                              customer_name: booking.customer_name,
-                                                              stylist: booking.stylist,
-                                                              services: booking.services,
-                                                              fecha: booking.Fecha,
-                                                              hora: booking.Hora
-                                                            }));
-                                                            onNavigateToCash();
-                                                          }}
-                                                          className="p-0.5 rounded text-muted-foreground hover:text-emerald-600 transition-colors"
-                                                          title="Cobrar"
-                                                        >
-                                                          <Banknote className="h-3 w-3" />
-                                                        </button>
-                                                      )}
-                                                    </>
-                                                  )}
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleDeleteBooking(booking);
-                                                    }}
-                                                    className="p-0.5 rounded text-muted-foreground hover:text-red-600 transition-colors"
-                                                    title={isBlocked ? "Eliminar bloqueo" : "Eliminar"}
-                                                  >
-                                                    <Trash2 className="h-3 w-3" />
-                                                  </button>
-                                                </div>
                                               </div>
                                             ) : (
                                               // Normal/expanded layout
@@ -1388,67 +1337,70 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                     </p>
                                                   )}
                                                 </div>
-
-                                                {/* Actions - always visible */}
-                                                <div className="flex gap-1 mt-1">
-                                                  {!isBlocked && (
-                                                    <>
-                                                      <button
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          handleMarkCompleted(booking);
-                                                        }}
-                                                        className={cn(
-                                                          "p-1 rounded transition-colors",
-                                                          isCompleted
-                                                            ? "bg-green-100 text-green-600"
-                                                            : "bg-muted/50 text-muted-foreground hover:bg-green-50 hover:text-green-600",
-                                                        )}
-                                                        title={isCompleted ? "Desmarcar" : "Marcar completada"}
-                                                      >
-                                                        <Check className="h-3 w-3" />
-                                                      </button>
-                                                      {!isCompleted && onNavigateToCash && (
-                                                        <button
-                                                          onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            sessionStorage.setItem('pendingChargeBooking', JSON.stringify({
-                                                              id: booking.id,
-                                                              customer_name: booking.customer_name,
-                                                              stylist: booking.stylist,
-                                                              services: booking.services,
-                                                              fecha: booking.Fecha,
-                                                              hora: booking.Hora
-                                                            }));
-                                                            onNavigateToCash();
-                                                          }}
-                                                          className="p-1 rounded bg-muted/50 text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
-                                                          title="Cobrar"
-                                                        >
-                                                          <Banknote className="h-3 w-3" />
-                                                        </button>
-                                                      )}
-                                                    </>
-                                                  )}
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleDeleteBooking(booking);
-                                                    }}
-                                                    className="p-1 rounded bg-muted/50 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                                                    title={isBlocked ? "Eliminar bloqueo" : "Eliminar"}
-                                                  >
-                                                    <Trash2 className="h-3 w-3" />
-                                                  </button>
-                                                </div>
                                               </>
                                             )}
                                           </div>
 
+                                          {/* Floating action buttons - always visible */}
+                                          {!isBlocked && (
+                                            <div className="absolute top-1 right-1 flex gap-1 z-20">
+                                              {/* Completar */}
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleMarkCompleted(booking);
+                                                }}
+                                                className={cn(
+                                                  "p-1.5 rounded-full shadow-sm border transition-all",
+                                                  isCompleted
+                                                    ? "bg-green-100 text-green-600 border-green-200"
+                                                    : "bg-white/90 text-gray-500 hover:text-green-600 hover:bg-green-50 border-gray-200"
+                                                )}
+                                                title={isCompleted ? "Desmarcar" : "Completar"}
+                                              >
+                                                <Check className="h-3.5 w-3.5" />
+                                              </button>
+
+                                              {/* Cobrar - solo si no completada */}
+                                              {!isCompleted && onNavigateToCash && (
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    sessionStorage.setItem('pendingChargeBooking', JSON.stringify({
+                                                      id: booking.id,
+                                                      customer_name: booking.customer_name,
+                                                      stylist: booking.stylist,
+                                                      services: booking.services,
+                                                      fecha: booking.Fecha,
+                                                      hora: booking.Hora
+                                                    }));
+                                                    onNavigateToCash();
+                                                  }}
+                                                  className="p-1.5 rounded-full bg-white/90 shadow-sm border border-gray-200 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+                                                  title="Cobrar"
+                                                >
+                                                  <Banknote className="h-3.5 w-3.5" />
+                                                </button>
+                                              )}
+
+                                              {/* Eliminar */}
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDeleteBooking(booking);
+                                                }}
+                                                className="p-1.5 rounded-full bg-white/90 shadow-sm border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all"
+                                                title="Eliminar"
+                                              >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                              </button>
+                                            </div>
+                                          )}
+
                                           {/* Resize handle */}
                                           {!isBlocked && (
                                             <div
-                                              className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center hover:bg-muted/50 group"
+                                              className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center hover:bg-muted/50 group z-10"
                                               onMouseDown={(e) => handleResizeStart(e, booking)}
                                             >
                                               <div className="w-8 h-1 rounded-full bg-muted-foreground/30 group-hover:bg-primary/50 transition-colors" />
