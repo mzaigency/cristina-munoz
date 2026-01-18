@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, GripVertical } from "lucide-react";
+import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, GripVertical, Banknote } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -58,12 +58,13 @@ interface LocalBooking {
 interface LocalCalendarCRMProps {
   tenantId: string;
   stylists: Array<{ slug: string; name: string; color: string }>;
+  onNavigateToCash?: () => void;
 }
 
 // Constante para escala visual - 2px por minuto = 120px por hora
 const PIXELS_PER_MINUTE = 2;
 
-export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) => {
+export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: LocalCalendarCRMProps) => {
   const [bookings, setBookings] = useState<LocalBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -1307,22 +1308,44 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                                   · {firstService}
                                                 </span>
                                                 <div className="flex gap-0.5 ml-auto shrink-0">
-                                                  {!isBlocked && (
-                                                    <button
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleMarkCompleted(booking);
-                                                      }}
-                                                      className={cn(
-                                                        "p-0.5 rounded transition-colors",
-                                                        isCompleted
-                                                          ? "bg-green-100 text-green-600"
-                                                          : "text-muted-foreground hover:text-green-600",
+                                                {!isBlocked && (
+                                                    <>
+                                                      <button
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleMarkCompleted(booking);
+                                                        }}
+                                                        className={cn(
+                                                          "p-0.5 rounded transition-colors",
+                                                          isCompleted
+                                                            ? "bg-green-100 text-green-600"
+                                                            : "text-muted-foreground hover:text-green-600",
+                                                        )}
+                                                        title={isCompleted ? "Desmarcar" : "Marcar completada"}
+                                                      >
+                                                        <Check className="h-3 w-3" />
+                                                      </button>
+                                                      {!isCompleted && onNavigateToCash && (
+                                                        <button
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            sessionStorage.setItem('pendingChargeBooking', JSON.stringify({
+                                                              id: booking.id,
+                                                              customer_name: booking.customer_name,
+                                                              stylist: booking.stylist,
+                                                              services: booking.services,
+                                                              fecha: booking.Fecha,
+                                                              hora: booking.Hora
+                                                            }));
+                                                            onNavigateToCash();
+                                                          }}
+                                                          className="p-0.5 rounded text-muted-foreground hover:text-emerald-600 transition-colors"
+                                                          title="Cobrar"
+                                                        >
+                                                          <Banknote className="h-3 w-3" />
+                                                        </button>
                                                       )}
-                                                      title={isCompleted ? "Desmarcar" : "Marcar completada"}
-                                                    >
-                                                      <Check className="h-3 w-3" />
-                                                    </button>
+                                                    </>
                                                   )}
                                                   <button
                                                     onClick={(e) => {
@@ -1369,21 +1392,43 @@ export const LocalCalendarCRM = ({ tenantId, stylists }: LocalCalendarCRMProps) 
                                                 {/* Actions - always visible */}
                                                 <div className="flex gap-1 mt-1">
                                                   {!isBlocked && (
-                                                    <button
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleMarkCompleted(booking);
-                                                      }}
-                                                      className={cn(
-                                                        "p-1 rounded transition-colors",
-                                                        isCompleted
-                                                          ? "bg-green-100 text-green-600"
-                                                          : "bg-muted/50 text-muted-foreground hover:bg-green-50 hover:text-green-600",
+                                                    <>
+                                                      <button
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleMarkCompleted(booking);
+                                                        }}
+                                                        className={cn(
+                                                          "p-1 rounded transition-colors",
+                                                          isCompleted
+                                                            ? "bg-green-100 text-green-600"
+                                                            : "bg-muted/50 text-muted-foreground hover:bg-green-50 hover:text-green-600",
+                                                        )}
+                                                        title={isCompleted ? "Desmarcar" : "Marcar completada"}
+                                                      >
+                                                        <Check className="h-3 w-3" />
+                                                      </button>
+                                                      {!isCompleted && onNavigateToCash && (
+                                                        <button
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            sessionStorage.setItem('pendingChargeBooking', JSON.stringify({
+                                                              id: booking.id,
+                                                              customer_name: booking.customer_name,
+                                                              stylist: booking.stylist,
+                                                              services: booking.services,
+                                                              fecha: booking.Fecha,
+                                                              hora: booking.Hora
+                                                            }));
+                                                            onNavigateToCash();
+                                                          }}
+                                                          className="p-1 rounded bg-muted/50 text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                                                          title="Cobrar"
+                                                        >
+                                                          <Banknote className="h-3 w-3" />
+                                                        </button>
                                                       )}
-                                                      title={isCompleted ? "Desmarcar" : "Marcar completada"}
-                                                    >
-                                                      <Check className="h-3 w-3" />
-                                                    </button>
+                                                    </>
                                                   )}
                                                   <button
                                                     onClick={(e) => {

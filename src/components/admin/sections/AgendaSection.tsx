@@ -8,11 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface AgendaSectionProps {
   tenantId: string;
+  onNavigateToCash?: () => void;
 }
 
 type AgendaTab = "calendar" | "waitlist";
 
-const AgendaSection = ({ tenantId }: AgendaSectionProps) => {
+const AgendaSection = ({ tenantId, onNavigateToCash }: AgendaSectionProps) => {
   const [activeTab, setActiveTab] = useState<AgendaTab>("calendar");
   const [stylists, setStylists] = useState<Array<{ slug: string; name: string; color: string }>>([]);
   const [waitlistCount, setWaitlistCount] = useState(0);
@@ -103,7 +104,7 @@ const AgendaSection = ({ tenantId }: AgendaSectionProps) => {
         </TabsList>
 
         <TabsContent value="calendar" className="mt-4">
-          <LocalCalendarCRM tenantId={tenantId} stylists={stylists} />
+          <LocalCalendarCRM tenantId={tenantId} stylists={stylists} onNavigateToCash={onNavigateToCash} />
         </TabsContent>
 
         <TabsContent value="waitlist" className="mt-4">
