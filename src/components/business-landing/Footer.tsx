@@ -1,12 +1,9 @@
 import { Link } from "react-router-dom";
 import { Instagram, Mail, Heart } from "lucide-react";
 import glowappLogo from "@/assets/glowapp-logo.png";
-
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
-
-  return (
-    <footer className="bg-muted/50 border-t border-border">
+  return <footer className="bg-muted/50 border-t border-border">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -17,18 +14,10 @@ export const Footer = () => {
               lugar.
             </p>
             <div className="flex items-center gap-4">
-              <a
-                href="https://instagram.com/glowapp.es"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
-              >
+              <a href="https://instagram.com/glowapp.es" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-colors">
                 <Instagram className="w-5 h-5" />
               </a>
-              <a
-                href="mailto:contacto@glowapp.es"
-                className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
-              >
+              <a href="mailto:contacto@glowapp.es" className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-colors">
                 <Mail className="w-5 h-5" />
               </a>
             </div>
@@ -56,23 +45,11 @@ export const Footer = () => {
             <h4 className="font-semibold mb-4">Contacto</h4>
             <ul className="space-y-2">
               <li>
-                <a
-                  href="mailto:contacto@glowapp.es"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
+                <a href="mailto:contacto@glowapp.es" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   contacto@glowapp.es
                 </a>
               </li>
-              <li>
-                <a
-                  href="https://instagram.com/glowapp.es"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  contacto@glowapp.es
-                </a>
-              </li>
+              
             </ul>
           </div>
         </div>
@@ -87,7 +64,8 @@ export const Footer = () => {
       </div>
 
       {/* Safe area for mobile */}
-      <div className="h-safe-area-bottom bg-muted/50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }} />
-    </footer>
-  );
+      <div className="h-safe-area-bottom bg-muted/50" style={{
+      paddingBottom: "env(safe-area-inset-bottom)"
+    }} />
+    </footer>;
 };
