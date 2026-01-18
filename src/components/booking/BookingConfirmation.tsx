@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, Tag, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
@@ -13,6 +14,8 @@ interface BookingConfirmationProps {
   onConfirm: (name: string, phone: string) => void;
   onBack: () => void;
   tenantId?: string;
+  totalPrice?: number;
+  discountedPrice?: number;
 }
 
 interface UserProfile {
@@ -21,18 +24,27 @@ interface UserProfile {
   phone: string;
 }
 
+const formatPrice = (price: number): string => {
+  return `${price.toFixed(2).replace('.', ',')} €`;
+};
+
 export const BookingConfirmation = ({
   bookingData,
   totalDuration,
   onConfirm,
   onBack,
   tenantId,
+  totalPrice = 0,
+  discountedPrice,
 }: BookingConfirmationProps) => {
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { toast } = useToast();
   const confettiRef = useRef<ConfettiRef>(null);
+
+  const hasDiscount = discountedPrice !== undefined && discountedPrice < totalPrice;
+  const finalPrice = hasDiscount ? discountedPrice : totalPrice;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -104,10 +116,14 @@ export const BookingConfirmation = ({
             duration_part1_active: s.duration_part1_active,
             duration_exposure_pause: s.duration_exposure_pause,
             duration_part2_active: s.duration_part2_active,
+            price: s.price,
           })),
           total_duration: totalDuration,
           user_id: session?.user?.id || null,
           tenant_id: tenantId,
+          package_id: bookingData.packageId,
+          promotion_code: bookingData.appliedPromotion?.code,
+          total_price: finalPrice,
         },
       });
 
@@ -242,6 +258,12 @@ export const BookingConfirmation = ({
               <span className="font-medium text-muted-foreground sm:col-span-1">Duración:</span>
               <span className="sm:col-span-2">{totalDuration} minutos</span>
             </div>
+            {finalPrice > 0 && (
+              <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
+                <span className="font-medium text-muted-foreground sm:col-span-1">Total:</span>
+                <span className="sm:col-span-2 font-bold text-primary">{formatPrice(finalPrice)}</span>
+              </div>
+            )}
           </div>
         </div>
         <p className="text-xs sm:text-sm text-muted-foreground">
@@ -280,14 +302,50 @@ export const BookingConfirmation = ({
             <span className="font-medium">Profesional:</span>{" "}
             <span>{bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}</span>
           </p>
-          <p className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 items-center">
             <span className="font-medium">Servicios:</span>{" "}
             <span>{bookingData.services.map((s) => s.name).join(", ")}</span>
-          </p>
+            {bookingData.packageId && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                <Package className="h-3 w-3 mr-1" />
+                Pack
+              </Badge>
+            )}
+          </div>
           <p className="flex flex-wrap gap-1">
             <span className="font-medium">Duración total:</span> 
             <span>{totalDuration} minutos</span>
           </p>
+          
+          {/* Price Section */}
+          {totalPrice > 0 && (
+            <div className="pt-3 mt-3 border-t border-primary/20">
+              {bookingData.appliedPromotion && (
+                <div className="flex items-center justify-between text-xs mb-2 bg-green-100 dark:bg-green-900/30 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-green-600" />
+                    <span className="text-green-700 dark:text-green-400">{bookingData.appliedPromotion.name}</span>
+                  </div>
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {bookingData.appliedPromotion.code}
+                  </Badge>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-base">Total a pagar:</span>
+                <div className="text-right">
+                  {hasDiscount ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground line-through text-sm">{formatPrice(totalPrice)}</span>
+                      <span className="font-bold text-xl text-green-600">{formatPrice(discountedPrice!)}</span>
+                    </div>
+                  ) : (
+                    <span className="font-bold text-xl text-primary">{formatPrice(totalPrice)}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
