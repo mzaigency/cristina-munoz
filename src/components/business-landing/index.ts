@@ -1,0 +1,10 @@
+export { HeroSection } from './HeroSection';
+export { StickyHeader } from './StickyHeader';
+export { PainPointsSection } from './PainPointsSection';
+export { FeaturesShowcase } from './FeaturesShowcase';
+export { BeforeAfterSection } from './BeforeAfterSection';
+export { PricingSection } from './PricingSection';
+export { FAQSection } from './FAQSection';
+export { FinalCTASection } from './FinalCTASection';
+export { Footer } from './Footer';
+export { FloatingMobileCTA } from './FloatingMobileCTA';

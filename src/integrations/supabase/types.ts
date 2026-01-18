@@ -2218,6 +2218,41 @@ export type Database = {
           },
         ]
       }
+      reviews_public: {
+        Row: {
+          approved: boolean | null
+          comment: string | null
+          created_at: string | null
+          id: string | null
+          rating: number | null
+          tenant_id: string | null
+        }
+        Insert: {
+          approved?: boolean | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string | null
+          rating?: number | null
+          tenant_id?: string | null
+        }
+        Update: {
+          approved?: boolean | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string | null
+          rating?: number | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions_decrypted: {
         Row: {
           created_at: string | null
