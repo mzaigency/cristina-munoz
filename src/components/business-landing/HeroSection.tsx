@@ -61,7 +61,7 @@ export const HeroSection = () => {
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
             </div>
-            <span className="text-sm font-medium text-white/90">30 días gratis · Sin tarjeta</span>
+            <span className="text-sm font-medium text-white/90">·30 días gratis·</span>
           </motion.div>
 
           {/* Main headline */}
