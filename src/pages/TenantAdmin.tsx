@@ -16,7 +16,6 @@ import {
   Users,
   LayoutDashboard,
   UserCircle,
-  BarChart3,
 } from "lucide-react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { ClientsCRM } from "@/components/admin/ClientsCRM";
@@ -40,7 +39,6 @@ import {
   SettingsSection,
   AgendaSection,
   CommunicationSection,
-  StatsSection,
 } from "@/components/admin/sections";
 
 interface Tenant {
@@ -59,7 +57,7 @@ interface Stylist {
 }
 
 // Simplified to 6 main tabs
-type TabValue = "dashboard" | "agenda" | "clients" | "business" | "stats" | "team" | "communication" | "settings";
+type TabValue = "dashboard" | "agenda" | "clients" | "business" | "team" | "communication" | "settings";
 
 interface NavItem {
   value: TabValue;
@@ -110,7 +108,6 @@ export default function TenantAdmin() {
         badge: notificationCounts.clients,
       },
       { value: "business", label: "Negocio", icon: <Wallet className="h-4 w-4" /> },
-      { value: "stats", label: "Stats", icon: <BarChart3 className="h-4 w-4" /> },
       { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
       {
         value: "communication",
@@ -331,8 +328,6 @@ export default function TenantAdmin() {
         return <ClientsCRM key={refreshKey} tenantId={tenant.id} />;
       case "business":
         return <BusinessSection key={refreshKey} tenantId={tenant.id} />;
-      case "stats":
-        return <StatsSection key={refreshKey} tenantId={tenant.id} />;
       case "team":
         return <TeamSection key={refreshKey} tenantId={tenant.id} />;
       case "communication":
