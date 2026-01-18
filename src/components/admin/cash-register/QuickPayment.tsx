@@ -139,24 +139,24 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     fetchData();
     fetchSavedFiscalData();
     fetchTodayBookings();
-    checkPendingCharge();
   }, [tenantId]);
 
-  // Check for pending booking from agenda navigation
-  const checkPendingCharge = () => {
-    const pendingBooking = sessionStorage.getItem('pendingChargeBooking');
-    if (pendingBooking) {
-      try {
-        const booking = JSON.parse(pendingBooking);
-        // We need to wait for services and stylists to be loaded
-        setTimeout(() => loadBookingData(booking), 500);
-        sessionStorage.removeItem('pendingChargeBooking');
-      } catch (e) {
-        console.error('Error parsing pending booking:', e);
-        sessionStorage.removeItem('pendingChargeBooking');
+  // Check for pending booking AFTER services are loaded
+  useEffect(() => {
+    if (services.length > 0 && stylists.length > 0) {
+      const pendingBooking = sessionStorage.getItem('pendingChargeBooking');
+      if (pendingBooking) {
+        try {
+          const booking = JSON.parse(pendingBooking);
+          loadBookingData(booking, services, stylists);
+          sessionStorage.removeItem('pendingChargeBooking');
+        } catch (e) {
+          console.error('Error parsing pending booking:', e);
+          sessionStorage.removeItem('pendingChargeBooking');
+        }
       }
     }
-  };
+  }, [services, stylists]);
 
   const fetchTodayBookings = async () => {
     setLoadingBookings(true);
@@ -199,28 +199,48 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     }
   };
 
-  const loadBookingData = (booking: any) => {
-    // Clear current selection
-    clearAll();
+  const loadBookingData = (booking: any, servicesList?: Service[], stylistsList?: Stylist[]) => {
+    const svcList = servicesList || services;
+    const stList = stylistsList || stylists;
+    
+    // Clear current selection first
+    setSelectedItems([]);
+    setSelectedStylistId("");
+    setPaymentMethod("cash");
+    setCashAmount("");
+    setCardAmount("");
+    setCashGiven("");
+    setDiscountType(null);
+    setDiscountValue("");
+    setDiscountReason("");
+    setTipAmount("");
+    setShowDiscount(false);
+    setShowTip(false);
+    setWantsInvoice(false);
+    setInvoiceData({ fiscalName: "", nif: "", fiscalAddress: "" });
     
     // Set customer name
     setCustomerName(booking.customer_name || "Cliente");
     
     // Find and preselect stylist
-    const matchedStylist = stylists.find(s => s.slug === booking.stylist);
+    const matchedStylist = stList.find(s => s.slug === booking.stylist);
     if (matchedStylist) {
       setSelectedStylistId(matchedStylist.id);
     }
     
-    // Load services from booking
+    // Load services from booking with prices
     if (Array.isArray(booking.services)) {
-      const bookingServices: SelectedItem[] = booking.services.map((s: any) => {
+      const bookingServices: SelectedItem[] = booking.services.map((s: any, idx: number) => {
         // Find the actual service to get the correct price
-        const realService = services.find(srv => srv.id === s.id || srv.name === s.name);
+        const realService = svcList.find(srv => srv.id === s.id || srv.name === s.name);
+        const price = realService?.price ?? s.price ?? 0;
+        
+        console.log('Mapping service:', s.name, 'Found:', realService?.name, 'Price:', price);
+        
         return {
-          id: s.id || `booking-${Date.now()}-${Math.random()}`,
+          id: s.id || `booking-${Date.now()}-${idx}`,
           name: s.name,
-          price: realService?.price || s.price || 0,
+          price: price,
           quantity: 1,
           type: "service" as const
         };
@@ -781,7 +801,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                 return (
                   <button
                     key={booking.id}
-                    onClick={() => loadBookingData(booking)}
+                    onClick={() => loadBookingData(booking, services, stylists)}
                     className={cn(
                       "shrink-0 flex flex-col items-start p-2.5 sm:p-3 rounded-xl border-2 transition-all min-w-[140px] max-w-[180px]",
                       isSelected
