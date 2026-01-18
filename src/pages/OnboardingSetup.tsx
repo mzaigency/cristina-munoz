@@ -1,5 +1,6 @@
 import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -1070,122 +1071,127 @@ export default function OnboardingSetup() {
         noindex
       />
 
-      {/* Header mejorado */}
+      {/* Header mejorado - diseño compacto para móvil */}
       <div 
         className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/30"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        <div className="px-4 py-4">
-          {/* Top row */}
-          <div className="flex items-center gap-3 mb-4">
-            {step < totalSteps && step > 0 && (
+        <div className="px-4 py-3">
+          {/* Top row - más compacto */}
+          <div className="flex items-center gap-3 mb-3">
+            {step > 0 && step < totalSteps ? (
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setStep(step - 1)}
-                className="h-9 w-9 rounded-full"
+                className="h-8 w-8 rounded-full shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-            )}
-            {step === 0 && (
+            ) : step === 0 ? (
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => navigate("/")}
-                className="h-9 w-9 rounded-full"
+                className="h-8 w-8 rounded-full shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-            )}
-            <div className="flex-1">
-              <h1 className="font-bold text-lg text-foreground">
-                {step < totalSteps ? steps[step].title : "¡Completado!"}
-              </h1>
-              {step < totalSteps && (
-                <p className="text-xs text-muted-foreground">
-                  Paso {step + 1} de {totalSteps} • {Math.round(((step + 1) / totalSteps) * 100)}% completado
-                </p>
-              )}
-            </div>
-            {step < totalSteps && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
-                {(() => {
+            ) : null}
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                {step < totalSteps && (() => {
                   const StepIcon = steps[step].icon;
-                  return <StepIcon className="h-4 w-4 text-primary" />;
+                  return (
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <StepIcon className="h-4 w-4 text-primary" />
+                    </div>
+                  );
                 })()}
-                <span className="text-xs font-semibold text-primary">
-                  {step + 1}/{totalSteps}
-                </span>
+                <div className="min-w-0">
+                  <h1 className="font-bold text-base text-foreground truncate">
+                    {step < totalSteps ? steps[step].title : "¡Completado!"}
+                  </h1>
+                </div>
+              </div>
+            </div>
+            
+            {step < totalSteps && (
+              <div className="text-right shrink-0">
+                <span className="text-lg font-bold text-primary">{step + 1}</span>
+                <span className="text-sm text-muted-foreground">/{totalSteps}</span>
               </div>
             )}
           </div>
 
-          {/* Steps visual indicator - horizontal scroll */}
+          {/* Progress bar - diseño moderno y limpio */}
           {step < totalSteps && (
-            <div className="relative">
-              {/* Progress bar background */}
-              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-secondary -translate-y-1/2 z-0" />
-              <div 
-                className="absolute top-1/2 left-0 h-0.5 bg-gradient-to-r from-primary to-primary/60 -translate-y-1/2 z-0 transition-all duration-500"
-                style={{ width: `${(step / (totalSteps - 1)) * 100}%` }}
-              />
+            <div className="space-y-2">
+              {/* Barra de progreso principal */}
+              <div className="relative h-1.5 bg-secondary rounded-full overflow-hidden">
+                <motion.div 
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-primary to-primary/80 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                />
+                {/* Efecto de brillo */}
+                <motion.div 
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
+                  style={{ width: `${((step + 1) / totalSteps) * 100}%` }}
+                  animate={{ 
+                    x: ["-100%", "100%"],
+                  }}
+                  transition={{ 
+                    duration: 1.5, 
+                    repeat: Infinity,
+                    repeatDelay: 3,
+                    ease: "easeInOut"
+                  }}
+                />
+              </div>
               
-              {/* Step circles */}
-              <div className="flex justify-between relative z-10">
-                {steps.slice(0, totalSteps).map((s, index) => {
-                  const StepIcon = s.icon;
-                  const isCompleted = index < step;
-                  const isCurrent = index === step;
-                  const isClickable = canGoToStep(index);
+              {/* Indicadores de categoría - scroll horizontal */}
+              <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4">
+                {/* Agrupamos los pasos por categoría */}
+                {[
+                  { label: "Info", range: [0, 3], icon: "📋" },
+                  { label: "Contenido", range: [4, 7], icon: "📸" },
+                  { label: "Diseño", range: [8, 10], icon: "🎨" },
+                  { label: "Final", range: [11, 11], icon: "✨" },
+                ].map((category, catIndex) => {
+                  const isActive = step >= category.range[0] && step <= category.range[1];
+                  const isCompleted = step > category.range[1];
+                  const stepsInCategory = category.range[1] - category.range[0] + 1;
+                  const completedInCategory = Math.max(0, Math.min(stepsInCategory, step - category.range[0] + (step >= category.range[0] ? 1 : 0)));
                   
                   return (
-                    <button
-                      key={index}
-                      onClick={() => handleStepClick(index)}
-                      disabled={!isClickable}
-                      className={`
-                        relative flex flex-col items-center transition-all duration-300
-                        ${isClickable ? 'cursor-pointer' : 'cursor-default'}
-                      `}
-                    >
-                      <motion.div
-                        initial={false}
-                        animate={{
-                          scale: isCurrent ? 1.15 : 1,
-                          backgroundColor: isCompleted 
-                            ? 'hsl(var(--primary))' 
-                            : isCurrent 
-                              ? 'hsl(var(--primary))' 
-                              : 'hsl(var(--secondary))',
-                        }}
-                        className={`
-                          w-8 h-8 rounded-full flex items-center justify-center
-                          ${isCurrent ? 'ring-4 ring-primary/20' : ''}
-                          ${isClickable && !isCurrent ? 'hover:ring-2 hover:ring-primary/30' : ''}
-                        `}
-                      >
-                        {isCompleted ? (
-                          <Check className="h-4 w-4 text-primary-foreground" />
-                        ) : (
-                          <StepIcon className={`h-3.5 w-3.5 ${isCurrent ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-                        )}
-                      </motion.div>
-                      
-                      {/* Step label - only show for current and adjacent */}
-                      {(isCurrent || index === step - 1 || index === step + 1) && (
-                        <motion.span
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`
-                            absolute -bottom-5 text-[10px] font-medium whitespace-nowrap
-                            ${isCurrent ? 'text-primary' : 'text-muted-foreground'}
-                          `}
-                        >
-                          {s.title}
-                        </motion.span>
+                    <motion.div
+                      key={catIndex}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: catIndex * 0.05 }}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all shrink-0",
+                        isActive 
+                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          : isCompleted 
+                            ? "bg-primary/20 text-primary"
+                            : "bg-secondary text-muted-foreground"
                       )}
-                    </button>
+                    >
+                      <span>{category.icon}</span>
+                      <span>{category.label}</span>
+                      {isActive && (
+                        <span className="text-[10px] opacity-80">
+                          {completedInCategory}/{stepsInCategory}
+                        </span>
+                      )}
+                      {isCompleted && (
+                        <Check className="w-3 h-3" />
+                      )}
+                    </motion.div>
                   );
                 })}
               </div>
