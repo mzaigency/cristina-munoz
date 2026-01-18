@@ -39,6 +39,7 @@ interface Tenant {
   hero_images?: unknown;
   instagram_url: string | null;
   facebook_url: string | null;
+  tiktok_url: string | null;
   whatsapp_number: string | null;
   google_maps_url: string | null;
   font_heading?: string | null;
