@@ -14,7 +14,7 @@ const features = [
     description:
       "Una página web profesional con tu marca, servicios y precios. Tus clientes te encontrarán en Google y podrán ver todo sobre tu negocio.",
     benefits: [
-      "Dominio personalizado (tunombre.glowapp.es)",
+      "Dominio personalizado (glowapp.app/salon/tunombre)",
       "Optimizada para móviles y SEO",
       "Galería de trabajos y reseñas",
       "Información de contacto y ubicación",
@@ -171,8 +171,8 @@ export const FeaturesShowcase = () => {
                   ))}
                 </ul>
 
-                <Button 
-                  onClick={() => navigate("/auth?mode=register&business=true")} 
+                <Button
+                  onClick={() => navigate("/auth?mode=register&business=true")}
                   className="rounded-full gradient-primary border-0"
                 >
                   Probar esta función
