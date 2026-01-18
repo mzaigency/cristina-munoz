@@ -59,6 +59,7 @@ export const fontOptions = [
 ];
 
 export const bodyFontOptions = [
+  { value: "Montserrat", label: "Montserrat", category: "Moderno" },
   { value: "Inter", label: "Inter", category: "Moderno" },
   { value: "Open Sans", label: "Open Sans", category: "Clásico" },
   { value: "Lato", label: "Lato", category: "Limpio" },
