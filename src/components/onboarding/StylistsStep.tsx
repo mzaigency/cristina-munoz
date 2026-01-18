@@ -1,19 +1,39 @@
 import { useState } from "react";
-import { Users, ArrowLeft, ArrowRight, Loader2, Plus, X } from "lucide-react";
+import { Users, ArrowLeft, ArrowRight, Loader2, Plus, X, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { StepProps, StylistForm, stylistColors } from "./types";
+import { cn } from "@/lib/utils";
 
-export function StylistsStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps) {
+export function StylistsStep({ 
+  onNext, 
+  onPrev, 
+  tenantId, 
+  loading, 
+  setLoading,
+  maxStylists = 1,
+  planSlug = "starter"
+}: StepProps) {
   const [stylists, setStylists] = useState<StylistForm[]>([
     { name: "", color: stylistColors[0] },
   ]);
   const { toast } = useToast();
 
+  const validStylistsCount = stylists.filter(s => s.name.trim()).length;
+  const canAddMore = stylists.length < maxStylists;
+
   const addStylist = () => {
+    if (!canAddMore) {
+      toast({
+        title: "Límite alcanzado",
+        description: `Tu plan permite máximo ${maxStylists} profesional(es). Puedes actualizar tu plan más adelante.`,
+        variant: "destructive",
+      });
+      return;
+    }
     const nextColor = stylistColors[stylists.length % stylistColors.length];
     setStylists([...stylists, { name: "", color: nextColor }]);
   };
@@ -133,15 +153,28 @@ export function StylistsStep({ onNext, onPrev, tenantId, loading, setLoading }: 
         <Button
           variant="outline"
           onClick={addStylist}
-          className="w-full h-11 rounded-xl border-dashed"
+          disabled={!canAddMore}
+          className={cn(
+            "w-full h-11 rounded-xl border-dashed",
+            !canAddMore && "opacity-60"
+          )}
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Añadir otro estilista
+          {canAddMore ? (
+            <>
+              <Plus className="h-4 w-4 mr-2" />
+              Añadir otro estilista
+            </>
+          ) : (
+            <>
+              <Crown className="h-4 w-4 mr-2 text-amber-500" />
+              Límite de tu plan ({maxStylists})
+            </>
+          )}
         </Button>
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        💡 El color ayuda a diferenciar las citas en el calendario
+        {validStylistsCount} / {maxStylists} profesionales • 💡 El color ayuda a diferenciar las citas
       </p>
 
       <div className="flex gap-3">

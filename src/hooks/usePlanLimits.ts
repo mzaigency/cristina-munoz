@@ -51,6 +51,7 @@ export interface PlanLimits {
   // Verificaciones
   canAddStylist: () => boolean;
   canAddService: () => boolean;
+  isOverLimit: (type: "stylists" | "services") => boolean;
   
   // Info del plan
   planSlug: string;
@@ -200,6 +201,11 @@ export const usePlanLimits = (tenantId: string | undefined): PlanLimits => {
     return null;
   }, [planSlug]);
 
+  const isOverLimit = useCallback((type: "stylists" | "services"): boolean => {
+    if (type === "stylists") return currentStylists > maxStylists;
+    return currentServices > maxServices;
+  }, [currentStylists, currentServices, maxStylists, maxServices]);
+
   return {
     maxStylists,
     maxServices,
@@ -213,6 +219,7 @@ export const usePlanLimits = (tenantId: string | undefined): PlanLimits => {
     loading,
     getUpgradePlan,
     getUpgradePlanForLimit,
+    isOverLimit,
     refetch: fetchPlanData,
   };
 };

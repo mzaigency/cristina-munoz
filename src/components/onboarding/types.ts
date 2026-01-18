@@ -5,6 +5,9 @@ export interface StepProps {
   tenantName?: string;
   loading: boolean;
   setLoading: (loading: boolean) => void;
+  maxStylists?: number;
+  maxServices?: number;
+  planSlug?: string;
 }
 
 export interface BrandingData {
