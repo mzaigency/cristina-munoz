@@ -44,11 +44,7 @@ export const HeroSection = () => {
             transition={{ duration: 0.5 }}
             className="mb-8"
           >
-            <img 
-              src={glowAppLogo} 
-              alt="GlowApp" 
-              className="h-10 sm:h-12 mx-auto"
-            />
+            <img src={glowAppLogo} alt="GlowApp" className="h-10 sm:h-12 mx-auto" />
           </motion.div>
 
           {/* Badge */}
@@ -62,10 +58,10 @@ export const HeroSection = () => {
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
             </div>
-            <span className="text-sm font-medium text-white/90">
-              30 días gratis · Sin tarjeta
-            </span>
+            <span className="text-sm font-medium text-white/90">30 días gratis · Sin tarjeta</span>
           </motion.div>
 
           {/* Main headline */}
@@ -77,9 +73,7 @@ export const HeroSection = () => {
           >
             <span className="text-white">Deja de perder clientes</span>
             <br />
-            <span className="text-gradient">
-              por WhatsApp
-            </span>
+            <span className="text-gradient">por WhatsApp</span>
           </motion.h1>
 
           {/* Subheadline */}
@@ -89,7 +83,8 @@ export const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-lg sm:text-xl text-white/60 max-w-2xl mx-auto mb-8"
           >
-            Tu salón de belleza merece más que una libreta. Reservas automáticas 24/7, cero llamadas perdidas y clientes que vuelven.
+            Tu salón de belleza merece más que una libreta. Reservas automáticas 24/7, cero llamadas perdidas y clientes
+            que vuelven.
           </motion.p>
 
           {/* Key benefits pills */}
@@ -104,8 +99,8 @@ export const HeroSection = () => {
               { icon: Clock, text: "Reservas 24/7" },
               { icon: Sparkles, text: "Listo en 5 min" },
             ].map((item, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm"
               >
                 <item.icon className="w-4 h-4 text-primary" />
@@ -168,7 +163,7 @@ export const HeroSection = () => {
             <div className="relative bg-gradient-to-b from-[hsl(230,15%,18%)] to-[hsl(230,15%,12%)] rounded-[3rem] p-3 shadow-2xl border border-white/10">
               {/* Notch */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-[hsl(230,20%,6%)] rounded-b-2xl z-10" />
-              
+
               {/* Screen */}
               <div className="aspect-[9/19] bg-gradient-to-br from-[hsl(230,20%,10%)] to-[hsl(230,20%,6%)] rounded-[2.5rem] overflow-hidden">
                 <div className="w-full h-full flex flex-col items-center justify-center p-6">
