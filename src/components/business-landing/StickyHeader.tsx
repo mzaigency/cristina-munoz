@@ -45,7 +45,7 @@ export const StickyHeader = () => {
         animate={{ y: 0 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
-            ? 'bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm'
+            ? 'bg-[hsl(230,20%,6%)]/95 backdrop-blur-xl border-b border-white/10 shadow-lg'
             : 'bg-transparent'
         }`}
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -53,7 +53,7 @@ export const StickyHeader = () => {
         {/* Progress bar */}
         <div className="absolute bottom-0 left-0 h-0.5 bg-primary/20 w-full">
           <motion.div
-            className="h-full bg-primary"
+            className="h-full gradient-primary"
             style={{ width: `${scrollProgress}%` }}
           />
         </div>
@@ -76,7 +76,7 @@ export const StickyHeader = () => {
                 <button
                   key={item.label}
                   onClick={() => scrollToSection(item.href)}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-sm font-medium text-white/60 hover:text-white transition-colors"
                 >
                   {item.label}
                 </button>
@@ -88,13 +88,14 @@ export const StickyHeader = () => {
               <Button
                 variant="ghost"
                 size="sm"
+                className="text-white/70 hover:text-white hover:bg-white/10"
                 onClick={() => navigate('/auth')}
               >
                 Iniciar sesión
               </Button>
               <Button
                 size="sm"
-                className="rounded-full"
+                className="rounded-full gradient-primary border-0"
                 onClick={() => navigate('/auth?mode=register&business=true')}
               >
                 Prueba gratis
@@ -106,7 +107,7 @@ export const StickyHeader = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="md:hidden text-white hover:bg-white/10"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -122,7 +123,7 @@ export const StickyHeader = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-x-0 top-16 z-40 bg-background/95 backdrop-blur-xl border-b border-border md:hidden"
+            className="fixed inset-x-0 top-16 z-40 bg-[hsl(230,20%,6%)]/98 backdrop-blur-xl border-b border-white/10 md:hidden"
             style={{ paddingTop: 'env(safe-area-inset-top)' }}
           >
             <nav className="container mx-auto px-4 py-6 space-y-4">
@@ -130,15 +131,15 @@ export const StickyHeader = () => {
                 <button
                   key={item.label}
                   onClick={() => scrollToSection(item.href)}
-                  className="block w-full text-left py-3 text-lg font-medium text-foreground hover:text-primary transition-colors"
+                  className="block w-full text-left py-3 text-lg font-medium text-white hover:text-primary transition-colors"
                 >
                   {item.label}
                 </button>
               ))}
-              <div className="pt-4 space-y-3 border-t border-border">
+              <div className="pt-4 space-y-3 border-t border-white/10">
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full bg-transparent border-white/20 text-white hover:bg-white/10"
                   onClick={() => {
                     navigate('/auth');
                     setIsMobileMenuOpen(false);
@@ -147,7 +148,7 @@ export const StickyHeader = () => {
                   Iniciar sesión
                 </Button>
                 <Button
-                  className="w-full"
+                  className="w-full gradient-primary border-0"
                   onClick={() => {
                     navigate('/auth?mode=register&business=true');
                     setIsMobileMenuOpen(false);

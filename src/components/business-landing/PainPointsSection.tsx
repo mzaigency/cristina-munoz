@@ -38,7 +38,7 @@ const painPoints = [
 
 export const PainPointsSection = () => {
   return (
-    <section className="py-20 bg-muted/30">
+    <section className="py-20 bg-[hsl(230,20%,8%)]">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -46,13 +46,13 @@ export const PainPointsSection = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <span className="text-sm font-medium text-destructive/80 uppercase tracking-wider">
+          <span className="text-sm font-medium text-red-400 uppercase tracking-wider">
             ¿Te suena familiar?
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4 text-white">
             Los problemas de siempre
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-white/50 max-w-2xl mx-auto">
             Si gestionas tu negocio con WhatsApp, llamadas y libretas... 
             probablemente estés perdiendo tiempo y dinero cada día.
           </p>
@@ -66,15 +66,15 @@ export const PainPointsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="group relative p-6 rounded-2xl bg-background border border-border hover:border-destructive/30 hover:shadow-lg hover:shadow-destructive/5 transition-all duration-300"
+              className="group relative p-6 rounded-2xl bg-[hsl(230,15%,12%)] border border-white/5 hover:border-red-500/30 hover:shadow-lg hover:shadow-red-500/5 transition-all duration-300"
             >
-              <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <point.icon className="w-6 h-6 text-destructive" />
+              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <point.icon className="w-6 h-6 text-red-400" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2 text-sm">
+              <h3 className="font-semibold text-white mb-2 text-sm">
                 {point.problem}
               </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-white/40 leading-relaxed">
                 {point.description}
               </p>
             </motion.div>

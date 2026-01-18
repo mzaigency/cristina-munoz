@@ -98,7 +98,7 @@ export const FeaturesShowcase = () => {
   const navigate = useNavigate();
 
   return (
-    <section id="features" className="py-20 bg-background">
+    <section id="features" className="py-20 bg-[hsl(230,20%,6%)]">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -107,8 +107,8 @@ export const FeaturesShowcase = () => {
           className="text-center mb-12"
         >
           <span className="text-sm font-medium text-primary uppercase tracking-wider">Todo lo que necesitas</span>
-          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4">Funciones que transforman tu negocio</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4 text-white">Funciones que transforman tu negocio</h2>
+          <p className="text-white/50 max-w-2xl mx-auto">
             Desde reservas automáticas hasta analytics avanzados. Todo diseñado específicamente para profesionales de la
             belleza.
           </p>
@@ -122,8 +122,8 @@ export const FeaturesShowcase = () => {
               onClick={() => setActiveFeature(feature)}
               className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                 activeFeature.id === feature.id
-                  ? "bg-primary text-primary-foreground shadow-lg"
-                  : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                  ? "gradient-primary text-white shadow-lg shadow-primary/30"
+                  : "bg-white/5 hover:bg-white/10 text-white/60 border border-white/10"
               }`}
             >
               <feature.icon className="w-4 h-4" />
@@ -150,9 +150,9 @@ export const FeaturesShowcase = () => {
                   <activeFeature.icon className="w-8 h-8 text-white" />
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-bold mb-4">{activeFeature.headline}</h3>
+                <h3 className="text-2xl sm:text-3xl font-bold mb-4 text-white">{activeFeature.headline}</h3>
 
-                <p className="text-muted-foreground mb-6 leading-relaxed">{activeFeature.description}</p>
+                <p className="text-white/50 mb-6 leading-relaxed">{activeFeature.description}</p>
 
                 <ul className="space-y-3 mb-8">
                   {activeFeature.benefits.map((benefit, index) => (
@@ -163,15 +163,18 @@ export const FeaturesShowcase = () => {
                       transition={{ delay: index * 0.1 }}
                       className="flex items-start gap-3"
                     >
-                      <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Check className="w-3 h-3 text-primary" />
                       </div>
-                      <span className="text-sm">{benefit}</span>
+                      <span className="text-sm text-white/70">{benefit}</span>
                     </motion.li>
                   ))}
                 </ul>
 
-                <Button onClick={() => navigate("/auth?mode=register&business=true")} className="rounded-full">
+                <Button 
+                  onClick={() => navigate("/auth?mode=register&business=true")} 
+                  className="rounded-full gradient-primary border-0"
+                >
                   Probar esta función
                   <ChevronRight className="ml-1 w-4 h-4" />
                 </Button>
@@ -180,7 +183,7 @@ export const FeaturesShowcase = () => {
               {/* Preview mockup */}
               <div className="order-1 md:order-2">
                 <div className={`relative p-1 rounded-3xl bg-gradient-to-br ${activeFeature.color}`}>
-                  <div className="bg-background rounded-[22px] p-6 aspect-[4/3] flex items-center justify-center">
+                  <div className="bg-[hsl(230,20%,10%)] rounded-[22px] p-6 aspect-[4/3] flex items-center justify-center">
                     <div className="text-center space-y-4">
                       <div
                         className={`w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br ${activeFeature.color} flex items-center justify-center`}
@@ -188,12 +191,12 @@ export const FeaturesShowcase = () => {
                         <activeFeature.icon className="w-10 h-10 text-white" />
                       </div>
                       <div className="space-y-2">
-                        <div className="h-4 w-40 mx-auto bg-muted rounded animate-pulse" />
-                        <div className="h-3 w-28 mx-auto bg-muted/70 rounded animate-pulse" />
+                        <div className="h-4 w-40 mx-auto bg-white/10 rounded animate-pulse" />
+                        <div className="h-3 w-28 mx-auto bg-white/5 rounded animate-pulse" />
                       </div>
                       <div className="grid grid-cols-2 gap-3 mt-6 max-w-xs mx-auto">
                         {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="aspect-video rounded-lg bg-muted/50 animate-pulse" />
+                          <div key={i} className="aspect-video rounded-lg bg-white/5 animate-pulse" />
                         ))}
                       </div>
                     </div>
