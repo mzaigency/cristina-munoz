@@ -20,7 +20,7 @@ export interface ServicePackage {
   id: string;
   name: string;
   description: string | null;
-  services: { id: string; name: string; price: number }[];
+  services: { service_id: string; name: string; original_price: number }[];
   original_total: number;
   package_price: number;
   discount_percentage: number | null;
