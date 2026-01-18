@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServiceSelection } from "./ServiceSelection";
 import { StylistSelection } from "./StylistSelection";
 import { DateTimeSelection } from "./DateTimeSelection";
 import { BookingConfirmation } from "./BookingConfirmation";
 import { BookingSummaryMobile } from "./BookingSummaryMobile";
+import { PromoCodeInput } from "./PromoCodeInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
@@ -12,13 +13,18 @@ import { User } from "lucide-react";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
-import { Service, Stylist, BookingData } from "@/types/booking";
+import { Service, Stylist, BookingData, Promotion, ServicePackage } from "@/types/booking";
 
-export const BookingFlow = () => {
+interface BookingFlowProps {
+  tenantId?: string;
+}
+
+export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [packages, setPackages] = useState<ServicePackage[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
@@ -29,6 +35,8 @@ export const BookingFlow = () => {
     time: null,
     name: "",
     phone: "",
+    appliedPromotion: null,
+    packageId: null,
   });
 
   // Check authentication status
@@ -44,15 +52,22 @@ export const BookingFlow = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Load services from database
+  // Load services and packages from database
   useEffect(() => {
-    const loadServices = async () => {
+    const loadData = async () => {
       try {
-        const { data, error } = await supabase
+        const query = supabase
           .from('services')
           .select('*')
           .order('category', { ascending: true })
           .order('name', { ascending: true });
+
+        // Filter by tenant if provided
+        if (tenantId) {
+          query.eq('tenant_id', tenantId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
@@ -66,9 +81,21 @@ export const BookingFlow = () => {
           duration_part2_active: service.duration_part2_active,
           category: service.category || 'Otros',
           duration: service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active,
+          price: service.price,
         }));
 
         setServices(transformedServices);
+
+        // Load packages if tenant
+        if (tenantId) {
+          const { data: packagesData } = await supabase
+            .from('service_packages')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .eq('is_active', true);
+          
+          setPackages((packagesData || []) as unknown as ServicePackage[]);
+        }
       } catch (error) {
         console.error('Error loading services:', error);
         toast({
@@ -81,12 +108,40 @@ export const BookingFlow = () => {
       }
     };
 
-    loadServices();
-  }, [toast]);
+    loadData();
+  }, [toast, tenantId]);
 
   const totalDuration = bookingData.services.reduce((sum, service) => sum + service.duration, 0);
 
-  const handleServicesSelect = (services: Service[]) => {
+  // Calculate prices
+  const { totalPrice, discountedPrice } = useMemo(() => {
+    let total = 0;
+    
+    // If using a package, use package price
+    if (bookingData.packageId) {
+      const pkg = packages.find(p => p.id === bookingData.packageId);
+      total = pkg?.package_price || 0;
+    } else {
+      // Sum individual service prices
+      total = bookingData.services.reduce((sum, s) => sum + (s.price || 0), 0);
+    }
+
+    let discounted = total;
+
+    // Apply promotion if exists
+    if (bookingData.appliedPromotion) {
+      const promo = bookingData.appliedPromotion;
+      if (promo.discount_type === 'percentage') {
+        discounted = total - (total * promo.discount_value / 100);
+      } else {
+        discounted = Math.max(0, total - promo.discount_value);
+      }
+    }
+
+    return { totalPrice: total, discountedPrice: discounted };
+  }, [bookingData.services, bookingData.packageId, bookingData.appliedPromotion, packages]);
+
+  const handleServicesSelect = (services: Service[], packageId?: string) => {
     // Check if user is logged in before proceeding
     if (!user) {
       toast({
@@ -98,7 +153,7 @@ export const BookingFlow = () => {
       return;
     }
     
-    setBookingData({ ...bookingData, services });
+    setBookingData({ ...bookingData, services, packageId: packageId || null });
     setStep(2);
     bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -120,13 +175,17 @@ export const BookingFlow = () => {
     setBookingData({ ...bookingData, name, phone });
   };
 
+  const handleApplyPromotion = (promotion: Promotion | null) => {
+    setBookingData({ ...bookingData, appliedPromotion: promotion });
+  };
+
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
   };
 
   const handleRemoveService = (serviceId: string) => {
     const updatedServices = bookingData.services.filter(s => s.id !== serviceId);
-    setBookingData({ ...bookingData, services: updatedServices });
+    setBookingData({ ...bookingData, services: updatedServices, packageId: null });
   };
 
   return (
@@ -214,6 +273,7 @@ export const BookingFlow = () => {
                         services={services}
                         selectedServices={bookingData.services}
                         onNext={handleServicesSelect}
+                        tenantId={tenantId}
                       />
                     </motion.div>
                   )}
@@ -270,12 +330,25 @@ export const BookingFlow = () => {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="space-y-6"
                     >
+                      {/* Promo Code Input */}
+                      {tenantId && (
+                        <PromoCodeInput
+                          tenantId={tenantId}
+                          subtotal={totalPrice}
+                          appliedPromotion={bookingData.appliedPromotion || null}
+                          onApplyPromotion={handleApplyPromotion}
+                        />
+                      )}
+                      
                       <BookingConfirmation
                         bookingData={bookingData}
                         totalDuration={totalDuration}
                         onConfirm={handleConfirmBooking}
                         onBack={handleBack}
+                        totalPrice={totalPrice}
+                        discountedPrice={discountedPrice}
                       />
                     </motion.div>
                   )}
@@ -292,6 +365,8 @@ export const BookingFlow = () => {
                 totalDuration={totalDuration}
                 step={step}
                 onRemoveService={step === 1 ? handleRemoveService : undefined}
+                totalPrice={totalPrice}
+                discountedPrice={bookingData.appliedPromotion ? discountedPrice : undefined}
               />
             )}
           </AnimatePresence>

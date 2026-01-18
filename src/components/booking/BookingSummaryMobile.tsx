@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Clock, Scissors, User, Calendar, ChevronUp, X } from "lucide-react";
+import { Clock, Scissors, User, Calendar, ChevronUp, X, Tag, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Service, Stylist, BookingData } from "@/types/booking";
+import { Service, Stylist, BookingData, Promotion } from "@/types/booking";
+import { Badge } from "@/components/ui/badge";
 
 interface BookingSummaryMobileProps {
   bookingData: BookingData;
   totalDuration: number;
   step: number;
   onRemoveService?: (serviceId: string) => void;
+  totalPrice?: number;
+  discountedPrice?: number;
 }
 
 const stylistNames: Record<Stylist, string> = {
@@ -19,16 +22,24 @@ const stylistNames: Record<Stylist, string> = {
   any: "Cualquiera",
 };
 
+const formatPrice = (price: number): string => {
+  return `${price.toFixed(2).replace('.', ',')} €`;
+};
+
 export const BookingSummaryMobile = ({ 
   bookingData, 
   totalDuration, 
   step,
-  onRemoveService 
+  onRemoveService,
+  totalPrice = 0,
+  discountedPrice
 }: BookingSummaryMobileProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasServices = bookingData.services.length > 0;
   
   if (!hasServices) return null;
+
+  const hasDiscount = discountedPrice !== undefined && discountedPrice < totalPrice;
 
   return (
     <motion.div
@@ -56,9 +67,27 @@ export const BookingSummaryMobile = ({
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
               {bookingData.services.length} servicio{bookingData.services.length > 1 ? 's' : ''}
             </span>
+            {bookingData.packageId && (
+              <Badge variant="secondary" className="text-xs">
+                <Package className="h-3 w-3 mr-1" />
+                Pack
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-primary">{totalDuration} min</span>
+            {totalPrice > 0 && (
+              <div className="text-right">
+                {hasDiscount ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground line-through">{formatPrice(totalPrice)}</span>
+                    <span className="text-sm font-bold text-green-600">{formatPrice(discountedPrice!)}</span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium text-primary">{formatPrice(totalPrice)}</span>
+                )}
+              </div>
+            )}
+            <span className="text-xs text-muted-foreground">{totalDuration} min</span>
             <motion.div
               animate={{ rotate: isExpanded ? 180 : 0 }}
               transition={{ duration: 0.2 }}
@@ -94,6 +123,9 @@ export const BookingSummaryMobile = ({
                         <span className="text-foreground truncate">{service.name}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
+                        {service.price && service.price > 0 && (
+                          <span className="text-xs font-medium text-primary">{formatPrice(service.price)}</span>
+                        )}
                         <span className="text-muted-foreground text-xs">{service.duration}min</span>
                         {step === 1 && onRemoveService && (
                           <button
@@ -110,6 +142,19 @@ export const BookingSummaryMobile = ({
                     </div>
                   ))}
                 </div>
+
+                {/* Applied Promotion */}
+                {bookingData.appliedPromotion && (
+                  <div className="flex items-center justify-between text-sm bg-green-500/10 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-green-600" />
+                      <span className="text-green-700 dark:text-green-400">{bookingData.appliedPromotion.name}</span>
+                    </div>
+                    <Badge variant="secondary" className="font-mono text-xs">
+                      {bookingData.appliedPromotion.code}
+                    </Badge>
+                  </div>
+                )}
 
                 {/* Additional Info */}
                 <div className="space-y-2 pt-2 border-t border-border/50">
@@ -139,16 +184,35 @@ export const BookingSummaryMobile = ({
                     </div>
                   )}
 
-                  {/* Total */}
+                  {/* Totals */}
                   <div className="flex items-center justify-between text-sm pt-2 border-t border-border/50">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Clock className="h-4 w-4" />
                       <span>Duración total</span>
                     </div>
-                    <span className="font-semibold text-primary text-base">
+                    <span className="font-semibold text-foreground">
                       {totalDuration} min
                     </span>
                   </div>
+
+                  {totalPrice > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Tag className="h-4 w-4" />
+                        <span>Total</span>
+                      </div>
+                      <div className="text-right">
+                        {hasDiscount ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground line-through">{formatPrice(totalPrice)}</span>
+                            <span className="font-bold text-lg text-green-600">{formatPrice(discountedPrice!)}</span>
+                          </div>
+                        ) : (
+                          <span className="font-bold text-lg text-primary">{formatPrice(totalPrice)}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Progress */}
