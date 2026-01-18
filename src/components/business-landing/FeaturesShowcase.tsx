@@ -1,108 +1,95 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Globe, 
-  Calendar, 
-  LayoutDashboard, 
-  CreditCard, 
-  BarChart3, 
-  Camera,
-  Check,
-  ChevronRight
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Camera, Check, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const features = [
   {
-    id: 'landing',
+    id: "landing",
     icon: Globe,
-    title: 'Tu web profesional',
-    shortTitle: 'Web',
-    headline: 'Tu salón en internet en 15 minutos',
-    description: 'Una página web profesional con tu marca, servicios y precios. Tus clientes te encontrarán en Google y podrán ver todo sobre tu negocio.',
+    title: "Tu web profesional",
+    shortTitle: "Web",
+    headline: "Tu salón en internet en 15 minutos",
+    description:
+      "Una página web profesional con tu marca, servicios y precios. Tus clientes te encontrarán en Google y podrán ver todo sobre tu negocio.",
     benefits: [
-      'Dominio personalizado (tunombre.glowapp.es)',
-      'Optimizada para móviles y SEO',
-      'Galería de trabajos y reseñas',
-      'Información de contacto y ubicación',
+      "Dominio personalizado (tunombre.glowapp.es)",
+      "Optimizada para móviles y SEO",
+      "Galería de trabajos y reseñas",
+      "Información de contacto y ubicación",
     ],
-    color: 'from-blue-500 to-cyan-500',
+    color: "from-blue-500 to-cyan-500",
   },
   {
-    id: 'bookings',
+    id: "bookings",
     icon: Calendar,
-    title: 'Reservas 24/7',
-    shortTitle: 'Reservas',
-    headline: 'Tus clientes reservan mientras duermes',
-    description: 'Sistema de reservas automático que funciona las 24 horas. Sin llamadas, sin WhatsApp, sin errores. El cliente elige fecha, hora y servicio.',
+    title: "Reservas 24/7",
+    shortTitle: "Reservas",
+    headline: "Tus clientes reservan mientras duermes",
+    description:
+      "Sistema de reservas automático que funciona las 24 horas. Sin llamadas, sin WhatsApp, sin errores. El cliente elige fecha, hora y servicio.",
     benefits: [
-      'Disponibilidad en tiempo real',
-      'Confirmación automática por email',
-      'Recordatorios antes de la cita',
-      'Cancelaciones fáciles sin llamadas',
+      "Disponibilidad en tiempo real",
+      "Confirmación automática por email",
+      "Recordatorios antes de la cita",
+      "Cancelaciones fáciles sin llamadas",
     ],
-    color: 'from-green-500 to-emerald-500',
+    color: "from-green-500 to-emerald-500",
   },
   {
-    id: 'calendar',
+    id: "calendar",
     icon: LayoutDashboard,
-    title: 'Calendario inteligente',
-    shortTitle: 'Agenda',
-    headline: 'Control total de tu agenda',
-    description: 'Vista por estilista, por día o por semana. Arrastra citas, bloquea horas, gestiona vacaciones. Todo desde tu móvil o tablet.',
-    benefits: [
-      'Vista multi-estilista',
-      'Bloqueos y descansos',
-      'Citas recurrentes',
-      'Sincronización con Google Calendar',
-    ],
-    color: 'from-purple-500 to-pink-500',
+    title: "Calendario inteligente",
+    shortTitle: "Agenda",
+    headline: "Control total de tu agenda",
+    description:
+      "Vista por estilista, por día o por semana. Arrastra citas, bloquea horas, gestiona vacaciones. Todo desde tu móvil o tablet.",
+    benefits: ["Vista multi-estilista", "Bloqueos y descansos", "Citas recurrentes"],
+    color: "from-purple-500 to-pink-500",
   },
   {
-    id: 'payments',
+    id: "payments",
     icon: CreditCard,
-    title: 'Caja registradora',
-    shortTitle: 'Caja',
-    headline: 'Cobros rápidos, cuentas claras',
-    description: 'Cobra en efectivo o tarjeta, aplica descuentos, gestiona propinas. Historial completo de todas las transacciones.',
+    title: "Caja registradora",
+    shortTitle: "Caja",
+    headline: "Cobros rápidos, cuentas claras",
+    description:
+      "Cobra en efectivo o tarjeta, aplica descuentos, gestiona propinas. Historial completo de todas las transacciones.",
     benefits: [
-      'Cobro rápido al finalizar',
-      'Descuentos y promociones',
-      'Cierre de caja diario',
-      'Historial de transacciones',
+      "Cobro rápido al finalizar",
+      "Descuentos y promociones",
+      "Cierre de caja diario",
+      "Historial de transacciones",
     ],
-    color: 'from-amber-500 to-orange-500',
+    color: "from-amber-500 to-orange-500",
   },
   {
-    id: 'analytics',
+    id: "analytics",
     icon: BarChart3,
-    title: 'Analytics y objetivos',
-    shortTitle: 'Datos',
-    headline: 'Métricas que importan',
-    description: 'Visualiza ingresos, reservas, servicios más populares. Establece objetivos mensuales y sigue tu progreso.',
-    benefits: [
-      'Dashboard de ingresos',
-      'Servicios más vendidos',
-      'Objetivos mensuales',
-      'Comparativas temporales',
-    ],
-    color: 'from-indigo-500 to-violet-500',
+    title: "Analytics y objetivos",
+    shortTitle: "Datos",
+    headline: "Métricas que importan",
+    description:
+      "Visualiza ingresos, reservas, servicios más populares. Establece objetivos mensuales y sigue tu progreso.",
+    benefits: ["Dashboard de ingresos", "Servicios más vendidos", "Objetivos mensuales", "Comparativas temporales"],
+    color: "from-indigo-500 to-violet-500",
   },
   {
-    id: 'stories',
+    id: "stories",
     icon: Camera,
-    title: 'Stories y comunidad',
-    shortTitle: 'Social',
-    headline: 'Muestra tu trabajo al mundo',
-    description: 'Publica fotos de tus trabajos como stories. Tus seguidores las verán y podrán reservar directamente desde ahí.',
+    title: "Stories y comunidad",
+    shortTitle: "Social",
+    headline: "Muestra tu trabajo al mundo",
+    description:
+      "Publica fotos de tus trabajos como stories. Tus seguidores las verán y podrán reservar directamente desde ahí.",
     benefits: [
-      'Editor de stories integrado',
-      'Visible para toda la comunidad',
-      'Enlace directo a reservas',
-      'Estadísticas de visualizaciones',
+      "Editor de stories integrado",
+      "Visible para toda la comunidad",
+      "Enlace directo a reservas",
+      "Estadísticas de visualizaciones",
     ],
-    color: 'from-rose-500 to-pink-500',
+    color: "from-rose-500 to-pink-500",
   },
 ];
 
@@ -119,15 +106,11 @@ export const FeaturesShowcase = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <span className="text-sm font-medium text-primary uppercase tracking-wider">
-            Todo lo que necesitas
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4">
-            Funciones que transforman tu negocio
-          </h2>
+          <span className="text-sm font-medium text-primary uppercase tracking-wider">Todo lo que necesitas</span>
+          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4">Funciones que transforman tu negocio</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Desde reservas automáticas hasta analytics avanzados. 
-            Todo diseñado específicamente para profesionales de la belleza.
+            Desde reservas automáticas hasta analytics avanzados. Todo diseñado específicamente para profesionales de la
+            belleza.
           </p>
         </motion.div>
 
@@ -139,8 +122,8 @@ export const FeaturesShowcase = () => {
               onClick={() => setActiveFeature(feature)}
               className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                 activeFeature.id === feature.id
-                  ? 'bg-primary text-primary-foreground shadow-lg'
-                  : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                  ? "bg-primary text-primary-foreground shadow-lg"
+                  : "bg-muted hover:bg-muted/80 text-muted-foreground"
               }`}
             >
               <feature.icon className="w-4 h-4" />
@@ -166,14 +149,10 @@ export const FeaturesShowcase = () => {
                 <div className={`inline-flex p-3 rounded-2xl bg-gradient-to-br ${activeFeature.color} mb-6`}>
                   <activeFeature.icon className="w-8 h-8 text-white" />
                 </div>
-                
-                <h3 className="text-2xl sm:text-3xl font-bold mb-4">
-                  {activeFeature.headline}
-                </h3>
-                
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  {activeFeature.description}
-                </p>
+
+                <h3 className="text-2xl sm:text-3xl font-bold mb-4">{activeFeature.headline}</h3>
+
+                <p className="text-muted-foreground mb-6 leading-relaxed">{activeFeature.description}</p>
 
                 <ul className="space-y-3 mb-8">
                   {activeFeature.benefits.map((benefit, index) => (
@@ -192,10 +171,7 @@ export const FeaturesShowcase = () => {
                   ))}
                 </ul>
 
-                <Button
-                  onClick={() => navigate('/auth?mode=register&business=true')}
-                  className="rounded-full"
-                >
+                <Button onClick={() => navigate("/auth?mode=register&business=true")} className="rounded-full">
                   Probar esta función
                   <ChevronRight className="ml-1 w-4 h-4" />
                 </Button>
@@ -206,7 +182,9 @@ export const FeaturesShowcase = () => {
                 <div className={`relative p-1 rounded-3xl bg-gradient-to-br ${activeFeature.color}`}>
                   <div className="bg-background rounded-[22px] p-6 aspect-[4/3] flex items-center justify-center">
                     <div className="text-center space-y-4">
-                      <div className={`w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br ${activeFeature.color} flex items-center justify-center`}>
+                      <div
+                        className={`w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br ${activeFeature.color} flex items-center justify-center`}
+                      >
                         <activeFeature.icon className="w-10 h-10 text-white" />
                       </div>
                       <div className="space-y-2">
