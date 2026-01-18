@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
 import { TenantStylistSelection } from "./TenantStylistSelection";
 import { TenantDateTimeSelection } from "./TenantDateTimeSelection";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { BookingSummaryMobile } from "@/components/booking/BookingSummaryMobile";
+import { PromoCodeInput } from "@/components/booking/PromoCodeInput";
 import { SuccessCelebration } from "@/components/booking/SuccessCelebration";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,7 @@ import { User } from "lucide-react";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
-import { Service, Stylist, BookingData } from "@/types/booking";
+import { Service, Stylist, BookingData, Promotion, ServicePackage } from "@/types/booking";
 import { useHaptic } from "@/hooks/useHaptic";
 
 interface TenantBookingFlowProps {
@@ -25,11 +26,12 @@ interface TenantBookingFlowProps {
 export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowProps) => {
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
+  const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [pendingServices, setPendingServices] = useState<Service[] | null>(null);
+  const [pendingServices, setPendingServices] = useState<{ services: Service[], packageId?: string } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
@@ -41,6 +43,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     time: null,
     name: "",
     phone: "",
+    appliedPromotion: null,
+    packageId: null,
   });
 
   // Check authentication status
@@ -56,21 +60,28 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     return () => subscription.unsubscribe();
   }, []);
 
-  // Load services from database filtered by tenant_id
+  // Load services and packages from database filtered by tenant_id
   useEffect(() => {
-    const loadServices = async () => {
+    const loadData = async () => {
       try {
-        const { data, error } = await supabase
-          .from('services')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .order('category', { ascending: true })
-          .order('name', { ascending: true });
+        const [servicesRes, packagesRes] = await Promise.all([
+          supabase
+            .from('services')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .order('category', { ascending: true })
+            .order('name', { ascending: true }),
+          supabase
+            .from('service_packages')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .eq('is_active', true)
+        ]);
 
-        if (error) throw error;
+        if (servicesRes.error) throw servicesRes.error;
 
         // Transform data to include computed duration field
-        const transformedServices: Service[] = (data || []).map(service => ({
+        const transformedServices: Service[] = (servicesRes.data || []).map(service => ({
           id: service.id,
           name: service.name,
           type: service.type as 'Simple' | 'Compuesto',
@@ -79,9 +90,11 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           duration_part2_active: service.duration_part2_active,
           category: service.category || 'Otros',
           duration: service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active,
+          price: service.price,
         }));
 
         setServices(transformedServices);
+        setPackages((packagesRes.data || []) as unknown as ServicePackage[]);
       } catch (error) {
         console.error('Error loading services:', error);
         toast({
@@ -95,24 +108,52 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     };
 
     if (tenantId) {
-      loadServices();
+      loadData();
     }
   }, [tenantId, toast]);
 
   const totalDuration = bookingData.services.reduce((sum, service) => sum + service.duration, 0);
 
-  const handleServicesSelect = (selectedServices: Service[]) => {
+  // Calculate prices
+  const { totalPrice, discountedPrice } = useMemo(() => {
+    let total = 0;
+    
+    // If using a package, use package price
+    if (bookingData.packageId) {
+      const pkg = packages.find(p => p.id === bookingData.packageId);
+      total = pkg?.package_price || 0;
+    } else {
+      // Sum individual service prices
+      total = bookingData.services.reduce((sum, s) => sum + (s.price || 0), 0);
+    }
+
+    let discounted = total;
+
+    // Apply promotion if exists
+    if (bookingData.appliedPromotion) {
+      const promo = bookingData.appliedPromotion;
+      if (promo.discount_type === 'percentage') {
+        discounted = total - (total * promo.discount_value / 100);
+      } else {
+        discounted = Math.max(0, total - promo.discount_value);
+      }
+    }
+
+    return { totalPrice: total, discountedPrice: discounted };
+  }, [bookingData.services, bookingData.packageId, bookingData.appliedPromotion, packages]);
+
+  const handleServicesSelect = (selectedServices: Service[], packageId?: string) => {
     // Check if user is logged in before proceeding
     if (!user) {
       // Save pending services and show auth modal instead of redirecting
-      setPendingServices(selectedServices);
+      setPendingServices({ services: selectedServices, packageId });
       setShowAuthModal(true);
       haptic.warning();
       return;
     }
     
     haptic.selection();
-    setBookingData({ ...bookingData, services: selectedServices });
+    setBookingData({ ...bookingData, services: selectedServices, packageId: packageId || null });
     setStep(2);
     bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -123,8 +164,12 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     haptic.success();
     
     // If there were pending services, continue the flow
-    if (pendingServices && pendingServices.length > 0) {
-      setBookingData({ ...bookingData, services: pendingServices });
+    if (pendingServices && pendingServices.services.length > 0) {
+      setBookingData({ 
+        ...bookingData, 
+        services: pendingServices.services, 
+        packageId: pendingServices.packageId || null 
+      });
       setPendingServices(null);
       setStep(2);
       bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -152,13 +197,17 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     haptic.success();
   };
 
+  const handleApplyPromotion = (promotion: Promotion | null) => {
+    setBookingData({ ...bookingData, appliedPromotion: promotion });
+  };
+
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
   };
 
   const handleRemoveService = (serviceId: string) => {
     const updatedServices = bookingData.services.filter(s => s.id !== serviceId);
-    setBookingData({ ...bookingData, services: updatedServices });
+    setBookingData({ ...bookingData, services: updatedServices, packageId: null });
   };
 
   return (
@@ -246,6 +295,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                         services={services}
                         selectedServices={bookingData.services}
                         onNext={handleServicesSelect}
+                        tenantId={tenantId}
                       />
                     </motion.div>
                   )}
@@ -304,13 +354,24 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="space-y-6"
                     >
+                      {/* Promo Code Input */}
+                      <PromoCodeInput
+                        tenantId={tenantId}
+                        subtotal={totalPrice}
+                        appliedPromotion={bookingData.appliedPromotion || null}
+                        onApplyPromotion={handleApplyPromotion}
+                      />
+                      
                       <BookingConfirmation
                         bookingData={bookingData}
                         totalDuration={totalDuration}
                         onConfirm={handleConfirmBooking}
                         onBack={handleBack}
                         tenantId={tenantId}
+                        totalPrice={totalPrice}
+                        discountedPrice={discountedPrice}
                       />
                     </motion.div>
                   )}
@@ -345,6 +406,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                 totalDuration={totalDuration}
                 step={step}
                 onRemoveService={step === 1 ? handleRemoveService : undefined}
+                totalPrice={totalPrice}
+                discountedPrice={bookingData.appliedPromotion ? discountedPrice : undefined}
               />
             )}
           </AnimatePresence>
