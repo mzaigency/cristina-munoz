@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles, Shield, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { motion } from "framer-motion";
+import { ArrowRight, Sparkles, Shield, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export const FinalCTASection = () => {
   const navigate = useNavigate();
@@ -25,26 +25,24 @@ export const FinalCTASection = () => {
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             viewport={{ once: true }}
-            transition={{ type: 'spring', bounce: 0.5 }}
+            transition={{ type: "spring", bounce: 0.5 }}
             className="w-20 h-20 mx-auto mb-8 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center"
           >
             <Sparkles className="w-10 h-10 text-white" />
           </motion.div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-            Tu negocio merece crecer
-          </h2>
-          
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">Tu negocio merece crecer</h2>
+
           <p className="text-lg text-white/80 mb-10 max-w-xl mx-auto">
-            Empieza hoy con 30 días gratis y descubre por qué los profesionales 
-            de la belleza eligen GlowApp para gestionar su negocio.
+            Empieza hoy con 30 días gratis y descubre por qué los profesionales de la belleza eligen GlowApp para
+            gestionar su negocio.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
             <Button
               size="lg"
               className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 rounded-full shadow-xl"
-              onClick={() => navigate('/auth?mode=register&business=true')}
+              onClick={() => navigate("/auth?mode=register&business=true")}
             >
               Empezar gratis ahora
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -56,10 +54,6 @@ export const FinalCTASection = () => {
             <span className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Configura en 15 min
-            </span>
-            <span className="flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              Sin tarjeta requerida
             </span>
             <span className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
