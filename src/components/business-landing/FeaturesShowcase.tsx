@@ -171,10 +171,7 @@ export const FeaturesShowcase = () => {
                   ))}
                 </ul>
 
-                <Button
-                  onClick={() => navigate("/auth?mode=register&business=true")}
-                  className="rounded-full gradient-primary border-0"
-                >
+                <Button onClick={() => navigate("/onboarding")} className="rounded-full gradient-primary border-0">
                   Probar esta función
                   <ChevronRight className="ml-1 w-4 h-4" />
                 </Button>
