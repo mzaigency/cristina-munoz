@@ -1,32 +1,32 @@
-import { motion } from 'framer-motion';
-import { X, Check, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { motion } from "framer-motion";
+import { X, Check, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const comparisons = [
   {
-    before: 'Agenda en papel o WhatsApp',
-    after: 'Calendario digital sincronizado',
+    before: "Agenda en papel o WhatsApp",
+    after: "Calendario digital sincronizado",
   },
   {
-    before: 'No sabes cuánto facturas',
-    after: 'Analytics en tiempo real',
+    before: "No sabes cuánto facturas",
+    after: "Analytics en tiempo real",
   },
   {
-    before: 'Clientes olvidan sus citas',
-    after: 'Recordatorios automáticos',
+    before: "Clientes olvidan sus citas",
+    after: "Recordatorios automáticos",
   },
   {
-    before: 'Sin presencia online',
-    after: 'Tu propia web profesional',
+    before: "Sin presencia online",
+    after: "Tu propia web profesional",
   },
   {
-    before: 'Pierdes clientes potenciales',
-    after: 'Reservas 24/7 automáticas',
+    before: "Pierdes clientes potenciales",
+    after: "Reservas 24/7 automáticas",
   },
   {
-    before: 'Gestión manual del equipo',
-    after: 'Agenda por estilista',
+    before: "Gestión manual del equipo",
+    after: "Agenda por estilista",
   },
 ];
 
@@ -42,12 +42,8 @@ export const BeforeAfterSection = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <span className="text-sm font-medium text-primary uppercase tracking-wider">
-            El cambio es real
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4 text-white">
-            Antes vs Después
-          </h2>
+          <span className="text-sm font-medium text-primary uppercase tracking-wider">El cambio es real</span>
+          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4 text-white">Antes vs Después</h2>
           <p className="text-white/50 max-w-2xl mx-auto">
             Mira cómo GlowApp transforma la gestión de tu negocio día a día.
           </p>
@@ -103,7 +99,7 @@ export const BeforeAfterSection = () => {
             <Button
               size="lg"
               className="rounded-full gradient-primary border-0 shadow-lg shadow-primary/30"
-              onClick={() => navigate('/auth?mode=register&business=true')}
+              onClick={() => navigate("/onboarding")}
             >
               Quiero el "después"
               <ArrowRight className="ml-2 w-5 h-5" />
