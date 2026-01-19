@@ -74,7 +74,7 @@ export function SmartSearchHeader() {
                 <Button
                   size="sm"
                   className="rounded-full gradient-primary border-0"
-                  onClick={() => navigate("/para-neogocios")}
+                  asChild
                 >
                   <Link to="/para-negocios" className="flex items-center gap-1.5">
                     <Building2 className="h-4 w-4" />
