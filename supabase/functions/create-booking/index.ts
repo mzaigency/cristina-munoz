@@ -177,6 +177,68 @@ serve(async (req) => {
     }
     console.log("Using tenant_id:", tenantId);
 
+    // SECURITY: Authorization Check
+    const authHeader = req.headers.get("Authorization");
+    let authUser = null;
+    let isTenantStaff = false;
+
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user && !error) {
+        authUser = user;
+
+        // Check permissions if authenticated
+        // Check tenant admin
+        const { data: isAdmin } = await supabase
+          .from("tenant_admins")
+          .select("id")
+          .eq("tenant_id", tenantId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (isAdmin) {
+          isTenantStaff = true;
+        } else {
+          // Check tenant stylist
+          const { data: isStylist } = await supabase
+            .from("tenant_stylists")
+            .select("id")
+            .eq("tenant_id", tenantId)
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (isStylist) isTenantStaff = true;
+        }
+
+        if (!isTenantStaff) {
+           // Check superadmin
+           const { data: isSuper } = await supabase
+             .from("user_roles")
+             .select("role")
+             .eq("user_id", user.id)
+             .eq("role", "superadmin")
+             .maybeSingle();
+           if (isSuper) isTenantStaff = true;
+        }
+      }
+    }
+
+    // 1. Prevent IDOR on user_id
+    if (bookingData.user_id) {
+       if (!authUser) {
+         throw new Error("Authentication required to assign booking to a user.");
+       }
+       if (authUser.id !== bookingData.user_id && !isTenantStaff) {
+         throw new Error("Unauthorized: You cannot create bookings for other users.");
+       }
+    }
+
+    // 2. Prevent bypass of availability check
+    if (bookingData.skipAvailabilityCheck && !isTenantStaff) {
+       throw new Error("Unauthorized: Only staff can skip availability checks.");
+    }
+    // END SECURITY CHECK
+
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
