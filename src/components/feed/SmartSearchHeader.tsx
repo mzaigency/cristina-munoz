@@ -12,7 +12,9 @@ export function SmartSearchHeader() {
 
   useEffect(() => {
     const checkSuperadmin = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user) {
         const { data } = await supabase
           .from("user_roles")
@@ -42,9 +44,9 @@ export function SmartSearchHeader() {
           >
             {/* Logo */}
             <Link to="/">
-              <motion.img 
-                src={glowappLogo} 
-                alt="GlowApp" 
+              <motion.img
+                src={glowappLogo}
+                alt="GlowApp"
                 className="h-8 object-contain rounded-xl"
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -56,23 +58,23 @@ export function SmartSearchHeader() {
             <div className="flex items-center gap-2">
               {/* Superadmin link */}
               {isSuperadmin && (
-                <Link 
+                <Link
                   to="/superadmin"
                   className="p-2 rounded-xl text-amber-500 hover:bg-amber-500/10 transition-colors"
                 >
                   <Crown className="h-5 w-5" />
                 </Link>
               )}
-              
+
               {/* Notification Bell */}
               <NotificationBadge />
-              
+
               {/* Para negocios button */}
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
-                  asChild
-                  size="default"
-                  className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4 rounded-xl shadow-lg shadow-primary/25 text-sm"
+                  size="sm"
+                  className="rounded-full gradient-primary border-0"
+                  onClick={() => navigate("/para-neogocios")}
                 >
                   <Link to="/para-negocios" className="flex items-center gap-1.5">
                     <Building2 className="h-4 w-4" />
