@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Menu, X, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import glowappLogo from '@/assets/glowapp-logo.png';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Menu, X, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import glowappLogo from "@/assets/glowapp-logo.png";
+import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
-  { label: 'Funciones', href: '#features' },
-  { label: 'Precios', href: '#pricing' },
-  { label: 'FAQ', href: '#faq' },
+  { label: "Funciones", href: "#features" },
+  { label: "Precios", href: "#pricing" },
+  { label: "FAQ", href: "#faq" },
 ];
 
 export const StickyHeader = () => {
@@ -21,13 +21,17 @@ export const StickyHeader = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
     };
-    
+
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
     });
 
@@ -37,20 +41,20 @@ export const StickyHeader = () => {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
-      
+
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
       const progress = (window.scrollY / totalHeight) * 100;
       setScrollProgress(progress);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: "smooth" });
     }
     setIsMobileMenuOpen(false);
   };
@@ -61,25 +65,20 @@ export const StickyHeader = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? 'bg-[hsl(230,20%,6%)]/95 backdrop-blur-xl border-b border-white/10 shadow-lg'
-            : 'bg-transparent'
+          isScrolled ? "bg-[hsl(230,20%,6%)]/95 backdrop-blur-xl border-b border-white/10 shadow-lg" : "bg-transparent"
         }`}
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         {/* Progress bar */}
         <div className="absolute bottom-0 left-0 h-0.5 bg-primary/20 w-full">
-          <motion.div
-            className="h-full gradient-primary"
-            style={{ width: `${scrollProgress}%` }}
-          />
+          <motion.div className="h-full gradient-primary" style={{ width: `${scrollProgress}%` }} />
         </div>
 
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <motion.button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="flex items-center gap-2"
@@ -107,7 +106,7 @@ export const StickyHeader = () => {
                   variant="ghost"
                   size="sm"
                   className="text-white/70 hover:text-white hover:bg-white/10"
-                  onClick={() => navigate('/auth')}
+                  onClick={() => navigate("/auth")}
                 >
                   Iniciar sesión
                 </Button>
@@ -115,9 +114,9 @@ export const StickyHeader = () => {
               <Button
                 size="sm"
                 className="rounded-full gradient-primary border-0"
-                onClick={() => navigate('/onboarding')}
+                onClick={() => navigate("/onboarding")}
               >
-                {isAuthenticated ? 'Ir al onboarding' : 'Prueba gratis'}
+                {isAuthenticated ? "Prueba gratis" : "Prueba gratis"}
                 <ArrowRight className="ml-1 w-4 h-4" />
               </Button>
             </div>
@@ -143,7 +142,7 @@ export const StickyHeader = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="fixed inset-x-0 top-16 z-40 bg-[hsl(230,20%,6%)]/98 backdrop-blur-xl border-b border-white/10 md:hidden"
-            style={{ paddingTop: 'env(safe-area-inset-top)' }}
+            style={{ paddingTop: "env(safe-area-inset-top)" }}
           >
             <nav className="container mx-auto px-4 py-6 space-y-4">
               {navItems.map((item) => (
@@ -161,7 +160,7 @@ export const StickyHeader = () => {
                     variant="outline"
                     className="w-full bg-transparent border-white/20 text-white hover:bg-white/10"
                     onClick={() => {
-                      navigate('/auth');
+                      navigate("/auth");
                       setIsMobileMenuOpen(false);
                     }}
                   >
@@ -171,11 +170,11 @@ export const StickyHeader = () => {
                 <Button
                   className="w-full gradient-primary border-0"
                   onClick={() => {
-                    navigate('/onboarding');
+                    navigate("/onboarding");
                     setIsMobileMenuOpen(false);
                   }}
                 >
-                  {isAuthenticated ? 'Ir al onboarding' : 'Prueba gratis'}
+                  {isAuthenticated ? "Ir al onboarding" : "Prueba gratis"}
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>
