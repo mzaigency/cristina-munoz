@@ -187,10 +187,6 @@ export const PricingSection = () => {
           </span>
           <span className="flex items-center gap-2">
             <Check className="w-4 h-4 text-primary" />
-            Sin tarjeta de crédito
-          </span>
-          <span className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-primary" />
             Cancela cuando quieras
           </span>
         </motion.div>
