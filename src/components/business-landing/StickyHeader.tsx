@@ -174,7 +174,7 @@ export const StickyHeader = () => {
                     setIsMobileMenuOpen(false);
                   }}
                 >
-                  {isAuthenticated ? "Ir al onboarding" : "Prueba gratis"}
+                  {isAuthenticated ? "Prueba Gratis" : "Prueba gratis"}
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>
