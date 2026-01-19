@@ -3,6 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Camera, Check, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import {
+  DemoCalendar,
+  DemoBookingFlow,
+  DemoCashRegister,
+  DemoAnalytics,
+  DemoLanding,
+  DemoStories,
+} from "./demos";
 
 const features = [
   {
@@ -20,6 +28,7 @@ const features = [
       "Información de contacto y ubicación",
     ],
     color: "from-blue-500 to-cyan-500",
+    Demo: DemoLanding,
   },
   {
     id: "bookings",
@@ -36,6 +45,7 @@ const features = [
       "Cancelaciones fáciles sin llamadas",
     ],
     color: "from-green-500 to-emerald-500",
+    Demo: DemoBookingFlow,
   },
   {
     id: "calendar",
@@ -47,6 +57,7 @@ const features = [
       "Vista por estilista, por día o por semana. Arrastra citas, bloquea horas, gestiona vacaciones. Todo desde tu móvil o tablet.",
     benefits: ["Vista multi-estilista", "Bloqueos y descansos", "Citas recurrentes"],
     color: "from-purple-500 to-pink-500",
+    Demo: DemoCalendar,
   },
   {
     id: "payments",
@@ -63,6 +74,7 @@ const features = [
       "Historial de transacciones",
     ],
     color: "from-amber-500 to-orange-500",
+    Demo: DemoCashRegister,
   },
   {
     id: "analytics",
@@ -74,6 +86,7 @@ const features = [
       "Visualiza ingresos, reservas, servicios más populares. Establece objetivos mensuales y sigue tu progreso.",
     benefits: ["Dashboard de ingresos", "Servicios más vendidos", "Objetivos mensuales", "Comparativas temporales"],
     color: "from-indigo-500 to-violet-500",
+    Demo: DemoAnalytics,
   },
   {
     id: "stories",
@@ -90,12 +103,15 @@ const features = [
       "Estadísticas de visualizaciones",
     ],
     color: "from-rose-500 to-pink-500",
+    Demo: DemoStories,
   },
 ];
 
 export const FeaturesShowcase = () => {
   const [activeFeature, setActiveFeature] = useState(features[0]);
   const navigate = useNavigate();
+
+  const ActiveDemo = activeFeature.Demo;
 
   return (
     <section id="features" className="py-20 bg-[hsl(230,20%,6%)]">
@@ -177,26 +193,30 @@ export const FeaturesShowcase = () => {
                 </Button>
               </div>
 
-              {/* Preview mockup */}
+              {/* Live Demo Preview */}
               <div className="order-1 md:order-2">
-                <div className={`relative p-1 rounded-3xl bg-gradient-to-br ${activeFeature.color}`}>
-                  <div className="bg-[hsl(230,20%,10%)] rounded-[22px] p-6 aspect-[4/3] flex items-center justify-center">
-                    <div className="text-center space-y-4">
-                      <div
-                        className={`w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br ${activeFeature.color} flex items-center justify-center`}
-                      >
-                        <activeFeature.icon className="w-10 h-10 text-white" />
+                <div className="relative">
+                  {/* Phone frame */}
+                  <div className="relative mx-auto w-[280px] sm:w-[320px]">
+                    {/* Phone border with gradient */}
+                    <div className={`absolute -inset-1 rounded-[2.5rem] bg-gradient-to-br ${activeFeature.color} opacity-50 blur-sm`} />
+                    <div className="relative bg-[hsl(230,20%,8%)] rounded-[2.2rem] p-2 border border-white/10">
+                      {/* Phone notch */}
+                      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-5 bg-black rounded-full z-10" />
+                      
+                      {/* Screen content */}
+                      <div className="rounded-[1.8rem] overflow-hidden bg-background">
+                        <ActiveDemo />
                       </div>
-                      <div className="space-y-2">
-                        <div className="h-4 w-40 mx-auto bg-white/10 rounded animate-pulse" />
-                        <div className="h-3 w-28 mx-auto bg-white/5 rounded animate-pulse" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3 mt-6 max-w-xs mx-auto">
-                        {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="aspect-video rounded-lg bg-white/5 animate-pulse" />
-                        ))}
-                      </div>
+                      
+                      {/* Home indicator */}
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-white/20 rounded-full" />
                     </div>
+                  </div>
+                  
+                  {/* Demo badge */}
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full border border-white/20">
+                    <span className="text-[10px] text-white/60 font-medium">Demo interactiva</span>
                   </div>
                 </div>
               </div>
