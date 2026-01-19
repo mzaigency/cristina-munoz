@@ -21,7 +21,7 @@ const faqs = [
   {
     question: "¿Mis clientes tienen que instalar algo?",
     answer:
-      "No. Tus clientes acceden a tu página web y reservan directamente desde el navegador de su móvil. No necesitan descargar nada aunque es aconsegable Glowapp.",
+      "No. Tus clientes acceden a tu página web y reservan directamente desde el navegador de su móvil. No necesitan descargar nada aunque es aconsejable Glowapp.",
   },
   {
     question: "¿Funciona con mi equipo de estilistas?",
@@ -79,9 +79,7 @@ export const FAQSection = () => {
                     <span className="font-medium text-white">{faq.question}</span>
                     <motion.div animate={{ rotate: openIndex === index ? 180 : 0 }} transition={{ duration: 0.2 }}>
                       <ChevronDown
-                        className={`w-5 h-5 flex-shrink-0 ${
-                          openIndex === index ? "text-primary" : "text-white/40"
-                        }`}
+                        className={`w-5 h-5 flex-shrink-0 ${openIndex === index ? "text-primary" : "text-white/40"}`}
                       />
                     </motion.div>
                   </div>
