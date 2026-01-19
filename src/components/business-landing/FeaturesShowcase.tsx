@@ -137,15 +137,20 @@ export const FeaturesShowcase = () => {
           >
             {/* Mobile: Demo arriba + info abajo - layout expandido */}
             <div className="md:hidden space-y-6">
-              {/* Phone frame centrado y más grande */}
-              <div className="relative mx-auto w-[240px]">
-                <div className={`absolute -inset-1 rounded-[2rem] bg-gradient-to-br ${activeFeature.color} opacity-50 blur-sm`} />
-                <div className="relative bg-[hsl(230,20%,8%)] rounded-[1.8rem] p-2 border border-white/10">
-                  <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-16 h-4 bg-black rounded-full z-10" />
-                  <div className="rounded-[1.4rem] overflow-hidden bg-background max-h-[420px] overflow-y-auto scrollbar-hide">
+              {/* Phone frame - iPhone 17 aspect ratio (19.5:9) con Dynamic Island */}
+              <div className="relative mx-auto w-[220px]" style={{ aspectRatio: '9/19.5' }}>
+                <div className={`absolute -inset-1 rounded-[2.5rem] bg-gradient-to-br ${activeFeature.color} opacity-50 blur-md`} />
+                <div className="relative h-full bg-[hsl(230,20%,8%)] rounded-[2.2rem] p-[6px] border border-white/10">
+                  {/* Dynamic Island */}
+                  <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[72px] h-[22px] bg-black rounded-full z-10 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-[hsl(230,20%,15%)] mr-6" />
+                  </div>
+                  {/* Screen content */}
+                  <div className="h-full rounded-[1.8rem] overflow-hidden bg-background overflow-y-auto scrollbar-hide pt-8">
                     <ActiveDemo />
                   </div>
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/20 rounded-full" />
+                  {/* Home indicator */}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[100px] h-[4px] bg-white/30 rounded-full" />
                 </div>
               </div>
               
