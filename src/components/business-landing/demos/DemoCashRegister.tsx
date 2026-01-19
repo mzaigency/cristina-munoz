@@ -8,7 +8,7 @@ const DemoCashRegister = () => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-background rounded-2xl shadow-2xl overflow-hidden border border-border/50"
+      className="bg-background min-h-full overflow-hidden flex flex-col"
     >
       {/* Header */}
       <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 px-4 py-3 border-b border-border/50">
@@ -73,9 +73,9 @@ const DemoCashRegister = () => {
       </div>
 
       {/* Recent transactions */}
-      <div className="p-3">
+      <div className="p-3 flex-1">
         <h4 className="text-xs font-medium text-muted-foreground mb-2">Últimos cobros</h4>
-        <div className="space-y-1.5 max-h-[120px] overflow-y-auto">
+        <div className="space-y-1.5 overflow-y-auto">
           {demoTransactions.map((tx, index) => (
             <motion.div
               key={tx.id}

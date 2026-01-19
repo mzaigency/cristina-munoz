@@ -10,7 +10,7 @@ const DemoAnalytics = () => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-background rounded-2xl shadow-2xl overflow-hidden border border-border/50"
+      className="bg-background min-h-full overflow-hidden"
     >
       {/* Header */}
       <div className="bg-gradient-to-r from-violet-500/10 to-purple-500/10 px-4 py-3 border-b border-border/50">

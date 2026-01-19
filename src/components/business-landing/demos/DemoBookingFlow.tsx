@@ -27,7 +27,7 @@ const DemoBookingFlow = () => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-background rounded-2xl shadow-2xl overflow-hidden border border-border/50"
+      className="bg-background min-h-full overflow-hidden flex flex-col"
     >
       {/* Header */}
       <div className="bg-gradient-to-r from-primary/10 to-secondary/10 px-4 py-3 border-b border-border/50">
@@ -35,7 +35,7 @@ const DemoBookingFlow = () => {
         <p className="text-xs text-muted-foreground">Beauty Studio Madrid</p>
       </div>
 
-      <div className="p-3 space-y-4 max-h-[300px] overflow-y-auto">
+      <div className="p-3 space-y-4 flex-1 overflow-y-auto">
         {/* Services */}
         <div>
           <h4 className="text-xs font-medium text-muted-foreground mb-2">Servicios</h4>

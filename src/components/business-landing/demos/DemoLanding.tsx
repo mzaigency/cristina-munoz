@@ -8,7 +8,7 @@ const DemoLanding = () => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-background rounded-2xl shadow-2xl overflow-hidden border border-border/50"
+      className="bg-background min-h-full overflow-hidden flex flex-col"
     >
       {/* Hero */}
       <div className="relative h-32 bg-gradient-to-br from-primary/80 to-secondary/80 overflow-hidden">
@@ -57,7 +57,7 @@ const DemoLanding = () => {
       </div>
 
       {/* Services */}
-      <div className="p-3">
+      <div className="p-3 flex-1">
         <h4 className="text-xs font-semibold mb-2">Servicios</h4>
         <div className="space-y-1.5">
           {demoServices.slice(0, 4).map((service, index) => (

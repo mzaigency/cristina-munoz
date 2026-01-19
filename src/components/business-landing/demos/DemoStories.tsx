@@ -8,7 +8,7 @@ const DemoStories = () => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-background rounded-2xl shadow-2xl overflow-hidden border border-border/50"
+      className="bg-background min-h-full overflow-hidden flex flex-col"
     >
       {/* Stories carousel */}
       <div className="p-3 border-b border-border/30">
@@ -59,8 +59,8 @@ const DemoStories = () => {
       </div>
 
       {/* Active story preview */}
-      <div className="relative">
-        <div className="aspect-[9/14] bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-orange-500/20 relative overflow-hidden">
+      <div className="relative flex-1">
+        <div className="h-full min-h-[280px] bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-orange-500/20 relative overflow-hidden">
           {/* Progress bars */}
           <div className="absolute top-2 left-2 right-2 flex gap-1">
             <motion.div 

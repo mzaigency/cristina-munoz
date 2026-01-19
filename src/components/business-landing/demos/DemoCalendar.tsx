@@ -22,7 +22,7 @@ const DemoCalendar = () => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-background rounded-2xl shadow-2xl overflow-hidden border border-border/50"
+      className="bg-background min-h-full overflow-hidden flex flex-col"
     >
       {/* Header */}
       <div className="bg-gradient-to-r from-primary/10 to-secondary/10 px-4 py-3 border-b border-border/50">
@@ -61,7 +61,7 @@ const DemoCalendar = () => {
       </div>
 
       {/* Calendar grid */}
-      <div className="relative h-[280px] overflow-hidden">
+      <div className="relative flex-1 min-h-[320px] overflow-hidden">
         {/* Time column */}
         <div className="absolute left-0 top-0 w-12 h-full bg-muted/30 border-r border-border/30 z-10">
           {hours.map((hour, i) => (
