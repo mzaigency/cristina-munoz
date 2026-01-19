@@ -36,7 +36,7 @@ export const FloatingMobileCTA = () => {
           <div className="flex items-center gap-3">
             <Button
               className="flex-1 rounded-full"
-              onClick={() => navigate('/auth?mode=register&business=true')}
+              onClick={() => navigate('/onboarding')}
             >
               Empezar gratis
               <ArrowRight className="ml-2 w-4 h-4" />

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import glowappLogo from '@/assets/glowapp-logo.png';
+import { supabase } from '@/integrations/supabase/client';
 
 const navItems = [
   { label: 'Funciones', href: '#features' },
@@ -16,6 +17,22 @@ export const StickyHeader = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -85,20 +102,22 @@ export const StickyHeader = () => {
 
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white/70 hover:text-white hover:bg-white/10"
-                onClick={() => navigate('/auth')}
-              >
-                Iniciar sesión
-              </Button>
+              {!isAuthenticated && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/70 hover:text-white hover:bg-white/10"
+                  onClick={() => navigate('/auth')}
+                >
+                  Iniciar sesión
+                </Button>
+              )}
               <Button
                 size="sm"
                 className="rounded-full gradient-primary border-0"
-                onClick={() => navigate('/auth?mode=register&business=true')}
+                onClick={() => navigate('/onboarding')}
               >
-                Prueba gratis
+                {isAuthenticated ? 'Ir al onboarding' : 'Prueba gratis'}
                 <ArrowRight className="ml-1 w-4 h-4" />
               </Button>
             </div>
@@ -137,24 +156,26 @@ export const StickyHeader = () => {
                 </button>
               ))}
               <div className="pt-4 space-y-3 border-t border-white/10">
-                <Button
-                  variant="outline"
-                  className="w-full bg-transparent border-white/20 text-white hover:bg-white/10"
-                  onClick={() => {
-                    navigate('/auth');
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  Iniciar sesión
-                </Button>
+                {!isAuthenticated && (
+                  <Button
+                    variant="outline"
+                    className="w-full bg-transparent border-white/20 text-white hover:bg-white/10"
+                    onClick={() => {
+                      navigate('/auth');
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    Iniciar sesión
+                  </Button>
+                )}
                 <Button
                   className="w-full gradient-primary border-0"
                   onClick={() => {
-                    navigate('/auth?mode=register&business=true');
+                    navigate('/onboarding');
                     setIsMobileMenuOpen(false);
                   }}
                 >
-                  Prueba gratis
+                  {isAuthenticated ? 'Ir al onboarding' : 'Prueba gratis'}
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>

@@ -42,7 +42,7 @@ export const FinalCTASection = () => {
             <Button
               size="lg"
               className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 rounded-full shadow-xl"
-              onClick={() => navigate("/auth?mode=register&business=true")}
+              onClick={() => navigate("/onboarding")}
             >
               Empezar gratis ahora
               <ArrowRight className="ml-2 w-5 h-5" />
