@@ -3,125 +3,83 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Camera, Check, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import {
-  DemoCalendar,
-  DemoBookingFlow,
-  DemoCashRegister,
-  DemoAnalytics,
-  DemoLanding,
-  DemoStories,
-} from "./demos";
-
-const features = [
-  {
-    id: "landing",
-    icon: Globe,
-    title: "Tu web profesional",
-    shortTitle: "Web",
-    headline: "Tu salón en internet en 5 minutos",
-    description:
-      "Una página web profesional con tu marca, servicios y precios. Tus clientes te encontrarán en Google y podrán ver todo sobre tu negocio.",
-    benefits: [
-      "Dominio personalizado (glowapp.app/salon/tunombre)",
-      "Optimizada para móviles y SEO",
-      "Galería de trabajos y reseñas",
-      "Información de contacto y ubicación",
-    ],
-    color: "from-blue-500 to-cyan-500",
-    Demo: DemoLanding,
-  },
-  {
-    id: "bookings",
-    icon: Calendar,
-    title: "Reservas 24/7",
-    shortTitle: "Reservas",
-    headline: "Tus clientes reservan mientras duermes",
-    description:
-      "Sistema de reservas automático que funciona las 24 horas. Sin llamadas, sin WhatsApp, sin errores. El cliente elige fecha, hora y servicio.",
-    benefits: [
-      "Disponibilidad en tiempo real",
-      "Confirmación automática por email",
-      "Recordatorios antes de la cita",
-      "Cancelaciones fáciles sin llamadas",
-    ],
-    color: "from-green-500 to-emerald-500",
-    Demo: DemoBookingFlow,
-  },
-  {
-    id: "calendar",
-    icon: LayoutDashboard,
-    title: "Calendario inteligente",
-    shortTitle: "Agenda",
-    headline: "Control total de tu agenda",
-    description:
-      "Vista por estilista, por día o por semana. Arrastra citas, bloquea horas, gestiona vacaciones. Todo desde tu móvil o tablet.",
-    benefits: ["Vista multi-estilista", "Bloqueos y descansos", "Citas recurrentes"],
-    color: "from-purple-500 to-pink-500",
-    Demo: DemoCalendar,
-  },
-  {
-    id: "payments",
-    icon: CreditCard,
-    title: "Caja registradora",
-    shortTitle: "Caja",
-    headline: "Cobros rápidos, cuentas claras",
-    description:
-      "Cobra en efectivo o tarjeta, aplica descuentos, gestiona propinas. Historial completo de todas las transacciones.",
-    benefits: [
-      "Cobro rápido al finalizar",
-      "Descuentos y promociones",
-      "Cierre de caja diario",
-      "Historial de transacciones",
-    ],
-    color: "from-amber-500 to-orange-500",
-    Demo: DemoCashRegister,
-  },
-  {
-    id: "analytics",
-    icon: BarChart3,
-    title: "Analytics y objetivos",
-    shortTitle: "Datos",
-    headline: "Métricas que importan",
-    description:
-      "Visualiza ingresos, reservas, servicios más populares. Establece objetivos mensuales y sigue tu progreso.",
-    benefits: ["Dashboard de ingresos", "Servicios más vendidos", "Objetivos mensuales", "Comparativas temporales"],
-    color: "from-indigo-500 to-violet-500",
-    Demo: DemoAnalytics,
-  },
-  {
-    id: "stories",
-    icon: Camera,
-    title: "Stories y comunidad",
-    shortTitle: "Social",
-    headline: "Muestra tu trabajo al mundo",
-    description:
-      "Publica fotos de tus trabajos como stories. Tus seguidores las verán y podrán reservar directamente desde ahí.",
-    benefits: [
-      "Editor de stories integrado",
-      "Visible para toda la comunidad",
-      "Enlace directo a reservas",
-      "Estadísticas de visualizaciones",
-    ],
-    color: "from-rose-500 to-pink-500",
-    Demo: DemoStories,
-  },
-];
-
+import { DemoCalendar, DemoBookingFlow, DemoCashRegister, DemoAnalytics, DemoLanding, DemoStories } from "./demos";
+const features = [{
+  id: "landing",
+  icon: Globe,
+  title: "Tu web profesional",
+  shortTitle: "Web",
+  headline: "Tu salón en internet en 5 minutos",
+  description: "Una página web profesional con tu marca, servicios y precios. Tus clientes te encontrarán en Google y podrán ver todo sobre tu negocio.",
+  benefits: ["Dominio personalizado (glowapp.app/salon/tunombre)", "Optimizada para móviles y SEO", "Galería de trabajos y reseñas", "Información de contacto y ubicación"],
+  color: "from-blue-500 to-cyan-500",
+  Demo: DemoLanding
+}, {
+  id: "bookings",
+  icon: Calendar,
+  title: "Reservas 24/7",
+  shortTitle: "Reservas",
+  headline: "Tus clientes reservan mientras duermes",
+  description: "Sistema de reservas automático que funciona las 24 horas. Sin llamadas, sin WhatsApp, sin errores. El cliente elige fecha, hora y servicio.",
+  benefits: ["Disponibilidad en tiempo real", "Confirmación automática por email", "Recordatorios antes de la cita", "Cancelaciones fáciles sin llamadas"],
+  color: "from-green-500 to-emerald-500",
+  Demo: DemoBookingFlow
+}, {
+  id: "calendar",
+  icon: LayoutDashboard,
+  title: "Calendario inteligente",
+  shortTitle: "Agenda",
+  headline: "Control total de tu agenda",
+  description: "Vista por estilista, por día o por semana. Arrastra citas, bloquea horas, gestiona vacaciones. Todo desde tu móvil o tablet.",
+  benefits: ["Vista multi-estilista", "Bloqueos y descansos", "Citas recurrentes"],
+  color: "from-purple-500 to-pink-500",
+  Demo: DemoCalendar
+}, {
+  id: "payments",
+  icon: CreditCard,
+  title: "Caja registradora",
+  shortTitle: "Caja",
+  headline: "Cobros rápidos, cuentas claras",
+  description: "Cobra en efectivo o tarjeta, aplica descuentos, gestiona propinas. Historial completo de todas las transacciones.",
+  benefits: ["Cobro rápido al finalizar", "Descuentos y promociones", "Cierre de caja diario", "Historial de transacciones"],
+  color: "from-amber-500 to-orange-500",
+  Demo: DemoCashRegister
+}, {
+  id: "analytics",
+  icon: BarChart3,
+  title: "Analytics y objetivos",
+  shortTitle: "Datos",
+  headline: "Métricas que importan",
+  description: "Visualiza ingresos, reservas, servicios más populares. Establece objetivos mensuales y sigue tu progreso.",
+  benefits: ["Dashboard de ingresos", "Servicios más vendidos", "Objetivos mensuales", "Comparativas temporales"],
+  color: "from-indigo-500 to-violet-500",
+  Demo: DemoAnalytics
+}, {
+  id: "stories",
+  icon: Camera,
+  title: "Stories y comunidad",
+  shortTitle: "Social",
+  headline: "Muestra tu trabajo al mundo",
+  description: "Publica fotos de tus trabajos como stories. Tus seguidores las verán y podrán reservar directamente desde ahí.",
+  benefits: ["Editor de stories integrado", "Visible para toda la comunidad", "Enlace directo a reservas", "Estadísticas de visualizaciones"],
+  color: "from-rose-500 to-pink-500",
+  Demo: DemoStories
+}];
 export const FeaturesShowcase = () => {
   const [activeFeature, setActiveFeature] = useState(features[0]);
   const navigate = useNavigate();
-
   const ActiveDemo = activeFeature.Demo;
-
-  return (
-    <section id="features" className="py-20 bg-[hsl(230,20%,6%)]">
+  return <section id="features" className="py-20 bg-[hsl(230,20%,6%)]">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
+        <motion.div initial={{
+        opacity: 0,
+        y: 20
+      }} whileInView={{
+        opacity: 1,
+        y: 0
+      }} viewport={{
+        once: true
+      }} className="text-center mb-12">
           <span className="text-sm font-medium text-primary uppercase tracking-wider">Todo lo que necesitas</span>
           <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4 text-white">Funciones que transforman tu negocio</h2>
           <p className="text-white/50 max-w-2xl mx-auto">
@@ -132,33 +90,27 @@ export const FeaturesShowcase = () => {
 
         {/* Feature tabs - horizontal scroll on mobile */}
         <div className="flex overflow-x-auto gap-2 pb-4 mb-8 scrollbar-hide -mx-4 px-4 md:justify-center md:flex-wrap">
-          {features.map((feature) => (
-            <button
-              key={feature.id}
-              onClick={() => setActiveFeature(feature)}
-              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
-                activeFeature.id === feature.id
-                  ? "gradient-primary text-white shadow-lg shadow-primary/30"
-                  : "bg-white/5 hover:bg-white/10 text-white/60 border border-white/10"
-              }`}
-            >
+          {features.map(feature => <button key={feature.id} onClick={() => setActiveFeature(feature)} className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${activeFeature.id === feature.id ? "gradient-primary text-white shadow-lg shadow-primary/30" : "bg-white/5 hover:bg-white/10 text-white/60 border border-white/10"}`}>
               <feature.icon className="w-4 h-4" />
               <span className="hidden sm:inline">{feature.title}</span>
               <span className="sm:hidden">{feature.shortTitle}</span>
-            </button>
-          ))}
+            </button>)}
         </div>
 
         {/* Feature content */}
         <AnimatePresence mode="wait">
-          <motion.div
-            key={activeFeature.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="max-w-5xl mx-auto"
-          >
+          <motion.div key={activeFeature.id} initial={{
+          opacity: 0,
+          y: 20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} exit={{
+          opacity: 0,
+          y: -20
+        }} transition={{
+          duration: 0.3
+        }} className="max-w-5xl mx-auto">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               {/* Content */}
               <div className="order-2 md:order-1">
@@ -171,20 +123,20 @@ export const FeaturesShowcase = () => {
                 <p className="text-white/50 mb-6 leading-relaxed">{activeFeature.description}</p>
 
                 <ul className="space-y-3 mb-8">
-                  {activeFeature.benefits.map((benefit, index) => (
-                    <motion.li
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-start gap-3"
-                    >
+                  {activeFeature.benefits.map((benefit, index) => <motion.li key={index} initial={{
+                  opacity: 0,
+                  x: -20
+                }} animate={{
+                  opacity: 1,
+                  x: 0
+                }} transition={{
+                  delay: index * 0.1
+                }} className="flex items-start gap-3">
                       <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Check className="w-3 h-3 text-primary" />
                       </div>
                       <span className="text-sm text-white/70">{benefit}</span>
-                    </motion.li>
-                  ))}
+                    </motion.li>)}
                 </ul>
 
                 <Button onClick={() => navigate("/onboarding")} className="rounded-full gradient-primary border-0">
@@ -215,15 +167,12 @@ export const FeaturesShowcase = () => {
                   </div>
                   
                   {/* Demo badge */}
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full border border-white/20">
-                    <span className="text-[10px] text-white/60 font-medium">Demo interactiva</span>
-                  </div>
+                  
                 </div>
               </div>
             </div>
           </motion.div>
         </AnimatePresence>
       </div>
-    </section>
-  );
+    </section>;
 };
