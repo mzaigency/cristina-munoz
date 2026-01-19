@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Camera, Check, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,20 @@ export const FeaturesShowcase = () => {
   const [activeFeature, setActiveFeature] = useState(features[0]);
   const navigate = useNavigate();
   const ActiveDemo = activeFeature.Demo;
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const handleTabChange = (feature: typeof features[0]) => {
+    setActiveFeature(feature);
+    // En móvil, hacer scroll al contenido
+    if (window.innerWidth < 768 && contentRef.current) {
+      setTimeout(() => {
+        contentRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 100);
+    }
+  };
   return <section id="features" className="py-20 bg-[hsl(230,20%,6%)]">
       <div className="container mx-auto px-4">
         <motion.div initial={{
@@ -88,29 +102,39 @@ export const FeaturesShowcase = () => {
           </p>
         </motion.div>
 
-        {/* Feature tabs - horizontal scroll on mobile */}
-        <div className="flex overflow-x-auto gap-2 pb-4 mb-8 scrollbar-hide -mx-4 px-4 md:justify-center md:flex-wrap">
-          {features.map(feature => <button key={feature.id} onClick={() => setActiveFeature(feature)} className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${activeFeature.id === feature.id ? "gradient-primary text-white shadow-lg shadow-primary/30" : "bg-white/5 hover:bg-white/10 text-white/60 border border-white/10"}`}>
-              <feature.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{feature.title}</span>
-              <span className="sm:hidden">{feature.shortTitle}</span>
-            </button>)}
+        {/* Feature tabs - sticky en móvil */}
+        <div className="sticky top-16 z-20 bg-[hsl(230,20%,6%)] py-3 -mx-4 px-4 md:static md:py-0 md:mx-0 md:px-0 md:mb-8">
+          <div className="flex overflow-x-auto gap-2 pb-2 md:pb-4 scrollbar-hide md:justify-center md:flex-wrap">
+            {features.map(feature => <button key={feature.id} onClick={() => handleTabChange(feature)} className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${activeFeature.id === feature.id ? "gradient-primary text-white shadow-lg shadow-primary/30" : "bg-white/5 hover:bg-white/10 text-white/60 border border-white/10"}`}>
+                <feature.icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{feature.title}</span>
+                <span className="sm:hidden">{feature.shortTitle}</span>
+              </button>)}
+          </div>
         </div>
 
         {/* Feature content */}
         <AnimatePresence mode="wait">
-          <motion.div key={activeFeature.id} initial={{
-          opacity: 0,
-          y: 20
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} exit={{
-          opacity: 0,
-          y: -20
-        }} transition={{
-          duration: 0.3
-        }} className="max-w-5xl mx-auto">
+          <motion.div 
+            ref={contentRef}
+            key={activeFeature.id} 
+            initial={{
+              opacity: 0,
+              y: 20
+            }} 
+            animate={{
+              opacity: 1,
+              y: 0
+            }} 
+            exit={{
+              opacity: 0,
+              y: -20
+            }} 
+            transition={{
+              duration: 0.3
+            }} 
+            className="max-w-5xl mx-auto scroll-mt-32 pt-4 md:pt-0"
+          >
             {/* Mobile: Demo + minimal info side by side */}
             <div className="md:hidden">
               <div className="flex gap-4 items-start">
