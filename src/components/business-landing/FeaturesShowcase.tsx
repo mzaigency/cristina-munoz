@@ -111,9 +111,50 @@ export const FeaturesShowcase = () => {
         }} transition={{
           duration: 0.3
         }} className="max-w-5xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
+            {/* Mobile: Demo + minimal info side by side */}
+            <div className="md:hidden">
+              <div className="flex gap-4 items-start">
+                {/* Compact phone frame for mobile */}
+                <div className="relative flex-shrink-0 w-[180px]">
+                  <div className={`absolute -inset-0.5 rounded-[1.5rem] bg-gradient-to-br ${activeFeature.color} opacity-50 blur-sm`} />
+                  <div className="relative bg-[hsl(230,20%,8%)] rounded-[1.3rem] p-1.5 border border-white/10">
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-3 bg-black rounded-full z-10" />
+                    <div className="rounded-[1rem] overflow-hidden bg-background max-h-[320px] overflow-y-auto scrollbar-hide">
+                      <ActiveDemo />
+                    </div>
+                    <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-16 h-0.5 bg-white/20 rounded-full" />
+                  </div>
+                </div>
+                
+                {/* Compact info for mobile */}
+                <div className="flex-1 min-w-0">
+                  <div className={`inline-flex p-2 rounded-xl bg-gradient-to-br ${activeFeature.color} mb-3`}>
+                    <activeFeature.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2 text-white leading-tight">{activeFeature.headline}</h3>
+                  <p className="text-white/50 text-sm mb-3 line-clamp-3">{activeFeature.description}</p>
+                  <ul className="space-y-1.5 mb-4">
+                    {activeFeature.benefits.slice(0, 3).map((benefit, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-2.5 h-2.5 text-primary" />
+                        </div>
+                        <span className="text-xs text-white/70">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button size="sm" onClick={() => navigate("/onboarding")} className="rounded-full gradient-primary border-0 text-xs px-3">
+                    Probar
+                    <ChevronRight className="ml-1 w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop: Original layout */}
+            <div className="hidden md:grid md:grid-cols-2 gap-8 items-center">
               {/* Content */}
-              <div className="order-2 md:order-1">
+              <div>
                 <div className={`inline-flex p-3 rounded-2xl bg-gradient-to-br ${activeFeature.color} mb-6`}>
                   <activeFeature.icon className="w-8 h-8 text-white" />
                 </div>
@@ -146,7 +187,7 @@ export const FeaturesShowcase = () => {
               </div>
 
               {/* Live Demo Preview */}
-              <div className="order-1 md:order-2">
+              <div>
                 <div className="relative">
                   {/* Phone frame */}
                   <div className="relative mx-auto w-[280px] sm:w-[320px]">
@@ -165,9 +206,6 @@ export const FeaturesShowcase = () => {
                       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-white/20 rounded-full" />
                     </div>
                   </div>
-                  
-                  {/* Demo badge */}
-                  
                 </div>
               </div>
             </div>
