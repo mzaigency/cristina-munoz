@@ -213,26 +213,23 @@ export const FeaturesShowcase = () => {
                 </Button>
               </div>
 
-              {/* Live Demo Preview */}
-              <div>
-                <div className="relative">
-                  {/* Phone frame */}
-                  <div className="relative mx-auto w-[280px] sm:w-[320px]">
-                    {/* Phone border with gradient */}
-                    <div className={`absolute -inset-1 rounded-[2.5rem] bg-gradient-to-br ${activeFeature.color} opacity-50 blur-sm`} />
-                    <div className="relative bg-[hsl(230,20%,8%)] rounded-[2.2rem] p-2 border border-white/10">
-                      {/* Phone notch */}
-                      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-5 bg-black rounded-full z-10" />
-                      
-                      {/* Screen content */}
-                      <div className="rounded-[1.8rem] overflow-hidden bg-background">
-                        <ActiveDemo />
-                      </div>
-                      
-                      {/* Home indicator */}
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-white/20 rounded-full" />
-                    </div>
+              {/* Live Demo Preview - iPhone 17 aspect ratio */}
+              <div className="relative mx-auto w-[280px]" style={{ aspectRatio: '9/19.5' }}>
+                {/* Phone border with gradient */}
+                <div className={`absolute -inset-1 rounded-[2.5rem] bg-gradient-to-br ${activeFeature.color} opacity-50 blur-md`} />
+                <div className="relative h-full bg-[hsl(230,20%,8%)] rounded-[2.2rem] p-[6px] border border-white/10">
+                  {/* Dynamic Island */}
+                  <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[90px] h-[28px] bg-black rounded-full z-10 flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[hsl(230,20%,15%)] mr-8" />
                   </div>
+                  
+                  {/* Screen content */}
+                  <div className="h-full rounded-[1.8rem] overflow-hidden bg-background overflow-y-auto scrollbar-hide pt-10">
+                    <ActiveDemo />
+                  </div>
+                  
+                  {/* Home indicator */}
+                  <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 w-[120px] h-[5px] bg-white/30 rounded-full" />
                 </div>
               </div>
             </div>
