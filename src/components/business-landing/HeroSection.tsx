@@ -119,7 +119,7 @@ export const HeroSection = () => {
             <Button
               size="lg"
               className="w-full sm:w-auto text-lg px-8 py-6 rounded-full gradient-primary shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all border-0"
-              onClick={() => navigate("/auth?mode=register&business=true")}
+              onClick={() => navigate("/onboarding")}
             >
               Empezar gratis
               <ArrowRight className="ml-2 w-5 h-5" />
