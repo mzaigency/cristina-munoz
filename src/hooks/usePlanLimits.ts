@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type PlanFeature = 
+export type PlanFeature =
   | "stories"
   | "messages"
   | "cash_register"
@@ -10,6 +10,7 @@ export type PlanFeature =
   | "pdf_reports"
   | "promotions"
   | "packages"
+  | "products"
   | "monthly_goals"
   | "waitlist";
 
@@ -44,26 +45,26 @@ export interface PlanLimits {
   maxServices: number;
   currentStylists: number;
   currentServices: number;
-  
+
   // Features booleanos
   hasFeature: (feature: PlanFeature) => boolean;
-  
+
   // Verificaciones
   canAddStylist: () => boolean;
   canAddService: () => boolean;
   isOverLimit: (type: "stylists" | "services") => boolean;
-  
+
   // Info del plan
   planSlug: string;
   planName: string;
-  
+
   // Loading
   loading: boolean;
-  
+
   // Upgrade info
   getUpgradePlan: (feature: PlanFeature) => string | null;
   getUpgradePlanForLimit: (limitType: "stylists" | "services") => string | null;
-  
+
   // Refetch
   refetch: () => Promise<void>;
 }
@@ -119,22 +120,16 @@ export const usePlanLimits = (tenantId: string | undefined): PlanLimits => {
       setPlanSlug(currentPlanSlug);
 
       // Obtener info del plan desde subscription_plans
-      const { data: plan } = await supabase
-        .from("subscription_plans")
-        .select("*")
-        .eq("slug", currentPlanSlug)
-        .single();
+      const { data: plan } = await supabase.from("subscription_plans").select("*").eq("slug", currentPlanSlug).single();
 
       if (plan) {
         setPlanName(plan.name);
         setMaxStylists(tenant.max_stylists || plan.max_stylists || 1);
         setMaxServices(tenant.max_services || plan.max_services || 15);
-        
+
         // Parse features from plan
         if (plan.features) {
-          const parsedFeatures = typeof plan.features === 'string' 
-            ? JSON.parse(plan.features) 
-            : plan.features;
+          const parsedFeatures = typeof plan.features === "string" ? JSON.parse(plan.features) : plan.features;
           setFeatures(parsedFeatures as PlanFeatures);
         }
       }
@@ -166,10 +161,13 @@ export const usePlanLimits = (tenantId: string | undefined): PlanLimits => {
     fetchPlanData();
   }, [fetchPlanData]);
 
-  const hasFeature = useCallback((feature: PlanFeature): boolean => {
-    if (!features) return false;
-    return features[feature] === true;
-  }, [features]);
+  const hasFeature = useCallback(
+    (feature: PlanFeature): boolean => {
+      if (!features) return false;
+      return features[feature] === true;
+    },
+    [features],
+  );
 
   const canAddStylist = useCallback((): boolean => {
     return currentStylists < maxStylists;
@@ -179,32 +177,41 @@ export const usePlanLimits = (tenantId: string | undefined): PlanLimits => {
     return currentServices < maxServices;
   }, [currentServices, maxServices]);
 
-  const getUpgradePlan = useCallback((feature: PlanFeature): string | null => {
-    const requiredPlans = FEATURE_PLAN_REQUIREMENTS[feature];
-    const currentPlanIndex = PLAN_ORDER.indexOf(planSlug);
-    
-    // Buscar el siguiente plan que tenga la feature
-    for (let i = currentPlanIndex + 1; i < PLAN_ORDER.length; i++) {
-      if (requiredPlans.includes(PLAN_ORDER[i])) {
-        return PLAN_ORDER[i];
+  const getUpgradePlan = useCallback(
+    (feature: PlanFeature): string | null => {
+      const requiredPlans = FEATURE_PLAN_REQUIREMENTS[feature];
+      const currentPlanIndex = PLAN_ORDER.indexOf(planSlug);
+
+      // Buscar el siguiente plan que tenga la feature
+      for (let i = currentPlanIndex + 1; i < PLAN_ORDER.length; i++) {
+        if (requiredPlans.includes(PLAN_ORDER[i])) {
+          return PLAN_ORDER[i];
+        }
       }
-    }
-    return null;
-  }, [planSlug]);
+      return null;
+    },
+    [planSlug],
+  );
 
-  const getUpgradePlanForLimit = useCallback((limitType: "stylists" | "services"): string | null => {
-    const currentPlanIndex = PLAN_ORDER.indexOf(planSlug);
-    
-    if (currentPlanIndex < PLAN_ORDER.length - 1) {
-      return PLAN_ORDER[currentPlanIndex + 1];
-    }
-    return null;
-  }, [planSlug]);
+  const getUpgradePlanForLimit = useCallback(
+    (limitType: "stylists" | "services"): string | null => {
+      const currentPlanIndex = PLAN_ORDER.indexOf(planSlug);
 
-  const isOverLimit = useCallback((type: "stylists" | "services"): boolean => {
-    if (type === "stylists") return currentStylists > maxStylists;
-    return currentServices > maxServices;
-  }, [currentStylists, currentServices, maxStylists, maxServices]);
+      if (currentPlanIndex < PLAN_ORDER.length - 1) {
+        return PLAN_ORDER[currentPlanIndex + 1];
+      }
+      return null;
+    },
+    [planSlug],
+  );
+
+  const isOverLimit = useCallback(
+    (type: "stylists" | "services"): boolean => {
+      if (type === "stylists") return currentStylists > maxStylists;
+      return currentServices > maxServices;
+    },
+    [currentStylists, currentServices, maxStylists, maxServices],
+  );
 
   return {
     maxStylists,
