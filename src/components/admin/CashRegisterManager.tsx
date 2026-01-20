@@ -3,12 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Receipt, History, BarChart3, Lock, Download } from "lucide-react";
+import { Loader2, Receipt, History, Lock, Download } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { QuickPayment } from "./cash-register/QuickPayment";
 import { TransactionHistory } from "./cash-register/TransactionHistory";
-import { CashRegisterStats } from "./cash-register/CashRegisterStats";
+
 import { DailySummary } from "./cash-register/DailySummary";
 import { ExportData } from "./cash-register/ExportData";
 
@@ -203,7 +203,7 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
       <Card className="overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <CardHeader className="p-2 sm:p-4 pb-0">
-            <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+            <TabsList className="grid w-full grid-cols-3 h-auto p-1">
               <TabsTrigger value="payment" className="gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
                 <Receipt className="h-4 w-4 shrink-0" />
                 <span className="hidden xs:inline sm:inline">Cobrar</span>
@@ -215,10 +215,6 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
               <TabsTrigger value="export" className="gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
                 <Download className="h-4 w-4 shrink-0" />
                 <span className="hidden xs:inline sm:inline">Exportar</span>
-              </TabsTrigger>
-              <TabsTrigger value="stats" className="gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
-                <BarChart3 className="h-4 w-4 shrink-0" />
-                <span className="hidden xs:inline sm:inline">Stats</span>
               </TabsTrigger>
             </TabsList>
           </CardHeader>
@@ -242,9 +238,6 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
             </TabsContent>
             <TabsContent value="export" className="mt-0">
               <ExportData tenantId={tenantId} />
-            </TabsContent>
-            <TabsContent value="stats" className="mt-0">
-              <CashRegisterStats />
             </TabsContent>
           </CardContent>
         </Tabs>
