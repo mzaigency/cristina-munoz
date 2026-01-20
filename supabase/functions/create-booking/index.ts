@@ -177,6 +177,63 @@ serve(async (req) => {
     }
     console.log("Using tenant_id:", tenantId);
 
+    // Verify user authorization
+    const authHeader = req.headers.get("Authorization");
+    let authenticatedUserId: string | null = null;
+    let isStaff = false;
+
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser(token);
+      if (!authError && user) {
+        authenticatedUserId = user.id;
+
+        // Check if user is staff (admin or stylist) for this tenant
+        const { data: admin } = await supabase
+          .from("tenant_admins")
+          .select("user_id")
+          .eq("tenant_id", tenantId)
+          .eq("user_id", authenticatedUserId)
+          .maybeSingle();
+
+        if (admin) {
+          isStaff = true;
+        } else {
+          const { data: stylist } = await supabase
+            .from("tenant_stylists")
+            .select("id")
+            .eq("tenant_id", tenantId)
+            .eq("user_id", authenticatedUserId)
+            .eq("is_active", true)
+            .maybeSingle();
+
+          if (stylist) isStaff = true;
+        }
+      }
+    }
+
+    // Security Check 1: skipAvailabilityCheck requires staff privileges
+    if (bookingData.skipAvailabilityCheck && !isStaff) {
+      return new Response(JSON.stringify({ error: "Unauthorized: Only staff can skip availability checks" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Security Check 2: user_id impersonation
+    // If a user_id is provided, it must match the authenticated user OR the caller must be staff
+    if (bookingData.user_id) {
+      if (authenticatedUserId !== bookingData.user_id && !isStaff) {
+        return new Response(JSON.stringify({ error: "Unauthorized: You cannot book for another user" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
