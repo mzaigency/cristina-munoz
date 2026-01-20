@@ -105,7 +105,7 @@ export const TenantReviewForm = ({ tenantId, tenantName, onReviewSubmitted }: Te
   if (loading) return null;
 
   return (
-    <section className="py-16 bg-background">
+    <section id="review-form" className="py-16 bg-background">
       <div className="container mx-auto px-4">
         <div className="max-w-xl mx-auto">
           <SmoothTitle>
