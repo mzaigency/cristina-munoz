@@ -189,10 +189,10 @@ serve(async (req) => {
     }
 
     if (!tenantData.is_active) {
-      return new Response(
-        JSON.stringify({ error: "Este negocio no está activo" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Este negocio no está activo" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (tenantData.subscription_expires_at) {
@@ -200,7 +200,7 @@ serve(async (req) => {
       if (expiresAt < new Date()) {
         return new Response(
           JSON.stringify({ error: "Este negocio tiene la suscripción expirada y no puede recibir reservas" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
     }
@@ -634,6 +634,40 @@ serve(async (req) => {
         console.log("Internal confirmation message sent to user:", bookingData.user_id);
       } catch (msgError) {
         console.error("Error sending internal confirmation message:", msgError);
+      }
+    }
+
+    // Send push notification to tenant admins for new booking (only for web/app bookings, not CRM)
+    if (bookingData.canal !== "crm") {
+      try {
+        // Get all admin users for this tenant
+        const { data: tenantAdmins } = await supabase.from("tenant_admins").select("user_id").eq("tenant_id", tenantId);
+
+        if (tenantAdmins && tenantAdmins.length > 0) {
+          const [year, month, day] = [bookingDate.slice(0, 4), bookingDate.slice(5, 7), bookingDate.slice(8, 10)];
+          const formattedDate = `${day}/${month}/${year}`;
+          const serviceNames = bookingData.services.map((s) => s.name).join(", ");
+          const servicePreview = serviceNames.length > 30 ? serviceNames.substring(0, 30) + "..." : serviceNames;
+
+          for (const admin of tenantAdmins) {
+            await supabase.functions.invoke("send-push-notification", {
+              body: {
+                user_id: admin.user_id,
+                title: "✨ Nueva reserva",
+                body: `${customer_name} • ${formattedDate} ${bookingTime.slice(0, 5)}\n${servicePreview}`,
+                data: {
+                  type: "new_booking",
+                  booking_id: createdBookings[0]?.id,
+                  tenant_id: tenantId,
+                },
+              },
+            });
+          }
+          console.log("Push notification sent to", tenantAdmins.length, "admin(s)");
+        }
+      } catch (pushError) {
+        console.error("Error sending admin push notification:", pushError);
+        // Don't fail the booking if push fails
       }
     }
 

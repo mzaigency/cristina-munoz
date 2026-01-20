@@ -261,8 +261,8 @@ export function useMessages(conversationId: string | null) {
           .single();
 
         if (conversation) {
-          // If sender is salon, notify user. If sender is user, we don't notify salon (they have admin panel)
           if (senderType === "salon") {
+            // If sender is salon, notify user
             const tenantName = (conversation.tenant as any)?.name || "Salón";
             await supabase.functions.invoke("send-push-notification", {
               body: {
@@ -272,6 +272,38 @@ export function useMessages(conversationId: string | null) {
                 data: { type: "message", conversation_id: conversationId },
               },
             });
+          } else {
+            // If sender is user, notify tenant admins
+            const { data: tenantAdmins } = await supabase
+              .from("tenant_admins")
+              .select("user_id")
+              .eq("tenant_id", conversation.tenant_id);
+
+            if (tenantAdmins && tenantAdmins.length > 0) {
+              // Get user name for notification
+              const { data: userProfile } = await supabase
+                .from("profiles")
+                .select("full_name")
+                .eq("id", senderId)
+                .maybeSingle();
+
+              const userName = userProfile?.full_name || "Cliente";
+
+              for (const admin of tenantAdmins) {
+                await supabase.functions.invoke("send-push-notification", {
+                  body: {
+                    user_id: admin.user_id,
+                    title: `✉️ ${userName}`,
+                    body: content.length > 100 ? content.substring(0, 100) + "..." : content,
+                    data: {
+                      type: "client_message",
+                      conversation_id: conversationId,
+                      tenant_id: conversation.tenant_id,
+                    },
+                  },
+                });
+              }
+            }
           }
         }
       } catch (pushError) {
