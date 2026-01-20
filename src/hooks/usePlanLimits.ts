@@ -23,6 +23,7 @@ interface PlanFeatures {
   pdf_reports: boolean;
   promotions: boolean;
   packages: boolean;
+  products: boolean;
   monthly_goals: boolean;
   waitlist: boolean;
 }
