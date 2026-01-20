@@ -1,11 +1,12 @@
 import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, isToday, isTomorrow, isThisWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Loader2, CalendarPlus, ChevronRight, X } from "lucide-react";
+import { Calendar, Loader2, CalendarPlus, ChevronRight, X, Star } from "lucide-react";
+import { BookingSkeleton } from "@/components/ui/Skeletons";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -54,7 +55,9 @@ const TABS = [
 export default function MyBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("upcoming");
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "history" ? "history" : "upcoming";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [dateToCancel, setDateToCancel] = useState<string | null>(null);
   const [cancelingDate, setCancelingDate] = useState<string | null>(null);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
@@ -80,11 +83,11 @@ export default function MyBookings() {
 
   const loadBookings = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_my_bookings');
+      const { data, error } = await supabase.rpc("get_my_bookings");
       if (error) throw error;
       setBookings(data || []);
     } catch (error) {
-      console.error('Error loading bookings:', error);
+      console.error("Error loading bookings:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar tus citas",
@@ -103,8 +106,8 @@ export default function MyBookings() {
       const bookingsForDate = bookings.filter((b) => b.Fecha === dateToCancel);
       const bookingIds = bookingsForDate.map((b) => b.id);
 
-      const { error: functionError } = await supabase.functions.invoke('cancel-booking', {
-        body: { bookingIds, user: 'client' },
+      const { error: functionError } = await supabase.functions.invoke("cancel-booking", {
+        body: { bookingIds, user: "client" },
       });
 
       if (functionError) throw functionError;
@@ -116,7 +119,7 @@ export default function MyBookings() {
 
       await loadBookings();
     } catch (error) {
-      console.error('Error canceling bookings:', error);
+      console.error("Error canceling bookings:", error);
       toast({
         title: "Error",
         description: "No se pudieron cancelar las citas",
@@ -133,12 +136,12 @@ export default function MyBookings() {
       navigate(`/mensajes?tenant=${booking.tenant_id}`);
       return;
     }
-    navigate('/mensajes');
+    navigate("/mensajes");
   };
 
   const getStylistName = (stylist: string) => {
-    if (stylist === 'cris') return 'Cristina';
-    if (stylist === 'desi') return 'Desi';
+    if (stylist === "cris") return "Cristina";
+    if (stylist === "desi") return "Desi";
     return stylist.charAt(0).toUpperCase() + stylist.slice(1);
   };
 
@@ -153,65 +156,63 @@ export default function MyBookings() {
   const getCountdown = (dateStr: string, hora: string) => {
     const date = parseISODateToLocal(dateStr);
     if (!isToday(date)) return null;
-    
-    const [hours, minutes] = hora.split(':').map(Number);
+
+    const [hours, minutes] = hora.split(":").map(Number);
     const bookingTime = new Date();
     bookingTime.setHours(hours, minutes, 0, 0);
     const diff = bookingTime.getTime() - Date.now();
-    
+
     if (diff < 0) return null;
     const hoursLeft = Math.floor(diff / (1000 * 60 * 60));
     const minsLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hoursLeft > 0) return `En ${hoursLeft}h ${minsLeft}m`;
     return `En ${minsLeft} min`;
   };
 
-  const today = format(new Date(), 'yyyy-MM-dd');
-  
+  const today = format(new Date(), "yyyy-MM-dd");
+
   // Filtrar citas compuestas: solo mostrar la cita principal (part1), no la secundaria (part2)
   // Para el cliente, un servicio compuesto es UNA sola cita
   const visibleBookings = bookings.filter((b) => {
     // Si es parte de un compuesto y es la parte 2, no mostrar
-    if (b.is_part_of_compound && b.compound_part === 'part2') {
+    if (b.is_part_of_compound && b.compound_part === "part2") {
       return false;
     }
     return true;
   });
-  
+
   const upcomingBookings = visibleBookings.filter((b) => b.Fecha >= today);
   const pastBookings = visibleBookings.filter((b) => b.Fecha < today);
   const displayedBookings = activeTab === "upcoming" ? upcomingBookings : pastBookings;
 
   // Group by date
-  const groupedBookings = displayedBookings.reduce((acc, booking) => {
-    if (!acc[booking.Fecha]) acc[booking.Fecha] = [];
-    acc[booking.Fecha].push(booking);
-    return acc;
-  }, {} as Record<string, Booking[]>);
+  const groupedBookings = displayedBookings.reduce(
+    (acc, booking) => {
+      if (!acc[booking.Fecha]) acc[booking.Fecha] = [];
+      acc[booking.Fecha].push(booking);
+      return acc;
+    },
+    {} as Record<string, Booking[]>,
+  );
 
   const sortedDates = Object.keys(groupedBookings).sort((a, b) =>
     activeTab === "upcoming"
       ? parseISODateToLocal(a).getTime() - parseISODateToLocal(b).getTime()
-      : parseISODateToLocal(b).getTime() - parseISODateToLocal(a).getTime()
+      : parseISODateToLocal(b).getTime() - parseISODateToLocal(a).getTime(),
   );
 
   if (loading) {
     return (
       <AppLayout noTopSafeArea>
-        <SEO
-          title="Mis Citas"
-          description="Gestiona tus reservas"
-          canonicalUrl="/mis-citas"
-          noindex={true}
-        />
-        <div className="flex items-center justify-center h-[80vh]">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-            <p className="text-sm text-muted-foreground">Cargando citas...</p>
+        <SEO title="Mis Citas" description="Gestiona tus reservas" canonicalUrl="/mis-citas" noindex={true} />
+        <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 pt-[env(safe-area-inset-top)]">
+          <div className="px-4 py-3">
+            <h1 className="text-[28px] font-bold text-foreground tracking-tight">Mis Citas</h1>
           </div>
+        </div>
+        <div className="px-4 py-4">
+          <BookingSkeleton />
         </div>
       </AppLayout>
     );
@@ -219,12 +220,7 @@ export default function MyBookings() {
 
   return (
     <AppLayout noTopSafeArea>
-      <SEO
-        title="Mis Citas"
-        description="Gestiona tus reservas"
-        canonicalUrl="/mis-citas"
-        noindex={true}
-      />
+      <SEO title="Mis Citas" description="Gestiona tus reservas" canonicalUrl="/mis-citas" noindex={true} />
 
       {/* iOS-style Header */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 pt-[env(safe-area-inset-top)]">
@@ -257,7 +253,7 @@ export default function MyBookings() {
                 {activeTab === "upcoming" && "Encuentra el salón perfecto y reserva tu primera cita"}
               </p>
               {activeTab === "upcoming" && (
-                <Button 
+                <Button
                   onClick={() => navigate("/")}
                   size="lg"
                   className="h-14 px-8 rounded-2xl text-base font-semibold shadow-lg shadow-primary/25"
@@ -278,9 +274,9 @@ export default function MyBookings() {
               {sortedDates.map((date, groupIndex) => {
                 const dateObj = parseISODateToLocal(date);
                 const isTodayDate = isToday(dateObj);
-                
+
                 return (
-                  <motion.section 
+                  <motion.section
                     key={date}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -290,10 +286,12 @@ export default function MyBookings() {
                     {/* Date Header - iOS style */}
                     <div className="flex items-center justify-between mb-3 px-1">
                       <div className="flex items-center gap-2">
-                        <h2 className={cn(
-                          "text-sm font-semibold capitalize",
-                          isTodayDate ? "text-primary" : "text-muted-foreground"
-                        )}>
+                        <h2
+                          className={cn(
+                            "text-sm font-semibold capitalize",
+                            isTodayDate ? "text-primary" : "text-muted-foreground",
+                          )}
+                        >
                           {getDateLabel(date)}
                         </h2>
                         <span className="text-sm text-muted-foreground">
@@ -306,11 +304,7 @@ export default function MyBookings() {
                           disabled={cancelingDate === date}
                           className="text-xs text-destructive font-medium px-3 py-1.5 rounded-full bg-destructive/10 active:bg-destructive/20 transition-colors"
                         >
-                          {cancelingDate === date ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            "Cancelar"
-                          )}
+                          {cancelingDate === date ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Cancelar"}
                         </button>
                       )}
                     </div>
@@ -320,7 +314,7 @@ export default function MyBookings() {
                       {groupedBookings[date].map((booking, index) => {
                         const countdown = getCountdown(booking.Fecha, booking.Hora);
                         const logoUrl = booking.tenant_logo_url;
-                        
+
                         return (
                           <motion.div
                             key={booking.id}
@@ -345,7 +339,7 @@ export default function MyBookings() {
                                 {logoUrl ? (
                                   <img
                                     src={logoUrl}
-                                    alt={booking.tenant_name || 'Salón'}
+                                    alt={booking.tenant_name || "Salón"}
                                     className="w-14 h-14 rounded-2xl object-cover ring-2 ring-border/50 shadow-sm"
                                   />
                                 ) : (
@@ -404,6 +398,19 @@ export default function MyBookings() {
                                 </button>
                               </div>
                             )}
+
+                            {/* Review button for history */}
+                            {activeTab === "history" && booking.tenant_slug && (
+                              <div className="mt-4 pt-3 border-t border-border/50">
+                                <button
+                                  onClick={() => navigate(`/salon/${booking.tenant_slug}?review=true`)}
+                                  className="w-full h-11 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-sm font-semibold text-white flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 active:scale-[0.98] transition-transform"
+                                >
+                                  <Star className="h-4 w-4" />
+                                  Dejar valoración
+                                </button>
+                              </div>
+                            )}
                           </motion.div>
                         );
                       })}
@@ -439,14 +446,14 @@ export default function MyBookings() {
             </div>
             <AlertDialogTitle className="text-lg">¿Cancelar citas?</AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              Vas a cancelar todas las citas del{' '}
+              Vas a cancelar todas las citas del{" "}
               <span className="font-medium text-foreground">
                 {dateToCancel && format(parseISODateToLocal(dateToCancel), "EEEE d 'de' MMMM", { locale: es })}
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col border-t border-border/50 p-0 sm:flex-col sm:space-x-0">
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleCancelAllBookingsForDate}
               className="h-14 rounded-none border-b border-border/50 bg-transparent text-destructive font-semibold hover:bg-destructive/5 m-0"
             >
