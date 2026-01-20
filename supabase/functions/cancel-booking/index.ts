@@ -153,41 +153,7 @@ serve(async (req) => {
 
     console.log("Booking(s) cancelled successfully");
 
-    // Send internal message cancellation for bookings with user_id
-    for (const booking of bookings) {
-      if (booking.user_id) {
-        try {
-          // Find conversation
-          const { data: conversation } = await supabase
-            .from("conversations")
-            .select("id")
-            .eq("tenant_id", tenantId)
-            .eq("user_id", booking.user_id)
-            .maybeSingle();
-
-          if (conversation) {
-            const dateStr = booking.Fecha.toString();
-            const [year, month, day] = dateStr.split("-");
-            const formattedDate = `${day}/${month}/${year}`;
-            const formattedTime = booking.Hora.slice(0, 5);
-
-            const cancellationMessage = `❌ *Cita cancelada*\n\nTu cita del ${formattedDate} a las ${formattedTime} ha sido cancelada.\n\nSi tienes alguna duda, no dudes en escribirnos.`;
-
-            await supabase.from("direct_messages").insert({
-              conversation_id: conversation.id,
-              sender_id: tenantId,
-              sender_type: "salon",
-              content: cancellationMessage,
-              message_type: "booking_cancellation",
-            });
-
-            console.log("Internal cancellation message sent to user:", booking.user_id);
-          }
-        } catch (msgError) {
-          console.error("Error sending internal cancellation message:", msgError);
-        }
-      }
-    }
+    // Push notifications are used instead of internal messages
 
     // Check waitlist for availability after cancellation
     try {
@@ -217,10 +183,20 @@ serve(async (req) => {
     // Send push notification to tenant admins when CLIENT cancels
     // Use the 'user' param from request body to determine who initiated the cancellation
     const isCancelledByClient = cancelUser === "client";
+    console.log("Cancellation notification check:", {
+      cancelUser,
+      isCancelledByClient,
+      bookingsCount: bookings.length,
+    });
 
     if (isCancelledByClient && bookings.length > 0) {
       try {
         const booking = bookings[0];
+        console.log("Booking to notify about:", {
+          customer_name: booking.customer_name,
+          Fecha: booking.Fecha,
+          tenantId,
+        });
         const { data: tenantAdmins } = await supabase.from("tenant_admins").select("user_id").eq("tenant_id", tenantId);
 
         if (tenantAdmins && tenantAdmins.length > 0) {

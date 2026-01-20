@@ -590,52 +590,7 @@ serve(async (req) => {
       }
     }
 
-    // Send internal message confirmation (if user has account)
-    if (bookingData.user_id) {
-      try {
-        // Find or create conversation
-        let { data: conversation } = await supabase
-          .from("conversations")
-          .select("id")
-          .eq("tenant_id", tenantId)
-          .eq("user_id", bookingData.user_id)
-          .maybeSingle();
-
-        if (!conversation) {
-          const { data: newConv, error: convError } = await supabase
-            .from("conversations")
-            .insert({
-              tenant_id: tenantId,
-              user_id: bookingData.user_id,
-            })
-            .select("id")
-            .single();
-
-          if (convError) throw convError;
-          conversation = newConv;
-        }
-
-        // Format the confirmation message
-        const [day, month, year] = [bookingDate.slice(8, 10), bookingDate.slice(5, 7), bookingDate.slice(0, 4)];
-        const formattedDateTime = `${day}/${month}/${year} a las ${bookingTime.slice(0, 5)}`;
-        const serviceNames = bookingData.services.map((s) => s.name).join(", ");
-
-        const confirmationMessage = `✅ *Reserva confirmada*\n\nHola ${customer_name},\n\nTu cita ha sido confirmada para el ${formattedDateTime}.\n\n📋 Servicios: ${serviceNames}\n👤 Profesional: ${actualStylist}\n\n¡Te esperamos!`;
-
-        // Insert the message
-        await supabase.from("direct_messages").insert({
-          conversation_id: conversation.id,
-          sender_id: tenantId,
-          sender_type: "salon",
-          content: confirmationMessage,
-          message_type: "booking_confirmation",
-        });
-
-        console.log("Internal confirmation message sent to user:", bookingData.user_id);
-      } catch (msgError) {
-        console.error("Error sending internal confirmation message:", msgError);
-      }
-    }
+    // Push notifications are used instead of internal messages
 
     // Send push notification to tenant admins for new booking (only for web/app bookings, not CRM)
     if (bookingData.canal !== "crm") {
