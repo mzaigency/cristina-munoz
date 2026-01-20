@@ -84,16 +84,27 @@ const TenantLanding = () => {
 
   // Auto-scroll to review form when ?review=true
   useEffect(() => {
-    if (reviewParam === "true" && !loading && tenant) {
-      // Small delay to ensure DOM is ready
-      const timer = setTimeout(() => {
-        const reviewFormElement = document.getElementById("review-form");
-        if (reviewFormElement) {
-          reviewFormElement.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 300);
-      return () => clearTimeout(timer);
-    }
+    if (reviewParam !== "true" || loading || !tenant) return;
+
+    // TenantReviewForm renders `null` while it checks auth, so we retry until the element exists.
+    let rafId = 0;
+    const startedAt = Date.now();
+    const maxWaitMs = 10000;
+
+    const tryScroll = () => {
+      const el = document.getElementById("review-form");
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - 12;
+        window.scrollTo({ top, behavior: "smooth" });
+        return;
+      }
+
+      if (Date.now() - startedAt > maxWaitMs) return;
+      rafId = window.requestAnimationFrame(tryScroll);
+    };
+
+    rafId = window.requestAnimationFrame(tryScroll);
+    return () => window.cancelAnimationFrame(rafId);
   }, [reviewParam, loading, tenant]);
 
   const fetchTenantData = async () => {
