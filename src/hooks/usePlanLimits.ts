@@ -165,10 +165,15 @@ export const usePlanLimits = (tenantId: string | undefined): PlanLimits => {
 
   const hasFeature = useCallback(
     (feature: PlanFeature): boolean => {
-      if (!features) return false;
-      return features[feature] === true;
+      // Si hay features definidos en la DB, usarlos
+      if (features && features[feature] !== undefined) {
+        return features[feature] === true;
+      }
+      // Fallback: usar el mapeo de requerimientos de plan
+      const requiredPlans = FEATURE_PLAN_REQUIREMENTS[feature];
+      return requiredPlans.includes(planSlug);
     },
-    [features],
+    [features, planSlug],
   );
 
   const canAddStylist = useCallback((): boolean => {

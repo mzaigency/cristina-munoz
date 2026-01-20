@@ -45,7 +45,7 @@ const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
     { id: "cash", label: "Caja", icon: Wallet, requiredFeature: "cash_register", requiredPlan: "pro" },
     { id: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions", requiredPlan: "pro" },
     { id: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages", requiredPlan: "pro" },
-    { id: "products", label: "Productos", icon: ShoppingBag },
+    { id: "products", label: "Productos", icon: ShoppingBag, requiredFeature: "products", requiredPlan: "pro" },
     { id: "goals", label: "Objetivos", icon: Target, requiredFeature: "monthly_goals", requiredPlan: "business" },
     { id: "stats", label: "Stats", icon: BarChart3, requiredFeature: "advanced_analytics", requiredPlan: "pro" },
   ];
