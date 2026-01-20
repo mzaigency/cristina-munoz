@@ -80,6 +80,7 @@ const FEATURE_PLAN_REQUIREMENTS: Record<PlanFeature, string[]> = {
   pdf_reports: ["pro", "business"],
   promotions: ["pro", "business"],
   packages: ["pro", "business"],
+  products: ["starter", "pro", "business"],
   monthly_goals: ["business"],
   waitlist: ["business"],
 };
