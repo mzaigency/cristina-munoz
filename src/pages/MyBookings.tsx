@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format, isToday, isTomorrow, isThisWeek } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar, Loader2, CalendarPlus, ChevronRight, X, Star } from "lucide-react";
-import { BookingSkeleton } from "@/components/ui/Skeletons";
+import { BookingSkeleton } from "@/components/ui/BookingSkeleton";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
