@@ -69,6 +69,7 @@ const TenantLanding = () => {
 
   const { isAdmin, isStylist, hasAccess } = useTenantAccess(tenant?.id);
   const previewToken = searchParams.get("preview");
+  const reviewParam = searchParams.get("review");
 
   const handleReviewSubmitted = useCallback(() => {
     // Refresh reviews section
@@ -80,6 +81,20 @@ const TenantLanding = () => {
       fetchTenantData();
     }
   }, [slug, previewToken]);
+
+  // Auto-scroll to review form when ?review=true
+  useEffect(() => {
+    if (reviewParam === "true" && !loading && tenant) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        const reviewFormElement = document.getElementById("review-form");
+        if (reviewFormElement) {
+          reviewFormElement.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [reviewParam, loading, tenant]);
 
   const fetchTenantData = async () => {
     try {
