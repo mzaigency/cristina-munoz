@@ -27,17 +27,17 @@ interface TabConfig {
 }
 
 const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
-  const [activeTab, setActiveTab] = useState<BusinessTab>("products");
+  const [activeTab, setActiveTab] = useState<BusinessTab>("cash");
   const { hasFeature, planSlug, loading } = usePlanLimits(tenantId);
 
   // Check for pending charge from agenda and auto-open cash tab
   useEffect(() => {
-    const openCashTab = sessionStorage.getItem('openCashTab');
-    const pendingBooking = sessionStorage.getItem('pendingChargeBooking');
-    
-    if ((openCashTab || pendingBooking) && hasFeature('cash_register')) {
+    const openCashTab = sessionStorage.getItem("openCashTab");
+    const pendingBooking = sessionStorage.getItem("pendingChargeBooking");
+
+    if ((openCashTab || pendingBooking) && hasFeature("cash_register")) {
       setActiveTab("cash");
-      sessionStorage.removeItem('openCashTab');
+      sessionStorage.removeItem("openCashTab");
     }
   }, [hasFeature]);
 
@@ -56,7 +56,7 @@ const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
   };
 
   const handleTabChange = (tabId: string) => {
-    const tab = tabs.find(t => t.id === tabId);
+    const tab = tabs.find((t) => t.id === tabId);
     if (tab && !isTabLocked(tab)) {
       setActiveTab(tabId as BusinessTab);
     }
@@ -79,7 +79,7 @@ const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
 
   // Find first available tab
   const getDefaultTab = () => {
-    const availableTabs = tabs.filter(t => !isTabLocked(t));
+    const availableTabs = tabs.filter((t) => !isTabLocked(t));
     return availableTabs.length > 0 ? availableTabs[0].id : "products";
   };
 
@@ -100,14 +100,10 @@ const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
                 className={cn(
                   "flex-1 min-w-fit flex items-center gap-1.5 text-xs px-3 py-2",
                   "data-[state=active]:bg-background data-[state=active]:shadow-sm",
-                  locked && "opacity-50 cursor-not-allowed"
+                  locked && "opacity-50 cursor-not-allowed",
                 )}
               >
-                {locked ? (
-                  <Lock className="h-3.5 w-3.5" />
-                ) : (
-                  <tab.icon className="h-3.5 w-3.5" />
-                )}
+                {locked ? <Lock className="h-3.5 w-3.5" /> : <tab.icon className="h-3.5 w-3.5" />}
                 <span className="hidden sm:inline">{tab.label}</span>
                 {locked && (
                   <span className="hidden md:inline text-[10px] text-amber-600 dark:text-amber-400 ml-1">
@@ -140,12 +136,13 @@ const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
         </TabsContent>
 
         <TabsContent value="stats" className="mt-4 space-y-6">
-          {renderTabContent(tabs[5], (
+          {renderTabContent(
+            tabs[5],
             <>
               <BusinessStats tenantId={tenantId} />
               <PDFReportsGenerator tenantId={tenantId} tenantName="" />
-            </>
-          ))}
+            </>,
+          )}
         </TabsContent>
       </Tabs>
     </div>
