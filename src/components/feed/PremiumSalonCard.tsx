@@ -172,7 +172,7 @@ export function PremiumSalonCard({
             delay: index * 0.08 + 0.4
           }} className="absolute bottom-3.5 right-3.5 flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/95 backdrop-blur-sm shadow-xl">
                 <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                <span className="text-sm font-bold text-secondary-foreground">
+                <span className="text-sm font-bold text-secondary">
                   {salon.avgRating.toFixed(1)}
                 </span>
                 <span className="text-xs text-muted-foreground">
