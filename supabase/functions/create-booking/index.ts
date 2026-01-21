@@ -177,6 +177,69 @@ serve(async (req) => {
     }
     console.log("Using tenant_id:", tenantId);
 
+    // SECURITY: Verify authorization
+    const authHeader = req.headers.get("Authorization");
+    let user = null;
+    let isStaff = false;
+
+    if (authHeader) {
+      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const {
+        data: { user: authUser },
+      } = await authClient.auth.getUser();
+      user = authUser;
+    }
+
+    if (user) {
+      // Check if user is staff (admin, stylist, or superadmin)
+      // We check multiple tables to be robust
+      const [adminResult, stylistResult, rolesResult] = await Promise.all([
+        supabase
+          .from("tenant_admins")
+          .select("id")
+          .eq("tenant_id", tenantId)
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("tenant_stylists")
+          .select("id")
+          .eq("tenant_id", tenantId)
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase.from("user_roles").select("role, tenant_id").eq("user_id", user.id),
+      ]);
+
+      const hasRole = rolesResult.data?.some(
+        (r: any) =>
+          r.role === "superadmin" ||
+          ((r.role === "admin" || r.role === "stylist") && r.tenant_id === tenantId),
+      );
+
+      if (adminResult.data || stylistResult.data || hasRole) {
+        isStaff = true;
+      }
+    }
+
+    // Verify user_id permission
+    if (bookingData.user_id) {
+      if (!user) {
+        // Guest attempting to book for a specific user ID
+        throw new Error("Unauthorized: Guests cannot create bookings for registered users");
+      }
+      if (user.id !== bookingData.user_id && !isStaff) {
+        // User attempting to book for someone else
+        throw new Error("Unauthorized: You cannot create bookings for other users");
+      }
+    }
+
+    // Verify skipAvailabilityCheck permission
+    if (bookingData.skipAvailabilityCheck && !isStaff) {
+      throw new Error("Unauthorized: Only staff can skip availability checks");
+    }
+
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
