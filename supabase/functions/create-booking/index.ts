@@ -594,16 +594,16 @@ serve(async (req) => {
 
     // Send push notification to tenant admins for new booking (only for web/app bookings, not CRM)
     if (bookingData.canal !== "crm") {
+      const [year, month, day] = [bookingDate.slice(0, 4), bookingDate.slice(5, 7), bookingDate.slice(8, 10)];
+      const formattedDate = `${day}/${month}/${year}`;
+      const serviceNames = bookingData.services.map((s) => s.name).join(", ");
+      const servicePreview = serviceNames.length > 30 ? serviceNames.substring(0, 30) + "..." : serviceNames;
+
+      // Notify admins
       try {
-        // Get all admin users for this tenant
         const { data: tenantAdmins } = await supabase.from("tenant_admins").select("user_id").eq("tenant_id", tenantId);
 
         if (tenantAdmins && tenantAdmins.length > 0) {
-          const [year, month, day] = [bookingDate.slice(0, 4), bookingDate.slice(5, 7), bookingDate.slice(8, 10)];
-          const formattedDate = `${day}/${month}/${year}`;
-          const serviceNames = bookingData.services.map((s) => s.name).join(", ");
-          const servicePreview = serviceNames.length > 30 ? serviceNames.substring(0, 30) + "..." : serviceNames;
-
           for (const admin of tenantAdmins) {
             await supabase.functions.invoke("send-push-notification", {
               body: {
@@ -622,7 +622,32 @@ serve(async (req) => {
         }
       } catch (pushError) {
         console.error("Error sending admin push notification:", pushError);
-        // Don't fail the booking if push fails
+      }
+
+      // Notify the user who made the booking
+      if (bookingData.user_id) {
+        try {
+          // Get tenant name for the notification
+          const { data: tenantData } = await supabase.from("tenants").select("name").eq("id", tenantId).single();
+
+          const tenantName = tenantData?.name || "el salón";
+
+          await supabase.functions.invoke("send-push-notification", {
+            body: {
+              user_id: bookingData.user_id,
+              title: "✅ ¡Reserva confirmada!",
+              body: `Tu cita en ${tenantName} el ${formattedDate} a las ${bookingTime.slice(0, 5)} está lista`,
+              data: {
+                type: "booking_confirmed",
+                booking_id: createdBookings[0]?.id,
+                tenant_id: tenantId,
+              },
+            },
+          });
+          console.log("Booking confirmation sent to user:", bookingData.user_id);
+        } catch (userPushError) {
+          console.error("Error sending user booking confirmation:", userPushError);
+        }
       }
     }
 
