@@ -12,6 +12,37 @@ const normalizePhone = (phone: string): string => {
   return phone.replace(/[\s\-\(\)]/g, "").replace(/^(\+34)?/, "");
 };
 
+// Helper function to check if user is staff (admin or stylist)
+async function checkIsStaff(supabase: any, userId: string, tenantId: string): Promise<boolean> {
+  // Check tenant admin
+  const { data: admin } = await supabase
+    .from("tenant_admins")
+    .select("id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (admin) return true;
+
+  // Check tenant stylist
+  const { data: stylist } = await supabase
+    .from("tenant_stylists")
+    .select("id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (stylist) return true;
+
+  // Check global role
+  const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+
+  if (roles?.some((r: any) => ["admin", "superadmin"].includes(r.role))) return true;
+
+  return false;
+}
+
 // Validation schemas
 const serviceSchema = z.object({
   id: z.string().uuid(),
@@ -176,6 +207,42 @@ serve(async (req) => {
       tenantId = defaultTenant;
     }
     console.log("Using tenant_id:", tenantId);
+
+    // SECURITY: Authorization Check
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "");
+    let authenticatedUser = null;
+
+    if (token) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser(token);
+      authenticatedUser = user;
+    }
+
+    if (bookingData.user_id) {
+      const isOwner = authenticatedUser && authenticatedUser.id === bookingData.user_id;
+      if (!isOwner) {
+        // If not the owner, must be staff
+        if (!authenticatedUser) {
+          throw new Error("Unauthorized: Guests cannot create bookings for registered users");
+        }
+        const isStaff = await checkIsStaff(supabase, authenticatedUser.id, tenantId);
+        if (!isStaff) {
+          throw new Error("Unauthorized: You do not have permission to book for this user");
+        }
+      }
+    }
+
+    if (bookingData.skipAvailabilityCheck) {
+      if (!authenticatedUser) {
+        throw new Error("Unauthorized: Guests cannot skip availability checks");
+      }
+      const isStaff = await checkIsStaff(supabase, authenticatedUser.id, tenantId);
+      if (!isStaff) {
+        throw new Error("Unauthorized: Only staff can skip availability checks");
+      }
+    }
 
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
