@@ -1071,6 +1071,42 @@ export type Database = {
           },
         ]
       }
+      sent_reminders: {
+        Row: {
+          booking_id: string
+          id: string
+          reminder_type: string
+          sent_at: string | null
+        }
+        Insert: {
+          booking_id: string
+          id?: string
+          reminder_type: string
+          sent_at?: string | null
+        }
+        Update: {
+          booking_id?: string
+          id?: string
+          reminder_type?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sent_reminders_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sent_reminders_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_decrypted"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_packages: {
         Row: {
           created_at: string | null
@@ -2522,6 +2558,7 @@ export type Database = {
           total_duration: number
         }[]
       }
+      send_booking_reminders: { Args: never; Returns: undefined }
       user_belongs_to_tenant: {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
