@@ -119,7 +119,7 @@ export default function Auth() {
   }, []);
 
   // Real-time username validation with debounce
-  const checkUsernameAvailability = async (username: string) => {
+  const checkUsernameAvailability = (username: string) => {
     if (usernameTimeoutRef.current) clearTimeout(usernameTimeoutRef.current);
     
     if (!username || username.length < 3) {
