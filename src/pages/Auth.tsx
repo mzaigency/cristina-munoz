@@ -60,6 +60,12 @@ export default function Auth() {
 
   const [citySearch, setCitySearch] = useState("");
 
+  // Real-time validation states
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const usernameTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const emailTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Prevent redirect race: signUp creates a session briefly before we signOut.
   // Initialize from emailSent so if user refreshes, we still don't redirect away.
   const suppressSessionRedirectRef = useRef(emailSent);
@@ -103,6 +109,99 @@ export default function Auth() {
     // Keep redirect suppression in sync with persisted state
     suppressSessionRedirectRef.current = emailSent || suppressSessionRedirectRef.current;
   }, [emailSent]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (usernameTimeoutRef.current) clearTimeout(usernameTimeoutRef.current);
+      if (emailTimeoutRef.current) clearTimeout(emailTimeoutRef.current);
+    };
+  }, []);
+
+  // Real-time username validation with debounce
+  const checkUsernameAvailability = async (username: string) => {
+    if (usernameTimeoutRef.current) clearTimeout(usernameTimeoutRef.current);
+    
+    if (!username || username.length < 3) {
+      setCheckingUsername(false);
+      return;
+    }
+
+    // Validate format first
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setCheckingUsername(false);
+      return;
+    }
+
+    setCheckingUsername(true);
+    
+    usernameTimeoutRef.current = setTimeout(async () => {
+      try {
+        const { data: existingUsername } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", username.toLowerCase())
+          .maybeSingle();
+
+        if (existingUsername) {
+          form.setError("username" as any, {
+            type: "manual",
+            message: "Este nombre de usuario ya está en uso",
+          });
+        } else {
+          // Clear error if it was a "already in use" error
+          const currentError = (form.formState.errors as any).username;
+          if (currentError?.message === "Este nombre de usuario ya está en uso") {
+            form.clearErrors("username" as any);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking username:", error);
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 500);
+  };
+
+  // Real-time email validation with debounce
+  const checkEmailAvailability = async (email: string) => {
+    if (emailTimeoutRef.current) clearTimeout(emailTimeoutRef.current);
+    
+    // Basic email format check
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setCheckingEmail(false);
+      return;
+    }
+
+    setCheckingEmail(true);
+    
+    emailTimeoutRef.current = setTimeout(async () => {
+      try {
+        const { data: existingEmail } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", email.toLowerCase())
+          .maybeSingle();
+
+        if (existingEmail) {
+          form.setError("email", {
+            type: "manual",
+            message: "Ya existe una cuenta con este email",
+          });
+        } else {
+          // Clear error if it was a "already in use" error
+          const currentError = form.formState.errors.email;
+          if (currentError?.message === "Ya existe una cuenta con este email") {
+            form.clearErrors("email");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking email:", error);
+      } finally {
+        setCheckingEmail(false);
+      }
+    }, 500);
+  };
 
   const filteredCities = useMemo(() => {
     if (!citySearch) return citiesList.slice(0, 50);
@@ -452,9 +551,18 @@ export default function Auth() {
                                 <Input
                                   placeholder="tu_usuario"
                                   {...field}
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    if (isSignUp) {
+                                      checkUsernameAvailability(e.target.value);
+                                    }
+                                  }}
                                   disabled={loading}
-                                  className="h-12 rounded-xl pl-8"
+                                  className="h-12 rounded-xl pl-8 pr-10"
                                 />
+                                {checkingUsername && (
+                                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                                )}
                               </div>
                             </FormControl>
                             <FormMessage />
@@ -567,13 +675,24 @@ export default function Auth() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="tu@email.com"
-                            {...field}
-                            disabled={loading}
-                            className="h-12 rounded-xl"
-                          />
+                          <div className="relative">
+                            <Input
+                              type="email"
+                              placeholder="tu@email.com"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                if (isSignUp) {
+                                  checkEmailAvailability(e.target.value);
+                                }
+                              }}
+                              disabled={loading}
+                              className="h-12 rounded-xl pr-10"
+                            />
+                            {checkingEmail && (
+                              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                            )}
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
