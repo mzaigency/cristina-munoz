@@ -177,6 +177,65 @@ serve(async (req) => {
     }
     console.log("Using tenant_id:", tenantId);
 
+    // Authorization check
+    let isStaff = false;
+    if (bookingData.user_id || bookingData.skipAvailabilityCheck) {
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader) {
+        const supabaseAnon = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user } } = await supabaseAnon.auth.getUser();
+
+        if (user) {
+          if (bookingData.user_id && user.id === bookingData.user_id) {
+            // User is booking for themselves
+          } else {
+            // Check if staff
+            const { data: globalRoles } = await supabase
+              .from("user_roles")
+              .select("role, tenant_id")
+              .eq("user_id", user.id);
+
+            const isGlobalAdmin = globalRoles?.some((r: any) =>
+              (r.role === "admin" || r.role === "superadmin") && !r.tenant_id
+            );
+
+            const { data: tAdmin } = await supabase
+              .from("tenant_admins")
+              .select("id")
+              .eq("user_id", user.id)
+              .eq("tenant_id", tenantId)
+              .maybeSingle();
+
+            const { data: tStylist } = await supabase
+              .from("tenant_stylists")
+              .select("id")
+              .eq("user_id", user.id)
+              .eq("tenant_id", tenantId)
+              .eq("is_active", true)
+              .maybeSingle();
+
+            const isTenantRoleAdmin = globalRoles?.some((r: any) => r.role === "admin" && r.tenant_id === tenantId);
+
+            isStaff = !!(isGlobalAdmin || tAdmin || tStylist || isTenantRoleAdmin);
+
+            if (bookingData.user_id && !isStaff) {
+              throw new Error("Unauthorized: You cannot create a booking for another user");
+            }
+          }
+        } else if (bookingData.user_id) {
+          throw new Error("Unauthorized: Invalid token");
+        }
+      } else if (bookingData.user_id) {
+        throw new Error("Unauthorized: Cannot assign user_id without authentication");
+      }
+    }
+
+    if (bookingData.skipAvailabilityCheck && !isStaff) {
+      throw new Error("Unauthorized: Only staff can skip availability checks");
+    }
+
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
