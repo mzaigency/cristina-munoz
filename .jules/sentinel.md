@@ -1,0 +1,4 @@
+## 2025-02-12 - Critical BOLA in Edge Function
+**Vulnerability:** Broken Object Level Authorization (BOLA) in `create-booking` Edge Function. The function initialized a service-role client immediately and accepted `user_id` from the request body without verifying if the caller was that user.
+**Learning:** Supabase Edge Functions do not automatically inherit the user context or enforce RLS when using `createClient` with the Service Role key. You must manually verify the `Authorization` header and enforce permissions, especially when handling sensitive operations like creating records on behalf of users.
+**Prevention:** Always extract the `Authorization` header and verify the user identity using `supabase.auth.getUser()` before performing actions that depend on user identity. Do not trust `user_id` in the request body without verification. Use `SUPABASE_ANON_KEY` for auth verification clients.
