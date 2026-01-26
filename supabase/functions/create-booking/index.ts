@@ -177,6 +177,82 @@ serve(async (req) => {
     }
     console.log("Using tenant_id:", tenantId);
 
+    // SECURITY: Authorization checks
+    // --------------------------------------------------------
+    let authenticatedUser: any = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user } } = await supabase.auth.getUser(token);
+      if (user) authenticatedUser = user;
+    }
+
+    // Helper to check staff permissions (cached)
+    let isStaffCache: boolean | null = null;
+    const isStaffMember = async (userId: string) => {
+      if (isStaffCache !== null) return isStaffCache;
+
+      const { data: isAdmin } = await supabase
+        .from("tenant_admins")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (isAdmin) {
+        isStaffCache = true;
+        return true;
+      }
+
+      const { data: isStylist } = await supabase
+        .from("tenant_stylists")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", userId)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      isStaffCache = !!isStylist;
+      return isStaffCache;
+    };
+
+    // 1. Verify user_id usage (Prevent impersonation)
+    if (bookingData.user_id) {
+      if (!authenticatedUser) {
+        return new Response(
+          JSON.stringify({ error: "Authentication required to book for a registered user" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (authenticatedUser.id !== bookingData.user_id) {
+        if (!(await isStaffMember(authenticatedUser.id))) {
+          return new Response(
+            JSON.stringify({ error: "Unauthorized to book for this user" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+    }
+
+    // 2. Verify skipAvailabilityCheck usage (Privilege Escalation)
+    if (bookingData.skipAvailabilityCheck) {
+      if (!authenticatedUser) {
+        return new Response(
+          JSON.stringify({ error: "Authentication required to skip checks" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (!(await isStaffMember(authenticatedUser.id))) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized to skip availability checks" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+    // --------------------------------------------------------
+
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
