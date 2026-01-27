@@ -4,7 +4,7 @@ import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
 // TikTok icon component
 const TikTokIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
   </svg>
 );
 
@@ -34,7 +34,7 @@ const formatMinutesToTime = (minutes: number) => {
   if (!minutes) return "";
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
 };
 
 export const TenantFooter = ({ tenant }: TenantFooterProps) => {
@@ -44,27 +44,29 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
   // Agrupar días con el mismo horario
   const getGroupedHours = () => {
     if (!businessHours) return [];
-    
+
     const groups: { days: number[]; hours: string }[] = [];
-    
+
     // Ordenar días: 1-5 (Lun-Vie), luego 6 (Sáb), luego 0 (Dom)
     const orderedDays = [1, 2, 3, 4, 5, 6, 0];
-    
-    orderedDays.forEach(day => {
+
+    orderedDays.forEach((day) => {
       const hours = businessHours[day];
       if (!hours) return;
-      
+
       let hoursStr: string;
       if (hours.isClosed) {
         hoursStr = "Cerrado";
       } else {
-        const morning = hours.morningStart && hours.morningEnd 
-          ? `${formatMinutesToTime(hours.morningStart)}-${formatMinutesToTime(hours.morningEnd)}`
-          : null;
-        const afternoon = hours.afternoonStart && hours.afternoonEnd
-          ? `${formatMinutesToTime(hours.afternoonStart)}-${formatMinutesToTime(hours.afternoonEnd)}`
-          : null;
-        
+        const morning =
+          hours.morningStart && hours.morningEnd
+            ? `${formatMinutesToTime(hours.morningStart)}-${formatMinutesToTime(hours.morningEnd)}`
+            : null;
+        const afternoon =
+          hours.afternoonStart && hours.afternoonEnd
+            ? `${formatMinutesToTime(hours.afternoonStart)}-${formatMinutesToTime(hours.afternoonEnd)}`
+            : null;
+
         if (morning && afternoon) {
           hoursStr = `${morning}, ${afternoon}`;
         } else if (morning) {
@@ -75,16 +77,16 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
           hoursStr = "Cerrado";
         }
       }
-      
+
       // Buscar grupo existente con el mismo horario
-      const existingGroup = groups.find(g => g.hours === hoursStr);
+      const existingGroup = groups.find((g) => g.hours === hoursStr);
       if (existingGroup) {
         existingGroup.days.push(day);
       } else {
         groups.push({ days: [day], hours: hoursStr });
       }
     });
-    
+
     return groups;
   };
 
@@ -92,28 +94,28 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
     if (days.length === 1) {
       return DAYS_SHORT[days[0] === 0 ? 6 : days[0] - 1];
     }
-    
+
     // Verificar si son consecutivos
     const sortedDays = [...days].sort((a, b) => {
       const orderA = a === 0 ? 7 : a;
       const orderB = b === 0 ? 7 : b;
       return orderA - orderB;
     });
-    
+
     const isConsecutive = sortedDays.every((day, i) => {
       if (i === 0) return true;
       const prevOrder = sortedDays[i - 1] === 0 ? 7 : sortedDays[i - 1];
       const currOrder = day === 0 ? 7 : day;
       return currOrder - prevOrder === 1;
     });
-    
+
     if (isConsecutive && days.length > 2) {
       const first = sortedDays[0];
       const last = sortedDays[sortedDays.length - 1];
       return `${DAYS_SHORT[first === 0 ? 6 : first - 1]}-${DAYS_SHORT[last === 0 ? 6 : last - 1]}`;
     }
-    
-    return days.map(d => DAYS_SHORT[d === 0 ? 6 : d - 1]).join(", ");
+
+    return days.map((d) => DAYS_SHORT[d === 0 ? 6 : d - 1]).join(", ");
   };
 
   const groupedHours = getGroupedHours();
@@ -127,7 +129,10 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
             <h3 className="text-2xl font-bold mb-4 text-primary">{tenant.name}</h3>
             <p className="text-muted-foreground mb-4">
               {tenant.description || tenant.tagline || (
-                <>Tu espacio de confianza{tenant.city && ` en ${tenant.city}`}. Profesionales dedicados a ofrecerte la mejor experiencia.</>
+                <>
+                  Tu espacio de confianza {tenant.city && ` en ${tenant.city}`}. Profesionales dedicados a ofrecerte la
+                  mejor experiencia.
+                </>
               )}
             </p>
             {/* Social Links */}
@@ -219,9 +224,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
                   groupedHours.map((group, idx) => (
                     <div key={idx} className="flex justify-between gap-4">
                       <span className="font-medium">{formatDaysRange(group.days)}</span>
-                      <span className={group.hours === "Cerrado" ? "text-muted-foreground/60" : ""}>
-                        {group.hours}
-                      </span>
+                      <span className={group.hours === "Cerrado" ? "text-muted-foreground/60" : ""}>{group.hours}</span>
                     </div>
                   ))
                 ) : (
