@@ -818,7 +818,7 @@ function SuccessStep({ tenantSlug }: { tenantSlug: string }) {
 
       <div className="space-y-3">
         <Button
-          onClick={() => navigate(`/salon/${tenantSlug}`)}
+          onClick={() => navigate(`/${tenantSlug}`)}
           className="w-full h-12 rounded-xl gradient-primary text-primary-foreground"
         >
           <Building2 className="h-4 w-4 mr-2" />

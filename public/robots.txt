@@ -43,6 +43,7 @@ Disallow: /*?*
 Disallow: /mis-citas
 Disallow: /perfil
 Disallow: /mensajes
+Disallow: /onboarding
 
 # AI Crawlers (optional - allow for visibility)
 User-agent: GPTBot

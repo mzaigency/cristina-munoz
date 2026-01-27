@@ -403,7 +403,7 @@ export default function MyBookings() {
                             {activeTab === "history" && booking.tenant_slug && (
                               <div className="mt-4 pt-3 border-t border-border/50">
                                 <button
-                                  onClick={() => navigate(`/salon/${booking.tenant_slug}?review=true`)}
+                                  onClick={() => navigate(`/${booking.tenant_slug}?review=true`)}
                                   className="w-full h-11 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-sm font-semibold text-white flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 active:scale-[0.98] transition-transform"
                                 >
                                   <Star className="h-4 w-4" />

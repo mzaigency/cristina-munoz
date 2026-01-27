@@ -263,13 +263,13 @@ const TenantLanding = () => {
           title={seoTitle}
           description={seoDescription}
           keywords={seoKeywords}
-          canonicalUrl={`/salon/${tenant.slug}`}
+          canonicalUrl={`/${tenant.slug}`}
           ogImage={tenant.hero_image_url || undefined}
           localBusiness={localBusinessData}
           breadcrumbs={[
             { name: "Inicio", url: "/" },
             { name: businessLabel, url: `/?category=${businessType || 'all'}` },
-            { name: tenant.name, url: `/salon/${tenant.slug}` }
+            { name: tenant.name, url: `/${tenant.slug}` }
           ]}
           noindex={isPreview}
         />

@@ -76,7 +76,7 @@ export default function TenantAdmin() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const navigate = useNavigate();
-  const { slug } = useParams<{ slug: string }>();
+  const { adminSlug: slug } = useParams<{ adminSlug: string }>();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -478,7 +478,7 @@ export default function TenantAdmin() {
               <HelpTutorial />
 
               <Button
-                onClick={() => navigate(`/salon/${slug}`)}
+                onClick={() => navigate(`/${slug}`)}
                 variant="outline"
                 size="sm"
                 className="gap-1 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"

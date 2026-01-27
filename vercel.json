@@ -1,4 +1,11 @@
 {
+  "redirects": [
+    {
+      "source": "/salon/:slug",
+      "destination": "/:slug",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/assets/:path*",

@@ -457,7 +457,7 @@ export function StoriesCarousel() {
               {/* Header */}
               <div className="absolute top-8 left-4 right-4 z-10 flex items-center justify-between">
                 <Link
-                  to={`/salon/${selectedGroup.tenant.slug}`}
+                  to={`/${selectedGroup.tenant.slug}`}
                   className="flex items-center gap-3"
                   onClick={handleClose}
                 >
