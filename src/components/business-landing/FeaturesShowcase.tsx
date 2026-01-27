@@ -11,7 +11,7 @@ const features = [{
   shortTitle: "Web",
   headline: "Tu salón en internet en 5 minutos",
   description: "Una página web profesional con tu marca, servicios y precios. Tus clientes te encontrarán en Google y podrán ver todo sobre tu negocio.",
-  benefits: ["Dominio personalizado (glowapp.app/salon/tunombre)", "Optimizada para móviles y SEO", "Galería de trabajos y reseñas", "Información de contacto y ubicación"],
+  benefits: ["Dominio personalizado (glowapp.app/tunombre)", "Optimizada para móviles y SEO", "Galería de trabajos y reseñas", "Información de contacto y ubicación"],
   color: "from-blue-500 to-cyan-500",
   Demo: DemoLanding
 }, {

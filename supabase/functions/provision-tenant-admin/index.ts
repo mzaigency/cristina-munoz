@@ -251,7 +251,7 @@ serve(async (req) => {
                 <p><strong>Email:</strong> ${email}</p>
                 <p><strong>Contraseña:</strong> ${password}</p>
                 <p>Panel de administración: /admin/${tenantSlug}</p>
-                <p>Web pública: /salon/${tenantSlug}</p>
+                <p>Web pública: /${tenantSlug}</p>
                 <p>⚠️ Te recomendamos cambiar tu contraseña después del primer inicio de sesión.</p>
               `,
             }),

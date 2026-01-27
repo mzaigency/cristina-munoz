@@ -76,7 +76,7 @@ export function PremiumSalonCard({
   }} whileHover={{
     y: -6
   }} className="group">
-      <Link to={`/salon/${salon.slug}`} className="block">
+      <Link to={`/${salon.slug}`} className="block">
         <div className="relative overflow-hidden rounded-[28px] bg-card border border-border/30 shadow-xl shadow-foreground/[0.03] transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-primary/15 group-hover:border-primary/30">
           
           {/* Image Container with Premium Gradient Overlay */}

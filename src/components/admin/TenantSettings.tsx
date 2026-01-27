@@ -166,7 +166,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button variant="outline" asChild className="h-11 md:h-10">
-            <a href={`/salon/${tenantSlug}`} target="_blank" rel="noopener noreferrer">
+            <a href={`/${tenantSlug}`} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-4 w-4 mr-2" />
               Ver Landing
             </a>

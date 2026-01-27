@@ -258,7 +258,7 @@ export const TenantsManager = () => {
   };
 
   const openTenantLanding = (slug: string) => {
-    window.open(`/salon/${slug}`, '_blank');
+    window.open(`/${slug}`, '_blank');
   };
 
   const filteredTenants = tenants.filter(

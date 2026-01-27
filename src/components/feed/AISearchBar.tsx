@@ -116,7 +116,7 @@ export function AISearchBar({
   const handleResultClick = (slug: string) => {
     setShowResults(false);
     setIsFocused(false);
-    navigate(`/salon/${slug}`);
+    navigate(`/${slug}`);
   };
 
   const suggestions = ["Mejores balayage en Manresa", "Peluquerías cerca de mí", "Tratamientos keratina Barcelona"];

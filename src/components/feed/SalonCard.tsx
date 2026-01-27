@@ -32,7 +32,7 @@ export function SalonCard({ salon, index }: SalonCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      <Link to={`/salon/${salon.slug}`} className="block">
+      <Link to={`/${salon.slug}`} className="block">
         <div className="ios-card group overflow-hidden active:scale-[0.98] transition-transform duration-200">
           {/* Image Container */}
           <div
