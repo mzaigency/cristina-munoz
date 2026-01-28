@@ -166,6 +166,15 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Get authenticated user
+    const authHeader = req.headers.get("Authorization");
+    let authenticatedUser = null;
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user } } = await supabase.auth.getUser(token);
+      authenticatedUser = user;
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
@@ -200,6 +209,47 @@ serve(async (req) => {
       if (expiresAt < new Date()) {
         return new Response(
           JSON.stringify({ error: "Este negocio tiene la suscripción expirada y no puede recibir reservas" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+    // Validate authorization
+    if (bookingData.user_id) {
+      let isAuthorized = false;
+
+      if (authenticatedUser && authenticatedUser.id === bookingData.user_id) {
+        isAuthorized = true;
+      } else if (authenticatedUser) {
+        // Check if admin
+        const { data: admin } = await supabase
+          .from("tenant_admins")
+          .select("id")
+          .eq("tenant_id", tenantId)
+          .eq("user_id", authenticatedUser.id)
+          .maybeSingle();
+
+        if (admin) {
+          isAuthorized = true;
+        } else {
+          // Check if stylist
+          const { data: stylist } = await supabase
+            .from("tenant_stylists")
+            .select("id")
+            .eq("tenant_id", tenantId)
+            .eq("user_id", authenticatedUser.id)
+            .eq("is_active", true)
+            .maybeSingle();
+
+          if (stylist) {
+            isAuthorized = true;
+          }
+        }
+      }
+
+      if (!isAuthorized) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: You do not have permission to create bookings for this user." }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
