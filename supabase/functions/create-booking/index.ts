@@ -130,6 +130,32 @@ async function getStylistColor(supabase: any, tenantId: string, stylistSlug: str
   return stylist?.color || "#8B5CF6";
 }
 
+// Helper function to check if user is staff (admin or stylist)
+async function checkIsStaff(supabase: any, userId: string, tenantId: string): Promise<boolean> {
+  // Check admin
+  const { data: admin } = await supabase
+    .from("tenant_admins")
+    .select("user_id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (admin) return true;
+
+  // Check stylist
+  const { data: stylist } = await supabase
+    .from("tenant_stylists")
+    .select("user_id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (stylist) return true;
+
+  return false;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -176,6 +202,52 @@ serve(async (req) => {
       tenantId = defaultTenant;
     }
     console.log("Using tenant_id:", tenantId);
+
+    // Verify user identity
+    const authHeader = req.headers.get("Authorization");
+    let authenticatedUser: any = null;
+
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser(token);
+      authenticatedUser = user;
+    }
+
+    // Authorization checks
+    if (bookingData.user_id) {
+      if (!authenticatedUser) {
+        // If user_id is provided but no auth token, reject.
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: User ID provided but not authenticated" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (authenticatedUser.id !== bookingData.user_id) {
+        // Check if admin/stylist
+        const isStaff = await checkIsStaff(supabase, authenticatedUser.id, tenantId);
+        if (!isStaff) {
+          return new Response(
+            JSON.stringify({ error: "Unauthorized: Cannot book for another user" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+    }
+
+    // Restrict skipAvailabilityCheck to staff
+    if (bookingData.skipAvailabilityCheck) {
+      if (!authenticatedUser) {
+        bookingData.skipAvailabilityCheck = false; // Ignore flag for guests
+      } else {
+        const isStaff = await checkIsStaff(supabase, authenticatedUser.id, tenantId);
+        if (!isStaff) {
+          bookingData.skipAvailabilityCheck = false; // Ignore flag for non-staff
+        }
+      }
+    }
 
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
