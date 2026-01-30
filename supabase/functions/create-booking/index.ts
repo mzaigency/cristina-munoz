@@ -130,6 +130,29 @@ async function getStylistColor(supabase: any, tenantId: string, stylistSlug: str
   return stylist?.color || "#8B5CF6";
 }
 
+// Helper function to check user permissions
+async function checkUserPermissions(supabase: any, userId: string, tenantId: string): Promise<{ isAdmin: boolean; isStylist: boolean }> {
+  const { data: admin } = await supabase
+    .from("tenant_admins")
+    .select("user_id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const { data: stylist } = await supabase
+    .from("tenant_stylists")
+    .select("user_id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  return {
+    isAdmin: !!admin,
+    isStylist: !!stylist,
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -176,6 +199,50 @@ serve(async (req) => {
       tenantId = defaultTenant;
     }
     console.log("Using tenant_id:", tenantId);
+
+    // Security: Verify user identity and permissions
+    let user: any = null;
+    let permissions = { isAdmin: false, isStylist: false };
+
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+      if (!authError && authUser) {
+        user = authUser;
+        // Check permissions if user exists and tenant is known
+        if (tenantId) {
+          permissions = await checkUserPermissions(supabase, user.id, tenantId);
+        }
+      }
+    }
+
+    // Security: Validate skipAvailabilityCheck authorization
+    if (bookingData.skipAvailabilityCheck) {
+       if (!permissions.isAdmin && !permissions.isStylist) {
+          return new Response(JSON.stringify({ error: "Unauthorized: Only admins or stylists can skip availability checks" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+       }
+    }
+
+    // Security: Validate user_id authorization
+    if (bookingData.user_id) {
+       if (!user) {
+          // Guest mode: cannot assign user_id. Force it to null to prevent impersonation.
+          bookingData.user_id = null;
+          console.log("Guest booking: cleared provided user_id");
+       } else if (bookingData.user_id !== user.id) {
+          // Booking for another user
+          if (!permissions.isAdmin && !permissions.isStylist) {
+             return new Response(JSON.stringify({ error: "Unauthorized: You cannot create bookings for other users" }), {
+               status: 403,
+               headers: { ...corsHeaders, "Content-Type": "application/json" },
+             });
+          }
+       }
+    }
 
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
