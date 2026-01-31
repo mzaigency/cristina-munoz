@@ -177,6 +177,107 @@ serve(async (req) => {
     }
     console.log("Using tenant_id:", tenantId);
 
+    // Get the user from the authorization header
+    const authHeader = req.headers.get("Authorization");
+    let user = null;
+
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const {
+        data: { user: authUser },
+        error: authError,
+      } = await supabase.auth.getUser(token);
+      if (!authError) {
+        user = authUser;
+      }
+    }
+
+    // Cache staff status to avoid redundant queries
+    let isStaff = false;
+    let hasCheckedStaff = false;
+    const checkStaffStatus = async () => {
+      if (hasCheckedStaff) return isStaff;
+      if (!user) return false;
+
+      // Check tenant_admins
+      const { data: admin } = await supabase
+        .from("tenant_admins")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+
+      if (admin) {
+        isStaff = true;
+        hasCheckedStaff = true;
+        return true;
+      }
+
+      // Check tenant_stylists
+      const { data: stylist } = await supabase
+        .from("tenant_stylists")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      isStaff = !!stylist;
+      hasCheckedStaff = true;
+      return isStaff;
+    };
+
+    // Verify Authorization
+    if (bookingData.user_id) {
+      // If attempting to book for a registered user
+      if (!user) {
+        // Unauthenticated requests cannot book for registered users
+        return new Response(
+          JSON.stringify({
+            error: "Unauthorized: Cannot book for a registered user without authentication",
+          }),
+          {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      if (user.id !== bookingData.user_id) {
+        // If the authenticated user is not the target user, they must be staff
+        const isStaffMember = await checkStaffStatus();
+
+        if (!isStaffMember) {
+          return new Response(
+            JSON.stringify({
+              error: "Unauthorized: You do not have permission to book for this user",
+            }),
+            {
+              status: 403,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        }
+      }
+    }
+
+    // Privileged operations check
+    if (bookingData.skipAvailabilityCheck) {
+      const isStaffMember = await checkStaffStatus();
+
+      if (!isStaffMember) {
+        return new Response(
+          JSON.stringify({
+            error: "Unauthorized: skipAvailabilityCheck requires staff privileges",
+          }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+    }
+
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
