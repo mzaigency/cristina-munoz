@@ -130,6 +130,28 @@ async function getStylistColor(supabase: any, tenantId: string, stylistSlug: str
   return stylist?.color || "#8B5CF6";
 }
 
+// Helper function to check if user is staff (admin or active stylist)
+async function checkIsStaff(supabase: any, userId: string, tenantId: string): Promise<boolean> {
+  const { data: admin } = await supabase
+    .from("tenant_admins")
+    .select("id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (admin) return true;
+
+  const { data: stylist } = await supabase
+    .from("tenant_stylists")
+    .select("id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  return !!stylist;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -176,6 +198,58 @@ serve(async (req) => {
       tenantId = defaultTenant;
     }
     console.log("Using tenant_id:", tenantId);
+
+    // Verify authorization
+    const authHeader = req.headers.get("Authorization");
+    let user = null;
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const {
+        data: { user: authUser },
+        error,
+      } = await supabase.auth.getUser(token);
+      if (!error) user = authUser;
+    }
+
+    // 1. Check skipAvailabilityCheck permissions
+    if (bookingData.skipAvailabilityCheck) {
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Unauthorized: Login required to skip availability check" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const isStaff = await checkIsStaff(supabase, user.id, tenantId);
+      if (!isStaff) {
+        return new Response(JSON.stringify({ error: "Forbidden: Only staff can skip availability checks" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // 2. Check user_id assignment permissions
+    if (bookingData.user_id) {
+      if (!user) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: Login required to assign booking to user account" }),
+          {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      if (bookingData.user_id !== user.id) {
+        const isStaff = await checkIsStaff(supabase, user.id, tenantId);
+        if (!isStaff) {
+          return new Response(JSON.stringify({ error: "Forbidden: You cannot create bookings for other users" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
 
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
