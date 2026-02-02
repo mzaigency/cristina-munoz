@@ -9,6 +9,7 @@ import { NavigationProvider } from "@/contexts/NavigationContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { ThemeProvider } from "next-themes";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { DeepLinkHandler } from "@/components/DeepLinkHandler";
 
 // Lazy loaded pages
 const Index = lazy(() => import("./pages/Index"));
@@ -53,6 +54,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <UpdatePrompt />
+            <DeepLinkHandler />
             <BrowserRouter>
               <ScrollToTop />
               <Suspense fallback={<PageLoader />}>
