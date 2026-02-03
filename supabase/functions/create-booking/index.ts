@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // Helper function to normalize phone numbers
 const normalizePhone = (phone: string): string => {
-  return phone.replace(/[\s\-\(\)]/g, "").replace(/^(\+34)?/, "");
+  return phone.replace(/[\s\-()]/g, "").replace(/^(\+34)?/, "");
 };
 
 // Validation schemas
@@ -95,6 +95,7 @@ interface BookingRequest {
 }
 
 // Helper function to get default tenant ID
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getDefaultTenantId(supabase: any): Promise<string | null> {
   const { data: tenant } = await supabase.from("tenants").select("id").eq("is_active", true).limit(1).maybeSingle();
 
@@ -102,6 +103,7 @@ async function getDefaultTenantId(supabase: any): Promise<string | null> {
 }
 
 // Helper function to get n8n webhook URL from tenant integrations
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getN8nWebhookUrl(supabase: any, tenantId: string): Promise<string | null> {
   const { data: integration } = await supabase
     .from("tenant_integrations")
@@ -119,6 +121,7 @@ async function getN8nWebhookUrl(supabase: any, tenantId: string): Promise<string
 }
 
 // Helper function to get stylist color
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getStylistColor(supabase: any, tenantId: string, stylistSlug: string): Promise<string> {
   const { data: stylist } = await supabase
     .from("tenant_stylists")
@@ -128,6 +131,29 @@ async function getStylistColor(supabase: any, tenantId: string, stylistSlug: str
     .maybeSingle();
 
   return stylist?.color || "#8B5CF6";
+}
+
+// Helper function to verify staff privileges
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function verifyStaffPrivileges(supabase: any, userId: string, tenantId: string): Promise<boolean> {
+  const { data: admin } = await supabase
+    .from("tenant_admins")
+    .select("user_id")
+    .eq("user_id", userId)
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+
+  if (admin) return true;
+
+  const { data: stylist } = await supabase
+    .from("tenant_stylists")
+    .select("user_id")
+    .eq("user_id", userId)
+    .eq("tenant_id", tenantId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  return !!stylist;
 }
 
 serve(async (req) => {
@@ -176,6 +202,59 @@ serve(async (req) => {
       tenantId = defaultTenant;
     }
     console.log("Using tenant_id:", tenantId);
+
+    // Security: Verify authentication and authorization
+    const authHeader = req.headers.get("Authorization");
+    let authenticatedUserId: string | null = null;
+
+    if (authHeader) {
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const {
+        data: { user },
+      } = await userClient.auth.getUser();
+      authenticatedUserId = user?.id || null;
+    }
+
+    // 1. Authorization Check: Prevent IDOR / Spoofing
+    // If a user_id is provided, the caller must be that user OR a staff member
+    if (bookingData.user_id) {
+      if (!authenticatedUserId) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: Cannot create booking for a user without authentication" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (authenticatedUserId !== bookingData.user_id) {
+        const isStaff = await verifyStaffPrivileges(supabase, authenticatedUserId, tenantId);
+        if (!isStaff) {
+          return new Response(
+            JSON.stringify({ error: "Forbidden: You are not authorized to create bookings for other users" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+    }
+
+    // 2. Authorization Check: Privileged Options
+    // Only staff can skip availability checks
+    if (bookingData.skipAvailabilityCheck) {
+      let canSkip = false;
+      if (authenticatedUserId) {
+        canSkip = await verifyStaffPrivileges(supabase, authenticatedUserId, tenantId);
+      }
+
+      if (!canSkip) {
+        console.warn(
+          `User ${authenticatedUserId || "guest"} tried to skip availability check without privileges. Ignoring.`,
+        );
+        bookingData.skipAvailabilityCheck = false;
+      }
+    }
 
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
@@ -279,7 +358,7 @@ serve(async (req) => {
 
     const normalizedPhone = normalizePhone(customer_phone);
     const [startHours, startMinutes] = bookingTime.split(":").map(Number);
-    let currentMinutes = startHours * 60 + startMinutes;
+    const currentMinutes = startHours * 60 + startMinutes;
 
     // Skip validations if admin explicitly requests it
     if (!bookingData.skipAvailabilityCheck) {
@@ -369,7 +448,7 @@ serve(async (req) => {
         case "weeks":
           date.setUTCDate(date.getUTCDate() + intervalValue * 7);
           break;
-        case "months":
+        case "months": {
           // Proper month addition that handles varying month lengths
           const originalDay = date.getUTCDate();
           date.setUTCMonth(date.getUTCMonth() + intervalValue);
@@ -380,6 +459,7 @@ serve(async (req) => {
             date.setUTCDate(0);
           }
           break;
+        }
       }
 
       return date.toISOString().split("T")[0];
@@ -407,6 +487,7 @@ serve(async (req) => {
     // Get stylist color for the booking
     const stylistColor = await getStylistColor(supabase, tenantId, actualStylist);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const createdBookings: any[] = [];
 
     // Generate recurrence group ID if this is a recurring booking
