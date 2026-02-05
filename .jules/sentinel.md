@@ -1,0 +1,4 @@
+## 2026-02-05 - Broken Access Control in Edge Functions
+**Vulnerability:** The `create-booking` Edge Function trusted the `user_id` provided in the request body without verifying it against the authenticated user's JWT. It also allowed `skipAvailabilityCheck` without checking for admin privileges.
+**Learning:** Initializing a Supabase client with `SUPABASE_SERVICE_ROLE_KEY` bypasses RLS, making the function responsible for all authorization checks. Input data from the request body must never be trusted for authorization decisions without verification.
+**Prevention:** Always verify the `Authorization` header using `supabase.auth.getUser()` (with an anon key client) to establish identity. Enforce that sensitive parameters (like `user_id` or override flags) match the authenticated user's context or privileges.
