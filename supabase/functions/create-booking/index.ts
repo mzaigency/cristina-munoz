@@ -130,6 +130,44 @@ async function getStylistColor(supabase: any, tenantId: string, stylistSlug: str
   return stylist?.color || "#8B5CF6";
 }
 
+// Helper to get authenticated user
+async function getAuthUser(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) return null;
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  const { data: { user }, error } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+  if (error || !user) return null;
+  return user;
+}
+
+// Helper to check staff privileges
+async function isStaffMember(supabase: any, userId: string, tenantId: string): Promise<boolean> {
+  // Check if admin
+  const { data: admin } = await supabase
+    .from("tenant_admins")
+    .select("user_id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (admin) return true;
+
+  // Check if stylist
+  const { data: stylist } = await supabase
+    .from("tenant_stylists")
+    .select("user_id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  return !!stylist;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -176,6 +214,29 @@ serve(async (req) => {
       tenantId = defaultTenant;
     }
     console.log("Using tenant_id:", tenantId);
+
+    // Verify Authorization
+    const authUser = await getAuthUser(req);
+    const authUserId = authUser?.id;
+    const isStaff = authUserId ? await isStaffMember(supabase, authUserId, tenantId) : false;
+
+    // 1. Verify user_id ownership or staff privilege
+    if (bookingData.user_id) {
+      if (authUserId !== bookingData.user_id && !isStaff) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: You can only create bookings for yourself" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // 2. Verify skipAvailabilityCheck privilege
+    if (bookingData.skipAvailabilityCheck && !isStaff) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Only staff can skip availability checks" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
