@@ -22,10 +22,8 @@ interface Review {
   rating: number;
   comment: string | null;
   created_at: string;
-  user_id: string;
-  profile?: {
-    full_name: string | null;
-  } | null;
+  reviewer_name: string;
+  reviewer_avatar: string | null;
 }
 
 interface TenantReviewsSectionProps {
@@ -60,9 +58,8 @@ const seededRandom = (seed: string): number => {
 };
 
 const getDisplayName = (fullName: string | null | undefined, reviewId: string): string => {
-  if (!fullName) return "Cliente";
+  if (!fullName || fullName === 'Cliente') return "Cliente";
   
-  // Replace "xavi barea" with a random name based on reviewId for consistency
   if (fullName.toLowerCase().includes("xavi")) {
     const nameIndex = seededRandom(reviewId) % RANDOM_NAMES.length;
     const randomName = RANDOM_NAMES[nameIndex];
@@ -104,33 +101,16 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const { data, error, count } = await supabase
-          .from("reviews")
-          .select(`id, rating, comment, created_at, user_id`, { count: 'exact' })
-          .eq("tenant_id", tenantId)
-          .eq("approved", true)
-          .order("created_at", { ascending: false });
+        const { data, error } = await supabase
+          .rpc("get_tenant_reviews", { p_tenant_id: tenantId, p_limit: 50 });
 
         if (error) throw error;
 
         if (data && data.length > 0) {
-          const userIds = [...new Set(data.map(r => r.user_id))];
-          const { data: profiles } = await supabase
-            .from("profiles")
-            .select("id, full_name")
-            .in("id", userIds);
-
-          const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+          setReviews(data as Review[]);
+          setTotalReviews(data.length);
           
-          const reviewsWithProfiles = data.map(review => ({
-            ...review,
-            profile: profileMap.get(review.user_id) || null
-          }));
-
-          setReviews(reviewsWithProfiles);
-          setTotalReviews(count || data.length);
-          
-          const avg = data.reduce((sum, r) => sum + r.rating, 0) / data.length;
+          const avg = data.reduce((sum: number, r: any) => sum + r.rating, 0) / data.length;
           setAverageRating(Math.round(avg * 10) / 10);
         } else {
           setReviews([]);
@@ -229,7 +209,7 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
                 >
                   <article
                     tabIndex={0}
-                    aria-label={`Leer reseña de ${getDisplayName(review.profile?.full_name, review.id)}`}
+                    aria-label={`Leer reseña de ${getDisplayName(review.reviewer_name, review.id)}`}
                     onClick={() => setSelectedReview(review)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -242,12 +222,16 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
                   >
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm flex-shrink-0">
-                        {getInitials(review.profile?.full_name, review.id)}
-                      </div>
+                      {review.reviewer_avatar ? (
+                        <img src={review.reviewer_avatar} alt={review.reviewer_name} className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm flex-shrink-0">
+                          {getInitials(review.reviewer_name, review.id)}
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-foreground text-sm">
-                          {getDisplayName(review.profile?.full_name, review.id)}
+                          {getDisplayName(review.reviewer_name, review.id)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {formatDateShort(review.created_at)}
@@ -305,13 +289,17 @@ export const TenantReviewsSection = ({ tenantId, tenantName }: TenantReviewsSect
           {selectedReview && (
             <div className="p-6 flex flex-col items-center text-center">
               {/* Avatar */}
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl mb-4">
-                {getInitials(selectedReview.profile?.full_name, selectedReview.id)}
-              </div>
+              {selectedReview.reviewer_avatar ? (
+                <img src={selectedReview.reviewer_avatar} alt={selectedReview.reviewer_name} className="h-16 w-16 rounded-full object-cover mb-4" />
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl mb-4">
+                  {getInitials(selectedReview.reviewer_name, selectedReview.id)}
+                </div>
+              )}
               
               {/* Name */}
               <p className="font-semibold text-foreground text-lg mb-1">
-                {getFullDisplayName(selectedReview.profile?.full_name, selectedReview.id)}
+                {getFullDisplayName(selectedReview.reviewer_name, selectedReview.id)}
               </p>
               
               {/* Date */}
