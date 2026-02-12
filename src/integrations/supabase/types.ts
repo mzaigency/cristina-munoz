@@ -2519,6 +2519,17 @@ export type Database = {
         }[]
       }
       get_tenant_by_slug: { Args: { _slug: string }; Returns: string }
+      get_tenant_reviews: {
+        Args: { p_limit?: number; p_tenant_id: string }
+        Returns: {
+          comment: string
+          created_at: string
+          id: string
+          rating: number
+          reviewer_avatar: string
+          reviewer_name: string
+        }[]
+      }
       get_user_tenant_id: { Args: never; Returns: string }
       has_role:
         | {
