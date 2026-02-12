@@ -4,12 +4,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Review {
   id: string;
   rating: number;
   comment: string | null;
   created_at: string;
+  reviewer_name: string;
+  reviewer_avatar: string | null;
 }
 
 interface TenantReviewsProps {
@@ -27,15 +30,10 @@ export const TenantReviews = ({ tenantId }: TenantReviewsProps) => {
   const fetchReviews = async () => {
     try {
       const { data, error } = await supabase
-        .from("reviews")
-        .select("id, rating, comment, created_at")
-        .eq("tenant_id", tenantId)
-        .eq("approved", true)
-        .order("created_at", { ascending: false })
-        .limit(6);
+        .rpc("get_tenant_reviews", { p_tenant_id: tenantId, p_limit: 6 });
 
       if (error) throw error;
-      setReviews(data || []);
+      setReviews((data as Review[]) || []);
     } catch (error) {
       console.error("Error fetching reviews:", error);
     } finally {
@@ -46,6 +44,15 @@ export const TenantReviews = ({ tenantId }: TenantReviewsProps) => {
   const averageRating = reviews.length > 0 
     ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
     : "0";
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   if (loading) {
     return (
@@ -86,6 +93,21 @@ export const TenantReviews = ({ tenantId }: TenantReviewsProps) => {
           {reviews.map((review) => (
             <Card key={review.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={review.reviewer_avatar || undefined} alt={review.reviewer_name} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                      {getInitials(review.reviewer_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground truncate">{review.reviewer_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(review.created_at), "d 'de' MMMM, yyyy", { locale: es })}
+                    </p>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-1 mb-3">
                   {[...Array(5)].map((_, i) => (
                     <Star
@@ -100,14 +122,10 @@ export const TenantReviews = ({ tenantId }: TenantReviewsProps) => {
                 </div>
                 
                 {review.comment && (
-                  <p className="text-foreground mb-4 line-clamp-4">
+                  <p className="text-foreground line-clamp-4">
                     "{review.comment}"
                   </p>
                 )}
-
-                <p className="text-sm text-muted-foreground">
-                  {format(new Date(review.created_at), "d 'de' MMMM, yyyy", { locale: es })}
-                </p>
               </CardContent>
             </Card>
           ))}
