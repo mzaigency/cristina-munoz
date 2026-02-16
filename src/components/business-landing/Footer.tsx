@@ -39,12 +39,12 @@ export const Footer = () => {
             <h4 className="font-semibold mb-4 text-white">Legal</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/privacy" className="text-sm text-white/50 hover:text-white transition-colors">
+                <Link to="/privacidad" className="text-sm text-white/50 hover:text-white transition-colors">
                   Política de privacidad
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-sm text-white/50 hover:text-white transition-colors">
+                <Link to="/terminos" className="text-sm text-white/50 hover:text-white transition-colors">
                   Términos de uso
                 </Link>
               </li>
