@@ -63,8 +63,8 @@ export default function Auth() {
   // Real-time validation states
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
-  const usernameTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const emailTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const usernameTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const emailTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Prevent redirect race: signUp creates a session briefly before we signOut.
   // Initialize from emailSent so if user refreshes, we still don't redirect away.

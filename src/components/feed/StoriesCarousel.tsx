@@ -42,7 +42,7 @@ export function StoriesCarousel() {
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   
-  const progressInterval = useRef<NodeJS.Timeout | null>(null);
+  const progressInterval = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const { tenantId, tenant, loading: tenantLoading } = useCurrentUserTenant();
