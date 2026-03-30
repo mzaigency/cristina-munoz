@@ -1,15 +1,17 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { NavigationProvider } from "@/contexts/NavigationContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { ThemeProvider } from "next-themes";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { DeepLinkHandler } from "@/components/DeepLinkHandler";
+import { MaintenanceScreen } from "@/components/MaintenanceScreen";
+import { supabase } from "@/integrations/supabase/client";
 
 // Lazy loaded pages
 const Index = lazy(() => import("./pages/Index"));
