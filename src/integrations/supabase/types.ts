@@ -134,20 +134,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "bookings_related_booking_id_fkey"
-            columns: ["related_booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_related_booking_id_fkey"
-            columns: ["related_booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings_decrypted"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "bookings_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -2231,20 +2217,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "bookings_related_booking_id_fkey"
-            columns: ["related_booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_related_booking_id_fkey"
-            columns: ["related_booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings_decrypted"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "bookings_tenant_id_fkey"
             columns: ["tenant_id"]
