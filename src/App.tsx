@@ -47,6 +47,54 @@ const PageLoader = () => (
   </div>
 );
 
+// Maintenance gate wrapper
+const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
+  const [maintenance, setMaintenance] = useState<boolean | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const check = async () => {
+      // Check maintenance mode
+      const { data } = await supabase
+        .from("app_config")
+        .select("value")
+        .eq("key", "maintenance_mode")
+        .maybeSingle();
+
+      const isMaintenanceOn = data?.value === "true";
+
+      // Check if current user is superadmin (they bypass maintenance)
+      if (isMaintenanceOn) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .eq("role", "superadmin")
+            .maybeSingle();
+          setIsSuperAdmin(!!roleData);
+        }
+      }
+
+      setMaintenance(isMaintenanceOn);
+    };
+
+    check();
+  }, [location.pathname]);
+
+  // Still loading
+  if (maintenance === null) return <PageLoader />;
+
+  // Maintenance active + not superadmin + not on superadmin page
+  if (maintenance && !isSuperAdmin && location.pathname !== "/superadmin") {
+    return <MaintenanceScreen />;
+  }
+
+  return <>{children}</>;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
