@@ -255,7 +255,7 @@ const SuperAdmin = () => {
             }} transition={{
               duration: 0.2
             }} className="h-full">
-                {activeTab === "dashboard" && <SuperAdminDashboard />}
+                {activeTab === "dashboard" && <><MaintenanceToggle /><SuperAdminDashboard /></>}
                 {activeTab === "tenants" && <TenantsManager />}
                 {activeTab === "users" && <UsersManager />}
                 {activeTab === "plans" && <SubscriptionPlansManager />}
