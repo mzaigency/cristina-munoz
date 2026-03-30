@@ -107,34 +107,36 @@ const App = () => (
             <DeepLinkHandler />
             <BrowserRouter>
               <ScrollToTop />
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  {/* Rutas fijas - tienen prioridad */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/admin/:adminSlug" element={<TenantAdmin />} />
-                  <Route path="/superadmin" element={<SuperAdmin />} />
-                  <Route path="/mis-citas" element={<MyBookings />} />
-                  <Route path="/perfil" element={<Profile />} />
-                  <Route path="/valoracion" element={<Review />} />
-                  <Route path="/mensajes" element={<Messages />} />
-                  <Route path="/onboarding" element={<BusinessOnboarding />} />
-                  <Route path="/onboarding/setup" element={<OnboardingSetup />} />
-                  <Route path="/para-negocios" element={<ForBusiness />} />
-                  <Route path="/recuperar-contrasena" element={<ForgotPassword />} />
-                  <Route path="/nueva-contrasena" element={<ResetPassword />} />
-                  <Route path="/verify-email" element={<VerifyEmail />} />
-                  <Route path="/privacidad" element={<PrivacyPolicy />} />
-                  <Route path="/terminos" element={<TermsOfUse />} />
-                  
-                  {/* Catch-all para salones - DEBE IR AL FINAL */}
-                  <Route path="/:slug" element={<TenantLanding />} />
-                  
-                  {/* 404 para rutas que no coinciden */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
+              <MaintenanceGate>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    {/* Rutas fijas - tienen prioridad */}
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/admin" element={<Admin />} />
+                    <Route path="/admin/:adminSlug" element={<TenantAdmin />} />
+                    <Route path="/superadmin" element={<SuperAdmin />} />
+                    <Route path="/mis-citas" element={<MyBookings />} />
+                    <Route path="/perfil" element={<Profile />} />
+                    <Route path="/valoracion" element={<Review />} />
+                    <Route path="/mensajes" element={<Messages />} />
+                    <Route path="/onboarding" element={<BusinessOnboarding />} />
+                    <Route path="/onboarding/setup" element={<OnboardingSetup />} />
+                    <Route path="/para-negocios" element={<ForBusiness />} />
+                    <Route path="/recuperar-contrasena" element={<ForgotPassword />} />
+                    <Route path="/nueva-contrasena" element={<ResetPassword />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route path="/privacidad" element={<PrivacyPolicy />} />
+                    <Route path="/terminos" element={<TermsOfUse />} />
+                    
+                    {/* Catch-all para salones - DEBE IR AL FINAL */}
+                    <Route path="/:slug" element={<TenantLanding />} />
+                    
+                    {/* 404 para rutas que no coinciden */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </MaintenanceGate>
             </BrowserRouter>
           </NavigationProvider>
         </TooltipProvider>
