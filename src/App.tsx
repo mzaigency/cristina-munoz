@@ -115,8 +115,8 @@ const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
   // Maintenance ON + superadmin — render normally
   if (state.superAdmin) return <>{children}</>;
 
-  // Maintenance ON + NOT superadmin — only allow /auth and /superadmin
-  if (location.pathname === "/auth" || location.pathname === "/superadmin") {
+  // Maintenance ON + NOT superadmin — only allow /superadmin (for admin login)
+  if (location.pathname === "/superadmin") {
     return <>{children}</>;
   }
 
