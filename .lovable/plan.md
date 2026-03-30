@@ -1,16 +1,33 @@
 
 
-## Plan: Fix NodeJS namespace build errors
+## Problem
 
-The build is failing because `NodeJS` namespace (from `@types/node`) isn't available in the browser TypeScript config.
+The `app_config` table has RLS that only allows superadmins to read/write. When any other user (or unauthenticated visitor) queries `maintenance_mode`, they get `null` back, so maintenance mode appears OFF for everyone except superadmins.
 
-### Changes
+## Solution
 
-1. **`src/components/feed/StoriesCarousel.tsx` (line 45)** — Replace `NodeJS.Timeout` with `ReturnType<typeof setTimeout>`
+Two changes needed:
 
-2. **`src/components/messages/ChatWindow.tsx` (line 75)** — Replace `NodeJS.Timeout` with `ReturnType<typeof setTimeout>`
+### 1. Database: Add public read policy for maintenance_mode
 
-3. **`src/pages/Auth.tsx` (lines 66-67)** — Replace `NodeJS.Timeout` with `ReturnType<typeof setTimeout>` and `NodeJS.Timer` with `ReturnType<typeof setInterval>`
+Create a migration that adds a SELECT policy allowing anyone (anon + authenticated) to read the `maintenance_mode` row from `app_config`:
 
-These are simple type annotation fixes — no logic changes.
+```sql
+CREATE POLICY "Anyone can read maintenance mode"
+ON public.app_config
+FOR SELECT
+TO anon, authenticated
+USING (key = 'maintenance_mode');
+```
+
+This lets the MaintenanceGate query work for all users while keeping other config keys protected.
+
+### 2. Code: Remove /auth bypass, block everyone except superadmin
+
+In `src/App.tsx`, remove the bypass for `/auth` and `/superadmin` routes. When maintenance is ON and user is not superadmin, always show `MaintenanceScreen` — no exceptions, no navigation possible. This covers:
+- Unauthenticated users → maintenance screen
+- Regular authenticated users → maintenance screen  
+- Superadmins → full access
+
+Lines 118-121 change from allowing `/auth` and `/superadmin` to only allowing `/superadmin` (so you can still log in as superadmin to manage things).
 
