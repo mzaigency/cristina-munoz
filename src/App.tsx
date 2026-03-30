@@ -49,26 +49,33 @@ const PageLoader = () => (
 
 // Maintenance gate wrapper
 const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
-  const [maintenance, setMaintenance] = useState<boolean | null>(null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [state, setState] = useState<{ maintenance: boolean; superAdmin: boolean } | null>(null);
   const location = useLocation();
 
   useEffect(() => {
+    let cancelled = false;
+
     const check = async () => {
-      // Check maintenance mode
-      const { data } = await supabase
-        .from("app_config")
-        .select("value")
-        .eq("key", "maintenance_mode")
-        .maybeSingle();
+      try {
+        // 1. Check maintenance mode
+        const { data } = await supabase
+          .from("app_config")
+          .select("value")
+          .eq("key", "maintenance_mode")
+          .maybeSingle();
 
-      const isMaintenanceOn = data?.value === "true";
-      let superAdmin = false;
+        const isMaintenanceOn = data?.value === "true";
 
-      // Always check superadmin status when maintenance is on
-      if (isMaintenanceOn) {
+        if (!isMaintenanceOn) {
+          if (!cancelled) setState({ maintenance: false, superAdmin: false });
+          return;
+        }
+
+        // 2. Maintenance is ON — check if user is superadmin
         const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
+        let superAdmin = false;
+
+        if (session?.user?.id) {
           const { data: roleData } = await supabase
             .from("user_roles")
             .select("role")
@@ -77,35 +84,44 @@ const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
             .maybeSingle();
           superAdmin = !!roleData;
         }
-      }
 
-      setIsSuperAdmin(superAdmin);
-      setMaintenance(isMaintenanceOn);
+        if (!cancelled) setState({ maintenance: true, superAdmin });
+      } catch (e) {
+        console.error("Maintenance check error:", e);
+        if (!cancelled) setState({ maintenance: false, superAdmin: false });
+      }
     };
 
     check();
 
-    // Also listen for auth changes (login/logout) to re-check
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      check();
-    });
-
-    return () => subscription.unsubscribe();
+    return () => { cancelled = true; };
   }, [location.pathname]);
 
+  // Listen for auth state changes globally (login/logout)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Re-trigger check by resetting state
+      setState(null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Still loading
-  if (maintenance === null) return <PageLoader />;
+  if (state === null) return <PageLoader />;
 
-  // Routes that bypass maintenance (needed for superadmin to log in)
-  const bypassRoutes = ["/auth", "/superadmin"];
-  const isBypassRoute = bypassRoutes.includes(location.pathname);
+  // Maintenance OFF — render normally
+  if (!state.maintenance) return <>{children}</>;
 
-  // Maintenance active: only superadmins can access the full app
-  if (maintenance && !isSuperAdmin && !isBypassRoute) {
-    return <MaintenanceScreen />;
+  // Maintenance ON + superadmin — render normally
+  if (state.superAdmin) return <>{children}</>;
+
+  // Maintenance ON + NOT superadmin — only allow /auth and /superadmin
+  if (location.pathname === "/auth" || location.pathname === "/superadmin") {
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
+  // Block everything else
+  return <MaintenanceScreen />;
 };
 
 const App = () => (
