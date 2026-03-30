@@ -63,8 +63,9 @@ const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
         .maybeSingle();
 
       const isMaintenanceOn = data?.value === "true";
+      let superAdmin = false;
 
-      // Check if current user is superadmin (they bypass maintenance)
+      // Always check superadmin status when maintenance is on
       if (isMaintenanceOn) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
@@ -74,21 +75,33 @@ const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
             .eq("user_id", session.user.id)
             .eq("role", "superadmin")
             .maybeSingle();
-          setIsSuperAdmin(!!roleData);
+          superAdmin = !!roleData;
         }
       }
 
+      setIsSuperAdmin(superAdmin);
       setMaintenance(isMaintenanceOn);
     };
 
     check();
+
+    // Also listen for auth changes (login/logout) to re-check
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      check();
+    });
+
+    return () => subscription.unsubscribe();
   }, [location.pathname]);
 
   // Still loading
   if (maintenance === null) return <PageLoader />;
 
-  // Maintenance active + not superadmin + not on superadmin page
-  if (maintenance && !isSuperAdmin && location.pathname !== "/superadmin") {
+  // Routes that bypass maintenance (needed for superadmin to log in)
+  const bypassRoutes = ["/auth", "/superadmin"];
+  const isBypassRoute = bypassRoutes.includes(location.pathname);
+
+  // Maintenance active: only superadmins can access the full app
+  if (maintenance && !isSuperAdmin && !isBypassRoute) {
     return <MaintenanceScreen />;
   }
 
