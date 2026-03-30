@@ -12,6 +12,7 @@ import { SubscriptionPlansManager } from "@/components/superadmin/SubscriptionPl
 import { FavoritesManager } from "@/components/superadmin/FavoritesManager";
 import { ActivityCenter } from "@/components/superadmin/ActivityCenter";
 import { ContentManager } from "@/components/superadmin/ContentManager";
+import { MaintenanceToggle } from "@/components/superadmin/MaintenanceToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -254,7 +255,7 @@ const SuperAdmin = () => {
             }} transition={{
               duration: 0.2
             }} className="h-full">
-                {activeTab === "dashboard" && <SuperAdminDashboard />}
+                {activeTab === "dashboard" && <><MaintenanceToggle /><SuperAdminDashboard /></>}
                 {activeTab === "tenants" && <TenantsManager />}
                 {activeTab === "users" && <UsersManager />}
                 {activeTab === "plans" && <SubscriptionPlansManager />}
