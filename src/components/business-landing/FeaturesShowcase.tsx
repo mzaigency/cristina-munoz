@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Camera, Check, ChevronRight } from "lucide-react";
+import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Check, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { DemoCalendar, DemoBookingFlow, DemoCashRegister, DemoAnalytics, DemoLanding, DemoStories } from "./demos";
+import { DemoCalendar, DemoBookingFlow, DemoCashRegister, DemoAnalytics, DemoLanding } from "./demos";
 const features = [{
   id: "landing",
   icon: Globe,
