@@ -412,7 +412,23 @@ export default function Profile() {
               </button>
             </div>
 
-            {/* Following Count */}
+            {/* Notifications */}
+            <div className="ios-card overflow-hidden">
+              <button 
+                onClick={() => navigate("/perfil/notificaciones")}
+                className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
+              >
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Bell className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Notificaciones</p>
+                  <p className="text-xs text-muted-foreground">Gestiona tus alertas push</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+              </button>
+            </div>
+
             <div className="ios-card overflow-hidden">
               <div className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
