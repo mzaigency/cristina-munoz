@@ -1,63 +1,46 @@
 
 
-## Plan: Sidebar Navigation para Admin Panel en Móvil
+## Plan: Safe Areas Globales — Enfoque Eficiente
 
-### Problema actual
-El panel de admin usa una barra horizontal de tabs debajo del header que en móvil (390px) se desborda horizontalmente y requiere scroll lateral — difícil de navegar con 7 secciones.
+### Situación actual
+El proyecto ya maneja safe areas en la mayoría de sitios, pero de forma **dispersa**: cada página y componente lo hace manualmente con `env(safe-area-inset-*)`. Los componentes UI base (Sheet, Dialog, AlertDialog, Drawer) ya los incluyen. `AppLayout` también los gestiona.
 
-### Solución
-Reemplazar la navegación horizontal en móvil por un **sidebar deslizable desde la izquierda** (drawer/sheet), activado con un botón hamburguesa en el header. En desktop se mantiene el layout actual.
+El riesgo actual es que alguna página o popup nuevo se olvide de añadirlos. La solución es **centralizar** en CSS global + ajustar los pocos gaps que existen.
 
-### Diseño del Sidebar Móvil
+### Cambios
 
-```text
-┌──────────────────────┐
-│ ☰  Cristina Muñoz  ⋯│  ← Header simplificado con hamburguesa
-├──────────────────────┤
-│                      │
-│   Contenido activo   │
-│                      │
-└──────────────────────┘
+| Archivo | Qué |
+|---------|-----|
+| `src/index.css` | Añadir regla global en `@layer base` para que `html` tenga `padding: env(safe-area-inset-*)` en los 4 lados. Esto elimina la necesidad de que cada página lo haga por separado. Añadir regla para toasts/sonner con `bottom` offset que respete safe area. |
+| `src/components/ui/sonner.tsx` | Posicionar toasts con offset inferior que respete `safe-area-inset-bottom` (actualmente no lo tiene). |
+| `src/components/ui/toaster.tsx` | Mismo ajuste para el Toaster de shadcn (si no lo tiene ya). |
+| `src/components/navigation/AppLayout.tsx` | Simplificar: quitar el div spacer fijo del top y el padding manual de safe areas, ya que el CSS global lo cubrirá. Mantener `pb-20` para la nav. |
 
-Al tocar ☰:
-┌─────────────┬────────┐
-│ Logo + Name │        │
-│─────────────│ (dim)  │
-│ ▸ Inicio    │        │
-│ ▸ Agenda  2 │        │
-│ ▸ Clientes  │        │
-│ ▸ Negocio   │        │
-│ ▸ Equipo    │        │
-│ ▸ Comunica 3│        │
-│ ▸ Ajustes   │        │
-│─────────────│        │
-│ Ver web ↗   │        │
-│ Cerrar ses. │        │
-└─────────────┴────────┘
+### Enfoque técnico
+
+En vez de hardcodear safe areas en cada componente, usaremos **una sola regla CSS global**:
+
+```css
+@layer base {
+  html {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
 ```
 
-- Cada item muestra icono + label + badge (si aplica)
-- Tab activo resaltado con fondo primary y texto blanco
-- Al seleccionar un tab, el drawer se cierra automáticamente
-- Logo/nombre del salón en la parte superior del sidebar
-- "Ver web" y "Cerrar sesión" en la parte inferior
-- Safe area respetada (top y bottom)
+Esto funciona porque:
+- `viewport-fit=cover` ya está en el `<meta viewport>` del `index.html`
+- El `html` element es el contenedor raíz — todo el contenido hereda el espacio seguro
+- Los elementos `fixed` (nav, headers, sheets, dialogs) ya tienen sus propios safe area insets en los componentes UI base
 
-### Cambios técnicos
+Para los elementos `position: fixed` (que ignoran el padding del html), los componentes base (Sheet, Dialog, BottomNavigation) ya manejan safe areas individualmente, así que no necesitan cambio.
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/pages/TenantAdmin.tsx` | En móvil: reemplazar la `<nav>` horizontal por un `<Sheet>` (drawer izquierdo). Mover botones de acción (Ver web, Home, Logout) al sidebar. Header queda con: hamburguesa + logo/nombre + ayuda/tour. En desktop: sin cambios. |
+### Lo que NO se toca
+- Sheet, Dialog, AlertDialog, Drawer → ya tienen safe areas
+- BottomNavigation → ya tiene `pb-[env(safe-area-inset-bottom)]`
+- Páginas que usan `noTopSafeArea` con headers sticky propios → seguirán funcionando porque el padding global del `html` se suma naturalmente
 
-### Detalles de implementación
-
-1. **Header móvil simplificado**: Botón hamburguesa (Menu icon) a la izquierda, logo + nombre en centro, tour/ayuda a la derecha
-2. **Sheet from left**: Usar el componente `Sheet` existente con `side="left"` 
-3. **Nav items en vertical**: Reutilizar el array `navItems` existente, renderizados como botones verticales con icono, label y badge
-4. **Footer del sidebar**: "Ver web" y "Cerrar sesión" fijados abajo
-5. **Auto-close**: `setOpen(false)` al seleccionar un tab
-6. **Swipe navigation**: Se mantiene para el contenido
-7. **Safe areas**: `padding-top: env(safe-area-inset-top)` en el sidebar y `padding-bottom: env(safe-area-inset-bottom)`
-
-Solo se modifica `src/pages/TenantAdmin.tsx`. No se crean componentes nuevos — el sidebar es inline usando `Sheet`.
+### Resultado
+Cualquier nueva página o componente que se cree en el futuro **automáticamente** respetará las safe areas sin necesidad de código adicional.
 
