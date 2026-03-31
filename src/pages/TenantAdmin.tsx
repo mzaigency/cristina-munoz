@@ -435,104 +435,203 @@ export default function TenantAdmin() {
 
   return (
     <div className="min-h-screen bg-muted/30">
+      {/* Mobile Sidebar */}
+      {isMobile && (
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col [&>button]:hidden">
+            {/* Sidebar Header */}
+            <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>
+              {tenant.logo_url ? (
+                <img
+                  src={tenant.logo_url}
+                  alt={tenant.name}
+                  className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20 shrink-0"
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Scissors className="h-5 w-5 text-primary" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm font-bold text-foreground truncate">{tenant.name}</h2>
+                <p className="text-[11px] text-muted-foreground truncate">{userEmail}</p>
+              </div>
+            </div>
+
+            {/* Sidebar Nav */}
+            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+              {navItems.map((item) => {
+                const isActive = activeTab === item.value;
+                const badgeCount = typeof item.badge === "number" ? item.badge : 0;
+                const showBadge = badgeCount > 0 && !isActive;
+
+                return (
+                  <button
+                    key={item.value}
+                    onClick={() => handleTabClick(item.value)}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    {item.icon}
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {showBadge && (
+                      <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
+                        {badgeCount > 9 ? "9+" : badgeCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Sidebar Footer */}
+            <div className="border-t px-3 py-4 space-y-1" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}>
+              <button
+                onClick={() => { setSidebarOpen(false); navigate(`/${slug}`); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+              >
+                <ExternalLink className="h-4 w-4" />
+                <span>Ver web</span>
+              </button>
+              <button
+                onClick={() => { setSidebarOpen(false); navigate("/"); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+              >
+                <Home className="h-4 w-4" />
+                <span>Inicio</span>
+              </button>
+              <button
+                onClick={() => { setSidebarOpen(false); handleSignOut(); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Cerrar sesión</span>
+              </button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+
       {/* Header */}
       <header
         className="sticky top-0 z-50 bg-background border-b shadow-sm"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-4">
-          {/* Top row - Logo, title and actions */}
-          <div className="flex items-center justify-between py-2.5 sm:py-3 border-b border-border/50">
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-              {tenant.logo_url ? (
-                <img
-                  src={tenant.logo_url}
-                  alt={tenant.name}
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl object-cover ring-2 ring-primary/20 shrink-0"
+          {isMobile ? (
+            /* Mobile Header - simplified */
+            <div className="flex items-center justify-between py-2.5">
+              <Button
+                onClick={() => setSidebarOpen(true)}
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0"
+                aria-label="Abrir menú"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+
+              <div className="flex items-center gap-2 min-w-0 flex-1 justify-center">
+                {tenant.logo_url ? (
+                  <img
+                    src={tenant.logo_url}
+                    alt={tenant.name}
+                    className="h-8 w-8 rounded-lg object-cover ring-2 ring-primary/20 shrink-0"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Scissors className="h-4 w-4 text-primary" />
+                  </div>
+                )}
+                <h1 className="text-sm font-bold text-foreground truncate">{tenant.name}</h1>
+              </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <InteractiveTour
+                  onTabChange={(tab) => {
+                    const tabMap: Record<string, TabValue> = {
+                      calendar: "agenda", cash: "business", services: "team",
+                      stylists: "team", messages: "communication", settings: "settings",
+                      clients: "clients", dashboard: "dashboard",
+                    };
+                    setActiveTab(tabMap[tab] || (tab as TabValue));
+                  }}
                 />
-              ) : (
-                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Scissors className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <HelpTutorial />
+              </div>
+            </div>
+          ) : (
+            /* Desktop Header - original layout */
+            <>
+              <div className="flex items-center justify-between py-3 border-b border-border/50">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {tenant.logo_url ? (
+                    <img
+                      src={tenant.logo_url}
+                      alt={tenant.name}
+                      className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20 shrink-0"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Scissors className="h-5 w-5 text-primary" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-base md:text-lg font-bold text-foreground truncate">{tenant.name}</h1>
+                    <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+                  </div>
                 </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <h1 className="text-sm sm:text-base md:text-lg font-bold text-foreground truncate">{tenant.name}</h1>
-                <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{userEmail}</p>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <InteractiveTour
+                    onTabChange={(tab) => {
+                      const tabMap: Record<string, TabValue> = {
+                        calendar: "agenda", cash: "business", services: "team",
+                        stylists: "team", messages: "communication", settings: "settings",
+                        clients: "clients", dashboard: "dashboard",
+                      };
+                      setActiveTab(tabMap[tab] || (tab as TabValue));
+                    }}
+                  />
+                  <HelpTutorial />
+                  <Button
+                    onClick={() => navigate(`/${slug}`)}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 h-9 px-3 text-sm"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span>Ver web</span>
+                  </Button>
+                  <Button onClick={() => navigate("/")} variant="ghost" size="icon" className="h-9 w-9" title="Inicio">
+                    <Home className="h-5 w-5" />
+                  </Button>
+                  <Button onClick={handleSignOut} variant="ghost" size="icon" className="h-9 w-9" title="Cerrar sesión">
+                    <LogOut className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <InteractiveTour
-                onTabChange={(tab) => {
-                  // Map old tab names to new ones for tour
-                  const tabMap: Record<string, TabValue> = {
-                    calendar: "agenda",
-                    cash: "business",
-                    services: "team",
-                    stylists: "team",
-                    messages: "communication",
-                    settings: "settings",
-                    clients: "clients",
-                    dashboard: "dashboard",
-                  };
-                  setActiveTab(tabMap[tab] || (tab as TabValue));
-                }}
-              />
-              <HelpTutorial />
-
-              <Button
-                onClick={() => navigate(`/${slug}`)}
-                variant="outline"
-                size="sm"
-                className="gap-1 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
-                aria-label="Ver página web del salón"
-              >
-                <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Ver web</span>
-              </Button>
-              <Button
-                onClick={() => navigate("/")}
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-9 sm:w-9"
-                title="Inicio"
-                aria-label="Ir a inicio"
-              >
-                <Home className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-              <Button
-                onClick={handleSignOut}
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-9 sm:w-9"
-                title="Cerrar sesión"
-                aria-label="Cerrar sesión"
-              >
-                <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Navigation - Clean horizontal tabs for both mobile and desktop */}
-          <nav className="flex items-center py-2" aria-label="Navegación del panel de administración" role="tablist">
-            {isMobile ? (
-              <div className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar pb-1">
-                {navItems.map((item) => renderNavButton(item))}
-              </div>
-            ) : (
-              <ScrollArea className="w-full">
-                <div className="flex items-center gap-2 pb-2">{navItems.map((item) => renderNavButton(item))}</div>
-                <ScrollBar orientation="horizontal" className="h-1.5" />
-              </ScrollArea>
-            )}
-          </nav>
+              {/* Desktop Navigation */}
+              <nav className="flex items-center py-2" role="tablist">
+                <ScrollArea className="w-full">
+                  <div className="flex items-center gap-2 pb-2">{navItems.map((item) => renderNavButton(item))}</div>
+                  <ScrollBar orientation="horizontal" className="h-1.5" />
+                </ScrollArea>
+              </nav>
+            </>
+          )}
         </div>
       </header>
 
-      {/* Content with Pull to Refresh on mobile + Swipe navigation */}
+      {/* Content */}
       {isMobile ? (
         <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
-          <main className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 safe-area-bottom pb-24" {...swipeHandlers}>
+          <main className="mx-auto max-w-7xl px-3 py-3 safe-area-bottom pb-24" {...swipeHandlers}>
             {renderContent()}
           </main>
         </PullToRefresh>
