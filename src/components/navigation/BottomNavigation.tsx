@@ -21,7 +21,27 @@ export function BottomNavigation() {
   const { unreadCount } = useUnreadMessages();
   const { tenant, isAdmin, isStylist } = useCurrentUserTenant();
   const [showPostCreator, setShowPostCreator] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const haptic = useHaptic();
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .single();
+      if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+    };
+    fetchAvatar();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchAvatar();
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
