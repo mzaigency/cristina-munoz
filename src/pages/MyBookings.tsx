@@ -321,7 +321,7 @@ export default function MyBookings() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            className="ios-card p-4 active:scale-[0.98] transition-transform"
+                            className="liquid-glass-card !rounded-2xl p-4 active:scale-[0.98] transition-transform"
                           >
                             {/* Countdown badge */}
                             {countdown && (
