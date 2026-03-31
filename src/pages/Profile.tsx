@@ -495,7 +495,7 @@ export default function Profile() {
             </div>
 
             {/* Legal Links */}
-            <div className="ios-card overflow-hidden divide-y divide-border/50">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden divide-y divide-border/30">
               <Link 
                 to="/privacidad"
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
