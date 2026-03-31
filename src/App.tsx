@@ -148,7 +148,7 @@ const App = () => (
                     <Route path="/superadmin" element={<SuperAdmin />} />
                     <Route path="/mis-citas" element={<MyBookings />} />
                     <Route path="/perfil" element={<Profile />} />
-                    <Route path="/perfil/notificaciones" element={<Profile />} />
+                    <Route path="/perfil/notificaciones" element={<NotificationSettingsPage />} />
                     <Route path="/valoracion" element={<Review />} />
                     <Route path="/mensajes" element={<Messages />} />
                     <Route path="/onboarding" element={<BusinessOnboarding />} />
