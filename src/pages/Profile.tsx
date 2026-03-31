@@ -365,7 +365,7 @@ export default function Profile() {
             )}
 
             {/* Personal Info Section */}
-            <div className="ios-card overflow-hidden">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
               <button 
                 onClick={() => setIsEditing(true)}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
