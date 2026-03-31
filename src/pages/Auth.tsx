@@ -438,78 +438,63 @@ export default function Auth() {
         noindex
       />
 
-      {/* Branded gradient hero */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-[hsl(290,70%,45%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.18)_0%,_transparent_60%)]" />
-        <div className="relative px-4">
-          <div className="flex items-center gap-3 py-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="text-white/90 hover:bg-white/10 hover:text-white">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </div>
-          <div className="text-center pb-10 pt-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md mb-4 shadow-lg border border-white/20">
-              <span className="text-3xl">✨</span>
-            </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
-              {isSignUp ? "Crea tu cuenta" : "Bienvenido a GlowApp"}
-            </h1>
-            <p className="text-white/70 text-sm mt-1.5">
-              {isSignUp ? "Regístrate para gestionar tus citas" : "Accede a tu cuenta"}
-            </p>
-          </div>
+      {/* Clean minimal header */}
+      <div className="sticky top-0 z-40 bg-background border-b border-border/40">
+        <div className="px-4 py-3 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="font-semibold text-foreground">{isSignUp ? "Crear cuenta" : "Iniciar sesión"}</h1>
         </div>
       </div>
 
-      <div className="px-4 -mt-6 pb-8 relative z-10">
+      <div className="px-5 py-8">
         <div className="max-w-md mx-auto">
           {/* Email Verification Sent Screen */}
           {emailSent ? (
-            <Card className="rounded-2xl border-0 shadow-xl bg-card/95 backdrop-blur-lg">
-              <CardContent className="pt-8 pb-8">
-                <div className="text-center space-y-4">
-                  <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                    <Mail className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <h2 className="text-xl font-semibold">Verifica tu correo</h2>
-                    <p className="text-muted-foreground text-sm">
-                      Hemos enviado un enlace de verificación a:
-                    </p>
-                    <p className="font-medium text-foreground">{sentEmail}</p>
-                  </div>
-                  <div className="pt-4 space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="w-full h-12 rounded-xl"
-                      onClick={() => {
-                        sessionStorage.removeItem("pendingVerificationEmail");
-                        suppressSessionRedirectRef.current = false;
-                        setEmailSent(false);
-                        setIsSignUp(false);
-                        form.reset();
-                      }}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Ya verifiqué, iniciar sesión
-                    </Button>
-                  </div>
+            <div className="pt-8">
+              <div className="text-center space-y-5">
+                <div className="mx-auto w-14 h-14 rounded-full bg-primary/8 flex items-center justify-center">
+                  <Mail className="h-7 w-7 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold tracking-tight">Verifica tu correo</h2>
+                  <p className="text-muted-foreground text-sm">
+                    Hemos enviado un enlace de verificación a
+                  </p>
+                  <p className="font-medium text-foreground text-sm">{sentEmail}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full h-12 rounded-xl"
+                  onClick={() => {
+                    sessionStorage.removeItem("pendingVerificationEmail");
+                    suppressSessionRedirectRef.current = false;
+                    setEmailSent(false);
+                    setIsSignUp(false);
+                    form.reset();
+                  }}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Ya verifiqué, iniciar sesión
+                </Button>
+              </div>
+            </div>
           ) : (
-          <Card className="rounded-2xl border-0 shadow-xl bg-card/95 backdrop-blur-lg">
-            <CardHeader className="text-center pb-2 pt-6">
-              <CardTitle className="text-lg font-semibold">{isSignUp ? "Datos de registro" : "Inicia sesión"}</CardTitle>
-              <CardDescription className="text-xs">
-                {isSignUp ? "Completa los datos para crear tu cuenta" : "Introduce tus credenciales"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <div>
+            {/* Title section */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                {isSignUp ? "Crea tu cuenta" : "Bienvenido"}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {isSignUp ? "Completa tus datos para empezar" : "Accede con tu email y contraseña"}
+              </p>
+            </div>
+            <div>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleAuth)} className="space-y-4">
                   {isSignUp && (
@@ -800,7 +785,7 @@ export default function Auth() {
                     </>
                   )}
 
-                  <Button type="submit" className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-medium shadow-lg shadow-primary/25 transition-all duration-300" disabled={loading}>
+                  <Button type="submit" className="w-full h-12 rounded-xl font-medium" disabled={loading}>
                     {loading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -828,8 +813,8 @@ export default function Auth() {
                   {isSignUp ? "¿Ya tienes cuenta? Inicia sesión" : "¿No tienes cuenta? Regístrate"}
                 </button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            </div>
           )}
         </div>
       </div>
