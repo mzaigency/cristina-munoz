@@ -428,7 +428,7 @@ const Index = () => {
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={handleLoadMore}
-                        className="flex items-center gap-2 px-6 py-3 rounded-full bg-secondary text-foreground font-semibold text-sm hover:bg-secondary/80 transition-colors shadow-sm"
+                        className="flex items-center gap-2 px-6 py-3 rounded-full liquid-glass-pill !bg-background/30 text-foreground font-semibold text-sm shadow-sm"
                       >
                         <span>Ver más</span>
                         <span className="text-muted-foreground text-xs">
