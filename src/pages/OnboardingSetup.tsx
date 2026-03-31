@@ -1197,15 +1197,15 @@ export default function OnboardingSetup() {
         </div>
       </div>
 
-      <div className="px-4 py-8 pb-24">
+      <div className="px-4 py-6 pb-24">
         <div className="max-w-lg mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
             >
               {renderStep()}
             </motion.div>
