@@ -256,16 +256,6 @@ export default function MyBookings() {
                     )}
                   </motion.div>
                 </div>
-                {activeTab === "upcoming" && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
-                    className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center"
-                  >
-                    <Sparkles className="h-4 w-4 text-primary" />
-                  </motion.div>
-                )}
               </motion.div>
 
               <motion.h3
