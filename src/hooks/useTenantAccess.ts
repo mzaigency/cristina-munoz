@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TenantAccess {
@@ -10,15 +10,26 @@ interface TenantAccess {
   stylistId: string | null;
 }
 
+// Cache per tenant to avoid re-querying on re-renders
+let accessCache: { tenantId: string; userId: string; result: TenantAccess } | null = null;
+
 export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
-  const [access, setAccess] = useState<TenantAccess>({
-    isAdmin: false,
-    isStylist: false,
-    hasAccess: false,
-    loading: true,
-    userId: null,
-    stylistId: null,
+  const [access, setAccess] = useState<TenantAccess>(() => {
+    // Use cache if available for same tenant
+    if (accessCache && accessCache.tenantId === tenantId) {
+      return accessCache.result;
+    }
+    return {
+      isAdmin: false,
+      isStylist: false,
+      hasAccess: false,
+      loading: true,
+      userId: null,
+      stylistId: null,
+    };
   });
+
+  const checkedRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!tenantId) {
@@ -26,6 +37,12 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
       return;
     }
 
+    // Skip if already checked for this tenant
+    if (checkedRef.current === tenantId && accessCache?.tenantId === tenantId) {
+      return;
+    }
+
+    checkedRef.current = tenantId;
     checkAccess();
   }, [tenantId]);
 
@@ -34,14 +51,15 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
-        setAccess({
+        const result: TenantAccess = {
           isAdmin: false,
           isStylist: false,
           hasAccess: false,
           loading: false,
           userId: null,
           stylistId: null,
-        });
+        };
+        setAccess(result);
         return;
       }
 
@@ -56,14 +74,16 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
         .maybeSingle();
 
       if (superadminRole) {
-        setAccess({
+        const result: TenantAccess = {
           isAdmin: true,
           isStylist: false,
           hasAccess: true,
           loading: false,
           userId,
           stylistId: null,
-        });
+        };
+        accessCache = { tenantId: tenantId!, userId, result };
+        setAccess(result);
         return;
       }
 
@@ -84,17 +104,19 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
         .eq("is_active", true)
         .maybeSingle();
 
-      const isAdmin = !!adminData;
-      const isStylist = !!stylistData;
+      const isAdminResult = !!adminData;
+      const isStylistResult = !!stylistData;
 
-      setAccess({
-        isAdmin,
-        isStylist,
-        hasAccess: isAdmin || isStylist,
+      const result: TenantAccess = {
+        isAdmin: isAdminResult,
+        isStylist: isStylistResult,
+        hasAccess: isAdminResult || isStylistResult,
         loading: false,
         userId,
         stylistId: stylistData?.id || null,
-      });
+      };
+      accessCache = { tenantId: tenantId!, userId, result };
+      setAccess(result);
     } catch (error) {
       console.error("Error checking tenant access:", error);
       setAccess({

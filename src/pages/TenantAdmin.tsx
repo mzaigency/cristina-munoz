@@ -69,12 +69,11 @@ interface NavItem {
 }
 
 export default function TenantAdmin() {
-  const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
   const [activeTab, setActiveTab] = useState<TabValue>("dashboard");
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [stylists, setStylists] = useState<Stylist[]>([]);
-  const [hasAccess, setHasAccess] = useState(false);
+  const [tenantLoading, setTenantLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -83,8 +82,8 @@ export default function TenantAdmin() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Use tenant access hook to check permissions
-  const { isAdmin, isStylist, stylistId } = useTenantAccess(tenant?.id);
+  // Use tenant access hook to check permissions — this is the single source of truth for auth
+  const { isAdmin, isStylist, hasAccess, loading: accessLoading, userId } = useTenantAccess(tenant?.id);
 
   // Check subscription status
   const { isExpired: subscriptionExpired, plan: subscriptionPlan, loading: subscriptionLoading } = useSubscriptionStatus(tenant?.id);
@@ -138,9 +137,58 @@ export default function TenantAdmin() {
     enabled: isMobile,
   });
 
+  // Fetch tenant by slug (no auth checks — useTenantAccess handles that)
   useEffect(() => {
-    checkAuth();
+    if (!slug) {
+      navigate("/");
+      return;
+    }
+
+    const fetchTenant = async () => {
+      setTenantLoading(true);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      setUserEmail(session.user.email || "");
+
+      const { data: tenantData, error: tenantError } = await supabase
+        .from("tenants")
+        .select("*")
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (tenantError || !tenantData) {
+        toast({
+          title: "Error",
+          description: "No se encontró el salón",
+          variant: "destructive",
+        });
+        navigate("/");
+        return;
+      }
+
+      setTenant(tenantData);
+      setTenantLoading(false);
+    };
+
+    fetchTenant();
   }, [slug]);
+
+  // Redirect if access check completes and user has no access
+  useEffect(() => {
+    if (!accessLoading && tenant && !hasAccess) {
+      toast({
+        title: "Acceso denegado",
+        description: "No tienes permisos para acceder a este panel",
+        variant: "destructive",
+      });
+      navigate("/");
+    }
+  }, [accessLoading, hasAccess, tenant]);
 
   useEffect(() => {
     if (tenant?.id) {
@@ -167,91 +215,6 @@ export default function TenantAdmin() {
         })),
       );
     }
-  };
-
-  const checkAuth = async () => {
-    if (!slug) {
-      navigate("/");
-      return;
-    }
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      navigate("/auth");
-      return;
-    }
-
-    setUserEmail(session.user.email || "");
-
-    const { data: tenantData, error: tenantError } = await supabase
-      .from("tenants")
-      .select("*")
-      .eq("slug", slug)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (tenantError || !tenantData) {
-      toast({
-        title: "Error",
-        description: "No se encontró el salón",
-        variant: "destructive",
-      });
-      navigate("/");
-      return;
-    }
-
-    setTenant(tenantData);
-
-    const userId = session.user.id;
-
-    const { data: superadminRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "superadmin")
-      .maybeSingle();
-
-    if (superadminRole) {
-      setHasAccess(true);
-      setLoading(false);
-      return;
-    }
-
-    const { data: adminData } = await supabase
-      .from("tenant_admins")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("tenant_id", tenantData.id)
-      .maybeSingle();
-
-    if (adminData) {
-      setHasAccess(true);
-      setLoading(false);
-      return;
-    }
-
-    const { data: stylistData } = await supabase
-      .from("tenant_stylists")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("tenant_id", tenantData.id)
-      .maybeSingle();
-
-    if (stylistData) {
-      setHasAccess(true);
-      setLoading(false);
-      return;
-    }
-
-    toast({
-      title: "Acceso denegado",
-      description: "No tienes permisos para acceder a este panel",
-      variant: "destructive",
-    });
-    navigate("/");
   };
 
   const handleSignOut = async () => {
@@ -409,6 +372,8 @@ export default function TenantAdmin() {
       </button>
     );
   };
+
+  const loading = tenantLoading || accessLoading;
 
   if (loading || subscriptionLoading) {
     return (
