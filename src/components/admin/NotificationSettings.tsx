@@ -45,9 +45,8 @@ export function NotificationSettings({
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const { permission, isSupported, isEnabled, requestPermission, disablePush, loading: pushLoading } = usePushNotifications();
   useEffect(() => {
     fetchPreferences();
   }, [tenantId]);
