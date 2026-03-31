@@ -18,27 +18,10 @@ export const MaintenanceScreen = () => {
     setError("");
 
     try {
-      // Check if email belongs to a superadmin by looking up profiles + user_roles
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", email.trim().toLowerCase())
-        .maybeSingle();
+      const { data: isSuperadmin, error: rpcError } = await supabase
+        .rpc("check_superadmin_email", { _email: email.trim().toLowerCase() });
 
-      if (!profile) {
-        setError("No autorizado");
-        setLoading(false);
-        return;
-      }
-
-      const { data: role } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", profile.id)
-        .eq("role", "superadmin")
-        .maybeSingle();
-
-      if (!role) {
+      if (rpcError || !isSuperadmin) {
         setError("No autorizado");
         setLoading(false);
         return;

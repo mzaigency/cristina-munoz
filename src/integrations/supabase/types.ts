@@ -2330,6 +2330,7 @@ export type Database = {
         Args: { user_email: string }
         Returns: boolean
       }
+      check_superadmin_email: { Args: { _email: string }; Returns: boolean }
       cleanup_expired_email_verification_tokens: {
         Args: never
         Returns: undefined
