@@ -142,6 +142,7 @@ export const BookingConfirmation = ({
 
       setLoading(false);
       setConfirmed(true);
+      setShowPushPrompt(true);
       onConfirm(userProfile.full_name, userProfile.phone);
       
       // Trigger confetti animation
