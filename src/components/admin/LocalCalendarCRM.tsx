@@ -1359,6 +1359,76 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                               </div>
                                             )}
                                           </div>
+
+                                          {/* Action buttons */}
+                                          {!isBlocked && (!isMobile || activeBookingActions === booking.id) && (
+                                            <div className={cn(
+                                              "absolute top-0.5 right-0.5 flex items-center gap-0.5 z-20 transition-opacity",
+                                              isMobile ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"
+                                            )}>
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleMarkCompleted(booking);
+                                                  if (isMobile) setActiveBookingActions(null);
+                                                }}
+                                                className={cn(
+                                                  "p-1 rounded-md transition-all",
+                                                  isCompleted
+                                                    ? "bg-green-500 text-white"
+                                                    : "bg-foreground/8 text-foreground/60 hover:bg-green-500 hover:text-white"
+                                                )}
+                                                title={isCompleted ? "Desmarcar" : "Completar"}
+                                              >
+                                                <Check className="h-3 w-3" />
+                                              </button>
+
+                                              {!isCompleted && onNavigateToCash && (
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    sessionStorage.setItem('pendingChargeBooking', JSON.stringify({
+                                                      id: booking.id,
+                                                      customer_name: booking.customer_name,
+                                                      stylist: booking.stylist,
+                                                      services: booking.services,
+                                                      fecha: booking.Fecha,
+                                                      hora: booking.Hora
+                                                    }));
+                                                    if (isMobile) setActiveBookingActions(null);
+                                                    onNavigateToCash();
+                                                  }}
+                                                  className="p-1 rounded-md bg-foreground/8 text-foreground/60 hover:bg-emerald-500 hover:text-white transition-all"
+                                                  title="Cobrar"
+                                                >
+                                                  <Banknote className="h-3 w-3" />
+                                                </button>
+                                              )}
+
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  if (isMobile) setActiveBookingActions(null);
+                                                  handleDeleteBooking(booking);
+                                                }}
+                                                className="p-1 rounded-md bg-foreground/8 text-foreground/60 hover:bg-red-500 hover:text-white transition-all"
+                                                title="Eliminar"
+                                              >
+                                                <Trash2 className="h-3 w-3" />
+                                              </button>
+                                            </div>
+                                          )}
+
+                                          {/* Resize handle */}
+                                          {!isBlocked && (
+                                            <div
+                                              className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity z-10"
+                                              onMouseDown={(e) => handleResizeStart(e, booking)}
+                                            >
+                                              <div className="w-8 h-0.5 rounded-full bg-foreground/20" />
+                                            </div>
+                                          )}
+                                        </div>
                                       );
                                     });
                                   })()}
