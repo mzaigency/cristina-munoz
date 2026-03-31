@@ -21,41 +21,28 @@ export const StickyHeader = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
     };
-
     checkAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
-
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = (window.scrollY / totalHeight) * 100;
-      setScrollProgress(progress);
+      setScrollProgress((window.scrollY / totalHeight) * 100);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
+    document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
     setIsMobileMenuOpen(false);
   };
 
@@ -65,18 +52,19 @@ export const StickyHeader = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled ? "bg-[hsl(230,20%,6%)]/95 backdrop-blur-xl border-b border-white/10 shadow-lg" : "bg-transparent"
+          isScrolled
+            ? "bg-background/90 backdrop-blur-xl border-b border-border shadow-sm"
+            : "bg-transparent"
         }`}
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         {/* Progress bar */}
-        <div className="absolute bottom-0 left-0 h-0.5 bg-primary/20 w-full">
+        <div className="absolute bottom-0 left-0 h-[2px] bg-primary/10 w-full">
           <motion.div className="h-full gradient-primary" style={{ width: `${scrollProgress}%` }} />
         </div>
 
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
             <motion.button
               onClick={() => navigate("/")}
               whileHover={{ scale: 1.02 }}
@@ -86,26 +74,23 @@ export const StickyHeader = () => {
               <img src={glowappLogo} alt="GlowApp" className="h-8 w-auto" />
             </motion.button>
 
-            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-8">
               {navItems.map((item) => (
                 <button
                   key={item.label}
                   onClick={() => scrollToSection(item.href)}
-                  className="text-sm font-medium text-white/60 hover:text-white transition-colors"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {item.label}
                 </button>
               ))}
             </nav>
 
-            {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-4">
               {!isAuthenticated && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-white/70 hover:text-white hover:bg-white/10"
                   onClick={() => navigate("/auth")}
                 >
                   Iniciar sesión
@@ -116,16 +101,15 @@ export const StickyHeader = () => {
                 className="rounded-full gradient-primary border-0"
                 onClick={() => navigate("/onboarding")}
               >
-                {isAuthenticated ? "Prueba gratis" : "Prueba gratis"}
+                Prueba gratis
                 <ArrowRight className="ml-1 w-4 h-4" />
               </Button>
             </div>
 
-            {/* Mobile menu button */}
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden text-white hover:bg-white/10"
+              className="md:hidden"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -134,14 +118,13 @@ export const StickyHeader = () => {
         </div>
       </motion.header>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-x-0 top-16 z-40 bg-[hsl(230,20%,6%)]/98 backdrop-blur-xl border-b border-white/10 md:hidden"
+            className="fixed inset-x-0 top-16 z-40 bg-background/98 backdrop-blur-xl border-b border-border md:hidden"
             style={{ paddingTop: "env(safe-area-inset-top)" }}
           >
             <nav className="container mx-auto px-4 py-6 space-y-4">
@@ -149,32 +132,26 @@ export const StickyHeader = () => {
                 <button
                   key={item.label}
                   onClick={() => scrollToSection(item.href)}
-                  className="block w-full text-left py-3 text-lg font-medium text-white hover:text-primary transition-colors"
+                  className="block w-full text-left py-3 text-lg font-medium text-foreground hover:text-primary transition-colors"
                 >
                   {item.label}
                 </button>
               ))}
-              <div className="pt-4 space-y-3 border-t border-white/10">
+              <div className="pt-4 space-y-3 border-t border-border">
                 {!isAuthenticated && (
                   <Button
                     variant="outline"
-                    className="w-full bg-transparent border-white/20 text-white hover:bg-white/10"
-                    onClick={() => {
-                      navigate("/auth");
-                      setIsMobileMenuOpen(false);
-                    }}
+                    className="w-full"
+                    onClick={() => { navigate("/auth"); setIsMobileMenuOpen(false); }}
                   >
                     Iniciar sesión
                   </Button>
                 )}
                 <Button
                   className="w-full gradient-primary border-0"
-                  onClick={() => {
-                    navigate("/onboarding");
-                    setIsMobileMenuOpen(false);
-                  }}
+                  onClick={() => { navigate("/onboarding"); setIsMobileMenuOpen(false); }}
                 >
-                  {isAuthenticated ? "Prueba Gratis" : "Prueba gratis"}
+                  Prueba gratis
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>
