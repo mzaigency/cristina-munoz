@@ -3,8 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Clock, Sparkles, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const DemoLanding = lazy(() => import("./demos/DemoLanding"));
-
 export const HeroSection = () => {
   const navigate = useNavigate();
 
