@@ -349,7 +349,7 @@ const Index = () => {
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    {/* Near Me Button */}
+                    {/* Near Me Button — liquid glass */}
                     <motion.button
                       whileTap={{ scale: 0.92 }}
                       onClick={handleNearMeClick}
@@ -358,7 +358,7 @@ const Index = () => {
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                         sortByDistance && hasLocation
                           ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
-                          : "bg-secondary/80 text-muted-foreground active:bg-secondary"
+                          : "liquid-glass-pill text-muted-foreground"
                       )}
                     >
                       {geoLoading ? (
@@ -377,7 +377,7 @@ const Index = () => {
                           "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                           showFavoritesOnly
                             ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
-                            : "bg-secondary/80 text-muted-foreground active:bg-secondary"
+                            : "liquid-glass-pill text-muted-foreground"
                         )}
                       >
                         <Heart className={cn("h-3.5 w-3.5", showFavoritesOnly && "fill-current")} />
