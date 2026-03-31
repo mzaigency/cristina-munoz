@@ -221,9 +221,29 @@ export function NotificationSettings({
             />
           </div>
           {permission === 'denied' && (
-            <p className="text-xs text-destructive mt-2">
-              Has bloqueado las notificaciones. Actívalas en los ajustes de tu navegador.
-            </p>
+            <div className="mt-3 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+              <p className="text-xs text-destructive mb-2">
+                Has bloqueado las notificaciones. Actívalas desde los ajustes de tu dispositivo.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const ua = navigator.userAgent.toLowerCase();
+                  if (/iphone|ipad|ipod/.test(ua)) {
+                    window.open("App-prefs:NOTIFICATIONS_ID", "_self");
+                  } else if (/android/.test(ua)) {
+                    window.open("intent://settings/notifications#Intent;scheme=android-app;end", "_self");
+                  } else if ((window as any).chrome) {
+                    window.open("chrome://settings/content/notifications", "_blank");
+                  } else {
+                    window.open("about:preferences#privacy", "_blank");
+                  }
+                }}
+                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+              >
+                Abrir ajustes de notificaciones →
+              </button>
+            </div>
           )}
         </Card>
       )}
