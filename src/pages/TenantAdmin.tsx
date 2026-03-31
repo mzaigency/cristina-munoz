@@ -69,12 +69,11 @@ interface NavItem {
 }
 
 export default function TenantAdmin() {
-  const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
   const [activeTab, setActiveTab] = useState<TabValue>("dashboard");
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [stylists, setStylists] = useState<Stylist[]>([]);
-  const [hasAccess, setHasAccess] = useState(false);
+  const [tenantLoading, setTenantLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -83,8 +82,8 @@ export default function TenantAdmin() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Use tenant access hook to check permissions
-  const { isAdmin, isStylist, stylistId } = useTenantAccess(tenant?.id);
+  // Use tenant access hook to check permissions — this is the single source of truth for auth
+  const { isAdmin, isStylist, hasAccess, loading: accessLoading, userId } = useTenantAccess(tenant?.id);
 
   // Check subscription status
   const { isExpired: subscriptionExpired, plan: subscriptionPlan, loading: subscriptionLoading } = useSubscriptionStatus(tenant?.id);
