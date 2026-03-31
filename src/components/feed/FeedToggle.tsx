@@ -22,7 +22,7 @@ export function FeedToggle({ mode, onChange, followingCount = 0, className }: Fe
   };
 
   return (
-    <div className={cn("flex justify-center gap-2 px-4 py-2", className)}>
+    <div className={cn("flex justify-center gap-6 py-2", className)}>
       {(["discover", "following"] as const).map((tab) => {
         const isActive = mode === tab;
         return (
@@ -30,30 +30,25 @@ export function FeedToggle({ mode, onChange, followingCount = 0, className }: Fe
             key={tab}
             onClick={() => handleChange(tab)}
             className={cn(
-              "relative px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200",
+              "relative pb-1.5 text-sm transition-colors duration-200",
               isActive
-                ? "text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                ? "text-foreground font-semibold"
+                : "text-muted-foreground font-medium hover:text-foreground/70"
             )}
           >
+            {tab === "discover" ? "Para ti" : "Siguiendo"}
+            {tab === "following" && followingCount > 0 && (
+              <span className="ml-1 text-xs text-muted-foreground">
+                {followingCount}
+              </span>
+            )}
             {isActive && (
               <motion.div
-                layoutId="feed-pill"
-                className="absolute inset-0 rounded-full bg-foreground"
+                layoutId="feed-underline"
+                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-foreground"
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
-            <span className="relative z-10">
-              {tab === "discover" ? "Para ti" : "Siguiendo"}
-              {tab === "following" && followingCount > 0 && (
-                <span className={cn(
-                  "ml-1 text-xs",
-                  isActive ? "opacity-70" : "text-muted-foreground"
-                )}>
-                  {followingCount}
-                </span>
-              )}
-            </span>
           </button>
         );
       })}
