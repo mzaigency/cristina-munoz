@@ -1127,41 +1127,25 @@ export default function OnboardingSetup() {
             )}
           </div>
 
-          {/* Progress bar - diseño moderno y limpio */}
           {step < totalSteps && (
-            <div className="space-y-2">
-              {/* Barra de progreso principal */}
-              <div className="relative h-1.5 bg-secondary rounded-full overflow-hidden">
+            <div className="space-y-2.5">
+              {/* Progress bar */}
+              <div className="relative h-1 bg-white/5 rounded-full overflow-hidden">
                 <motion.div 
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-primary to-primary/80 rounded-full"
+                  className="absolute inset-y-0 left-0 bg-primary rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 />
-                {/* Efecto de brillo */}
-                <motion.div 
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
-                  style={{ width: `${((step + 1) / totalSteps) * 100}%` }}
-                  animate={{ 
-                    x: ["-100%", "100%"],
-                  }}
-                  transition={{ 
-                    duration: 1.5, 
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                    ease: "easeInOut"
-                  }}
-                />
               </div>
               
-              {/* Indicadores de categoría - scroll horizontal */}
-              <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4">
-                {/* Agrupamos los pasos por categoría */}
+              {/* Category pills */}
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none -mx-4 px-4">
                 {[
-                  { label: "Info", range: [0, 3], icon: "📋" },
-                  { label: "Contenido", range: [4, 7], icon: "📸" },
-                  { label: "Diseño", range: [8, 10], icon: "🎨" },
-                  { label: "Final", range: [11, 11], icon: "✨" },
+                  { label: "Info", range: [0, 3] },
+                  { label: "Contenido", range: [4, 7] },
+                  { label: "Diseño", range: [8, 10] },
+                  { label: "Final", range: [11, 11] },
                 ].map((category, catIndex) => {
                   const isActive = step >= category.range[0] && step <= category.range[1];
                   const isCompleted = step > category.range[1];
@@ -1169,31 +1153,27 @@ export default function OnboardingSetup() {
                   const completedInCategory = Math.max(0, Math.min(stepsInCategory, step - category.range[0] + (step >= category.range[0] ? 1 : 0)));
                   
                   return (
-                    <motion.div
+                    <div
                       key={catIndex}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: catIndex * 0.05 }}
                       className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all shrink-0",
+                        "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all shrink-0",
                         isActive 
-                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          ? "bg-primary/15 text-primary border border-primary/20" 
                           : isCompleted 
-                            ? "bg-primary/20 text-primary"
-                            : "bg-secondary text-muted-foreground"
+                            ? "bg-primary/5 text-primary/70"
+                            : "bg-white/5 text-muted-foreground"
                       )}
                     >
-                      <span>{category.icon}</span>
                       <span>{category.label}</span>
                       {isActive && (
-                        <span className="text-[10px] opacity-80">
+                        <span className="text-[10px] opacity-70">
                           {completedInCategory}/{stepsInCategory}
                         </span>
                       )}
                       {isCompleted && (
                         <Check className="w-3 h-3" />
                       )}
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
