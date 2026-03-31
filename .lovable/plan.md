@@ -1,46 +1,28 @@
 
 
-## Plan: Safe Areas Globales — Enfoque Eficiente
+## Plan: Fix Overlapping Calendar Cards
 
-### Situación actual
-El proyecto ya maneja safe areas en la mayoría de sitios, pero de forma **dispersa**: cada página y componente lo hace manualmente con `env(safe-area-inset-*)`. Los componentes UI base (Sheet, Dialog, AlertDialog, Drawer) ya los incluyen. `AppLayout` también los gestiona.
+### Problem
+The overlap detection in `calculateOverlapLayout` uses **real end times** (`endMinutes`) to determine if bookings overlap. But `calculateBookingPosition` enforces a **minimum visual height of 40px** (`Math.max(..., 40)`). So a 15-minute booking (30px real) gets rendered at 40px, visually overlapping the next booking even though the algorithm thinks they don't overlap.
 
-El riesgo actual es que alguna página o popup nuevo se olvide de añadirlos. La solución es **centralizar** en CSS global + ajustar los pocos gaps que existen.
+### Solution
+Use the **visual end time** (accounting for the minimum height) in the overlap detection, not just the real end time.
 
-### Cambios
+### Changes — 1 file
 
-| Archivo | Qué |
-|---------|-----|
-| `src/index.css` | Añadir regla global en `@layer base` para que `html` tenga `padding: env(safe-area-inset-*)` en los 4 lados. Esto elimina la necesidad de que cada página lo haga por separado. Añadir regla para toasts/sonner con `bottom` offset que respete safe area. |
-| `src/components/ui/sonner.tsx` | Posicionar toasts con offset inferior que respete `safe-area-inset-bottom` (actualmente no lo tiene). |
-| `src/components/ui/toaster.tsx` | Mismo ajuste para el Toaster de shadcn (si no lo tiene ya). |
-| `src/components/navigation/AppLayout.tsx` | Simplificar: quitar el div spacer fijo del top y el padding manual de safe areas, ya que el CSS global lo cubrirá. Mantener `pb-20` para la nav. |
+**`src/components/admin/LocalCalendarCRM.tsx`**
 
-### Enfoque técnico
+1. In `calculateBookingPosition` (line ~578), also return a `visualEndMinutes` that accounts for the minimum height:
+   ```ts
+   const visualHeight = Math.max(durationMinutes * PIXELS_PER_MINUTE, 40);
+   const visualEndMinutes = startMinutesFromStart + (visualHeight / PIXELS_PER_MINUTE);
+   return { top, height: visualHeight, startMinutes, endMinutes, visualEndMinutes };
+   ```
 
-En vez de hardcodear safe areas en cada componente, usaremos **una sola regla CSS global**:
+2. In `calculateOverlapLayout` (lines ~602, 604, 625), use `visualEndMinutes` instead of `endMinutes` for group detection and column placement:
+   - Line 602: `pos.startMinutes < groupEnd` stays the same
+   - Line 604: `groupEnd = Math.max(groupEnd, pos.visualEndMinutes)`
+   - Line 625: `pos.startMinutes >= lastPos.visualEndMinutes`
 
-```css
-@layer base {
-  html {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
-```
-
-Esto funciona porque:
-- `viewport-fit=cover` ya está en el `<meta viewport>` del `index.html`
-- El `html` element es el contenedor raíz — todo el contenido hereda el espacio seguro
-- Los elementos `fixed` (nav, headers, sheets, dialogs) ya tienen sus propios safe area insets en los componentes UI base
-
-Para los elementos `position: fixed` (que ignoran el padding del html), los componentes base (Sheet, Dialog, BottomNavigation) ya manejan safe areas individualmente, así que no necesitan cambio.
-
-### Lo que NO se toca
-- Sheet, Dialog, AlertDialog, Drawer → ya tienen safe areas
-- BottomNavigation → ya tiene `pb-[env(safe-area-inset-bottom)]`
-- Páginas que usan `noTopSafeArea` con headers sticky propios → seguirán funcionando porque el padding global del `html` se suma naturalmente
-
-### Resultado
-Cualquier nueva página o componente que se cree en el futuro **automáticamente** respetará las safe areas sin necesidad de código adicional.
+This ensures that if a short booking is visually stretched, subsequent bookings that would visually collide are correctly placed in separate columns.
 
