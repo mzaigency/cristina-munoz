@@ -34,6 +34,7 @@ const ForBusiness = lazy(() => import("./pages/ForBusiness"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const NotificationSettingsPage = lazy(() => import("./pages/NotificationSettings"));
 
 const queryClient = new QueryClient();
 
@@ -147,6 +148,7 @@ const App = () => (
                     <Route path="/superadmin" element={<SuperAdmin />} />
                     <Route path="/mis-citas" element={<MyBookings />} />
                     <Route path="/perfil" element={<Profile />} />
+                    <Route path="/perfil/notificaciones" element={<NotificationSettingsPage />} />
                     <Route path="/valoracion" element={<Review />} />
                     <Route path="/mensajes" element={<Messages />} />
                     <Route path="/onboarding" element={<BusinessOnboarding />} />

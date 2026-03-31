@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
-import { Bell, Calendar, MessageCircle, Star, Clock, Mail, Smartphone, Loader2, Save, Sun } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { motion } from "motion/react";
+import { Bell, Calendar, MessageCircle, Star, Clock, Mail, Smartphone, Loader2, Save, Sun, BellRing, BellOff } from "lucide-react";
 interface NotificationPreferences {
   id?: string;
   new_booking: boolean;
@@ -44,9 +45,8 @@ export function NotificationSettings({
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const { permission, isSupported, isEnabled, requestPermission, disablePush, loading: pushLoading } = usePushNotifications();
   useEffect(() => {
     fetchPreferences();
   }, [tenantId]);
@@ -196,8 +196,37 @@ export function NotificationSettings({
           </Button>}
       </div>
 
-      {/* Delivery methods */}
-      
+      {/* Push master toggle */}
+      {isSupported && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isEnabled ? 'bg-primary/10' : 'bg-muted'}`}>
+                {isEnabled ? <BellRing className="h-5 w-5 text-primary" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
+              </div>
+              <div>
+                <Label className="font-semibold text-sm">Notificaciones push</Label>
+                <p className="text-xs text-muted-foreground">
+                  {permission === 'denied' ? 'Bloqueadas en ajustes del navegador' : isEnabled ? 'Recibirás alertas en tu dispositivo' : 'Activa para recibir alertas en el móvil'}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={isEnabled}
+              onCheckedChange={async () => {
+                if (isEnabled) await disablePush();
+                else await requestPermission();
+              }}
+              disabled={pushLoading || permission === 'denied'}
+            />
+          </div>
+          {permission === 'denied' && (
+            <p className="text-xs text-destructive mt-2">
+              Has bloqueado las notificaciones. Actívalas en los ajustes de tu navegador.
+            </p>
+          )}
+        </Card>
+      )}
 
       {/* Notification categories */}
       {sections.map((section, sectionIndex) => <motion.div key={section.title} initial={{

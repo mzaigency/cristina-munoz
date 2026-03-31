@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
 import { BookingData } from "@/types/booking";
+import { PushPermissionPrompt } from "@/components/notifications/PushPermissionPrompt";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
@@ -40,6 +41,7 @@ export const BookingConfirmation = ({
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [showPushPrompt, setShowPushPrompt] = useState(false);
   const { toast } = useToast();
   const confettiRef = useRef<ConfettiRef>(null);
 
@@ -140,6 +142,7 @@ export const BookingConfirmation = ({
 
       setLoading(false);
       setConfirmed(true);
+      setShowPushPrompt(true);
       onConfirm(userProfile.full_name, userProfile.phone);
       
       // Trigger confetti animation
@@ -269,6 +272,10 @@ export const BookingConfirmation = ({
         <p className="text-xs sm:text-sm text-muted-foreground">
           Nos vemos pronto en el salón ✨
         </p>
+        <PushPermissionPrompt
+          show={showPushPrompt}
+          onDismiss={() => setShowPushPrompt(false)}
+        />
       </div>
     );
   }

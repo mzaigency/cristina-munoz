@@ -71,6 +71,7 @@
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
     "fabric": "^6.9.1",
+    "firebase": "^12.11.0",
     "immer": "^10.2.0",
     "input-otp": "^1.4.2",
     "lottie-react": "^2.4.1",
