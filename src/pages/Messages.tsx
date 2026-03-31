@@ -15,9 +15,8 @@ export default function Messages() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
+  const { user, loading: authLoading } = useAuth();
 
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
 
@@ -34,20 +33,11 @@ export default function Messages() {
   );
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/auth?redirect=/mensajes');
-        return;
-      }
-      setUser(user);
-      setLoading(false);
-    };
-
-    checkAuth();
-  }, [navigate]);
+    if (authLoading) return;
+    if (!user) {
+      navigate('/auth?redirect=/mensajes');
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     // Mark messages as read when conversation is selected
