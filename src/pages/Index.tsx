@@ -10,7 +10,7 @@ import { CategoryPills } from "@/components/feed/CategoryPills";
 import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { PremiumSkeleton } from "@/components/feed/PremiumSkeleton";
 import { EmptyState } from "@/components/feed/EmptyState";
-import { StoriesCarousel } from "@/components/feed/StoriesCarousel";
+
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
