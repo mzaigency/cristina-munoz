@@ -1273,14 +1273,12 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                           onDragStart={(e) => handleDragStart(e, booking)}
                                           onDragEnd={handleDragEnd}
                                           className={cn(
-                                            "absolute overflow-hidden transition-all duration-150",
-                                            "rounded-xl",
-                                            "backdrop-blur-sm",
-                                            "shadow-sm hover:shadow-lg hover:z-30",
+                                            "absolute overflow-hidden transition-all duration-200 group/card",
+                                            "rounded-[10px]",
                                             !isBlocked && "cursor-grab active:cursor-grabbing",
-                                            isCompleted && "opacity-60",
+                                            isCompleted && "opacity-50",
                                             isHighlighted && "ring-2 ring-primary ring-offset-1 animate-pulse",
-                                            isDragging && "opacity-50 scale-95",
+                                            isDragging && "opacity-40 scale-95",
                                             isResizing && "z-40 ring-2 ring-primary",
                                           )}
                                           style={{
@@ -1289,11 +1287,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                             left: `calc(${layout.left} + 2px)`,
                                             width: `calc(${layout.width} - 4px)`,
                                             zIndex: layout.zIndex,
-                                            backgroundColor: isBlocked ? "hsl(0 84% 60% / 0.12)" : `${bookingColor}12`,
-                                            borderLeft: `3px solid ${bookingColor}`,
-                                            border: isBlocked ? undefined : `0.5px solid ${bookingColor}25`,
-                                            borderLeftWidth: '3px',
-                                            borderLeftColor: bookingColor,
+                                            background: isBlocked
+                                              ? "hsl(0 70% 50% / 0.08)"
+                                              : `linear-gradient(135deg, ${bookingColor}14, ${bookingColor}08)`,
+                                            borderLeft: `2.5px solid ${bookingColor}`,
+                                            boxShadow: `0 1px 3px ${bookingColor}10`,
                                           }}
                                           onClick={(e) => {
                                             if (!isBlocked && !isResizing) {
@@ -1317,51 +1315,48 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                           <div
                                             className={cn(
                                               "h-full flex flex-col px-2 py-1",
-                                              isCompact ? "justify-center" : "justify-between",
+                                              isCompact ? "justify-center" : "justify-start pt-1.5",
                                             )}
                                           >
                                             {isCompact ? (
                                               <div className="flex items-center gap-1 min-w-0 pr-10">
-                                                {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
+                                                {isCompleted && <Check className="h-3 w-3 text-green-500 shrink-0" />}
                                                 {booking.skip_availability_check && (
-                                                  <span title="Disponibilidad saltada"><ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" /></span>
+                                                  <ShieldAlert className="h-2.5 w-2.5 text-amber-500 shrink-0" />
                                                 )}
-                                                <span className="font-semibold text-xs truncate text-foreground">
+                                                <span className="font-medium text-[11px] truncate text-foreground">
                                                   {booking.customer_name}
                                                 </span>
-                                                <span className="text-[10px] truncate" style={{ color: bookingColor }}>
+                                                <span className="text-[10px] truncate text-muted-foreground">
                                                   · {firstService}
                                                 </span>
                                               </div>
                                             ) : (
-                                              <>
-                                                <div className="min-w-0 pr-10">
-                                                  <div className="flex items-center gap-1">
-                                                    {isCompleted && (
-                                                      <Check className="h-3 w-3 text-green-600 shrink-0" />
-                                                    )}
-                                                    {booking.skip_availability_check && (
-                                                      <span title="Disponibilidad saltada"><ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" /></span>
-                                                    )}
-                                                    <p className="font-semibold text-sm truncate text-foreground leading-tight">
-                                                      {booking.customer_name}
-                                                    </p>
-                                                  </div>
-                                                  <p
-                                                    className="text-xs font-medium truncate"
-                                                    style={{ color: bookingColor }}
-                                                  >
-                                                    {isBlocked ? booking.title : firstService}
-                                                    {servicesList.length > 1 && ` +${servicesList.length - 1}`}
-                                                  </p>
-                                                  {pos.height >= 80 && (
-                                                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                                                      {booking.Hora.slice(0, 5)} - {booking.end_time?.slice(0, 5) || ""}{" "}
-                                                      · {booking.total_duration}min
-                                                    </p>
+                                              <div className="min-w-0 pr-10 space-y-0.5">
+                                                <div className="flex items-center gap-1">
+                                                  {isCompleted && (
+                                                    <Check className="h-3 w-3 text-green-500 shrink-0" />
                                                   )}
+                                                  {booking.skip_availability_check && (
+                                                    <ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" />
+                                                  )}
+                                                  <p className="font-semibold text-[12px] truncate text-foreground leading-tight">
+                                                    {booking.customer_name}
+                                                  </p>
                                                 </div>
-                                              </>
+                                                <p className="text-[11px] truncate text-muted-foreground">
+                                                  {isBlocked ? booking.title : firstService}
+                                                  {servicesList.length > 1 && (
+                                                    <span className="opacity-60"> +{servicesList.length - 1}</span>
+                                                  )}
+                                                </p>
+                                                {pos.height >= 80 && (
+                                                  <p className="text-[10px] text-muted-foreground/70">
+                                                    {booking.Hora.slice(0, 5)}–{booking.end_time?.slice(0, 5) || ""}{" "}
+                                                    · {booking.total_duration}min
+                                                  </p>
+                                                )}
+                                              </div>
                                             )}
                                           </div>
 
@@ -1369,7 +1364,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                           {!isBlocked && (!isMobile || activeBookingActions === booking.id) && (
                                             <div className={cn(
                                               "absolute top-0.5 right-0.5 flex items-center gap-0.5 z-20 transition-opacity",
-                                              isMobile ? "opacity-100" : "opacity-70 hover:opacity-100"
+                                              isMobile ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"
                                             )}>
                                               <button
                                                 onClick={(e) => {
@@ -1378,10 +1373,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                   if (isMobile) setActiveBookingActions(null);
                                                 }}
                                                 className={cn(
-                                                  "p-1 rounded-lg transition-all",
+                                                  "p-1 rounded-md transition-all",
                                                   isCompleted
                                                     ? "bg-green-500 text-white"
-                                                    : "bg-foreground/10 text-foreground/70 hover:bg-green-500 hover:text-white"
+                                                    : "bg-foreground/8 text-foreground/60 hover:bg-green-500 hover:text-white"
                                                 )}
                                                 title={isCompleted ? "Desmarcar" : "Completar"}
                                               >
@@ -1403,7 +1398,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                     if (isMobile) setActiveBookingActions(null);
                                                     onNavigateToCash();
                                                   }}
-                                                  className="p-1 rounded-lg bg-foreground/10 text-foreground/70 hover:bg-emerald-500 hover:text-white transition-all"
+                                                  className="p-1 rounded-md bg-foreground/8 text-foreground/60 hover:bg-emerald-500 hover:text-white transition-all"
                                                   title="Cobrar"
                                                 >
                                                   <Banknote className="h-3 w-3" />
@@ -1416,7 +1411,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                   if (isMobile) setActiveBookingActions(null);
                                                   handleDeleteBooking(booking);
                                                 }}
-                                                className="p-1 rounded-lg bg-foreground/10 text-foreground/70 hover:bg-red-500 hover:text-white transition-all"
+                                                className="p-1 rounded-md bg-foreground/8 text-foreground/60 hover:bg-red-500 hover:text-white transition-all"
                                                 title="Eliminar"
                                               >
                                                 <Trash2 className="h-3 w-3" />
@@ -1427,10 +1422,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                           {/* Resize handle */}
                                           {!isBlocked && (
                                             <div
-                                              className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center hover:bg-muted/50 group z-10"
+                                              className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity z-10"
                                               onMouseDown={(e) => handleResizeStart(e, booking)}
                                             >
-                                              <div className="w-8 h-1 rounded-full bg-muted-foreground/30 group-hover:bg-primary/50 transition-colors" />
+                                              <div className="w-8 h-0.5 rounded-full bg-foreground/20" />
                                             </div>
                                           )}
                                         </div>
