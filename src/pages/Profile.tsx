@@ -188,7 +188,7 @@ export default function Profile() {
 
   if (initialLoading) {
     return (
-      <AppLayout noTopSafeArea>
+      <AppLayout>
         <div className="flex items-center justify-center h-[80vh]">
           <div className="flex flex-col items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -204,7 +204,7 @@ export default function Profile() {
   const profileData = form.getValues();
 
   return (
-    <AppLayout noTopSafeArea>
+    <AppLayout>
       <SEO 
         title="Mi Perfil"
         description="Gestiona tu información personal"
