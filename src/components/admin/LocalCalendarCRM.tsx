@@ -574,8 +574,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
 
     const top = startMinutesFromStart * PIXELS_PER_MINUTE;
     const height = Math.max(durationMinutes * PIXELS_PER_MINUTE, 40);
+    const visualEndMinutes = startMinutesFromStart + (height / PIXELS_PER_MINUTE);
 
-    return { top, height, startMinutes: startMinutesFromStart, endMinutes: endMinutesFromStart };
+    return { top, height, startMinutes: startMinutesFromStart, endMinutes: endMinutesFromStart, visualEndMinutes };
   };
 
   // Calculate overlapping bookings layout
@@ -601,11 +602,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
 
       if (currentGroup.length === 0 || pos.startMinutes < groupEnd) {
         currentGroup.push(booking);
-        groupEnd = Math.max(groupEnd, pos.endMinutes);
+        groupEnd = Math.max(groupEnd, pos.visualEndMinutes);
       } else {
         if (currentGroup.length > 0) groups.push([...currentGroup]);
         currentGroup = [booking];
-        groupEnd = pos.endMinutes;
+        groupEnd = pos.visualEndMinutes;
       }
     });
     if (currentGroup.length > 0) groups.push(currentGroup);
@@ -622,7 +623,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
           const lastInColumn = columns[i][columns[i].length - 1];
           const lastPos = calculateBookingPosition(lastInColumn, dayDate);
 
-          if (pos.startMinutes >= lastPos.endMinutes) {
+          if (pos.startMinutes >= lastPos.visualEndMinutes) {
             columns[i].push(booking);
             placed = true;
             break;
