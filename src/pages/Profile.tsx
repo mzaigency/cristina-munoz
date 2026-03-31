@@ -423,7 +423,7 @@ export default function Profile() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-foreground">Notificaciones</p>
-                  <p className="text-xs text-muted-foreground">Gestiona tus alertas push</p>
+                  <p className="text-xs text-muted-foreground">Gestiona tus alertas</p>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
               </button>
