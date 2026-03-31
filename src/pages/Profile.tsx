@@ -382,7 +382,7 @@ export default function Profile() {
             </div>
 
             {/* Quick Links */}
-            <div className="ios-card overflow-hidden divide-y divide-border/50">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden divide-y divide-border/30">
               <button 
                 onClick={() => navigate("/mis-citas")}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
