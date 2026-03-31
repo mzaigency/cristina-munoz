@@ -169,6 +169,7 @@ const App = () => (
             </BrowserRouter>
           </NavigationProvider>
         </TooltipProvider>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>

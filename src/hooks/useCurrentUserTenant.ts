@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CurrentUserTenant {
   tenantId: string | null;
@@ -20,9 +21,10 @@ let globalCache: CurrentUserTenant | null = null;
 let cacheUserId: string | null = null;
 
 export const useCurrentUserTenant = (): CurrentUserTenant => {
-  // Inicializar con cache si existe
+  const { user, loading: authLoading } = useAuth();
+
   const [state, setState] = useState<CurrentUserTenant>(() => {
-    if (globalCache) {
+    if (globalCache && cacheUserId === user?.id) {
       return globalCache;
     }
     return {
@@ -34,50 +36,42 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
     };
   });
 
-  const hasChecked = useRef(false);
+  const checkedUserId = useRef<string | null>(null);
 
   useEffect(() => {
-    // Synchronous cache check first — avoid async getSession if cache is valid
-    if (globalCache && cacheUserId && !state.loading) {
-      // Cache exists and is valid, skip
-    } else if (!hasChecked.current) {
-      hasChecked.current = true;
-      checkUserTenant();
+    // Wait for auth to resolve
+    if (authLoading) return;
+
+    const userId = user?.id ?? null;
+
+    // No user — clear state
+    if (!userId) {
+      const newState: CurrentUserTenant = {
+        tenantId: null,
+        isAdmin: false,
+        isStylist: false,
+        loading: false,
+        tenant: null,
+      };
+      globalCache = newState;
+      cacheUserId = null;
+      checkedUserId.current = null;
+      setState(newState);
+      return;
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      // Only reload on meaningful auth events — NOT TOKEN_REFRESHED
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        hasChecked.current = false;
-        globalCache = null;
-        cacheUserId = null;
-        checkUserTenant();
-      }
-    });
+    // Already checked for this user and cache is valid
+    if (checkedUserId.current === userId && globalCache && cacheUserId === userId) {
+      if (state.loading) setState(globalCache);
+      return;
+    }
 
-    return () => subscription.unsubscribe();
-  }, []);
+    checkedUserId.current = userId;
+    checkUserTenant(userId);
+  }, [user?.id, authLoading]);
 
-  const checkUserTenant = async () => {
+  const checkUserTenant = async (userId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        const newState = {
-          tenantId: null,
-          isAdmin: false,
-          isStylist: false,
-          loading: false,
-          tenant: null,
-        };
-        globalCache = newState;
-        cacheUserId = null;
-        setState(newState);
-        return;
-      }
-
-      const userId = session.user.id;
-
       // Check if user is a tenant admin
       const { data: adminData } = await supabase
         .from("tenant_admins")
@@ -95,7 +89,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
         .maybeSingle();
 
       if (adminData?.tenant) {
-        const newState = {
+        const newState: CurrentUserTenant = {
           tenantId: adminData.tenant_id,
           isAdmin: true,
           isStylist: false,
@@ -108,7 +102,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
         return;
       }
 
-      // Check if user is a stylist (they can also post stories)
+      // Check if user is a stylist
       const { data: stylistData } = await supabase
         .from("tenant_stylists")
         .select(`
@@ -126,7 +120,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
         .maybeSingle();
 
       if (stylistData?.tenant) {
-        const newState = {
+        const newState: CurrentUserTenant = {
           tenantId: stylistData.tenant_id,
           isAdmin: false,
           isStylist: true,
@@ -139,7 +133,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
         return;
       }
 
-      const newState = {
+      const newState: CurrentUserTenant = {
         tenantId: null,
         isAdmin: false,
         isStylist: false,
@@ -151,7 +145,7 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
       setState(newState);
     } catch (error) {
       console.error("Error checking user tenant:", error);
-      const newState = {
+      const newState: CurrentUserTenant = {
         tenantId: null,
         isAdmin: false,
         isStylist: false,

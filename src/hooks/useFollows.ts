@@ -1,26 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useFollows() {
-  const [userId, setUserId] = useState<string | null>(null);
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const queryClient = useQueryClient();
   const { toast } = useToast();
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUserId(session?.user?.id ?? null);
-    };
-    getUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUserId(session?.user?.id ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Get all tenants the user follows
   const { data: following = [], isLoading: isLoadingFollowing } = useQuery({
