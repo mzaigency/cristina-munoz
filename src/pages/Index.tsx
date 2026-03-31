@@ -290,15 +290,6 @@ const Index = () => {
         />
       </div>
 
-      {/* Stories Carousel */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="py-5"
-      >
-        <StoriesCarousel />
-      </motion.div>
 
       {/* Feed Toggle - Para ti / Siguiendo */}
       <FeedToggle 

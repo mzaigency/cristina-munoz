@@ -1,22 +1,20 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Camera, Star } from "lucide-react";
+import { MessageCircle, Star } from "lucide-react";
 import { MessagesManager } from "../MessagesManager";
-import { StoriesAnalytics } from "../StoriesAnalytics";
 import { ReviewsManager } from "../ReviewsManager";
 
 interface CommunicationSectionProps {
   tenantId: string;
 }
 
-type CommunicationTab = "messages" | "stories" | "reviews";
+type CommunicationTab = "messages" | "reviews";
 
 const CommunicationSection = ({ tenantId }: CommunicationSectionProps) => {
   const [activeTab, setActiveTab] = useState<CommunicationTab>("messages");
 
   const tabs = [
     { id: "messages" as CommunicationTab, label: "Mensajes", icon: MessageCircle },
-    { id: "stories" as CommunicationTab, label: "Stories", icon: Camera },
     { id: "reviews" as CommunicationTab, label: "Reseñas", icon: Star },
   ];
 
@@ -38,10 +36,6 @@ const CommunicationSection = ({ tenantId }: CommunicationSectionProps) => {
 
         <TabsContent value="messages" className="mt-4">
           <MessagesManager tenantId={tenantId} />
-        </TabsContent>
-
-        <TabsContent value="stories" className="mt-4">
-          <StoriesAnalytics tenantId={tenantId} />
         </TabsContent>
 
         <TabsContent value="reviews" className="mt-4">

@@ -54,16 +54,6 @@ const features = [{
   benefits: ["Dashboard de ingresos", "Servicios más vendidos", "Objetivos mensuales", "Comparativas temporales"],
   color: "from-indigo-500 to-violet-500",
   Demo: DemoAnalytics
-}, {
-  id: "stories",
-  icon: Camera,
-  title: "Stories y comunidad",
-  shortTitle: "Social",
-  headline: "Muestra tu trabajo al mundo",
-  description: "Publica fotos de tus trabajos como stories. Tus seguidores las verán y podrán reservar directamente desde ahí.",
-  benefits: ["Editor de stories integrado", "Visible para toda la comunidad", "Enlace directo a reservas", "Estadísticas de visualizaciones"],
-  color: "from-rose-500 to-pink-500",
-  Demo: DemoStories
 }];
 export const FeaturesShowcase = () => {
   const [activeFeature, setActiveFeature] = useState(features[0]);
