@@ -16,26 +16,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { 
-  Plus, 
-  Loader2, 
-  Building2, 
-  Search, 
-  Edit, 
+  Plus,
+  Loader2,
+  Building2,
+  Search,
+  Edit,
   Trash2,
   ExternalLink,
   Users,
   Calendar,
   MessageSquare,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -92,11 +85,8 @@ export const TenantsManager = () => {
   const fetchTenants = async () => {
     try {
       setLoading(true);
-      
-      const { data, error } = await supabase
-        .from("tenants")
-        .select("*")
-        .order("created_at", { ascending: false });
+
+      const { data, error } = await supabase.from("tenants").select("*").order("created_at", { ascending: false });
 
       if (error) throw error;
 
@@ -171,10 +161,7 @@ export const TenantsManager = () => {
 
   const handleToggleActive = async (tenant: Tenant) => {
     try {
-      const { error } = await supabase
-        .from("tenants")
-        .update({ is_active: !tenant.is_active })
-        .eq("id", tenant.id);
+      const { error } = await supabase.from("tenants").update({ is_active: !tenant.is_active }).eq("id", tenant.id);
 
       if (error) throw error;
 
@@ -230,10 +217,7 @@ export const TenantsManager = () => {
       await supabase.from("tenant_admins").delete().eq("tenant_id", tenantToDelete.id);
 
       // Finally delete the tenant
-      const { error } = await supabase
-        .from("tenants")
-        .delete()
-        .eq("id", tenantToDelete.id);
+      const { error } = await supabase.from("tenants").delete().eq("id", tenantToDelete.id);
 
       if (error) throw error;
 
@@ -258,14 +242,14 @@ export const TenantsManager = () => {
   };
 
   const openTenantLanding = (slug: string) => {
-    window.open(`/${slug}`, '_blank');
+    window.open(`/${slug}`, "_blank");
   };
 
   const filteredTenants = tenants.filter(
     (t) =>
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t.email && t.email.toLowerCase().includes(searchQuery.toLowerCase()))
+      (t.email && t.email.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
   if (loading) {
@@ -320,12 +304,9 @@ export const TenantsManager = () => {
                   <p className="text-xs text-muted-foreground">/{tenant.slug}</p>
                 </div>
               </div>
-              <Switch
-                checked={tenant.is_active}
-                onCheckedChange={() => handleToggleActive(tenant)}
-              />
+              <Switch checked={tenant.is_active} onCheckedChange={() => handleToggleActive(tenant)} />
             </div>
-            
+
             <div className="flex items-center justify-between mt-3 pt-3 border-t">
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <Badge variant={tenant.subscription_plan === "premium" ? "default" : "secondary"} className="text-xs">
@@ -341,20 +322,10 @@ export const TenantsManager = () => {
                 </span>
               </div>
               <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => openTenantLanding(tenant.slug)}
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openTenantLanding(tenant.slug)}>
                   <ExternalLink className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => openEditDialog(tenant)}
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(tenant)}>
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
@@ -370,9 +341,7 @@ export const TenantsManager = () => {
           </Card>
         ))}
         {filteredTenants.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            No se encontraron tenants
-          </div>
+          <div className="text-center py-8 text-muted-foreground">No se encontraron tenants</div>
         )}
       </div>
 
@@ -422,27 +391,14 @@ export const TenantsManager = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Switch
-                      checked={tenant.is_active}
-                      onCheckedChange={() => handleToggleActive(tenant)}
-                    />
+                    <Switch checked={tenant.is_active} onCheckedChange={() => handleToggleActive(tenant)} />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openTenantLanding(tenant.slug)}
-                        title="Ver landing"
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => openTenantLanding(tenant.slug)} title="Ver web">
                         <ExternalLink className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditDialog(tenant)}
-                        title="Editar"
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => openEditDialog(tenant)} title="Editar">
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
@@ -475,9 +431,7 @@ export const TenantsManager = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Tenant</DialogTitle>
-            <DialogDescription>
-              Modifica los datos de {selectedTenant?.name}
-            </DialogDescription>
+            <DialogDescription>Modifica los datos de {selectedTenant?.name}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -529,7 +483,8 @@ export const TenantsManager = () => {
             <DialogTitle className="text-destructive">Eliminar Tenant</DialogTitle>
             <DialogDescription>
               ¿Estás seguro de que quieres eliminar <strong>{tenantToDelete?.name}</strong>?
-              <br /><br />
+              <br />
+              <br />
               Esta acción eliminará permanentemente:
               <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
                 <li>Todas las reservas</li>
@@ -544,18 +499,10 @@ export const TenantsManager = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsDeleteDialogOpen(false)}
-              disabled={deleting}
-            >
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={deleting}>
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleDeleteTenant} 
-              disabled={deleting}
-            >
+            <Button variant="destructive" onClick={handleDeleteTenant} disabled={deleting}>
               {deleting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Eliminar permanentemente
             </Button>

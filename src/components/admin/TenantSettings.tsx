@@ -47,12 +47,19 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
     try {
       const { data, error } = await supabase
         .from("tenants")
-        .select("name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code, show_logo_on_landing, heading_size, theme_id")
+        .select(
+          "name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code, show_logo_on_landing, heading_size, theme_id",
+        )
         .eq("id", tenantId)
         .single();
 
       if (error) throw error;
-      setTenant({ ...data, show_logo_on_landing: data.show_logo_on_landing ?? true, heading_size: data.heading_size ?? "xlarge", theme_id: data.theme_id ?? "immersive" });
+      setTenant({
+        ...data,
+        show_logo_on_landing: data.show_logo_on_landing ?? true,
+        heading_size: data.heading_size ?? "xlarge",
+        theme_id: data.theme_id ?? "immersive",
+      });
     } catch (error) {
       console.error("Error fetching tenant:", error);
       toast({
@@ -68,22 +75,22 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
   const handleImageUpload = async (file: File, type: "logo" | "hero") => {
     try {
       setUploading(type);
-      
+
       const fileExt = file.name.split(".").pop();
       const fileName = `${tenantId}/${type}-${Date.now()}.${fileExt}`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from("tenant-assets")
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("tenant-assets")
-        .getPublicUrl(fileName);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("tenant-assets").getPublicUrl(fileName);
 
       const fieldName = type === "logo" ? "logo_url" : "hero_image_url";
-      setTenant(prev => prev ? { ...prev, [fieldName]: publicUrl } : null);
+      setTenant((prev) => (prev ? { ...prev, [fieldName]: publicUrl } : null));
 
       toast({
         title: "Imagen subida",
@@ -106,7 +113,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
 
     try {
       setSaving(true);
-      
+
       const { error } = await supabase
         .from("tenants")
         .update({
@@ -161,14 +168,14 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
       {/* Header - Mobile responsive */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold">Personalización de Página Web</h2>
+          <h2 className="text-xl md:text-2xl font-bold">Personalización de Landing</h2>
           <p className="text-sm md:text-base text-muted-foreground">Configura la apariencia de tu página web</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button variant="outline" asChild className="h-11 md:h-10">
             <a href={`/${tenantSlug}`} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-4 w-4 mr-2" />
-              Ver Landing
+              Ver web
             </a>
           </Button>
           <Button onClick={handleSave} disabled={saving} className="h-11 md:h-10">
@@ -191,11 +198,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="name">Nombre del negocio</Label>
-              <Input
-                id="name"
-                value={tenant.name}
-                onChange={(e) => setTenant({ ...tenant, name: e.target.value })}
-              />
+              <Input id="name" value={tenant.name} onChange={(e) => setTenant({ ...tenant, name: e.target.value })} />
             </div>
             <div>
               <Label htmlFor="heading_size">Tamaño del nombre</Label>
@@ -282,18 +285,18 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
             <div className="pt-2">
               <Label>Vista previa</Label>
               <div className="flex gap-2 mt-2">
-                <div 
-                  className="w-12 h-12 rounded-lg shadow-sm" 
+                <div
+                  className="w-12 h-12 rounded-lg shadow-sm"
                   style={{ backgroundColor: tenant.primary_color || "#8B5CF6" }}
                 />
-                <div 
-                  className="w-12 h-12 rounded-lg shadow-sm" 
+                <div
+                  className="w-12 h-12 rounded-lg shadow-sm"
                   style={{ backgroundColor: tenant.secondary_color || "#D946EF" }}
                 />
-                <div 
-                  className="flex-1 h-12 rounded-lg shadow-sm" 
-                  style={{ 
-                    background: `linear-gradient(135deg, ${tenant.primary_color || "#8B5CF6"}, ${tenant.secondary_color || "#D946EF"})` 
+                <div
+                  className="flex-1 h-12 rounded-lg shadow-sm"
+                  style={{
+                    background: `linear-gradient(135deg, ${tenant.primary_color || "#8B5CF6"}, ${tenant.secondary_color || "#D946EF"})`,
                   }}
                 />
               </div>
@@ -343,11 +346,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
             <div className="space-y-4">
               {tenant.logo_url && (
                 <div className="flex justify-center p-4 bg-muted rounded-lg">
-                  <img 
-                    src={tenant.logo_url} 
-                    alt="Logo" 
-                    className="max-h-24 object-contain"
-                  />
+                  <img src={tenant.logo_url} alt="Logo" className="max-h-24 object-contain" />
                 </div>
               )}
               <div>
@@ -388,9 +387,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   <Label htmlFor="show_logo_landing" className="text-sm font-medium">
                     Mostrar logo en landing
                   </Label>
-                  <p className="text-xs text-muted-foreground">
-                    El logo se mostrará en la sección hero de tu página
-                  </p>
+                  <p className="text-xs text-muted-foreground">El logo se mostrará en la sección hero de tu página</p>
                 </div>
                 <input
                   type="checkbox"
@@ -417,11 +414,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
             <div className="space-y-4">
               {tenant.hero_image_url && (
                 <div className="aspect-video relative overflow-hidden rounded-lg bg-muted">
-                  <img 
-                    src={tenant.hero_image_url} 
-                    alt="Hero" 
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={tenant.hero_image_url} alt="Hero" className="w-full h-full object-cover" />
                 </div>
               )}
               <div>
@@ -522,7 +515,6 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
             </div>
           </CardContent>
         </Card>
-
       </div>
     </div>
   );
