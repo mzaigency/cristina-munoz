@@ -54,6 +54,7 @@ interface LocalBooking {
   tenant_id: string | null;
   recurrence_group_id: string | null;
   recurrence_pattern: any | null;
+  skip_availability_check: boolean;
 }
 
 interface LocalCalendarCRMProps {
