@@ -623,7 +623,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
           const lastInColumn = columns[i][columns[i].length - 1];
           const lastPos = calculateBookingPosition(lastInColumn, dayDate);
 
-          if (pos.startMinutes >= lastPos.endMinutes) {
+          if (pos.startMinutes >= lastPos.visualEndMinutes) {
             columns[i].push(booking);
             placed = true;
             break;
