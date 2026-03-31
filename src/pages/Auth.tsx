@@ -494,7 +494,7 @@ export default function Auth() {
                 {isSignUp ? "Completa tus datos para empezar" : "Accede con tu email y contraseña"}
               </p>
             </div>
-            <CardContent>
+            <div>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleAuth)} className="space-y-4">
                   {isSignUp && (
