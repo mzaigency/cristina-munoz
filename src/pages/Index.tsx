@@ -276,10 +276,13 @@ const Index = () => {
         canonicalUrl="/"
       />
 
-      {/* Header Bar - Fixed, compact */}
+      {/* Liquid Glass animated background */}
+      <div className="fixed inset-0 -z-10 liquid-bg" />
+
+      {/* Header Bar */}
       <SmartSearchHeader />
 
-      {/* AI Search Bar - Below header */}
+      {/* AI Search Bar */}
       <div className="py-3">
         <AISearchBar
           searchQuery={searchQuery}
@@ -290,8 +293,7 @@ const Index = () => {
         />
       </div>
 
-
-      {/* Feed Toggle - Para ti / Siguiendo */}
+      {/* Feed Toggle */}
       <FeedToggle 
         mode={feedMode} 
         onChange={setFeedMode} 
@@ -347,7 +349,7 @@ const Index = () => {
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    {/* Near Me Button */}
+                    {/* Near Me Button — liquid glass */}
                     <motion.button
                       whileTap={{ scale: 0.92 }}
                       onClick={handleNearMeClick}
@@ -356,7 +358,7 @@ const Index = () => {
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                         sortByDistance && hasLocation
                           ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
-                          : "bg-secondary/80 text-muted-foreground active:bg-secondary"
+                          : "liquid-glass-pill text-muted-foreground"
                       )}
                     >
                       {geoLoading ? (
@@ -375,7 +377,7 @@ const Index = () => {
                           "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                           showFavoritesOnly
                             ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
-                            : "bg-secondary/80 text-muted-foreground active:bg-secondary"
+                            : "liquid-glass-pill text-muted-foreground"
                         )}
                       >
                         <Heart className={cn("h-3.5 w-3.5", showFavoritesOnly && "fill-current")} />
@@ -426,7 +428,7 @@ const Index = () => {
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={handleLoadMore}
-                        className="flex items-center gap-2 px-6 py-3 rounded-full bg-secondary text-foreground font-semibold text-sm hover:bg-secondary/80 transition-colors shadow-sm"
+                        className="flex items-center gap-2 px-6 py-3 rounded-full liquid-glass-pill !bg-background/30 text-foreground font-semibold text-sm shadow-sm"
                       >
                         <span>Ver más</span>
                         <span className="text-muted-foreground text-xs">

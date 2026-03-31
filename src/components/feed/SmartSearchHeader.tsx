@@ -30,10 +30,12 @@ export function SmartSearchHeader() {
 
   return (
     <div className="sticky top-0 z-50">
-      <div className="relative bg-gradient-to-b from-background via-background/98 to-background/90 backdrop-blur-3xl">
+      <div className="relative liquid-glass-solid">
         {/* Safe area spacer for notch */}
-        <div className="h-[env(safe-area-inset-top)] bg-background" />
-        <div className="absolute inset-x-0 top-[env(safe-area-inset-top)] h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        <div className="h-[env(safe-area-inset-top)]" />
+        
+        {/* Subtle bottom edge light refraction */}
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
         <div className="px-4 pt-3 pb-3">
           <motion.div
@@ -54,26 +56,23 @@ export function SmartSearchHeader() {
               />
             </Link>
 
-            {/* Right side: Superadmin + Notifications + Para negocios */}
+            {/* Right side */}
             <div className="flex items-center gap-2">
-              {/* Superadmin link */}
               {isSuperadmin && (
                 <Link
                   to="/superadmin"
-                  className="p-2 rounded-xl text-amber-500 hover:bg-amber-500/10 transition-colors"
+                  className="p-2 rounded-full liquid-glass-pill text-amber-500"
                 >
                   <Crown className="h-5 w-5" />
                 </Link>
               )}
 
-              {/* Notification Bell */}
               <NotificationBadge />
 
-              {/* Para negocios button */}
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
                   size="sm"
-                  className="rounded-full gradient-primary border-0"
+                  className="rounded-full gradient-primary border-0 shadow-lg shadow-primary/20"
                   asChild
                 >
                   <Link to="/para-negocios" className="flex items-center gap-1.5">
