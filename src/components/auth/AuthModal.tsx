@@ -205,30 +205,39 @@ export function AuthModal({
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
           className="relative w-full max-w-md bg-background rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden"
         >
-          {/* Handle bar for mobile */}
-          <div className="sm:hidden flex justify-center pt-3">
-            <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
+          {/* Gradient header */}
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-[hsl(290,70%,45%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.18)_0%,_transparent_60%)]" />
+            <div className="relative">
+              {/* Handle bar for mobile */}
+              <div className="sm:hidden flex justify-center pt-3">
+                <div className="w-10 h-1 bg-white/30 rounded-full" />
+              </div>
+
+              {/* Close button */}
+              <button
+                onClick={handleClose}
+                className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/15 transition-colors"
+              >
+                <X className="h-5 w-5 text-white/80" />
+              </button>
+
+              <div className="text-center px-6 pt-4 pb-6">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md mb-3 shadow-lg border border-white/20">
+                  <span className="text-2xl">✨</span>
+                </div>
+                <h2 className="text-xl font-bold text-white">
+                  {mode === "login" ? title : "Crear cuenta"}
+                </h2>
+                <p className="text-sm text-white/70 mt-1">
+                  {mode === "login" ? subtitle : "Regístrate para reservar tu cita"}
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Close button */}
-          <button
-            onClick={handleClose}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"
-          >
-            <X className="h-5 w-5 text-muted-foreground" />
-          </button>
-
-          <div className="p-6 pt-4 sm:pt-6">
-            {/* Header */}
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-foreground">
-                {mode === "login" ? title : "Crear cuenta"}
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {mode === "login" ? subtitle : "Regístrate para reservar tu cita"}
-              </p>
-            </div>
-
+          <div className="p-6">
             {/* Form */}
             <form onSubmit={mode === "login" ? handleLogin : handleSignup}>
               <div className="space-y-4">
@@ -244,7 +253,7 @@ export function AuthModal({
                           placeholder="Tu nombre"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          className="pl-10 h-12"
+                          className="pl-10 h-12 rounded-xl"
                           required
                         />
                       </div>
@@ -262,7 +271,7 @@ export function AuthModal({
                           placeholder="600 123 456"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          className="pl-10 h-12"
+                          className="pl-10 h-12 rounded-xl"
                           required
                         />
                       </div>
@@ -280,7 +289,7 @@ export function AuthModal({
                       placeholder="tu@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-12"
+                      className="pl-10 h-12 rounded-xl"
                       required
                     />
                   </div>
@@ -296,7 +305,7 @@ export function AuthModal({
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10 h-12"
+                      className="pl-10 pr-10 h-12 rounded-xl"
                       minLength={6}
                       required
                     />
@@ -316,7 +325,7 @@ export function AuthModal({
 
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-medium"
+                  className="w-full h-12 text-base font-medium rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white shadow-lg shadow-primary/25 transition-all duration-300"
                   disabled={loading}
                 >
                   {loading ? (
@@ -332,7 +341,6 @@ export function AuthModal({
                 </Button>
               </div>
             </form>
-
             {/* Toggle mode */}
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">

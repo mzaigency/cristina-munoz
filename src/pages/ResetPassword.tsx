@@ -95,6 +95,21 @@ export default function ResetPassword() {
     }
   };
 
+  const heroIcon = success ? (
+    <CheckCircle className="h-8 w-8 text-white" />
+  ) : invalidToken ? (
+    <XCircle className="h-8 w-8 text-white" />
+  ) : (
+    <KeyRound className="h-8 w-8 text-white" />
+  );
+
+  const heroTitle = success ? "¡Listo!" : invalidToken ? "Enlace inválido" : "Nueva contraseña";
+  const heroSubtitle = success 
+    ? "Tu contraseña ha sido actualizada" 
+    : invalidToken 
+    ? "Este enlace ha expirado o no es válido" 
+    : "Crea una contraseña segura para tu cuenta";
+
   return (
     <AppLayout hideNavigation>
       <SEO
@@ -104,51 +119,59 @@ export default function ResetPassword() {
         noindex
       />
 
-      {/* Header */}
-      <div
-        className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
-      >
-        <div className="px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/auth")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="font-semibold text-foreground">Nueva contraseña</h1>
+      {/* Branded gradient hero */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-[hsl(290,70%,45%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.18)_0%,_transparent_60%)]" />
+        <div className="relative px-4">
+          <div className="flex items-center gap-3 py-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/auth")} className="text-white/90 hover:bg-white/10 hover:text-white">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="text-center pb-10 pt-2">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md mb-4 shadow-lg border border-white/20">
+              {heroIcon}
+            </div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              {heroTitle}
+            </h1>
+            <p className="text-white/70 text-sm mt-1.5">
+              {heroSubtitle}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="px-4 py-8">
+      <div className="px-4 -mt-6 pb-8 relative z-10">
         <div className="max-w-md mx-auto">
-          <Card className="ios-card">
-            <CardHeader className="text-center pb-4">
+          <Card className="rounded-2xl border-0 shadow-xl bg-card/95 backdrop-blur-lg">
+            <CardHeader className="text-center pb-2 pt-6">
               {success ? (
                 <>
-                  <div className="mx-auto w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
-                    <CheckCircle className="h-8 w-8 text-green-500" />
+                  <div className="mx-auto w-14 h-14 bg-gradient-to-br from-[hsl(142,76%,36%)]/20 to-[hsl(142,76%,36%)]/10 rounded-full flex items-center justify-center mb-2">
+                    <CheckCircle className="h-7 w-7 text-[hsl(142,76%,36%)]" />
                   </div>
-                  <CardTitle className="text-xl">¡Contraseña actualizada!</CardTitle>
-                  <CardDescription>
-                    Tu contraseña ha sido cambiada correctamente. Ya puedes iniciar sesión.
+                  <CardTitle className="text-lg">¡Contraseña actualizada!</CardTitle>
+                  <CardDescription className="text-xs">
+                    Ya puedes iniciar sesión con tu nueva contraseña.
                   </CardDescription>
                 </>
               ) : invalidToken ? (
                 <>
-                  <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
-                    <XCircle className="h-8 w-8 text-destructive" />
+                  <div className="mx-auto w-14 h-14 bg-destructive/10 rounded-full flex items-center justify-center mb-2">
+                    <XCircle className="h-7 w-7 text-destructive" />
                   </div>
-                  <CardTitle className="text-xl">Enlace inválido</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-lg">Enlace inválido</CardTitle>
+                  <CardDescription className="text-xs">
                     Este enlace ha expirado o no es válido. Solicita uno nuevo.
                   </CardDescription>
                 </>
               ) : (
                 <>
-                  <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                    <KeyRound className="h-8 w-8 text-primary" />
-                  </div>
-                  <CardTitle className="text-xl">Crea tu nueva contraseña</CardTitle>
-                  <CardDescription>
-                    Introduce una contraseña segura de al menos 8 caracteres.
+                  <CardTitle className="text-lg">Crea tu nueva contraseña</CardTitle>
+                  <CardDescription className="text-xs">
+                    Mínimo 8 caracteres para mayor seguridad.
                   </CardDescription>
                 </>
               )}
@@ -156,7 +179,7 @@ export default function ResetPassword() {
             <CardContent>
               {success ? (
                 <Button 
-                  className="w-full h-12 rounded-xl"
+                  className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-medium shadow-lg shadow-primary/25"
                   onClick={() => navigate("/auth")}
                 >
                   Ir a iniciar sesión
@@ -164,7 +187,7 @@ export default function ResetPassword() {
               ) : invalidToken ? (
                 <div className="space-y-4">
                   <Button 
-                    className="w-full h-12 rounded-xl"
+                    className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-medium shadow-lg shadow-primary/25"
                     onClick={() => navigate("/recuperar-contrasena")}
                   >
                     Solicitar nuevo enlace
@@ -240,7 +263,7 @@ export default function ResetPassword() {
                       )}
                     />
 
-                    <Button type="submit" className="w-full h-12 rounded-xl" disabled={loading}>
+                    <Button type="submit" className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-medium shadow-lg shadow-primary/25" disabled={loading}>
                       {loading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
