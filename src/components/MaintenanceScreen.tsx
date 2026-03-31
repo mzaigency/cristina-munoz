@@ -1,10 +1,84 @@
-import { motion } from "motion/react";
-import { Wrench, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { Wrench, Sparkles, Mail, Lock, Loader2, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const MaintenanceScreen = () => {
+  const [showLogin, setShowLogin] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [step, setStep] = useState<"email" | "password">("email");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleCheckEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      // Check if email belongs to a superadmin by looking up profiles + user_roles
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", email.trim().toLowerCase())
+        .maybeSingle();
+
+      if (!profile) {
+        setError("No autorizado");
+        setLoading(false);
+        return;
+      }
+
+      const { data: role } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", profile.id)
+        .eq("role", "superadmin")
+        .maybeSingle();
+
+      if (!role) {
+        setError("No autorizado");
+        setLoading(false);
+        return;
+      }
+
+      setStep("password");
+    } catch {
+      setError("Error al verificar");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (authError) {
+        setError("Contraseña incorrecta");
+        return;
+      }
+      // Auth state change will trigger MaintenanceGate re-check automatically
+    } catch {
+      setError("Error al iniciar sesión");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[hsl(230,85%,60%)] via-[hsl(250,80%,55%)] to-[hsl(270,80%,60%)] flex items-center justify-center p-6"
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+    <div
+      className="min-h-screen bg-gradient-to-br from-[hsl(230,85%,60%)] via-[hsl(250,80%,55%)] to-[hsl(270,80%,60%)] flex items-center justify-center p-6"
+      style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {/* Decorative blurred circles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -17,7 +91,7 @@ export const MaintenanceScreen = () => {
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
-        className="relative z-10 text-center max-w-md mx-auto"
+        className="relative z-10 text-center max-w-md mx-auto w-full"
       >
         {/* Logo / Icon */}
         <motion.div
@@ -75,16 +149,132 @@ export const MaintenanceScreen = () => {
           ))}
         </motion.div>
 
+        {/* Admin Login Section */}
+        <AnimatePresence mode="wait">
+          {!showLogin ? (
+            <motion.button
+              key="toggle"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.8 }}
+              onClick={() => setShowLogin(true)}
+              className="inline-flex items-center gap-2 text-white/40 text-xs hover:text-white/60 transition-colors"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Acceso administrador</span>
+            </motion.button>
+          ) : (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-left"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldCheck className="h-4 w-4 text-white/70" />
+                <span className="text-sm font-medium text-white/80">Acceso autorizado</span>
+              </div>
+
+              {step === "email" ? (
+                <form onSubmit={handleCheckEmail} className="space-y-3">
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                    <input
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                      className="w-full h-11 pl-10 pr-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  {error && (
+                    <p className="text-red-300 text-xs">{error}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-10 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verificar"}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleLogin} className="space-y-3">
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                    <input
+                      type="email"
+                      value={email}
+                      disabled
+                      className="w-full h-11 pl-10 pr-4 rounded-xl bg-white/5 border border-white/10 text-white/50 text-sm"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Contraseña"
+                      value={password}
+                      onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                      className="w-full h-11 pl-10 pr-10 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                      required
+                      autoFocus
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  {error && (
+                    <p className="text-red-300 text-xs">{error}</p>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setStep("email"); setPassword(""); setError(""); }}
+                      className="h-10 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white/60 text-sm transition-colors"
+                    >
+                      Atrás
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 h-10 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Bottom sparkle */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="inline-flex items-center gap-2 text-white/50 text-sm"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span>Preparando novedades para ti</span>
-        </motion.div>
+        {!showLogin && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+            className="inline-flex items-center gap-2 text-white/50 text-sm mt-4"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span>Preparando novedades para ti</span>
+          </motion.div>
+        )}
       </motion.div>
     </div>
   );
