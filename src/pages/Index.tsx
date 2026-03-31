@@ -276,10 +276,13 @@ const Index = () => {
         canonicalUrl="/"
       />
 
-      {/* Header Bar - Fixed, compact */}
+      {/* Liquid Glass animated background */}
+      <div className="fixed inset-0 -z-10 liquid-bg" />
+
+      {/* Header Bar */}
       <SmartSearchHeader />
 
-      {/* AI Search Bar - Below header */}
+      {/* AI Search Bar */}
       <div className="py-3">
         <AISearchBar
           searchQuery={searchQuery}
@@ -290,8 +293,7 @@ const Index = () => {
         />
       </div>
 
-
-      {/* Feed Toggle - Para ti / Siguiendo */}
+      {/* Feed Toggle */}
       <FeedToggle 
         mode={feedMode} 
         onChange={setFeedMode} 
