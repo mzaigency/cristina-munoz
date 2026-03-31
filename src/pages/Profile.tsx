@@ -413,7 +413,7 @@ export default function Profile() {
             </div>
 
             {/* Notifications */}
-            <div className="ios-card overflow-hidden">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
               <button 
                 onClick={() => navigate("/perfil/notificaciones")}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
