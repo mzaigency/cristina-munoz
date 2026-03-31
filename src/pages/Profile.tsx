@@ -459,7 +459,7 @@ export default function Profile() {
                     {theme === 'dark' ? 'Modo oscuro' : theme === 'light' ? 'Modo claro' : 'Automático'}
                   </p>
                 </div>
-                <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+                <div className="flex items-center gap-1 liquid-glass-pill !rounded-lg p-1">
                   <button
                     onClick={() => setTheme('light')}
                     className={`p-2 rounded-md transition-all ${
