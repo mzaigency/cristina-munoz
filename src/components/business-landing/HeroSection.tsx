@@ -1,4 +1,3 @@
-import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Clock, Sparkles, Star } from "lucide-react";
