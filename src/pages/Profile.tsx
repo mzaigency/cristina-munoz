@@ -544,7 +544,7 @@ export default function Profile() {
                     className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
                   >
                     <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
-                      <Trash2 className="h-5 w-5 text-destructive" />
+                      <UserX className="h-5 w-5 text-destructive" />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-destructive">Eliminar cuenta</p>
