@@ -161,7 +161,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
       {/* Header - Mobile responsive */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold">Personalización de Landing</h2>
+          <h2 className="text-xl md:text-2xl font-bold">Personalización de Página Web</h2>
           <p className="text-sm md:text-base text-muted-foreground">Configura la apariencia de tu página web</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
