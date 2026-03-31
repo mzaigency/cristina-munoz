@@ -1340,7 +1340,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                       <Check className="h-3 w-3 text-green-600 shrink-0" />
                                                     )}
                                                     {booking.skip_availability_check && (
-                                                      <ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" title="Disponibilidad saltada" />
+                                                      <span title="Disponibilidad saltada"><ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" /></span>
                                                     )}
                                                     <p className="font-semibold text-sm truncate text-foreground leading-tight">
                                                       {booking.customer_name}
