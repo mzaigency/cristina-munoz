@@ -913,64 +913,72 @@
     to { transform: rotate(360deg); }
   }
 
+}
+
+@layer components {
   /* iOS 26 Liquid Glass System */
   .liquid-glass {
-    background: hsl(var(--card) / 0.5);
+    background: hsl(0 0% 100% / 0.55);
     backdrop-filter: blur(40px) saturate(1.8) brightness(1.08);
     -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(1.08);
-    border: 1px solid hsl(var(--foreground) / 0.06);
+    border: 1px solid hsl(0 0% 100% / 0.6);
     box-shadow:
-      inset 0 0.5px 0 hsl(0 0% 100% / 0.5),
-      inset 0 -0.5px 0 hsl(var(--foreground) / 0.04),
-      0 2px 8px hsl(var(--foreground) / 0.03),
-      0 8px 32px hsl(var(--foreground) / 0.04);
+      inset 0 0.5px 0 hsl(0 0% 100% / 0.7),
+      inset 0 -0.5px 0 hsl(var(--foreground) / 0.03),
+      0 2px 8px hsl(var(--foreground) / 0.04),
+      0 8px 32px hsl(var(--foreground) / 0.05);
   }
 
   .liquid-glass-subtle {
-    background: hsl(var(--card) / 0.35);
+    background: hsl(0 0% 100% / 0.4);
     backdrop-filter: blur(28px) saturate(1.6) brightness(1.04);
     -webkit-backdrop-filter: blur(28px) saturate(1.6) brightness(1.04);
-    border: 1px solid hsl(var(--foreground) / 0.04);
+    border: 1px solid hsl(0 0% 100% / 0.45);
     box-shadow:
-      inset 0 0.5px 0 hsl(0 0% 100% / 0.35);
+      inset 0 0.5px 0 hsl(0 0% 100% / 0.5);
   }
 
   .liquid-glass-nav {
-    background: hsl(var(--background) / 0.6);
+    background: hsl(0 0% 100% / 0.65);
     backdrop-filter: blur(48px) saturate(2) brightness(1.1);
     -webkit-backdrop-filter: blur(48px) saturate(2) brightness(1.1);
-    border-color: hsl(var(--foreground) / 0.05);
+    border-color: hsl(0 0% 100% / 0.5);
     box-shadow:
-      inset 0 0.5px 0 hsl(0 0% 100% / 0.4),
-      0 -1px 12px hsl(var(--foreground) / 0.03);
+      inset 0 0.5px 0 hsl(0 0% 100% / 0.6),
+      0 1px 12px hsl(var(--foreground) / 0.04);
   }
 
   .liquid-glass-card {
-    background: hsl(var(--card) / 0.6);
+    background: hsl(0 0% 100% / 0.65);
     backdrop-filter: blur(32px) saturate(1.7) brightness(1.06);
     -webkit-backdrop-filter: blur(32px) saturate(1.7) brightness(1.06);
-    border: 1px solid hsl(var(--foreground) / 0.05);
+    border: 1px solid hsl(0 0% 100% / 0.55);
     box-shadow:
-      inset 0 0.5px 0 hsl(0 0% 100% / 0.45),
-      0 4px 24px hsl(var(--foreground) / 0.04),
+      inset 0 0.5px 0 hsl(0 0% 100% / 0.6),
+      0 4px 24px hsl(var(--foreground) / 0.05),
       0 1px 4px hsl(var(--foreground) / 0.03);
   }
 
   .dark .liquid-glass {
-    background: hsl(var(--card) / 0.4);
+    background: hsl(var(--card) / 0.35);
     border-color: hsl(0 0% 100% / 0.08);
     box-shadow:
-      inset 0 0.5px 0 hsl(0 0% 100% / 0.1),
+      inset 0 0.5px 0 hsl(0 0% 100% / 0.08),
       0 2px 8px hsl(0 0% 0% / 0.3);
   }
 
+  .dark .liquid-glass-subtle {
+    background: hsl(var(--card) / 0.25);
+    border-color: hsl(0 0% 100% / 0.06);
+  }
+
   .dark .liquid-glass-nav {
-    background: hsl(var(--background) / 0.5);
+    background: hsl(var(--background) / 0.45);
     border-color: hsl(0 0% 100% / 0.06);
   }
 
   .dark .liquid-glass-card {
-    background: hsl(var(--card) / 0.45);
+    background: hsl(var(--card) / 0.4);
     border-color: hsl(0 0% 100% / 0.07);
   }
 }
