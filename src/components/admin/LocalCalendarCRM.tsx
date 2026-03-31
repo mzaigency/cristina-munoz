@@ -1323,7 +1323,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                               <div className="flex items-center gap-1 min-w-0 pr-10">
                                                 {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
                                                 {booking.skip_availability_check && (
-                                                  <ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" title="Disponibilidad saltada" />
+                                                  <span title="Disponibilidad saltada"><ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" /></span>
                                                 )}
                                                 <span className="font-semibold text-xs truncate text-foreground">
                                                   {booking.customer_name}
