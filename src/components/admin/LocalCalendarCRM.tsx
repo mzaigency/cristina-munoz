@@ -574,8 +574,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
 
     const top = startMinutesFromStart * PIXELS_PER_MINUTE;
     const height = Math.max(durationMinutes * PIXELS_PER_MINUTE, 40);
+    const visualEndMinutes = startMinutesFromStart + (height / PIXELS_PER_MINUTE);
 
-    return { top, height, startMinutes: startMinutesFromStart, endMinutes: endMinutesFromStart };
+    return { top, height, startMinutes: startMinutesFromStart, endMinutes: endMinutesFromStart, visualEndMinutes };
   };
 
   // Calculate overlapping bookings layout
