@@ -10,7 +10,7 @@ import { CategoryPills } from "@/components/feed/CategoryPills";
 import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { PremiumSkeleton } from "@/components/feed/PremiumSkeleton";
 import { EmptyState } from "@/components/feed/EmptyState";
-import { StoriesCarousel } from "@/components/feed/StoriesCarousel";
+
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
@@ -290,15 +290,6 @@ const Index = () => {
         />
       </div>
 
-      {/* Stories Carousel */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="py-5"
-      >
-        <StoriesCarousel />
-      </motion.div>
 
       {/* Feed Toggle - Para ti / Siguiendo */}
       <FeedToggle 

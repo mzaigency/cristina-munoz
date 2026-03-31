@@ -15,7 +15,7 @@ const plans = [{
   annualPrice: 290,
   annualSavings: 58,
   popular: false,
-  features: ["1 profesional", "Hasta 15 servicios", "Página web personalizable", "Reservas online 24/7", "Stories y mensajes"]
+  features: ["1 profesional", "Hasta 15 servicios", "Página web personalizable", "Reservas online 24/7", "Mensajes directos"]
 }, {
   name: "Pro",
   subtitle: "Para crecer",
