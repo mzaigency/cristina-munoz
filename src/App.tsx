@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { NavigationProvider } from "@/contexts/NavigationContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { ThemeProvider } from "next-themes";
 import ErrorBoundary from "@/components/ErrorBoundary";
