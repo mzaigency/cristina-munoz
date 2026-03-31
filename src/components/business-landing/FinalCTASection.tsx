@@ -20,15 +20,7 @@ export const FinalCTASection = () => {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto text-center"
         >
-          <motion.div
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ type: "spring", bounce: 0.5 }}
-            className="w-20 h-20 mx-auto mb-8 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center"
-          >
-            <Sparkles className="w-10 h-10 text-white" />
-          </motion.div>
+
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">Tu negocio merece crecer</h2>
 
