@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { MessageSquareX, CalendarX, TrendingDown, Clock, UserX, ArrowDown } from "lucide-react";
+import { MessageSquareX, CalendarX, TrendingDown, Clock, UserX } from "lucide-react";
 
 const painPoints = [
   {
@@ -68,23 +68,6 @@ export const PainPointsSection = () => {
             </motion.div>
           ))}
         </div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-center mt-16"
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="inline-flex items-center gap-2 text-primary font-medium"
-          >
-            <ArrowDown className="w-5 h-5" />
-            <span>GlowApp soluciona todo esto</span>
-            <ArrowDown className="w-5 h-5" />
-          </motion.div>
-        </motion.div>
       </div>
     </section>
   );
