@@ -271,6 +271,10 @@ export const BookingConfirmation = ({
         <p className="text-xs sm:text-sm text-muted-foreground">
           Nos vemos pronto en el salón ✨
         </p>
+        <PushPermissionPrompt
+          show={showPushPrompt}
+          onDismiss={() => setShowPushPrompt(false)}
+        />
       </div>
     );
   }
