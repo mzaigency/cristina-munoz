@@ -310,7 +310,7 @@ export function AuthModal({
 
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-medium rounded-xl"
+                  className="w-full h-12 text-base font-medium rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white transition-all duration-300"
                   disabled={loading}
                 >
                   {loading ? (

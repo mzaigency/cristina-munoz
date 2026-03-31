@@ -784,7 +784,7 @@ export default function Auth() {
                     </>
                   )}
 
-                  <Button type="submit" className="w-full h-12 rounded-xl font-medium" disabled={loading}>
+                  <Button type="submit" className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-medium transition-all duration-300" disabled={loading}>
                     {loading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
