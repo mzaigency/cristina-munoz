@@ -243,7 +243,7 @@ export default function MyBookings() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center py-20"
             >
-              <div className="w-20 h-20 rounded-3xl bg-secondary flex items-center justify-center mx-auto mb-5">
+              <div className="w-20 h-20 rounded-3xl liquid-glass-solid flex items-center justify-center mx-auto mb-5">
                 <Calendar className="h-10 w-10 text-muted-foreground" />
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
