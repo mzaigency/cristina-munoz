@@ -16,6 +16,7 @@ import {
   Users,
   LayoutDashboard,
   UserCircle,
+  Menu,
 } from "lucide-react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { ClientsCRM } from "@/components/admin/ClientsCRM";
