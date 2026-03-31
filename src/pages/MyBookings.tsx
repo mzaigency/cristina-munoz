@@ -2,6 +2,7 @@ import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { format, isToday, isTomorrow, isThisWeek } from "date-fns";
 import { es } from "date-fns/locale";
