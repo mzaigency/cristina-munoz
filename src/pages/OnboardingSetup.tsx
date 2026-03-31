@@ -1071,20 +1071,19 @@ export default function OnboardingSetup() {
         noindex
       />
 
-      {/* Header mejorado - diseño compacto para móvil */}
+      {/* Header - liquid glass */}
       <div 
-        className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/30"
+        className="sticky top-0 z-40 bg-background/80 backdrop-blur-2xl border-b border-white/10"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="px-4 py-3">
-          {/* Top row - más compacto */}
           <div className="flex items-center gap-3 mb-3">
             {step > 0 && step < totalSteps ? (
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setStep(step - 1)}
-                className="h-8 w-8 rounded-full shrink-0"
+                className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -1093,7 +1092,7 @@ export default function OnboardingSetup() {
                 variant="ghost" 
                 size="icon" 
                 onClick={() => navigate("/")}
-                className="h-8 w-8 rounded-full shrink-0"
+                className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -1104,23 +1103,21 @@ export default function OnboardingSetup() {
                 {step < totalSteps && (() => {
                   const StepIcon = steps[step].icon;
                   return (
-                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <StepIcon className="h-4 w-4 text-primary" />
+                    <div className="w-7 h-7 rounded-xl bg-primary/10 backdrop-blur-sm flex items-center justify-center shrink-0">
+                      <StepIcon className="h-3.5 w-3.5 text-primary" />
                     </div>
                   );
                 })()}
-                <div className="min-w-0">
-                  <h1 className="font-bold text-base text-foreground truncate">
-                    {step < totalSteps ? steps[step].title : "¡Completado!"}
-                  </h1>
-                </div>
+                <h1 className="font-semibold text-sm text-foreground truncate">
+                  {step < totalSteps ? steps[step].title : "¡Completado!"}
+                </h1>
               </div>
             </div>
             
             {step < totalSteps && (
-              <div className="text-right shrink-0">
-                <span className="text-lg font-bold text-primary">{step + 1}</span>
-                <span className="text-sm text-muted-foreground">/{totalSteps}</span>
+              <div className="flex items-baseline gap-0.5 shrink-0">
+                <span className="text-sm font-bold text-primary">{step + 1}</span>
+                <span className="text-xs text-muted-foreground">/{totalSteps}</span>
               </div>
             )}
           </div>
