@@ -393,18 +393,20 @@
     background: hsl(var(--background) / 0.12);
     backdrop-filter: blur(40px) saturate(1.8);
     -webkit-backdrop-filter: blur(40px) saturate(1.8);
-    border: 0.5px solid;
-    border-image: linear-gradient(
-      135deg,
-      hsl(0 0% 100% / 0.35),
-      hsl(0 0% 100% / 0.08),
-      hsl(var(--primary) / 0.12)
-    ) 1;
+    border: 0.5px solid hsl(0 0% 100% / 0.35);
     box-shadow:
       inset 0 1px 0 hsl(0 0% 100% / 0.15),
       inset 0 -1px 0 hsl(0 0% 0% / 0.05),
       0 8px 32px hsl(var(--foreground) / 0.06);
     transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .dark .liquid-glass {
+    border-color: hsl(0 0% 100% / 0.08);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.05),
+      inset 0 -1px 0 hsl(0 0% 0% / 0.15),
+      0 8px 32px hsl(0 0% 0% / 0.3);
   }
 
   .liquid-glass-solid {
@@ -415,6 +417,13 @@
     box-shadow:
       inset 0 1px 0 hsl(0 0% 100% / 0.12),
       0 4px 24px hsl(var(--foreground) / 0.05);
+  }
+
+  .dark .liquid-glass-solid {
+    border-color: hsl(0 0% 100% / 0.06);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.04),
+      0 4px 24px hsl(0 0% 0% / 0.4);
   }
 
   .liquid-glass-pill {
@@ -435,6 +444,20 @@
     box-shadow:
       inset 0 0.5px 0 hsl(0 0% 100% / 0.3),
       0 4px 16px hsl(var(--primary) / 0.08);
+  }
+
+  .dark .liquid-glass-pill {
+    border-color: hsl(0 0% 100% / 0.06);
+    box-shadow:
+      inset 0 0.5px 0 hsl(0 0% 100% / 0.04),
+      0 2px 8px hsl(0 0% 0% / 0.3);
+  }
+
+  .dark .liquid-glass-pill:hover {
+    border-color: hsl(0 0% 100% / 0.1);
+    box-shadow:
+      inset 0 0.5px 0 hsl(0 0% 100% / 0.06),
+      0 4px 16px hsl(var(--primary) / 0.15);
   }
 
   .liquid-glass-card {
@@ -458,6 +481,24 @@
       0 12px 48px hsl(var(--primary) / 0.1),
       0 4px 16px hsl(var(--foreground) / 0.04);
     border-color: hsl(0 0% 100% / 0.28);
+  }
+
+  .dark .liquid-glass-card {
+    border-color: hsl(0 0% 100% / 0.06);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.04),
+      inset 0 -0.5px 0 hsl(0 0% 0% / 0.15),
+      0 8px 40px hsl(0 0% 0% / 0.4),
+      0 2px 8px hsl(0 0% 0% / 0.2);
+  }
+
+  .dark .liquid-glass-card:hover {
+    border-color: hsl(0 0% 100% / 0.1);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.06),
+      inset 0 -0.5px 0 hsl(0 0% 0% / 0.15),
+      0 12px 48px hsl(var(--primary) / 0.15),
+      0 4px 16px hsl(0 0% 0% / 0.3);
   }
 
   /* Animated flowing gradient background */
