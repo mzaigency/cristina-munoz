@@ -4,9 +4,10 @@ import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PostCreator } from "@/components/social/PostCreator";
 import { useHaptic } from "@/hooks/useHaptic";
+import { supabase } from "@/integrations/supabase/client";
 
 const baseNavItems = [
   { path: "/", icon: Home, label: "Inicio" },
