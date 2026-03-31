@@ -353,11 +353,11 @@ export default function TenantAdmin() {
   };
 
   const handleTabClick = (tab: TabValue) => {
-    // Marcar como visto INMEDIATAMENTE al hacer click
     if (tab !== "dashboard") {
       markSectionViewed(tab);
     }
     setActiveTab(tab);
+    if (isMobile) setSidebarOpen(false);
   };
 
   const renderNavButton = (item: NavItem) => {
