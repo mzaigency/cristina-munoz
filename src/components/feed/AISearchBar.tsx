@@ -126,10 +126,13 @@ export function AISearchBar({
 
   return (
     <div className="relative px-4">
+      {/* Liquid Glass search container */}
       <div
         className={cn(
-          "relative flex items-center rounded-2xl transition-all duration-300",
-          isFocused ? "bg-card ring-2 ring-primary/40 shadow-lg shadow-primary/10" : "bg-secondary/60",
+          "relative flex items-center rounded-2xl transition-all duration-400",
+          isFocused 
+            ? "liquid-glass-card !rounded-2xl ring-1 ring-primary/20" 
+            : "liquid-glass-solid !rounded-2xl"
         )}
       >
         {/* AI/Search Icon */}
@@ -158,7 +161,7 @@ export function AISearchBar({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 300)}
           onKeyDown={handleKeyDown}
-          className="h-12 pl-11 pr-28 text-sm border-0 bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/60"
+          className="h-12 pl-11 pr-28 text-sm border-0 bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
         />
 
         {/* Right side actions */}
@@ -177,7 +180,6 @@ export function AISearchBar({
             )}
           </AnimatePresence>
 
-          {/* Voice button */}
           {("webkitSpeechRecognition" in window || "SpeechRecognition" in window) && (
             <Button
               variant="ghost"
@@ -189,31 +191,33 @@ export function AISearchBar({
             </Button>
           )}
 
-          {/* AI Search button */}
-          <Button
-            size="icon"
-            onClick={() => handleAISearch()}
-            disabled={!searchQuery.trim() || isAISearching}
-            className="h-9 w-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
-          >
-            {isAISearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
+          {/* AI Search button — liquid drop */}
+          <motion.div whileTap={{ scale: 0.88 }}>
+            <Button
+              size="icon"
+              onClick={() => handleAISearch()}
+              disabled={!searchQuery.trim() || isAISearching}
+              className="h-9 w-9 rounded-xl gradient-primary border-0 shadow-md shadow-primary/20 disabled:opacity-40"
+            >
+              {isAISearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </motion.div>
         </div>
       </div>
 
-      {/* Dropdown - AI Suggestions (when empty) */}
+      {/* Dropdown - AI Suggestions */}
       <AnimatePresence>
         {showDropdown && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-2xl bg-card border border-border/50 shadow-xl z-50"
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-2xl liquid-glass-card z-50"
           >
             <div className="p-3">
-              {/* AI Badge */}
               <div className="flex items-center gap-1.5 mb-2.5">
-                <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <div className="h-5 w-5 rounded-lg gradient-primary flex items-center justify-center">
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
@@ -221,7 +225,6 @@ export function AISearchBar({
                 </span>
               </div>
 
-              {/* AI Suggestions */}
               <div className="space-y-1">
                 {suggestions.map((text, i) => (
                   <button
@@ -230,7 +233,7 @@ export function AISearchBar({
                       onSearchChange(text);
                       handleAISearch(text);
                     }}
-                    className="w-full flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-secondary/60 active:scale-[0.98] transition-all text-left"
+                    className="w-full flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-primary/5 active:scale-[0.98] transition-all text-left"
                   >
                     <Search className="h-3.5 w-3.5 text-muted-foreground/60" />
                     <span className="text-sm text-foreground">{text}</span>
@@ -238,9 +241,8 @@ export function AISearchBar({
                 ))}
               </div>
 
-              {/* Recent Searches */}
               {recentSearches.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-border/30">
+                <div className="mt-3 pt-3 border-t border-border/20">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wide">
                       Recientes
@@ -256,7 +258,7 @@ export function AISearchBar({
                       <button
                         key={i}
                         onClick={() => onRecentSearchClick?.(search)}
-                        className="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-secondary/60 text-left"
+                        className="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-primary/5 text-left"
                       >
                         <span className="text-sm text-muted-foreground">{search}</span>
                       </button>
@@ -273,21 +275,20 @@ export function AISearchBar({
       <AnimatePresence>
         {showResultsDropdown && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-2xl bg-card border border-border/50 shadow-xl z-50 max-h-[60vh] overflow-y-auto"
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-2xl liquid-glass-card z-50 max-h-[60vh] overflow-y-auto"
           >
             <div className="p-3">
-              {/* Result message header */}
               <div className="flex items-center gap-1.5 mb-3">
-                <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <div className="h-5 w-5 rounded-lg gradient-primary flex items-center justify-center">
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
                 <span className="text-xs font-semibold text-foreground">{resultMessage}</span>
               </div>
 
-              {/* No results */}
               {searchResults.length === 0 && !isAISearching && (
                 <div className="py-6 text-center">
                   <Store className="h-10 w-10 mx-auto text-muted-foreground/40 mb-2" />
@@ -296,20 +297,16 @@ export function AISearchBar({
                 </div>
               )}
 
-              {/* Results list */}
               <div className="space-y-1.5">
                 {searchResults.map((salon) => (
                   <button
                     key={salon.id}
                     onClick={() => handleResultClick(salon.slug)}
-                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-secondary/60 active:scale-[0.98] transition-all text-left group"
+                    className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-primary/5 active:scale-[0.98] transition-all text-left group"
                   >
-                    {/* Salon logo */}
                     <div
                       className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
-                      style={{
-                        backgroundColor: salon.primary_color || "hsl(var(--primary))",
-                      }}
+                      style={{ backgroundColor: salon.primary_color || "hsl(var(--primary))" }}
                     >
                       {salon.logo_url ? (
                         <img src={salon.logo_url} alt={salon.name} className="w-full h-full object-cover" />
@@ -318,21 +315,16 @@ export function AISearchBar({
                       )}
                     </div>
 
-                    {/* Salon info */}
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
                         {salon.name}
                       </h4>
-
-                      {/* City */}
                       {salon.city && (
                         <div className="flex items-center gap-1 mt-0.5">
                           <MapPin className="h-3 w-3 text-muted-foreground/60" />
                           <span className="text-xs text-muted-foreground">{salon.city}</span>
                         </div>
                       )}
-
-                      {/* Matched services */}
                       {salon.matchedServices.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {salon.matchedServices.map((service, i) => (
@@ -347,7 +339,6 @@ export function AISearchBar({
                       )}
                     </div>
 
-                    {/* Arrow indicator */}
                     <div className="text-muted-foreground/40 group-hover:text-primary transition-colors">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

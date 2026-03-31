@@ -21,7 +21,6 @@ const DEFAULT_CATEGORIES = [
   { id: "maquillaje", label: "Maquillaje", icon: Sparkles },
 ];
 
-// Quick filter pills - NOW AT THE BEGINNING
 const QUICK_FILTERS = [
   { id: "popular", label: "Popular", icon: Flame, color: "amber" },
   { id: "huecos", label: "Huecos hoy", icon: Clock, color: "emerald" },
@@ -37,20 +36,18 @@ export function CategoryPills({
   onCheckAvailability
 }: CategoryPillsProps) {
   const items = categories.length > 0 ? categories : DEFAULT_CATEGORIES;
-
   const availableCount = tenantsWithAvailability.length;
 
   const handleFilterClick = (filterId: string, isSelected: boolean) => {
     if (filterId === "huecos" && !isSelected && !hasCheckedAvailability && onCheckAvailability) {
-      // First time clicking "Huecos hoy" - trigger availability check
       onCheckAvailability();
     }
     onSelect(isSelected ? null : filterId);
   };
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
-      {/* Quick filters FIRST */}
+    <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
+      {/* Quick filters */}
       {QUICK_FILTERS.map((filter) => {
         const Icon = filter.icon;
         const isSelected = selected === filter.id;
@@ -60,14 +57,14 @@ export function CategoryPills({
         return (
           <motion.button
             key={filter.id}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.93 }}
             onClick={() => handleFilterClick(filter.id, isSelected)}
             className={cn(
-              "shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs transition-all relative",
-              isHuecos && isSelected && "bg-emerald-500 text-white shadow-md shadow-emerald-500/25",
-              isHuecos && !isSelected && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 active:bg-emerald-500/20 border border-emerald-500/30",
-              isPopular && isSelected && "bg-amber-500 text-white shadow-md shadow-amber-500/25",
-              isPopular && !isSelected && "bg-amber-500/10 text-amber-600 dark:text-amber-400 active:bg-amber-500/20"
+              "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs transition-all duration-300",
+              isHuecos && isSelected && "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25",
+              isHuecos && !isSelected && "liquid-glass-pill !bg-emerald-500/8 text-emerald-600 dark:text-emerald-400",
+              isPopular && isSelected && "bg-amber-500 text-white shadow-lg shadow-amber-500/25",
+              isPopular && !isSelected && "liquid-glass-pill !bg-amber-500/8 text-amber-600 dark:text-amber-400"
             )}
           >
             {loadingAvailability && isHuecos ? (
@@ -89,17 +86,17 @@ export function CategoryPills({
       })}
 
       {/* Divider */}
-      <div className="shrink-0 w-px h-6 my-auto bg-border/50" />
+      <div className="shrink-0 w-px h-6 my-auto bg-border/30" />
 
       {/* All button */}
       <motion.button
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.93 }}
         onClick={() => onSelect(null)}
         className={cn(
-          "shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs transition-all",
+          "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs transition-all duration-300",
           selected === null
-            ? "bg-primary text-primary-foreground shadow-sm"
-            : "bg-secondary/60 text-muted-foreground active:bg-secondary"
+            ? "gradient-primary text-primary-foreground shadow-md shadow-primary/20"
+            : "liquid-glass-pill text-muted-foreground"
         )}
       >
         <Sparkles className="h-3.5 w-3.5" />
@@ -114,13 +111,13 @@ export function CategoryPills({
         return (
           <motion.button
             key={category.id}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.93 }}
             onClick={() => onSelect(isSelected ? null : category.id)}
             className={cn(
-              "shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs transition-all",
+              "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs transition-all duration-300",
               isSelected
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-secondary/60 text-muted-foreground active:bg-secondary"
+                ? "gradient-primary text-primary-foreground shadow-md shadow-primary/20"
+                : "liquid-glass-pill text-muted-foreground"
             )}
           >
             <Icon className="h-3.5 w-3.5" />

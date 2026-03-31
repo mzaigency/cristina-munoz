@@ -45,7 +45,7 @@ export function FeedToggle({ mode, onChange, followingCount = 0, className }: Fe
             {isActive && (
               <motion.div
                 layoutId="feed-underline"
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-foreground"
+                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full gradient-primary"
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
