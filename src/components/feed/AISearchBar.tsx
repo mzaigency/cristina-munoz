@@ -128,10 +128,8 @@ export function AISearchBar({
     <div className="relative px-4">
       <div
         className={cn(
-          "relative flex items-center rounded-2xl transition-all duration-300 border",
-          isFocused 
-            ? "liquid-glass ring-2 ring-primary/20 shadow-lg shadow-primary/5" 
-            : "liquid-glass-subtle",
+          "relative flex items-center rounded-2xl transition-all duration-300",
+          isFocused ? "bg-card ring-2 ring-primary/40 shadow-lg shadow-primary/10" : "bg-secondary/60",
         )}
       >
         {/* AI/Search Icon */}

@@ -22,7 +22,7 @@ export function FeedToggle({ mode, onChange, followingCount = 0, className }: Fe
   };
 
   return (
-    <div className={cn("flex liquid-glass-subtle border-b", className)}>
+    <div className={cn("flex border-b border-border", className)}>
       <button
         onClick={() => handleChange("discover")}
         className={cn(
