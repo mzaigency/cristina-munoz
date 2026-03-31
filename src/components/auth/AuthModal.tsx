@@ -203,7 +203,7 @@ export function AuthModal({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 100 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="relative w-full max-w-md bg-background rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden"
+          className="relative w-full max-w-md bg-card/70 backdrop-blur-2xl rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden border border-border/30"
         >
           {/* Handle bar for mobile */}
           <div className="sm:hidden flex justify-center pt-3">
@@ -310,7 +310,7 @@ export function AuthModal({
 
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-medium rounded-xl"
+                  className="w-full h-12 text-base font-medium rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white transition-all duration-300"
                   disabled={loading}
                 >
                   {loading ? (

@@ -438,8 +438,8 @@ export default function Auth() {
         noindex
       />
 
-      {/* Clean minimal header */}
-      <div className="sticky top-0 z-40 bg-background border-b border-border/40">
+      {/* Minimal header with subtle glass */}
+      <div className="sticky top-0 z-40 bg-background/70 backdrop-blur-xl border-b border-border/30">
         <div className="px-4 py-3 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="h-5 w-5" />
@@ -452,9 +452,9 @@ export default function Auth() {
         <div className="max-w-md mx-auto">
           {/* Email Verification Sent Screen */}
           {emailSent ? (
-            <div className="pt-8">
+            <div className="rounded-2xl bg-card/60 backdrop-blur-lg border border-border/30 p-6 shadow-sm">
               <div className="text-center space-y-5">
-                <div className="mx-auto w-14 h-14 rounded-full bg-primary/8 flex items-center justify-center">
+                <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
                   <Mail className="h-7 w-7 text-primary" />
                 </div>
                 <div className="space-y-2">
@@ -468,8 +468,7 @@ export default function Auth() {
                   Revisa tu bandeja de entrada (y spam) y haz clic en el enlace para activar tu cuenta.
                 </p>
                 <Button
-                  variant="outline"
-                  className="w-full h-12 rounded-xl"
+                  className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-medium"
                   onClick={() => {
                     sessionStorage.removeItem("pendingVerificationEmail");
                     suppressSessionRedirectRef.current = false;
@@ -494,7 +493,7 @@ export default function Auth() {
                 {isSignUp ? "Completa tus datos para empezar" : "Accede con tu email y contraseña"}
               </p>
             </div>
-            <div>
+            <div className="rounded-2xl bg-card/60 backdrop-blur-lg border border-border/30 p-5 shadow-sm">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleAuth)} className="space-y-4">
                   {isSignUp && (
@@ -785,7 +784,7 @@ export default function Auth() {
                     </>
                   )}
 
-                  <Button type="submit" className="w-full h-12 rounded-xl font-medium" disabled={loading}>
+                  <Button type="submit" className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-medium transition-all duration-300" disabled={loading}>
                     {loading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
