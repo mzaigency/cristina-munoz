@@ -51,14 +51,15 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
-        setAccess({
+        const result: TenantAccess = {
           isAdmin: false,
           isStylist: false,
           hasAccess: false,
           loading: false,
           userId: null,
           stylistId: null,
-        });
+        };
+        setAccess(result);
         return;
       }
 
