@@ -42,7 +42,7 @@ export const FinalCTASection = () => {
           <div className="flex flex-wrap justify-center gap-6 text-white/70 text-sm">
             <span className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Configura en 15 min
+              Configura en 10 min
             </span>
             <span className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" />

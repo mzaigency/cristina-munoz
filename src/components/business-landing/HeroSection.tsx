@@ -1,32 +1,24 @@
+import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Clock, Sparkles, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import glowAppLogo from "@/assets/glowapp-logo.png";
+
+const DemoLanding = lazy(() => import("./demos/DemoLanding"));
 
 export const HeroSection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-background">
+    <section className="relative overflow-hidden bg-background">
       {/* Subtle gradient background */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-radial from-primary/8 via-primary/3 to-transparent rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-gradient-radial from-accent/6 to-transparent rounded-full blur-3xl" />
       </div>
 
-      <div className="container mx-auto px-4 pt-24 pb-12 relative z-10">
+      <div className="container mx-auto px-4 pt-28 pb-16 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="mb-8"
-          >
-            <img src={glowAppLogo} alt="GlowApp" className="h-10 sm:h-12 mx-auto" />
-          </motion.div>
-
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -74,7 +66,7 @@ export const HeroSection = () => {
             {[
               { icon: Calendar, text: "Tu propia web" },
               { icon: Clock, text: "Reservas 24/7" },
-              { icon: Sparkles, text: "Listo en 5 min" },
+              { icon: Sparkles, text: "Listo en 10 min" },
             ].map((item, i) => (
               <div
                 key={i}
@@ -122,24 +114,30 @@ export const HeroSection = () => {
           >
             ✓ Configuración guiada · ✓ Sin conocimientos técnicos · ✓ Soporte incluido
           </motion.p>
+
+          {/* iPhone mockup */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="mt-12 flex justify-center"
+          >
+            <div className="relative w-[260px] sm:w-[280px]">
+              {/* iPhone frame */}
+              <div className="relative rounded-[2.5rem] border-[6px] border-foreground/90 bg-background shadow-2xl shadow-primary/10 overflow-hidden" style={{ aspectRatio: '9/19.5' }}>
+                {/* Dynamic Island */}
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[80px] h-[22px] bg-foreground/90 rounded-full z-20" />
+                {/* Screen content */}
+                <div className="absolute inset-0 pt-8 overflow-hidden">
+                  <Suspense fallback={<div className="w-full h-full bg-muted animate-pulse" />}>
+                    <DemoLanding />
+                  </Suspense>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.5 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-      >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="w-6 h-10 rounded-full border-2 border-border flex justify-center pt-2"
-        >
-          <div className="w-1.5 h-3 rounded-full bg-muted-foreground/40" />
-        </motion.div>
-      </motion.div>
     </section>
   );
 };

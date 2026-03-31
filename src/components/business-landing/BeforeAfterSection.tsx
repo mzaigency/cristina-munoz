@@ -32,7 +32,8 @@ export const BeforeAfterSection = () => {
         </motion.div>
 
         <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          {/* Desktop headers */}
+          <div className="hidden sm:grid grid-cols-2 gap-4 mb-6">
             <div className="text-center">
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive/10 text-destructive font-medium text-sm border border-destructive/20">
                 <X className="w-4 h-4" />
@@ -47,7 +48,8 @@ export const BeforeAfterSection = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
+          {/* Desktop: 2 columns */}
+          <div className="hidden sm:block space-y-3">
             {comparisons.map((item, index) => (
               <motion.div
                 key={index}
@@ -63,6 +65,29 @@ export const BeforeAfterSection = () => {
                 </div>
                 <div className="p-4 rounded-xl bg-background border border-primary/20 flex items-center gap-3">
                   <Check className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span className="text-sm font-medium text-foreground">{item.after}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Mobile: vertical cards */}
+          <div className="sm:hidden space-y-3">
+            {comparisons.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.05 }}
+                className="p-4 rounded-xl bg-background border border-border"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <X className="w-4 h-4 text-destructive flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground line-through">{item.before}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0" />
                   <span className="text-sm font-medium text-foreground">{item.after}</span>
                 </div>
               </motion.div>
