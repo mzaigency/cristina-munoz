@@ -74,14 +74,16 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
         .maybeSingle();
 
       if (superadminRole) {
-        setAccess({
+        const result: TenantAccess = {
           isAdmin: true,
           isStylist: false,
           hasAccess: true,
           loading: false,
           userId,
           stylistId: null,
-        });
+        };
+        accessCache = { tenantId: tenantId!, userId, result };
+        setAccess(result);
         return;
       }
 
