@@ -429,7 +429,7 @@ export default function Profile() {
               </button>
             </div>
 
-            <div className="ios-card overflow-hidden">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
               <div className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <Users className="h-5 w-5 text-primary" />
