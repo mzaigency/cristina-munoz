@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Moon, Sun, Monitor, Users, AtSign, Trash2 } from "lucide-react";
+import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Moon, Sun, Monitor, Users, AtSign, Trash2, Bell } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/navigation/AppLayout";
