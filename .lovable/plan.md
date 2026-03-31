@@ -1,56 +1,72 @@
 
+Objetivo: quitar la sensación de “refresh” en Inicio para usuarios normales, especialmente en móvil, evitando que cada pantalla vuelva a resolver sesión y datos base al entrar.
 
-## Plan: Fix Redundant Re-authentication on Navigation
+Qué está pasando
+- No parece un logout/login real, sino una cascada de chequeos al montar cada página.
+- En Inicio se disparan a la vez varios hooks/componentes con auth:
+  - `useFavorites`
+  - `useFollows`
+  - `useRecommendations`
+  - `useCurrentUserTenant`
+  - `BottomNavigation` (`useUnreadMessages` + avatar)
+  - `SmartSearchHeader` (superadmin)
+  - `NotificationBadge` / `useNotifications`
+- Además, páginas como `MyBookings`, `Messages` y `Profile` vuelven a hacer `getSession/getUser` al abrirse, así que la navegación se siente como recarga completa.
 
-### Problem Identified
+Plan de implementación
 
-Every time you navigate within the admin panel (or between pages), the app triggers multiple redundant authentication checks that create a noticeable "loading/re-auth" feel:
+1. Crear una fuente única de sesión en cliente
+- Añadir un contexto/hook global tipo `useAuthSession`.
+- Resolver la sesión una sola vez al arrancar la app.
+- Escuchar `onAuthStateChange` una sola vez y compartir:
+  - `user`
+  - `session`
+  - `loading`
+  - `isAuthenticated`
 
-1. **`MaintenanceGate` (App.tsx)** — Re-runs on every `location.pathname` change: calls `getSession()`, queries `app_config`, and checks `user_roles`. This means switching tabs within admin triggers a full maintenance check.
+2. Reemplazar chequeos repetidos en Inicio y navegación
+- Refactorizar estos hooks para que usen el contexto global en vez de `getSession/getUser`:
+  - `useFavorites`
+  - `useFollows`
+  - `useRecommendations`
+  - `usePosts`
+  - `useUnreadMessages`
+  - `useNotifications`
+  - `useCurrentUserTenant`
+- Ajustar `BottomNavigation` y `SmartSearchHeader` para reutilizar esa misma sesión y no volver a consultar auth al montar.
 
-2. **`TenantAdmin.checkAuth()`** — Runs on mount with `[slug]` dependency. Makes 4+ sequential DB queries (getSession → tenant → superadmin role → tenant_admins → tenant_stylists). The slug doesn't change between tab switches, but if the component remounts it re-runs everything.
+3. Evitar loaders agresivos en pantallas de usuario
+- `MyBookings`, `Messages` y `Profile` deben esperar al estado global de auth antes de redirigir o cargar.
+- Sustituir “pantalla vacía + spinner” por transiciones más estables:
+  - mantener layout/header/bottom bar visibles
+  - cargar solo el contenido interno
+- Esto es importante para mobile: menos parpadeo, mejor continuidad visual y safe areas intactas.
 
-3. **`useTenantAccess` hook** — Also called in TenantAdmin, performs the same superadmin/admin/stylist checks independently, duplicating queries.
+4. Reducir consultas duplicadas de perfil/rol
+- Unificar datos derivados del usuario:
+  - avatar
+  - tenant vinculado
+  - flags de admin/stylist/superadmin
+- Mantener caché en memoria para esos metadatos y refrescar solo en `SIGNED_IN` / `SIGNED_OUT`.
 
-4. **`useCurrentUserTenant` hook** — Used in Index and other pages, performs yet another round of the same queries (tenant_admins, tenant_stylists).
+5. Revisar Inicio específicamente
+- Inicio debe renderizar primero la parte pública y enriquecer después:
+  - feed discover
+  - favoritos
+  - recomendaciones
+  - badge de mensajes
+- Los elementos opcionales de usuario no deben bloquear la pantalla completa.
+- Si algo aún no está listo, mostrar estado parcial discreto, no sensación de recarga.
 
-5. **`onAuthStateChange` listener in MaintenanceGate** — Sets state to `null` on any auth event (including `TOKEN_REFRESHED`), causing a full re-render with loading spinner while re-checking maintenance mode.
+Resultado esperado
+- Entrar en Inicio ya no parecerá un refresh.
+- Cambiar entre Inicio, Citas, Mensajes y Perfil será mucho más fluido.
+- Menos consultas redundantes al backend.
+- Mejor experiencia móvil, respetando safe areas y continuidad visual.
 
-### Root Cause
-There's no centralized auth/session state. Each component independently calls `getSession()` and runs DB queries, causing:
-- Visible loading spinners on every navigation
-- 10-15+ redundant Supabase queries per page transition
-- The `TOKEN_REFRESHED` event in MaintenanceGate resets to loading state, causing a flash
-
-### Solution
-
-**1. Fix MaintenanceGate — Stop re-checking on every pathname change**
-- Remove `location.pathname` from the `useEffect` dependency — maintenance mode doesn't change per-route
-- Check once on mount, then only re-check on auth state changes
-- Filter `onAuthStateChange` to only react to `SIGNED_IN` and `SIGNED_OUT`, not `TOKEN_REFRESHED` or `INITIAL_SESSION`
-
-**2. Consolidate TenantAdmin auth — Remove duplicate checks**
-- `TenantAdmin.checkAuth()` and `useTenantAccess()` do the same queries. Remove the manual `checkAuth` logic and rely solely on `useTenantAccess` (which already returns `isAdmin`, `isStylist`, `hasAccess`, `loading`)
-- Pass the tenant lookup separately (just fetch tenant by slug, no auth checks)
-
-**3. Stabilize `useCurrentUserTenant` cache**
-- The global cache is already implemented but the `checkCache` async function has a race condition — it awaits `getSession()` before checking cache validity, adding latency. Use a synchronous cache check first.
-
-**4. Filter auth events in `useCurrentUserTenant`**
-- Currently reacts to `TOKEN_REFRESHED` by clearing cache and re-querying. This is unnecessary — the user hasn't changed. Only clear on `SIGNED_IN` / `SIGNED_OUT`.
-
-### Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/App.tsx` (MaintenanceGate) | Remove `location.pathname` dep, filter auth events |
-| `src/pages/TenantAdmin.tsx` | Replace manual `checkAuth` with `useTenantAccess` + simple tenant fetch |
-| `src/hooks/useCurrentUserTenant.ts` | Remove `TOKEN_REFRESHED` from cache-clearing events, sync cache check |
-| `src/hooks/useTenantAccess.ts` | Minor: add caching to avoid re-querying on re-renders |
-
-### Expected Result
-- No more loading flickers when switching admin tabs
-- No re-auth feel when navigating between pages
-- ~70% fewer Supabase queries per navigation
-- Instant tab switches within admin panel
-
+Detalles técnicos
+- Punto central a corregir: hoy la app tiene demasiados `supabase.auth.getSession()` / `getUser()` repartidos por hooks y páginas.
+- La mejora clave es pasar de “cada pantalla resuelve auth” a “la app resuelve auth una vez y las pantallas consumen ese estado”.
+- Mantendría React Query para datos funcionales, pero separaría completamente:
+  - estado de sesión global
+  - consultas de negocio dependientes del usuario
