@@ -124,7 +124,7 @@ const TESTIMONIALS = [
   {
     name: "Ana P.",
     role: "Centro de Estética Bella",
-    text: "En una semana ya tenía mi landing, servicios y calendario funcionando. Mis clientas están encantadas.",
+    text: "En 10 minutos ya tenía mi pagina web, servicios y calendario funcionando. Mis clientas están encantadas.",
     rating: 5,
   },
 ];
