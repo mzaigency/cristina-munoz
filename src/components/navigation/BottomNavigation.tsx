@@ -123,13 +123,26 @@ export function BottomNavigation() {
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <Icon
-                      className={cn(
-                        "h-5 w-5 transition-all duration-300",
-                        active && "scale-105"
-                      )}
-                      strokeWidth={active ? 2.5 : 2}
-                    />
+                    {path === "/perfil" && avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt="Perfil"
+                        className={cn(
+                          "h-6 w-6 rounded-full object-cover transition-all duration-300 ring-1",
+                          active
+                            ? "ring-primary ring-2 scale-105"
+                            : "ring-border/50"
+                        )}
+                      />
+                    ) : (
+                      <Icon
+                        className={cn(
+                          "h-5 w-5 transition-all duration-300",
+                          active && "scale-105"
+                        )}
+                        strokeWidth={active ? 2.5 : 2}
+                      />
+                    )}
                     
                     {/* Notification Badge */}
                     {showBadge && (
