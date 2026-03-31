@@ -125,7 +125,7 @@ export default function Messages() {
       <AppLayout hideNavigation={!!selectedConversation}>
         <div className="min-h-screen bg-background">
           {/* Header iOS style */}
-          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
+          <div className="sticky top-0 z-10 liquid-glass-solid pt-[env(safe-area-inset-top)]">
             <div className="flex items-center h-14 px-2">
               {selectedConversation ? (
                 <Button
