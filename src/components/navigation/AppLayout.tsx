@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { BottomNavigation } from "./BottomNavigation";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -17,6 +18,7 @@ export function AppLayout({ children, hideNavigation = false }: AppLayoutProps) 
         {children}
       </main>
       {!shouldHideNav && <BottomNavigation />}
+      <InstallPrompt />
     </div>
   );
 }
