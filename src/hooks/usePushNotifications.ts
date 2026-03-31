@@ -2,14 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Firebase config — replace VAPID_KEY with your Web Push certificate from Firebase Console
-const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || "";
+const VAPID_KEY = "BH2_PIC9lM3oeV49itkKlddUbagkIq_FK80gqNZqHGQ5IRdjt41rkYQG34cPf_Gfd5bs-nZcr66BoGxgAAihrTg";
 
 const FIREBASE_CONFIG = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+  apiKey: "AIzaSyAL-OMCiWg0WwmoXRVGk8Fh8zGqHo4z27M",
+  authDomain: "glowapp-8837d.firebaseapp.com",
+  projectId: "glowapp-8837d",
+  storageBucket: "glowapp-8837d.firebasestorage.app",
+  messagingSenderId: "459863249000",
+  appId: "1:459863249000:web:fef8028fe735f54193abdd",
 };
 
 type PermissionState = "default" | "granted" | "denied" | "unsupported";
