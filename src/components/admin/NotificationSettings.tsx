@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
-import { Bell, Calendar, MessageCircle, Star, Clock, Mail, Smartphone, Loader2, Save, Sun } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { motion } from "motion/react";
+import { Bell, Calendar, MessageCircle, Star, Clock, Mail, Smartphone, Loader2, Save, Sun, BellRing, BellOff } from "lucide-react";
 interface NotificationPreferences {
   id?: string;
   new_booking: boolean;
