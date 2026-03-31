@@ -803,23 +803,28 @@ function SuccessStep({ tenantSlug }: { tenantSlug: string }) {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="text-center py-8"
+      className="text-center py-10"
     >
-      <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mx-auto mb-6">
-        <PartyPopper className="h-10 w-10 text-primary-foreground" />
+      <div className="w-24 h-24 rounded-[28px] liquid-glass-card flex items-center justify-center mx-auto mb-8">
+        <motion.div
+          animate={{ rotate: [0, -10, 10, -5, 5, 0] }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
+          <PartyPopper className="h-10 w-10 text-primary" />
+        </motion.div>
       </div>
       
-      <h2 className="text-2xl font-bold text-foreground mb-3">
+      <h2 className="text-2xl font-bold text-foreground mb-2">
         ¡Tu salón está listo!
       </h2>
-      <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
-        Tu landing page profesional está creada. Ahora puedes empezar a recibir reservas online.
+      <p className="text-sm text-muted-foreground mb-8 max-w-xs mx-auto leading-relaxed">
+        Tu landing page profesional está creada. Ya puedes empezar a recibir reservas.
       </p>
 
       <div className="space-y-3">
         <Button
           onClick={() => navigate(`/${tenantSlug}`)}
-          className="w-full h-12 rounded-xl gradient-primary text-primary-foreground"
+          className="w-full h-12 rounded-2xl gradient-primary text-primary-foreground shadow-lg shadow-primary/20"
         >
           <Building2 className="h-4 w-4 mr-2" />
           Ver mi landing page
@@ -827,7 +832,7 @@ function SuccessStep({ tenantSlug }: { tenantSlug: string }) {
         <Button
           variant="outline"
           onClick={() => navigate(`/admin/${tenantSlug}`)}
-          className="w-full h-12 rounded-xl"
+          className="w-full h-12 rounded-2xl bg-white/5 backdrop-blur-sm border-white/10"
         >
           Ir al panel de administración
         </Button>
