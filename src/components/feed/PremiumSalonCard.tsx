@@ -77,7 +77,7 @@ export function PremiumSalonCard({
     y: -6
   }} className="group">
       <Link to={`/${salon.slug}`} className="block">
-        <div className="relative overflow-hidden rounded-[28px] bg-card/70 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl shadow-foreground/[0.03] transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-primary/15 group-hover:border-primary/30">
+        <div className="relative overflow-hidden rounded-[28px] liquid-glass-card transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-primary/10 group-hover:border-primary/20">
           
           {/* Image Container with Premium Gradient Overlay */}
           <div className="relative h-52 overflow-hidden">

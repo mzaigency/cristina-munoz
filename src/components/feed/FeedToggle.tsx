@@ -22,7 +22,7 @@ export function FeedToggle({ mode, onChange, followingCount = 0, className }: Fe
   };
 
   return (
-    <div className={cn("flex bg-background/50 backdrop-blur-xl border-b border-white/15 dark:border-white/10", className)}>
+    <div className={cn("flex liquid-glass-subtle border-b", className)}>
       <button
         onClick={() => handleChange("discover")}
         className={cn(
