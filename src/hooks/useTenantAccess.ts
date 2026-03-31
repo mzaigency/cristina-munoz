@@ -33,7 +33,7 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
 
   useEffect(() => {
     if (!tenantId) {
-      setAccess(prev => ({ ...prev, loading: false }));
+      // Don't set loading to false — we're waiting for tenantId
       return;
     }
 

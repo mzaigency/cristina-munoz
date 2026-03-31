@@ -180,7 +180,7 @@ export default function TenantAdmin() {
 
   // Redirect if access check completes and user has no access
   useEffect(() => {
-    if (!accessLoading && tenant && !hasAccess) {
+    if (!tenantLoading && !accessLoading && tenant && !hasAccess) {
       toast({
         title: "Acceso denegado",
         description: "No tienes permisos para acceder a este panel",
@@ -188,7 +188,7 @@ export default function TenantAdmin() {
       });
       navigate("/");
     }
-  }, [accessLoading, hasAccess, tenant]);
+  }, [tenantLoading, accessLoading, hasAccess, tenant]);
 
   useEffect(() => {
     if (tenant?.id) {
