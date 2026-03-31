@@ -122,7 +122,7 @@ export default function Messages() {
   // Mobile layout - iOS style
   if (isMobile) {
     return (
-      <AppLayout hideNavigation={!!selectedConversation} noTopSafeArea>
+      <AppLayout hideNavigation={!!selectedConversation}>
         <div className="min-h-screen bg-background">
           {/* Header iOS style */}
           <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">

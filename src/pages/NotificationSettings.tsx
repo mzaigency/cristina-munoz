@@ -9,7 +9,7 @@ export default function NotificationSettingsPage() {
   const navigate = useNavigate();
 
   return (
-    <AppLayout noTopSafeArea>
+    <AppLayout>
       <SEO
         title="Notificaciones"
         description="Gestiona tus preferencias de notificaciones"

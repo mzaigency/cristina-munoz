@@ -268,7 +268,7 @@ const Index = () => {
       {/* Welcome Onboarding for new users */}
       {showWelcome && <WelcomeCarousel onComplete={handleOnboardingComplete} />}
       
-      <AppLayout noTopSafeArea>
+      <AppLayout>
       <SEO
         title="GlowApp | Reserva Cita en Salones de Belleza Cerca de Ti"
         description="Descubre peluquerías, spas y centros de estética cerca de ti. Reserva cita online al instante. La app de belleza #1 en España con +500 salones."
