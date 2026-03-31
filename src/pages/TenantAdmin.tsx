@@ -76,6 +76,7 @@ export default function TenantAdmin() {
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [hasAccess, setHasAccess] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
   const { adminSlug: slug } = useParams<{ adminSlug: string }>();
