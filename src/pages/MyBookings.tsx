@@ -206,7 +206,7 @@ export default function MyBookings() {
     return (
       <AppLayout>
         <SEO title="Mis Citas" description="Gestiona tus reservas" canonicalUrl="/mis-citas" noindex={true} />
-        <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 pt-[env(safe-area-inset-top)]">
+        <div className="sticky top-0 z-40 liquid-glass-solid pt-[env(safe-area-inset-top)]">
           <div className="px-4 py-3">
             <h1 className="text-[28px] font-bold text-foreground tracking-tight">Mis Citas</h1>
           </div>
