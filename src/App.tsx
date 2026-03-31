@@ -34,6 +34,7 @@ const ForBusiness = lazy(() => import("./pages/ForBusiness"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const NotificationSettingsPage = lazy(() => import("./pages/NotificationSettings"));
 
 const queryClient = new QueryClient();
 
