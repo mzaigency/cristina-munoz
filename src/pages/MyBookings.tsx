@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { format, isToday, isTomorrow, isThisWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Loader2, CalendarPlus, ChevronRight, X, Star } from "lucide-react";
+import { Calendar, Loader2, CalendarPlus, ChevronRight, X, Star, Sparkles } from "lucide-react";
 import { BookingSkeleton } from "@/components/ui/BookingSkeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -235,26 +235,78 @@ export default function MyBookings() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="text-center py-20"
+              className="flex flex-col items-center justify-center py-16 px-6"
             >
-              <div className="w-20 h-20 rounded-3xl liquid-glass-solid flex items-center justify-center mx-auto mb-5">
-                <Calendar className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
+              {/* Animated icon with liquid glass */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}
+                className="relative mb-6"
+              >
+                <div className="w-24 h-24 rounded-[28px] liquid-glass-card flex items-center justify-center">
+                  <motion.div
+                    animate={{ y: [0, -4, 0] }}
+                    transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                  >
+                    {activeTab === "upcoming" ? (
+                      <CalendarPlus className="h-11 w-11 text-primary" />
+                    ) : (
+                      <Calendar className="h-11 w-11 text-muted-foreground/60" />
+                    )}
+                  </motion.div>
+                </div>
+                {activeTab === "upcoming" && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
+                    className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center"
+                  >
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  </motion.div>
+                )}
+              </motion.div>
+
+              <motion.h3
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-xl font-bold text-foreground mb-2 tracking-tight"
+              >
                 {activeTab === "upcoming" ? "Sin citas próximas" : "Sin historial"}
-              </h3>
-              <p className="text-base text-muted-foreground mb-8 max-w-[260px] mx-auto">
-                {activeTab === "upcoming" && "Encuentra el salón perfecto y reserva tu primera cita"}
-              </p>
+              </motion.h3>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-sm text-muted-foreground mb-8 max-w-[280px] text-center leading-relaxed"
+              >
+                {activeTab === "upcoming"
+                  ? "Descubre salones cerca de ti y reserva tu primera cita en segundos"
+                  : "Aquí aparecerán tus citas pasadas"}
+              </motion.p>
+
               {activeTab === "upcoming" && (
-                <Button
-                  onClick={() => navigate("/")}
-                  size="lg"
-                  className="h-14 px-8 rounded-2xl text-base font-semibold shadow-lg shadow-primary/25"
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="flex flex-col items-center gap-3 w-full max-w-[260px]"
                 >
-                  <CalendarPlus className="h-5 w-5 mr-2" />
-                  Reservar cita
-                </Button>
+                  <Button
+                    onClick={() => navigate("/")}
+                    size="lg"
+                    className="w-full h-14 rounded-2xl text-base font-semibold shadow-lg shadow-primary/25 gradient-primary border-0"
+                  >
+                    <CalendarPlus className="h-5 w-5 mr-2" />
+                    Explorar salones
+                  </Button>
+                  <span className="text-xs text-muted-foreground/60">
+                    Reserva online al instante
+                  </span>
+                </motion.div>
               )}
             </motion.div>
           ) : (
