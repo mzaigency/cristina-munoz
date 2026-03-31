@@ -277,10 +277,30 @@ export function UserNotificationSettings() {
             />
           </div>
           {permission === "denied" && (
-            <p className="text-xs text-destructive mt-2">
-              Has bloqueado las notificaciones. Actívalas en los ajustes de tu
-              navegador para recibirlas.
-            </p>
+            <div className="mt-3 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+              <p className="text-xs text-destructive mb-2">
+                Has bloqueado las notificaciones. Actívalas desde los ajustes de tu dispositivo.
+              </p>
+              <button
+                onClick={() => {
+                  const ua = navigator.userAgent.toLowerCase();
+                  if (/iphone|ipad|ipod/.test(ua)) {
+                    // iOS: no direct link, guide user
+                    window.open("App-prefs:NOTIFICATIONS_ID", "_self");
+                  } else if (/android/.test(ua)) {
+                    // Android Chrome: direct to site notification settings
+                    window.open(`intent://settings/notifications#Intent;scheme=android-app;end`, "_self");
+                  }
+                  // Fallback: Chrome desktop & others
+                  if (window.chrome) {
+                    window.open("chrome://settings/content/notifications", "_blank");
+                  }
+                }}
+                className="text-xs font-semibold text-primary underline underline-offset-2"
+              >
+                Abrir ajustes de notificaciones →
+              </button>
+            </div>
           )}
         </Card>
       )}
