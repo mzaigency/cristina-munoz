@@ -191,7 +191,7 @@ export default function Messages() {
         </a>
 
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className="sticky top-0 z-10 liquid-glass-solid border-b border-border/30">
           <div className="container mx-auto flex items-center justify-between h-16 px-4">
             <Button
               variant="ghost"

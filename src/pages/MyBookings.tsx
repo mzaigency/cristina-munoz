@@ -386,7 +386,7 @@ export default function MyBookings() {
                               <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/50">
                                 <button
                                   onClick={() => setRescheduleBooking(booking)}
-                                  className="flex-1 h-10 rounded-xl bg-secondary text-sm font-medium text-foreground active:bg-secondary/80 transition-colors"
+                                  className="flex-1 h-10 rounded-xl liquid-glass-pill !rounded-xl text-sm font-medium text-foreground active:bg-secondary/80 transition-colors"
                                 >
                                   Reagendar
                                 </button>

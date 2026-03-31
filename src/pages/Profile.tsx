@@ -213,7 +213,7 @@ export default function Profile() {
       />
       
       {/* Header with safe area */}
-      <div className="bg-gradient-to-b from-primary/10 to-background pt-[calc(env(safe-area-inset-top)+2rem)] pb-6 px-4">
+      <div className="bg-gradient-to-b from-primary/8 to-transparent pt-[calc(env(safe-area-inset-top)+2rem)] pb-6 px-4">
         <div className="flex flex-col items-center">
           {/* Avatar with upload */}
           {userId && (
