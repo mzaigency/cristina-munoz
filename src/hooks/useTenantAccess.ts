@@ -104,17 +104,19 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
         .eq("is_active", true)
         .maybeSingle();
 
-      const isAdmin = !!adminData;
-      const isStylist = !!stylistData;
+      const isAdminResult = !!adminData;
+      const isStylistResult = !!stylistData;
 
-      setAccess({
-        isAdmin,
-        isStylist,
-        hasAccess: isAdmin || isStylist,
+      const result: TenantAccess = {
+        isAdmin: isAdminResult,
+        isStylist: isStylistResult,
+        hasAccess: isAdminResult || isStylistResult,
         loading: false,
         userId,
         stylistId: stylistData?.id || null,
-      });
+      };
+      accessCache = { tenantId: tenantId!, userId, result };
+      setAccess(result);
     } catch (error) {
       console.error("Error checking tenant access:", error);
       setAccess({
