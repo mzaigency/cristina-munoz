@@ -701,9 +701,6 @@ export default function BusinessOnboarding() {
                             <Lock className="h-3 w-3" /> SSL seguro
                           </span>
                           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                            <CreditCard className="h-3 w-3" /> Sin tarjeta
-                          </span>
-                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                             <Shield className="h-3 w-3" /> Cancela gratis
                           </span>
                         </div>
