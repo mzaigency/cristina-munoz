@@ -202,11 +202,17 @@ export default function BusinessOnboarding() {
     return (
       <AppLayout hideNavigation>
         <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="w-14 h-14 rounded-2xl liquid-glass-card flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
         </div>
       </AppLayout>
     );
   }
+
+  const currentPlan = PLANS[selectedPlan];
+  const monthlyEquiv = billingCycle === "annual" ? Math.round(currentPlan.annualPrice / 12) : currentPlan.monthlyPrice;
+  const savings = Math.round(currentPlan.monthlyPrice * 12 - currentPlan.annualPrice);
 
   return (
     <AppLayout hideNavigation>
@@ -216,49 +222,51 @@ export default function BusinessOnboarding() {
         canonicalUrl="/onboarding"
       />
 
-      {/* Header */}
+      {/* Header - liquid glass */}
       <div 
-        className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50"
+        className="sticky top-0 z-40 bg-background/80 backdrop-blur-2xl border-b border-white/10"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-            <ArrowLeft className="h-5 w-5" />
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="h-8 w-8 rounded-full bg-white/5 hover:bg-white/10">
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="font-semibold text-foreground">
+          <h1 className="font-semibold text-sm text-foreground">
             Unirse a GlowApp
           </h1>
         </div>
       </div>
 
-      <div className="px-4 py-8 pb-24">
+      <div className="px-4 py-6 pb-24">
         <div className="max-w-4xl mx-auto">
-          {/* Hero Section */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
-              <Sparkles className="h-4 w-4" />
-              <span className="text-sm font-medium">30 días gratis de prueba</span>
+          {/* Hero */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 backdrop-blur-sm border border-primary/10 text-primary mb-4">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">30 días gratis de prueba</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Haz crecer tu negocio con GlowApp</h2>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3 leading-tight">
+              Haz crecer tu negocio<br className="sm:hidden" /> con GlowApp
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
               Crea tu landing page profesional y empieza a recibir reservas online hoy mismo.
             </p>
           </motion.div>
 
-          {/* Billing Toggle - Mejorado con descuento destacado */}
+          {/* Billing Toggle */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex flex-col items-center gap-3 mb-8"
+            className="flex flex-col items-center gap-2.5 mb-7"
           >
-            <div className="relative inline-flex items-center gap-1 p-1.5 rounded-2xl bg-muted/80 border border-border/50">
+            <div className="relative inline-flex items-center gap-0.5 p-1 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
               <button
                 type="button"
                 onClick={() => setBillingCycle("monthly")}
-                className={`relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`relative px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                   billingCycle === "monthly"
-                    ? "bg-background shadow-lg text-foreground"
+                    ? "bg-background/80 shadow-sm text-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -267,81 +275,78 @@ export default function BusinessOnboarding() {
               <button
                 type="button"
                 onClick={() => setBillingCycle("annual")}
-                className={`relative px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`relative px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                   billingCycle === "annual"
-                    ? "bg-gradient-to-r from-primary to-primary/90 shadow-lg text-primary-foreground"
+                    ? "bg-primary shadow-sm text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Anual
               </button>
               
-              {/* Badge de descuento flotante */}
               <motion.div 
-                initial={{ scale: 0, rotate: -10 }}
-                animate={{ scale: 1, rotate: 0 }}
-                className="absolute -top-3 -right-2 z-10"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-2.5 -right-1.5 z-10"
               >
-                <Badge className="bg-gradient-to-r from-success to-emerald-500 text-white text-[11px] px-2 py-0.5 shadow-lg font-bold">
+                <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-md font-bold shadow-sm">
                   -17%
-                </Badge>
+                </span>
               </motion.div>
             </div>
 
-            {/* Mensaje de ahorro cuando está en anual */}
             <AnimatePresence mode="wait">
               {billingCycle === "annual" && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: "auto" }}
-                  exit={{ opacity: 0, y: -10, height: 0 }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 border border-success/20"
+                <motion.p
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="text-xs text-emerald-500 font-medium flex items-center gap-1.5"
                 >
-                  <Gift className="h-4 w-4 text-success" />
-                  <span className="text-sm font-medium text-success">
-                    ¡Ahorras {Math.round((PLANS[selectedPlan].monthlyPrice * 12 - PLANS[selectedPlan].annualPrice))}€/año con el plan {PLANS[selectedPlan].name}!
-                  </span>
-                </motion.div>
+                  <Gift className="h-3.5 w-3.5" />
+                  Ahorras {savings}€/año con el plan {currentPlan.name}
+                </motion.p>
               )}
             </AnimatePresence>
           </motion.div>
 
           {/* Plans Grid */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
+            initial={{ opacity: 0, y: 16 }} 
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="grid md:grid-cols-3 gap-4 mb-8"
+            className="grid md:grid-cols-3 gap-3 mb-8"
           >
             {(Object.entries(PLANS) as [PlanSlug, PlanInfo][]).map(([slug, plan], idx) => {
               const isSelected = selectedPlan === slug;
               const price = billingCycle === "annual" ? plan.annualPrice : plan.monthlyPrice;
-              const monthlyEquivalent = billingCycle === "annual" ? Math.round(plan.annualPrice / 12) : plan.monthlyPrice;
+              const monthlyEq = billingCycle === "annual" ? Math.round(plan.annualPrice / 12) : plan.monthlyPrice;
+              const planSavings = Math.round(plan.monthlyPrice * 12 - plan.annualPrice);
               
               return (
                 <motion.button
                   key={slug}
                   type="button"
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + idx * 0.05 }}
                   onClick={() => handlePlanSelect(slug)}
-                  className={`relative text-left ios-card p-4 transition-all ${
+                  className={`relative text-left rounded-2xl p-4 transition-all border ${
                     isSelected 
-                      ? "border-2 border-primary ring-2 ring-primary/20" 
-                      : "hover:border-border"
+                      ? "border-primary/40 bg-primary/5 shadow-lg shadow-primary/10" 
+                      : "border-white/10 bg-white/[0.02] hover:bg-white/5 hover:border-white/15"
                   }`}
                 >
                   {plan.popular && (
                     <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                      <Badge className={`bg-gradient-to-r ${plan.color} text-white text-[10px] px-2`}>
+                      <span className={`bg-gradient-to-r ${plan.color} text-white text-[10px] px-2.5 py-0.5 rounded-full font-semibold shadow-sm`}>
                         Popular
-                      </Badge>
+                      </span>
                     </div>
                   )}
                   
                   <div className="flex items-center justify-between mb-3 mt-1">
-                    <div className={`p-2 rounded-lg bg-gradient-to-br ${plan.color} text-white`}>
+                    <div className={`p-1.5 rounded-xl bg-gradient-to-br ${plan.color} text-white`}>
                       {plan.icon}
                     </div>
                     {isSelected && (
@@ -353,19 +358,19 @@ export default function BusinessOnboarding() {
 
                   <h4 className="font-bold text-foreground mb-1">{plan.name}</h4>
                   
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className="text-2xl font-bold text-foreground">{monthlyEquivalent}€</span>
-                    <span className="text-xs text-muted-foreground">/mes</span>
+                  <div className="flex items-baseline gap-0.5 mb-1">
+                    <span className="text-2xl font-bold text-foreground">{monthlyEq}€</span>
+                    <span className="text-[11px] text-muted-foreground">/mes</span>
                   </div>
 
                   {billingCycle === "annual" && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs text-muted-foreground line-through">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="text-[11px] text-muted-foreground line-through">
                         {plan.monthlyPrice}€/mes
                       </span>
-                      <Badge className="bg-success/15 text-success text-[10px] px-1.5 font-semibold">
-                        Ahorras {Math.round(plan.monthlyPrice * 12 - plan.annualPrice)}€
-                      </Badge>
+                      <span className="text-[10px] text-emerald-500 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                        Ahorras {planSavings}€
+                      </span>
                     </div>
                   )}
 
@@ -375,30 +380,28 @@ export default function BusinessOnboarding() {
                     </p>
                   )}
                   
-                  {billingCycle === "monthly" && (
-                    <div className="mb-3" />
-                  )}
+                  {billingCycle === "monthly" && <div className="mb-3" />}
 
                   <div className="space-y-1.5 text-xs">
                     <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Users className="h-3 w-3" />
+                      <Users className="h-3 w-3 shrink-0" />
                       <span>{plan.stylists}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Scissors className="h-3 w-3" />
+                      <Scissors className="h-3 w-3 shrink-0" />
                       <span>{plan.services}</span>
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-border space-y-1">
+                  <div className="mt-3 pt-3 border-t border-white/5 space-y-1">
                     {plan.features.slice(0, 3).map((feature, fidx) => (
                       <div key={fidx} className="flex items-center gap-1.5 text-[11px]">
-                        <Check className="h-3 w-3 text-success shrink-0" />
+                        <Check className="h-3 w-3 text-emerald-500 shrink-0" />
                         <span className="text-muted-foreground">{feature}</span>
                       </div>
                     ))}
                     {plan.features.length > 3 && (
-                      <p className="text-[10px] text-primary font-medium pl-4">
+                      <p className="text-[10px] text-primary font-medium pl-[18px]">
                         +{plan.features.length - 3} más
                       </p>
                     )}
@@ -408,186 +411,182 @@ export default function BusinessOnboarding() {
             })}
           </motion.div>
 
-          {/* Form - Ahora después de los planes */}
+          {/* Form */}
           <motion.div 
             ref={formRef}
-            initial={{ opacity: 0, y: 20 }} 
+            initial={{ opacity: 0, y: 16 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.25 }}
             className="max-w-md mx-auto scroll-mt-4"
           >
-            <Card className="ios-card">
-              <CardHeader className="text-center pb-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm p-5">
+              <div className="text-center mb-5">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className={`p-2 rounded-lg bg-gradient-to-br ${PLANS[selectedPlan].color} text-white`}>
-                    {PLANS[selectedPlan].icon}
+                  <div className={`p-1.5 rounded-xl bg-gradient-to-br ${currentPlan.color} text-white`}>
+                    {currentPlan.icon}
                   </div>
-                  <CardTitle className="text-xl">Plan {PLANS[selectedPlan].name}</CardTitle>
+                  <h3 className="text-lg font-bold text-foreground">Plan {currentPlan.name}</h3>
                 </div>
-                <CardDescription>
-                  {user 
-                    ? "Completa la información de tu salón" 
-                    : "Crea una cuenta para continuar"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!user ? (
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground text-center">Necesitas una cuenta para crear tu salón.</p>
-                    <div className="flex flex-col gap-3">
-                      <Button onClick={() => navigate("/auth?redirect=/onboarding&mode=register")} className="w-full h-12 rounded-xl">
-                        Crear cuenta
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => navigate("/auth?redirect=/onboarding")}
-                        className="w-full h-12 rounded-xl"
-                      >
-                        Ya tengo cuenta
-                      </Button>
-                    </div>
+                <p className="text-xs text-muted-foreground">
+                  {user ? "Completa la información de tu salón" : "Crea una cuenta para continuar"}
+                </p>
+              </div>
+
+              {!user ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground text-center">Necesitas una cuenta para crear tu salón.</p>
+                  <div className="flex flex-col gap-3">
+                    <Button onClick={() => navigate("/auth?redirect=/onboarding&mode=register")} className="w-full h-12 rounded-2xl gradient-primary text-primary-foreground shadow-lg shadow-primary/20">
+                      Crear cuenta
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate("/auth?redirect=/onboarding")}
+                      className="w-full h-12 rounded-2xl bg-white/5 border-white/10"
+                    >
+                      Ya tengo cuenta
+                    </Button>
                   </div>
-                ) : (
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="businessName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nombre del salón</FormLabel>
-                            <FormControl>
+                </div>
+              ) : (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="businessName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Nombre del salón</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Mi Salón de Belleza"
+                              {...field}
+                              disabled={loading}
+                              className="h-11 rounded-xl bg-white/5 border-white/10"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="businessSlug"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">URL de tu salón</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center">
+                              <span className="text-xs text-muted-foreground mr-2">glowapp.app/</span>
                               <Input
-                                placeholder="Mi Salón de Belleza"
+                                placeholder="mi-salon"
                                 {...field}
                                 disabled={loading}
-                                className="h-12 rounded-xl"
+                                className="h-11 rounded-xl flex-1 bg-white/5 border-white/10"
                               />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="businessSlug"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>URL de tu salón</FormLabel>
-                            <FormControl>
-                              <div className="flex items-center">
-                                <span className="text-sm text-muted-foreground mr-2">glowapp.app/</span>
-                                <Input
-                                  placeholder="mi-salon"
-                                  {...field}
-                                  disabled={loading}
-                                  className="h-12 rounded-xl flex-1"
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email de contacto</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="email"
-                                placeholder="contacto@misalon.com"
-                                {...field}
-                                disabled={loading}
-                                className="h-12 rounded-xl"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Teléfono (opcional)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="tel"
-                                placeholder="600 000 000"
-                                {...field}
-                                disabled={loading}
-                                className="h-12 rounded-xl"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="pt-4 space-y-3">
-                        {/* Resumen del precio */}
-                        <div className="p-3 rounded-xl bg-muted/50 border border-border/50">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Plan seleccionado</span>
-                            <span className="font-semibold">{PLANS[selectedPlan].name} ({billingCycle === "annual" ? "Anual" : "Mensual"})</span>
-                          </div>
-                          <div className="flex justify-between items-center mt-1">
-                            <span className="text-sm text-muted-foreground">Precio</span>
-                            <div className="text-right">
-                              <span className="font-bold text-lg">
-                                {billingCycle === "annual" 
-                                  ? `${PLANS[selectedPlan].annualPrice}€/año`
-                                  : `${PLANS[selectedPlan].monthlyPrice}€/mes`
-                                }
-                              </span>
-                              {billingCycle === "annual" && (
-                                <p className="text-xs text-success">
-                                  Ahorras {Math.round(PLANS[selectedPlan].monthlyPrice * 12 - PLANS[selectedPlan].annualPrice)}€
-                                </p>
-                              )}
                             </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Email de contacto</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="contacto@misalon.com"
+                              {...field}
+                              disabled={loading}
+                              className="h-11 rounded-xl bg-white/5 border-white/10"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Teléfono (opcional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="tel"
+                              placeholder="600 000 000"
+                              {...field}
+                              disabled={loading}
+                              className="h-11 rounded-xl bg-white/5 border-white/10"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="pt-3 space-y-3">
+                      {/* Price summary */}
+                      <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground">Plan seleccionado</span>
+                          <span className="text-sm font-semibold">{currentPlan.name} ({billingCycle === "annual" ? "Anual" : "Mensual"})</span>
+                        </div>
+                        <div className="flex justify-between items-center mt-1.5">
+                          <span className="text-xs text-muted-foreground">Precio</span>
+                          <div className="text-right">
+                            <span className="font-bold text-base">
+                              {billingCycle === "annual" 
+                                ? `${currentPlan.annualPrice}€/año`
+                                : `${currentPlan.monthlyPrice}€/mes`
+                              }
+                            </span>
+                            {billingCycle === "annual" && (
+                              <p className="text-[11px] text-emerald-500 font-medium">
+                                Ahorras {savings}€
+                              </p>
+                            )}
                           </div>
                         </div>
-
-                        <Button
-                          type="submit"
-                          className="w-full h-12 rounded-xl gradient-primary text-primary-foreground"
-                          disabled={loading}
-                        >
-                          {loading ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Procesando...
-                            </>
-                          ) : (
-                            <>
-                              Continuar al pago
-                              <span className="ml-2 text-xs opacity-80">(30 días gratis)</span>
-                            </>
-                          )}
-                        </Button>
                       </div>
 
-                      <p className="text-xs text-center text-muted-foreground">
-                        No se te cobrará hasta que termine tu período de prueba. Puedes cancelar en cualquier momento.
-                      </p>
+                      <Button
+                        type="submit"
+                        className="w-full h-12 rounded-2xl gradient-primary text-primary-foreground shadow-lg shadow-primary/20"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Procesando...
+                          </>
+                        ) : (
+                          <>
+                            Continuar al pago
+                            <span className="ml-2 text-[11px] opacity-70">(30 días gratis)</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
 
-                      {/* Ayuda inline */}
-                      <div className="pt-2">
-                        <SupportButton variant="inline" context="Registro de negocio" />
-                      </div>
-                    </form>
-                  </Form>
-                )}
-              </CardContent>
-            </Card>
+                    <p className="text-[11px] text-center text-muted-foreground leading-relaxed">
+                      No se te cobrará hasta que termine tu período de prueba. Puedes cancelar en cualquier momento.
+                    </p>
+
+                    <div className="pt-1">
+                      <SupportButton variant="inline" context="Registro de negocio" />
+                    </div>
+                  </form>
+                </Form>
+              )}
+            </div>
           </motion.div>
         </div>
       </div>
