@@ -130,8 +130,8 @@ export function AISearchBar({
         className={cn(
           "relative flex items-center rounded-2xl transition-all duration-300 border",
           isFocused 
-            ? "bg-card/70 backdrop-blur-xl ring-2 ring-primary/30 shadow-lg shadow-primary/10 border-white/20" 
-            : "bg-card/40 backdrop-blur-lg border-white/15 dark:border-white/10",
+            ? "liquid-glass ring-2 ring-primary/20 shadow-lg shadow-primary/5" 
+            : "liquid-glass-subtle",
         )}
       >
         {/* AI/Search Icon */}

@@ -30,10 +30,9 @@ export function SmartSearchHeader() {
 
   return (
     <div className="sticky top-0 z-50">
-      <div className="relative bg-background/60 backdrop-blur-2xl backdrop-saturate-[1.8] border-b border-white/20 dark:border-white/10 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="relative liquid-glass-nav border-b">
         {/* Safe area spacer for notch */}
-        <div className="h-[env(safe-area-inset-top)] bg-background/40" />
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
+        <div className="h-[env(safe-area-inset-top)]" />
 
         <div className="px-4 pt-3 pb-3">
           <motion.div
