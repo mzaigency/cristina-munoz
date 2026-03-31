@@ -744,6 +744,18 @@
     }
   }
 
+  @keyframes float {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(30px, -20px) scale(1.05);
+    }
+    66% {
+      transform: translate(-20px, 15px) scale(0.95);
+    }
+  }
+
   .section-3d {
     transform-style: preserve-3d;
     transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);

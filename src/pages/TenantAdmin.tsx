@@ -434,7 +434,15 @@ export default function TenantAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Liquid Glass ambient background */}
+      <div className="fixed inset-0 -z-10 bg-background">
+        <div className="absolute inset-0 opacity-40 dark:opacity-20">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/15 blur-[100px] animate-[float_20s_ease-in-out_infinite]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] rounded-full bg-secondary/20 blur-[100px] animate-[float_25s_ease-in-out_infinite_reverse]" />
+          <div className="absolute top-[40%] left-[50%] w-[35%] h-[35%] rounded-full bg-accent/15 blur-[80px] animate-[float_18s_ease-in-out_infinite_2s]" />
+        </div>
+      </div>
       {/* Mobile Sidebar */}
       {isMobile && (
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -518,7 +526,7 @@ export default function TenantAdmin() {
 
       {/* Header */}
       <header
-        className="sticky top-0 z-50 bg-background border-b shadow-sm"
+        className="sticky top-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/40 shadow-sm"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-4">
