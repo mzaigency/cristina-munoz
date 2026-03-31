@@ -526,7 +526,7 @@ export default function TenantAdmin() {
 
       {/* Header */}
       <header
-        className="sticky top-0 z-50 bg-background border-b shadow-sm"
+        className="sticky top-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/40 shadow-sm"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-4">
