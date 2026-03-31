@@ -292,7 +292,7 @@ export function UserNotificationSettings() {
                     window.open(`intent://settings/notifications#Intent;scheme=android-app;end`, "_self");
                   }
                   // Fallback: Chrome desktop & others
-                  if (window.chrome) {
+                  if ((window as any).chrome) {
                     window.open("chrome://settings/content/notifications", "_blank");
                   }
                 }}
