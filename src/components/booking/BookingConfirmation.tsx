@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
 import { BookingData } from "@/types/booking";
+import { PushPermissionPrompt } from "@/components/notifications/PushPermissionPrompt";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
