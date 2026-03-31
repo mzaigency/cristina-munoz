@@ -206,7 +206,7 @@ export default function MyBookings() {
     return (
       <AppLayout>
         <SEO title="Mis Citas" description="Gestiona tus reservas" canonicalUrl="/mis-citas" noindex={true} />
-        <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 pt-[env(safe-area-inset-top)]">
+        <div className="sticky top-0 z-40 liquid-glass-solid pt-[env(safe-area-inset-top)]">
           <div className="px-4 py-3">
             <h1 className="text-[28px] font-bold text-foreground tracking-tight">Mis Citas</h1>
           </div>
@@ -223,7 +223,7 @@ export default function MyBookings() {
       <SEO title="Mis Citas" description="Gestiona tus reservas" canonicalUrl="/mis-citas" noindex={true} />
 
       {/* iOS-style Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 pt-[env(safe-area-inset-top)]">
+      <div className="sticky top-0 z-40 liquid-glass-solid pt-[env(safe-area-inset-top)]">
         <div className="px-4 py-3">
           <h1 className="text-[28px] font-bold text-foreground tracking-tight">Mis Citas</h1>
         </div>
@@ -243,7 +243,7 @@ export default function MyBookings() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center py-20"
             >
-              <div className="w-20 h-20 rounded-3xl bg-secondary flex items-center justify-center mx-auto mb-5">
+              <div className="w-20 h-20 rounded-3xl liquid-glass-solid flex items-center justify-center mx-auto mb-5">
                 <Calendar className="h-10 w-10 text-muted-foreground" />
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
@@ -321,7 +321,7 @@ export default function MyBookings() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            className="ios-card p-4 active:scale-[0.98] transition-transform"
+                            className="liquid-glass-card !rounded-2xl p-4 active:scale-[0.98] transition-transform"
                           >
                             {/* Countdown badge */}
                             {countdown && (
@@ -386,7 +386,7 @@ export default function MyBookings() {
                               <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/50">
                                 <button
                                   onClick={() => setRescheduleBooking(booking)}
-                                  className="flex-1 h-10 rounded-xl bg-secondary text-sm font-medium text-foreground active:bg-secondary/80 transition-colors"
+                                  className="flex-1 h-10 rounded-xl liquid-glass-pill !rounded-xl text-sm font-medium text-foreground active:bg-secondary/80 transition-colors"
                                 >
                                   Reagendar
                                 </button>

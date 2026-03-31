@@ -213,7 +213,7 @@ export default function Profile() {
       />
       
       {/* Header with safe area */}
-      <div className="bg-gradient-to-b from-primary/10 to-background pt-[calc(env(safe-area-inset-top)+2rem)] pb-6 px-4">
+      <div className="bg-gradient-to-b from-primary/8 to-transparent pt-[calc(env(safe-area-inset-top)+2rem)] pb-6 px-4">
         <div className="flex flex-col items-center">
           {/* Avatar with upload */}
           {userId && (
@@ -242,7 +242,7 @@ export default function Profile() {
       <div className="px-4 py-6">
         {isEditing ? (
           /* Edit Mode */
-          <div className="ios-card p-4">
+          <div className="liquid-glass-card !rounded-2xl p-4">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <FormField
@@ -365,7 +365,7 @@ export default function Profile() {
             )}
 
             {/* Personal Info Section */}
-            <div className="ios-card overflow-hidden">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
               <button 
                 onClick={() => setIsEditing(true)}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
@@ -382,7 +382,7 @@ export default function Profile() {
             </div>
 
             {/* Quick Links */}
-            <div className="ios-card overflow-hidden divide-y divide-border/50">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden divide-y divide-border/30">
               <button 
                 onClick={() => navigate("/mis-citas")}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
@@ -413,7 +413,7 @@ export default function Profile() {
             </div>
 
             {/* Notifications */}
-            <div className="ios-card overflow-hidden">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
               <button 
                 onClick={() => navigate("/perfil/notificaciones")}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
@@ -429,7 +429,7 @@ export default function Profile() {
               </button>
             </div>
 
-            <div className="ios-card overflow-hidden">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
               <div className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <Users className="h-5 w-5 text-primary" />
@@ -442,7 +442,7 @@ export default function Profile() {
             </div>
 
             {/* Appearance */}
-            <div className="ios-card overflow-hidden">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
               <div className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   {theme === 'dark' ? (
@@ -459,7 +459,7 @@ export default function Profile() {
                     {theme === 'dark' ? 'Modo oscuro' : theme === 'light' ? 'Modo claro' : 'Automático'}
                   </p>
                 </div>
-                <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+                <div className="flex items-center gap-1 liquid-glass-pill !rounded-lg p-1">
                   <button
                     onClick={() => setTheme('light')}
                     className={`p-2 rounded-md transition-all ${
@@ -495,7 +495,7 @@ export default function Profile() {
             </div>
 
             {/* Legal Links */}
-            <div className="ios-card overflow-hidden divide-y divide-border/50">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden divide-y divide-border/30">
               <Link 
                 to="/privacidad"
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
@@ -524,7 +524,7 @@ export default function Profile() {
             </div>
 
             {/* Logout */}
-            <div className="ios-card overflow-hidden">
+            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
               <button 
                 onClick={handleLogout}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"

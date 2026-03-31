@@ -125,7 +125,7 @@ export default function Messages() {
       <AppLayout hideNavigation={!!selectedConversation}>
         <div className="min-h-screen bg-background">
           {/* Header iOS style */}
-          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-[env(safe-area-inset-top)]">
+          <div className="sticky top-0 z-10 liquid-glass-solid pt-[env(safe-area-inset-top)]">
             <div className="flex items-center h-14 px-2">
               {selectedConversation ? (
                 <Button
@@ -191,7 +191,7 @@ export default function Messages() {
         </a>
 
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className="sticky top-0 z-10 liquid-glass-solid border-b border-border/30">
           <div className="container mx-auto flex items-center justify-between h-16 px-4">
             <Button
               variant="ghost"
