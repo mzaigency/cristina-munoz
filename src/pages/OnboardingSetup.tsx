@@ -1003,8 +1003,10 @@ export default function OnboardingSetup() {
       <AppLayout hideNavigation>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Preparando tu salón...</p>
+            <div className="w-16 h-16 rounded-2xl liquid-glass-card flex items-center justify-center mx-auto mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground">Preparando tu salón...</p>
           </div>
         </div>
       </AppLayout>
