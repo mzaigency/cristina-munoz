@@ -33,12 +33,18 @@ export const useTenantAccess = (tenantId: string | undefined): TenantAccess => {
 
   useEffect(() => {
     if (!tenantId) {
-      // Don't set loading to false — we're waiting for tenantId
       return;
     }
 
-    // Skip if already checked for this tenant
-    if (checkedRef.current === tenantId && accessCache?.tenantId === tenantId) {
+    // If cache is valid for this tenant, use it directly
+    if (accessCache?.tenantId === tenantId) {
+      setAccess(accessCache.result);
+      checkedRef.current = tenantId;
+      return;
+    }
+
+    // Skip if already checked for this tenant in this mount
+    if (checkedRef.current === tenantId) {
       return;
     }
 
