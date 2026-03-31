@@ -259,7 +259,7 @@ export function UserNotificationSettings() {
               </div>
               <div>
                 <Label className="font-semibold text-sm">
-                  Notificaciones push
+                  Notificaciones
                 </Label>
                 <p className="text-xs text-muted-foreground">
                   {permission === "denied"
