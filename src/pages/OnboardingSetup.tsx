@@ -803,23 +803,28 @@ function SuccessStep({ tenantSlug }: { tenantSlug: string }) {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="text-center py-8"
+      className="text-center py-10"
     >
-      <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mx-auto mb-6">
-        <PartyPopper className="h-10 w-10 text-primary-foreground" />
+      <div className="w-24 h-24 rounded-[28px] liquid-glass-card flex items-center justify-center mx-auto mb-8">
+        <motion.div
+          animate={{ rotate: [0, -10, 10, -5, 5, 0] }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
+          <PartyPopper className="h-10 w-10 text-primary" />
+        </motion.div>
       </div>
       
-      <h2 className="text-2xl font-bold text-foreground mb-3">
+      <h2 className="text-2xl font-bold text-foreground mb-2">
         ¡Tu salón está listo!
       </h2>
-      <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
-        Tu landing page profesional está creada. Ahora puedes empezar a recibir reservas online.
+      <p className="text-sm text-muted-foreground mb-8 max-w-xs mx-auto leading-relaxed">
+        Tu landing page profesional está creada. Ya puedes empezar a recibir reservas.
       </p>
 
       <div className="space-y-3">
         <Button
           onClick={() => navigate(`/${tenantSlug}`)}
-          className="w-full h-12 rounded-xl gradient-primary text-primary-foreground"
+          className="w-full h-12 rounded-2xl gradient-primary text-primary-foreground shadow-lg shadow-primary/20"
         >
           <Building2 className="h-4 w-4 mr-2" />
           Ver mi landing page
@@ -827,7 +832,7 @@ function SuccessStep({ tenantSlug }: { tenantSlug: string }) {
         <Button
           variant="outline"
           onClick={() => navigate(`/admin/${tenantSlug}`)}
-          className="w-full h-12 rounded-xl"
+          className="w-full h-12 rounded-2xl bg-white/5 backdrop-blur-sm border-white/10"
         >
           Ir al panel de administración
         </Button>
@@ -998,8 +1003,10 @@ export default function OnboardingSetup() {
       <AppLayout hideNavigation>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Preparando tu salón...</p>
+            <div className="w-16 h-16 rounded-2xl liquid-glass-card flex items-center justify-center mx-auto mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground">Preparando tu salón...</p>
           </div>
         </div>
       </AppLayout>
@@ -1071,20 +1078,19 @@ export default function OnboardingSetup() {
         noindex
       />
 
-      {/* Header mejorado - diseño compacto para móvil */}
+      {/* Header - liquid glass */}
       <div 
-        className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/30"
+        className="sticky top-0 z-40 bg-background/80 backdrop-blur-2xl border-b border-white/10"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="px-4 py-3">
-          {/* Top row - más compacto */}
           <div className="flex items-center gap-3 mb-3">
             {step > 0 && step < totalSteps ? (
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setStep(step - 1)}
-                className="h-8 w-8 rounded-full shrink-0"
+                className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -1093,7 +1099,7 @@ export default function OnboardingSetup() {
                 variant="ghost" 
                 size="icon" 
                 onClick={() => navigate("/")}
-                className="h-8 w-8 rounded-full shrink-0"
+                className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -1104,62 +1110,44 @@ export default function OnboardingSetup() {
                 {step < totalSteps && (() => {
                   const StepIcon = steps[step].icon;
                   return (
-                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <StepIcon className="h-4 w-4 text-primary" />
+                    <div className="w-7 h-7 rounded-xl bg-primary/10 backdrop-blur-sm flex items-center justify-center shrink-0">
+                      <StepIcon className="h-3.5 w-3.5 text-primary" />
                     </div>
                   );
                 })()}
-                <div className="min-w-0">
-                  <h1 className="font-bold text-base text-foreground truncate">
-                    {step < totalSteps ? steps[step].title : "¡Completado!"}
-                  </h1>
-                </div>
+                <h1 className="font-semibold text-sm text-foreground truncate">
+                  {step < totalSteps ? steps[step].title : "¡Completado!"}
+                </h1>
               </div>
             </div>
             
             {step < totalSteps && (
-              <div className="text-right shrink-0">
-                <span className="text-lg font-bold text-primary">{step + 1}</span>
-                <span className="text-sm text-muted-foreground">/{totalSteps}</span>
+              <div className="flex items-baseline gap-0.5 shrink-0">
+                <span className="text-sm font-bold text-primary">{step + 1}</span>
+                <span className="text-xs text-muted-foreground">/{totalSteps}</span>
               </div>
             )}
           </div>
 
-          {/* Progress bar - diseño moderno y limpio */}
           {step < totalSteps && (
-            <div className="space-y-2">
-              {/* Barra de progreso principal */}
-              <div className="relative h-1.5 bg-secondary rounded-full overflow-hidden">
+            <div className="space-y-2.5">
+              {/* Progress bar */}
+              <div className="relative h-1 bg-white/5 rounded-full overflow-hidden">
                 <motion.div 
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-primary to-primary/80 rounded-full"
+                  className="absolute inset-y-0 left-0 bg-primary rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 />
-                {/* Efecto de brillo */}
-                <motion.div 
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
-                  style={{ width: `${((step + 1) / totalSteps) * 100}%` }}
-                  animate={{ 
-                    x: ["-100%", "100%"],
-                  }}
-                  transition={{ 
-                    duration: 1.5, 
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                    ease: "easeInOut"
-                  }}
-                />
               </div>
               
-              {/* Indicadores de categoría - scroll horizontal */}
-              <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4">
-                {/* Agrupamos los pasos por categoría */}
+              {/* Category pills */}
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none -mx-4 px-4">
                 {[
-                  { label: "Info", range: [0, 3], icon: "📋" },
-                  { label: "Contenido", range: [4, 7], icon: "📸" },
-                  { label: "Diseño", range: [8, 10], icon: "🎨" },
-                  { label: "Final", range: [11, 11], icon: "✨" },
+                  { label: "Info", range: [0, 3] },
+                  { label: "Contenido", range: [4, 7] },
+                  { label: "Diseño", range: [8, 10] },
+                  { label: "Final", range: [11, 11] },
                 ].map((category, catIndex) => {
                   const isActive = step >= category.range[0] && step <= category.range[1];
                   const isCompleted = step > category.range[1];
@@ -1167,31 +1155,27 @@ export default function OnboardingSetup() {
                   const completedInCategory = Math.max(0, Math.min(stepsInCategory, step - category.range[0] + (step >= category.range[0] ? 1 : 0)));
                   
                   return (
-                    <motion.div
+                    <div
                       key={catIndex}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: catIndex * 0.05 }}
                       className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all shrink-0",
+                        "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all shrink-0",
                         isActive 
-                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          ? "bg-primary/15 text-primary border border-primary/20" 
                           : isCompleted 
-                            ? "bg-primary/20 text-primary"
-                            : "bg-secondary text-muted-foreground"
+                            ? "bg-primary/5 text-primary/70"
+                            : "bg-white/5 text-muted-foreground"
                       )}
                     >
-                      <span>{category.icon}</span>
                       <span>{category.label}</span>
                       {isActive && (
-                        <span className="text-[10px] opacity-80">
+                        <span className="text-[10px] opacity-70">
                           {completedInCategory}/{stepsInCategory}
                         </span>
                       )}
                       {isCompleted && (
                         <Check className="w-3 h-3" />
                       )}
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
@@ -1200,15 +1184,15 @@ export default function OnboardingSetup() {
         </div>
       </div>
 
-      <div className="px-4 py-8 pb-24">
+      <div className="px-4 py-6 pb-24">
         <div className="max-w-lg mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
             >
               {renderStep()}
             </motion.div>
