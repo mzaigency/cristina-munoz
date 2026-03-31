@@ -137,9 +137,58 @@ export default function TenantAdmin() {
     enabled: isMobile,
   });
 
+  // Fetch tenant by slug (no auth checks — useTenantAccess handles that)
   useEffect(() => {
-    checkAuth();
+    if (!slug) {
+      navigate("/");
+      return;
+    }
+
+    const fetchTenant = async () => {
+      setTenantLoading(true);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      setUserEmail(session.user.email || "");
+
+      const { data: tenantData, error: tenantError } = await supabase
+        .from("tenants")
+        .select("*")
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (tenantError || !tenantData) {
+        toast({
+          title: "Error",
+          description: "No se encontró el salón",
+          variant: "destructive",
+        });
+        navigate("/");
+        return;
+      }
+
+      setTenant(tenantData);
+      setTenantLoading(false);
+    };
+
+    fetchTenant();
   }, [slug]);
+
+  // Redirect if access check completes and user has no access
+  useEffect(() => {
+    if (!accessLoading && tenant && !hasAccess) {
+      toast({
+        title: "Acceso denegado",
+        description: "No tienes permisos para acceder a este panel",
+        variant: "destructive",
+      });
+      navigate("/");
+    }
+  }, [accessLoading, hasAccess, tenant]);
 
   useEffect(() => {
     if (tenant?.id) {
@@ -166,91 +215,6 @@ export default function TenantAdmin() {
         })),
       );
     }
-  };
-
-  const checkAuth = async () => {
-    if (!slug) {
-      navigate("/");
-      return;
-    }
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      navigate("/auth");
-      return;
-    }
-
-    setUserEmail(session.user.email || "");
-
-    const { data: tenantData, error: tenantError } = await supabase
-      .from("tenants")
-      .select("*")
-      .eq("slug", slug)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (tenantError || !tenantData) {
-      toast({
-        title: "Error",
-        description: "No se encontró el salón",
-        variant: "destructive",
-      });
-      navigate("/");
-      return;
-    }
-
-    setTenant(tenantData);
-
-    const userId = session.user.id;
-
-    const { data: superadminRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "superadmin")
-      .maybeSingle();
-
-    if (superadminRole) {
-      setHasAccess(true);
-      setLoading(false);
-      return;
-    }
-
-    const { data: adminData } = await supabase
-      .from("tenant_admins")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("tenant_id", tenantData.id)
-      .maybeSingle();
-
-    if (adminData) {
-      setHasAccess(true);
-      setLoading(false);
-      return;
-    }
-
-    const { data: stylistData } = await supabase
-      .from("tenant_stylists")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("tenant_id", tenantData.id)
-      .maybeSingle();
-
-    if (stylistData) {
-      setHasAccess(true);
-      setLoading(false);
-      return;
-    }
-
-    toast({
-      title: "Acceso denegado",
-      description: "No tienes permisos para acceder a este panel",
-      variant: "destructive",
-    });
-    navigate("/");
   };
 
   const handleSignOut = async () => {
