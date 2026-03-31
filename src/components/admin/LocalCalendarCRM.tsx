@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, GripVertical, Banknote } from "lucide-react";
+import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, GripVertical, Banknote, ShieldAlert } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +54,7 @@ interface LocalBooking {
   tenant_id: string | null;
   recurrence_group_id: string | null;
   recurrence_pattern: any | null;
+  skip_availability_check: boolean;
 }
 
 interface LocalCalendarCRMProps {
@@ -1271,10 +1272,12 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                           onDragStart={(e) => handleDragStart(e, booking)}
                                           onDragEnd={handleDragEnd}
                                           className={cn(
-                                            "absolute rounded-lg overflow-hidden transition-all duration-150",
+                                            "absolute overflow-hidden transition-all duration-150",
+                                            "rounded-xl",
+                                            "backdrop-blur-sm",
                                             "shadow-sm hover:shadow-lg hover:z-30",
                                             !isBlocked && "cursor-grab active:cursor-grabbing",
-                                            isCompleted && "opacity-70",
+                                            isCompleted && "opacity-60",
                                             isHighlighted && "ring-2 ring-primary ring-offset-1 animate-pulse",
                                             isDragging && "opacity-50 scale-95",
                                             isResizing && "z-40 ring-2 ring-primary",
@@ -1285,32 +1288,31 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                             left: `calc(${layout.left} + 2px)`,
                                             width: `calc(${layout.width} - 4px)`,
                                             zIndex: layout.zIndex,
-                                            backgroundColor: isBlocked ? "#FEE2E2" : `${bookingColor}15`,
+                                            backgroundColor: isBlocked ? "hsl(0 84% 60% / 0.12)" : `${bookingColor}12`,
                                             borderLeft: `3px solid ${bookingColor}`,
+                                            border: isBlocked ? undefined : `0.5px solid ${bookingColor}25`,
+                                            borderLeftWidth: '3px',
+                                            borderLeftColor: bookingColor,
                                           }}
                                           onClick={(e) => {
                                             if (!isBlocked && !isResizing) {
                                               if (isMobile) {
-                                                // On mobile: toggle action buttons on tap
                                                 e.stopPropagation();
                                                 if (activeBookingActions === booking.id) {
-                                                  // Second tap opens edit dialog
                                                   setActiveBookingActions(null);
                                                   setSelectedBooking(booking);
                                                   setIsEditDialogOpen(true);
                                                 } else {
-                                                  // First tap shows action buttons
                                                   setActiveBookingActions(booking.id);
                                                 }
                                               } else {
-                                                // On desktop: directly open edit dialog
                                                 setSelectedBooking(booking);
                                                 setIsEditDialogOpen(true);
                                               }
                                             }
                                           }}
                                         >
-                                          {/* Content - always visible, adaptive layout */}
+                                          {/* Content */}
                                           <div
                                             className={cn(
                                               "h-full flex flex-col px-2 py-1",
@@ -1318,9 +1320,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                             )}
                                           >
                                             {isCompact ? (
-                                              // Ultra compact: single line with all info
                                               <div className="flex items-center gap-1 min-w-0 pr-10">
                                                 {isCompleted && <Check className="h-3 w-3 text-green-600 shrink-0" />}
+                                                {booking.skip_availability_check && (
+                                                  <span title="Disponibilidad saltada"><ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" /></span>
+                                                )}
                                                 <span className="font-semibold text-xs truncate text-foreground">
                                                   {booking.customer_name}
                                                 </span>
@@ -1329,12 +1333,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                 </span>
                                               </div>
                                             ) : (
-                                              // Normal/expanded layout
                                               <>
                                                 <div className="min-w-0 pr-10">
                                                   <div className="flex items-center gap-1">
                                                     {isCompleted && (
                                                       <Check className="h-3 w-3 text-green-600 shrink-0" />
+                                                    )}
+                                                    {booking.skip_availability_check && (
+                                                      <span title="Disponibilidad saltada"><ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" /></span>
                                                     )}
                                                     <p className="font-semibold text-sm truncate text-foreground leading-tight">
                                                       {booking.customer_name}
@@ -1358,13 +1364,12 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                             )}
                                           </div>
 
-                                          {/* Action buttons - Desktop: always visible, Mobile: only when tapped */}
+                                          {/* Action buttons */}
                                           {!isBlocked && (!isMobile || activeBookingActions === booking.id) && (
                                             <div className={cn(
                                               "absolute top-0.5 right-0.5 flex items-center gap-0.5 z-20 transition-opacity",
                                               isMobile ? "opacity-100" : "opacity-70 hover:opacity-100"
                                             )}>
-                                              {/* Completar */}
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation();
@@ -1372,17 +1377,16 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                   if (isMobile) setActiveBookingActions(null);
                                                 }}
                                                 className={cn(
-                                                  "p-1 rounded transition-all",
+                                                  "p-1 rounded-lg transition-all",
                                                   isCompleted
                                                     ? "bg-green-500 text-white"
-                                                    : "bg-black/20 text-white hover:bg-green-500"
+                                                    : "bg-foreground/10 text-foreground/70 hover:bg-green-500 hover:text-white"
                                                 )}
                                                 title={isCompleted ? "Desmarcar" : "Completar"}
                                               >
                                                 <Check className="h-3 w-3" />
                                               </button>
 
-                                              {/* Cobrar - solo si no completada */}
                                               {!isCompleted && onNavigateToCash && (
                                                 <button
                                                   onClick={(e) => {
@@ -1398,21 +1402,20 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                                                     if (isMobile) setActiveBookingActions(null);
                                                     onNavigateToCash();
                                                   }}
-                                                  className="p-1 rounded bg-black/20 text-white hover:bg-emerald-500 transition-all"
+                                                  className="p-1 rounded-lg bg-foreground/10 text-foreground/70 hover:bg-emerald-500 hover:text-white transition-all"
                                                   title="Cobrar"
                                                 >
                                                   <Banknote className="h-3 w-3" />
                                                 </button>
                                               )}
 
-                                              {/* Eliminar */}
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   if (isMobile) setActiveBookingActions(null);
                                                   handleDeleteBooking(booking);
                                                 }}
-                                                className="p-1 rounded bg-black/20 text-white hover:bg-red-500 transition-all"
+                                                className="p-1 rounded-lg bg-foreground/10 text-foreground/70 hover:bg-red-500 hover:text-white transition-all"
                                                 title="Eliminar"
                                               >
                                                 <Trash2 className="h-3 w-3" />
