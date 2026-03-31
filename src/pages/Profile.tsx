@@ -537,19 +537,11 @@ export default function Profile() {
             </div>
 
             {/* Delete Account */}
-            <div className="ios-card overflow-hidden mt-8">
+            <div className="mt-10 mb-4 flex justify-center">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button 
-                    className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
-                      <Trash2 className="h-5 w-5 text-destructive" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-destructive">Eliminar cuenta</p>
-                      <p className="text-xs text-muted-foreground">Esta acción es permanente</p>
-                    </div>
+                  <button className="text-xs text-muted-foreground/60 underline underline-offset-2 hover:text-muted-foreground transition-colors">
+                    Eliminar mi cuenta
                   </button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -588,7 +580,7 @@ export default function Profile() {
             </div>
           </div>
         )}
-      </div>
+            </div>
     </AppLayout>
   );
 }
