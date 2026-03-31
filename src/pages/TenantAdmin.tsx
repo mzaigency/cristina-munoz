@@ -373,6 +373,8 @@ export default function TenantAdmin() {
     );
   };
 
+  const loading = tenantLoading || accessLoading;
+
   if (loading || subscriptionLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">

@@ -58,7 +58,6 @@ const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
 
     const check = async () => {
       try {
-        // 1. Check maintenance mode
         const { data } = await supabase
           .from("app_config")
           .select("value")
@@ -72,7 +71,6 @@ const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        // 2. Maintenance is ON — check if user is superadmin
         const { data: { session } } = await supabase.auth.getSession();
         let superAdmin = false;
 
@@ -95,16 +93,14 @@ const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
 
     check();
 
-    return () => { cancelled = true; };
-  }, [location.pathname]);
-
-  // Listen for auth state changes globally (login/logout)
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Re-trigger check by resetting state
-      setState(null);
+    // Only re-check on meaningful auth events (not TOKEN_REFRESHED)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        check();
+      }
     });
-    return () => subscription.unsubscribe();
+
+    return () => { cancelled = true; subscription.unsubscribe(); };
   }, []);
 
   // Still loading

@@ -37,30 +37,17 @@ export const useCurrentUserTenant = (): CurrentUserTenant => {
   const hasChecked = useRef(false);
 
   useEffect(() => {
-    // Si ya tenemos cache válida, no volver a cargar
-    const checkCache = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUserId = session?.user?.id || null;
-      
-      // Si el usuario es el mismo y ya tenemos cache, usar cache
-      if (globalCache && cacheUserId === currentUserId && !state.loading) {
-        return;
-      }
-      
-      // Si ya verificamos en este montaje, no repetir
-      if (hasChecked.current && cacheUserId === currentUserId) {
-        return;
-      }
-      
+    // Synchronous cache check first — avoid async getSession if cache is valid
+    if (globalCache && cacheUserId && !state.loading) {
+      // Cache exists and is valid, skip
+    } else if (!hasChecked.current) {
       hasChecked.current = true;
-      await checkUserTenant();
-    };
-
-    checkCache();
+      checkUserTenant();
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      // Solo recargar en eventos importantes de auth
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+      // Only reload on meaningful auth events — NOT TOKEN_REFRESHED
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         hasChecked.current = false;
         globalCache = null;
         cacheUserId = null;
