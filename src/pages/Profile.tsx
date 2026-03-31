@@ -46,21 +46,23 @@ export default function Profile() {
     defaultValues: { full_name: "", username: "", email: "", phone: "" },
   });
 
+  const { user: authUser, loading: authLoading } = useAuth();
+
   useEffect(() => {
-    const checkAuthAndLoadProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
+    if (authLoading) return;
+    if (!authUser) {
+      navigate("/auth");
+      return;
+    }
 
-      setUserId(session.user.id);
+    setUserId(authUser.id);
 
+    const loadProfile = async () => {
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('full_name, username, email, phone, avatar_url')
-          .eq('id', session.user.id)
+          .eq('id', authUser.id)
           .single();
 
         if (error) throw error;
@@ -87,8 +89,8 @@ export default function Profile() {
       }
     };
 
-    checkAuthAndLoadProfile();
-  }, [navigate, toast, form]);
+    loadProfile();
+  }, [authUser, authLoading, navigate, toast, form]);
 
   const handleSubmit = async (values: ProfileFormValues) => {
     setLoading(true);

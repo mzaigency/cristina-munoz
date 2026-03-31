@@ -64,23 +64,16 @@ export default function MyBookings() {
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    checkAuthAndLoadBookings();
-  }, []);
-
-  const checkAuthAndLoadBookings = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
+    if (authLoading) return;
+    if (!user) {
       navigate("/auth");
       return;
     }
-
-    await loadBookings();
-  };
+    loadBookings();
+  }, [user, authLoading]);
 
   const loadBookings = async () => {
     try {

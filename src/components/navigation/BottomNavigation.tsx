@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Home, Calendar, MessageCircle, User, Shield, Plus } from "lucide-react";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
@@ -20,14 +21,17 @@ export function BottomNavigation() {
   const location = useLocation();
   const { unreadCount } = useUnreadMessages();
   const { tenant, isAdmin, isStylist } = useCurrentUserTenant();
+  const { user } = useAuth();
   const [showPostCreator, setShowPostCreator] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const haptic = useHaptic();
 
   useEffect(() => {
+    if (!user) {
+      setAvatarUrl(null);
+      return;
+    }
     const fetchAvatar = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
       const { data } = await supabase
         .from('profiles')
         .select('avatar_url')
@@ -36,12 +40,7 @@ export function BottomNavigation() {
       if (data?.avatar_url) setAvatarUrl(data.avatar_url);
     };
     fetchAvatar();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      fetchAvatar();
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  }, [user?.id]);
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -49,7 +48,6 @@ export function BottomNavigation() {
     return false;
   };
 
-  // Build nav items - base items only, admin handled separately
   const navItems = [...baseNavItems];
 
   const handleCreatePost = () => {
@@ -57,9 +55,8 @@ export function BottomNavigation() {
     setShowPostCreator(true);
   };
 
-  // Mostrar botones para admins y estilistas vinculados
   const showCenterButtons = (isAdmin || isStylist) && tenant;
-  const centerButtonIndex = 2; // After "Citas"
+  const centerButtonIndex = 2;
 
   return (
     <>
@@ -68,15 +65,12 @@ export function BottomNavigation() {
           {navItems.map(({ path, icon: Icon, label }, index) => {
             const active = isActive(path);
             const showBadge = path === "/mensajes" && unreadCount > 0;
-            
-            // Insert admin + create buttons after "Citas" (index 1)
             const insertCenterButtons = showCenterButtons && index === centerButtonIndex;
 
             return (
               <div key={path} className="contents">
                 {insertCenterButtons && (
                   <>
-                    {/* Admin Button */}
                     <Link
                       to={`/admin/${tenant.slug}`}
                       className="flex flex-col items-center justify-center min-w-[56px] h-full relative active:scale-95 transition-transform duration-200"
@@ -88,8 +82,6 @@ export function BottomNavigation() {
                         <Shield className="h-6 w-6" strokeWidth={2.5} />
                       </motion.div>
                     </Link>
-                    
-                    {/* Create Post Button */}
                     <button
                       onClick={handleCreatePost}
                       className="flex flex-col items-center justify-center min-w-[56px] h-full relative active:scale-95 transition-transform duration-200"
@@ -144,7 +136,6 @@ export function BottomNavigation() {
                       />
                     )}
                     
-                    {/* Notification Badge */}
                     {showBadge && (
                       <motion.span 
                         initial={{ scale: 0 }}
@@ -175,7 +166,6 @@ export function BottomNavigation() {
         </div>
       </nav>
 
-      {/* Post Creator Modal */}
       <PostCreator 
         isOpen={showPostCreator} 
         onClose={() => setShowPostCreator(false)} 
