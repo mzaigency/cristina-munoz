@@ -205,7 +205,7 @@ export function NotificationSettings({
                 {isEnabled ? <BellRing className="h-5 w-5 text-primary" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
               </div>
               <div>
-                <Label className="font-semibold text-sm">Notificaciones push</Label>
+                <Label className="font-semibold text-sm">Notificaciones</Label>
                 <p className="text-xs text-muted-foreground">
                   {permission === 'denied' ? 'Bloqueadas en ajustes del navegador' : isEnabled ? 'Recibirás alertas en tu dispositivo' : 'Activa para recibir alertas en el móvil'}
                 </p>
