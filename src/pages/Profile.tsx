@@ -242,7 +242,7 @@ export default function Profile() {
       <div className="px-4 py-6">
         {isEditing ? (
           /* Edit Mode */
-          <div className="ios-card p-4">
+          <div className="liquid-glass-card !rounded-2xl p-4">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <FormField
