@@ -2,6 +2,7 @@ import { SEO } from "@/components/SEO";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Heart, TrendingUp, Navigation, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
@@ -67,17 +68,14 @@ const Index = () => {
   const [sortByDistance, setSortByDistance] = useState(false);
   const { scoresMap, isAuthenticated: hasRecommendations } = useRecommendations();
 
-  // Check if current user is superadmin
+  // Check if current user is superadmin — uses auth context, no extra getUser call
+  const { user: authUser } = useAuth();
   useEffect(() => {
-    const checkSuperadmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase.rpc('is_superadmin');
-        setIsSuperadmin(data === true);
-      }
-    };
-    checkSuperadmin();
-  }, []);
+    if (!authUser) { setIsSuperadmin(false); return; }
+    supabase.rpc('is_superadmin').then(({ data }) => {
+      setIsSuperadmin(data === true);
+    });
+  }, [authUser?.id]);
 
   // Load recent searches from localStorage
   useEffect(() => {

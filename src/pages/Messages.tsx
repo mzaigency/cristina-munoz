@@ -6,6 +6,7 @@ import { ConversationList } from '@/components/messages/ConversationList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
 import { useConversations, useMessages, Conversation, getOrCreateConversation } from '@/hooks/useConversations';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AppLayout } from '@/components/navigation/AppLayout';
@@ -14,9 +15,8 @@ export default function Messages() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
+  const { user, loading: authLoading } = useAuth();
 
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
 
@@ -33,20 +33,11 @@ export default function Messages() {
   );
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/auth?redirect=/mensajes');
-        return;
-      }
-      setUser(user);
-      setLoading(false);
-    };
-
-    checkAuth();
-  }, [navigate]);
+    if (authLoading) return;
+    if (!user) {
+      navigate('/auth?redirect=/mensajes');
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     // Mark messages as read when conversation is selected
@@ -111,7 +102,7 @@ export default function Messages() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedConversation, handleBack]);
 
-  if (loading) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useUnreadMessages() {
+  const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchUnreadCount = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setUnreadCount(0);
         return;
@@ -31,6 +32,8 @@ export function useUnreadMessages() {
 
   useEffect(() => {
     fetchUnreadCount();
+
+    if (!user) return;
 
     // Subscribe to realtime updates
     const channel = supabase
@@ -59,16 +62,10 @@ export function useUnreadMessages() {
       )
       .subscribe();
 
-    // Also listen to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      fetchUnreadCount();
-    });
-
     return () => {
       supabase.removeChannel(channel);
-      subscription.unsubscribe();
     };
-  }, []);
+  }, [user?.id]);
 
   return { unreadCount, loading, refetch: fetchUnreadCount };
 }

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface RecommendationScore {
   tenant_id: string;
@@ -9,19 +9,8 @@ interface RecommendationScore {
 }
 
 export function useRecommendations() {
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserId(user?.id || null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUserId(session?.user?.id || null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['recommendations', userId],
@@ -45,8 +34,8 @@ export function useRecommendations() {
       return data?.recommendations as RecommendationScore[] | null;
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 30, // 30 minutes cache
-    gcTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
   });
 
   // Create a map for quick lookups

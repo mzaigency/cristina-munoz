@@ -6,35 +6,33 @@ import glowappLogo from "@/assets/glowapp-logo.png";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function SmartSearchHeader() {
+  const { user } = useAuth();
   const [isSuperadmin, setIsSuperadmin] = useState(false);
 
   useEffect(() => {
+    if (!user) {
+      setIsSuperadmin(false);
+      return;
+    }
     const checkSuperadmin = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .eq("role", "superadmin")
-          .maybeSingle();
-        setIsSuperadmin(!!data);
-      }
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "superadmin")
+        .maybeSingle();
+      setIsSuperadmin(!!data);
     };
     checkSuperadmin();
-  }, []);
+  }, [user?.id]);
 
   return (
     <div className="sticky top-0 z-50">
       <div className="relative liquid-glass-solid">
-        {/* Safe area spacer for notch */}
         <div className="h-[env(safe-area-inset-top)]" />
-        
-        {/* Subtle bottom edge light refraction */}
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
         <div className="px-4 pt-3 pb-3">
@@ -44,7 +42,6 @@ export function SmartSearchHeader() {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="flex items-center justify-between"
           >
-            {/* Logo */}
             <Link to="/">
               <motion.img
                 src={glowappLogo}
@@ -56,7 +53,6 @@ export function SmartSearchHeader() {
               />
             </Link>
 
-            {/* Right side */}
             <div className="flex items-center gap-2">
               {isSuperadmin && (
                 <Link
