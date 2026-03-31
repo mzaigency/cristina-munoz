@@ -4,9 +4,10 @@ import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PostCreator } from "@/components/social/PostCreator";
 import { useHaptic } from "@/hooks/useHaptic";
+import { supabase } from "@/integrations/supabase/client";
 
 const baseNavItems = [
   { path: "/", icon: Home, label: "Inicio" },
@@ -20,7 +21,27 @@ export function BottomNavigation() {
   const { unreadCount } = useUnreadMessages();
   const { tenant, isAdmin, isStylist } = useCurrentUserTenant();
   const [showPostCreator, setShowPostCreator] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const haptic = useHaptic();
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .single();
+      if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+    };
+    fetchAvatar();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchAvatar();
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -102,13 +123,26 @@ export function BottomNavigation() {
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <Icon
-                      className={cn(
-                        "h-5 w-5 transition-all duration-300",
-                        active && "scale-105"
-                      )}
-                      strokeWidth={active ? 2.5 : 2}
-                    />
+                    {path === "/perfil" && avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt="Perfil"
+                        className={cn(
+                          "h-6 w-6 rounded-full object-cover transition-all duration-300 ring-1",
+                          active
+                            ? "ring-primary ring-2 scale-105"
+                            : "ring-border/50"
+                        )}
+                      />
+                    ) : (
+                      <Icon
+                        className={cn(
+                          "h-5 w-5 transition-all duration-300",
+                          active && "scale-105"
+                        )}
+                        strokeWidth={active ? 2.5 : 2}
+                      />
+                    )}
                     
                     {/* Notification Badge */}
                     {showBadge && (
