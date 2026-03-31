@@ -606,7 +606,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
       } else {
         if (currentGroup.length > 0) groups.push([...currentGroup]);
         currentGroup = [booking];
-        groupEnd = pos.endMinutes;
+        groupEnd = pos.visualEndMinutes;
       }
     });
     if (currentGroup.length > 0) groups.push(currentGroup);
