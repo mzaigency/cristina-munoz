@@ -602,7 +602,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
 
       if (currentGroup.length === 0 || pos.startMinutes < groupEnd) {
         currentGroup.push(booking);
-        groupEnd = Math.max(groupEnd, pos.endMinutes);
+        groupEnd = Math.max(groupEnd, pos.visualEndMinutes);
       } else {
         if (currentGroup.length > 0) groups.push([...currentGroup]);
         currentGroup = [booking];
