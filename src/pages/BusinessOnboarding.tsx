@@ -300,7 +300,7 @@ export default function BusinessOnboarding() {
             {/* Urgency badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-5">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-medium text-emerald-500">30 días gratis · Sin tarjeta</span>
+              <span className="text-xs font-medium text-emerald-500">30 días gratis</span>
             </div>
 
             <h1 className="text-[28px] leading-[1.15] font-bold text-foreground mb-3 tracking-tight">
