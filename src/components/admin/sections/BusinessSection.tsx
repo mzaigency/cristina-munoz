@@ -83,8 +83,8 @@ const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
     return availableTabs.length > 0 ? availableTabs[0].id : "products";
   };
 
-  // If loading, set products as default (always available)
-  const currentActiveTab = loading ? "products" : activeTab;
+  // While loading, show cash as default (intended primary tab)
+  const currentActiveTab = loading ? "cash" : activeTab;
 
   return (
     <div className="space-y-4">
