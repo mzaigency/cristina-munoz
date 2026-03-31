@@ -1,10 +1,7 @@
-import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Clock, Sparkles, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const DemoLanding = lazy(() => import("./demos/DemoLanding"));
 
 export const HeroSection = () => {
   const navigate = useNavigate();
@@ -115,27 +112,6 @@ export const HeroSection = () => {
             ✓ Configuración guiada · ✓ Sin conocimientos técnicos · ✓ Soporte incluido
           </motion.p>
 
-          {/* iPhone mockup */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="mt-12 flex justify-center"
-          >
-            <div className="relative w-[260px] sm:w-[280px]">
-              {/* iPhone frame */}
-              <div className="relative rounded-[2.5rem] border-[6px] border-foreground/90 bg-background shadow-2xl shadow-primary/10 overflow-hidden" style={{ aspectRatio: '9/19.5' }}>
-                {/* Dynamic Island */}
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[80px] h-[22px] bg-foreground/90 rounded-full z-20" />
-                {/* Screen content */}
-                <div className="absolute inset-0 pt-8 overflow-hidden">
-                  <Suspense fallback={<div className="w-full h-full bg-muted animate-pulse" />}>
-                    <DemoLanding />
-                  </Suspense>
-                </div>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </div>
     </section>
