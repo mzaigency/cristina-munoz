@@ -1,72 +1,30 @@
 
-Objetivo: quitar la sensación de “refresh” en Inicio para usuarios normales, especialmente en móvil, evitando que cada pantalla vuelva a resolver sesión y datos base al entrar.
 
-Qué está pasando
-- No parece un logout/login real, sino una cascada de chequeos al montar cada página.
-- En Inicio se disparan a la vez varios hooks/componentes con auth:
-  - `useFavorites`
-  - `useFollows`
-  - `useRecommendations`
-  - `useCurrentUserTenant`
-  - `BottomNavigation` (`useUnreadMessages` + avatar)
-  - `SmartSearchHeader` (superadmin)
-  - `NotificationBadge` / `useNotifications`
-- Además, páginas como `MyBookings`, `Messages` y `Profile` vuelven a hacer `getSession/getUser` al abrirse, así que la navegación se siente como recarga completa.
+## Plan: Mejoras visuales de la página Para Negocios
 
-Plan de implementación
+### 1. Hero mas visual
+**HeroSection.tsx**
+- Eliminar el logo duplicado (ya esta en el StickyHeader)
+- Añadir debajo de los CTAs un mockup del producto: un frame de iPhone con una captura de la app (reutilizando el componente DemoLanding que ya existe) para que el visitante vea inmediatamente qué obtiene
+- Ajustar espaciados para que el mockup quepa sin forzar scroll excesivo
 
-1. Crear una fuente única de sesión en cliente
-- Añadir un contexto/hook global tipo `useAuthSession`.
-- Resolver la sesión una sola vez al arrancar la app.
-- Escuchar `onAuthStateChange` una sola vez y compartir:
-  - `user`
-  - `session`
-  - `loading`
-  - `isAuthenticated`
+### 2. Before/After responsive en mobile
+**BeforeAfterSection.tsx**
+- En mobile (< sm), cambiar de `grid-cols-2` a layout vertical: cada comparación como una sola tarjeta con "antes" arriba tachado y "después" abajo destacado
+- Las cabeceras "Sin GlowApp / Con GlowApp" se ocultan en mobile ya que el formato visual de cada item lo deja claro
+- En desktop se mantiene el grid de 2 columnas actual
 
-2. Reemplazar chequeos repetidos en Inicio y navegación
-- Refactorizar estos hooks para que usen el contexto global en vez de `getSession/getUser`:
-  - `useFavorites`
-  - `useFollows`
-  - `useRecommendations`
-  - `usePosts`
-  - `useUnreadMessages`
-  - `useNotifications`
-  - `useCurrentUserTenant`
-- Ajustar `BottomNavigation` y `SmartSearchHeader` para reutilizar esa misma sesión y no volver a consultar auth al montar.
+### 3. Consistencia general
+- **HeroSection.tsx**: Cambiar pill "Listo en 5 min" a "Listo en 10 min"
+- **FinalCTASection.tsx**: Cambiar "Configura en 15 min" a "Configura en 10 min" (alinear ambas secciones)
+- **PainPointsSection.tsx**: Eliminar la flecha animada "GlowApp soluciona todo esto" del final, se siente poco profesional. Dejar un espaciado limpio
+- Revisar que los `py-` de secciones sean consistentes
 
-3. Evitar loaders agresivos en pantallas de usuario
-- `MyBookings`, `Messages` y `Profile` deben esperar al estado global de auth antes de redirigir o cargar.
-- Sustituir “pantalla vacía + spinner” por transiciones más estables:
-  - mantener layout/header/bottom bar visibles
-  - cargar solo el contenido interno
-- Esto es importante para mobile: menos parpadeo, mejor continuidad visual y safe areas intactas.
+### Archivos a modificar
+| Archivo | Cambio |
+|---------|--------|
+| `HeroSection.tsx` | Quitar logo, añadir mockup iPhone, corregir "5 min" → "10 min" |
+| `BeforeAfterSection.tsx` | Layout vertical en mobile |
+| `PainPointsSection.tsx` | Eliminar flecha animada inferior |
+| `FinalCTASection.tsx` | "15 min" → "10 min" |
 
-4. Reducir consultas duplicadas de perfil/rol
-- Unificar datos derivados del usuario:
-  - avatar
-  - tenant vinculado
-  - flags de admin/stylist/superadmin
-- Mantener caché en memoria para esos metadatos y refrescar solo en `SIGNED_IN` / `SIGNED_OUT`.
-
-5. Revisar Inicio específicamente
-- Inicio debe renderizar primero la parte pública y enriquecer después:
-  - feed discover
-  - favoritos
-  - recomendaciones
-  - badge de mensajes
-- Los elementos opcionales de usuario no deben bloquear la pantalla completa.
-- Si algo aún no está listo, mostrar estado parcial discreto, no sensación de recarga.
-
-Resultado esperado
-- Entrar en Inicio ya no parecerá un refresh.
-- Cambiar entre Inicio, Citas, Mensajes y Perfil será mucho más fluido.
-- Menos consultas redundantes al backend.
-- Mejor experiencia móvil, respetando safe areas y continuidad visual.
-
-Detalles técnicos
-- Punto central a corregir: hoy la app tiene demasiados `supabase.auth.getSession()` / `getUser()` repartidos por hooks y páginas.
-- La mejora clave es pasar de “cada pantalla resuelve auth” a “la app resuelve auth una vez y las pantallas consumen ese estado”.
-- Mantendría React Query para datos funcionales, pero separaría completamente:
-  - estado de sesión global
-  - consultas de negocio dependientes del usuario
