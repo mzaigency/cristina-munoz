@@ -76,25 +76,25 @@ export const MaintenanceToggle = () => {
   }
 
   return (
-    <Card className={enabled ? "border-warning/50 bg-warning/5" : ""}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Wrench className="h-5 w-5" />
+    <Card className={`bg-card/40 backdrop-blur-xl border-white/[0.08] ${enabled ? "border-amber-500/30" : ""}`}>
+      <CardHeader className="pb-2 p-4">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Wrench className="h-4 w-4" />
           Modo Mantenimiento
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <p className="text-sm text-muted-foreground">
+      <CardContent className="p-4 pt-0">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground">
               {enabled
-                ? "La app está en mantenimiento. Los usuarios no pueden acceder."
-                : "La app está funcionando con normalidad."}
+                ? "App en mantenimiento"
+                : "App funcionando con normalidad"}
             </p>
             {enabled && (
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-1.5">
                 <AlertTriangle className="h-4 w-4 text-warning" />
-                <Badge variant="outline" className="text-warning border-warning/30">
+                <Badge variant="outline" className="text-warning border-warning/30 text-[10px]">
                   En mantenimiento
                 </Badge>
               </div>

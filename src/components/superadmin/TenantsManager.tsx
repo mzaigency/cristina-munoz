@@ -263,17 +263,16 @@ export const TenantsManager = () => {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-start sm:items-center justify-between">
+      <div className="flex flex-col gap-3">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold">Gestión de Tenants</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg font-bold">Gestión de Tenants</h2>
+          <p className="text-xs text-muted-foreground">
             {tenants.length} tenant{tenants.length !== 1 ? "s" : ""} registrado{tenants.length !== 1 ? "s" : ""}
           </p>
         </div>
-
-        <Button className="gap-2 w-full sm:w-auto" onClick={() => navigate("/onboarding/setup?demo=true")}>
+        <Button className="gap-2 w-full rounded-xl h-10" onClick={() => navigate("/onboarding/setup?demo=true")}>
           <Sparkles className="h-4 w-4" />
           Nuevo Tenant
         </Button>
@@ -283,24 +282,24 @@ export const TenantsManager = () => {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar por nombre, slug o email..."
+          placeholder="Buscar tenant..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-10 h-10 rounded-xl bg-card/40 backdrop-blur-xl border-white/[0.08] text-sm"
         />
       </div>
 
       {/* Mobile Cards View */}
       <div className="md:hidden space-y-3">
         {filteredTenants.map((tenant) => (
-          <Card key={tenant.id} className="p-4">
+          <Card key={tenant.id} className="p-3.5 bg-card/40 backdrop-blur-xl border-white/[0.08]">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                <div className="p-2 bg-primary/10 rounded-xl shrink-0">
                   <Building2 className="h-4 w-4 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-medium truncate">{tenant.name}</p>
+                  <p className="font-medium text-sm truncate">{tenant.name}</p>
                   <p className="text-xs text-muted-foreground">/{tenant.slug}</p>
                 </div>
               </div>
@@ -308,8 +307,8 @@ export const TenantsManager = () => {
             </div>
 
             <div className="flex items-center justify-between mt-3 pt-3 border-t">
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <Badge variant={tenant.subscription_plan === "premium" ? "default" : "secondary"} className="text-xs">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Badge variant={tenant.subscription_plan === "premium" ? "default" : "secondary"} className="text-[10px] rounded-lg">
                   {tenant.subscription_plan}
                 </Badge>
                 <span className="flex items-center gap-1">
@@ -322,16 +321,16 @@ export const TenantsManager = () => {
                 </span>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openTenantLanding(tenant.slug)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => openTenantLanding(tenant.slug)}>
                   <ExternalLink className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(tenant)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => openEditDialog(tenant)}>
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-destructive"
+                  className="h-8 w-8 rounded-xl text-destructive"
                   onClick={() => openDeleteDialog(tenant)}
                 >
                   <Trash2 className="h-4 w-4" />

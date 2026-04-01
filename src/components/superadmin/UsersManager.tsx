@@ -188,27 +188,27 @@ export const UsersManager = () => {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-xl md:text-2xl font-bold">Gestión de Usuarios</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="text-lg font-bold">Gestión de Usuarios</h2>
+        <p className="text-xs text-muted-foreground">
           {users.length} usuario{users.length !== 1 ? "s" : ""} registrado{users.length !== 1 ? "s" : ""}
         </p>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+      <div className="flex flex-col gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por email o tenant..."
+            placeholder="Buscar usuario..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-10 rounded-xl bg-card/40 backdrop-blur-xl border-white/[0.08] text-sm"
           />
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full h-10 rounded-xl bg-card/40 backdrop-blur-xl border-white/[0.08] text-sm">
             <SelectValue placeholder="Filtrar por rol" />
           </SelectTrigger>
           <SelectContent>
@@ -224,13 +224,13 @@ export const UsersManager = () => {
       {/* Mobile Cards View */}
       <div className="md:hidden space-y-3">
         {filteredUsers.map((user) => (
-          <Card key={user.id} className="p-4">
+          <Card key={user.id} className="p-3.5 bg-card/40 backdrop-blur-xl border-white/[0.08]">
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-muted rounded-full shrink-0">
+              <div className="p-2 bg-muted/50 rounded-xl shrink-0">
                 <User className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm truncate">{user.email}</p>
+                <p className="font-medium text-[13px] truncate">{user.email}</p>
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {user.roles.length > 0 ? (
                     user.roles.map((role) => (
@@ -240,7 +240,7 @@ export const UsersManager = () => {
                     <Badge variant="outline" className="text-xs">Usuario</Badge>
                   )}
                 </div>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t text-xs text-muted-foreground">
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/[0.06] text-[11px] text-muted-foreground">
                   <span>{user.tenant_name || "Sin tenant"}</span>
                   <span>{format(new Date(user.created_at), "dd MMM yy", { locale: es })}</span>
                 </div>
