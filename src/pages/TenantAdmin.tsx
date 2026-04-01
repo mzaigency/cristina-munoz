@@ -19,7 +19,7 @@ import {
   Menu,
 } from "lucide-react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
-import { ClientsCRM } from "@/components/admin/ClientsCRM";
+// ClientsCRM is now rendered inside AgendaSection
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
 
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
