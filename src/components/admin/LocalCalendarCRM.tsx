@@ -61,6 +61,7 @@ interface LocalCalendarCRMProps {
   tenantId: string;
   stylists: Array<{ slug: string; name: string; color: string }>;
   onNavigateToCash?: () => void;
+  onSelectClient?: (clientId: string) => void;
 }
 
 // Constante para escala visual - 2px por minuto = 120px por hora
