@@ -294,10 +294,6 @@ export default function TenantAdmin() {
             }}
           />
         );
-      case "clients":
-        // Redirect old clients tab to agenda (clients is now inside agenda)
-        setActiveTab("agenda");
-        return null;
       case "business":
         return <BusinessSection key={refreshKey} tenantId={tenant.id} />;
       case "team":
