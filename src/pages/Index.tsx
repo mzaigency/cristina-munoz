@@ -352,6 +352,7 @@ const Index = () => {
                       whileTap={{ scale: 0.92 }}
                       onClick={handleNearMeClick}
                       disabled={geoLoading}
+                      aria-label="Buscar salones cerca de mí"
                       className={cn(
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                         sortByDistance && hasLocation
