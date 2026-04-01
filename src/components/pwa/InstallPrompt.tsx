@@ -91,8 +91,8 @@ export function InstallPrompt() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 flex-1">
                 {/* App icon */}
-                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary-foreground font-bold text-lg">G</span>
+                <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                  <img src="/favicon.svg" alt="GlowApp" className="w-full h-full object-cover" />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-foreground text-sm">Instala GlowApp</p>
