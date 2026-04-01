@@ -15,6 +15,7 @@ const FIREBASE_CONFIG = {
 
 const FCM_SW_PATH = "/firebase-messaging-sw.js";
 const FCM_SW_SCOPE = "/firebase-push-scope";
+const FCM_TOKEN_CACHE_KEY = "fcm_push_token";
 
 type PermissionState = "default" | "granted" | "denied" | "unsupported";
 
@@ -76,6 +77,11 @@ export function usePushNotifications() {
       setPermission(perm);
 
       if (perm === "granted") {
+        const cachedToken = localStorage.getItem(FCM_TOKEN_CACHE_KEY);
+        if (cachedToken) {
+          setToken(cachedToken);
+        }
+
         (async () => {
           try {
             const { initializeApp, getApps } = await import("firebase/app");
@@ -91,6 +97,7 @@ export function usePushNotifications() {
 
             if (fcmToken) {
               setToken(fcmToken);
+              localStorage.setItem(FCM_TOKEN_CACHE_KEY, fcmToken);
               await saveToken(fcmToken);
             }
           } catch (err) {
@@ -145,6 +152,7 @@ export function usePushNotifications() {
 
       if (fcmToken) {
         setToken(fcmToken);
+        localStorage.setItem(FCM_TOKEN_CACHE_KEY, fcmToken);
         await saveToken(fcmToken);
         setLoading(false);
         return true;
@@ -162,6 +170,7 @@ export function usePushNotifications() {
   const disablePush = useCallback(async () => {
     await removeToken();
     setToken(null);
+    localStorage.removeItem(FCM_TOKEN_CACHE_KEY);
   }, [removeToken]);
 
   return {
