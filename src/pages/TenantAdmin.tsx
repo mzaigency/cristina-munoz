@@ -59,7 +59,7 @@ interface Stylist {
 }
 
 // Simplified to 6 main tabs
-type TabValue = "dashboard" | "agenda" | "clients" | "business" | "team" | "communication" | "settings";
+type TabValue = "dashboard" | "agenda" | "business" | "team" | "communication" | "settings";
 
 interface NavItem {
   value: TabValue;
