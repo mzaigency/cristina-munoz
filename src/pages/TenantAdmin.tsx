@@ -521,7 +521,7 @@ export default function TenantAdmin() {
                     const tabMap: Record<string, TabValue> = {
                       calendar: "agenda", cash: "business", services: "team",
                       stylists: "team", messages: "communication", settings: "settings",
-                      clients: "clients", dashboard: "dashboard",
+                      clients: "agenda", dashboard: "dashboard",
                     };
                     setActiveTab(tabMap[tab] || (tab as TabValue));
                   }}
