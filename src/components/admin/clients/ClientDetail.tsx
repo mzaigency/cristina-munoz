@@ -52,13 +52,16 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
     try {
       const { data } = await supabase
         .from("bookings")
-        .select("id, Fecha, Hora, services, stylist, status")
+        .select("id, Fecha, Hora, services, stylist, status, compound_part")
         .eq("tenant_id", tenantId)
         .eq("Telefono", phone)
         .order("Fecha", { ascending: false })
-        .limit(20);
+        .limit(40);
 
-      const bookings = (data as Booking[]) || [];
+      // Filter out part2 compound bookings so compound services count as 1 visit
+      const filteredData = (data || []).filter((b: any) => b.compound_part !== "part2").slice(0, 20);
+
+      const bookings = (filteredData as Booking[]) || [];
       setHistory(bookings);
 
       const serviceCount: Record<string, number> = {};
