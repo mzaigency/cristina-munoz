@@ -7,5 +7,7 @@ export { TypographyStep } from "./TypographyStep";
 export { ImagesStep } from "./ImagesStep";
 export { AIGenerationStep } from "./AIGenerationStep";
 export { ThemeStep } from "./ThemeStep";
+export { BusinessInfoStep } from "./BusinessInfoStep";
+export { DesignStep } from "./DesignStep";
 export * from "./types";
 export * from "./landing-themes";
