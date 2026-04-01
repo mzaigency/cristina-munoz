@@ -27,9 +27,10 @@ if ('serviceWorker' in navigator && !isPreviewHost && !isInIframe) {
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
       if (newWorker) {
+        // Ignore firebase messaging SW — it's not a PWA update
+        if (newWorker.scriptURL?.includes('firebase-messaging-sw')) return;
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New content is available, dispatch event
             window.dispatchEvent(new CustomEvent('swUpdated'));
           }
         });

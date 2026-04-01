@@ -29,11 +29,38 @@ export function usePushNotifications() {
     setIsSupported(supported);
 
     if (supported) {
-      setPermission(Notification.permission as PermissionState);
+      const perm = Notification.permission as PermissionState;
+      setPermission(perm);
+
+      // If permission already granted, recover the FCM token silently
+      if (perm === "granted") {
+        (async () => {
+          try {
+            const { initializeApp, getApps } = await import("firebase/app");
+            const { getMessaging, getToken } = await import("firebase/messaging");
+            const app = getApps().length === 0 ? initializeApp(FIREBASE_CONFIG) : getApps()[0];
+            const messaging = getMessaging(app);
+            const regs = await navigator.serviceWorker.getRegistrations();
+            const fbReg = regs.find(r => r.active?.scriptURL?.includes("firebase-messaging-sw"));
+            if (fbReg) {
+              const fcmToken = await getToken(messaging, {
+                vapidKey: VAPID_KEY,
+                serviceWorkerRegistration: fbReg,
+              });
+              if (fcmToken) {
+                setToken(fcmToken);
+                await saveToken(fcmToken);
+              }
+            }
+          } catch (err) {
+            console.error("Error recovering FCM token:", err);
+          }
+        })();
+      }
     } else {
       setPermission("unsupported");
     }
-  }, []);
+  }, [saveToken]);
 
   const saveToken = useCallback(async (fcmToken: string) => {
     try {
