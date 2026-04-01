@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Building2, Users, BarChart3, Shield, LayoutDashboard, Heart, Activity, FileImage, Search, Bell, Moon, Sun, ChevronLeft, Menu, CreditCard, X } from "lucide-react";
+import {
+  Loader2, Building2, Users, BarChart3, Shield, LayoutDashboard,
+  Heart, Activity, FileImage, Moon, Sun, ChevronLeft, Menu, CreditCard
+} from "lucide-react";
 import { TenantsManager } from "@/components/superadmin/TenantsManager";
-import { GlobalStats } from "@/components/superadmin/GlobalStats";
 import { UsersManager } from "@/components/superadmin/UsersManager";
 import { SuperAdminDashboard } from "@/components/superadmin/SuperAdminDashboard";
 import { PlatformAnalytics } from "@/components/superadmin/PlatformAnalytics";
@@ -14,19 +16,17 @@ import { ActivityCenter } from "@/components/superadmin/ActivityCenter";
 import { ContentManager } from "@/components/superadmin/ContentManager";
 import { MaintenanceToggle } from "@/components/superadmin/MaintenanceToggle";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 const SuperAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [globalSearch, setGlobalSearch] = useState("");
   const [isDark, setIsDark] = useState(false);
   const navigate = useNavigate();
   const {
@@ -132,129 +132,133 @@ const SuperAdmin = () => {
     return null;
   }
 
-  // Sidebar content (shared between desktop and mobile)
-  const SidebarContent = ({
+  const SidebarNav = ({
     onTabClick
   }: {
     onTabClick?: () => void;
   }) => <>
-      {/* Sidebar Header */}
-      <div className="p-4 border-b border-border/50">
+      <div className="p-5 border-b border-white/[0.06]">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
             <Shield className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg">SuperAdmin</h1>
-            <p className="text-xs text-muted-foreground">Panel de control</p>
+            <h1 className="font-bold text-base text-foreground">SuperAdmin</h1>
+            <p className="text-[11px] text-muted-foreground">Panel de control</p>
           </div>
         </div>
       </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {tabs.map(tab => <button key={tab.id} onClick={() => {
-        handleTabChange(tab.id);
-        onTabClick?.();
-      }} className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200", activeTab === tab.id ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" : "text-muted-foreground hover:bg-secondary hover:text-foreground")}>
-            <tab.icon className="h-5 w-5 flex-shrink-0" />
-            <span className="text-sm font-medium">{tab.label}</span>
-          </button>)}
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => { handleTabChange(tab.id); onTabClick?.(); }}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-200 text-left",
+              activeTab === tab.id
+                ? "bg-white/10 backdrop-blur-sm text-foreground shadow-sm border border-white/[0.08]"
+                : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+            )}
+          >
+            <tab.icon className={cn("h-[18px] w-[18px] flex-shrink-0", activeTab === tab.id && "text-primary")} />
+            <span className="text-[13px] font-medium">{tab.label}</span>
+          </button>
+        ))}
       </nav>
     </>;
-  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+
+  return (
+    <div className="min-h-screen bg-background" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="flex h-screen overflow-hidden" style={{ height: 'calc(100vh - env(safe-area-inset-top))' }}>
+
         {/* Desktop Sidebar */}
-        {!isMobile && <motion.aside initial={false} animate={{
-        width: sidebarCollapsed ? 72 : 240
-      }} className={cn("flex-shrink-0 bg-card/50 backdrop-blur-xl border-r border-border/50 flex flex-col", "transition-all duration-300 hidden md:flex")}>
-            {!sidebarCollapsed ? <SidebarContent /> : <>
-                {/* Collapsed sidebar */}
-                <div className="p-4 border-b border-border/50 flex justify-center">
-                  <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg">
+        {!isMobile && (
+          <motion.aside
+            initial={false}
+            animate={{ width: sidebarCollapsed ? 72 : 260 }}
+            className="flex-shrink-0 bg-card/40 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col hidden md:flex"
+          >
+            {!sidebarCollapsed ? (
+              <SidebarNav />
+            ) : (
+              <>
+                <div className="p-4 border-b border-white/[0.06] flex justify-center">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
                     <Shield className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <nav className="flex-1 p-2 space-y-1">
-                  {tabs.map(tab => <button key={tab.id} onClick={() => handleTabChange(tab.id)} className={cn("w-full flex items-center justify-center p-2.5 rounded-xl transition-all duration-200", activeTab === tab.id ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" : "text-muted-foreground hover:bg-secondary hover:text-foreground")} title={tab.label}>
+                  {tabs.map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={cn(
+                        "w-full flex items-center justify-center p-2.5 rounded-2xl transition-all",
+                        activeTab === tab.id
+                          ? "bg-white/10 text-primary"
+                          : "text-muted-foreground hover:bg-white/5"
+                      )}
+                      title={tab.label}
+                    >
                       <tab.icon className="h-5 w-5" />
-                    </button>)}
+                    </button>
+                  ))}
                 </nav>
-              </>}
-
-            {/* Sidebar Footer */}
-            <div className="p-3 border-t border-border/50">
-              <Button variant="ghost" size="sm" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="w-full justify-center">
+              </>
+            )}
+            <div className="p-3 border-t border-white/[0.06]">
+              <Button variant="ghost" size="sm" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="w-full justify-center rounded-xl hover:bg-white/5">
                 {sidebarCollapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
               </Button>
             </div>
-          </motion.aside>}
+          </motion.aside>
+        )}
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Top Header */}
-          <header className="h-14 md:h-16 border-b border-border/50 bg-card/30 backdrop-blur-xl flex items-center justify-between px-3 md:px-6">
-            <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
-              {/* Mobile Menu Button */}
-              {isMobile && <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          {/* Top Header — glass bar */}
+          <header className="h-14 border-b border-white/[0.06] bg-card/30 backdrop-blur-2xl flex items-center justify-between px-4 gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              {isMobile && (
+                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 md:hidden">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-white/5">
                       <Menu className="h-5 w-5" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-[280px] p-0">
+                  <SheetContent side="left" className="w-[280px] p-0 bg-card/80 backdrop-blur-2xl border-white/[0.06]">
                     <div className="flex flex-col h-full">
-                      <SidebarContent onTabClick={() => setMobileMenuOpen(false)} />
+                      <SidebarNav onTabClick={() => setMobileMenuOpen(false)} />
                     </div>
                   </SheetContent>
-                </Sheet>}
-
-              {/* Breadcrumb */}
-              <div className="flex items-center gap-2 text-xs md:text-sm min-w-0">
-                <span className="text-muted-foreground hidden sm:inline">SuperAdmin</span>
-                <span className="text-muted-foreground hidden sm:inline">/</span>
-                <span className="font-medium capitalize truncate">{tabs.find(t => t.id === activeTab)?.label}</span>
-              </div>
-              
-              {/* Global Search - Hidden on mobile */}
-              <div className="relative max-w-md flex-1 ml-2 md:ml-8 hidden sm:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Buscar..." value={globalSearch} onChange={e => setGlobalSearch(e.target.value)} className="pl-10 h-9 bg-secondary/50 border-0 focus-visible:ring-1 focus-visible:ring-primary text-sm" />
-              </div>
+                </Sheet>
+              )}
+              <h2 className="font-semibold text-sm text-foreground truncate">
+                {tabs.find(t => t.id === activeTab)?.label}
+              </h2>
             </div>
 
-            <div className="flex items-center gap-1 md:gap-3">
-              {/* Notifications */}
-              
-
-              {/* Theme Toggle */}
-              <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9">
-                {isDark ? <Sun className="h-4 w-4 md:h-5 md:w-5" /> : <Moon className="h-4 w-4 md:h-5 md:w-5" />}
+            <div className="flex items-center gap-1.5">
+              <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9 rounded-xl hover:bg-white/5">
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
-
-              {/* Back to App */}
-              <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-1.5 h-9 px-2 md:px-3 text-xs md:text-sm">
-                <ChevronLeft className="h-4 w-4" />
+              <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="gap-1 h-9 px-2.5 rounded-xl hover:bg-white/5 text-xs">
+                <ChevronLeft className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Volver</span>
               </Button>
             </div>
           </header>
 
-          {/* Content Area */}
-          <main className="flex-1 overflow-y-auto p-3 md:p-6" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          {/* Content */}
+          <main className="flex-1 overflow-y-auto p-4 md:p-6" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }}>
             <AnimatePresence mode="wait">
-              <motion.div key={activeTab} initial={{
-              opacity: 0,
-              y: 10
-            }} animate={{
-              opacity: 1,
-              y: 0
-            }} exit={{
-              opacity: 0,
-              y: -10
-            }} transition={{
-              duration: 0.2
-            }} className="h-full">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
                 {activeTab === "dashboard" && <><MaintenanceToggle /><SuperAdminDashboard /></>}
                 {activeTab === "tenants" && <TenantsManager />}
                 {activeTab === "users" && <UsersManager />}
@@ -268,6 +272,7 @@ const SuperAdmin = () => {
           </main>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 export default SuperAdmin;
