@@ -21,8 +21,10 @@ export function UpdatePrompt() {
         return () => clearInterval(interval);
       });
 
-      // Listen for new service worker
+      // Listen for new service worker (ignore firebase SW)
       navigator.serviceWorker.addEventListener('controllerchange', () => {
+        const newSW = navigator.serviceWorker.controller;
+        if (newSW?.scriptURL?.includes('firebase-messaging-sw')) return;
         window.location.reload();
       });
     }

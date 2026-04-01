@@ -21,20 +21,6 @@ export function usePushNotifications() {
   const [loading, setLoading] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
 
-  useEffect(() => {
-    const supported =
-      "Notification" in window &&
-      "serviceWorker" in navigator &&
-      "PushManager" in window;
-    setIsSupported(supported);
-
-    if (supported) {
-      setPermission(Notification.permission as PermissionState);
-    } else {
-      setPermission("unsupported");
-    }
-  }, []);
-
   const saveToken = useCallback(async (fcmToken: string) => {
     try {
       const {
@@ -42,7 +28,6 @@ export function usePushNotifications() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Upsert token — use token as unique key
       const { error } = await supabase.from("push_tokens").upsert(
         {
           user_id: user.id,
@@ -60,6 +45,46 @@ export function usePushNotifications() {
       console.error("Error saving push token:", err);
     }
   }, []);
+
+  useEffect(() => {
+    const supported =
+      "Notification" in window &&
+      "serviceWorker" in navigator &&
+      "PushManager" in window;
+    setIsSupported(supported);
+
+    if (supported) {
+      const perm = Notification.permission as PermissionState;
+      setPermission(perm);
+
+      if (perm === "granted") {
+        (async () => {
+          try {
+            const { initializeApp, getApps } = await import("firebase/app");
+            const { getMessaging, getToken } = await import("firebase/messaging");
+            const app = getApps().length === 0 ? initializeApp(FIREBASE_CONFIG) : getApps()[0];
+            const messaging = getMessaging(app);
+            const regs = await navigator.serviceWorker.getRegistrations();
+            const fbReg = regs.find(r => r.active?.scriptURL?.includes("firebase-messaging-sw"));
+            if (fbReg) {
+              const fcmToken = await getToken(messaging, {
+                vapidKey: VAPID_KEY,
+                serviceWorkerRegistration: fbReg,
+              });
+              if (fcmToken) {
+                setToken(fcmToken);
+                await saveToken(fcmToken);
+              }
+            }
+          } catch (err) {
+            console.error("Error recovering FCM token:", err);
+          }
+        })();
+      }
+    } else {
+      setPermission("unsupported");
+    }
+  }, [saveToken]);
 
   const removeToken = useCallback(async () => {
     if (!token) return;
