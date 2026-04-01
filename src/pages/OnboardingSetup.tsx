@@ -22,185 +22,30 @@ import {
   Sparkles,
   RefreshCw,
   Paintbrush,
-  MapPin,
-  Phone,
-  Share2,
   Users,
-  Type,
-  Image
+  Image,
+  SkipForward
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { motion, AnimatePresence } from "motion/react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import confetti from "canvas-confetti";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import {
   BusinessTypeStep,
-  LocationStep,
-  ContactStep,
-  SocialStep,
   StylistsStep,
-  TypographyStep,
   ImagesStep,
   AIGenerationStep,
   colorPresets,
   dayNames,
   StepProps,
   ServiceForm,
+  BusinessInfoStep,
+  DesignStep,
 } from "@/components/onboarding";
-import { ThemeStep } from "@/components/onboarding/ThemeStep";
 import { SupportButton } from "@/components/common/SupportButton";
-
-// Step: Colors only (AI generation moved to end)
-function ColorsStep({ onNext, tenantId, loading, setLoading }: StepProps) {
-  const [selectedColor, setSelectedColor] = useState(colorPresets[0]);
-  const [useCustomColor, setUseCustomColor] = useState(false);
-  const [customPrimary, setCustomPrimary] = useState("#8B5CF6");
-  const [customSecondary, setCustomSecondary] = useState("#D946EF");
-  const { toast } = useToast();
-
-  const handleSave = async () => {
-    setLoading(true);
-    try {
-      const primaryColor = useCustomColor ? customPrimary : selectedColor.primary;
-      const secondaryColor = useCustomColor ? customSecondary : selectedColor.secondary;
-
-      const { error } = await supabase
-        .from("tenants")
-        .update({
-          primary_color: primaryColor,
-          secondary_color: secondaryColor,
-        })
-        .eq("id", tenantId);
-
-      if (error) throw error;
-      onNext();
-    } catch (error: unknown) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al guardar",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-          <Palette className="h-5 w-5 text-primary" />
-          Paleta de colores
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Elige los colores que representan tu marca
-        </p>
-      </div>
-
-      {/* Color Selection */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Selecciona una paleta</Label>
-          <button
-            type="button"
-            onClick={() => setUseCustomColor(!useCustomColor)}
-            className="flex items-center gap-2 text-xs text-primary hover:underline"
-          >
-            <Paintbrush className="h-3 w-3" />
-            {useCustomColor ? "Usar paletas" : "Color personalizado"}
-          </button>
-        </div>
-
-        {!useCustomColor ? (
-          <div className="grid grid-cols-4 gap-2">
-            {colorPresets.map((preset) => (
-              <button
-                key={preset.name}
-                type="button"
-                onClick={() => setSelectedColor(preset)}
-                className={`p-2 rounded-xl border-2 transition-all ${
-                  selectedColor.name === preset.name 
-                    ? "border-primary ring-2 ring-primary/20" 
-                    : "border-border hover:border-primary/50"
-                }`}
-              >
-                <div 
-                  className={`h-8 w-full rounded-lg bg-gradient-to-r ${preset.gradient}`}
-                />
-                <p className="text-[10px] text-muted-foreground mt-1 text-center">{preset.name}</p>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 p-4 bg-secondary/30 rounded-xl">
-            <div>
-              <Label className="text-xs text-muted-foreground">Color principal</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <input
-                  type="color"
-                  value={customPrimary}
-                  onChange={(e) => setCustomPrimary(e.target.value)}
-                  className="w-12 h-10 rounded-lg cursor-pointer border-0"
-                />
-                <Input
-                  value={customPrimary}
-                  onChange={(e) => setCustomPrimary(e.target.value)}
-                  className="h-10 rounded-lg font-mono text-sm"
-                  placeholder="#8B5CF6"
-                />
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Color secundario</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <input
-                  type="color"
-                  value={customSecondary}
-                  onChange={(e) => setCustomSecondary(e.target.value)}
-                  className="w-12 h-10 rounded-lg cursor-pointer border-0"
-                />
-                <Input
-                  value={customSecondary}
-                  onChange={(e) => setCustomSecondary(e.target.value)}
-                  className="h-10 rounded-lg font-mono text-sm"
-                  placeholder="#D946EF"
-                />
-              </div>
-            </div>
-            {/* Preview */}
-            <div className="col-span-2">
-              <Label className="text-xs text-muted-foreground">Vista previa</Label>
-              <div 
-                className="h-10 w-full rounded-lg mt-1"
-                style={{ 
-                  background: `linear-gradient(to right, ${customPrimary}, ${customSecondary})` 
-                }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      <Button 
-        onClick={handleSave} 
-        className="w-full h-12 rounded-xl"
-        disabled={loading}
-      >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-        Continuar
-        <ArrowRight className="h-4 w-4 ml-2" />
-      </Button>
-    </div>
-  );
-}
 
 // Step: Business Hours with shifts support
 function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps) {
@@ -311,9 +156,9 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
           <Clock className="h-5 w-5 text-primary" />
           Horarios de apertura
         </h3>
@@ -564,9 +409,9 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
           <Scissors className="h-5 w-5 text-primary" />
           Añade tus servicios
         </h3>
@@ -787,6 +632,121 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
   );
 }
 
+// Combined Services + Hours step with tabs
+function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading }: StepProps) {
+  const [activeTab, setActiveTab] = useState("services");
+  const [servicesCompleted, setServicesCompleted] = useState(false);
+
+  if (activeTab === "services" && !servicesCompleted) {
+    return (
+      <ServicesStep
+        onNext={() => {
+          setServicesCompleted(true);
+          setActiveTab("hours");
+        }}
+        onPrev={onPrev}
+        tenantId={tenantId}
+        tenantName={tenantName}
+        loading={loading}
+        setLoading={setLoading}
+      />
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={() => { setServicesCompleted(false); setActiveTab("services"); }}
+          className={cn(
+            "flex-1 py-2 rounded-lg text-sm font-medium transition-all text-center",
+            activeTab === "services" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground"
+          )}
+        >
+          <Scissors className="h-3.5 w-3.5 inline mr-1" />
+          Servicios ✓
+        </button>
+        <button
+          onClick={() => setActiveTab("hours")}
+          className={cn(
+            "flex-1 py-2 rounded-lg text-sm font-medium transition-all text-center",
+            activeTab === "hours" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground"
+          )}
+        >
+          <Clock className="h-3.5 w-3.5 inline mr-1" />
+          Horarios
+        </button>
+      </div>
+      <HoursStep
+        onNext={onNext}
+        onPrev={() => { setServicesCompleted(false); setActiveTab("services"); }}
+        tenantId={tenantId}
+        tenantName={tenantName}
+        loading={loading}
+        setLoading={setLoading}
+      />
+    </div>
+  );
+}
+
+// Combined Images + Stylists step
+function ContentStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading, maxStylists }: StepProps) {
+  const [activeTab, setActiveTab] = useState("images");
+  const [imagesCompleted, setImagesCompleted] = useState(false);
+
+  if (activeTab === "images" && !imagesCompleted) {
+    return (
+      <ImagesStep
+        onNext={() => {
+          setImagesCompleted(true);
+          setActiveTab("team");
+        }}
+        onPrev={onPrev}
+        tenantId={tenantId}
+        tenantName={tenantName}
+        loading={loading}
+        setLoading={setLoading}
+      />
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={() => { setImagesCompleted(false); setActiveTab("images"); }}
+          className={cn(
+            "flex-1 py-2 rounded-lg text-sm font-medium transition-all text-center",
+            activeTab === "images" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground"
+          )}
+        >
+          <Image className="h-3.5 w-3.5 inline mr-1" />
+          Imágenes ✓
+        </button>
+        <button
+          onClick={() => setActiveTab("team")}
+          className={cn(
+            "flex-1 py-2 rounded-lg text-sm font-medium transition-all text-center",
+            activeTab === "team" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground"
+          )}
+        >
+          <Users className="h-3.5 w-3.5 inline mr-1" />
+          Equipo
+        </button>
+      </div>
+      <StylistsStep
+        onNext={onNext}
+        onPrev={() => { setImagesCompleted(false); setActiveTab("images"); }}
+        tenantId={tenantId}
+        tenantName={tenantName}
+        loading={loading}
+        setLoading={setLoading}
+        maxStylists={maxStylists}
+      />
+    </div>
+  );
+}
+
 // Success Step
 function SuccessStep({ tenantSlug }: { tenantSlug: string }) {
   const navigate = useNavigate();
@@ -841,6 +801,16 @@ function SuccessStep({ tenantSlug }: { tenantSlug: string }) {
   );
 }
 
+// Microcopy motivacional por paso
+const stepMicrocopy = [
+  "Empecemos con lo básico 💪",
+  "Para que tus clientes te encuentren",
+  "Logo, fotos y tu equipo",
+  "¿Qué ofreces y cuándo?",
+  "Dale personalidad a tu página ✨",
+  "La IA creará tu contenido",
+];
+
 export default function OnboardingSetup() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -852,28 +822,21 @@ export default function OnboardingSetup() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  // Define all steps with their icons - Orden lógico:
-  // 1. Info básica (negocio, ubicación, contacto, redes)
-  // 2. Contenido (imágenes, equipo, servicios, horarios)  
-  // 3. Diseño (tema, colores, tipografía) - con datos reales para preview
-  // 4. IA y finalización
+  // 6 grouped steps + success
   const steps = [
-    { title: "Negocio", icon: Building2 },
-    { title: "Ubicación", icon: MapPin },
-    { title: "Contacto", icon: Phone },
-    { title: "Redes", icon: Share2 },
-    { title: "Imágenes", icon: Image },
-    { title: "Equipo", icon: Users },
-    { title: "Servicios", icon: Scissors },
-    { title: "Horarios", icon: Clock },
-    { title: "Tema", icon: Layers },
-    { title: "Colores", icon: Palette },
-    { title: "Tipografía", icon: Type },
-    { title: "IA", icon: Sparkles },
+    { title: "Tu negocio", icon: Building2 },
+    { title: "Datos de contacto", icon: Users },
+    { title: "Tu contenido", icon: Image },
+    { title: "Servicios y horarios", icon: Scissors },
+    { title: "Diseño", icon: Palette },
+    { title: "Generar con IA", icon: Sparkles },
     { title: "¡Listo!", icon: PartyPopper },
   ];
 
-  const totalSteps = steps.length - 1; // Exclude success step from count
+  const totalSteps = steps.length - 1; // Exclude success
+
+  // Skippable steps (indices)
+  const skippableSteps = [1, 2]; // Datos de contacto, Tu contenido
 
   useEffect(() => {
     const initSetup = async () => {
@@ -1025,49 +988,27 @@ export default function OnboardingSetup() {
       setLoading,
     };
 
-    // Orden lógico: Info básica → Contenido → Diseño → IA
     switch (step) {
       case 0:
         return <BusinessTypeStep {...stepProps} tenantName={tenantName} setTenantName={setTenantName} />;
       case 1:
-        return <LocationStep {...stepProps} />;
+        return <BusinessInfoStep {...stepProps} />;
       case 2:
-        return <ContactStep {...stepProps} />;
+        return <ContentStep {...stepProps} />;
       case 3:
-        return <SocialStep {...stepProps} />;
+        return <ServicesAndHoursStep {...stepProps} />;
       case 4:
-        return <ImagesStep {...stepProps} />;
+        return <DesignStep {...stepProps} tenantName={tenantName} />;
       case 5:
-        return <StylistsStep {...stepProps} />;
-      case 6:
-        return <ServicesStep {...stepProps} />;
-      case 7:
-        return <HoursStep {...stepProps} />;
-      case 8:
-        return <ThemeStep {...stepProps} tenantName={tenantName} />;
-      case 9:
-        return <ColorsStep {...stepProps} />;
-      case 10:
-        return <TypographyStep {...stepProps} />;
-      case 11:
         return <AIGenerationStep {...stepProps} />;
-      case 12:
+      case 6:
         return tenantSlug ? <SuccessStep tenantSlug={tenantSlug} /> : null;
       default:
         return null;
     }
   };
 
-  const canGoToStep = (targetStep: number) => {
-    // Allow going back to any previous step, but not forward past current
-    return targetStep <= step;
-  };
-
-  const handleStepClick = (targetStep: number) => {
-    if (canGoToStep(targetStep) && targetStep < totalSteps) {
-      setStep(targetStep);
-    }
-  };
+  const isSkippable = skippableSteps.includes(step);
 
   return (
     <AppLayout hideNavigation>
@@ -1078,13 +1019,13 @@ export default function OnboardingSetup() {
         noindex
       />
 
-      {/* Header - liquid glass */}
+      {/* Compact Header */}
       <div 
         className="sticky top-0 z-40 bg-background/80 backdrop-blur-2xl border-b border-white/10"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="px-4 py-3">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-2.5">
             {step > 0 && step < totalSteps ? (
               <Button 
                 variant="ghost" 
@@ -1106,79 +1047,46 @@ export default function OnboardingSetup() {
             ) : null}
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                {step < totalSteps && (() => {
-                  const StepIcon = steps[step].icon;
-                  return (
-                    <div className="w-7 h-7 rounded-xl bg-primary/10 backdrop-blur-sm flex items-center justify-center shrink-0">
-                      <StepIcon className="h-3.5 w-3.5 text-primary" />
-                    </div>
-                  );
-                })()}
-                <h1 className="font-semibold text-sm text-foreground truncate">
-                  {step < totalSteps ? steps[step].title : "¡Completado!"}
-                </h1>
-              </div>
+              <h1 className="font-semibold text-sm text-foreground truncate">
+                {step < totalSteps ? steps[step].title : "¡Completado!"}
+              </h1>
+              {step < totalSteps && (
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {stepMicrocopy[step]}
+                </p>
+              )}
             </div>
             
-            {step < totalSteps && (
-              <div className="flex items-baseline gap-0.5 shrink-0">
-                <span className="text-sm font-bold text-primary">{step + 1}</span>
-                <span className="text-xs text-muted-foreground">/{totalSteps}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {isSkippable && (
+                <button
+                  onClick={() => setStep(step + 1)}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-lg hover:bg-primary/5"
+                >
+                  <SkipForward className="h-3 w-3" />
+                  Saltar
+                </button>
+              )}
+              {step < totalSteps && (
+                <div className="flex items-baseline gap-0.5">
+                  <span className="text-sm font-bold text-primary">{step + 1}</span>
+                  <span className="text-xs text-muted-foreground">/{totalSteps}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {step < totalSteps && (
-            <div className="space-y-2.5">
-              {/* Progress bar */}
-              <div className="relative h-1 bg-white/5 rounded-full overflow-hidden">
-                <motion.div 
-                  className="absolute inset-y-0 left-0 bg-primary rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                />
-              </div>
-              
-              {/* Category pills */}
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none -mx-4 px-4">
-                {[
-                  { label: "Info", range: [0, 3] },
-                  { label: "Contenido", range: [4, 7] },
-                  { label: "Diseño", range: [8, 10] },
-                  { label: "Final", range: [11, 11] },
-                ].map((category, catIndex) => {
-                  const isActive = step >= category.range[0] && step <= category.range[1];
-                  const isCompleted = step > category.range[1];
-                  const stepsInCategory = category.range[1] - category.range[0] + 1;
-                  const completedInCategory = Math.max(0, Math.min(stepsInCategory, step - category.range[0] + (step >= category.range[0] ? 1 : 0)));
-                  
-                  return (
-                    <div
-                      key={catIndex}
-                      className={cn(
-                        "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all shrink-0",
-                        isActive 
-                          ? "bg-primary/15 text-primary border border-primary/20" 
-                          : isCompleted 
-                            ? "bg-primary/5 text-primary/70"
-                            : "bg-white/5 text-muted-foreground"
-                      )}
-                    >
-                      <span>{category.label}</span>
-                      {isActive && (
-                        <span className="text-[10px] opacity-70">
-                          {completedInCategory}/{stepsInCategory}
-                        </span>
-                      )}
-                      {isCompleted && (
-                        <Check className="w-3 h-3" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <motion.div 
+                className="absolute inset-y-0 left-0 rounded-full"
+                style={{
+                  background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))",
+                }}
+                initial={{ width: 0 }}
+                animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              />
             </div>
           )}
         </div>
@@ -1189,9 +1097,9 @@ export default function OnboardingSetup() {
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
             >
               {renderStep()}
@@ -1200,7 +1108,6 @@ export default function OnboardingSetup() {
         </div>
       </div>
 
-      {/* Botón flotante de soporte */}
       <SupportButton variant="floating" context="Configuración de salón" />
     </AppLayout>
   );
