@@ -1547,6 +1547,49 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                     ))}
                 </div>
               </div>
+
+              {/* Client Info Panel */}
+              <div className="rounded-lg border border-border/60 p-3 space-y-2 bg-muted/30">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Ficha de cliente</Label>
+                {clientLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Buscando...
+                  </div>
+                ) : matchedClient ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{matchedClient.name}</span>
+                      {matchedClient.tags?.map((tag: string) => (
+                        <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <div>Visitas: <span className="font-medium text-foreground">{matchedClient.total_visits || 0}</span></div>
+                      <div>Gasto: <span className="font-medium text-foreground">{(matchedClient.total_spent || 0).toFixed(2)}€</span></div>
+                    </div>
+                    {matchedClient.notes && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{matchedClient.notes}</p>
+                    )}
+                    {onSelectClient && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() => {
+                          setIsEditDialogOpen(false);
+                          onSelectClient(matchedClient.id);
+                        }}
+                      >
+                        <UserCircle className="h-3 w-3 mr-1" /> Ver ficha completa
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No se encontró un cliente registrado con este nombre</p>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter>
