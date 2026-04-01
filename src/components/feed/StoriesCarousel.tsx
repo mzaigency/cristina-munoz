@@ -499,6 +499,7 @@ export function StoriesCarousel() {
                   )}
                   <button
                     onClick={() => setIsPaused(!isPaused)}
+                    aria-label={isPaused ? "Reanudar historia" : "Pausar historia"}
                     className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                   >
                     {isPaused ? (
