@@ -155,6 +155,7 @@ export function PremiumSalonCard({
             <motion.button
               whileTap={{ scale: 0.8 }}
               onClick={handleFavoriteClick}
+              aria-label={isFav ? `Quitar ${salon.name} de favoritos` : `Añadir ${salon.name} a favoritos`}
               className={cn(
                 "absolute top-3.5 right-3.5 h-11 w-11 rounded-full flex items-center justify-center transition-all duration-400",
                 isFav
