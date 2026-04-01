@@ -1,29 +1,87 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, UserCheck, X, Search } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { Client } from "./types";
 import { TAG_OPTIONS, TAG_COLORS } from "./types";
+
+interface ProfileResult {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  email: string;
+}
 
 interface ClientFormProps {
   tenantId: string;
   editingClient: Client | null;
-  initialData?: { name: string; phone: string; email: string; notes: string; tags: string[]; birthday: string };
+  initialData?: { name: string; phone: string; email: string; notes: string; tags: string[]; birthday: string; user_id?: string | null };
   onSaved: () => void;
   existingClients: Client[];
 }
 
 export function ClientForm({ tenantId, editingClient, initialData, onSaved, existingClients }: ClientFormProps) {
   const [formData, setFormData] = useState(initialData || {
-    name: "", phone: "", email: "", notes: "", tags: [] as string[], birthday: ""
+    name: "", phone: "", email: "", notes: "", tags: [] as string[], birthday: "", user_id: null as string | null
   });
   const [saving, setSaving] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Profile linking
+  const [profileSearch, setProfileSearch] = useState("");
+  const [profileResults, setProfileResults] = useState<ProfileResult[]>([]);
+  const [searchingProfiles, setSearchingProfiles] = useState(false);
+  const [linkedProfile, setLinkedProfile] = useState<ProfileResult | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load linked profile on mount
+  useEffect(() => {
+    const uid = formData.user_id || editingClient?.user_id;
+    if (uid) {
+      supabase.from("profiles").select("id, full_name, username, avatar_url, email").eq("id", uid).single()
+        .then(({ data }) => { if (data) setLinkedProfile(data as ProfileResult); });
+    }
+  }, []);
+
+  const searchProfiles = (term: string) => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (term.length < 2) { setProfileResults([]); setShowDropdown(false); return; }
+    searchTimeout.current = setTimeout(async () => {
+      setSearchingProfiles(true);
+      try {
+        const cleanTerm = term.replace("@", "");
+        const { data } = await supabase
+          .from("profiles")
+          .select("id, full_name, username, avatar_url, email")
+          .or(`username.ilike.%${cleanTerm}%,full_name.ilike.%${cleanTerm}%,email.ilike.%${cleanTerm}%`)
+          .limit(6);
+        setProfileResults((data as ProfileResult[]) || []);
+        setShowDropdown(true);
+      } catch { setProfileResults([]); }
+      finally { setSearchingProfiles(false); }
+    }, 300);
+  };
+
+  const selectProfile = (profile: ProfileResult) => {
+    setLinkedProfile(profile);
+    setFormData(prev => ({ ...prev, user_id: profile.id }));
+    setShowDropdown(false);
+    setProfileSearch("");
+  };
+
+  const unlinkProfile = () => {
+    setLinkedProfile(null);
+    setFormData(prev => ({ ...prev, user_id: null }));
+  };
 
   const checkDuplicate = (phone: string) => {
     if (!phone.trim()) { setDuplicateWarning(null); return; }
@@ -56,6 +114,7 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
         notes: formData.notes.trim() || null,
         tags: formData.tags,
         birthday: formData.birthday || null,
+        user_id: formData.user_id || null,
       };
 
       if (editingClient) {
@@ -107,6 +166,69 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
       <div>
         <label className="text-sm font-medium mb-1.5 block">Cumpleaños</label>
         <Input value={formData.birthday} onChange={(e) => setFormData({ ...formData, birthday: e.target.value })} type="date" />
+      </div>
+
+      {/* Profile linking */}
+      <div>
+        <label className="text-sm font-medium mb-1.5 block">Vincular cuenta de usuario</label>
+        {linkedProfile ? (
+          <div className="flex items-center gap-2 p-2.5 rounded-lg border bg-primary/5 border-primary/20">
+            <Avatar className="h-8 w-8">
+              {linkedProfile.avatar_url && <AvatarImage src={linkedProfile.avatar_url} />}
+              <AvatarFallback className="text-xs bg-primary/20 text-primary">
+                {(linkedProfile.full_name || linkedProfile.email)?.[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{linkedProfile.full_name || linkedProfile.email}</p>
+              {linkedProfile.username && (
+                <p className="text-xs text-primary">@{linkedProfile.username}</p>
+              )}
+            </div>
+            <UserCheck className="h-4 w-4 text-green-500 shrink-0" />
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={unlinkProfile}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ) : (
+          <div className="relative" ref={dropdownRef}>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={profileSearch}
+                onChange={(e) => { setProfileSearch(e.target.value); searchProfiles(e.target.value); }}
+                onFocus={() => profileResults.length > 0 && setShowDropdown(true)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                placeholder="Buscar por @usuario, nombre o email..."
+                className="pl-9"
+              />
+              {searchingProfiles && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+            </div>
+            {showDropdown && profileResults.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                {profileResults.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="w-full flex items-center gap-2.5 p-2.5 hover:bg-muted/50 transition-colors text-left"
+                    onMouseDown={(e) => { e.preventDefault(); selectProfile(p); }}
+                  >
+                    <Avatar className="h-7 w-7">
+                      {p.avatar_url && <AvatarImage src={p.avatar_url} />}
+                      <AvatarFallback className="text-[10px]">
+                        {(p.full_name || p.email)?.[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-sm truncate">{p.full_name || p.email}</p>
+                      {p.username && <p className="text-xs text-muted-foreground">@{p.username}</p>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div>

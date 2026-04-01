@@ -4,14 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   User, Phone, Mail, Calendar, StickyNote, History,
-  Trash2, Edit, Loader2, MessageSquare, Gift
+  Trash2, Edit, MessageSquare, Gift, UserCheck, UserX
 } from "lucide-react";
 import type { Client, Booking } from "./types";
 import { TAG_COLORS } from "./types";
+
+interface LinkedProfile {
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  email: string;
+}
 
 interface ClientDetailProps {
   client: Client;
@@ -24,10 +32,20 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
   const [history, setHistory] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [topServices, setTopServices] = useState<string[]>([]);
+  const [linkedProfile, setLinkedProfile] = useState<LinkedProfile | null>(null);
 
   useEffect(() => {
     if (client.phone) fetchHistory(client.phone);
   }, [client.phone]);
+
+  useEffect(() => {
+    if (client.user_id) {
+      supabase.from("profiles").select("full_name, username, avatar_url, email").eq("id", client.user_id).single()
+        .then(({ data }) => { if (data) setLinkedProfile(data as LinkedProfile); });
+    } else {
+      setLinkedProfile(null);
+    }
+  }, [client.user_id]);
 
   const fetchHistory = async (phone: string) => {
     setLoading(true);
@@ -43,7 +61,6 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
       const bookings = (data as Booking[]) || [];
       setHistory(bookings);
 
-      // Calculate top services
       const serviceCount: Record<string, number> = {};
       bookings.forEach(b => {
         if (Array.isArray(b.services)) {
@@ -97,6 +114,32 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
               </p>
             )}
           </div>
+        </div>
+
+        {/* Linked profile badge */}
+        <div className="mt-3">
+          {linkedProfile ? (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+              <Avatar className="h-6 w-6">
+                {linkedProfile.avatar_url && <AvatarImage src={linkedProfile.avatar_url} />}
+                <AvatarFallback className="text-[10px] bg-green-500/20 text-green-700">
+                  {(linkedProfile.full_name || linkedProfile.email)?.[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-medium text-green-700">
+                  {linkedProfile.username ? `@${linkedProfile.username}` : linkedProfile.full_name || linkedProfile.email}
+                </span>
+              </div>
+              <UserCheck className="h-3.5 w-3.5 text-green-600 shrink-0" />
+              <span className="text-[10px] text-green-600 font-medium">Vinculado</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border">
+              <UserX className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground">Sin cuenta vinculada</span>
+            </div>
+          )}
         </div>
 
         {client.tags && client.tags.length > 0 && (

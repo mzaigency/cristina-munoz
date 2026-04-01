@@ -214,6 +214,7 @@ export type Database = {
           total_spent: number | null
           total_visits: number | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           birthday?: string | null
@@ -233,6 +234,7 @@ export type Database = {
           total_spent?: number | null
           total_visits?: number | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           birthday?: string | null
@@ -252,6 +254,7 @@ export type Database = {
           total_spent?: number | null
           total_visits?: number | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {

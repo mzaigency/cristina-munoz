@@ -12,6 +12,7 @@ export interface Client {
   created_at: string;
   is_blocked: boolean;
   birthday: string | null;
+  user_id: string | null;
 }
 
 export interface Booking {
