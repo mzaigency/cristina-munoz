@@ -226,6 +226,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         .or(`customer_name.ilike.%${query}%,Telefono.ilike.%${query}%`)
         .eq("status", "confirmed")
         .gte("Fecha", format(new Date(), "yyyy-MM-dd"))
+        .neq("compound_part", "part2")
         .order("Fecha", { ascending: true })
         .order("Hora", { ascending: true })
         .limit(20);
