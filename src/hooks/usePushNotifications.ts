@@ -13,6 +13,10 @@ const FIREBASE_CONFIG = {
   appId: "1:459863249000:web:fef8028fe735f54193abdd",
 };
 
+const FCM_SW_PATH = "/firebase-messaging-sw.js";
+const FCM_SW_SCOPE = "/firebase-push-scope";
+const FCM_TOKEN_CACHE_KEY = "fcm_push_token";
+
 type PermissionState = "default" | "granted" | "denied" | "unsupported";
 
 export function usePushNotifications() {
@@ -35,7 +39,7 @@ export function usePushNotifications() {
           platform: "web",
           updated_at: new Date().toISOString(),
         },
-        { onConflict: "token" }
+        { onConflict: "user_id,token" }
       );
 
       if (error) {
@@ -44,6 +48,21 @@ export function usePushNotifications() {
     } catch (err) {
       console.error("Error saving push token:", err);
     }
+  }, []);
+
+  const getOrRegisterFcmServiceWorker = useCallback(async () => {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    const existing = regs.find((r) => {
+      const activeUrl = r.active?.scriptURL ?? r.waiting?.scriptURL ?? r.installing?.scriptURL ?? "";
+      return activeUrl.includes("firebase-messaging-sw") || r.scope.includes(FCM_SW_SCOPE);
+    });
+
+    if (existing) return existing;
+
+    return navigator.serviceWorker.register(FCM_SW_PATH, {
+      scope: FCM_SW_SCOPE,
+      updateViaCache: "none",
+    });
   }, []);
 
   useEffect(() => {
@@ -58,23 +77,28 @@ export function usePushNotifications() {
       setPermission(perm);
 
       if (perm === "granted") {
+        const cachedToken = localStorage.getItem(FCM_TOKEN_CACHE_KEY);
+        if (cachedToken) {
+          setToken(cachedToken);
+        }
+
         (async () => {
           try {
             const { initializeApp, getApps } = await import("firebase/app");
             const { getMessaging, getToken } = await import("firebase/messaging");
             const app = getApps().length === 0 ? initializeApp(FIREBASE_CONFIG) : getApps()[0];
             const messaging = getMessaging(app);
-            const regs = await navigator.serviceWorker.getRegistrations();
-            const fbReg = regs.find(r => r.active?.scriptURL?.includes("firebase-messaging-sw"));
-            if (fbReg) {
-              const fcmToken = await getToken(messaging, {
-                vapidKey: VAPID_KEY,
-                serviceWorkerRegistration: fbReg,
-              });
-              if (fcmToken) {
-                setToken(fcmToken);
-                await saveToken(fcmToken);
-              }
+            const fcmRegistration = await getOrRegisterFcmServiceWorker();
+
+            const fcmToken = await getToken(messaging, {
+              vapidKey: VAPID_KEY,
+              serviceWorkerRegistration: fcmRegistration,
+            });
+
+            if (fcmToken) {
+              setToken(fcmToken);
+              localStorage.setItem(FCM_TOKEN_CACHE_KEY, fcmToken);
+              await saveToken(fcmToken);
             }
           } catch (err) {
             console.error("Error recovering FCM token:", err);
@@ -84,7 +108,34 @@ export function usePushNotifications() {
     } else {
       setPermission("unsupported");
     }
-  }, [saveToken]);
+  }, [getOrRegisterFcmServiceWorker, saveToken]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const syncTokenWhenAuthenticated = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await saveToken(token);
+      }
+    };
+
+    syncTokenWhenAuthenticated();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user?.id) {
+        await saveToken(token);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [token, saveToken]);
 
   const removeToken = useCallback(async () => {
     if (!token) return;
@@ -118,9 +169,7 @@ export function usePushNotifications() {
       const messaging = getMessaging(app);
 
       // Register the custom service worker
-      const registration = await navigator.serviceWorker.register(
-        "/firebase-messaging-sw.js"
-      );
+      const registration = await getOrRegisterFcmServiceWorker();
 
       // Get FCM token
       const fcmToken = await getToken(messaging, {
@@ -130,6 +179,7 @@ export function usePushNotifications() {
 
       if (fcmToken) {
         setToken(fcmToken);
+        localStorage.setItem(FCM_TOKEN_CACHE_KEY, fcmToken);
         await saveToken(fcmToken);
         setLoading(false);
         return true;
@@ -142,11 +192,12 @@ export function usePushNotifications() {
       setLoading(false);
       return false;
     }
-  }, [isSupported, saveToken]);
+  }, [getOrRegisterFcmServiceWorker, isSupported, saveToken]);
 
   const disablePush = useCallback(async () => {
     await removeToken();
     setToken(null);
+    localStorage.removeItem(FCM_TOKEN_CACHE_KEY);
   }, [removeToken]);
 
   return {

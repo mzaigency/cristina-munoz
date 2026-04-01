@@ -2,6 +2,12 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
+const isFirebaseMessagingWorker = (scriptUrl?: string | null) =>
+  !!scriptUrl && scriptUrl.includes("firebase-messaging-sw");
+
+const isAppPwaWorker = (scriptUrl?: string | null) =>
+  !!scriptUrl && (scriptUrl.includes("/sw.js") || scriptUrl.includes("workbox"));
+
 // Guard: unregister SW in iframes / preview hosts
 const isInIframe = (() => {
   try {
@@ -24,11 +30,18 @@ if (isPreviewHost || isInIframe) {
 // Register service worker update handler
 if ('serviceWorker' in navigator && !isPreviewHost && !isInIframe) {
   navigator.serviceWorker.ready.then((registration) => {
+    const activeScript =
+      registration.active?.scriptURL ??
+      registration.waiting?.scriptURL ??
+      registration.installing?.scriptURL;
+
+    if (!isAppPwaWorker(activeScript)) return;
+
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
       if (newWorker) {
-        // Ignore firebase messaging SW — it's not a PWA update
-        if (newWorker.scriptURL?.includes('firebase-messaging-sw')) return;
+        if (isFirebaseMessagingWorker(newWorker.scriptURL)) return;
+        if (!isAppPwaWorker(newWorker.scriptURL)) return;
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             window.dispatchEvent(new CustomEvent('swUpdated'));
