@@ -197,6 +197,7 @@ export type Database = {
       }
       clients: {
         Row: {
+          birthday: string | null
           created_at: string
           email: string | null
           favorite_stylist_id: string | null
@@ -215,6 +216,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          birthday?: string | null
           created_at?: string
           email?: string | null
           favorite_stylist_id?: string | null
@@ -233,6 +235,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          birthday?: string | null
           created_at?: string
           email?: string | null
           favorite_stylist_id?: string | null
