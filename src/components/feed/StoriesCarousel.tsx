@@ -487,6 +487,7 @@ export function StoriesCarousel() {
                   {isVideoStory && (
                     <button
                       onClick={toggleMute}
+                      aria-label={isMuted ? "Activar sonido" : "Silenciar"}
                       className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                     >
                       {isMuted ? (
