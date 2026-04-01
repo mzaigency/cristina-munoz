@@ -539,9 +539,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     }
   };
 
-  const groupBookingsByDate = (bookings: LocalBooking[]) => {
+  const groupBookingsByDate = (bookingsList: LocalBooking[]) => {
+    // Filter out compound part2 bookings - they should be visually merged with part1
+    const filtered = bookingsList.filter((b) => (b as any).compound_part !== "part2");
     const grouped: Record<string, LocalBooking[]> = {};
-    bookings.forEach((booking) => {
+    filtered.forEach((booking) => {
       const date = booking.Fecha;
       if (!grouped[date]) {
         grouped[date] = [];

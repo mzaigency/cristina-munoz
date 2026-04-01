@@ -91,7 +91,8 @@ serve(async (req) => {
 
     console.log("Authorization verified, proceeding with cancellation");
 
-    // Collect all related bookings (compound services)
+    // Collect all related bookings (compound services) - search BOTH directions
+    // Direction 1: bookings that the cancelled ones point to
     const relatedBookingIds = bookings
       .filter((b) => b.is_part_of_compound && b.related_booking_id)
       .map((b) => b.related_booking_id)
@@ -102,6 +103,16 @@ serve(async (req) => {
       const { data: related } = await supabase.from("bookings").select("*").in("id", relatedBookingIds);
       relatedBookings = related || [];
     }
+
+    // Direction 2: bookings that point TO the cancelled ones (e.g. part2 pointing to part1)
+    const { data: reverseRelated } = await supabase
+      .from("bookings")
+      .select("*")
+      .in("related_booking_id", idsToCancel);
+    if (reverseRelated && reverseRelated.length > 0) {
+      relatedBookings = [...relatedBookings, ...reverseRelated];
+    }
+    console.log("Found related bookings (both directions):", relatedBookings.length);
 
     // If cancelSeries is true, get all future bookings in the same recurrence group
     let seriesBookings: any[] = [];
