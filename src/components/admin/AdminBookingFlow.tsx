@@ -4,12 +4,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
 import { StylistSelection } from "@/components/booking/StylistSelection";
 import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { RecurrenceSelector, RecurrenceConfig } from "@/components/admin/RecurrenceSelector";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserCircle, AtSign, Check } from "lucide-react";
 import { Service, Stylist } from "@/types/booking";
 
 interface UserProfile {
@@ -17,6 +18,16 @@ interface UserProfile {
   username: string | null;
   full_name: string | null;
   avatar_url: string | null;
+}
+
+interface ClientRecord {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  tags: string[];
+  total_visits: number;
+  total_spent: number;
 }
 
 interface AdminBookingData {
@@ -27,6 +38,7 @@ interface AdminBookingData {
   customerName: string;
   customerUsername: string;
   selectedUser: UserProfile | null;
+  selectedClient: ClientRecord | null;
   skipAvailabilityCheck?: boolean;
   recurrence: RecurrenceConfig;
 }
@@ -45,6 +57,12 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [showResults, setShowResults] = useState(false);
+
+  // Client autocomplete state
+  const [clientSearchResults, setClientSearchResults] = useState<ClientRecord[]>([]);
+  const [showClientResults, setShowClientResults] = useState(false);
+  const [clientSearching, setClientSearching] = useState(false);
+
   const [bookingData, setBookingData] = useState<AdminBookingData>({
     services: [],
     stylist: null,
@@ -53,6 +71,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     customerName: "",
     customerUsername: "",
     selectedUser: null,
+    selectedClient: null,
     recurrence: {
       enabled: false,
       intervalValue: 2,
@@ -62,7 +81,42 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
   });
   const { toast } = useToast();
 
-  // Real-time search for users as admin types
+  // Real-time search for clients as admin types the name
+  useEffect(() => {
+    const searchClients = async () => {
+      const term = bookingData.customerName.trim();
+      if (term.length < 2 || bookingData.selectedClient) {
+        setClientSearchResults([]);
+        setShowClientResults(false);
+        return;
+      }
+
+      setClientSearching(true);
+      try {
+        const { data, error } = await supabase
+          .from("clients" as any)
+          .select("id, name, phone, email, tags, total_visits, total_spent")
+          .eq("tenant_id", tenantId)
+          .ilike("name", `%${term}%`)
+          .neq("is_blocked", true)
+          .limit(8);
+
+        if (error) throw error;
+        setClientSearchResults((data || []) as unknown as ClientRecord[]);
+        setShowClientResults((data || []).length > 0);
+      } catch (error) {
+        console.error("Error searching clients:", error);
+        setClientSearchResults([]);
+      } finally {
+        setClientSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchClients, 250);
+    return () => clearTimeout(debounce);
+  }, [bookingData.customerName, bookingData.selectedClient, tenantId]);
+
+  // Real-time search for users as admin types @username
   useEffect(() => {
     const searchUsers = async () => {
       const term = searchUsername.trim();
@@ -95,10 +149,27 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     return () => clearTimeout(debounce);
   }, [searchUsername]);
 
+  const handleSelectClient = (client: ClientRecord) => {
+    setBookingData((prev) => ({
+      ...prev,
+      customerName: client.name,
+      selectedClient: client,
+    }));
+    setShowClientResults(false);
+    setClientSearchResults([]);
+  };
+
+  const handleClearClient = () => {
+    setBookingData((prev) => ({
+      ...prev,
+      selectedClient: null,
+    }));
+  };
+
   const handleSelectUser = (profile: UserProfile) => {
     setBookingData((prev) => ({
       ...prev,
-      customerName: profile.full_name || profile.username || "",
+      customerName: prev.customerName || profile.full_name || profile.username || "",
       customerUsername: profile.username || "",
       selectedUser: profile,
     }));
@@ -123,7 +194,6 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
       return;
     }
 
-    // Add computed duration field and type cast
     const servicesWithDuration = (data || []).map((service) => ({
       ...service,
       type: service.type as "Simple" | "Compuesto",
@@ -155,7 +225,6 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     resolvedStylist?: Stylist,
     skipAvailabilityCheck?: boolean,
   ) => {
-    // If a resolved stylist is provided (from 'any' selection), use it instead
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist, skipAvailabilityCheck });
     setStep(4);
@@ -171,8 +240,6 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
       return;
     }
 
-    // Determine if we should skip availability checks
-    // This is set in DateTimeSelection when admin uses custom time
     const skipAvailabilityCheck = bookingData.skipAvailabilityCheck || false;
 
     try {
@@ -190,15 +257,13 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
           duration_part2_active: s.duration_part2_active,
           type: s.type,
         })),
-        // Format date in local timezone to avoid timezone issues
         date: `${bookingData.date!.getFullYear()}-${String(bookingData.date!.getMonth() + 1).padStart(2, "0")}-${String(bookingData.date!.getDate()).padStart(2, "0")}`,
         time: bookingData.time,
         stylist: bookingData.stylist,
         total_duration: totalDuration,
-        skipAvailabilityCheck, // Pass the flag to skip validations
+        skipAvailabilityCheck,
         tenant_id: tenantId,
-        canal: "crm" as const, // Reservas desde el CRM
-        // Recurrence configuration
+        canal: "crm" as const,
         recurrence: bookingData.recurrence.enabled
           ? {
               intervalValue: bookingData.recurrence.intervalValue,
@@ -297,25 +362,89 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Datos del cliente</h3>
 
-              <div className="space-y-2">
+              {/* Customer Name with Client Autocomplete */}
+              <div className="space-y-2 relative">
                 <Label htmlFor="customerName">Nombre completo</Label>
                 <Input
                   id="customerName"
                   value={bookingData.customerName}
-                  onChange={(e) => setBookingData({ ...bookingData, customerName: e.target.value })}
-                  placeholder="Nombre del cliente"
+                  onChange={(e) => {
+                    setBookingData({ ...bookingData, customerName: e.target.value, selectedClient: null });
+                  }}
+                  onFocus={() => clientSearchResults.length > 0 && setShowClientResults(true)}
+                  placeholder="Escribe para buscar clientes..."
                 />
+                {clientSearching && (
+                  <p className="text-xs text-muted-foreground">Buscando clientes...</p>
+                )}
+
+                {/* Selected client badge */}
+                {bookingData.selectedClient && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/20">
+                    <UserCircle className="h-4 w-4 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{bookingData.selectedClient.name}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{bookingData.selectedClient.total_visits || 0} visitas</span>
+                        <span>·</span>
+                        <span>{(bookingData.selectedClient.total_spent || 0).toFixed(0)}€</span>
+                        {bookingData.selectedClient.tags?.map(tag => (
+                          <Badge key={tag} variant="outline" className="text-[10px] px-1 py-0">{tag}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={handleClearClient}>
+                      <span className="sr-only">Desvincular cliente</span>×
+                    </Button>
+                  </div>
+                )}
+
+                {/* Client Search Results Dropdown */}
+                {showClientResults && clientSearchResults.length > 0 && !bookingData.selectedClient && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-card border rounded-lg shadow-lg max-h-[250px] overflow-y-auto">
+                    {clientSearchResults.map((client) => (
+                      <button
+                        key={client.id}
+                        type="button"
+                        onClick={() => handleSelectClient(client)}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors text-left border-b last:border-b-0"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm shrink-0">
+                          {client.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{client.name}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {client.phone && <span>{client.phone}</span>}
+                            <span>{client.total_visits || 0} visitas</span>
+                            <span>{(client.total_spent || 0).toFixed(0)}€</span>
+                          </div>
+                        </div>
+                        {client.tags?.length > 0 && (
+                          <div className="flex gap-1">
+                            {client.tags.slice(0, 2).map(tag => (
+                              <Badge key={tag} variant="outline" className="text-[10px] px-1 py-0">{tag}</Badge>
+                            ))}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
+              {/* User @ search */}
               <div className="space-y-2 relative">
-                <Label htmlFor="customerUsername">Usuario (opcional)</Label>
+                <Label htmlFor="customerUsername">
+                  <AtSign className="inline h-3.5 w-3.5 mr-1" />
+                  Vincular cuenta (opcional)
+                </Label>
                 <Input
                   id="customerUsername"
                   type="text"
                   value={searchUsername}
                   onChange={(e) => {
                     setSearchUsername(e.target.value);
-                    // Clear selected user if typing again
                     if (bookingData.selectedUser) {
                       setBookingData((prev) => ({ ...prev, selectedUser: null, customerUsername: "" }));
                     }
@@ -325,12 +454,17 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                 />
                 {searching && <p className="text-xs text-muted-foreground">Buscando...</p>}
                 <p className="text-xs text-muted-foreground">
-                  {bookingData.selectedUser
-                    ? `Usuario vinculado: @${bookingData.selectedUser.username || bookingData.selectedUser.full_name}`
-                    : "Vincula la cita a un usuario registrado"}
+                  {bookingData.selectedUser ? (
+                    <span className="text-primary flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      Vinculado: @{bookingData.selectedUser.username || bookingData.selectedUser.full_name}
+                    </span>
+                  ) : (
+                    "Vincula la cita a un usuario registrado en la app"
+                  )}
                 </p>
 
-                {/* Search Results Dropdown */}
+                {/* User Search Results Dropdown */}
                 {showResults && searchResults.length > 0 && (
                   <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-card border rounded-lg shadow-lg max-h-[250px] overflow-y-auto">
                     {searchResults.map((profile) => (
