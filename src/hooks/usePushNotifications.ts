@@ -110,6 +110,33 @@ export function usePushNotifications() {
     }
   }, [getOrRegisterFcmServiceWorker, saveToken]);
 
+  useEffect(() => {
+    if (!token) return;
+
+    const syncTokenWhenAuthenticated = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await saveToken(token);
+      }
+    };
+
+    syncTokenWhenAuthenticated();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user?.id) {
+        await saveToken(token);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [token, saveToken]);
+
   const removeToken = useCallback(async () => {
     if (!token) return;
     try {
