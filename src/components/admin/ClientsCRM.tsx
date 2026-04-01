@@ -42,6 +42,17 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
     fetchClients();
   }, [tenantId]);
 
+  // Auto-open client detail when navigating from calendar
+  useEffect(() => {
+    if (initialClientId && clients.length > 0) {
+      const client = clients.find(c => c.id === initialClientId);
+      if (client) {
+        setSelectedClient(client);
+        setIsDetailOpen(true);
+      }
+    }
+  }, [initialClientId, clients]);
+
   const fetchClients = async () => {
     try {
       const [clientsRes, transactionsRes] = await Promise.all([
