@@ -45,7 +45,6 @@ import {
   BusinessInfoStep,
   DesignStep,
 } from "@/components/onboarding";
-import { SupportButton } from "@/components/common/SupportButton";
 
 // Step: Business Hours with shifts support
 function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps) {
