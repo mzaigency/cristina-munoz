@@ -43,15 +43,39 @@ export function ClientsCRM({ tenantId }: ClientsCRMProps) {
 
   const fetchClients = async () => {
     try {
-      const { data, error } = await supabase
-        .from("clients" as any)
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .neq("is_blocked", true)
-        .order("last_visit_at", { ascending: false, nullsFirst: false });
+      const [clientsRes, transactionsRes] = await Promise.all([
+        supabase
+          .from("clients" as any)
+          .select("*")
+          .eq("tenant_id", tenantId)
+          .neq("is_blocked", true)
+          .order("last_visit_at", { ascending: false, nullsFirst: false }),
+        supabase
+          .from("transactions")
+          .select("customer_name, total")
+          .eq("tenant_id", tenantId)
+          .eq("voided", false),
+      ]);
 
-      if (error) throw error;
-      setClients((data || []) as unknown as Client[]);
+      if (clientsRes.error) throw clientsRes.error;
+
+      // Build spending map by normalized name
+      const spendMap = new Map<string, number>();
+      if (transactionsRes.data) {
+        for (const tx of transactionsRes.data) {
+          const key = (tx.customer_name || "").trim().toLowerCase();
+          if (key) spendMap.set(key, (spendMap.get(key) || 0) + Number(tx.total || 0));
+        }
+      }
+
+      // Enrich clients with real spending
+      const enriched = ((clientsRes.data || []) as unknown as Client[]).map(c => {
+        const key = c.name.trim().toLowerCase();
+        const spent = spendMap.get(key) || 0;
+        return { ...c, total_spent: spent > 0 ? spent : c.total_spent };
+      });
+
+      setClients(enriched);
     } catch (error) {
       console.error("Error fetching clients:", error);
       toast({ title: "Error", description: "No se pudieron cargar los clientes", variant: "destructive" });
