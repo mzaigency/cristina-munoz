@@ -40,8 +40,15 @@ export function ClientCard({ client, index, onClick }: ClientCardProps) {
         onClick={onClick}
       >
         <div className="flex items-center gap-3">
-          <div className={`h-10 w-10 rounded-full ${getAvatarColor(client.name)} flex items-center justify-center shrink-0`}>
-            <span className="text-white text-sm font-bold">{getInitials(client.name)}</span>
+          <div className="relative shrink-0">
+            <div className={`h-10 w-10 rounded-full ${getAvatarColor(client.name)} flex items-center justify-center`}>
+              <span className="text-white text-sm font-bold">{getInitials(client.name)}</span>
+            </div>
+            {client.user_id && (
+              <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-500 flex items-center justify-center border-2 border-background">
+                <UserCheck className="h-2.5 w-2.5 text-white" />
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
