@@ -15,7 +15,7 @@ import {
   Scissors,
   Users,
   LayoutDashboard,
-  UserCircle,
+  
   Menu,
 } from "lucide-react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
