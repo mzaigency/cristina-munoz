@@ -563,6 +563,7 @@ export function StoriesCarousel() {
               <button
                 className="absolute left-0 top-20 bottom-32 w-1/3"
                 onClick={handlePrevStory}
+                aria-label="Historia anterior"
               >
                 {currentStoryIndex > 0 && (
                   <ChevronLeft className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 text-white/50" />
@@ -571,6 +572,7 @@ export function StoriesCarousel() {
               <button
                 className="absolute right-0 top-20 bottom-32 w-1/3"
                 onClick={handleNextStory}
+                aria-label="Siguiente historia"
               >
                 <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 text-white/50" />
               </button>
