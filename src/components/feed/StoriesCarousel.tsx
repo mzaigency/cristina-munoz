@@ -510,6 +510,7 @@ export function StoriesCarousel() {
                   </button>
                   <button
                     onClick={handleClose}
+                    aria-label="Cerrar historia"
                     className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                   >
                     <X className="w-5 h-5 text-white" />
