@@ -66,6 +66,7 @@ const TenantLanding = () => {
   const [isPreview, setIsPreview] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [reviewsKey, setReviewsKey] = useState(0);
+  const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null);
 
   const { isAdmin, isStylist, hasAccess } = useTenantAccess(tenant?.id);
   const previewToken = searchParams.get("preview");
