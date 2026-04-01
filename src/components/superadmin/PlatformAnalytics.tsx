@@ -170,14 +170,14 @@ export const PlatformAnalytics = () => {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4">
         {[...Array(4)].map((_, i) => (
-          <Card key={i}>
-            <CardHeader>
+          <Card key={i} className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+            <CardHeader className="p-3.5">
               <Skeleton className="h-6 w-32" />
             </CardHeader>
-            <CardContent>
-              <Skeleton className="h-[300px] w-full" />
+            <CardContent className="p-3.5 pt-0">
+              <Skeleton className="h-[200px] w-full" />
             </CardContent>
           </Card>
         ))}
@@ -186,18 +186,18 @@ export const PlatformAnalytics = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4">
         {/* Bookings by Channel */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
+        <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+          <CardHeader className="p-3.5 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-primary" />
               Reservas por Canal
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="p-2 pt-0">
+            <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -205,10 +205,12 @@ export const PlatformAnalytics = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    outerRadius={100}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={70}
+                    innerRadius={35}
                     fill="#8884d8"
                     dataKey="value"
+                    paddingAngle={2}
                   >
                     {channelData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -223,15 +225,15 @@ export const PlatformAnalytics = () => {
         </Card>
 
         {/* Plan Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" />
+        <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+          <CardHeader className="p-3.5 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Building2 className="h-4 w-4 text-primary" />
               Distribución de Planes
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="p-2 pt-0">
+            <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -239,11 +241,13 @@ export const PlatformAnalytics = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ plan, percent }) => `${plan} (${(percent * 100).toFixed(0)}%)`}
-                    outerRadius={100}
+                    label={({ plan, percent }) => `${plan} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={70}
+                    innerRadius={35}
                     fill="#8884d8"
                     dataKey="count"
                     nameKey="plan"
+                    paddingAngle={2}
                   >
                     {planDistribution.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -258,20 +262,20 @@ export const PlatformAnalytics = () => {
         </Card>
 
         {/* Weekly Bookings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
+        <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+          <CardHeader className="p-3.5 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <TrendingUp className="h-4 w-4 text-primary" />
               Reservas Últimos 7 Días
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="p-2 pt-0">
+            <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyBookings}>
+                <BarChart data={weeklyBookings} barSize={24}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="day" className="text-xs" />
-                  <YAxis className="text-xs" />
+                  <XAxis dataKey="day" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} width={30} />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))',
@@ -292,43 +296,43 @@ export const PlatformAnalytics = () => {
         </Card>
 
         {/* Top Tenants */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-yellow-500" />
+        <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+          <CardHeader className="p-3.5 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Crown className="h-4 w-4 text-yellow-500" />
               Top 10 Negocios
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3 max-h-[300px] overflow-y-auto">
+          <CardContent className="p-3.5 pt-0">
+            <div className="space-y-2 max-h-[320px] overflow-y-auto">
               {topTenants.map((tenant, index) => (
                 <div 
                   key={tenant.id}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
                 >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary font-bold text-xs">
                     {index + 1}
                   </div>
                   {tenant.logo_url ? (
                     <img 
                       src={tenant.logo_url} 
                       alt={tenant.name}
-                      className="w-10 h-10 rounded-xl object-cover"
+                      className="w-9 h-9 rounded-xl object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm">
                       {tenant.name.charAt(0)}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{tenant.name}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{tenant.bookings} reservas</span>
-                      <span>•</span>
+                    <p className="font-medium text-sm truncate">{tenant.name}</p>
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <span>{tenant.bookings} res.</span>
+                      <span>·</span>
                       <span>€{tenant.revenue.toLocaleString()}</span>
                     </div>
                   </div>
-                  <Badge variant="secondary">{tenant.reviews} ⭐</Badge>
+                  <Badge variant="secondary" className="text-[10px] rounded-lg">{tenant.reviews} ⭐</Badge>
                 </div>
               ))}
             </div>

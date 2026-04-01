@@ -244,24 +244,24 @@ export const SubscriptionPlansManager = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <CreditCard className="h-6 w-6 text-primary" />
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-primary" />
             Planes de Suscripción
           </h2>
-          <p className="text-muted-foreground">Configura los precios y características de cada plan</p>
+          <p className="text-xs text-muted-foreground">Configura precios y características</p>
         </div>
-        <Button onClick={openNewPlan} className="gap-2">
+        <Button onClick={openNewPlan} className="gap-2 w-full rounded-xl h-10">
           <Plus className="h-4 w-4" />
           Nuevo Plan
         </Button>
       </div>
 
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-3">
         <AnimatePresence>
           {plans.map((plan, index) => (
             <motion.div
@@ -271,15 +271,15 @@ export const SubscriptionPlansManager = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className={`relative overflow-hidden ${!plan.is_active ? 'opacity-60' : ''}`}>
+              <Card className={`relative overflow-hidden bg-card/40 backdrop-blur-xl border-white/[0.08] ${!plan.is_active ? 'opacity-60' : ''}`}>
                 {!plan.is_active && (
                   <div className="absolute top-2 right-2">
                     <Badge variant="secondary">Inactivo</Badge>
                   </div>
                 )}
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-2 p-3.5">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{plan.name}</CardTitle>
+                    <CardTitle className="text-base">{plan.name}</CardTitle>
                     <div className="flex gap-1">
                       <Button 
                         variant="ghost" 
@@ -301,11 +301,11 @@ export const SubscriptionPlansManager = () => {
                   </div>
                   <p className="text-xs text-muted-foreground">/{plan.slug}</p>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 p-3.5 pt-0">
                   {/* Pricing */}
                   <div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold">€{plan.monthly_price}</span>
+                      <span className="text-2xl font-bold">€{plan.monthly_price}</span>
                       <span className="text-muted-foreground">/mes</span>
                     </div>
                     {plan.annual_price && (

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Select,
   SelectContent,
@@ -216,41 +216,40 @@ export const ActivityCenter = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            Centro de Actividad
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filtrar por tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="booking">Reservas</SelectItem>
-                <SelectItem value="user">Usuarios</SelectItem>
-                <SelectItem value="review">Reseñas</SelectItem>
-                <SelectItem value="favorite">Favoritos</SelectItem>
-                <SelectItem value="story">Stories</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
+    <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+      <CardHeader className="p-3.5 pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm mb-2">
+          <Activity className="h-4 w-4 text-primary" />
+          Actividad
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="flex-1 h-9 rounded-xl bg-white/[0.03] border-white/[0.06] text-sm">
+              <Filter className="h-3.5 w-3.5 mr-1.5" />
+              <SelectValue placeholder="Filtrar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="booking">Reservas</SelectItem>
+              <SelectItem value="user">Usuarios</SelectItem>
+              <SelectItem value="review">Reseñas</SelectItem>
+              <SelectItem value="favorite">Favoritos</SelectItem>
+              <SelectItem value="story">Stories</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="h-9 w-9 rounded-xl hover:bg-white/5"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4 max-h-[600px] overflow-y-auto">
+      <CardContent className="p-3.5 pt-0">
+        <div className="space-y-2 max-h-[500px] overflow-y-auto">
           <AnimatePresence>
             {filteredActivities.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
@@ -264,23 +263,14 @@ export const ActivityCenter = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ delay: index * 0.05 }}
-                  className="flex items-start gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
                 >
-                  <div className={`p-2 rounded-full ${getActivityColor(activity.type)}`}>
+                  <div className={`p-1.5 rounded-xl ${getActivityColor(activity.type)}`}>
                     {getActivityIcon(activity.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium">{activity.title}</p>
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {activity.type === 'booking' ? 'Reserva' :
-                         activity.type === 'user' ? 'Usuario' :
-                         activity.type === 'review' ? 'Reseña' :
-                         activity.type === 'favorite' ? 'Favorito' :
-                         activity.type === 'story' ? 'Story' : activity.type}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="font-medium text-sm">{activity.title}</p>
+                    <p className="text-[11px] text-muted-foreground line-clamp-1">
                       {activity.description}
                     </p>
                     {activity.metadata?.rating && (
@@ -291,7 +281,7 @@ export const ActivityCenter = () => {
                       </div>
                     )}
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
                     {formatDistanceToNow(new Date(activity.timestamp), { 
                       addSuffix: true, 
                       locale: es 

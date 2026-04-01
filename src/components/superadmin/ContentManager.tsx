@@ -192,97 +192,79 @@ export const ContentManager = () => {
   const filteredStories = getFilteredStories();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-primary/10">
-                <Image className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Stories</p>
-                <p className="text-2xl font-bold">{stories.length}</p>
-              </div>
+      <div className="grid grid-cols-4 gap-2">
+        <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+          <CardContent className="p-2.5 text-center">
+            <div className="p-1.5 rounded-lg bg-primary/10 w-fit mx-auto mb-1">
+              <Image className="h-3.5 w-3.5 text-primary" />
             </div>
+            <p className="text-base font-bold">{stories.length}</p>
+            <p className="text-[9px] text-muted-foreground">Total</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-green-500/10">
-                <Eye className="h-6 w-6 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Activas Ahora</p>
-                <p className="text-2xl font-bold">{activeCount}</p>
-              </div>
+        <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+          <CardContent className="p-2.5 text-center">
+            <div className="p-1.5 rounded-lg bg-green-500/10 w-fit mx-auto mb-1">
+              <Eye className="h-3.5 w-3.5 text-green-500" />
             </div>
+            <p className="text-base font-bold">{activeCount}</p>
+            <p className="text-[9px] text-muted-foreground">Activas</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-yellow-500/10">
-                <Clock className="h-6 w-6 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Expiradas</p>
-                <p className="text-2xl font-bold">{expiredCount}</p>
-              </div>
+        <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+          <CardContent className="p-2.5 text-center">
+            <div className="p-1.5 rounded-lg bg-yellow-500/10 w-fit mx-auto mb-1">
+              <Clock className="h-3.5 w-3.5 text-yellow-500" />
             </div>
+            <p className="text-base font-bold">{expiredCount}</p>
+            <p className="text-[9px] text-muted-foreground">Expiradas</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-gray-500/10">
-                <EyeOff className="h-6 w-6 text-gray-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Ocultas</p>
-                <p className="text-2xl font-bold">{hiddenCount}</p>
-              </div>
+        <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+          <CardContent className="p-2.5 text-center">
+            <div className="p-1.5 rounded-lg bg-gray-500/10 w-fit mx-auto mb-1">
+              <EyeOff className="h-3.5 w-3.5 text-gray-500" />
             </div>
+            <p className="text-base font-bold">{hiddenCount}</p>
+            <p className="text-[9px] text-muted-foreground">Ocultas</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Stories Grid */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Image className="h-5 w-5 text-primary" />
-              Moderación de Stories
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Select value={filter} onValueChange={setFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filtrar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas ({stories.length})</SelectItem>
-                  <SelectItem value="active">Activas ({activeCount})</SelectItem>
-                  <SelectItem value="expired">Expiradas ({expiredCount})</SelectItem>
-                  <SelectItem value="hidden">Ocultas ({hiddenCount})</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="icon" onClick={fetchStories}>
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
+      <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+        <CardHeader className="p-3.5 pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm mb-2">
+            <Image className="h-4 w-4 text-primary" />
+            Stories
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger className="flex-1 h-9 rounded-xl bg-white/[0.03] border-white/[0.06] text-sm">
+                <Filter className="h-3.5 w-3.5 mr-1.5" />
+                <SelectValue placeholder="Filtrar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas ({stories.length})</SelectItem>
+                <SelectItem value="active">Activas ({activeCount})</SelectItem>
+                <SelectItem value="expired">Expiradas ({expiredCount})</SelectItem>
+                <SelectItem value="hidden">Ocultas ({hiddenCount})</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="icon" onClick={fetchStories} className="h-9 w-9 rounded-xl hover:bg-white/5">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3.5 pt-0">
           {filteredStories.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">
               No hay stories en esta categoría
             </p>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {filteredStories.map((story) => {
                 const isExpired = isPast(new Date(story.expires_at));
                 
