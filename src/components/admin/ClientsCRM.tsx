@@ -21,6 +21,7 @@ import { exportClientsCsv } from "./clients/exportCsv";
 
 interface ClientsCRMProps {
   tenantId: string;
+  initialClientId?: string;
 }
 
 export function ClientsCRM({ tenantId }: ClientsCRMProps) {
