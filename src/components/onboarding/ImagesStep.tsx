@@ -133,8 +133,8 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
         </p>
       </div>
 
-      {/* Two equal boxes side by side */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Stacked layout — logo square, salon photo horizontal */}
+      <div className="space-y-4">
         {/* Logo Upload */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -144,9 +144,9 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
           <p className="text-[11px] text-muted-foreground leading-tight">
             Aparecerá en la cabecera de tu web
           </p>
-          <div className="ios-card p-3">
+          <div className="ios-card p-4">
             {logoUrl ? (
-              <div className="relative aspect-square w-full">
+              <div className="relative w-24 h-24 mx-auto">
                 <img
                   src={logoUrl}
                   alt="Logo"
@@ -163,7 +163,7 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
               <button
                 onClick={() => logoInputRef.current?.click()}
                 disabled={uploadingLogo}
-                className="w-full aspect-square border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-2"
+                className="w-full py-8 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-2"
               >
                 {uploadingLogo ? (
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -199,9 +199,9 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
           <p className="text-[11px] text-muted-foreground leading-tight">
             La imagen principal de tu página
           </p>
-          <div className="ios-card p-3">
+          <div className="ios-card p-4">
             {salonPhoto ? (
-              <div className="relative aspect-square w-full">
+              <div className="relative aspect-video w-full">
                 <img
                   src={salonPhoto}
                   alt="Foto del salón"
@@ -218,7 +218,7 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
               <button
                 onClick={() => salonInputRef.current?.click()}
                 disabled={uploadingSalon}
-                className="w-full aspect-square border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-2"
+                className="w-full aspect-video border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-2"
               >
                 {uploadingSalon ? (
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
