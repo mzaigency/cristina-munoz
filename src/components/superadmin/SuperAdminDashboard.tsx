@@ -8,7 +8,7 @@ import {
   TrendingUp, TrendingDown, Star, MessageSquare,
   Activity, Heart, Eye, CreditCard
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, AreaChart, Area,
@@ -228,31 +228,30 @@ export const SuperAdminDashboard = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="relative overflow-hidden hover:shadow-lg transition-shadow">
-        <div className={`absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 -mr-6 md:-mr-8 -mt-6 md:-mt-8 rounded-full opacity-10 ${gradient || 'bg-primary'}`} />
-        <CardHeader className="flex flex-row items-center justify-between pb-2 p-3 md:p-6 md:pb-2">
-          <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+      <Card className="relative overflow-hidden bg-card/40 backdrop-blur-xl border-white/[0.08] hover:border-white/[0.12] transition-all shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between pb-1 p-3.5">
+          <CardTitle className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
             {title}
           </CardTitle>
-          <div className={`p-1.5 md:p-2 rounded-lg ${gradient ? gradient : 'bg-primary/10'}`}>
-            <Icon className="h-3 w-3 md:h-4 md:w-4 text-white" />
+          <div className={`p-1.5 rounded-xl ${gradient ? gradient : 'bg-primary/10'}`}>
+            <Icon className="h-3.5 w-3.5 text-white" />
           </div>
         </CardHeader>
-        <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-          <div className="flex items-end justify-between">
+        <CardContent className="p-3.5 pt-0">
+          <div className="flex items-end justify-between gap-2">
             <div>
-              <div className="text-lg md:text-2xl font-bold">{value}</div>
+              <div className="text-xl font-bold tracking-tight">{value}</div>
               {subValue && (
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1 line-clamp-1">{subValue}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{subValue}</p>
               )}
             </div>
             {trend && trendValue && (
               <Badge 
                 variant={trend === 'up' ? 'default' : trend === 'down' ? 'destructive' : 'secondary'}
-                className="flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs h-5 md:h-6"
+                className="flex items-center gap-0.5 text-[10px] h-5 rounded-lg"
               >
-                {trend === 'up' ? <TrendingUp className="h-2.5 w-2.5 md:h-3 md:w-3" /> : 
-                 trend === 'down' ? <TrendingDown className="h-2.5 w-2.5 md:h-3 md:w-3" /> : null}
+                {trend === 'up' ? <TrendingUp className="h-2.5 w-2.5" /> : 
+                 trend === 'down' ? <TrendingDown className="h-2.5 w-2.5" /> : null}
                 {trendValue}
               </Badge>
             )}
@@ -264,16 +263,16 @@ export const SuperAdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="space-y-4 md:space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
           {[...Array(8)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-2 p-3 md:p-6 md:pb-2">
-                <Skeleton className="h-3 md:h-4 w-16 md:w-24" />
+            <Card key={i} className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+              <CardHeader className="pb-2 p-3.5">
+                <Skeleton className="h-3 w-16" />
               </CardHeader>
-              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-                <Skeleton className="h-5 md:h-8 w-12 md:w-16" />
-                <Skeleton className="h-2 md:h-3 w-24 md:w-32 mt-1 md:mt-2" />
+              <CardContent className="p-3.5 pt-0">
+                <Skeleton className="h-6 w-14" />
+                <Skeleton className="h-2 w-20 mt-1" />
               </CardContent>
             </Card>
           ))}
@@ -285,9 +284,9 @@ export const SuperAdminDashboard = () => {
   if (!stats) return null;
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Revenue KPIs - App Income */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+    <div className="space-y-4">
+      {/* Revenue KPIs */}
+      <div className="grid grid-cols-2 gap-3">
         <StatCard
           title="MRR"
           value={`€${stats.monthlyRecurringRevenue.toLocaleString()}`}
@@ -325,7 +324,7 @@ export const SuperAdminDashboard = () => {
       </div>
 
       {/* Secondary KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <StatCard
           title="Reservas Hoy"
           value={stats.totalBookingsToday}
@@ -353,16 +352,16 @@ export const SuperAdminDashboard = () => {
       </div>
 
       {/* Charts - Stack on mobile */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        <Card>
-          <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
-            <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-              <Activity className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+          <CardHeader className="p-3.5 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Activity className="h-4 w-4 text-primary" />
               Tendencia
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-2 md:p-6 pt-0">
-            <div className="h-[200px] md:h-[300px]">
+          <CardContent className="p-2 pt-0">
+            <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -398,18 +397,18 @@ export const SuperAdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
-            <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-              <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
+        <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+          <CardHeader className="p-3.5 pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <DollarSign className="h-4 w-4 text-green-500" />
               Ingresos por Plan
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-2 md:p-6 pt-0">
-            <div className="h-[200px] md:h-[300px]">
+          <CardContent className="p-2 pt-0">
+            <div className="h-[220px]">
               {stats.revenueByPlan.length > 0 ? (
-                <div className="w-full h-full flex flex-col md:flex-row items-center gap-4">
-                  <div className="w-full md:w-1/2 h-32 md:h-full">
+                <div className="w-full h-full flex flex-col items-center gap-3">
+                  <div className="w-full h-28">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -438,19 +437,19 @@ export const SuperAdminDashboard = () => {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="w-full md:flex-1 space-y-2 md:space-y-3">
+                  <div className="w-full space-y-2 px-2">
                     {stats.revenueByPlan.map((plan, index) => (
                       <div key={plan.plan} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div 
-                            className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full" 
+                            className="w-2.5 h-2.5 rounded-full" 
                             style={{ backgroundColor: COLORS[index % COLORS.length] }}
                           />
-                          <span className="text-xs md:text-sm font-medium">{plan.plan}</span>
+                          <span className="text-xs font-medium">{plan.plan}</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs md:text-sm font-bold">€{plan.revenue}</p>
-                          <p className="text-[10px] md:text-xs text-muted-foreground">{plan.count} negocios</p>
+                          <p className="text-xs font-bold">€{plan.revenue}</p>
+                          <p className="text-[10px] text-muted-foreground">{plan.count} neg.</p>
                         </div>
                       </div>
                     ))}
@@ -459,8 +458,8 @@ export const SuperAdminDashboard = () => {
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                   <div className="text-center">
-                    <DollarSign className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 opacity-20" />
-                    <p className="text-xs md:text-sm">Sin suscripciones</p>
+                    <DollarSign className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                    <p className="text-xs">Sin suscripciones</p>
                   </div>
                 </div>
               )}
@@ -470,15 +469,15 @@ export const SuperAdminDashboard = () => {
       </div>
 
       {/* New Tenants Trend */}
-      <Card>
-        <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
-          <CardTitle className="flex items-center gap-2 text-sm md:text-base">
-            <Building2 className="h-4 w-4 md:h-5 md:w-5 text-purple-500" />
+      <Card className="bg-card/40 backdrop-blur-xl border-white/[0.08]">
+        <CardHeader className="p-3.5 pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Building2 className="h-4 w-4 text-purple-500" />
             Nuevos Negocios (7 días)
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-2 md:p-6 pt-0">
-          <div className="h-[150px] md:h-[200px]">
+        <CardContent className="p-2 pt-0">
+          <div className="h-[160px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
