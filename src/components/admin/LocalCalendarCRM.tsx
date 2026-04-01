@@ -165,6 +165,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     lookup();
   }, [selectedBooking?.id, isEditDialogOpen, tenantId]);
 
+  useEffect(() => {
     const timerId = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
