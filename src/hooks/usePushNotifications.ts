@@ -21,6 +21,31 @@ export function usePushNotifications() {
   const [loading, setLoading] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
 
+  const saveToken = useCallback(async (fcmToken: string) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase.from("push_tokens").upsert(
+        {
+          user_id: user.id,
+          token: fcmToken,
+          platform: "web",
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "token" }
+      );
+
+      if (error) {
+        console.error("Error saving push token:", error);
+      }
+    } catch (err) {
+      console.error("Error saving push token:", err);
+    }
+  }, []);
+
   useEffect(() => {
     const supported =
       "Notification" in window &&
@@ -32,7 +57,6 @@ export function usePushNotifications() {
       const perm = Notification.permission as PermissionState;
       setPermission(perm);
 
-      // If permission already granted, recover the FCM token silently
       if (perm === "granted") {
         (async () => {
           try {
@@ -61,32 +85,6 @@ export function usePushNotifications() {
       setPermission("unsupported");
     }
   }, [saveToken]);
-
-  const saveToken = useCallback(async (fcmToken: string) => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Upsert token — use token as unique key
-      const { error } = await supabase.from("push_tokens").upsert(
-        {
-          user_id: user.id,
-          token: fcmToken,
-          platform: "web",
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "token" }
-      );
-
-      if (error) {
-        console.error("Error saving push token:", error);
-      }
-    } catch (err) {
-      console.error("Error saving push token:", err);
-    }
-  }, []);
 
   const removeToken = useCallback(async () => {
     if (!token) return;
