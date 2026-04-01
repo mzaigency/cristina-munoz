@@ -6,13 +6,15 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SITE_URL = process.env.VITE_SITE_URL || 'https://cristina-munoz.lovable.app';
+const SITE_URL = process.env.VITE_SITE_URL || 'https://www.glowapp.app';
 
 const pages = [
   { url: '/', priority: '1.0', changefreq: 'daily' },
   { url: '/para-negocios', priority: '0.9', changefreq: 'weekly' },
-  { url: '/politica-privacidad', priority: '0.3', changefreq: 'yearly' },
-  { url: '/terminos-uso', priority: '0.3', changefreq: 'yearly' },
+  { url: '/auth', priority: '0.7', changefreq: 'monthly' },
+  { url: '/onboarding', priority: '0.8', changefreq: 'monthly' },
+  { url: '/privacidad', priority: '0.3', changefreq: 'yearly' },
+  { url: '/terminos', priority: '0.3', changefreq: 'yearly' },
 ];
 
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

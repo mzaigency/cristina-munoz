@@ -66,6 +66,7 @@ const TenantLanding = () => {
   const [isPreview, setIsPreview] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [reviewsKey, setReviewsKey] = useState(0);
+  const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null);
 
   const { isAdmin, isStylist, hasAccess } = useTenantAccess(tenant?.id);
   const previewToken = searchParams.get("preview");
@@ -134,6 +135,18 @@ const TenantLanding = () => {
       }
 
       setTenant(tenant as Tenant);
+
+      // Fetch real review stats for structured data
+      const { data: reviews } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("tenant_id", tenant.id)
+        .eq("approved", true);
+
+      if (reviews && reviews.length > 0) {
+        const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+        setReviewStats({ avg: Math.round(avg * 10) / 10, count: reviews.length });
+      }
     } catch (error) {
       console.error("Error fetching tenant:", error);
       navigate("/404");
@@ -227,6 +240,12 @@ const TenantLanding = () => {
     ...(tenant.phone ? { telephone: tenant.phone } : {}),
     ...(tenant.average_price ? { 
       priceRange: tenant.average_price <= 20 ? "€" : tenant.average_price <= 50 ? "€€" : "€€€" 
+    } : {}),
+    ...(reviewStats ? {
+      aggregateRating: {
+        ratingValue: reviewStats.avg,
+        reviewCount: reviewStats.count,
+      }
     } : {}),
   };
 
