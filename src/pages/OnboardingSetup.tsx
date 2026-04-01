@@ -1068,10 +1068,13 @@ export default function OnboardingSetup() {
                 </button>
               )}
               {step < totalSteps && (
+                <>
+                <SupportButton variant="inline" context="Configuración de salón" />
                 <div className="flex items-baseline gap-0.5">
                   <span className="text-sm font-bold text-primary">{step + 1}</span>
                   <span className="text-xs text-muted-foreground">/{totalSteps}</span>
                 </div>
+                </>
               )}
             </div>
           </div>
@@ -1107,8 +1110,6 @@ export default function OnboardingSetup() {
           </AnimatePresence>
         </div>
       </div>
-
-      <SupportButton variant="floating" context="Configuración de salón" />
     </AppLayout>
   );
 }
