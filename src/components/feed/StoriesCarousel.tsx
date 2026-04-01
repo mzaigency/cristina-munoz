@@ -487,6 +487,7 @@ export function StoriesCarousel() {
                   {isVideoStory && (
                     <button
                       onClick={toggleMute}
+                      aria-label={isMuted ? "Activar sonido" : "Silenciar"}
                       className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                     >
                       {isMuted ? (
@@ -498,6 +499,7 @@ export function StoriesCarousel() {
                   )}
                   <button
                     onClick={() => setIsPaused(!isPaused)}
+                    aria-label={isPaused ? "Reanudar historia" : "Pausar historia"}
                     className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                   >
                     {isPaused ? (
@@ -508,6 +510,7 @@ export function StoriesCarousel() {
                   </button>
                   <button
                     onClick={handleClose}
+                    aria-label="Cerrar historia"
                     className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                   >
                     <X className="w-5 h-5 text-white" />
@@ -560,6 +563,7 @@ export function StoriesCarousel() {
               <button
                 className="absolute left-0 top-20 bottom-32 w-1/3"
                 onClick={handlePrevStory}
+                aria-label="Historia anterior"
               >
                 {currentStoryIndex > 0 && (
                   <ChevronLeft className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 text-white/50" />
@@ -568,6 +572,7 @@ export function StoriesCarousel() {
               <button
                 className="absolute right-0 top-20 bottom-32 w-1/3"
                 onClick={handleNextStory}
+                aria-label="Siguiente historia"
               >
                 <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 text-white/50" />
               </button>

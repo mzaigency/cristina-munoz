@@ -152,6 +152,7 @@ export function WelcomeCarousel({ onComplete }: WelcomeCarouselProps) {
               <button
                 key={index}
                 onClick={() => handleDotClick(index)}
+                aria-label={`Ir a diapositiva ${index + 1}`}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   index === currentSlide
                     ? "w-8 bg-primary"
