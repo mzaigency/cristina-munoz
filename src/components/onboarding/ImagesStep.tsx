@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Image, ArrowLeft, ArrowRight, Loader2, Upload, X, Camera } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Upload, X, Camera, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -134,21 +134,26 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-          <Image className="h-5 w-5 text-primary" />
-          Imágenes del salón
+        <h3 className="text-lg font-semibold text-foreground mb-1">
+          📸 Imágenes de tu negocio
         </h3>
         <p className="text-sm text-muted-foreground">
-          Sube tu logo y fotos del salón para personalizar tu landing page
+          Añade tu logo y fotos para que tu página se vea profesional
         </p>
       </div>
 
       {/* Logo Upload */}
-      <div className="space-y-3">
-        <Label>Logo del salón (opcional)</Label>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">Logo</Label>
+          <span className="text-[11px] text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">Opcional</span>
+        </div>
+        <p className="text-[11px] text-muted-foreground -mt-1">
+          Se mostrará en la cabecera de tu página web
+        </p>
         <div className="ios-card p-4">
           {logoUrl ? (
-            <div className="relative w-24 h-24 mx-auto">
+            <div className="relative w-20 h-20 mx-auto">
               <img
                 src={logoUrl}
                 alt="Logo"
@@ -156,7 +161,7 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
               />
               <button
                 onClick={() => setLogoUrl(null)}
-                className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
+                className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-sm"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -165,16 +170,19 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
             <button
               onClick={() => logoInputRef.current?.click()}
               disabled={uploadingLogo}
-              className="w-full py-8 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors flex flex-col items-center gap-2"
+              className="w-full py-6 border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors flex flex-col items-center gap-2"
             >
               {uploadingLogo ? (
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-7 w-7 animate-spin text-primary" />
               ) : (
                 <>
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Subir logo (PNG, JPG)
-                  </span>
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Upload className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-center">
+                    <span className="text-sm font-medium text-foreground block">Subir logo</span>
+                    <span className="text-[11px] text-muted-foreground">PNG, JPG · máx 5MB</span>
+                  </div>
                 </>
               )}
             </button>
@@ -189,23 +197,26 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
         </div>
       </div>
 
-      {/* Hero Images */}
-      <div className="space-y-3">
-        <Label>Fotos del salón (opcional)</Label>
-        <p className="text-xs text-muted-foreground">
-          Estas fotos se mostrarán en el carrusel de tu landing page
+      {/* Salon Photos */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">Fotos del salón</Label>
+          <span className="text-[11px] text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">Opcional</span>
+        </div>
+        <p className="text-[11px] text-muted-foreground -mt-1">
+          Se mostrarán en la portada de tu página · máx 5 fotos
         </p>
         <div className="grid grid-cols-3 gap-2">
           {heroImages.map((url, index) => (
             <div key={index} className="relative aspect-square">
               <img
                 src={url}
-                alt={`Hero ${index + 1}`}
+                alt={`Foto ${index + 1}`}
                 className="w-full h-full object-cover rounded-xl"
               />
               <button
                 onClick={() => removeHeroImage(index)}
-                className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
+                className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-sm"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -216,14 +227,14 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
             <button
               onClick={() => heroInputRef.current?.click()}
               disabled={uploadingHero}
-              className="aspect-square border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1"
+              className="aspect-square border-2 border-dashed border-border rounded-xl hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-1.5"
             >
               {uploadingHero ? (
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
               ) : (
                 <>
-                  <Camera className="h-6 w-6 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">Añadir</span>
+                  <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground font-medium">Añadir</span>
                 </>
               )}
             </button>
@@ -239,8 +250,8 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
         />
       </div>
 
-      <p className="text-xs text-muted-foreground text-center">
-        💡 Puedes saltar este paso y añadir imágenes después desde el panel de administración
+      <p className="text-[11px] text-muted-foreground text-center bg-secondary/30 rounded-xl py-2.5 px-4">
+        💡 Puedes saltar este paso y añadir imágenes después desde tu panel
       </p>
 
       <div className="flex gap-3">

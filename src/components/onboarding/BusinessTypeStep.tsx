@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Scissors, Sparkles, Heart, Leaf, Users, Palette, MoreHorizontal } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StepProps } from "./types";
@@ -12,58 +12,66 @@ const businessTypes = [
   { 
     id: "peluqueria", 
     label: "Peluquería", 
-    icon: Scissors, 
-    description: "Cortes, peinados y tratamientos capilares",
-    color: "from-purple-500 to-pink-500"
+    emoji: "✂️",
+    description: "Cortes, peinados y color",
+    color: "from-violet-500/20 to-purple-500/20",
+    borderActive: "border-violet-500",
   },
   { 
     id: "barberia", 
     label: "Barbería", 
-    icon: Scissors, 
-    description: "Cortes masculinos, afeitado y barba",
-    color: "from-amber-600 to-orange-500"
+    emoji: "💈",
+    description: "Cortes, afeitado y barba",
+    color: "from-amber-500/20 to-orange-500/20",
+    borderActive: "border-amber-500",
   },
   { 
     id: "salon_belleza", 
     label: "Salón de Belleza", 
-    icon: Sparkles, 
+    emoji: "💅",
     description: "Servicios integrales de belleza",
-    color: "from-rose-400 to-pink-500"
+    color: "from-pink-500/20 to-rose-500/20",
+    borderActive: "border-pink-500",
   },
   { 
     id: "estetica", 
-    label: "Centro de Estética", 
-    icon: Heart, 
-    description: "Tratamientos faciales y corporales",
-    color: "from-teal-400 to-cyan-500"
+    label: "Centro Estética", 
+    emoji: "🧖‍♀️",
+    description: "Faciales y tratamientos corporales",
+    color: "from-teal-500/20 to-cyan-500/20",
+    borderActive: "border-teal-500",
   },
   { 
     id: "spa", 
     label: "Spa & Wellness", 
-    icon: Leaf, 
-    description: "Masajes, relajación y bienestar",
-    color: "from-green-400 to-emerald-500"
+    emoji: "🧘",
+    description: "Masajes y bienestar",
+    color: "from-green-500/20 to-emerald-500/20",
+    borderActive: "border-green-500",
   },
   { 
     id: "unas", 
     label: "Salón de Uñas", 
-    icon: Palette, 
+    emoji: "💎",
     description: "Manicura, pedicura y nail art",
-    color: "from-fuchsia-400 to-purple-500"
+    color: "from-fuchsia-500/20 to-purple-500/20",
+    borderActive: "border-fuchsia-500",
   },
   { 
     id: "multiservicios", 
     label: "Multiservicios", 
-    icon: Users, 
-    description: "Combina varios servicios de belleza",
-    color: "from-indigo-400 to-violet-500"
+    emoji: "🌟",
+    description: "Combina varios servicios",
+    color: "from-indigo-500/20 to-violet-500/20",
+    borderActive: "border-indigo-500",
   },
   { 
     id: "otro", 
     label: "Otro", 
-    icon: MoreHorizontal, 
-    description: "Especifica tu tipo de negocio",
-    color: "from-gray-400 to-slate-500"
+    emoji: "🏠",
+    description: "Especifica tu negocio",
+    color: "from-gray-500/20 to-slate-500/20",
+    borderActive: "border-gray-500",
   },
 ];
 
@@ -99,7 +107,6 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
         .from("tenants")
         .update({ 
           name: tenantName.trim(),
-          // We'll store this in features JSON for now
           features: {
             reviews: true,
             whatsapp: true,
@@ -113,7 +120,7 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
 
       if (error) throw error;
       
-      toast.success("Tipo de negocio guardado");
+      toast.success("¡Perfecto! Vamos al siguiente paso");
       onNext();
     } catch (error) {
       console.error("Error saving business type:", error);
@@ -123,55 +130,60 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
     }
   };
 
-  const selectedTypeData = businessTypes.find(t => t.id === selectedType);
-
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">¿Qué tipo de negocio tienes?</h2>
-        <p className="text-muted-foreground">
-          Esto nos ayudará a personalizar tu experiencia
+        <div className="text-4xl mb-2">👋</div>
+        <h2 className="text-2xl font-bold text-foreground">¿Qué tipo de negocio tienes?</h2>
+        <p className="text-sm text-muted-foreground">
+          Personalizaremos todo para tu tipo de negocio
         </p>
       </div>
 
       {/* Business Name */}
       <div className="space-y-2">
-        <Label htmlFor="businessName">Nombre de tu negocio</Label>
+        <Label htmlFor="businessName" className="text-sm font-medium">
+          Nombre de tu negocio
+        </Label>
         <Input
           id="businessName"
           value={tenantName}
           onChange={(e) => setTenantName(e.target.value)}
           placeholder="Ej: Salón María, Barbería El Clásico..."
-          className="text-lg"
+          className="h-12 rounded-xl text-base"
         />
+        <p className="text-[11px] text-muted-foreground">
+          Este nombre aparecerá en tu página web
+        </p>
       </div>
 
       {/* Business Type Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
         {businessTypes.map((type) => {
-          const Icon = type.icon;
           const isSelected = selectedType === type.id;
           
           return (
-            <Card
+            <button
               key={type.id}
-              className={`p-4 cursor-pointer transition-all hover:scale-105 ${
+              type="button"
+              className={`relative p-4 rounded-2xl border-2 transition-all text-left ${
                 isSelected 
-                  ? "ring-2 ring-primary shadow-lg" 
-                  : "hover:shadow-md"
+                  ? `${type.borderActive} bg-gradient-to-br ${type.color} shadow-sm` 
+                  : "border-border hover:border-primary/30 bg-card"
               }`}
               onClick={() => setSelectedType(type.id)}
             >
-              <div className="flex flex-col items-center text-center space-y-2">
-                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${type.color} flex items-center justify-center`}>
-                  <Icon className="w-6 h-6 text-white" />
+              {isSelected && (
+                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                  <Check className="w-3 h-3 text-primary-foreground" />
                 </div>
-                <span className="font-medium text-sm">{type.label}</span>
-                <span className="text-xs text-muted-foreground line-clamp-2">
-                  {type.description}
-                </span>
-              </div>
-            </Card>
+              )}
+              <div className="text-2xl mb-2">{type.emoji}</div>
+              <p className="font-semibold text-sm text-foreground leading-tight">{type.label}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                {type.description}
+              </p>
+            </button>
           );
         })}
       </div>
@@ -179,42 +191,25 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
       {/* Custom Type Input */}
       {selectedType === "otro" && (
         <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-          <Label htmlFor="customType">Especifica tu tipo de negocio</Label>
+          <Label htmlFor="customType" className="text-sm">Especifica tu tipo de negocio</Label>
           <Input
             id="customType"
             value={customType}
             onChange={(e) => setCustomType(e.target.value)}
-            placeholder="Ej: Centro de micropigmentación, Estudio de cejas..."
+            placeholder="Ej: Centro de micropigmentación..."
+            className="h-12 rounded-xl"
           />
         </div>
-      )}
-
-      {/* Preview Card */}
-      {selectedType && tenantName && (
-        <Card className="p-4 bg-muted/50 animate-in fade-in">
-          <div className="flex items-center gap-3">
-            {selectedTypeData && (
-              <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${selectedTypeData.color} flex items-center justify-center`}>
-                <selectedTypeData.icon className="w-5 h-5 text-white" />
-              </div>
-            )}
-            <div>
-              <p className="font-semibold">{tenantName}</p>
-              <p className="text-sm text-muted-foreground">
-                {selectedType === "otro" ? customType : selectedTypeData?.label}
-              </p>
-            </div>
-          </div>
-        </Card>
       )}
 
       <Button 
         onClick={handleSave} 
         disabled={saving || !selectedType || !tenantName.trim() || (selectedType === "otro" && !customType.trim())}
-        className="w-full"
+        className="w-full h-12 rounded-xl"
         size="lg"
       >
         {saving ? "Guardando..." : "Continuar"}
+        <ArrowRight className="h-4 w-4 ml-2" />
       </Button>
     </div>
   );
