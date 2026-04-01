@@ -187,20 +187,27 @@ serve(async (req) => {
 
         const result = await response.json();
 
+        console.log(`FCM response for token ${token.substring(0, 20)}:`, JSON.stringify(result));
+        console.log(`FCM HTTP status: ${response.status}`);
+
         // Handle invalid tokens
-        if (result.error?.details?.some((d: any) => d.errorCode === "UNREGISTERED")) {
-          await supabase.from("push_tokens").delete().eq("token", token);
-          console.log("Removed invalid token");
+        if (result.error) {
+          console.error(`FCM error:`, JSON.stringify(result.error));
+          if (result.error?.details?.some((d: any) => d.errorCode === "UNREGISTERED")) {
+            await supabase.from("push_tokens").delete().eq("token", token);
+            console.log("Removed invalid token");
+          }
         }
 
-        return { token: token.substring(0, 20), result };
+        return { token: token.substring(0, 20), result, status: response.status };
       }),
     );
 
-    const successful = results.filter((r) => r.status === "fulfilled").length;
-    const failed = results.filter((r) => r.status === "rejected").length;
+    const successful = results.filter((r) => r.status === "fulfilled" && (r.value as any).status === 200).length;
+    const failed = results.length - successful;
 
     console.log(`Push notifications sent: ${successful} success, ${failed} failed`);
+    console.log(`Full results:`, JSON.stringify(results));
 
     return new Response(JSON.stringify({ message: "Push notifications processed", sent: successful, failed }), {
       status: 200,
