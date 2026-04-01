@@ -275,7 +275,7 @@ export default function TenantAdmin() {
                 stylists: "team",
                 messages: "communication",
                 settings: "settings",
-                clients: "clients",
+                clients: "agenda",
               };
               setActiveTab(tabMap[tab] || (tab as TabValue));
             }}
