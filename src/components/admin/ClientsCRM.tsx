@@ -21,9 +21,10 @@ import { exportClientsCsv } from "./clients/exportCsv";
 
 interface ClientsCRMProps {
   tenantId: string;
+  initialClientId?: string;
 }
 
-export function ClientsCRM({ tenantId }: ClientsCRMProps) {
+export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,6 +41,17 @@ export function ClientsCRM({ tenantId }: ClientsCRMProps) {
   useEffect(() => {
     fetchClients();
   }, [tenantId]);
+
+  // Auto-open client detail when navigating from calendar
+  useEffect(() => {
+    if (initialClientId && clients.length > 0) {
+      const client = clients.find(c => c.id === initialClientId);
+      if (client) {
+        setSelectedClient(client);
+        setIsDetailOpen(true);
+      }
+    }
+  }, [initialClientId, clients]);
 
   const fetchClients = async () => {
     try {

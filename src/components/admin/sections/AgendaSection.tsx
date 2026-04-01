@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, UserCircle } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
 import { WaitlistManager } from "../WaitlistManager";
+import { ClientsCRM } from "../ClientsCRM";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AgendaSectionProps {
@@ -11,12 +12,13 @@ interface AgendaSectionProps {
   onNavigateToCash?: () => void;
 }
 
-type AgendaTab = "calendar" | "waitlist";
+type AgendaTab = "calendar" | "waitlist" | "clients";
 
 const AgendaSection = ({ tenantId, onNavigateToCash }: AgendaSectionProps) => {
   const [activeTab, setActiveTab] = useState<AgendaTab>("calendar");
   const [stylists, setStylists] = useState<Array<{ slug: string; name: string; color: string }>>([]);
   const [waitlistCount, setWaitlistCount] = useState(0);
+  const [initialClientId, setInitialClientId] = useState<string | undefined>();
 
   useEffect(() => {
     const fetchStylists = async () => {
@@ -69,14 +71,20 @@ const AgendaSection = ({ tenantId, onNavigateToCash }: AgendaSectionProps) => {
     };
   }, [tenantId]);
 
-  // Clear badge when viewing waitlist tab
   const handleTabChange = (value: string) => {
     setActiveTab(value as AgendaTab);
   };
 
+  // Callback from calendar to open a client in the CRM tab
+  const handleSelectClient = useCallback((clientId: string) => {
+    setInitialClientId(clientId);
+    setActiveTab("clients");
+  }, []);
+
   const tabs = [
     { id: "calendar" as AgendaTab, label: "Calendario", icon: Calendar, badge: 0 },
     { id: "waitlist" as AgendaTab, label: "Lista de espera", icon: Clock, badge: waitlistCount },
+    { id: "clients" as AgendaTab, label: "Clientes", icon: UserCircle, badge: 0 },
   ];
 
   return (
@@ -104,11 +112,23 @@ const AgendaSection = ({ tenantId, onNavigateToCash }: AgendaSectionProps) => {
         </TabsList>
 
         <TabsContent value="calendar" className="mt-4">
-          <LocalCalendarCRM tenantId={tenantId} stylists={stylists} onNavigateToCash={onNavigateToCash} />
+          <LocalCalendarCRM
+            tenantId={tenantId}
+            stylists={stylists}
+            onNavigateToCash={onNavigateToCash}
+            onSelectClient={handleSelectClient}
+          />
         </TabsContent>
 
         <TabsContent value="waitlist" className="mt-4">
           <WaitlistManager tenantId={tenantId} />
+        </TabsContent>
+
+        <TabsContent value="clients" className="mt-4">
+          <ClientsCRM
+            tenantId={tenantId}
+            initialClientId={initialClientId}
+          />
         </TabsContent>
       </Tabs>
     </div>

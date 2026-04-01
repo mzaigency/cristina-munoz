@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, GripVertical, Banknote, ShieldAlert } from "lucide-react";
+import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, GripVertical, Banknote, ShieldAlert, UserCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -61,12 +61,13 @@ interface LocalCalendarCRMProps {
   tenantId: string;
   stylists: Array<{ slug: string; name: string; color: string }>;
   onNavigateToCash?: () => void;
+  onSelectClient?: (clientId: string) => void;
 }
 
 // Constante para escala visual - 2px por minuto = 120px por hora
 const PIXELS_PER_MINUTE = 2;
 
-export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: LocalCalendarCRMProps) => {
+export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelectClient }: LocalCalendarCRMProps) => {
   const [bookings, setBookings] = useState<LocalBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -118,10 +119,51 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
   const [activeBookingActions, setActiveBookingActions] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
+  // Client lookup state for edit dialog
+  const [matchedClient, setMatchedClient] = useState<{ id: string; name: string; tags: string[]; total_visits: number; total_spent: number; last_visit_at: string | null; notes: string | null } | null>(null);
+  const [clientLoading, setClientLoading] = useState(false);
+
   const { toast } = useToast();
   
   // Get tenant business hours
   const { businessHours, getBusinessHoursForDay, getClosedDays } = useTenantBusinessHours(tenantId);
+
+  // Lookup client when a booking is selected for editing
+  useEffect(() => {
+    if (!selectedBooking || !isEditDialogOpen) {
+      setMatchedClient(null);
+      return;
+    }
+    const lookup = async () => {
+      setClientLoading(true);
+      const name = selectedBooking.customer_name.trim().toLowerCase();
+      const phone = selectedBooking.Telefono?.trim();
+
+      let query = supabase
+        .from("clients" as any)
+        .select("id, name, tags, total_visits, total_spent, last_visit_at, notes")
+        .eq("tenant_id", tenantId);
+
+      // Try matching by phone first, then name
+      const { data: byPhone } = phone
+        ? await query.eq("phone", phone).limit(1)
+        : { data: null };
+
+      if (byPhone && byPhone.length > 0) {
+        setMatchedClient(byPhone[0] as any);
+      } else {
+        const { data: byName } = await supabase
+          .from("clients" as any)
+          .select("id, name, tags, total_visits, total_spent, last_visit_at, notes")
+          .eq("tenant_id", tenantId)
+          .ilike("name", name)
+          .limit(1);
+        setMatchedClient(byName && byName.length > 0 ? (byName[0] as any) : null);
+      }
+      setClientLoading(false);
+    };
+    lookup();
+  }, [selectedBooking?.id, isEditDialogOpen, tenantId]);
 
   useEffect(() => {
     const timerId = setInterval(() => {
@@ -1504,6 +1546,49 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: Local
                       </Badge>
                     ))}
                 </div>
+              </div>
+
+              {/* Client Info Panel */}
+              <div className="rounded-lg border border-border/60 p-3 space-y-2 bg-muted/30">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Ficha de cliente</Label>
+                {clientLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Buscando...
+                  </div>
+                ) : matchedClient ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{matchedClient.name}</span>
+                      {matchedClient.tags?.map((tag: string) => (
+                        <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <div>Visitas: <span className="font-medium text-foreground">{matchedClient.total_visits || 0}</span></div>
+                      <div>Gasto: <span className="font-medium text-foreground">{(matchedClient.total_spent || 0).toFixed(2)}€</span></div>
+                    </div>
+                    {matchedClient.notes && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{matchedClient.notes}</p>
+                    )}
+                    {onSelectClient && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() => {
+                          setIsEditDialogOpen(false);
+                          onSelectClient(matchedClient.id);
+                        }}
+                      >
+                        <UserCircle className="h-3 w-3 mr-1" /> Ver ficha completa
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No se encontró un cliente registrado con este nombre</p>
+                )}
               </div>
             </div>
           )}

@@ -15,11 +15,11 @@ import {
   Scissors,
   Users,
   LayoutDashboard,
-  UserCircle,
+  
   Menu,
 } from "lucide-react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
-import { ClientsCRM } from "@/components/admin/ClientsCRM";
+// ClientsCRM is now rendered inside AgendaSection
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
 
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
@@ -59,7 +59,7 @@ interface Stylist {
 }
 
 // Simplified to 6 main tabs
-type TabValue = "dashboard" | "agenda" | "clients" | "business" | "team" | "communication" | "settings";
+type TabValue = "dashboard" | "agenda" | "business" | "team" | "communication" | "settings";
 
 interface NavItem {
   value: TabValue;
@@ -103,12 +103,6 @@ export default function TenantAdmin() {
     const allItems: NavItem[] = [
       { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
       { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
-      {
-        value: "clients",
-        label: "Clientes",
-        icon: <UserCircle className="h-4 w-4" />,
-        badge: notificationCounts.clients,
-      },
       { value: "business", label: "Negocio", icon: <Wallet className="h-4 w-4" /> },
       { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
       {
@@ -126,7 +120,7 @@ export default function TenantAdmin() {
     }
 
     return allItems;
-  }, [notificationCounts.agenda, notificationCounts.clients, getCommunicationCount, isAdmin, isStylist]);
+  }, [notificationCounts.agenda, getCommunicationCount, isAdmin, isStylist]);
 
   const tabOrder = navItems.map((item) => item.value);
 
@@ -281,7 +275,7 @@ export default function TenantAdmin() {
                 stylists: "team",
                 messages: "communication",
                 settings: "settings",
-                clients: "clients",
+                clients: "agenda",
               };
               setActiveTab(tabMap[tab] || (tab as TabValue));
             }}
@@ -300,8 +294,6 @@ export default function TenantAdmin() {
             }}
           />
         );
-      case "clients":
-        return <ClientsCRM key={refreshKey} tenantId={tenant.id} />;
       case "business":
         return <BusinessSection key={refreshKey} tenantId={tenant.id} />;
       case "team":
@@ -529,7 +521,7 @@ export default function TenantAdmin() {
                     const tabMap: Record<string, TabValue> = {
                       calendar: "agenda", cash: "business", services: "team",
                       stylists: "team", messages: "communication", settings: "settings",
-                      clients: "clients", dashboard: "dashboard",
+                      clients: "agenda", dashboard: "dashboard",
                     };
                     setActiveTab(tabMap[tab] || (tab as TabValue));
                   }}
@@ -565,7 +557,7 @@ export default function TenantAdmin() {
                       const tabMap: Record<string, TabValue> = {
                         calendar: "agenda", cash: "business", services: "team",
                         stylists: "team", messages: "communication", settings: "settings",
-                        clients: "clients", dashboard: "dashboard",
+                        clients: "agenda", dashboard: "dashboard",
                       };
                       setActiveTab(tabMap[tab] || (tab as TabValue));
                     }}
