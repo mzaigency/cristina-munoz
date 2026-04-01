@@ -74,14 +74,26 @@ export function PremiumSalonCard({
           {/* Image Container */}
           <div className="relative h-52 overflow-hidden rounded-t-[24px]">
             {salon.hero_image_url ? (
-              <motion.img
-                src={salon.hero_image_url}
-                alt={salon.name}
-                className="w-full h-full object-cover"
-                initial={{ scale: 1.05 }}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              />
+              index === 0 ? (
+                <img
+                  src={salon.hero_image_url}
+                  alt={salon.name}
+                  className="w-full h-full object-cover"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                />
+              ) : (
+                <motion.img
+                  src={salon.hero_image_url}
+                  alt={salon.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  initial={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                />
+              )
             ) : (
               <div
                 className="w-full h-full flex items-center justify-center"
