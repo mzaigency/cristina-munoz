@@ -241,6 +241,12 @@ const TenantLanding = () => {
     ...(tenant.average_price ? { 
       priceRange: tenant.average_price <= 20 ? "€" : tenant.average_price <= 50 ? "€€" : "€€€" 
     } : {}),
+    ...(reviewStats ? {
+      aggregateRating: {
+        ratingValue: reviewStats.avg,
+        reviewCount: reviewStats.count,
+      }
+    } : {}),
   };
 
   const primaryColor = tenant.primary_color || "#8B5CF6";
