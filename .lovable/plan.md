@@ -1,45 +1,33 @@
 
 
-# Vincular Ficha de Cliente con Usuario Registrado
+# Citas compuestas: borrar ambas partes + contar como 1
 
-## Resumen
-Añadir la posibilidad de vincular cada ficha de cliente del CRM con un usuario registrado en la app (tabla `profiles`). Así el admin puede ver si un cliente tiene cuenta, su @username y avatar.
+## Problema actual
+1. **Al borrar parte 1 desde el calendario admin**, solo se envía `bookingId` de esa cita. La edge function `cancel-booking` busca `related_booking_id` en las citas enviadas, pero la relación va de part1 → main y part2 → part1. Si borras part1, no encuentra part2 porque part2 apunta a part1 (no al revés).
+2. **En MyBookings** ya se filtran las part2 correctamente, pero en el calendario admin se muestran ambas partes como citas separadas.
+3. **El conteo de visitas** (`total_visits` en tabla `clients`) cuenta cada booking individual, incluyendo part2.
 
 ## Cambios planificados
 
-### 1. Migración DB: añadir `user_id` a `clients`
+### 1. Edge function `cancel-booking/index.ts` - Buscar en ambas direcciones
+Actualmente solo busca `related_booking_id` de las citas enviadas. Hay que también buscar citas que apunten A las citas enviadas:
 ```sql
-ALTER TABLE public.clients ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
-CREATE INDEX idx_clients_user_id ON public.clients(user_id);
+-- Buscar citas cuyo related_booking_id sea alguno de los IDs a cancelar
+SELECT * FROM bookings WHERE related_booking_id IN (idsToCancel)
 ```
+Esto garantiza que si borras part1, se encuentra part2 (que tiene `related_booking_id = part1.id`), y viceversa.
 
-### 2. Actualizar tipos (`clients/types.ts`)
-- Añadir `user_id: string | null` al interface `Client`
+### 2. Calendario admin `LocalCalendarCRM.tsx` - Agrupar visualmente
+- Filtrar las part2 del renderizado (igual que MyBookings): no mostrar bookings con `compound_part === "part2"`
+- En la cita part1, mostrar la duración total combinada (part1 + pausa + part2)
+- Al hacer fetch, guardar la info de part2 para mostrar servicios completos
 
-### 3. Buscador de usuario en ClientForm
-- Añadir campo "Vincular cuenta @" con input de búsqueda
-- Al escribir, buscar en `profiles` por `username` o `full_name` (igual que en AdminBookingFlow)
-- Dropdown con resultados mostrando avatar + nombre + @username
-- Al seleccionar, guardar el `user_id` en el payload de insert/update
-- Indicador visual cuando está vinculado, con opción de desvincular
-
-### 4. Mostrar cuenta vinculada en ClientDetail
-- En el header de la ficha, si tiene `user_id`, mostrar avatar y @username del perfil vinculado
-- Fetch al `profiles` con el `user_id` para obtener avatar y username
-- Badge visual "Cuenta vinculada" o "Sin cuenta" si no tiene
-
-### 5. Indicador en ClientCard
-- Pequeño icono o badge en la tarjeta de la lista si el cliente tiene cuenta vinculada (ej: icono de @ o checkmark)
+### 3. Conteo de citas del cliente
+- En `ClientsCRM.tsx` y `ClientDetail.tsx`, al calcular stats desde bookings, filtrar las part2 para que un servicio compuesto cuente como 1 visita
+- Actualizar la query de historial de citas en `ClientDetail.tsx` para filtrar part2
 
 ## Archivos a modificar
-1. **Migración SQL** - nueva columna `user_id`
-2. `src/components/admin/clients/types.ts` - añadir `user_id`
-3. `src/components/admin/clients/ClientForm.tsx` - buscador de usuario + vincular
-4. `src/components/admin/clients/ClientDetail.tsx` - mostrar perfil vinculado
-5. `src/components/admin/clients/ClientCard.tsx` - indicador visual
-
-## Notas técnicas
-- La búsqueda de perfiles usa la misma RLS policy "Admins can view all profiles" que ya existe
-- Mobile-first: dropdown de búsqueda con scroll y safe zones
-- Sin dependencias nuevas
+1. `supabase/functions/cancel-booking/index.ts` - Buscar related bookings en ambas direcciones
+2. `src/components/admin/LocalCalendarCRM.tsx` - Filtrar part2 del renderizado
+3. `src/components/admin/clients/ClientDetail.tsx` - Filtrar part2 en historial y stats
 
