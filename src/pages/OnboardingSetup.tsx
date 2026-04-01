@@ -1054,7 +1054,7 @@ export default function OnboardingSetup() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {isSkippable && (
                 <button
                   onClick={() => setStep(step + 1)}
@@ -1065,7 +1065,16 @@ export default function OnboardingSetup() {
                 </button>
               )}
               {step < totalSteps && (
-                <SupportButton variant="inline" context="Configuración de salón" />
+                <button
+                  onClick={() => {
+                    const subject = encodeURIComponent("Ayuda con: Configuración de salón");
+                    window.location.href = `mailto:contacto@glowapp.app?subject=${subject}`;
+                  }}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+                  aria-label="Ayuda"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </button>
               )}
             </div>
           </div>
