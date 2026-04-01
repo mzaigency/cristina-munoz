@@ -135,6 +135,18 @@ const TenantLanding = () => {
       }
 
       setTenant(tenant as Tenant);
+
+      // Fetch real review stats for structured data
+      const { data: reviews } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("tenant_id", tenant.id)
+        .eq("approved", true);
+
+      if (reviews && reviews.length > 0) {
+        const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+        setReviewStats({ avg: Math.round(avg * 10) / 10, count: reviews.length });
+      }
     } catch (error) {
       console.error("Error fetching tenant:", error);
       navigate("/404");
