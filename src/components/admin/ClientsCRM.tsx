@@ -24,7 +24,7 @@ interface ClientsCRMProps {
   initialClientId?: string;
 }
 
-export function ClientsCRM({ tenantId }: ClientsCRMProps) {
+export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

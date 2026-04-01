@@ -67,7 +67,7 @@ interface LocalCalendarCRMProps {
 // Constante para escala visual - 2px por minuto = 120px por hora
 const PIXELS_PER_MINUTE = 2;
 
-export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash }: LocalCalendarCRMProps) => {
+export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelectClient }: LocalCalendarCRMProps) => {
   const [bookings, setBookings] = useState<LocalBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
