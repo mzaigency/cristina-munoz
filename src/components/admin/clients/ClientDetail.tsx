@@ -61,7 +61,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
       // Filter out part2 compound bookings so compound services count as 1 visit
       const filteredData = (data || []).filter((b: any) => b.compound_part !== "part2").slice(0, 20);
 
-      const bookings = (data as Booking[]) || [];
+      const bookings = (filteredData as Booking[]) || [];
       setHistory(bookings);
 
       const serviceCount: Record<string, number> = {};
