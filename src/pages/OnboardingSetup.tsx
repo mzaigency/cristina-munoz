@@ -1025,39 +1025,36 @@ export default function OnboardingSetup() {
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="px-4 py-3">
-          <div className="flex items-center gap-3 mb-2.5">
-            {step > 0 && step < totalSteps ? (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setStep(step - 1)}
-                className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            ) : step === 0 ? (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => navigate("/")}
-                className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            ) : null}
-            
-            <div className="flex-1 min-w-0">
-              <h1 className="font-semibold text-sm text-foreground truncate">
-                {step < totalSteps ? steps[step].title : "¡Completado!"}
-              </h1>
+          {/* Row 1: back + step counter + actions */}
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-2">
+              {(step > 0 && step < totalSteps) ? (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setStep(step - 1)}
+                  className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              ) : step === 0 ? (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => navigate("/")}
+                  className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              ) : null}
               {step < totalSteps && (
-                <p className="text-[11px] text-muted-foreground truncate">
-                  {stepMicrocopy[step]}
-                </p>
+                <span className="text-xs text-muted-foreground">
+                  Paso <span className="font-bold text-primary">{step + 1}</span>/{totalSteps}
+                </span>
               )}
             </div>
-            
-            <div className="flex items-center gap-2 shrink-0">
+
+            <div className="flex items-center gap-2">
               {isSkippable && (
                 <button
                   onClick={() => setStep(step + 1)}
@@ -1068,15 +1065,21 @@ export default function OnboardingSetup() {
                 </button>
               )}
               {step < totalSteps && (
-                <>
                 <SupportButton variant="inline" context="Configuración de salón" />
-                <div className="flex items-baseline gap-0.5">
-                  <span className="text-sm font-bold text-primary">{step + 1}</span>
-                  <span className="text-xs text-muted-foreground">/{totalSteps}</span>
-                </div>
-                </>
               )}
             </div>
+          </div>
+
+          {/* Row 2: step title */}
+          <div className="mb-2">
+            <h1 className="font-semibold text-sm text-foreground truncate">
+              {step < totalSteps ? steps[step].title : "¡Completado!"}
+            </h1>
+            {step < totalSteps && (
+              <p className="text-[11px] text-muted-foreground truncate">
+                {stepMicrocopy[step]}
+              </p>
+            )}
           </div>
 
           {step < totalSteps && (
