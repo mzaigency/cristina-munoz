@@ -128,7 +128,43 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   // Get tenant business hours
   const { businessHours, getBusinessHoursForDay, getClosedDays } = useTenantBusinessHours(tenantId);
 
+  // Lookup client when a booking is selected for editing
   useEffect(() => {
+    if (!selectedBooking || !isEditDialogOpen) {
+      setMatchedClient(null);
+      return;
+    }
+    const lookup = async () => {
+      setClientLoading(true);
+      const name = selectedBooking.customer_name.trim().toLowerCase();
+      const phone = selectedBooking.Telefono?.trim();
+
+      let query = supabase
+        .from("clients" as any)
+        .select("id, name, tags, total_visits, total_spent, last_visit_at, notes")
+        .eq("tenant_id", tenantId);
+
+      // Try matching by phone first, then name
+      const { data: byPhone } = phone
+        ? await query.eq("phone", phone).limit(1)
+        : { data: null };
+
+      if (byPhone && byPhone.length > 0) {
+        setMatchedClient(byPhone[0] as any);
+      } else {
+        const { data: byName } = await supabase
+          .from("clients" as any)
+          .select("id, name, tags, total_visits, total_spent, last_visit_at, notes")
+          .eq("tenant_id", tenantId)
+          .ilike("name", name)
+          .limit(1);
+        setMatchedClient(byName && byName.length > 0 ? (byName[0] as any) : null);
+      }
+      setClientLoading(false);
+    };
+    lookup();
+  }, [selectedBooking?.id, isEditDialogOpen, tenantId]);
+
     const timerId = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
