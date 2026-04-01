@@ -103,12 +103,6 @@ export default function TenantAdmin() {
     const allItems: NavItem[] = [
       { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
       { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
-      {
-        value: "clients",
-        label: "Clientes",
-        icon: <UserCircle className="h-4 w-4" />,
-        badge: notificationCounts.clients,
-      },
       { value: "business", label: "Negocio", icon: <Wallet className="h-4 w-4" /> },
       { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
       {
@@ -126,7 +120,7 @@ export default function TenantAdmin() {
     }
 
     return allItems;
-  }, [notificationCounts.agenda, notificationCounts.clients, getCommunicationCount, isAdmin, isStylist]);
+  }, [notificationCounts.agenda, getCommunicationCount, isAdmin, isStylist]);
 
   const tabOrder = navItems.map((item) => item.value);
 
