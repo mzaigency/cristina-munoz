@@ -10,6 +10,7 @@ import { useConversations, useMessages, Conversation, getOrCreateConversation } 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MessagesManagerProps {
   tenantId: string;
