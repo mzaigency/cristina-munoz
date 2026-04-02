@@ -18,8 +18,9 @@ export function useRecommendations() {
     queryFn: async () => {
       if (!userId) return null;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return null;
+      // Session is available from AuthContext but we need the token for the edge function
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession?.access_token) return null;
 
       const { data, error } = await supabase.functions.invoke('get-recommendations', {
         headers: {
