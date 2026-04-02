@@ -27,6 +27,7 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { PlanUsageBar } from "./PlanUsageBar";
 import { UpgradePrompt } from "./UpgradePrompt";
 import { SupportButton } from "@/components/common/SupportButton";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 
 interface StripeSubscriptionData {
   subscribed: boolean;
@@ -46,40 +47,10 @@ interface SubscriptionManagerProps {
 
 type PlanSlug = "starter" | "pro" | "business";
 
-interface PlanDetails {
-  name: string;
-  icon: React.ReactNode;
-  color: string;
-  bgColor: string;
-  monthlyPrice: number;
-  annualPrice: number;
-}
-
-const PLAN_DETAILS: Record<PlanSlug, PlanDetails> = {
-  starter: {
-    name: "Starter",
-    icon: <Zap className="h-5 w-5" />,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    monthlyPrice: 29,
-    annualPrice: 290
-  },
-  pro: {
-    name: "Pro",
-    icon: <Crown className="h-5 w-5" />,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-    monthlyPrice: 49,
-    annualPrice: 490
-  },
-  business: {
-    name: "Business",
-    icon: <Sparkles className="h-5 w-5" />,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-    monthlyPrice: 89,
-    annualPrice: 890
-  }
+const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
+  starter: { icon: <Zap className="h-5 w-5" />, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+  pro: { icon: <Crown className="h-5 w-5" />, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+  business: { icon: <Sparkles className="h-5 w-5" />, color: "text-purple-500", bgColor: "bg-purple-500/10" },
 };
 
 const PLAN_ORDER: PlanSlug[] = ["starter", "pro", "business"];

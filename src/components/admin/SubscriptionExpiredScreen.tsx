@@ -106,22 +106,22 @@ export function SubscriptionExpiredScreen({
           {/* Plan options */}
           <div className="space-y-3">
             <h3 className="font-medium text-sm text-center">Elige un plan para reactivar</h3>
-            {(["starter", "pro", "business"] as PlanSlug[]).map((plan) => {
-              const details = PLAN_DETAILS[plan];
+            {plans.map((plan) => {
+              const icons = PLAN_ICONS[plan.slug] || PLAN_ICONS.starter;
               return (
                 <button
-                  key={plan}
-                  onClick={() => handleUpgrade(plan)}
+                  key={plan.id}
+                  onClick={() => handleUpgrade(plan.slug as PlanSlug)}
                   className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border hover:border-primary/50 transition-all group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2.5 rounded-xl ${details.bgColor} ${details.color}`}>
-                      {details.icon}
+                    <div className={`p-2.5 rounded-xl ${icons.bgColor} ${icons.color}`}>
+                      {icons.icon}
                     </div>
                     <div className="text-left">
-                      <p className="font-semibold">{details.name}</p>
+                      <p className="font-semibold">{plan.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Desde {details.monthlyPrice}€/mes
+                        Desde {plan.monthly_price}€/mes
                       </p>
                     </div>
                   </div>
