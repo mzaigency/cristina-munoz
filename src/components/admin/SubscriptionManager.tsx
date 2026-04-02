@@ -165,7 +165,16 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   }
 
   const currentPlan = (tenantPlan?.toLowerCase() || 'starter') as PlanSlug;
-  const planInfo = PLAN_DETAILS[currentPlan] || PLAN_DETAILS.starter;
+  const currentDbPlan = getDbPlan(currentPlan);
+  const planIcons = PLAN_ICONS[currentPlan] || PLAN_ICONS.starter;
+  const planInfo = {
+    name: currentDbPlan?.name || currentPlan,
+    icon: planIcons.icon,
+    color: planIcons.color,
+    bgColor: planIcons.bgColor,
+    monthlyPrice: currentDbPlan?.monthly_price || 0,
+    annualPrice: currentDbPlan?.annual_price || 0,
+  };
   const currentPlanIndex = PLAN_ORDER.indexOf(currentPlan);
   
   // Stripe tiene prioridad SOLO si existe cliente en Stripe.
