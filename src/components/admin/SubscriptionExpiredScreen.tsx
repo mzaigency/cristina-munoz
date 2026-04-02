@@ -41,6 +41,7 @@ export function SubscriptionExpiredScreen({
   const { toast } = useToast();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanSlug>("starter");
+  const { plans } = useSubscriptionPlans();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut({ scope: "local" });
