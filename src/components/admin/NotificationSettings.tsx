@@ -50,8 +50,8 @@ export function NotificationSettings({
   const { user: authUser } = useAuth();
   const userId = authUser?.id ?? null;
   useEffect(() => {
-    fetchPreferences();
-  }, [tenantId]);
+    if (userId) fetchPreferences();
+  }, [tenantId, userId]);
   const fetchPreferences = async () => {
     try {
       if (!userId) return;
