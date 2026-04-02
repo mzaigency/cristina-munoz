@@ -164,7 +164,8 @@ export function CommentsSection({ postId, isOpen, onClose }: CommentsSectionProp
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 100 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="relative w-full max-w-lg bg-background rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col"
+          className="relative w-full max-w-lg bg-background rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col mb-[env(safe-area-inset-bottom,0px)] sm:mb-0"
+          style={{ marginBottom: 'max(env(safe-area-inset-bottom, 0px), 72px)' }}
         >
           {/* Handle bar for mobile */}
           <div className="sm:hidden flex justify-center pt-3">
