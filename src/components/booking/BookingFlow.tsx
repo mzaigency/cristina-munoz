@@ -14,6 +14,7 @@ import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { Service, Stylist, BookingData, Promotion, ServicePackage } from "@/types/booking";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface BookingFlowProps {
   tenantId?: string;
@@ -23,11 +24,11 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
+  const { user } = useAuth();
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
     stylist: null,
