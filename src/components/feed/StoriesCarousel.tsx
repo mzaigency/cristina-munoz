@@ -9,6 +9,7 @@ import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { StoryCreatorFlow } from "./story-editor";
 import { StoryReplyInput } from "./StoryReplyInput";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Story {
   id: string;
