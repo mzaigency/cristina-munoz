@@ -29,7 +29,6 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const [services, setServices] = useState<Service[]>([]);
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [pendingServices, setPendingServices] = useState<{ services: Service[], packageId?: string } | null>(null);
