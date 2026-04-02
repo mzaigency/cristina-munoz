@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { motion } from "motion/react";
 import { Bell, Calendar, MessageCircle, Star, Clock, Mail, Smartphone, Loader2, Save, Sun, BellRing, BellOff } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 interface NotificationPreferences {
   id?: string;
   new_booking: boolean;
