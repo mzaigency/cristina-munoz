@@ -17,6 +17,7 @@ import {
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { motion, AnimatePresence } from "motion/react";
 import { SupportButton } from "@/components/common/SupportButton";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 
 const businessSchema = z.object({
   businessName: z.string().trim().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
