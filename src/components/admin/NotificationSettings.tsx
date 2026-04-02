@@ -54,17 +54,11 @@ export function NotificationSettings({
   }, [tenantId]);
   const fetchPreferences = async () => {
     try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
+      if (!userId) return;
       const {
         data,
         error
-      } = await supabase.from("notification_preferences" as any).select("*").eq("user_id", user.id).eq("tenant_id", tenantId).maybeSingle();
+      } = await supabase.from("notification_preferences" as any).select("*").eq("user_id", userId).eq("tenant_id", tenantId).maybeSingle();
       if (error) throw error;
       if (data) {
         setPreferences(data as unknown as NotificationPreferences);

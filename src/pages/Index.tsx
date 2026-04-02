@@ -87,13 +87,15 @@ const Index = () => {
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    // Save to recent searches when user submits (not on every keystroke)
-    if (value.length > 2 && !recentSearches.includes(value)) {
-      const updated = [value, ...recentSearches.slice(0, 4)];
+  };
+
+  const handleSearchSubmit = useCallback(() => {
+    if (searchQuery.length > 2 && !recentSearches.includes(searchQuery)) {
+      const updated = [searchQuery, ...recentSearches.slice(0, 4)];
       setRecentSearches(updated);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     }
-  };
+  }, [searchQuery, recentSearches]);
 
   const clearRecentSearches = () => {
     setRecentSearches([]);

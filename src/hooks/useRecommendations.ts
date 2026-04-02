@@ -40,11 +40,14 @@ export function useRecommendations() {
     gcTime: 1000 * 60 * 60,
   });
 
-  // Create a map for quick lookups
-  const scoresMap = new Map<string, RecommendationScore>();
-  data?.forEach(rec => {
-    scoresMap.set(rec.tenant_id, rec);
-  });
+  // Memoize the map to avoid re-creation on every render
+  const scoresMap = useMemo(() => {
+    const map = new Map<string, RecommendationScore>();
+    data?.forEach(rec => {
+      map.set(rec.tenant_id, rec);
+    });
+    return map;
+  }, [data]);
 
   return {
     recommendations: data,

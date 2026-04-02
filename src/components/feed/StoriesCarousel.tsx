@@ -49,15 +49,8 @@ export function StoriesCarousel() {
   const { tenantId, tenant, loading: tenantLoading } = useCurrentUserTenant();
   const { setNavigationHidden } = useNavigation();
   const queryClient = useQueryClient();
-
-  // Get current user for viewing status
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setCurrentUserId(user?.id || null);
-    });
-  }, []);
+  const { user: authUser } = useAuth();
+  const currentUserId = authUser?.id ?? null;
 
   const { data: storyGroups = [], isLoading } = useQuery({
     queryKey: ["salon-stories", currentUserId],

@@ -32,14 +32,6 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
   );
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
-  }, []);
-
-  useEffect(() => {
     if (selectedConversation) {
       markAsRead('salon');
     }

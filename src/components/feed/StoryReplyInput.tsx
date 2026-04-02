@@ -32,7 +32,6 @@ export function StoryReplyInput({ tenantId, tenantName, storyId, onClose, onSent
     
     setIsSending(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Debes iniciar sesión para responder");
         return;

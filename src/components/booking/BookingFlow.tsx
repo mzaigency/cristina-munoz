@@ -40,19 +40,6 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
     packageId: null,
   });
 
-  // Check authentication status
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   // Load services and packages from database
   useEffect(() => {
     const loadData = async () => {

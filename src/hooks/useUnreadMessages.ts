@@ -44,6 +44,7 @@ export function useUnreadMessages() {
           event: '*',
           schema: 'public',
           table: 'conversations',
+          filter: `user_id=eq.${user.id}`,
         },
         () => {
           fetchUnreadCount();
