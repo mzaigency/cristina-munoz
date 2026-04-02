@@ -19,7 +19,7 @@ interface MessagesManagerProps {
 export function MessagesManager({ tenantId }: MessagesManagerProps) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [newMessageDialog, setNewMessageDialog] = useState(false);
   const [searchUsername, setSearchUsername] = useState('');
