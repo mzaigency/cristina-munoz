@@ -47,12 +47,13 @@ interface PlanInfo {
   cta: string;
 }
 
-const PLANS: Record<PlanSlug, PlanInfo> = {
+// Fallback plans used only while DB loads
+const FALLBACK_PLANS: Record<PlanSlug, PlanInfo> = {
   starter: {
     name: "Starter",
     icon: <Zap className="h-5 w-5" />,
-    monthlyPrice: 29,
-    annualPrice: 290,
+    monthlyPrice: 19,
+    annualPrice: 190,
     stylists: "1 profesional",
     services: "15 servicios",
     features: ["Landing profesional", "Reservas 24/7", "Calendario inteligente", "Reseñas verificadas", "Stories"],
@@ -62,10 +63,10 @@ const PLANS: Record<PlanSlug, PlanInfo> = {
   pro: {
     name: "Pro",
     icon: <Crown className="h-5 w-5" />,
-    monthlyPrice: 49,
-    annualPrice: 490,
+    monthlyPrice: 39,
+    annualPrice: 390,
     stylists: "3 profesionales",
-    services: "50 servicios",
+    services: "25 servicios",
     features: ["Todo de Starter", "Caja registradora", "Analíticas avanzadas", "Promociones", "Paquetes de servicios"],
     color: "from-amber-500 to-orange-500",
     popular: true,
