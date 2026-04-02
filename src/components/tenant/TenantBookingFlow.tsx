@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { Service, Stylist, BookingData, Promotion, ServicePackage } from "@/types/booking";
 import { useHaptic } from "@/hooks/useHaptic";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TenantBookingFlowProps {
   tenantId: string;
