@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { motion } from "motion/react";
 import { Bell, Calendar, MessageCircle, Star, Clock, Mail, Smartphone, Loader2, Save, Sun, BellRing, BellOff } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 interface NotificationPreferences {
   id?: string;
   new_booking: boolean;
@@ -43,26 +44,21 @@ export function NotificationSettings({
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
   const { permission, isSupported, isEnabled, requestPermission, disablePush, loading: pushLoading } = usePushNotifications();
+  const { user: authUser } = useAuth();
+  const userId = authUser?.id ?? null;
   useEffect(() => {
-    fetchPreferences();
-  }, [tenantId]);
+    if (userId) fetchPreferences();
+  }, [tenantId, userId]);
   const fetchPreferences = async () => {
     try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
+      if (!userId) return;
       const {
         data,
         error
-      } = await supabase.from("notification_preferences" as any).select("*").eq("user_id", user.id).eq("tenant_id", tenantId).maybeSingle();
+      } = await supabase.from("notification_preferences" as any).select("*").eq("user_id", userId).eq("tenant_id", tenantId).maybeSingle();
       if (error) throw error;
       if (data) {
         setPreferences(data as unknown as NotificationPreferences);

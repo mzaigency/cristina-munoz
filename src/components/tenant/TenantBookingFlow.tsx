@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { Service, Stylist, BookingData, Promotion, ServicePackage } from "@/types/booking";
 import { useHaptic } from "@/hooks/useHaptic";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TenantBookingFlowProps {
   tenantId: string;
@@ -28,7 +29,6 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const [services, setServices] = useState<Service[]>([]);
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [pendingServices, setPendingServices] = useState<{ services: Service[], packageId?: string } | null>(null);
@@ -36,6 +36,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
   const haptic = useHaptic();
+  const { user } = useAuth();
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
     stylist: null,
@@ -46,19 +47,6 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     appliedPromotion: null,
     packageId: null,
   });
-
-  // Check authentication status
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Load services and packages from database filtered by tenant_id
   useEffect(() => {

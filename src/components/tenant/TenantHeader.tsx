@@ -3,6 +3,7 @@ import { Menu, X, Phone, User, LogOut, Shield, Calendar, MessageCircle, Home } f
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,10 +33,10 @@ interface TenantHeaderProps {
 export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { unreadCount } = useUnreadMessages();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,26 +50,12 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminRole(session.user.id);
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminRole(session.user.id);
-      } else {
-        setIsAdmin(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (user) {
+      checkAdminRole(user.id);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user?.id]);
 
   const checkAdminRole = async (userId: string) => {
     const { data } = await supabase
@@ -98,7 +85,6 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
     } catch (error) {
       console.error("Error during sign out:", error);
     } finally {
-      setUser(null);
       setIsAdmin(false);
     }
   };

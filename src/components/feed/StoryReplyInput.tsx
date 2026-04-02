@@ -4,6 +4,7 @@ import { Send, Heart, Smile, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface StoryReplyInputProps {
   tenantId: string;
@@ -20,6 +21,7 @@ export function StoryReplyInput({ tenantId, tenantName, storyId, onClose, onSent
   const [isSending, setIsSending] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -30,7 +32,6 @@ export function StoryReplyInput({ tenantId, tenantName, storyId, onClose, onSent
     
     setIsSending(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Debes iniciar sesión para responder");
         return;

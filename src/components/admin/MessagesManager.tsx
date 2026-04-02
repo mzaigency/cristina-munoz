@@ -10,6 +10,7 @@ import { useConversations, useMessages, Conversation, getOrCreateConversation } 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MessagesManagerProps {
   tenantId: string;
@@ -18,7 +19,7 @@ interface MessagesManagerProps {
 export function MessagesManager({ tenantId }: MessagesManagerProps) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [newMessageDialog, setNewMessageDialog] = useState(false);
   const [searchUsername, setSearchUsername] = useState('');
@@ -29,14 +30,6 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
   const { messages, loading: loadingMessages, sendMessage, markAsRead } = useMessages(
     selectedConversation?.id || null
   );
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
-  }, []);
 
   useEffect(() => {
     if (selectedConversation) {

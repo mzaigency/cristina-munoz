@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,12 +18,13 @@ export function useRecommendations() {
     queryFn: async () => {
       if (!userId) return null;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return null;
+      // Session is available from AuthContext but we need the token for the edge function
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession?.access_token) return null;
 
       const { data, error } = await supabase.functions.invoke('get-recommendations', {
         headers: {
-          Authorization: `Bearer ${session.access_token}`
+          Authorization: `Bearer ${currentSession.access_token}`
         }
       });
 
@@ -38,11 +40,14 @@ export function useRecommendations() {
     gcTime: 1000 * 60 * 60,
   });
 
-  // Create a map for quick lookups
-  const scoresMap = new Map<string, RecommendationScore>();
-  data?.forEach(rec => {
-    scoresMap.set(rec.tenant_id, rec);
-  });
+  // Memoize the map to avoid re-creation on every render
+  const scoresMap = useMemo(() => {
+    const map = new Map<string, RecommendationScore>();
+    data?.forEach(rec => {
+      map.set(rec.tenant_id, rec);
+    });
+    return map;
+  }, [data]);
 
   return {
     recommendations: data,
