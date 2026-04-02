@@ -149,6 +149,35 @@ export default function BusinessOnboarding() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
+  const { plans: dbPlans } = useSubscriptionPlans();
+
+  const PLANS = useMemo(() => {
+    if (dbPlans.length === 0) return FALLBACK_PLANS;
+    const result: Record<string, PlanInfo> = {};
+    const ICONS: Record<string, { icon: React.ReactNode; color: string; cta: string; popular?: boolean }> = {
+      starter: { icon: <Zap className="h-5 w-5" />, color: "from-blue-500 to-cyan-500", cta: "Empezar gratis" },
+      pro: { icon: <Crown className="h-5 w-5" />, color: "from-amber-500 to-orange-500", cta: "Probar Pro gratis", popular: true },
+      business: { icon: <Sparkles className="h-5 w-5" />, color: "from-purple-500 to-pink-500", cta: "Probar Business" },
+    };
+    dbPlans.forEach((p) => {
+      const meta = ICONS[p.slug] || ICONS.starter;
+      const ms = p.max_stylists;
+      const sv = p.max_services;
+      result[p.slug as PlanSlug] = {
+        name: p.name,
+        icon: meta.icon,
+        monthlyPrice: p.monthly_price,
+        annualPrice: p.annual_price || Math.round(p.monthly_price * 10),
+        stylists: ms && ms >= 999 ? "Ilimitados" : `${ms || 1} profesional${(ms || 1) > 1 ? "es" : ""}`,
+        services: sv && sv >= 999 ? "Ilimitados" : `${sv || 15} servicios`,
+        features: FALLBACK_PLANS[p.slug as PlanSlug]?.features || [],
+        color: meta.color,
+        popular: meta.popular,
+        cta: meta.cta,
+      };
+    });
+    return result as Record<PlanSlug, PlanInfo>;
+  }, [dbPlans]);
   const pricingRef = useRef<HTMLDivElement>(null);
 
   const handlePlanSelect = (slug: PlanSlug) => {
