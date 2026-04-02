@@ -21,6 +21,7 @@ export function StoryReplyInput({ tenantId, tenantName, storyId, onClose, onSent
   const [isSending, setIsSending] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     inputRef.current?.focus();
