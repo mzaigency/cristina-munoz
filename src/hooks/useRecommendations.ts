@@ -24,7 +24,7 @@ export function useRecommendations() {
 
       const { data, error } = await supabase.functions.invoke('get-recommendations', {
         headers: {
-          Authorization: `Bearer ${session.access_token}`
+          Authorization: `Bearer ${currentSession.access_token}`
         }
       });
 
