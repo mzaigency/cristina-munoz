@@ -16,6 +16,7 @@ import {
   Mail
 } from "lucide-react";
 import { UpgradePrompt } from "./UpgradePrompt";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 
 interface SubscriptionExpiredScreenProps {
   tenantId: string;
@@ -25,28 +26,10 @@ interface SubscriptionExpiredScreenProps {
 
 type PlanSlug = "starter" | "pro" | "business";
 
-const PLAN_DETAILS: Record<PlanSlug, { name: string; icon: React.ReactNode; color: string; bgColor: string; monthlyPrice: number }> = {
-  starter: {
-    name: "Starter",
-    icon: <Zap className="h-6 w-6" />,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    monthlyPrice: 29
-  },
-  pro: {
-    name: "Pro",
-    icon: <Crown className="h-6 w-6" />,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-    monthlyPrice: 49
-  },
-  business: {
-    name: "Business",
-    icon: <Sparkles className="h-6 w-6" />,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-    monthlyPrice: 89
-  }
+const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
+  starter: { icon: <Zap className="h-6 w-6" />, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+  pro: { icon: <Crown className="h-6 w-6" />, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+  business: { icon: <Sparkles className="h-6 w-6" />, color: "text-purple-500", bgColor: "bg-purple-500/10" },
 };
 
 export function SubscriptionExpiredScreen({ 
