@@ -356,7 +356,8 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
             <h4 className="font-semibold text-sm mb-3">Mejora tu plan</h4>
             <div className="space-y-2">
               {PLAN_ORDER.slice(currentPlanIndex + 1).map((slug) => {
-                const plan = PLAN_DETAILS[slug];
+                const dbPlan = getDbPlan(slug);
+                const icons = PLAN_ICONS[slug] || PLAN_ICONS.starter;
                 return (
                   <button
                     key={slug}
@@ -364,13 +365,13 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
                     className="w-full flex items-center justify-between p-3 rounded-xl bg-background border border-border hover:border-primary/50 transition-all group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${plan.bgColor} ${plan.color}`}>
-                        {plan.icon}
+                      <div className={`p-2 rounded-lg ${icons.bgColor} ${icons.color}`}>
+                        {icons.icon}
                       </div>
                       <div className="text-left">
-                        <p className="font-medium text-sm">{plan.name}</p>
+                        <p className="font-medium text-sm">{dbPlan?.name || slug}</p>
                         <p className="text-xs text-muted-foreground">
-                          Desde {plan.monthlyPrice}€/mes
+                          Desde {dbPlan?.monthly_price || 0}€/mes
                         </p>
                       </div>
                     </div>
