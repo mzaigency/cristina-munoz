@@ -85,7 +85,6 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
     } catch (error) {
       console.error("Error during sign out:", error);
     } finally {
-      setUser(null);
       setIsAdmin(false);
     }
   };
