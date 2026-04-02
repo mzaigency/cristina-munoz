@@ -36,6 +36,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
   const haptic = useHaptic();
+  const { user } = useAuth();
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
     stylist: null,
