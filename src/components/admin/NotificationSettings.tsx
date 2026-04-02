@@ -44,10 +44,11 @@ export function NotificationSettings({
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
   const { permission, isSupported, isEnabled, requestPermission, disablePush, loading: pushLoading } = usePushNotifications();
+  const { user: authUser } = useAuth();
+  const userId = authUser?.id ?? null;
   useEffect(() => {
     fetchPreferences();
   }, [tenantId]);
