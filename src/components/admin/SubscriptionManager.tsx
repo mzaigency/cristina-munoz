@@ -27,6 +27,7 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { PlanUsageBar } from "./PlanUsageBar";
 import { UpgradePrompt } from "./UpgradePrompt";
 import { SupportButton } from "@/components/common/SupportButton";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 
 interface StripeSubscriptionData {
   subscribed: boolean;
@@ -46,40 +47,10 @@ interface SubscriptionManagerProps {
 
 type PlanSlug = "starter" | "pro" | "business";
 
-interface PlanDetails {
-  name: string;
-  icon: React.ReactNode;
-  color: string;
-  bgColor: string;
-  monthlyPrice: number;
-  annualPrice: number;
-}
-
-const PLAN_DETAILS: Record<PlanSlug, PlanDetails> = {
-  starter: {
-    name: "Starter",
-    icon: <Zap className="h-5 w-5" />,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    monthlyPrice: 29,
-    annualPrice: 290
-  },
-  pro: {
-    name: "Pro",
-    icon: <Crown className="h-5 w-5" />,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-    monthlyPrice: 49,
-    annualPrice: 490
-  },
-  business: {
-    name: "Business",
-    icon: <Sparkles className="h-5 w-5" />,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-    monthlyPrice: 89,
-    annualPrice: 890
-  }
+const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
+  starter: { icon: <Zap className="h-5 w-5" />, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+  pro: { icon: <Crown className="h-5 w-5" />, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+  business: { icon: <Sparkles className="h-5 w-5" />, color: "text-purple-500", bgColor: "bg-purple-500/10" },
 };
 
 const PLAN_ORDER: PlanSlug[] = ["starter", "pro", "business"];
@@ -87,6 +58,7 @@ const PLAN_ORDER: PlanSlug[] = ["starter", "pro", "business"];
 export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
   const [tenantExpires, setTenantExpires] = useState<string | null>(null);
+  const { plans: dbPlans, getPlan: getDbPlan } = useSubscriptionPlans();
   const [tenantIsActive, setTenantIsActive] = useState<boolean>(true);
   const [stripeData, setStripeData] = useState<StripeSubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -193,7 +165,16 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   }
 
   const currentPlan = (tenantPlan?.toLowerCase() || 'starter') as PlanSlug;
-  const planInfo = PLAN_DETAILS[currentPlan] || PLAN_DETAILS.starter;
+  const currentDbPlan = getDbPlan(currentPlan);
+  const planIcons = PLAN_ICONS[currentPlan] || PLAN_ICONS.starter;
+  const planInfo = {
+    name: currentDbPlan?.name || currentPlan,
+    icon: planIcons.icon,
+    color: planIcons.color,
+    bgColor: planIcons.bgColor,
+    monthlyPrice: currentDbPlan?.monthly_price || 0,
+    annualPrice: currentDbPlan?.annual_price || 0,
+  };
   const currentPlanIndex = PLAN_ORDER.indexOf(currentPlan);
   
   // Stripe tiene prioridad SOLO si existe cliente en Stripe.
@@ -375,7 +356,8 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
             <h4 className="font-semibold text-sm mb-3">Mejora tu plan</h4>
             <div className="space-y-2">
               {PLAN_ORDER.slice(currentPlanIndex + 1).map((slug) => {
-                const plan = PLAN_DETAILS[slug];
+                const dbPlan = getDbPlan(slug);
+                const icons = PLAN_ICONS[slug] || PLAN_ICONS.starter;
                 return (
                   <button
                     key={slug}
@@ -383,13 +365,13 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
                     className="w-full flex items-center justify-between p-3 rounded-xl bg-background border border-border hover:border-primary/50 transition-all group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${plan.bgColor} ${plan.color}`}>
-                        {plan.icon}
+                      <div className={`p-2 rounded-lg ${icons.bgColor} ${icons.color}`}>
+                        {icons.icon}
                       </div>
                       <div className="text-left">
-                        <p className="font-medium text-sm">{plan.name}</p>
+                        <p className="font-medium text-sm">{dbPlan?.name || slug}</p>
                         <p className="text-xs text-muted-foreground">
-                          Desde {plan.monthlyPrice}€/mes
+                          Desde {dbPlan?.monthly_price || 0}€/mes
                         </p>
                       </div>
                     </div>

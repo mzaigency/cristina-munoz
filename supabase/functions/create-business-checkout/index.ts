@@ -19,7 +19,7 @@ const PRICE_IDS: Record<string, Record<string, string>> = {
     annual: "price_1SqgCaRte0Pe7Hk3SEcCaPqa" 
   },
   pro: { 
-    monthly: "price_1SqgDZRte0Pe7Hk3JqDc8Lsi", 
+    monthly: "price_1THkYQRte0Pe7Hk3ilAOSf8h", 
     annual: "price_1SqgDfRte0Pe7Hk33GzDcpQv" 
   },
   business: { 

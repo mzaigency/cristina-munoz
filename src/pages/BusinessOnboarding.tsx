@@ -1,5 +1,5 @@
 import { SEO } from "@/components/SEO";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { motion, AnimatePresence } from "motion/react";
 import { SupportButton } from "@/components/common/SupportButton";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 
 const businessSchema = z.object({
   businessName: z.string().trim().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
@@ -47,12 +48,13 @@ interface PlanInfo {
   cta: string;
 }
 
-const PLANS: Record<PlanSlug, PlanInfo> = {
+// Fallback plans used only while DB loads
+const FALLBACK_PLANS: Record<PlanSlug, PlanInfo> = {
   starter: {
     name: "Starter",
     icon: <Zap className="h-5 w-5" />,
-    monthlyPrice: 29,
-    annualPrice: 290,
+    monthlyPrice: 19,
+    annualPrice: 190,
     stylists: "1 profesional",
     services: "15 servicios",
     features: ["Landing profesional", "Reservas 24/7", "Calendario inteligente", "Reseñas verificadas", "Stories"],
@@ -62,10 +64,10 @@ const PLANS: Record<PlanSlug, PlanInfo> = {
   pro: {
     name: "Pro",
     icon: <Crown className="h-5 w-5" />,
-    monthlyPrice: 49,
-    annualPrice: 490,
+    monthlyPrice: 39,
+    annualPrice: 390,
     stylists: "3 profesionales",
-    services: "50 servicios",
+    services: "25 servicios",
     features: ["Todo de Starter", "Caja registradora", "Analíticas avanzadas", "Promociones", "Paquetes de servicios"],
     color: "from-amber-500 to-orange-500",
     popular: true,
@@ -147,6 +149,35 @@ export default function BusinessOnboarding() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
+  const { plans: dbPlans } = useSubscriptionPlans();
+
+  const PLANS = useMemo(() => {
+    if (dbPlans.length === 0) return FALLBACK_PLANS;
+    const result: Record<string, PlanInfo> = {};
+    const ICONS: Record<string, { icon: React.ReactNode; color: string; cta: string; popular?: boolean }> = {
+      starter: { icon: <Zap className="h-5 w-5" />, color: "from-blue-500 to-cyan-500", cta: "Empezar gratis" },
+      pro: { icon: <Crown className="h-5 w-5" />, color: "from-amber-500 to-orange-500", cta: "Probar Pro gratis", popular: true },
+      business: { icon: <Sparkles className="h-5 w-5" />, color: "from-purple-500 to-pink-500", cta: "Probar Business" },
+    };
+    dbPlans.forEach((p) => {
+      const meta = ICONS[p.slug] || ICONS.starter;
+      const ms = p.max_stylists;
+      const sv = p.max_services;
+      result[p.slug as PlanSlug] = {
+        name: p.name,
+        icon: meta.icon,
+        monthlyPrice: p.monthly_price,
+        annualPrice: p.annual_price || Math.round(p.monthly_price * 10),
+        stylists: ms && ms >= 999 ? "Ilimitados" : `${ms || 1} profesional${(ms || 1) > 1 ? "es" : ""}`,
+        services: sv && sv >= 999 ? "Ilimitados" : `${sv || 15} servicios`,
+        features: FALLBACK_PLANS[p.slug as PlanSlug]?.features || [],
+        color: meta.color,
+        popular: meta.popular,
+        cta: meta.cta,
+      };
+    });
+    return result as Record<PlanSlug, PlanInfo>;
+  }, [dbPlans]);
   const pricingRef = useRef<HTMLDivElement>(null);
 
   const handlePlanSelect = (slug: PlanSlug) => {

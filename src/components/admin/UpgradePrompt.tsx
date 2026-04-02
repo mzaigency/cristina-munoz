@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Crown, Check, X, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,57 +17,20 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 
-interface PlanDetails {
-  name: string;
-  slug: string;
-  monthlyPrice: number;
-  features: string[];
-}
-
-const PLANS: Record<string, PlanDetails> = {
-  starter: {
-    name: "Starter",
-    slug: "starter",
-    monthlyPrice: 29,
-    features: [
-      "1 estilista",
-      "15 servicios",
-      "Landing completa",
-      "Calendario y reservas",
-      "CRM básico",
-      "Stories",
-      "Mensajes directos",
-    ],
-  },
-  pro: {
-    name: "Pro",
-    slug: "pro",
-    monthlyPrice: 49,
-    features: [
-      "3 estilistas",
-      "50 servicios",
-      "Todo de Starter +",
-      "Caja registradora",
-      "Stats avanzados",
-      "PDFs y reportes",
-      "Promociones",
-      "Paquetes de servicios",
-    ],
-  },
-  business: {
-    name: "Business",
-    slug: "business",
-    monthlyPrice: 89,
-    features: [
-      "Estilistas ilimitados",
-      "Servicios ilimitados",
-      "Todo de Pro +",
-      "Comisiones estilistas",
-      "Metas mensuales",
-      "Lista de espera",
-    ],
-  },
+const FEATURE_LABELS: Record<string, string> = {
+  stories: "Stories",
+  messages: "Mensajes directos",
+  cash_register: "Caja registradora",
+  advanced_analytics: "Stats avanzados",
+  promotions: "Promociones",
+  packages: "Paquetes de servicios",
+  pdf_reports: "PDFs y reportes",
+  commissions: "Comisiones estilistas",
+  monthly_goals: "Metas mensuales",
+  waitlist: "Lista de espera",
+  products: "Productos",
 };
 
 interface UpgradePromptProps {
@@ -89,24 +52,33 @@ export const UpgradePrompt = ({
 }: UpgradePromptProps) => {
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
-  
-  const current = PLANS[currentPlan] || PLANS.starter;
-  const target = PLANS[targetPlan] || PLANS.pro;
+  const { plans, getPlan } = useSubscriptionPlans();
+
+  const currentData = getPlan(currentPlan);
+  const targetData = getPlan(targetPlan);
+
+  const buildFeatures = (plan: typeof currentData) => {
+    if (!plan) return [];
+    const list: string[] = [];
+    const ms = plan.max_stylists;
+    const sv = plan.max_services;
+    list.push(ms && ms >= 999 ? "Estilistas ilimitados" : `${ms || 1} estilista${(ms || 1) > 1 ? "s" : ""}`);
+    list.push(sv && sv >= 999 ? "Servicios ilimitados" : `${sv || 15} servicios`);
+    if (plan.features) {
+      Object.entries(plan.features).forEach(([key, enabled]) => {
+        if (enabled && FEATURE_LABELS[key]) list.push(FEATURE_LABELS[key]);
+      });
+    }
+    return list;
+  };
 
   const handleUpgrade = async () => {
     try {
       setLoading(true);
-      
       const { data, error } = await supabase.functions.invoke("upgrade-subscription", {
-        body: { 
-          tenantId,
-          planSlug: targetPlan,
-          billingCycle: "monthly"
-        },
+        body: { tenantId, planSlug: targetPlan, billingCycle: "monthly" },
       });
-
       if (error) throw error;
-
       if (data?.url) {
         window.open(data.url, "_blank");
         onOpenChange(false);
@@ -119,9 +91,14 @@ export const UpgradePrompt = ({
     }
   };
 
+  const currentName = currentData?.name || currentPlan;
+  const targetName = targetData?.name || targetPlan;
+  const currentPrice = currentData?.monthly_price || 0;
+  const targetPrice = targetData?.monthly_price || 0;
+  const targetFeatures = buildFeatures(targetData);
+
   const content = (
     <div className="flex flex-col gap-6 pb-safe">
-      {/* Header con icono */}
       <div className="flex flex-col items-center text-center gap-3 pt-4">
         <motion.div
           initial={{ scale: 0 }}
@@ -140,36 +117,31 @@ export const UpgradePrompt = ({
         </div>
       </div>
 
-      {/* Comparativa de planes */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Plan actual */}
         <div className="rounded-xl border border-border bg-muted/30 p-4">
           <p className="text-xs text-muted-foreground mb-1">Plan actual</p>
-          <p className="font-semibold text-foreground">{current.name}</p>
+          <p className="font-semibold text-foreground">{currentName}</p>
           <p className="text-lg font-bold text-foreground mt-2">
-            {current.monthlyPrice}€<span className="text-xs font-normal text-muted-foreground">/mes</span>
+            {currentPrice}€<span className="text-xs font-normal text-muted-foreground">/mes</span>
           </p>
         </div>
-
-        {/* Plan objetivo */}
         <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 relative overflow-hidden">
           <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-bl-lg font-medium flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             Recomendado
           </div>
           <p className="text-xs text-muted-foreground mb-1">Mejora a</p>
-          <p className="font-semibold text-primary">{target.name}</p>
+          <p className="font-semibold text-primary">{targetName}</p>
           <p className="text-lg font-bold text-foreground mt-2">
-            {target.monthlyPrice}€<span className="text-xs font-normal text-muted-foreground">/mes</span>
+            {targetPrice}€<span className="text-xs font-normal text-muted-foreground">/mes</span>
           </p>
         </div>
       </div>
 
-      {/* Features del plan objetivo */}
       <div className="space-y-2">
-        <p className="text-sm font-medium text-foreground">Incluido en {target.name}:</p>
+        <p className="text-sm font-medium text-foreground">Incluido en {targetName}:</p>
         <div className="grid gap-2">
-          {target.features.map((feat, index) => (
+          {targetFeatures.map((feat, index) => (
             <motion.div
               key={feat}
               initial={{ opacity: 0, x: -10 }}
@@ -186,27 +158,11 @@ export const UpgradePrompt = ({
         </div>
       </div>
 
-      {/* CTA */}
       <div className="flex flex-col gap-2 mt-2">
-        <Button 
-          onClick={handleUpgrade}
-          disabled={loading}
-          className="w-full h-12 text-base font-semibold gap-2"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              Mejorar a {target.name}
-              <ArrowRight className="w-4 h-4" />
-            </>
-          )}
+        <Button onClick={handleUpgrade} disabled={loading} className="w-full h-12 text-base font-semibold gap-2">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (<>Mejorar a {targetName}<ArrowRight className="w-4 h-4" /></>)}
         </Button>
-        <Button 
-          variant="ghost" 
-          onClick={() => onOpenChange(false)}
-          className="text-muted-foreground"
-        >
+        <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-muted-foreground">
           Ahora no
         </Button>
       </div>
@@ -217,9 +173,7 @@ export const UpgradePrompt = ({
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto">
-          <SheetHeader className="sr-only">
-            <SheetTitle>Mejora tu plan</SheetTitle>
-          </SheetHeader>
+          <SheetHeader className="sr-only"><SheetTitle>Mejora tu plan</SheetTitle></SheetHeader>
           {content}
         </SheetContent>
       </Sheet>
@@ -229,9 +183,7 @@ export const UpgradePrompt = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader className="sr-only">
-          <DialogTitle>Mejora tu plan</DialogTitle>
-        </DialogHeader>
+        <DialogHeader className="sr-only"><DialogTitle>Mejora tu plan</DialogTitle></DialogHeader>
         {content}
       </DialogContent>
     </Dialog>

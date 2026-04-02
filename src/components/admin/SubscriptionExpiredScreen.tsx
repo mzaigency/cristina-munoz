@@ -16,6 +16,7 @@ import {
   Mail
 } from "lucide-react";
 import { UpgradePrompt } from "./UpgradePrompt";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 
 interface SubscriptionExpiredScreenProps {
   tenantId: string;
@@ -25,28 +26,10 @@ interface SubscriptionExpiredScreenProps {
 
 type PlanSlug = "starter" | "pro" | "business";
 
-const PLAN_DETAILS: Record<PlanSlug, { name: string; icon: React.ReactNode; color: string; bgColor: string; monthlyPrice: number }> = {
-  starter: {
-    name: "Starter",
-    icon: <Zap className="h-6 w-6" />,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    monthlyPrice: 29
-  },
-  pro: {
-    name: "Pro",
-    icon: <Crown className="h-6 w-6" />,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
-    monthlyPrice: 49
-  },
-  business: {
-    name: "Business",
-    icon: <Sparkles className="h-6 w-6" />,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-    monthlyPrice: 89
-  }
+const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
+  starter: { icon: <Zap className="h-6 w-6" />, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+  pro: { icon: <Crown className="h-6 w-6" />, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+  business: { icon: <Sparkles className="h-6 w-6" />, color: "text-purple-500", bgColor: "bg-purple-500/10" },
 };
 
 export function SubscriptionExpiredScreen({ 
@@ -58,6 +41,7 @@ export function SubscriptionExpiredScreen({
   const { toast } = useToast();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanSlug>("starter");
+  const { plans } = useSubscriptionPlans();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut({ scope: "local" });
@@ -122,22 +106,22 @@ export function SubscriptionExpiredScreen({
           {/* Plan options */}
           <div className="space-y-3">
             <h3 className="font-medium text-sm text-center">Elige un plan para reactivar</h3>
-            {(["starter", "pro", "business"] as PlanSlug[]).map((plan) => {
-              const details = PLAN_DETAILS[plan];
+            {plans.map((plan) => {
+              const icons = PLAN_ICONS[plan.slug] || PLAN_ICONS.starter;
               return (
                 <button
-                  key={plan}
-                  onClick={() => handleUpgrade(plan)}
+                  key={plan.id}
+                  onClick={() => handleUpgrade(plan.slug as PlanSlug)}
                   className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border hover:border-primary/50 transition-all group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2.5 rounded-xl ${details.bgColor} ${details.color}`}>
-                      {details.icon}
+                    <div className={`p-2.5 rounded-xl ${icons.bgColor} ${icons.color}`}>
+                      {icons.icon}
                     </div>
                     <div className="text-left">
-                      <p className="font-semibold">{details.name}</p>
+                      <p className="font-semibold">{plan.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Desde {details.monthlyPrice}€/mes
+                        Desde {plan.monthly_price}€/mes
                       </p>
                     </div>
                   </div>
