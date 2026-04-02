@@ -58,6 +58,7 @@ const PLAN_ORDER: PlanSlug[] = ["starter", "pro", "business"];
 export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   const [tenantPlan, setTenantPlan] = useState<string | null>(null);
   const [tenantExpires, setTenantExpires] = useState<string | null>(null);
+  const { plans: dbPlans, getPlan: getDbPlan } = useSubscriptionPlans();
   const [tenantIsActive, setTenantIsActive] = useState<boolean>(true);
   const [stripeData, setStripeData] = useState<StripeSubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
