@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { es } from "date-fns/locale";
 import { format } from "date-fns";
 import { Service, TimeRange } from "@/types/booking";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
-import { Loader2, Clock, Bell } from "lucide-react";
+import { Loader2, Clock, Bell, User } from "lucide-react";
 import {
   Dialog,
   DialogContent,
