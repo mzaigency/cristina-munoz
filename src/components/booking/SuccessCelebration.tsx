@@ -203,7 +203,7 @@ export function SuccessCelebration({
             </div>
             <div>
               <p className="font-medium text-foreground">
-                {stylistName === "any" ? "Cualquier profesional" : stylistName}
+                {stylistName === "any" ? "Siguiente disponible" : stylistName}
               </p>
               <p className="text-sm text-muted-foreground">{services.map((s) => s.name).join(", ")}</p>
             </div>

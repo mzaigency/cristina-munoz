@@ -40,7 +40,13 @@ export const TenantStylistSelection = ({
           .order("name", { ascending: true });
 
         if (error) throw error;
-        setStylists(data || []);
+        const result = data || [];
+        setStylists(result);
+
+        // Auto-skip if only 1 professional
+        if (result.length === 1) {
+          onNext(result[0].slug);
+        }
       } catch (error) {
         console.error("Error fetching stylists:", error);
       } finally {
@@ -61,19 +67,22 @@ export const TenantStylistSelection = ({
     );
   }
 
-  // Create options including "any" option
+  // If only 1 stylist, don't render UI (auto-skipped above)
+  if (stylists.length <= 1) {
+    return null;
+  }
+
+  // Create options including "next available" option
   const options = [
     ...stylists.map(s => ({
       id: s.slug,
       name: s.name,
-      description: "",
       color: s.color,
       avatar_url: s.avatar_url,
     })),
     {
       id: "any",
-      name: "Cualquiera",
-      description: "Siguiente disponible",
+      name: "Siguiente disponible",
       color: null,
       avatar_url: null,
     },
@@ -116,11 +125,6 @@ export const TenantStylistSelection = ({
             <h3 className="mb-1 sm:mb-2 text-sm sm:text-lg font-semibold text-foreground transition-colors duration-200 group-hover:text-primary">
               {stylist.name}
             </h3>
-            {stylist.description && (
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                {stylist.description}
-              </p>
-            )}
           </Card>
         ))}
       </div>

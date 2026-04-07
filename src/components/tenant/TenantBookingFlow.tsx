@@ -32,6 +32,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [pendingServices, setPendingServices] = useState<{ services: Service[], packageId?: string } | null>(null);
+  const [stylistCount, setStylistCount] = useState<number | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
@@ -48,11 +49,11 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     packageId: null,
   });
 
-  // Load services and packages from database filtered by tenant_id
+  // Load services, packages, and stylist count from database
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [servicesRes, packagesRes] = await Promise.all([
+        const [servicesRes, packagesRes, stylistsRes] = await Promise.all([
           supabase
             .from('services')
             .select('*')
@@ -63,12 +64,16 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
             .from('service_packages')
             .select('*')
             .eq('tenant_id', tenantId)
-            .eq('is_active', true)
+            .eq('is_active', true),
+          supabase
+            .from('tenant_stylists')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .eq('is_active', true),
         ]);
 
         if (servicesRes.error) throw servicesRes.error;
 
-        // Transform data to include computed duration field
         const transformedServices: Service[] = (servicesRes.data || []).map(service => ({
           id: service.id,
           name: service.name,
@@ -83,6 +88,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
         setServices(transformedServices);
         setPackages((packagesRes.data || []) as unknown as ServicePackage[]);
+        setStylistCount(stylistsRes.data?.length || 0);
       } catch (error) {
         console.error('Error loading services:', error);
         toast({
@@ -190,7 +196,12 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   };
 
   const handleBack = () => {
-    if (step > 1) setStep(step - 1);
+    if (step === 3 && stylistCount !== null && stylistCount <= 1) {
+      // Skip step 2 if only 1 professional
+      setStep(1);
+    } else if (step > 1) {
+      setStep(step - 1);
+    }
   };
 
   const handleRemoveService = (serviceId: string) => {
