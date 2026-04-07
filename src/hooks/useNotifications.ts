@@ -72,18 +72,21 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   const markAllAsRead = useCallback(async () => {
     try {
       if (!user) return;
+      // Optimistic update — badge disappears instantly
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       const { error } = await supabase
         .from("notifications")
         .update({ read: true })
         .eq("user_id", user.id)
         .eq("read", false);
       if (error) throw error;
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
     } catch (error) {
       console.error("Error marking all as read:", error);
+      // Revert on failure
+      fetchNotifications();
     }
-  }, [user?.id]);
+  }, [user?.id, fetchNotifications]);
 
   const deleteNotification = useCallback(
     async (notificationId: string) => {
