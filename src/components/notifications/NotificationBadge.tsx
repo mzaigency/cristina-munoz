@@ -14,12 +14,15 @@ interface NotificationBadgeProps {
 
 export function NotificationBadge({ className, forTenant = false }: NotificationBadgeProps) {
   const [open, setOpen] = useState(false);
-  const { unreadCount } = useNotifications({ forTenant });
+  const { unreadCount, markAllAsRead } = useNotifications({ forTenant });
   const { light } = useHaptic();
 
   const handleOpen = (isOpen: boolean) => {
     if (isOpen) {
       light();
+      if (unreadCount > 0) {
+        markAllAsRead();
+      }
     }
     setOpen(isOpen);
   };
