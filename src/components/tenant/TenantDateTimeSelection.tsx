@@ -22,6 +22,7 @@ interface TenantStylist {
   name: string;
   slug: string;
   color: string | null;
+  avatar_url: string | null;
 }
 
 interface TenantDateTimeSelectionProps {
@@ -96,6 +97,8 @@ export const TenantDateTimeSelection = ({
   const [stylists, setStylists] = useState<TenantStylist[]>([]);
   const [bookedRanges, setBookedRanges] = useState<TimeRange[]>([]);
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
+  const [slotToStylists, setSlotToStylists] = useState<Record<string, TenantStylist[]>>({});
+  const [selectedSlotStylist, setSelectedSlotStylist] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [stylistsLoading, setStylistsLoading] = useState(true);
 
