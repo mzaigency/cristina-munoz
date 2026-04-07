@@ -1,22 +1,33 @@
 
 
-# Fix: Limpiar badges de notificaciones al hacer click
-
-## Problema
-Cuando abres el panel de notificaciones (campana), el badge rojo con el número sigue visible. Esto genera frustración porque el usuario ya ha "visto" las notificaciones pero el indicador no desaparece.
+# Mejora del flujo de selección de profesional en reservas
 
 ## Cambios
 
-### 1. `NotificationBadge.tsx` — Marcar todas como leídas al abrir
-Cuando el Sheet se abre, llamar `markAllAsRead()` automáticamente. Esto elimina el badge al instante.
+### 1. Auto-skip cuando solo hay 1 profesional
+En `TenantStylistSelection.tsx`: si después de cargar los estilistas solo hay 1 activo, llamar `onNext(stylist.slug)` automáticamente y no renderizar la UI de selección. Esto salta el paso 2 directamente.
 
-### 2. `useNotifications.ts` — Optimistic update en `markAllAsRead`
-Asegurar que `unreadCount` se pone a 0 de forma optimista (inmediata) antes de esperar la respuesta del servidor, para que el badge desaparezca sin delay.
+En `TenantBookingFlow.tsx`: ajustar el botón "Volver" del paso 3 para que vuelva al paso 1 si solo hay 1 profesional (saltando el paso 2 vacío).
 
-### 3. Admin section badges (ya funciona)
-Los badges del panel admin (`handleTabClick` → `markSectionViewed`) ya limpian correctamente al hacer click. No requieren cambios.
+### 2. Renombrar "Cualquiera" → "Siguiente disponible"
+En `TenantStylistSelection.tsx`: cambiar el nombre de la opción "any" de "Cualquiera" a "Siguiente disponible" y quitar la descripción redundante.
+
+En `TenantBookingFlow.tsx` y `SuccessCelebration`: cambiar "Cualquier profesional" por "Siguiente disponible" donde aparezca.
+
+En `StylistSelection.tsx` (booking genérico): mismo cambio de "Cualquiera" → "Siguiente disponible".
+
+### 3. Mostrar disponibilidad por profesional cuando se elige "Siguiente disponible"
+En `TenantDateTimeSelection.tsx`: cuando `stylist === "any"`, en vez de mostrar solo las horas fusionadas, mostrar junto a cada hora qué profesionales están disponibles. Si para una hora hay más de 1 profesional libre, mostrar un selector para que el usuario elija cuál prefiere antes de continuar.
+
+Concretamente:
+- Guardar un mapa `slotToStylists: Record<string, TenantStylist[]>` que asocie cada hora con los profesionales disponibles en ese slot.
+- En la UI de horas, mostrar junto a cada botón los avatares/nombres de quiénes están libres.
+- Al seleccionar una hora donde hay 2+ profesionales disponibles, mostrar un mini-selector (cards pequeñas) para elegir profesional.
+- Si solo hay 1 disponible en esa hora, asignarlo automáticamente.
 
 ## Archivos a modificar
-- `src/components/notifications/NotificationBadge.tsx` — llamar `markAllAsRead` al abrir
-- `src/hooks/useNotifications.ts` — asegurar update optimista inmediato
+- `src/components/tenant/TenantStylistSelection.tsx` — auto-skip + renombrar
+- `src/components/tenant/TenantBookingFlow.tsx` — gestionar skip paso 2 + texto
+- `src/components/tenant/TenantDateTimeSelection.tsx` — mostrar profesionales por slot
+- `src/components/booking/StylistSelection.tsx` — renombrar "Cualquiera"
 
