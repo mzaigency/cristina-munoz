@@ -374,41 +374,25 @@ export const TenantDateTimeSelection = ({
 
   const timeSlots = stylist === "any" ? fusedAvailableSlots : getAvailableTimeSlots(date);
 
+  const handleTimeSelect = (slot: string) => {
+    setTime(slot);
+    setSelectedSlotStylist(null);
+    
+    // If "any" and only 1 stylist available at this slot, auto-assign
+    if (stylist === "any" && slotToStylists[slot]?.length === 1) {
+      setSelectedSlotStylist(slotToStylists[slot][0].slug);
+    }
+  };
+
   const handleNext = async () => {
     if (!date || !time) return;
 
-    // If stylist is 'any', determine which specific stylist is available
-    if (stylist === "any" && stylists.length > 0) {
-      try {
-        const dateStr = formatDateToISO(date);
-        const selectedStartMinutes = timeStringToMinutes(time);
-        const activeWindows = getActiveWindows(selectedStartMinutes, services);
-
-        // Check each stylist's availability
-        const availabilityResults = await Promise.all(
-          stylists.map(async (s) => {
-            const { data, error } = await supabase.functions.invoke("check-availability", {
-              body: { date: dateStr, stylist: s.slug, tenant_id: tenantId },
-            });
-
-            if (error) return { slug: s.slug, available: false };
-
-            const ranges = parseBookedSlotsToRanges(data?.bookedSlots || []);
-            const isAvailable = !activeWindows.some((window) =>
-              ranges.some((booking) => hasOverlap(window.start, window.end, booking.start, booking.end)),
-            );
-
-            return { slug: s.slug, available: isAvailable };
-          }),
-        );
-
-        // Find first available stylist
-        const availableStylist = availabilityResults.find((r) => r.available);
-        if (availableStylist) {
-          onNext(date, time, availableStylist.slug);
-        }
-      } catch {
-        return;
+    if (stylist === "any") {
+      const available = slotToStylists[time] || [];
+      if (available.length === 1) {
+        onNext(date, time, available[0].slug);
+      } else if (selectedSlotStylist) {
+        onNext(date, time, selectedSlotStylist);
       }
     } else {
       onNext(date, time);
