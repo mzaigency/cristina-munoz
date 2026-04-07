@@ -150,7 +150,7 @@ export const TenantDateTimeSelection = ({
       try {
         const { data, error } = await supabase
           .from("tenant_stylists")
-          .select("id, name, slug, color")
+          .select("id, name, slug, color, avatar_url")
           .eq("tenant_id", tenantId)
           .eq("is_active", true)
           .order("name", { ascending: true });
