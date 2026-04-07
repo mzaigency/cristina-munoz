@@ -20,8 +20,8 @@ export const StylistSelection = ({ selectedStylist, onNext, onBack }: StylistSel
     },
     {
       id: "any" as Stylist,
-      name: "Cualquiera",
-      description: "Siguiente disponible",
+      name: "Siguiente disponible",
+      description: "",
     },
   ];
   return (
