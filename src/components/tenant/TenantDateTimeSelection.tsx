@@ -261,17 +261,21 @@ export const TenantDateTimeSelection = ({
             ),
           );
 
-          // Merge all available slots
-          const allSlotsSet = new Set<string>();
+          // Merge all available slots and track which stylists are available per slot
+          const slotsMap: Record<string, TenantStylist[]> = {};
           responses.forEach((response, index) => {
             if (!response.error && response.data) {
               const slots = computeAvailableSlotsForStylist(date, response.data);
-              slots.forEach((slot) => allSlotsSet.add(slot));
+              slots.forEach((slot) => {
+                if (!slotsMap[slot]) slotsMap[slot] = [];
+                slotsMap[slot].push(stylists[index]);
+              });
             }
           });
 
-          const mergedSlots = Array.from(allSlotsSet).sort();
+          const mergedSlots = Object.keys(slotsMap).sort();
           setFusedAvailableSlots(mergedSlots);
+          setSlotToStylists(slotsMap);
           setBookedRanges([]);
         } else {
           // Regular handling for specific stylist
