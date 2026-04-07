@@ -619,6 +619,35 @@ export const TenantDateTimeSelection = ({
               );
             })()
           )}
+          {/* Stylist picker when multiple are available for selected slot */}
+          {stylist === "any" && time && (slotToStylists[time]?.length || 0) > 1 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-medium text-foreground">¿Con quién prefieres?</p>
+              <div className="grid grid-cols-2 gap-2">
+                {slotToStylists[time].map((s) => (
+                  <Card
+                    key={s.slug}
+                    className={cn(
+                      "cursor-pointer border-2 p-3 flex items-center gap-3 transition-all touch-manipulation",
+                      selectedSlotStylist === s.slug
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    )}
+                    onClick={() => setSelectedSlotStylist(s.slug)}
+                  >
+                    {s.avatar_url ? (
+                      <img src={s.avatar_url} alt={s.name} className="h-9 w-9 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full flex-shrink-0 text-white text-sm" style={{ backgroundColor: s.color || 'hsl(var(--primary))' }}>
+                        <User className="h-4 w-4" />
+                      </span>
+                    )}
+                    <span className="text-sm font-medium text-foreground truncate">{s.name}</span>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
           {date && time && (
             <p className="mt-4 text-xs text-muted-foreground">
               Duración estimada: {totalDuration} minutos (finaliza a las{" "}
@@ -634,7 +663,7 @@ export const TenantDateTimeSelection = ({
         </Button>
         <Button
           onClick={handleNext}
-          disabled={!date || !time}
+          disabled={!date || !time || (stylist === "any" && time && (slotToStylists[time]?.length || 0) > 1 && !selectedSlotStylist)}
           className="transition-transform duration-200 hover:scale-105 disabled:scale-100"
         >
           Continuar
