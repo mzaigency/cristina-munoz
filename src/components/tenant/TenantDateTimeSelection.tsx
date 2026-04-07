@@ -531,20 +531,36 @@ export const TenantDateTimeSelection = ({
                         ☀️ Mañana ({minutesToTimeString(hours.morningStart)} - {minutesToTimeString(hours.morningEnd)})
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {morningSlots.map((slot) => (
-                          <Button
-                            key={slot}
-                            variant={time === slot ? "default" : "outline"}
-                            size="default"
-                            onClick={() => setTime(slot)}
-                            className={cn(
-                              "h-11 text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation",
-                              time === slot && "shadow-glow",
-                            )}
-                          >
-                            {slot}
-                          </Button>
-                        ))}
+                        {morningSlots.map((slot) => {
+                          const available = stylist === "any" ? slotToStylists[slot] || [] : [];
+                          return (
+                            <Button
+                              key={slot}
+                              variant={time === slot ? "default" : "outline"}
+                              size="default"
+                              onClick={() => handleTimeSelect(slot)}
+                              className={cn(
+                                "h-auto min-h-[2.75rem] text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation flex-col gap-0.5 py-1.5",
+                                time === slot && "shadow-glow",
+                              )}
+                            >
+                              <span>{slot}</span>
+                              {stylist === "any" && available.length > 0 && (
+                                <span className="flex -space-x-1.5 mt-0.5">
+                                  {available.slice(0, 3).map((s) => (
+                                    s.avatar_url ? (
+                                      <img key={s.slug} src={s.avatar_url} alt={s.name} className="h-4 w-4 rounded-full border border-background object-cover" />
+                                    ) : (
+                                      <span key={s.slug} className="flex h-4 w-4 items-center justify-center rounded-full border border-background text-[8px] text-white" style={{ backgroundColor: s.color || 'hsl(var(--primary))' }}>
+                                        {s.name[0]}
+                                      </span>
+                                    )
+                                  ))}
+                                </span>
+                              )}
+                            </Button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -566,20 +582,36 @@ export const TenantDateTimeSelection = ({
                         {minutesToTimeString(hours.afternoonEnd)})
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {afternoonSlots.map((slot) => (
-                          <Button
-                            key={slot}
-                            variant={time === slot ? "default" : "outline"}
-                            size="default"
-                            onClick={() => setTime(slot)}
-                            className={cn(
-                              "h-11 text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation",
-                              time === slot && "shadow-glow",
-                            )}
-                          >
-                            {slot}
-                          </Button>
-                        ))}
+                        {afternoonSlots.map((slot) => {
+                          const available = stylist === "any" ? slotToStylists[slot] || [] : [];
+                          return (
+                            <Button
+                              key={slot}
+                              variant={time === slot ? "default" : "outline"}
+                              size="default"
+                              onClick={() => handleTimeSelect(slot)}
+                              className={cn(
+                                "h-auto min-h-[2.75rem] text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation flex-col gap-0.5 py-1.5",
+                                time === slot && "shadow-glow",
+                              )}
+                            >
+                              <span>{slot}</span>
+                              {stylist === "any" && available.length > 0 && (
+                                <span className="flex -space-x-1.5 mt-0.5">
+                                  {available.slice(0, 3).map((s) => (
+                                    s.avatar_url ? (
+                                      <img key={s.slug} src={s.avatar_url} alt={s.name} className="h-4 w-4 rounded-full border border-background object-cover" />
+                                    ) : (
+                                      <span key={s.slug} className="flex h-4 w-4 items-center justify-center rounded-full border border-background text-[8px] text-white" style={{ backgroundColor: s.color || 'hsl(var(--primary))' }}>
+                                        {s.name[0]}
+                                      </span>
+                                    )
+                                  ))}
+                                </span>
+                              )}
+                            </Button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
