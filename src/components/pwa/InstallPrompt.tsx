@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { X, Share, Plus, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import glowAppLogo from "@/assets/glowapp-logo.png";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -92,7 +93,7 @@ export function InstallPrompt() {
               <div className="flex items-center gap-3 flex-1">
                 {/* App icon */}
                 <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-                  <img src="/favicon.svg" alt="GlowApp" className="w-full h-full object-cover" />
+                  <img src={glowAppLogo} alt="GlowApp" className="w-full h-full object-cover" />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-foreground text-sm">Instala GlowApp</p>
