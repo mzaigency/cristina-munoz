@@ -399,7 +399,7 @@ export default function Auth() {
       const { data: existingUsername } = await supabase
         .from("profiles")
         .select("id")
-        .eq("username", values.username.toLowerCase())
+        .eq("username", v.username.toLowerCase())
         .maybeSingle();
       if (existingUsername) {
         signUpForm.setError("username", { type: "manual", message: "Este nombre de usuario ya está en uso" });
@@ -411,7 +411,7 @@ export default function Auth() {
       const { data: existingEmail } = await supabase
         .from("profiles")
         .select("id")
-        .eq("email", values.email.toLowerCase())
+        .eq("email", v.email.toLowerCase())
         .maybeSingle();
       if (existingEmail) {
         signUpForm.setError("email", { type: "manual", message: "Ya existe una cuenta con este email" });
@@ -422,16 +422,16 @@ export default function Auth() {
       suppressSessionRedirectRef.current = true;
 
       const { data, error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
+        email: v.email,
+        password: v.password,
         options: {
           data: {
-            full_name: `${values.firstName} ${values.lastName}`,
-            username: values.username.toLowerCase(),
-            phone: cleanPhoneNumber(values.phone),
+            full_name: `${v.firstName} ${v.lastName}`,
+            username: v.username.toLowerCase(),
+            phone: cleanPhoneNumber(v.phone),
             country: "España",
-            province: values.province,
-            city: values.city,
+            province: v.province,
+            city: v.city,
             email_verified: false,
           },
         },
@@ -446,8 +446,8 @@ export default function Auth() {
       }
 
       if (data.user) {
-        sessionStorage.setItem("pendingVerificationEmail", values.email);
-        setSentEmail(values.email);
+        sessionStorage.setItem("pendingVerificationEmail", v.email);
+        setSentEmail(v.email);
         setEmailSent(true);
 
         await supabase.auth.signOut();
@@ -456,8 +456,8 @@ export default function Auth() {
           await supabase.functions.invoke("send-verification-email", {
             body: {
               userId: data.user.id,
-              email: values.email,
-              userName: values.firstName,
+              email: v.email,
+              userName: v.firstName,
             },
           });
         } catch {
