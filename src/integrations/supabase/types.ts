@@ -32,6 +32,48 @@ export type Database = {
         }
         Relationships: []
       }
+      b2b_leads: {
+        Row: {
+          business_name: string
+          city: string | null
+          contact_name: string
+          created_at: string
+          email: string
+          id: string
+          notes: string | null
+          phone: string
+          services: string[] | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_name: string
+          city?: string | null
+          contact_name: string
+          created_at?: string
+          email: string
+          id?: string
+          notes?: string | null
+          phone: string
+          services?: string[] | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string
+          city?: string | null
+          contact_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          notes?: string | null
+          phone?: string
+          services?: string[] | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           calendar_id: string | null

@@ -15,6 +15,7 @@ import { FavoritesManager } from "@/components/superadmin/FavoritesManager";
 import { ActivityCenter } from "@/components/superadmin/ActivityCenter";
 import { ContentManager } from "@/components/superadmin/ContentManager";
 import { MaintenanceToggle } from "@/components/superadmin/MaintenanceToggle";
+import { LeadsManager } from "@/components/superadmin/LeadsManager";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "motion/react";
@@ -115,6 +116,10 @@ const SuperAdmin = () => {
     id: "content",
     label: "Contenido",
     icon: FileImage
+  }, {
+    id: "leads",
+    label: "Leads B2B",
+    icon: Building2
   }];
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -267,6 +272,7 @@ const SuperAdmin = () => {
                 {activeTab === "favorites" && <FavoritesManager />}
                 {activeTab === "activity" && <ActivityCenter />}
                 {activeTab === "content" && <ContentManager />}
+                {activeTab === "leads" && <LeadsManager />}
               </motion.div>
             </AnimatePresence>
           </main>

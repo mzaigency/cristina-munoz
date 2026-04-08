@@ -11,6 +11,7 @@ import {
   Footer,
   FloatingMobileCTA,
 } from "@/components/business-landing";
+import { B2BLeadForm } from "@/components/business-landing/B2BLeadForm";
 
 export default function ForBusiness() {
   return (
@@ -55,6 +56,7 @@ export default function ForBusiness() {
         <FeaturesShowcase />
         <BeforeAfterSection />
         <PricingSection />
+        <B2BLeadForm />
         <FAQSection />
         <FinalCTASection />
         <Footer />
