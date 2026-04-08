@@ -391,7 +391,8 @@ export default function Auth() {
     }
   };
 
-  const handleSignUp = async (values: SignUpFormValues) => {
+  const handleSignUp = async (values: any) => {
+    const v = values as { firstName: string; lastName: string; username: string; phone: string; province: string; city: string; email: string; password: string; confirmPassword: string; acceptTerms: boolean };
     setLoading(true);
     try {
       // Final checks
