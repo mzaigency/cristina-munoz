@@ -382,17 +382,15 @@ export default function Auth() {
     if (step === 1) {
       const valid = await signUpForm.trigger(["firstName", "lastName", "username", "phone"]);
       if (!valid) return false;
-      // Check username one more time
       const username = signUpForm.getValues("username");
-      const { data: existing } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", username.toLowerCase())
-        .maybeSingle();
-      if (existing) {
-        signUpForm.setError("username", { type: "manual", message: "Este nombre de usuario ya está en uso" });
-        return false;
-      }
+      try {
+        const { data } = await supabase.rpc("check_availability", { p_username: username, p_email: null });
+        const result = data as unknown as { username_taken?: boolean };
+        if (result?.username_taken) {
+          signUpForm.setError("username", { type: "manual", message: "Este nombre de usuario ya está en uso" });
+          return false;
+        }
+      } catch { /* proceed */ }
       return true;
     }
     if (step === 2) {
@@ -439,25 +437,20 @@ export default function Auth() {
     const v = values as { firstName: string; lastName: string; username: string; phone: string; province: string; city: string; email: string; password: string; confirmPassword: string; acceptTerms: boolean };
     setLoading(true);
     try {
-      // Final checks
-      const { data: existingUsername } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", v.username.toLowerCase())
-        .maybeSingle();
-      if (existingUsername) {
+      // Final availability check via RPC
+      const { data: availData } = await supabase.rpc("check_availability", {
+        p_username: v.username,
+        p_email: v.email,
+      });
+      const avail = availData as unknown as { username_taken?: boolean; email_taken?: boolean };
+
+      if (avail?.username_taken) {
         signUpForm.setError("username", { type: "manual", message: "Este nombre de usuario ya está en uso" });
         setSignUpStep(1);
         setLoading(false);
         return;
       }
-
-      const { data: existingEmail } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", v.email.toLowerCase())
-        .maybeSingle();
-      if (existingEmail) {
+      if (avail?.email_taken) {
         signUpForm.setError("email", { type: "manual", message: "Ya existe una cuenta con este email" });
         setLoading(false);
         return;
