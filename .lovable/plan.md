@@ -1,60 +1,55 @@
 
 
-# Plan: Mejoras en Tarjetas QR, Formación y reorganización de secciones
+# Plan: Rediseñar el Tour Interactivo
 
-## Resumen de cambios
+## Problemas actuales
+1. El botón de tour está en el header y el prompt de "¿Primera vez?" se posiciona mal en móvil (se sale de pantalla)
+2. El tour es un modal estático centrado — poco dinámico y nada interactivo
+3. Los 10 pasos con dots no caben bien en 390px
 
-5 problemas a resolver:
-1. **Tarjetas QR**: usar logo, colores y fuentes del salón + añadir 3 plantillas más (total 7)
-2. **QR y texto borroso en descarga**: el canvas es 600x400 — demasiado bajo. Subir a 1200x800 (2x) y generar QR a 400px
-3. **Formación y ROI fuera de Contenido**: mover a Dashboard (como sub-secciones del dashboard principal)
-4. **Stories → Posts**: cambiar el paso "Publica tu primer Story" a "Publica tu primer Post"
-5. **Navegación de formación**: cada paso debe navegar a la pestaña Y sub-pestaña correcta
+## Nuevo diseño: Tour bottom-sheet con animaciones y swipe
 
-## Cambios por archivo
+### Concepto
+- **Bottom-sheet estilo iOS** en vez de modal centrado — siempre visible sin tapar la navegación
+- **Swipeable** entre pasos (gesture horizontal)
+- **Animación del icono** con pulse/bounce al entrar cada paso
+- **Fondo con spotlight** suave que destaca la zona relevante
+- **Auto-prompt** aparece como bottom-sheet pequeño, no como floating card que se sale
 
-### 1. `src/components/admin/content/QRCardGenerator.tsx`
-- Fetch adicional: `primary_color`, `secondary_color`, `font_heading`, `font_body` del tenant
-- Cargar Google Fonts en canvas via `FontFace` API antes de dibujar
-- Añadir logo del salón en la tarjeta (cargar imagen con `new Image()`)
-- **Canvas 1200x800** (2x resolución) para descarga nítida
-- **QR generado a 400px** en vez de 200px
-- 3 plantillas nuevas usando colores del salón:
-  - `"salon"` — usa primary_color como fondo + fuente del salón
-  - `"gradient"` — gradiente primary→secondary
-  - `"glass"` — fondo blanco con bordes glassmorphism y acentos del salón
-- Template `"brand"` ahora usa el primary_color real del tenant (no hardcoded `#8B5CF6`)
+### Cambios en `InteractiveTour.tsx`
 
-### 2. `src/components/admin/sections/ContentSection.tsx`
-- Eliminar tabs de Formación y ROI
-- Solo queda el QRCardGenerator (renombrar a "Marketing" sin tabs)
+**Estructura del tour activo:**
+- Bottom sheet fijo (`fixed bottom-0`) con `safe-area-inset-bottom`
+- Altura máxima `60vh`, con contenido scrollable si necesario
+- Animación slide-up al aparecer, slide-down al cerrar
+- Swipe left/right para navegar entre pasos (reusando touch events)
+- Swipe down para cerrar/skip
 
-### 3. `src/components/admin/AdminDashboard.tsx`
-- Integrar `TrainingChecklist` y `ROICalculator` como secciones del dashboard
-- Formación visible para tenants < 30 días (ya existe `OnboardingChecklist`)
-- ROI visible siempre como card colapsable
+**Contenido de cada paso:**
+- Icono grande animado (scale bounce + gradient background)
+- Título y descripción compactos
+- Tips con chips/pills en vez de lista vertical (ahorra espacio)
+- Barra de progreso visual tipo segmentos (no dots — mejor para 10 pasos en móvil)
 
-### 4. `src/components/admin/content/TrainingChecklist.tsx`
-- Cambiar "Publica tu primer Story" → "Publica tu primer Post" (id: `first_post`)
-- Icono: `ImagePlus` en vez de `Camera`
-- **Navegación precisa con sub-tabs**:
-  - `services` → navegar a `team` + `sessionStorage.setItem('openTeamSubTab', 'services')`
-  - `first_booking` → `agenda` (correcto)
-  - `cash_register` → `business` + `sessionStorage.setItem('openBusinessSubTab', 'cash')`
-  - `first_message` → `communication` (correcto)
-  - `first_post` → `communication` (correcto, posts están ahí)
-  - `review_analytics` → `business` + `sessionStorage.setItem('openBusinessSubTab', 'stats')`
-- `onNavigate` pasa un objeto `{ tab, subTab }` en vez de solo string
+**Auto-prompt para nuevos usuarios:**
+- Bottom-sheet mini (no floating card) — siempre dentro de pantalla
+- Posicionado con `bottom: calc(env(safe-area-inset-bottom) + 16px)`
 
-### 5. `src/pages/TenantAdmin.tsx`
-- Actualizar `onNavigate` del dashboard para aceptar sub-tab y guardarlo en sessionStorage
-- `TeamSection` y `BusinessSection` deben leer sessionStorage al montar para abrir la sub-tab correcta
+**Navegación:**
+- Botones "Anterior" / "Siguiente" con iconos
+- Progress bar segmentada en la parte superior del sheet
+- Swipe gesture nativo para avanzar/retroceder
+- Tap en el fondo oscuro = skip
 
-### 6. `src/components/admin/sections/TeamSection.tsx`
-- Al montar, leer `sessionStorage.getItem('openTeamSubTab')` y abrir esa sub-tab
+### Animaciones (motion/react)
+- `slideY` from bottom para abrir/cerrar
+- `slideX` para transición entre pasos (como carrusel)
+- Icono: `scale(0) → scale(1.1) → scale(1)` con spring
+- Progress segments: width animation suave
 
-### 7. `src/components/admin/sections/BusinessSection.tsx`
-- Ya lee `openCashTab` — extender para leer `openBusinessSubTab` genérico
+### Archivos a modificar
+- `src/components/admin/InteractiveTour.tsx` — reescritura completa del componente
 
-## Sin migraciones SQL necesarias
+### Sin cambios en otros archivos
+El componente se renderiza igual desde `TenantAdmin.tsx`, solo cambia su UI interna.
 
