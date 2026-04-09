@@ -1,108 +1,117 @@
 
-# Plan corregido: arreglar de verdad el registro
 
-## Qué está fallando ahora
+# Plan Maestro SEO — GlowApp
 
-1. **La validación de username/email en tiempo real está mal planteada**
-   - En `/auth` se está consultando `profiles` directamente desde el cliente.
-   - Como el usuario aún no ha iniciado sesión, **RLS bloquea esas lecturas**.
-   - Resultado: la comprobación puede fallar en silencio y el estado visual queda mal o inconsistente.
-   - Además, la unicidad actual del username parece depender de `text UNIQUE`, que **no garantiza unicidad case-insensitive** (`Pepe` vs `pepe`).
+## Objetivo
+Que GlowApp aparezca en Google para cualquier busqueda de belleza en Espana: tanto genericas ("peluqueria cerca de mi") como locales ("peluqueria santpedor") como por nombre de salon ("Cristina Munoz peluqueria").
 
-2. **“Usar mi ubicación actual” detecta la ubicación, pero no rellena bien provincia/ciudad**
-   - El reverse geocoding devuelve cosas como `Cataluña`, que es comunidad autónoma, mientras el formulario espera una **provincia** como `Barcelona`.
-   - El código actual solo intenta casar `state`, así que el toast sale bien, pero los selects no se rellenan.
+## Estado actual
+- Structured data en `index.html`: WebApplication, Organization, WebSite+SearchAction — bien
+- SEO dinamico por salon en `TenantLanding.tsx` con LocalBusiness schema — basico
+- Sitemap dinamico con edge function — solo salones individuales + paginas estaticas
+- robots.txt bien configurado
+- Solo hay 1 tenant activo: Cristina Munoz (Santpedor, peluqueria)
 
-## Implementación propuesta
+## Problema
+No existen paginas indexables de categoria/ciudad. Si buscas "peluqueria santpedor", Google no tiene una pagina de GlowApp que responda a eso. Solo existe `/cristina-munoz` que puede no asociarse con la busqueda.
 
-### 1. Arreglar la disponibilidad de username/email desde backend
-Crear una verificación pública segura para registro, en vez de leer `profiles` directamente desde el frontend.
+---
 
-**Haré esto:**
-- Añadir una función backend/RPC pública y segura para comprobar:
-  - `username_available`
-  - `email_available`
-- Validar y normalizar inputs en backend:
-  - trim
-  - lower-case
-  - formato permitido
-  - límites de longitud
-- En `Auth.tsx`, sustituir las consultas directas a `profiles` por esta verificación.
+## Cambios
 
-**Resultado esperado:**
-- “Disponible” solo aparecerá si el backend confirma que está libre.
-- Si ya existe, se mostrará error real y nunca el check verde.
+### 1. Nueva pagina: `src/pages/DirectoryLanding.tsx`
 
-### 2. Blindar la unicidad del username en base de datos
-No basta con validarlo en UI: hay que **hacerlo imposible en base de datos**.
+Componente que sirve como directorio SEO. Recibe `category` y opcionalmente `city` de la URL.
 
-**Haré esto:**
-- Añadir una migración para garantizar unicidad real de username normalizado (`lower(username)`).
-- Normalizar usernames legacy antes de aplicar la restricción si hiciera falta.
-- Mantener el submit final protegido para que, aunque haya carrera entre dos registros, el segundo falle correctamente.
+- Mapea slugs URL a `business_type` en BD: `peluquerias` → `peluqueria`, `barberias` → `barberia`, `estetica` → `estetica`, `spa` → `spa`, `unas` → `unas`
+- Fetch tenants activos filtrando por `features->>'business_type'` y opcionalmente por `city` (case-insensitive, normalizado sin tildes)
+- H1 dinamico optimizado: "Peluquerias en Santpedor - Reserva Online | GlowApp"
+- Meta description unica por combinacion categoria+ciudad
+- Schema `CollectionPage` + `ItemList` con cada salon como `ListItem`
+- Listado de salones con card (nombre, ciudad, valoracion, link a `/{slug}`)
+- Si no hay resultados: mensaje amable + CTA para registrar salon
+- Mobile-first, safe areas respetadas
+- Links internos: cada salon enlaza a `/{slug}`, breadcrumbs de navegacion
 
-**Resultado esperado:**
-- Un username no podrá duplicarse aunque dos usuarios intenten registrarse a la vez.
-- No habrá falsos “disponible”.
+### 2. Actualizar `src/App.tsx` — Nuevas rutas
 
-### 3. Corregir la geolocalización para rellenar sola provincia y ciudad
-Refactorizar `handleUseLocation` para mapear correctamente datos españoles.
+Anadir ANTES del catch-all `/:slug`:
+```text
+/peluquerias            → DirectoryLanding (category="peluquerias")
+/peluquerias/:city      → DirectoryLanding (category="peluquerias", city param)
+/barberias              → DirectoryLanding
+/barberias/:city        → DirectoryLanding
+/estetica               → DirectoryLanding
+/estetica/:city         → DirectoryLanding
+/spa                    → DirectoryLanding
+/spa/:city              → DirectoryLanding
+/unas                   → DirectoryLanding
+/unas/:city             → DirectoryLanding
+```
 
-**Haré esto:**
-- Leer más campos del reverse geocoder:
-  - `city`
-  - `town`
-  - `village`
-  - `municipality`
-  - `county`
-  - `state_district`
-  - `province`
-  - `state`
-- Normalizar nombres quitando tildes/mayúsculas para comparar mejor.
-- Intentar resolver la **provincia real** primero.
-- Una vez resuelta la provincia, buscar la ciudad dentro del catálogo de esa provincia.
-- Si el geocoder devuelve comunidad autónoma pero no provincia, usar la ciudad detectada para inferir la provincia correcta.
-- Al completar ambos valores:
-  - hacer `setValue` en `province`
-  - hacer `setValue` en `city`
-  - disparar validación
-  - limpiar búsqueda manual si procede
+### 3. Actualizar `src/components/SEO.tsx`
 
-**Resultado esperado:**
-- Si detecta `Manresa, Cataluña`, el formulario rellenará **Barcelona** y **Manresa** automáticamente.
+Anadir soporte para nuevos schemas:
+- `itemList` prop — genera `CollectionPage` + `ItemList` structured data
+- Cada item incluye `name`, `url`, `image`, `position`
 
-## Archivos a tocar
+### 4. Mejorar structured data en `src/pages/TenantLanding.tsx`
 
-- `src/pages/Auth.tsx`
-  - reemplazar checks directos
-  - corregir debounce/estado visual
-  - arreglar autofill de ubicación
-- `supabase/migrations/...`
-  - función segura de disponibilidad
-  - restricción de unicidad normalizada para username
-- Si hace falta reforzar normalización:
-  - lógica de perfil/registro en backend para guardar username en minúsculas
+Pasar de un schema `LocalBusiness` basico a uno completo:
+- `hasOfferCatalog` con servicios reales del salon (fetch de tabla `services`)
+- Top 3 reviews individuales como schema `Review` (no solo aggregateRating)
+- `openingHoursSpecification` con horarios reales de `business_hours`
+- `sameAs` con redes sociales del salon (instagram, facebook, tiktok)
+- `hasMap` con `google_maps_url` del salon
 
-## Verificación
+### 5. Actualizar `supabase/functions/generate-sitemap/index.ts`
 
-### Username
-- Escribir un username ya existente:
-  - no debe salir “Disponible”
-  - debe salir error inline
-- Escribir uno libre:
-  - debe salir check verde
-- Intentar registrar dos veces el mismo username:
-  - la segunda debe fallar aunque pase el debounce
+Fetch adicional: ciudades unicas agrupadas por business_type de tenants activos.
 
-### Ubicación
-- Pulsar “Usar mi ubicación actual”
-- Si detecta una ciudad española:
-  - **Provincia** debe rellenarse sola
-  - **Ciudad** debe rellenarse sola
-- Probar casos como:
-  - ciudad + provincia
-  - ciudad + comunidad autónoma
-  - nombres con tildes
+Generar URLs de directorio dinamicamente:
+```text
+/peluquerias              (si hay >= 1 peluqueria)
+/peluquerias/santpedor    (si hay peluqueria en Santpedor)
+/barberias                (si hay >= 1 barberia)
+... etc
+```
 
-## Enfoque UX mobile
-Mantendré el flujo actual de 3 pasos, sin añadir fricción, y revisaré que el comportamiento siga siendo cómodo en móvil y respetando safe areas.
+Query: `SELECT DISTINCT lower(city) as city, features->>'business_type' as type FROM tenants WHERE is_active = true AND city IS NOT NULL`
+
+Prioridades sitemap:
+- `/` → 1.0
+- `/peluquerias`, `/barberias`... → 0.9
+- `/peluquerias/santpedor`... → 0.85
+- `/{salon-slug}` → 0.8
+
+Anadir `<image:image>` con `logo_url` de cada salon en sus URLs individuales.
+
+### 6. Actualizar `index.html`
+
+Anadir schema `SoftwareApplication` apuntando a Play Store (cuando este disponible) para reforzar presencia de marca en busquedas de "GlowApp".
+
+### 7. Actualizar `public/robots.txt`
+
+Las nuevas rutas de directorio ya estan permitidas por defecto (no hay Disallow para `/peluquerias`, etc.). No se necesitan cambios, pero verificaremos.
+
+---
+
+## Archivos
+
+| Archivo | Accion |
+|---|---|
+| `src/pages/DirectoryLanding.tsx` | Crear — directorio SEO dinamico |
+| `src/App.tsx` | Anadir 10 rutas de directorio |
+| `src/components/SEO.tsx` | Anadir soporte ItemList/CollectionPage |
+| `src/pages/TenantLanding.tsx` | Mejorar structured data (servicios, reviews, horarios, redes) |
+| `supabase/functions/generate-sitemap/index.ts` | Generar URLs de directorio + imagenes |
+| `index.html` | Anadir SoftwareApplication schema |
+
+## Resultado esperado
+
+- "peluqueria santpedor" → `glowapp.app/peluquerias/santpedor` con link a Cristina Munoz
+- "peluquerias cerca de mi" → `glowapp.app/peluquerias` con listado
+- "Cristina Munoz peluqueria" → `glowapp.app/cristina-munoz` con rich snippet (estrellas, horario, servicios)
+- "reservar peluqueria online" → `glowapp.app` con sitelinks
+- Cada nuevo salon registrado aparece automaticamente en su directorio de ciudad sin tocar codigo
+
