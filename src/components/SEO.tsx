@@ -33,6 +33,13 @@ interface LocalBusinessData {
   };
 }
 
+interface ItemListItem {
+  name: string;
+  url: string;
+  image?: string;
+  position: number;
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -48,6 +55,7 @@ interface SEOProps {
   faq?: FAQItem[];
   localBusiness?: LocalBusinessData;
   alternateLanguages?: { lang: string; url: string }[];
+  itemList?: ItemListItem[];
 }
 
 export const SEO = ({
@@ -65,6 +73,7 @@ export const SEO = ({
   faq,
   localBusiness,
   alternateLanguages,
+  itemList,
 }: SEOProps) => {
   const baseUrl = "https://www.glowapp.app";
   const fullCanonicalUrl = canonicalUrl ? `${baseUrl}${canonicalUrl}` : baseUrl;
