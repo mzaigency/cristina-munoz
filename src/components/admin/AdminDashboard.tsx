@@ -340,7 +340,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
             <Button 
               size="sm" 
               variant="ghost"
-              onClick={() => onNavigate("calendar")}
+              onClick={() => onNavigate("agenda")}
               className="shrink-0"
             >
               Ver
