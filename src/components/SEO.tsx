@@ -33,6 +33,13 @@ interface LocalBusinessData {
   };
 }
 
+interface ItemListItem {
+  name: string;
+  url: string;
+  image?: string;
+  position: number;
+}
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -48,6 +55,7 @@ interface SEOProps {
   faq?: FAQItem[];
   localBusiness?: LocalBusinessData;
   alternateLanguages?: { lang: string; url: string }[];
+  itemList?: ItemListItem[];
 }
 
 export const SEO = ({
@@ -65,6 +73,7 @@ export const SEO = ({
   faq,
   localBusiness,
   alternateLanguages,
+  itemList,
 }: SEOProps) => {
   const baseUrl = "https://www.glowapp.app";
   const fullCanonicalUrl = canonicalUrl ? `${baseUrl}${canonicalUrl}` : baseUrl;
@@ -137,6 +146,26 @@ export const SEO = ({
         "worstRating": 1
       }
     })
+  } : null;
+
+  // Generate CollectionPage + ItemList structured data
+  const itemListSchema = itemList && itemList.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": title,
+    "description": description,
+    "url": fullCanonicalUrl,
+    "mainEntity": {
+      "@type": "ItemList",
+      "numberOfItems": itemList.length,
+      "itemListElement": itemList.map(item => ({
+        "@type": "ListItem",
+        "position": item.position,
+        "name": item.name,
+        "url": `${baseUrl}${item.url}`,
+        ...(item.image ? { "image": item.image } : {})
+      }))
+    }
   } : null;
 
   // Generate Organization structured data for brand pages
@@ -242,6 +271,13 @@ export const SEO = ({
       {localBusinessSchema && (
         <script type="application/ld+json">
           {JSON.stringify(localBusinessSchema)}
+        </script>
+      )}
+
+      {/* Structured Data - CollectionPage + ItemList */}
+      {itemListSchema && (
+        <script type="application/ld+json">
+          {JSON.stringify(itemListSchema)}
         </script>
       )}
     </Helmet>

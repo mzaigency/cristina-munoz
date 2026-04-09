@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Helmet } from "react-helmet";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
@@ -55,6 +56,23 @@ interface Tenant {
     [key: string]: unknown;
   } | null;
 }
+// Map business_type → display label and URL slug for breadcrumbs
+const CATEGORY_MAP: Record<string, string> = {
+  peluqueria: "Peluquerías",
+  barberia: "Barberías",
+  estetica: "Centros de Estética",
+  spa: "Spas",
+  unas: "Centros de Uñas",
+  salon_belleza: "Salones de Belleza",
+  multiservicios: "Multiservicios",
+};
+const CATEGORY_SLUG_MAP: Record<string, string> = {
+  peluqueria: "peluquerias",
+  barberia: "barberias",
+  estetica: "estetica",
+  spa: "spa",
+  unas: "unas",
+};
 
 const TenantLanding = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -67,6 +85,9 @@ const TenantLanding = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [reviewsKey, setReviewsKey] = useState(0);
   const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null);
+  const [topReviews, setTopReviews] = useState<any[]>([]);
+  const [tenantServices, setTenantServices] = useState<{ name: string; price: number | null }[]>([]);
+  const [businessHours, setBusinessHours] = useState<any[]>([]);
 
   const { isAdmin, isStylist, hasAccess } = useTenantAccess(tenant?.id);
   const previewToken = searchParams.get("preview");
@@ -139,14 +160,37 @@ const TenantLanding = () => {
       // Fetch real review stats for structured data
       const { data: reviews } = await supabase
         .from("reviews")
-        .select("rating")
+        .select("rating, comment, created_at, user_id")
         .eq("tenant_id", tenant.id)
-        .eq("approved", true);
+        .eq("approved", true)
+        .order("created_at", { ascending: false })
+        .limit(100);
 
       if (reviews && reviews.length > 0) {
         const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
         setReviewStats({ avg: Math.round(avg * 10) / 10, count: reviews.length });
+        // Store top 3 reviews for schema
+        setTopReviews(reviews.slice(0, 3));
       }
+
+      // Fetch services for structured data
+      const { data: servicesData } = await supabase
+        .from("services")
+        .select("name, price")
+        .eq("tenant_id", tenant.id)
+        .order("sort_order", { ascending: true })
+        .limit(20);
+
+      if (servicesData) setTenantServices(servicesData);
+
+      // Fetch business hours for structured data
+      const { data: hoursData } = await supabase
+        .from("tenant_business_hours")
+        .select("day_of_week, is_open, open_time, close_time")
+        .eq("tenant_id", tenant.id)
+        .order("day_of_week", { ascending: true });
+
+      if (hoursData) setBusinessHours(hoursData);
     } catch (error) {
       console.error("Error fetching tenant:", error);
       navigate("/404");
@@ -224,7 +268,13 @@ const TenantLanding = () => {
     tenant.city ? `reservar ${businessLabel.toLowerCase()} ${tenant.city}` : null,
   ].filter(Boolean).join(", ");
 
-  // Build LocalBusiness structured data
+  // Build opening hours specification for schema
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const openingHoursSpec = businessHours
+    .filter((h: any) => h.is_open && h.open_time && h.close_time)
+    .map((h: any) => `${dayNames[h.day_of_week]} ${h.open_time}-${h.close_time}`);
+
+  // Build LocalBusiness structured data — enriched
   const localBusinessData = {
     name: tenant.name,
     description: tenant.description || `${businessLabel} profesional`,
@@ -247,6 +297,7 @@ const TenantLanding = () => {
         reviewCount: reviewStats.count,
       }
     } : {}),
+    ...(openingHoursSpec.length > 0 ? { openingHours: openingHoursSpec } : {}),
   };
 
   const primaryColor = tenant.primary_color || "#8B5CF6";
@@ -287,11 +338,47 @@ const TenantLanding = () => {
           localBusiness={localBusinessData}
           breadcrumbs={[
             { name: "Inicio", url: "/" },
-            { name: businessLabel, url: `/?category=${businessType || 'all'}` },
+            ...(businessType && CATEGORY_MAP[businessType]
+              ? [{ name: CATEGORY_MAP[businessType], url: `/${CATEGORY_SLUG_MAP[businessType] || businessType}` }]
+              : [{ name: businessLabel, url: "/" }]),
             { name: tenant.name, url: `/${tenant.slug}` }
           ]}
           noindex={isPreview}
         />
+
+        {/* Enhanced structured data: services catalog + individual reviews + sameAs */}
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "BeautySalon",
+              "name": tenant.name,
+              "url": `https://www.glowapp.app/${tenant.slug}`,
+              ...(tenantServices.length > 0 ? {
+                "hasOfferCatalog": {
+                  "@type": "OfferCatalog",
+                  "name": "Servicios",
+                  "itemListElement": tenantServices.map(s => ({
+                    "@type": "Offer",
+                    "itemOffered": { "@type": "Service", "name": s.name },
+                    ...(s.price != null ? { "price": s.price, "priceCurrency": "EUR" } : {})
+                  }))
+                }
+              } : {}),
+              ...(topReviews.length > 0 ? {
+                "review": topReviews.map(r => ({
+                  "@type": "Review",
+                  "reviewRating": { "@type": "Rating", "ratingValue": r.rating, "bestRating": 5 },
+                  ...(r.comment ? { "reviewBody": r.comment } : {}),
+                  "datePublished": r.created_at?.split("T")[0],
+                  "author": { "@type": "Person", "name": "Cliente verificado" }
+                }))
+              } : {}),
+              ...(tenant.google_maps_url ? { "hasMap": tenant.google_maps_url } : {}),
+              "sameAs": [tenant.instagram_url, tenant.facebook_url, tenant.tiktok_url].filter(Boolean),
+            })}
+          </script>
+        </Helmet>
         
         <TenantHeader 
           tenant={tenant} 
