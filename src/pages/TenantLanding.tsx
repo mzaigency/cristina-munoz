@@ -56,6 +56,23 @@ interface Tenant {
     [key: string]: unknown;
   } | null;
 }
+// Map business_type → display label and URL slug for breadcrumbs
+const CATEGORY_MAP: Record<string, string> = {
+  peluqueria: "Peluquerías",
+  barberia: "Barberías",
+  estetica: "Centros de Estética",
+  spa: "Spas",
+  unas: "Centros de Uñas",
+  salon_belleza: "Salones de Belleza",
+  multiservicios: "Multiservicios",
+};
+const CATEGORY_SLUG_MAP: Record<string, string> = {
+  peluqueria: "peluquerias",
+  barberia: "barberias",
+  estetica: "estetica",
+  spa: "spa",
+  unas: "unas",
+};
 
 const TenantLanding = () => {
   const { slug } = useParams<{ slug: string }>();
