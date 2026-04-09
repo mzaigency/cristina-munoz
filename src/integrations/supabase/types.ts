@@ -1742,6 +1742,41 @@ export type Database = {
           },
         ]
       }
+      tenant_onboarding_progress: {
+        Row: {
+          created_at: string | null
+          dismissed: boolean | null
+          id: string
+          steps_completed: Json | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dismissed?: boolean | null
+          id?: string
+          steps_completed?: Json | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dismissed?: boolean | null
+          id?: string
+          steps_completed?: Json | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_onboarding_progress_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_stylists: {
         Row: {
           avatar_url: string | null

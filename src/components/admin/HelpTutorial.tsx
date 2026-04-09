@@ -107,6 +107,39 @@ const helpSections: HelpSection[] = [
     ],
   },
   {
+    id: "content",
+    title: "Contenido",
+    icon: <Camera className="h-5 w-5" />,
+    description: "Marketing, formación y ROI",
+    subsections: [
+      {
+        name: "Marketing",
+        items: [
+          "📱 Genera tarjetas con QR",
+          "🖨️ Descarga en PNG para imprimir",
+          "🎨 Varias plantillas de diseño",
+          "🔗 Link de reserva compartible",
+        ],
+      },
+      {
+        name: "Formación",
+        items: [
+          "✅ Checklist de primeros pasos",
+          "📚 Guía para cada herramienta",
+          "📊 Progreso guardado",
+        ],
+      },
+      {
+        name: "ROI",
+        items: [
+          "💰 Ingresos gestionados",
+          "🛡️ No-shows evitados",
+          "⏱️ Tiempo ahorrado",
+        ],
+      },
+    ],
+  },
+  {
     id: "business",
     title: "Negocio",
     icon: <Wallet className="h-5 w-5" />,

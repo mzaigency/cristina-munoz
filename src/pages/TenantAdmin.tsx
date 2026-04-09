@@ -15,7 +15,7 @@ import {
   Scissors,
   Users,
   LayoutDashboard,
-  
+  Palette,
   Menu,
 } from "lucide-react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
@@ -41,6 +41,7 @@ import {
   SettingsSection,
   AgendaSection,
   CommunicationSection,
+  ContentSection,
 } from "@/components/admin/sections";
 
 interface Tenant {
@@ -59,7 +60,7 @@ interface Stylist {
 }
 
 // Simplified to 6 main tabs
-type TabValue = "dashboard" | "agenda" | "business" | "team" | "communication" | "settings";
+type TabValue = "dashboard" | "agenda" | "business" | "content" | "team" | "communication" | "settings";
 
 interface NavItem {
   value: TabValue;
@@ -104,6 +105,7 @@ export default function TenantAdmin() {
       { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
       { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
       { value: "business", label: "Negocio", icon: <Wallet className="h-4 w-4" /> },
+      { value: "content", label: "Contenido", icon: <Palette className="h-4 w-4" /> },
       { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
       {
         value: "communication",
@@ -296,6 +298,15 @@ export default function TenantAdmin() {
         );
       case "business":
         return <BusinessSection key={refreshKey} tenantId={tenant.id} />;
+      case "content":
+        return (
+          <ContentSection
+            key={refreshKey}
+            tenantId={tenant.id}
+            tenantSlug={tenant.slug}
+            onNavigate={(tab) => setActiveTab(tab as TabValue)}
+          />
+        );
       case "team":
         return <TeamSection key={refreshKey} tenantId={tenant.id} />;
       case "communication":
