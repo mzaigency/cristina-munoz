@@ -32,6 +32,7 @@ const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BusinessOnboarding = lazy(() => import("./pages/BusinessOnboarding"));
 const OnboardingSetup = lazy(() => import("./pages/OnboardingSetup"));
+const DirectoryLanding = lazy(() => import("./pages/DirectoryLanding"));
 
 const ForBusiness = lazy(() => import("./pages/ForBusiness"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -170,6 +171,18 @@ const App = () => (
                       <Route path="/verify-email" element={<VerifyEmail />} />
                       <Route path="/privacidad" element={<PrivacyPolicy />} />
                       <Route path="/terminos" element={<TermsOfUse />} />
+                      
+                      {/* SEO Directory routes - category and category/city */}
+                      <Route path="/peluquerias" element={<DirectoryLanding />} />
+                      <Route path="/peluquerias/:city" element={<DirectoryLanding />} />
+                      <Route path="/barberias" element={<DirectoryLanding />} />
+                      <Route path="/barberias/:city" element={<DirectoryLanding />} />
+                      <Route path="/estetica" element={<DirectoryLanding />} />
+                      <Route path="/estetica/:city" element={<DirectoryLanding />} />
+                      <Route path="/spa" element={<DirectoryLanding />} />
+                      <Route path="/spa/:city" element={<DirectoryLanding />} />
+                      <Route path="/unas" element={<DirectoryLanding />} />
+                      <Route path="/unas/:city" element={<DirectoryLanding />} />
                       
                       {/* Catch-all para salones - DEBE IR AL FINAL */}
                       <Route path="/:slug" element={<TenantLanding />} />

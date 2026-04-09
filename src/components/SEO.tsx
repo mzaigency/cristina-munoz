@@ -148,6 +148,26 @@ export const SEO = ({
     })
   } : null;
 
+  // Generate CollectionPage + ItemList structured data
+  const itemListSchema = itemList && itemList.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": title,
+    "description": description,
+    "url": fullCanonicalUrl,
+    "mainEntity": {
+      "@type": "ItemList",
+      "numberOfItems": itemList.length,
+      "itemListElement": itemList.map(item => ({
+        "@type": "ListItem",
+        "position": item.position,
+        "name": item.name,
+        "url": `${baseUrl}${item.url}`,
+        ...(item.image ? { "image": item.image } : {})
+      }))
+    }
+  } : null;
+
   // Generate Organization structured data for brand pages
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -251,6 +271,13 @@ export const SEO = ({
       {localBusinessSchema && (
         <script type="application/ld+json">
           {JSON.stringify(localBusinessSchema)}
+        </script>
+      )}
+
+      {/* Structured Data - CollectionPage + ItemList */}
+      {itemListSchema && (
+        <script type="application/ld+json">
+          {JSON.stringify(itemListSchema)}
         </script>
       )}
     </Helmet>
