@@ -128,7 +128,11 @@ export function useAdminNotifications(tenantId: string | null) {
     setCounts(prev => {
       const newCounts = { ...prev };
       if (section === 'agenda') newCounts.agenda = 0;
-      if (section === 'clients') newCounts.clients = 0;
+      if (section === 'clients') {
+        newCounts.clients = 0;
+        newCounts.messages = 0;
+        newCounts.reviews = 0;
+      }
       if (section === 'communication') {
         newCounts.messages = 0;
         newCounts.reviews = 0;
