@@ -219,12 +219,6 @@ export function InteractiveTour({ onTabChange }: InteractiveTourProps) {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={0.3}
-              onDragEnd={(_, info) => {
-                if (info.offset.y > 120) completeTour();
-              }}
               className={cn(
                 "fixed bottom-0 left-0 right-0 z-[101] bg-background rounded-t-3xl shadow-2xl",
                 "pb-[calc(env(safe-area-inset-bottom)+8px)]"
