@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, Layers, ChevronLeft, ChevronRight, Expand, Star, MapPin, Clock, X, Users, Scissors } from "lucide-react";
+import { Check, Layers, ChevronLeft, ChevronRight, Expand, Star, MapPin, Clock, X, Users, Scissors, ChevronDown, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { landingThemes, LandingTheme } from "./landing-themes";
