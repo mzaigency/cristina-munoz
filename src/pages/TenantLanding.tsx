@@ -250,7 +250,13 @@ const TenantLanding = () => {
     tenant.city ? `reservar ${businessLabel.toLowerCase()} ${tenant.city}` : null,
   ].filter(Boolean).join(", ");
 
-  // Build LocalBusiness structured data
+  // Build opening hours specification for schema
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const openingHoursSpec = businessHours
+    .filter((h: any) => h.is_open && h.open_time && h.close_time)
+    .map((h: any) => `${dayNames[h.day_of_week]} ${h.open_time}-${h.close_time}`);
+
+  // Build LocalBusiness structured data — enriched
   const localBusinessData = {
     name: tenant.name,
     description: tenant.description || `${businessLabel} profesional`,
@@ -273,6 +279,7 @@ const TenantLanding = () => {
         reviewCount: reviewStats.count,
       }
     } : {}),
+    ...(openingHoursSpec.length > 0 ? { openingHours: openingHoursSpec } : {}),
   };
 
   const primaryColor = tenant.primary_color || "#8B5CF6";
