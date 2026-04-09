@@ -31,6 +31,7 @@ interface TrainingStep {
   icon: React.ReactNode;
   navigateTo: string;
   subTab?: string;
+  sessionStorageKey?: string;
 }
 
 const TRAINING_STEPS: TrainingStep[] = [
@@ -39,8 +40,9 @@ const TRAINING_STEPS: TrainingStep[] = [
     title: "Configura tus servicios",
     description: "Añade los servicios que ofreces con precios y duraciones",
     icon: <Scissors className="h-5 w-5" />,
-    navigateTo: "team",
+    navigateTo: "catalog",
     subTab: "services",
+    sessionStorageKey: "openCatalogSubTab",
   },
   {
     id: "first_booking",
@@ -54,30 +56,36 @@ const TRAINING_STEPS: TrainingStep[] = [
     title: "Realiza tu primer cobro",
     description: "Aprende a usar la caja registradora",
     icon: <CreditCard className="h-5 w-5" />,
-    navigateTo: "business",
+    navigateTo: "agenda",
     subTab: "cash",
+    sessionStorageKey: "openCashTab",
   },
   {
     id: "first_message",
     title: "Envía tu primer mensaje",
     description: "Descubre el chat directo con clientes",
     icon: <MessageCircle className="h-5 w-5" />,
-    navigateTo: "communication",
+    navigateTo: "clients",
+    subTab: "messages",
+    sessionStorageKey: "openClientsSubTab",
   },
   {
     id: "first_post",
     title: "Publica tu primer Post",
     description: "Muestra tus trabajos y atrae nuevos clientes",
     icon: <ImagePlus className="h-5 w-5" />,
-    navigateTo: "communication",
+    navigateTo: "marketing",
+    subTab: "posts",
+    sessionStorageKey: "openMarketingSubTab",
   },
   {
     id: "review_analytics",
     title: "Revisa tus estadísticas",
     description: "Consulta el rendimiento de tu primera semana",
     icon: <BarChart3 className="h-5 w-5" />,
-    navigateTo: "business",
+    navigateTo: "reports",
     subTab: "stats",
+    sessionStorageKey: "openReportsSubTab",
   },
 ];
 
@@ -144,13 +152,8 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
 
   const handleStepNavigate = (step: TrainingStep) => {
     if (!onNavigate) return;
-    if (step.subTab) {
-      // Store sub-tab info in sessionStorage for the target section to pick up
-      if (step.navigateTo === "team") {
-        sessionStorage.setItem("openTeamSubTab", step.subTab);
-      } else if (step.navigateTo === "business") {
-        sessionStorage.setItem("openBusinessSubTab", step.subTab);
-      }
+    if (step.subTab && step.sessionStorageKey) {
+      sessionStorage.setItem(step.sessionStorageKey, step.subTab);
     }
     onNavigate(step.navigateTo);
   };
@@ -170,7 +173,6 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
 
   return (
     <div className="space-y-4">
-      {/* Progress header */}
       <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
         <CardContent className="p-4">
           <div className="flex items-center gap-3 mb-3">
@@ -189,7 +191,6 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
         </CardContent>
       </Card>
 
-      {/* Steps */}
       <div className="space-y-2">
         {TRAINING_STEPS.map((step, index) => {
           const isCompleted = stepsCompleted[step.id];
@@ -200,18 +201,10 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Card
-                className={cn(
-                  "transition-all",
-                  isCompleted && "bg-primary/5 border-primary/20"
-                )}
-              >
+              <Card className={cn("transition-all", isCompleted && "bg-primary/5 border-primary/20")}>
                 <CardContent className="p-3">
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => toggleStep(step.id)}
-                      className="shrink-0 transition-transform active:scale-90"
-                    >
+                    <button onClick={() => toggleStep(step.id)} className="shrink-0 transition-transform active:scale-90">
                       {isCompleted ? (
                         <CheckCircle2 className="h-6 w-6 text-primary" />
                       ) : (
@@ -219,23 +212,13 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
                       )}
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p
-                        className={cn(
-                          "text-sm font-medium",
-                          isCompleted && "line-through text-muted-foreground"
-                        )}
-                      >
+                      <p className={cn("text-sm font-medium", isCompleted && "line-through text-muted-foreground")}>
                         {step.title}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">{step.description}</p>
                     </div>
                     {!isCompleted && onNavigate && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleStepNavigate(step)}
-                        className="shrink-0 h-8 w-8 p-0"
-                      >
+                      <Button size="sm" variant="ghost" onClick={() => handleStepNavigate(step)} className="shrink-0 h-8 w-8 p-0">
                         <ArrowRight className="h-4 w-4" />
                       </Button>
                     )}

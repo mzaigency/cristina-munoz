@@ -15,13 +15,14 @@ import {
   Scissors,
   Users,
   LayoutDashboard,
-  Palette,
   Menu,
+  ShoppingBag,
+  Megaphone,
+  BarChart3,
+  UserCircle,
 } from "lucide-react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
-// ClientsCRM is now rendered inside AgendaSection
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
-
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -34,14 +35,14 @@ import { useTenantAccess } from "@/hooks/useTenantAccess";
 import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
 import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpiredScreen";
 
-// Import consolidated sections
 import {
-  BusinessSection,
   TeamSection,
   SettingsSection,
   AgendaSection,
-  CommunicationSection,
-  ContentSection,
+  ClientsSection,
+  CatalogSection,
+  MarketingSection,
+  ReportsSection,
 } from "@/components/admin/sections";
 
 interface Tenant {
@@ -59,8 +60,7 @@ interface Stylist {
   color: string;
 }
 
-// Simplified to 6 main tabs
-type TabValue = "dashboard" | "agenda" | "business" | "content" | "team" | "communication" | "settings";
+type TabValue = "dashboard" | "agenda" | "clients" | "catalog" | "marketing" | "team" | "reports" | "settings";
 
 interface NavItem {
   value: TabValue;
@@ -83,13 +83,9 @@ export default function TenantAdmin() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Use tenant access hook to check permissions — this is the single source of truth for auth
   const { isAdmin, isStylist, hasAccess, loading: accessLoading, userId } = useTenantAccess(tenant?.id);
-
-  // Check subscription status
   const { isExpired: subscriptionExpired, plan: subscriptionPlan, loading: subscriptionLoading } = useSubscriptionStatus(tenant?.id);
 
-  // Use admin notifications hook
   const {
     counts: notificationCounts,
     getCommunicationCount,
@@ -97,32 +93,25 @@ export default function TenantAdmin() {
     markSectionViewed,
   } = useAdminNotifications(tenant?.id || null);
 
-  // El badge se oculta inmediatamente al hacer click en handleTabClick
-
-  // Navigation items - filter based on role (stylists don't see Settings or Team)
   const navItems: NavItem[] = useMemo(() => {
+    const clientsBadge = notificationCounts.messages + notificationCounts.reviews;
     const allItems: NavItem[] = [
       { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
       { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
-      { value: "business", label: "Negocio", icon: <Wallet className="h-4 w-4" /> },
-      { value: "content", label: "Contenido", icon: <Palette className="h-4 w-4" /> },
+      { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: clientsBadge },
+      { value: "catalog", label: "Catálogo", icon: <ShoppingBag className="h-4 w-4" /> },
+      { value: "marketing", label: "Marketing", icon: <Megaphone className="h-4 w-4" /> },
       { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
-      {
-        value: "communication",
-        label: "Comunica",
-        icon: <MessageCircle className="h-4 w-4" />,
-        badge: getCommunicationCount(),
-      },
+      { value: "reports", label: "Informes", icon: <BarChart3 className="h-4 w-4" /> },
       { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" /> },
     ];
 
-    // If user is stylist but not admin, hide Settings and Team tabs
     if (isStylist && !isAdmin) {
-      return allItems.filter((item) => item.value !== "settings" && item.value !== "team");
+      return allItems.filter((item) => !["settings", "team", "reports"].includes(item.value));
     }
 
     return allItems;
-  }, [notificationCounts.agenda, getCommunicationCount, isAdmin, isStylist]);
+  }, [notificationCounts, isAdmin, isStylist]);
 
   const tabOrder = navItems.map((item) => item.value);
 
@@ -133,21 +122,13 @@ export default function TenantAdmin() {
     enabled: isMobile,
   });
 
-  // Fetch tenant by slug (no auth checks — useTenantAccess handles that)
   useEffect(() => {
-    if (!slug) {
-      navigate("/");
-      return;
-    }
+    if (!slug) { navigate("/"); return; }
 
     const fetchTenant = async () => {
       setTenantLoading(true);
-
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
+      if (!session) { navigate("/auth"); return; }
       setUserEmail(session.user.email || "");
 
       const { data: tenantData, error: tenantError } = await supabase
@@ -158,11 +139,7 @@ export default function TenantAdmin() {
         .maybeSingle();
 
       if (tenantError || !tenantData) {
-        toast({
-          title: "Error",
-          description: "No se encontró el salón",
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: "No se encontró el salón", variant: "destructive" });
         navigate("/");
         return;
       }
@@ -174,27 +151,19 @@ export default function TenantAdmin() {
     fetchTenant();
   }, [slug]);
 
-  // Redirect if access check completes and user has no access
   useEffect(() => {
     if (!tenantLoading && !accessLoading && tenant && !hasAccess) {
-      toast({
-        title: "Acceso denegado",
-        description: "No tienes permisos para acceder a este panel",
-        variant: "destructive",
-      });
+      toast({ title: "Acceso denegado", description: "No tienes permisos para acceder a este panel", variant: "destructive" });
       navigate("/");
     }
   }, [tenantLoading, accessLoading, hasAccess, tenant]);
 
   useEffect(() => {
-    if (tenant?.id) {
-      fetchStylists();
-    }
+    if (tenant?.id) fetchStylists();
   }, [tenant?.id]);
 
   const fetchStylists = async () => {
     if (!tenant?.id) return;
-
     const { data, error } = await supabase
       .from("tenant_stylists")
       .select("id, name, slug, color")
@@ -202,62 +171,80 @@ export default function TenantAdmin() {
       .eq("is_active", true);
 
     if (!error && data) {
-      setStylists(
-        data.map((s) => ({
-          id: s.id,
-          name: s.name,
-          slug: s.slug,
-          color: s.color || "#8B5CF6",
-        })),
-      );
+      setStylists(data.map((s) => ({ id: s.id, name: s.name, slug: s.slug, color: s.color || "#8B5CF6" })));
     }
   };
 
   const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut({ scope: "local" });
-    } catch (error) {
-      console.error("Error during sign out:", error);
-    }
-
-    try {
-      localStorage.removeItem("supabase.auth.token");
-    } catch (e) {
-      console.error("Error clearing localStorage:", e);
-    }
-
+    try { await supabase.auth.signOut({ scope: "local" }); } catch (error) { console.error("Error during sign out:", error); }
+    try { localStorage.removeItem("supabase.auth.token"); } catch (e) { console.error("Error clearing localStorage:", e); }
     navigate("/auth", { replace: true });
   };
 
   const handleRefresh = useCallback(async () => {
     setRefreshKey((prev) => prev + 1);
-    if (tenant?.id) {
-      await Promise.all([refetchNotifications(), fetchStylists()]);
-    }
-    toast({
-      title: "Actualizado",
-      description: "Datos actualizados correctamente",
-    });
+    if (tenant?.id) await Promise.all([refetchNotifications(), fetchStylists()]);
+    toast({ title: "Actualizado", description: "Datos actualizados correctamente" });
   }, [tenant?.id, refetchNotifications]);
 
   const handleQuickAction = (action: string) => {
     switch (action) {
-      case "new-booking":
-        setActiveTab("agenda");
-        break;
+      case "new-booking": setActiveTab("agenda"); break;
       case "new-payment":
-        setActiveTab("business");
-        break;
-      case "block-slot":
+        sessionStorage.setItem("openCashTab", "true");
         setActiveTab("agenda");
         break;
+      case "block-slot": setActiveTab("agenda"); break;
       case "new-service":
-        setActiveTab("team");
+        sessionStorage.setItem("openCatalogSubTab", "services");
+        setActiveTab("catalog");
         break;
-      default:
-        break;
+      default: break;
     }
   };
+
+  // Map from dashboard/training navigation keys to actual tabs
+  const TAB_MAP: Record<string, TabValue> = {
+    calendar: "agenda",
+    agenda: "agenda",
+    cash: "agenda",
+    clients: "clients",
+    directory: "clients",
+    messages: "clients",
+    reviews: "clients",
+    services: "catalog",
+    products: "catalog",
+    catalog: "catalog",
+    marketing: "marketing",
+    posts: "marketing",
+    qr: "marketing",
+    team: "team",
+    stylists: "team",
+    hours: "team",
+    reports: "reports",
+    stats: "reports",
+    goals: "reports",
+    settings: "settings",
+    dashboard: "dashboard",
+  };
+
+  const handleNavigate = useCallback((tab: string, subTab?: string) => {
+    // Store sub-tab in sessionStorage if provided
+    if (subTab) {
+      const targetTab = TAB_MAP[tab] || tab;
+      const storageKeyMap: Record<string, string> = {
+        agenda: "openCashTab",
+        clients: "openClientsSubTab",
+        catalog: "openCatalogSubTab",
+        marketing: "openMarketingSubTab",
+        team: "openTeamSubTab",
+        reports: "openReportsSubTab",
+      };
+      const key = storageKeyMap[targetTab];
+      if (key) sessionStorage.setItem(key, subTab);
+    }
+    setActiveTab(TAB_MAP[tab] || (tab as TabValue));
+  }, []);
 
   const renderContent = () => {
     if (!tenant) return null;
@@ -268,49 +255,31 @@ export default function TenantAdmin() {
           <AdminDashboard
             key={refreshKey}
             tenantId={tenant.id}
-            onNavigate={(tab) => {
-              // Map old tab names to new ones
-              const tabMap: Record<string, TabValue> = {
-                calendar: "agenda",
-                cash: "business",
-                services: "team",
-                stylists: "team",
-                messages: "communication",
-                settings: "settings",
-                clients: "agenda",
-              };
-              setActiveTab(tabMap[tab] || (tab as TabValue));
-            }}
+            onNavigate={handleNavigate}
             onQuickAction={handleQuickAction}
           />
         );
       case "agenda":
         return (
-          <AgendaSection 
-            key={refreshKey} 
+          <AgendaSection
+            key={refreshKey}
             tenantId={tenant.id}
-            onNavigateToCash={() => {
-              setActiveTab("business");
-              // Signal to open cash tab
-              sessionStorage.setItem('openCashTab', 'true');
+            onSelectClient={(clientId) => {
+              sessionStorage.setItem("openClientsSubTab", "directory");
+              setActiveTab("clients");
             }}
           />
         );
-      case "business":
-        return <BusinessSection key={refreshKey} tenantId={tenant.id} />;
-      case "content":
-        return (
-          <ContentSection
-            key={refreshKey}
-            tenantId={tenant.id}
-            tenantSlug={tenant.slug}
-            onNavigate={(tab) => setActiveTab(tab as TabValue)}
-          />
-        );
+      case "clients":
+        return <ClientsSection key={refreshKey} tenantId={tenant.id} />;
+      case "catalog":
+        return <CatalogSection key={refreshKey} tenantId={tenant.id} />;
+      case "marketing":
+        return <MarketingSection key={refreshKey} tenantId={tenant.id} tenantSlug={tenant.slug} />;
       case "team":
         return <TeamSection key={refreshKey} tenantId={tenant.id} />;
-      case "communication":
-        return <CommunicationSection key={refreshKey} tenantId={tenant.id} />;
+      case "reports":
+        return <ReportsSection key={refreshKey} tenantId={tenant.id} />;
       case "settings":
         return <SettingsSection key={refreshKey} tenantId={tenant.id} tenantSlug={tenant.slug} />;
       default:
@@ -319,9 +288,7 @@ export default function TenantAdmin() {
   };
 
   const handleTabClick = (tab: TabValue) => {
-    if (tab !== "dashboard") {
-      markSectionViewed(tab);
-    }
+    if (tab !== "dashboard") markSectionViewed(tab);
     setActiveTab(tab);
     if (isMobile) setSidebarOpen(false);
   };
@@ -329,7 +296,6 @@ export default function TenantAdmin() {
   const renderNavButton = (item: NavItem) => {
     const isActive = activeTab === item.value;
     const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-    // Solo mostrar badge si NO es el tab activo (desaparece al instante)
     const showBadge = badgeCount > 0 && activeTab !== item.value;
 
     return (
@@ -386,11 +352,8 @@ export default function TenantAdmin() {
     );
   }
 
-  if (!hasAccess || !tenant) {
-    return null;
-  }
+  if (!hasAccess || !tenant) return null;
 
-  // Block access if subscription is expired
   if (subscriptionExpired) {
     return (
       <SubscriptionExpiredScreen
@@ -411,18 +374,14 @@ export default function TenantAdmin() {
           <div className="absolute top-[40%] left-[50%] w-[35%] h-[35%] rounded-full bg-accent/15 blur-[80px] animate-[float_18s_ease-in-out_infinite_2s]" />
         </div>
       </div>
+
       {/* Mobile Sidebar */}
       {isMobile && (
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetContent side="left" className="w-[280px] p-0 flex flex-col [&>button]:hidden">
-            {/* Sidebar Header */}
             <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>
               {tenant.logo_url ? (
-                <img
-                  src={tenant.logo_url}
-                  alt={tenant.name}
-                  className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20 shrink-0"
-                />
+                <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20 shrink-0" />
               ) : (
                 <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <Scissors className="h-5 w-5 text-primary" />
@@ -434,7 +393,6 @@ export default function TenantAdmin() {
               </div>
             </div>
 
-            {/* Sidebar Nav */}
             <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
               {navItems.map((item) => {
                 const isActive = activeTab === item.value;
@@ -464,7 +422,6 @@ export default function TenantAdmin() {
               })}
             </nav>
 
-            {/* Sidebar Footer */}
             <div className="border-t px-3 py-4 space-y-1" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}>
               <button
                 onClick={() => { setSidebarOpen(false); navigate(`/${slug}`); }}
@@ -499,25 +456,14 @@ export default function TenantAdmin() {
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-4">
           {isMobile ? (
-            /* Mobile Header - simplified */
             <div className="flex items-center justify-between py-2.5">
-              <Button
-                onClick={() => setSidebarOpen(true)}
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 shrink-0"
-                aria-label="Abrir menú"
-              >
+              <Button onClick={() => setSidebarOpen(true)} variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Abrir menú">
                 <Menu className="h-5 w-5" />
               </Button>
 
               <div className="flex items-center gap-2 min-w-0 flex-1 justify-center">
                 {tenant.logo_url ? (
-                  <img
-                    src={tenant.logo_url}
-                    alt={tenant.name}
-                    className="h-8 w-8 rounded-lg object-cover ring-2 ring-primary/20 shrink-0"
-                  />
+                  <img src={tenant.logo_url} alt={tenant.name} className="h-8 w-8 rounded-lg object-cover ring-2 ring-primary/20 shrink-0" />
                 ) : (
                   <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <Scissors className="h-4 w-4 text-primary" />
@@ -527,30 +473,16 @@ export default function TenantAdmin() {
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                <InteractiveTour
-                  onTabChange={(tab) => {
-                    const tabMap: Record<string, TabValue> = {
-                      calendar: "agenda", cash: "business", services: "team",
-                      stylists: "team", messages: "communication", settings: "settings",
-                      clients: "agenda", dashboard: "dashboard",
-                    };
-                    setActiveTab(tabMap[tab] || (tab as TabValue));
-                  }}
-                />
+                <InteractiveTour onTabChange={(tab) => setActiveTab(TAB_MAP[tab] || (tab as TabValue))} />
                 <HelpTutorial />
               </div>
             </div>
           ) : (
-            /* Desktop Header - original layout */
             <>
               <div className="flex items-center justify-between py-3 border-b border-border/50">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   {tenant.logo_url ? (
-                    <img
-                      src={tenant.logo_url}
-                      alt={tenant.name}
-                      className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20 shrink-0"
-                    />
+                    <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20 shrink-0" />
                   ) : (
                     <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                       <Scissors className="h-5 w-5 text-primary" />
@@ -563,23 +495,9 @@ export default function TenantAdmin() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <InteractiveTour
-                    onTabChange={(tab) => {
-                      const tabMap: Record<string, TabValue> = {
-                        calendar: "agenda", cash: "business", services: "team",
-                        stylists: "team", messages: "communication", settings: "settings",
-                        clients: "agenda", dashboard: "dashboard",
-                      };
-                      setActiveTab(tabMap[tab] || (tab as TabValue));
-                    }}
-                  />
+                  <InteractiveTour onTabChange={(tab) => setActiveTab(TAB_MAP[tab] || (tab as TabValue))} />
                   <HelpTutorial />
-                  <Button
-                    onClick={() => navigate(`/${slug}`)}
-                    variant="outline"
-                    size="sm"
-                    className="gap-1 h-9 px-3 text-sm"
-                  >
+                  <Button onClick={() => navigate(`/${slug}`)} variant="outline" size="sm" className="gap-1 h-9 px-3 text-sm">
                     <ExternalLink className="h-4 w-4" />
                     <span>Ver web</span>
                   </Button>
@@ -592,7 +510,6 @@ export default function TenantAdmin() {
                 </div>
               </div>
 
-              {/* Desktop Navigation */}
               <nav className="flex items-center py-2" role="tablist">
                 <ScrollArea className="w-full">
                   <div className="flex items-center gap-2 pb-2">{navItems.map((item) => renderNavButton(item))}</div>
