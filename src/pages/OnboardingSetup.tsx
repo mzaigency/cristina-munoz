@@ -369,12 +369,41 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
     setServices(newServices);
   };
 
+  const handleDurationChange = (index: number, field: keyof ServiceForm, value: string) => {
+    // Allow empty string during editing
+    if (value === '') {
+      updateService(index, field, '' as any);
+      return;
+    }
+    const parsed = parseInt(value);
+    if (!isNaN(parsed)) {
+      updateService(index, field, parsed);
+    }
+  };
+
   const handleSave = async () => {
     const validServices = services.filter((s) => s.name.trim());
     
     if (validServices.length === 0) {
       onNext();
       return;
+    }
+
+    // Validate durations are >= 1
+    for (const s of validServices) {
+      if (s.type === "simple") {
+        if (!s.duration || Number(s.duration) < 1) {
+          toast({ title: "Error", description: "La duración de cada servicio debe ser al menos 1 minuto", variant: "destructive" });
+          return;
+        }
+      } else {
+        if (!s.duration_part1_active || Number(s.duration_part1_active) < 1 ||
+            !s.duration_exposure_pause || Number(s.duration_exposure_pause) < 1 ||
+            !s.duration_part2_active || Number(s.duration_part2_active) < 1) {
+          toast({ title: "Error", description: "Todas las fases deben ser al menos 1 minuto", variant: "destructive" });
+          return;
+        }
+      }
     }
 
     setLoading(true);
@@ -386,9 +415,9 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
             tenant_id: tenantId,
             name: s.name.trim(),
             type: s.type === "simple" ? "Simple" : "Compuesto",
-            duration_part1_active: s.type === "simple" ? s.duration : s.duration_part1_active,
-            duration_exposure_pause: s.type === "compound" ? s.duration_exposure_pause : 0,
-            duration_part2_active: s.type === "compound" ? s.duration_part2_active : 0,
+            duration_part1_active: s.type === "simple" ? Number(s.duration) : Number(s.duration_part1_active),
+            duration_exposure_pause: s.type === "compound" ? Number(s.duration_exposure_pause) : 0,
+            duration_part2_active: s.type === "compound" ? Number(s.duration_part2_active) : 0,
             price: s.price ? parseFloat(s.price) : null,
             category: s.category.trim() || "General",
           }))
@@ -529,7 +558,7 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
                       min={5}
                       step={5}
                       value={service.duration}
-                      onChange={(e) => updateService(index, "duration", parseInt(e.target.value) || 30)}
+                      onChange={(e) => handleDurationChange(index, "duration", e.target.value)}
                       className="h-10 rounded-lg mt-1"
                     />
                   </div>
@@ -556,7 +585,7 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
                         min={5}
                         step={5}
                         value={service.duration_part1_active}
-                        onChange={(e) => updateService(index, "duration_part1_active", parseInt(e.target.value) || 15)}
+                        onChange={(e) => handleDurationChange(index, "duration_part1_active", e.target.value)}
                         className="h-9 rounded-lg mt-1"
                       />
                     </div>
@@ -567,7 +596,7 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
                         min={5}
                         step={5}
                         value={service.duration_exposure_pause}
-                        onChange={(e) => updateService(index, "duration_exposure_pause", parseInt(e.target.value) || 30)}
+                        onChange={(e) => handleDurationChange(index, "duration_exposure_pause", e.target.value)}
                         className="h-9 rounded-lg mt-1"
                       />
                     </div>
@@ -578,7 +607,7 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
                         min={5}
                         step={5}
                         value={service.duration_part2_active}
-                        onChange={(e) => updateService(index, "duration_part2_active", parseInt(e.target.value) || 15)}
+                        onChange={(e) => handleDurationChange(index, "duration_part2_active", e.target.value)}
                         className="h-9 rounded-lg mt-1"
                       />
                     </div>

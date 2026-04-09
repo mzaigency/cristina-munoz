@@ -457,7 +457,7 @@ function ThemePreviewModal({ theme, tenantData, stylists, services, onClose, onS
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3"
       onClick={onClose}
     >
       <motion.div
@@ -466,7 +466,7 @@ function ThemePreviewModal({ theme, tenantData, stylists, services, onClose, onS
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[300px]"
+        className="relative w-full max-w-[260px] max-h-[95vh] overflow-y-auto"
       >
         {/* Close button */}
         <button
@@ -496,36 +496,22 @@ function ThemePreviewModal({ theme, tenantData, stylists, services, onClose, onS
         </div>
 
         {/* Theme Info & Actions */}
-        <div className="mt-6 text-center">
-          <h4 className="font-semibold text-lg text-white">{theme.name}</h4>
-          <p className="text-sm text-white/70 mb-4">{theme.description}</p>
-          
-          {/* Stats from real data */}
-          <div className="flex justify-center gap-4 mb-4 text-white/60 text-xs">
-            {services.length > 0 && (
-              <div className="flex items-center gap-1">
-                <Scissors className="w-3 h-3" />
-                <span>{services.length} servicios</span>
-              </div>
-            )}
-            {stylists.length > 0 && (
-              <div className="flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                <span>{stylists.length} profesionales</span>
-              </div>
-            )}
-          </div>
+        <div className="mt-3 text-center">
+          <h4 className="font-semibold text-base text-white">{theme.name}</h4>
+          <p className="text-xs text-white/70 mb-3">{theme.description}</p>
           
           <div className="flex gap-2">
             <Button 
               variant="outline" 
               onClick={onClose} 
+              size="sm"
               className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
               Cerrar
             </Button>
             <Button 
               onClick={onSelect} 
+              size="sm"
               className="flex-1"
             >
               <Check className="w-4 h-4 mr-1.5" />
