@@ -67,6 +67,9 @@ const TenantLanding = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [reviewsKey, setReviewsKey] = useState(0);
   const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null);
+  const [topReviews, setTopReviews] = useState<any[]>([]);
+  const [tenantServices, setTenantServices] = useState<{ name: string; price: number | null }[]>([]);
+  const [businessHours, setBusinessHours] = useState<any[]>([]);
 
   const { isAdmin, isStylist, hasAccess } = useTenantAccess(tenant?.id);
   const previewToken = searchParams.get("preview");
@@ -139,14 +142,37 @@ const TenantLanding = () => {
       // Fetch real review stats for structured data
       const { data: reviews } = await supabase
         .from("reviews")
-        .select("rating")
+        .select("rating, comment, created_at, user_id")
         .eq("tenant_id", tenant.id)
-        .eq("approved", true);
+        .eq("approved", true)
+        .order("created_at", { ascending: false })
+        .limit(100);
 
       if (reviews && reviews.length > 0) {
         const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
         setReviewStats({ avg: Math.round(avg * 10) / 10, count: reviews.length });
+        // Store top 3 reviews for schema
+        setTopReviews(reviews.slice(0, 3));
       }
+
+      // Fetch services for structured data
+      const { data: servicesData } = await supabase
+        .from("services")
+        .select("name, price")
+        .eq("tenant_id", tenant.id)
+        .order("sort_order", { ascending: true })
+        .limit(20);
+
+      if (servicesData) setTenantServices(servicesData);
+
+      // Fetch business hours for structured data
+      const { data: hoursData } = await supabase
+        .from("tenant_business_hours")
+        .select("day_of_week, is_open, open_time, close_time")
+        .eq("tenant_id", tenant.id)
+        .order("day_of_week", { ascending: true });
+
+      if (hoursData) setBusinessHours(hoursData);
     } catch (error) {
       console.error("Error fetching tenant:", error);
       navigate("/404");
