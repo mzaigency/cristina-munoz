@@ -43,7 +43,7 @@ interface HelpSection {
   }[];
 }
 
-// Simplified help matching the new 7-tab structure
+// Help matching the new 8-tab structure
 const helpSections: HelpSection[] = [
   {
     id: "dashboard",
@@ -66,7 +66,7 @@ const helpSections: HelpSection[] = [
     id: "agenda",
     title: "Agenda",
     icon: <Calendar className="h-5 w-5" />,
-    description: "Calendario + Lista de espera",
+    description: "Calendario, espera y caja",
     subsections: [
       {
         name: "Calendario",
@@ -85,87 +85,60 @@ const helpSections: HelpSection[] = [
           "⬆️ Gestión de prioridades",
         ],
       },
+      {
+        name: "Caja (Pro)",
+        items: [
+          "💰 Registrar cobros al finalizar cita",
+          "💳 Efectivo, tarjeta o mixto",
+          "📧 Exportar a Excel",
+        ],
+      },
     ],
   },
   {
     id: "clients",
     title: "Clientes",
     icon: <UserCircle className="h-5 w-5" />,
-    description: "CRM completo",
+    description: "CRM, mensajes y reseñas",
     subsections: [
       {
-        name: "Base de datos",
+        name: "Directorio",
         items: [
           "👥 Lista de todos los clientes",
           "🔍 Búsqueda por nombre/teléfono",
           "📝 Notas y preferencias",
           "🏷️ Etiquetas: VIP, Frecuente",
           "📊 Historial de visitas",
-          "❤️ Estilista favorito",
+        ],
+      },
+      {
+        name: "Mensajes",
+        items: [
+          "💬 Chat con clientes",
+          "🔔 Notificaciones en tiempo real",
+        ],
+      },
+      {
+        name: "Reseñas",
+        items: [
+          "⭐ Moderar opiniones",
+          "✅ Aprobar/rechazar",
         ],
       },
     ],
   },
   {
-    id: "content",
-    title: "Contenido",
-    icon: <Camera className="h-5 w-5" />,
-    description: "Marketing, formación y ROI",
+    id: "catalog",
+    title: "Catálogo",
+    icon: <ShoppingBag className="h-5 w-5" />,
+    description: "Servicios, productos y promos",
     subsections: [
       {
-        name: "Marketing",
+        name: "Servicios",
         items: [
-          "📱 Genera tarjetas con QR",
-          "🖨️ Descarga en PNG para imprimir",
-          "🎨 Varias plantillas de diseño",
-          "🔗 Link de reserva compartible",
-        ],
-      },
-      {
-        name: "Formación",
-        items: [
-          "✅ Checklist de primeros pasos",
-          "📚 Guía para cada herramienta",
-          "📊 Progreso guardado",
-        ],
-      },
-      {
-        name: "ROI",
-        items: [
-          "💰 Ingresos gestionados",
-          "🛡️ No-shows evitados",
-          "⏱️ Tiempo ahorrado",
-        ],
-      },
-    ],
-  },
-  {
-    id: "business",
-    title: "Negocio",
-    icon: <Wallet className="h-5 w-5" />,
-    description: "Finanzas y promociones",
-    subsections: [
-      {
-        name: "Caja",
-        items: [
-          "💰 Registrar cobros",
-          "💳 Efectivo, tarjeta o mixto",
-          "📧 Exportar a Excel",
-        ],
-      },
-      {
-        name: "Promos",
-        items: [
-          "🎫 Cupones de descuento",
-          "⭐ Puntos de fidelidad",
-          "📤 Códigos compartibles",
-        ],
-      },
-      {
-        name: "Paquetes",
-        items: [
-          "📦 Combos de servicios",
-          "💰 Descuento automático",
+          "✂️ Catálogo de servicios",
+          "⏱️ Duraciones y precios",
+          "📂 Categorías",
         ],
       },
       {
@@ -176,17 +149,43 @@ const helpSections: HelpSection[] = [
         ],
       },
       {
-        name: "Objetivos",
+        name: "Paquetes (Pro)",
         items: [
-          "🎯 Metas mensuales",
-          "📈 Progreso y predicción",
+          "📦 Combos de servicios",
+          "💰 Descuento automático",
         ],
       },
       {
-        name: "Stats",
+        name: "Promos (Pro)",
         items: [
-          "📊 Análisis de ventas",
-          "📈 Comparativas",
+          "🎫 Cupones de descuento",
+          "⭐ Puntos de fidelidad",
+          "📤 Códigos compartibles",
+        ],
+      },
+    ],
+  },
+  {
+    id: "marketing",
+    title: "Marketing",
+    icon: <Camera className="h-5 w-5" />,
+    description: "Posts y tarjetas QR",
+    subsections: [
+      {
+        name: "Posts",
+        items: [
+          "📸 Publica tus trabajos",
+          "🖼️ Portafolio visual",
+          "📊 Engagement de clientes",
+        ],
+      },
+      {
+        name: "Tarjetas QR",
+        items: [
+          "📱 Genera tarjetas con QR",
+          "🖨️ Descarga en PNG para imprimir",
+          "🎨 Varias plantillas de diseño",
+          "🔗 Link de reserva compartible",
         ],
       },
     ],
@@ -195,29 +194,14 @@ const helpSections: HelpSection[] = [
     id: "team",
     title: "Equipo",
     icon: <Users className="h-5 w-5" />,
-    description: "Estilistas y servicios",
+    description: "Staff, horarios y comisiones",
     subsections: [
       {
-        name: "Estilistas",
+        name: "Staff",
         items: [
           "👥 Gestión de equipo",
           "🎨 Color por estilista",
           "📷 Foto de perfil",
-        ],
-      },
-      {
-        name: "Servicios",
-        items: [
-          "✂️ Catálogo de servicios",
-          "⏱️ Duraciones y precios",
-          "📂 Categorías",
-        ],
-      },
-      {
-        name: "Comisiones",
-        items: [
-          "💰 % por estilista",
-          "📊 Cálculo automático",
         ],
       },
       {
@@ -227,34 +211,40 @@ const helpSections: HelpSection[] = [
           "☕ Pausas de comida",
         ],
       },
+      {
+        name: "Comisiones (Business)",
+        items: [
+          "💰 % por estilista",
+          "📊 Cálculo automático",
+        ],
+      },
     ],
   },
   {
-    id: "communication",
-    title: "Comunicación",
-    icon: <MessageCircle className="h-5 w-5" />,
-    description: "Mensajes, Stories y Reseñas",
+    id: "reports",
+    title: "Informes",
+    icon: <Wallet className="h-5 w-5" />,
+    description: "Stats, objetivos y reportes",
     subsections: [
       {
-        name: "Mensajes",
+        name: "Stats (Pro)",
         items: [
-          "💬 Chat con clientes",
-          "🔔 Notificaciones en tiempo real",
+          "📊 Análisis de ventas",
+          "📈 Comparativas semanales",
         ],
       },
       {
-        name: "Stories",
+        name: "Objetivos (Business)",
         items: [
-          "📸 Publica tus trabajos",
-          "⏰ Duran 24 horas",
-          "📊 Estadísticas de vistas",
+          "🎯 Metas mensuales",
+          "📈 Progreso y predicción",
         ],
       },
       {
-        name: "Reseñas",
+        name: "Reportes PDF (Pro)",
         items: [
-          "⭐ Moderar opiniones",
-          "✅ Aprobar/rechazar",
+          "📄 Exporta informes completos",
+          "📊 Datos de rendimiento",
         ],
       },
     ],
