@@ -457,7 +457,7 @@ function ThemePreviewModal({ theme, tenantData, stylists, services, onClose, onS
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3"
       onClick={onClose}
     >
       <motion.div
@@ -466,7 +466,7 @@ function ThemePreviewModal({ theme, tenantData, stylists, services, onClose, onS
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[300px]"
+        className="relative w-full max-w-[260px] max-h-[95vh] overflow-y-auto"
       >
         {/* Close button */}
         <button
