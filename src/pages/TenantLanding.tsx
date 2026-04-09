@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Helmet } from "react-helmet";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
@@ -320,11 +321,47 @@ const TenantLanding = () => {
           localBusiness={localBusinessData}
           breadcrumbs={[
             { name: "Inicio", url: "/" },
-            { name: businessLabel, url: `/?category=${businessType || 'all'}` },
+            ...(businessType && CATEGORY_MAP[businessType]
+              ? [{ name: CATEGORY_MAP[businessType], url: `/${CATEGORY_SLUG_MAP[businessType] || businessType}` }]
+              : [{ name: businessLabel, url: "/" }]),
             { name: tenant.name, url: `/${tenant.slug}` }
           ]}
           noindex={isPreview}
         />
+
+        {/* Enhanced structured data: services catalog + individual reviews + sameAs */}
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "BeautySalon",
+              "name": tenant.name,
+              "url": `https://www.glowapp.app/${tenant.slug}`,
+              ...(tenantServices.length > 0 ? {
+                "hasOfferCatalog": {
+                  "@type": "OfferCatalog",
+                  "name": "Servicios",
+                  "itemListElement": tenantServices.map(s => ({
+                    "@type": "Offer",
+                    "itemOffered": { "@type": "Service", "name": s.name },
+                    ...(s.price != null ? { "price": s.price, "priceCurrency": "EUR" } : {})
+                  }))
+                }
+              } : {}),
+              ...(topReviews.length > 0 ? {
+                "review": topReviews.map(r => ({
+                  "@type": "Review",
+                  "reviewRating": { "@type": "Rating", "ratingValue": r.rating, "bestRating": 5 },
+                  ...(r.comment ? { "reviewBody": r.comment } : {}),
+                  "datePublished": r.created_at?.split("T")[0],
+                  "author": { "@type": "Person", "name": "Cliente verificado" }
+                }))
+              } : {}),
+              ...(tenant.google_maps_url ? { "hasMap": tenant.google_maps_url } : {}),
+              "sameAs": [tenant.instagram_url, tenant.facebook_url, tenant.tiktok_url].filter(Boolean),
+            })}
+          </script>
+        </Helmet>
         
         <TenantHeader 
           tenant={tenant} 
