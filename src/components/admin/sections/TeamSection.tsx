@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Scissors, Percent, Clock, Lock } from "lucide-react";
 import { StylistsManager } from "../StylistsManager";
@@ -26,6 +26,15 @@ interface TabConfig {
 const TeamSection = ({ tenantId }: TeamSectionProps) => {
   const [activeTab, setActiveTab] = useState<TeamTab>("stylists");
   const { hasFeature, planSlug, loading } = usePlanLimits(tenantId);
+
+  // Check for sub-tab navigation from training checklist
+  useEffect(() => {
+    const subTab = sessionStorage.getItem("openTeamSubTab");
+    if (subTab && (subTab === "stylists" || subTab === "services" || subTab === "commissions" || subTab === "hours")) {
+      setActiveTab(subTab as TeamTab);
+      sessionStorage.removeItem("openTeamSubTab");
+    }
+  }, []);
 
   const tabs: TabConfig[] = [
     { id: "stylists", label: "Equipo", icon: Users },

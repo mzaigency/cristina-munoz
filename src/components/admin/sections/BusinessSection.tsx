@@ -30,14 +30,21 @@ const BusinessSection = ({ tenantId }: BusinessSectionProps) => {
   const [activeTab, setActiveTab] = useState<BusinessTab>("cash");
   const { hasFeature, planSlug, loading } = usePlanLimits(tenantId);
 
-  // Check for pending charge from agenda and auto-open cash tab
+  // Check for pending charge or sub-tab navigation from training/agenda
   useEffect(() => {
     const openCashTab = sessionStorage.getItem("openCashTab");
     const pendingBooking = sessionStorage.getItem("pendingChargeBooking");
+    const businessSubTab = sessionStorage.getItem("openBusinessSubTab");
 
     if ((openCashTab || pendingBooking) && hasFeature("cash_register")) {
       setActiveTab("cash");
       sessionStorage.removeItem("openCashTab");
+    } else if (businessSubTab) {
+      const validTabs: BusinessTab[] = ["cash", "promos", "packages", "products", "goals", "stats"];
+      if (validTabs.includes(businessSubTab as BusinessTab)) {
+        setActiveTab(businessSubTab as BusinessTab);
+      }
+      sessionStorage.removeItem("openBusinessSubTab");
     }
   }, [hasFeature]);
 
