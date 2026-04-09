@@ -176,13 +176,15 @@ export default function Auth() {
 
     usernameTimeoutRef.current = setTimeout(async () => {
       try {
-        const { data: existing } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("username", username.toLowerCase())
-          .maybeSingle();
+        const { data, error } = await supabase.rpc("check_availability", {
+          p_username: username,
+          p_email: null,
+        });
 
-        if (existing) {
+        if (error) throw error;
+
+        const result = data as unknown as { username_taken?: boolean };
+        if (result?.username_taken) {
           signUpForm.setError("username", { type: "manual", message: "Este nombre de usuario ya está en uso" });
           setUsernameAvailable(false);
         } else {
@@ -213,13 +215,15 @@ export default function Auth() {
 
     emailTimeoutRef.current = setTimeout(async () => {
       try {
-        const { data: existing } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", email.toLowerCase())
-          .maybeSingle();
+        const { data, error } = await supabase.rpc("check_availability", {
+          p_username: null,
+          p_email: email,
+        });
 
-        if (existing) {
+        if (error) throw error;
+
+        const result = data as unknown as { email_taken?: boolean };
+        if (result?.email_taken) {
           signUpForm.setError("email", { type: "manual", message: "Ya existe una cuenta con este email" });
           setEmailAvailable(false);
         } else {
@@ -238,6 +242,14 @@ export default function Auth() {
   }, [signUpForm]);
 
   // Geolocation: detect city from coords
+  // Normalize string for comparison: lowercase, remove accents
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
   const handleUseLocation = async () => {
     if (!navigator.geolocation) {
       toast({ title: "No disponible", description: "Tu navegador no soporta geolocalización", variant: "destructive" });
@@ -251,35 +263,67 @@ export default function Auth() {
         try {
           const { latitude, longitude } = position.coords;
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=es`
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=es&addressdetails=1`
           );
           const data = await res.json();
+          const addr = data.address || {};
 
-          const city =
-            data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || "";
-          const state = data.address?.state || "";
+          // Collect all possible city names
+          const cityCandidate = addr.city || addr.town || addr.village || addr.municipality || addr.hamlet || "";
+          // Collect all possible province-level names
+          const provinceCandidates = [
+            addr.province,
+            addr.state_district,
+            addr.county,
+            addr.state,
+          ].filter(Boolean) as string[];
 
-          if (state) {
-            const matchedProvince = provincesList.find(
-              (p) => p.name.toLowerCase() === state.toLowerCase() || state.toLowerCase().includes(p.name.toLowerCase())
+          let matchedProvince: { code: string; name: string } | undefined;
+
+          // Try to match province directly
+          for (const candidate of provinceCandidates) {
+            matchedProvince = provincesList.find(
+              (p) => normalize(p.name) === normalize(candidate)
             );
-            if (matchedProvince) {
-              signUpForm.setValue("province", matchedProvince.name, { shouldValidate: true });
+            if (matchedProvince) break;
+          }
 
-              // Directly query cities from the library instead of waiting for React state
-              if (city) {
-                const allCities = getCitiesES({ code_province: matchedProvince.code }).map((c) => c.name);
-                const matchedCity = allCities.find(
-                  (c) => c.toLowerCase() === city.toLowerCase() || city.toLowerCase().includes(c.toLowerCase())
-                );
-                if (matchedCity) {
-                  signUpForm.setValue("city", matchedCity, { shouldValidate: true });
-                }
+          // If no match (e.g. state is "Cataluña" but we need "Barcelona"),
+          // try to find province via the city name
+          if (!matchedProvince && cityCandidate) {
+            const normalizedCity = normalize(cityCandidate);
+            for (const prov of provincesList) {
+              const provCities = getCitiesES({ code_province: prov.code });
+              if (provCities.some((c) => normalize(c.name) === normalizedCity)) {
+                matchedProvince = prov;
+                break;
               }
             }
           }
 
-          toast({ title: "📍 Ubicación detectada", description: city ? `${city}, ${state}` : state || "Ubicación encontrada" });
+          if (matchedProvince) {
+            signUpForm.setValue("province", matchedProvince.name, { shouldValidate: true });
+
+            if (cityCandidate) {
+              const allCities = getCitiesES({ code_province: matchedProvince.code }).map((c) => c.name);
+              const normalizedCity = normalize(cityCandidate);
+              const matchedCity = allCities.find((c) => normalize(c) === normalizedCity)
+                || allCities.find((c) => normalize(c).includes(normalizedCity) || normalizedCity.includes(normalize(c)));
+              if (matchedCity) {
+                signUpForm.setValue("city", matchedCity, { shouldValidate: true });
+              }
+            }
+
+            toast({
+              title: "📍 Ubicación detectada",
+              description: `${cityCandidate ? cityCandidate + ", " : ""}${matchedProvince.name}`,
+            });
+          } else {
+            toast({
+              title: "📍 Ubicación detectada",
+              description: cityCandidate || "No se pudo determinar la provincia. Selecciona manualmente.",
+            });
+          }
         } catch {
           toast({ title: "Error", description: "No se pudo detectar tu ciudad", variant: "destructive" });
         } finally {
