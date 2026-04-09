@@ -13,12 +13,12 @@ interface OnboardingChecklistProps {
 }
 
 const QUICK_STEPS = [
-  { id: "services", label: "Configura servicios", tab: "team" },
+  { id: "services", label: "Configura servicios", tab: "catalog" },
   { id: "first_booking", label: "Crea una cita", tab: "agenda" },
-  { id: "cash_register", label: "Primer cobro", tab: "business" },
-  { id: "first_message", label: "Envía un mensaje", tab: "communication" },
-  { id: "first_story", label: "Publica un Story", tab: "communication" },
-  { id: "review_analytics", label: "Revisa estadísticas", tab: "business" },
+  { id: "cash_register", label: "Primer cobro", tab: "agenda" },
+  { id: "first_message", label: "Envía un mensaje", tab: "clients" },
+  { id: "first_story", label: "Publica un Post", tab: "marketing" },
+  { id: "review_analytics", label: "Revisa estadísticas", tab: "reports" },
 ];
 
 export function OnboardingChecklist({ tenantId, onNavigate }: OnboardingChecklistProps) {
@@ -156,7 +156,7 @@ export function OnboardingChecklist({ tenantId, onNavigate }: OnboardingChecklis
             variant="link"
             size="sm"
             className="mt-2 h-auto p-0 text-xs"
-            onClick={() => onNavigate("content")}
+            onClick={() => onNavigate("dashboard")}
           >
             Ver toda la formación →
           </Button>
