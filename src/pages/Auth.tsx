@@ -250,7 +250,6 @@ export default function Auth() {
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          // Use reverse geocoding via Nominatim (free, no API key)
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=es`
           );
@@ -260,7 +259,6 @@ export default function Auth() {
             data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || "";
           const state = data.address?.state || "";
 
-          // Try to match province
           if (state) {
             const matchedProvince = provincesList.find(
               (p) => p.name.toLowerCase() === state.toLowerCase() || state.toLowerCase().includes(p.name.toLowerCase())
@@ -268,18 +266,16 @@ export default function Auth() {
             if (matchedProvince) {
               signUpForm.setValue("province", matchedProvince.name, { shouldValidate: true });
 
-              // Wait a tick for cities to populate, then set city
-              setTimeout(() => {
-                if (city) {
-                  const allCities = getCitiesES({ code_province: matchedProvince.code }).map((c) => c.name);
-                  const matchedCity = allCities.find(
-                    (c) => c.toLowerCase() === city.toLowerCase() || city.toLowerCase().includes(c.toLowerCase())
-                  );
-                  if (matchedCity) {
-                    signUpForm.setValue("city", matchedCity, { shouldValidate: true });
-                  }
+              // Directly query cities from the library instead of waiting for React state
+              if (city) {
+                const allCities = getCitiesES({ code_province: matchedProvince.code }).map((c) => c.name);
+                const matchedCity = allCities.find(
+                  (c) => c.toLowerCase() === city.toLowerCase() || city.toLowerCase().includes(c.toLowerCase())
+                );
+                if (matchedCity) {
+                  signUpForm.setValue("city", matchedCity, { shouldValidate: true });
                 }
-              }, 100);
+              }
             }
           }
 
