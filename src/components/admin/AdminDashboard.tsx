@@ -191,7 +191,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
         : "Sin más citas hoy",
       icon: <Calendar className="h-5 w-5" />,
       color: "from-violet-500 to-purple-600",
-      tab: "calendar",
+      tab: "agenda",
     },
     {
       id: "revenue",
@@ -202,7 +202,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
         : `${stats.weeklyGrowth}% vs semana pasada`,
       icon: <Wallet className="h-5 w-5" />,
       color: "from-emerald-500 to-green-600",
-      tab: "cash",
+      tab: "agenda",
     },
     {
       id: "messages",
@@ -211,7 +211,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       subtitle: stats.unreadMessages > 0 ? "sin leer" : "Todo al día",
       icon: <MessageCircle className="h-5 w-5" />,
       color: "from-blue-500 to-cyan-600",
-      tab: "messages",
+      tab: "clients",
       badge: stats.unreadMessages > 0,
     },
     {
@@ -221,7 +221,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       subtitle: stats.pendingReviews > 0 ? "pendientes" : "Todas aprobadas",
       icon: <Star className="h-5 w-5" />,
       color: "from-amber-500 to-orange-600",
-      tab: "reviews",
+      tab: "clients",
       badge: stats.pendingReviews > 0,
     },
   ];
