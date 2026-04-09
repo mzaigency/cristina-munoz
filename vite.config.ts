@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => ({
       devOptions: {
         enabled: false,
       },
-      includeAssets: ["favicon.ico", "robots.txt", "logo.png"],
+      includeAssets: ["favicon.ico", "robots.txt", "apple-touch-icon.png"],
       manifest: {
         name: "GlowApp",
         short_name: "GlowApp",
@@ -47,16 +47,31 @@ export default defineConfig(({ mode }) => ({
         start_url: "/",
         icons: [
           {
-            src: "/pwa-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any maskable",
+            src: "/favicon.ico",
+            type: "image/x-icon",
+            sizes: "16x16 32x32",
           },
           {
-            src: "/pwa-512x512.png",
-            sizes: "512x512",
+            src: "/icon-192.png",
             type: "image/png",
-            purpose: "any maskable",
+            sizes: "192x192",
+          },
+          {
+            src: "/icon-512.png",
+            type: "image/png",
+            sizes: "512x512",
+          },
+          {
+            src: "/icon-192-maskable.png",
+            type: "image/png",
+            sizes: "192x192",
+            purpose: "maskable",
+          },
+          {
+            src: "/icon-512-maskable.png",
+            type: "image/png",
+            sizes: "512x512",
+            purpose: "maskable",
           },
         ],
       },
