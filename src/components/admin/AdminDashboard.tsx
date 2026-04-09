@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { OnboardingChecklist } from "@/components/admin/OnboardingChecklist";
 import { motion } from "framer-motion";
 import { 
   Calendar, 
@@ -222,6 +223,8 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
   return (
     <div className="space-y-6 pb-6">
+      {/* Onboarding checklist for new tenants */}
+      <OnboardingChecklist tenantId={tenantId} onNavigate={onNavigate} />
       {/* Welcome message */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}

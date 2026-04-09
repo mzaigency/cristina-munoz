@@ -69,6 +69,14 @@ const TOUR_STEPS: TourStep[] = [
     tips: ["Cobros y descuentos", "Informes PDF descargables", "Objetivos mensuales"],
   },
   {
+    id: "content",
+    title: "🎨 Contenido",
+    description: "Marketing con QR, formación paso a paso y análisis de tu retorno de inversión.",
+    icon: <Sparkles className="h-6 w-6" />,
+    targetTab: "content",
+    tips: ["Tarjetas QR para clientes", "Checklist de formación", "Calcula tu ROI"],
+  },
+  {
     id: "team",
     title: "✂️ Equipo",
     description: "Gestiona estilistas, servicios, comisiones y horarios de apertura.",
