@@ -1,91 +1,60 @@
 
-# Plan: Centro de Formacion y Contenido para Profesionales
 
-## Resumen
-Crear dos nuevas funcionalidades en el panel de admin: (1) un **sistema de onboarding guiado por pasos** que acompane al profesional en sus primeras semanas, y (2) una nueva seccion **"Contenido"** donde pueda generar tarjetas con QR, material de marketing y ver su progreso/ROI.
+# Plan: Mejoras en Tarjetas QR, Formación y reorganización de secciones
 
-## Arquitectura
+## Resumen de cambios
 
-Se anade una nueva tab **"Contenido"** al panel de admin (7 tabs total) y se mejora el dashboard con un **checklist de progreso** para nuevos usuarios.
+5 problemas a resolver:
+1. **Tarjetas QR**: usar logo, colores y fuentes del salón + añadir 3 plantillas más (total 7)
+2. **QR y texto borroso en descarga**: el canvas es 600x400 — demasiado bajo. Subir a 1200x800 (2x) y generar QR a 400px
+3. **Formación y ROI fuera de Contenido**: mover a Dashboard (como sub-secciones del dashboard principal)
+4. **Stories → Posts**: cambiar el paso "Publica tu primer Story" a "Publica tu primer Post"
+5. **Navegación de formación**: cada paso debe navegar a la pestaña Y sub-pestaña correcta
 
-```text
-TenantAdmin tabs (actual → nuevo):
-  dashboard | agenda | business | team | communication | settings
-                                                          ↓
-  dashboard | agenda | business | content | team | communication | settings
-```
+## Cambios por archivo
 
-## Cambios detallados
+### 1. `src/components/admin/content/QRCardGenerator.tsx`
+- Fetch adicional: `primary_color`, `secondary_color`, `font_heading`, `font_body` del tenant
+- Cargar Google Fonts en canvas via `FontFace` API antes de dibujar
+- Añadir logo del salón en la tarjeta (cargar imagen con `new Image()`)
+- **Canvas 1200x800** (2x resolución) para descarga nítida
+- **QR generado a 400px** en vez de 200px
+- 3 plantillas nuevas usando colores del salón:
+  - `"salon"` — usa primary_color como fondo + fuente del salón
+  - `"gradient"` — gradiente primary→secondary
+  - `"glass"` — fondo blanco con bordes glassmorphism y acentos del salón
+- Template `"brand"` ahora usa el primary_color real del tenant (no hardcoded `#8B5CF6`)
 
-### 1. Nueva seccion "Contenido" (`src/components/admin/sections/ContentSection.tsx`)
-Tab con 3 sub-pestanas:
+### 2. `src/components/admin/sections/ContentSection.tsx`
+- Eliminar tabs de Formación y ROI
+- Solo queda el QRCardGenerator (renombrar a "Marketing" sin tabs)
 
-- **Marketing**: Generador de tarjetas con QR code apuntando a `glowapp.app/{slug}`. El usuario puede:
-  - Generar tarjeta de visita digital con logo, nombre, QR y eslogan
-  - Descargar en PNG/PDF para imprimir
-  - Elegir entre 3-4 plantillas de diseno
-  - Usar libreria `qrcode` (npm) para generar el QR en canvas
+### 3. `src/components/admin/AdminDashboard.tsx`
+- Integrar `TrainingChecklist` y `ROICalculator` como secciones del dashboard
+- Formación visible para tenants < 30 días (ya existe `OnboardingChecklist`)
+- ROI visible siempre como card colapsable
 
-- **Formacion**: Checklist interactivo con videos/guias de cada herramienta:
-  - Configurar agenda y servicios
-  - Realizar primer cobro en caja
-  - Enviar primer mensaje a cliente
-  - Publicar primer post
-  - Revisar analytics de la primera semana
-  - Estado guardado en DB (tabla `tenant_onboarding_progress`)
+### 4. `src/components/admin/content/TrainingChecklist.tsx`
+- Cambiar "Publica tu primer Story" → "Publica tu primer Post" (id: `first_post`)
+- Icono: `ImagePlus` en vez de `Camera`
+- **Navegación precisa con sub-tabs**:
+  - `services` → navegar a `team` + `sessionStorage.setItem('openTeamSubTab', 'services')`
+  - `first_booking` → `agenda` (correcto)
+  - `cash_register` → `business` + `sessionStorage.setItem('openBusinessSubTab', 'cash')`
+  - `first_message` → `communication` (correcto)
+  - `first_post` → `communication` (correcto, posts están ahí)
+  - `review_analytics` → `business` + `sessionStorage.setItem('openBusinessSubTab', 'stats')`
+- `onNavigate` pasa un objeto `{ tab, subTab }` en vez de solo string
 
-- **ROI**: Panel simplificado que muestra:
-  - Ingresos generados desde el registro
-  - Citas gestionadas vs no-shows evitados
-  - Estimacion del ahorro de tiempo
-  - Comparativa con el coste del plan
+### 5. `src/pages/TenantAdmin.tsx`
+- Actualizar `onNavigate` del dashboard para aceptar sub-tab y guardarlo en sessionStorage
+- `TeamSection` y `BusinessSection` deben leer sessionStorage al montar para abrir la sub-tab correcta
 
-### 2. Checklist de bienvenida en Dashboard (`AdminDashboard.tsx`)
-- Anadir un componente `OnboardingChecklist` al dashboard que aparece solo si el tenant tiene < 30 dias
-- Muestra progreso: "3/7 pasos completados"
-- Cada paso lleva a la seccion correspondiente
-- Se puede descartar permanentemente
+### 6. `src/components/admin/sections/TeamSection.tsx`
+- Al montar, leer `sessionStorage.getItem('openTeamSubTab')` y abrir esa sub-tab
 
-### 3. Tabla nueva: `tenant_onboarding_progress`
-```sql
-CREATE TABLE tenant_onboarding_progress (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE NOT NULL UNIQUE,
-  steps_completed JSONB DEFAULT '{}',
-  dismissed BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
--- RLS: solo el admin del tenant puede leer/escribir
-```
+### 7. `src/components/admin/sections/BusinessSection.tsx`
+- Ya lee `openCashTab` — extender para leer `openBusinessSubTab` genérico
 
-### 4. Registrar la tab en `TenantAdmin.tsx`
-- Anadir `"content"` al tipo `TabValue`
-- Anadir icono `Palette` o `FileImage` a navItems
-- Renderizar `<ContentSection tenantId={tenant.id} tenantSlug={tenant.slug} />`
+## Sin migraciones SQL necesarias
 
-### 5. Actualizar `sections/index.ts`
-- Exportar `ContentSection`
-
-### 6. Actualizar InteractiveTour y HelpTutorial
-- Anadir paso para la seccion "Contenido"
-
-## Archivos a crear
-- `src/components/admin/sections/ContentSection.tsx` — Componente principal con tabs
-- `src/components/admin/content/QRCardGenerator.tsx` — Generador de tarjetas QR
-- `src/components/admin/content/TrainingChecklist.tsx` — Checklist de formacion
-- `src/components/admin/content/ROICalculator.tsx` — Panel de retorno de inversion
-- `src/components/admin/OnboardingChecklist.tsx` — Widget de progreso en dashboard
-
-## Archivos a modificar
-- `src/pages/TenantAdmin.tsx` — Nueva tab "content"
-- `src/components/admin/sections/index.ts` — Export
-- `src/components/admin/AdminDashboard.tsx` — Integrar checklist
-- `src/components/admin/InteractiveTour.tsx` — Nuevo paso
-- `src/components/admin/HelpTutorial.tsx` — Nueva seccion de ayuda
-
-## Dependencia npm
-- `qrcode` (ligera, genera QR en canvas/SVG sin servidor)
-
-## Migracion SQL
-- Crear tabla `tenant_onboarding_progress` con RLS
