@@ -2374,6 +2374,10 @@ export type Database = {
     }
     Functions: {
       can_create_review: { Args: never; Returns: boolean }
+      check_availability: {
+        Args: { p_email?: string; p_username?: string }
+        Returns: Json
+      }
       check_password_reset_rate_limit: {
         Args: { user_email: string }
         Returns: boolean
