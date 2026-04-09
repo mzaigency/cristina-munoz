@@ -218,68 +218,26 @@ const DirectoryLanding = () => {
             </Link>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-3">
             {tenants.map((tenant, index) => {
               const stats = reviewCounts[tenant.id];
               return (
-                <motion.div
+                <PremiumSalonCard
                   key={tenant.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <Link
-                    to={`/${tenant.slug}`}
-                    className="group block liquid-glass rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  >
-                    {/* Image */}
-                    <div className="aspect-[16/10] bg-muted relative overflow-hidden">
-                      {tenant.hero_image_url || tenant.logo_url ? (
-                        <img
-                          src={tenant.hero_image_url || tenant.logo_url || ""}
-                          alt={`${tenant.name} - ${catInfo.label}${tenant.city ? ` en ${tenant.city}` : ""}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                          <Sparkles className="h-12 w-12 text-primary/30" />
-                        </div>
-                      )}
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/30 to-transparent" />
-                    </div>
-
-                    {/* Info */}
-                    <div className="p-4">
-                      <h2 className="text-base font-bold text-foreground group-hover:text-primary transition-colors mb-1 line-clamp-1">
-                        {tenant.name}
-                      </h2>
-                      {tenant.city && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
-                          <MapPin className="h-3 w-3" /> {tenant.city}
-                        </p>
-                      )}
-                      {tenant.tagline && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{tenant.tagline}</p>
-                      )}
-                      <div className="flex items-center justify-between">
-                        {stats ? (
-                          <div className="flex items-center gap-1 text-xs">
-                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                            <span className="font-semibold text-foreground">{stats.avg}</span>
-                            <span className="text-muted-foreground">({stats.count})</span>
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">Nuevo</span>
-                        )}
-                        <span className="text-xs font-medium text-primary group-hover:underline flex items-center gap-1">
-                          Reservar <ArrowRight className="h-3 w-3" />
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
+                  salon={{
+                    id: tenant.id,
+                    name: tenant.name,
+                    slug: tenant.slug,
+                    logo_url: tenant.logo_url,
+                    hero_image_url: tenant.hero_image_url,
+                    primary_color: null,
+                    city: tenant.city,
+                    tagline: tenant.tagline,
+                    avgRating: stats ? stats.avg : null,
+                    reviewCount: stats ? stats.count : 0,
+                  }}
+                  index={index}
+                />
               );
             })}
           </div>
