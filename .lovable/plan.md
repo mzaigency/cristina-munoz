@@ -1,33 +1,108 @@
 
+# Plan corregido: arreglar de verdad el registro
 
-# Mejora del flujo de selección de profesional en reservas
+## Qué está fallando ahora
 
-## Cambios
+1. **La validación de username/email en tiempo real está mal planteada**
+   - En `/auth` se está consultando `profiles` directamente desde el cliente.
+   - Como el usuario aún no ha iniciado sesión, **RLS bloquea esas lecturas**.
+   - Resultado: la comprobación puede fallar en silencio y el estado visual queda mal o inconsistente.
+   - Además, la unicidad actual del username parece depender de `text UNIQUE`, que **no garantiza unicidad case-insensitive** (`Pepe` vs `pepe`).
 
-### 1. Auto-skip cuando solo hay 1 profesional
-En `TenantStylistSelection.tsx`: si después de cargar los estilistas solo hay 1 activo, llamar `onNext(stylist.slug)` automáticamente y no renderizar la UI de selección. Esto salta el paso 2 directamente.
+2. **“Usar mi ubicación actual” detecta la ubicación, pero no rellena bien provincia/ciudad**
+   - El reverse geocoding devuelve cosas como `Cataluña`, que es comunidad autónoma, mientras el formulario espera una **provincia** como `Barcelona`.
+   - El código actual solo intenta casar `state`, así que el toast sale bien, pero los selects no se rellenan.
 
-En `TenantBookingFlow.tsx`: ajustar el botón "Volver" del paso 3 para que vuelva al paso 1 si solo hay 1 profesional (saltando el paso 2 vacío).
+## Implementación propuesta
 
-### 2. Renombrar "Cualquiera" → "Siguiente disponible"
-En `TenantStylistSelection.tsx`: cambiar el nombre de la opción "any" de "Cualquiera" a "Siguiente disponible" y quitar la descripción redundante.
+### 1. Arreglar la disponibilidad de username/email desde backend
+Crear una verificación pública segura para registro, en vez de leer `profiles` directamente desde el frontend.
 
-En `TenantBookingFlow.tsx` y `SuccessCelebration`: cambiar "Cualquier profesional" por "Siguiente disponible" donde aparezca.
+**Haré esto:**
+- Añadir una función backend/RPC pública y segura para comprobar:
+  - `username_available`
+  - `email_available`
+- Validar y normalizar inputs en backend:
+  - trim
+  - lower-case
+  - formato permitido
+  - límites de longitud
+- En `Auth.tsx`, sustituir las consultas directas a `profiles` por esta verificación.
 
-En `StylistSelection.tsx` (booking genérico): mismo cambio de "Cualquiera" → "Siguiente disponible".
+**Resultado esperado:**
+- “Disponible” solo aparecerá si el backend confirma que está libre.
+- Si ya existe, se mostrará error real y nunca el check verde.
 
-### 3. Mostrar disponibilidad por profesional cuando se elige "Siguiente disponible"
-En `TenantDateTimeSelection.tsx`: cuando `stylist === "any"`, en vez de mostrar solo las horas fusionadas, mostrar junto a cada hora qué profesionales están disponibles. Si para una hora hay más de 1 profesional libre, mostrar un selector para que el usuario elija cuál prefiere antes de continuar.
+### 2. Blindar la unicidad del username en base de datos
+No basta con validarlo en UI: hay que **hacerlo imposible en base de datos**.
 
-Concretamente:
-- Guardar un mapa `slotToStylists: Record<string, TenantStylist[]>` que asocie cada hora con los profesionales disponibles en ese slot.
-- En la UI de horas, mostrar junto a cada botón los avatares/nombres de quiénes están libres.
-- Al seleccionar una hora donde hay 2+ profesionales disponibles, mostrar un mini-selector (cards pequeñas) para elegir profesional.
-- Si solo hay 1 disponible en esa hora, asignarlo automáticamente.
+**Haré esto:**
+- Añadir una migración para garantizar unicidad real de username normalizado (`lower(username)`).
+- Normalizar usernames legacy antes de aplicar la restricción si hiciera falta.
+- Mantener el submit final protegido para que, aunque haya carrera entre dos registros, el segundo falle correctamente.
 
-## Archivos a modificar
-- `src/components/tenant/TenantStylistSelection.tsx` — auto-skip + renombrar
-- `src/components/tenant/TenantBookingFlow.tsx` — gestionar skip paso 2 + texto
-- `src/components/tenant/TenantDateTimeSelection.tsx` — mostrar profesionales por slot
-- `src/components/booking/StylistSelection.tsx` — renombrar "Cualquiera"
+**Resultado esperado:**
+- Un username no podrá duplicarse aunque dos usuarios intenten registrarse a la vez.
+- No habrá falsos “disponible”.
 
+### 3. Corregir la geolocalización para rellenar sola provincia y ciudad
+Refactorizar `handleUseLocation` para mapear correctamente datos españoles.
+
+**Haré esto:**
+- Leer más campos del reverse geocoder:
+  - `city`
+  - `town`
+  - `village`
+  - `municipality`
+  - `county`
+  - `state_district`
+  - `province`
+  - `state`
+- Normalizar nombres quitando tildes/mayúsculas para comparar mejor.
+- Intentar resolver la **provincia real** primero.
+- Una vez resuelta la provincia, buscar la ciudad dentro del catálogo de esa provincia.
+- Si el geocoder devuelve comunidad autónoma pero no provincia, usar la ciudad detectada para inferir la provincia correcta.
+- Al completar ambos valores:
+  - hacer `setValue` en `province`
+  - hacer `setValue` en `city`
+  - disparar validación
+  - limpiar búsqueda manual si procede
+
+**Resultado esperado:**
+- Si detecta `Manresa, Cataluña`, el formulario rellenará **Barcelona** y **Manresa** automáticamente.
+
+## Archivos a tocar
+
+- `src/pages/Auth.tsx`
+  - reemplazar checks directos
+  - corregir debounce/estado visual
+  - arreglar autofill de ubicación
+- `supabase/migrations/...`
+  - función segura de disponibilidad
+  - restricción de unicidad normalizada para username
+- Si hace falta reforzar normalización:
+  - lógica de perfil/registro en backend para guardar username en minúsculas
+
+## Verificación
+
+### Username
+- Escribir un username ya existente:
+  - no debe salir “Disponible”
+  - debe salir error inline
+- Escribir uno libre:
+  - debe salir check verde
+- Intentar registrar dos veces el mismo username:
+  - la segunda debe fallar aunque pase el debounce
+
+### Ubicación
+- Pulsar “Usar mi ubicación actual”
+- Si detecta una ciudad española:
+  - **Provincia** debe rellenarse sola
+  - **Ciudad** debe rellenarse sola
+- Probar casos como:
+  - ciudad + provincia
+  - ciudad + comunidad autónoma
+  - nombres con tildes
+
+## Enfoque UX mobile
+Mantendré el flujo actual de 3 pasos, sin añadir fricción, y revisaré que el comportamiento siga siendo cómodo en móvil y respetando safe areas.
