@@ -124,7 +124,11 @@ export default function Auth() {
     const suggested = generateUsername(watchedFirstName, watchedLastName);
     if (suggested && suggested.length >= 3) {
       signUpForm.setValue("username", suggested, { shouldValidate: false });
+      // Reset availability before checking
+      setUsernameAvailable(null);
       checkUsernameAvailability(suggested);
+    } else {
+      setUsernameAvailable(null);
     }
   }, [watchedFirstName, watchedLastName, isSignUp, usernameManuallyEdited]);
 
