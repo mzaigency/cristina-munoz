@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ImagePlus, QrCode } from "lucide-react";
+import { ImagePlus, QrCode, Plus } from "lucide-react";
 import { QRCardGenerator } from "@/components/admin/content/QRCardGenerator";
 import { PostCreator } from "@/components/social/PostCreator";
 import { PostGrid } from "@/components/social/PostGrid";
+import { usePosts } from "@/hooks/usePosts";
+import { Button } from "@/components/ui/button";
 
 interface MarketingSectionProps {
   tenantId: string;
@@ -14,7 +16,8 @@ type MarketingTab = "posts" | "qr";
 
 const MarketingSection = ({ tenantId, tenantSlug }: MarketingSectionProps) => {
   const [activeTab, setActiveTab] = useState<MarketingTab>("posts");
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [postCreatorOpen, setPostCreatorOpen] = useState(false);
+  const { tenantPosts, deletePost, refetchTenantPosts } = usePosts(tenantId);
 
   useEffect(() => {
     const subTab = sessionStorage.getItem("openMarketingSubTab");
@@ -46,8 +49,21 @@ const MarketingSection = ({ tenantId, tenantSlug }: MarketingSectionProps) => {
         </TabsList>
 
         <TabsContent value="posts" className="mt-4 space-y-4">
-          <PostCreator tenantId={tenantId} onPostCreated={() => setRefreshKey((k) => k + 1)} />
-          <PostGrid tenantId={tenantId} key={refreshKey} />
+          <div className="flex justify-end">
+            <Button onClick={() => setPostCreatorOpen(true)} size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nuevo Post
+            </Button>
+          </div>
+          <PostGrid
+            posts={tenantPosts || []}
+            isAdmin
+            onDelete={(postId) => deletePost(postId)}
+          />
+          <PostCreator
+            isOpen={postCreatorOpen}
+            onClose={() => { setPostCreatorOpen(false); refetchTenantPosts(); }}
+          />
         </TabsContent>
 
         <TabsContent value="qr" className="mt-4">

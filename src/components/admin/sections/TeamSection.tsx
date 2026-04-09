@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Scissors, Percent, Clock, Lock } from "lucide-react";
+import { Users, Clock, Percent, Lock } from "lucide-react";
 import { StylistsManager } from "../StylistsManager";
-import { ServicesManager } from "../ServicesManager";
 import { CommissionsManager } from "../CommissionsManager";
 import { BusinessHoursManager } from "../BusinessHoursManager";
 import { LockedFeature } from "../LockedFeature";
@@ -13,7 +12,7 @@ interface TeamSectionProps {
   tenantId: string;
 }
 
-type TeamTab = "stylists" | "services" | "commissions" | "hours";
+type TeamTab = "stylists" | "hours" | "commissions";
 
 interface TabConfig {
   id: TeamTab;
@@ -25,22 +24,20 @@ interface TabConfig {
 
 const TeamSection = ({ tenantId }: TeamSectionProps) => {
   const [activeTab, setActiveTab] = useState<TeamTab>("stylists");
-  const { hasFeature, planSlug, loading } = usePlanLimits(tenantId);
+  const { hasFeature, planSlug } = usePlanLimits(tenantId);
 
-  // Check for sub-tab navigation from training checklist
   useEffect(() => {
     const subTab = sessionStorage.getItem("openTeamSubTab");
-    if (subTab && (subTab === "stylists" || subTab === "services" || subTab === "commissions" || subTab === "hours")) {
+    if (subTab && ["stylists", "hours", "commissions"].includes(subTab)) {
       setActiveTab(subTab as TeamTab);
       sessionStorage.removeItem("openTeamSubTab");
     }
   }, []);
 
   const tabs: TabConfig[] = [
-    { id: "stylists", label: "Equipo", icon: Users },
-    { id: "services", label: "Servicios", icon: Scissors },
-    { id: "commissions", label: "Comisiones", icon: Percent, requiredFeature: "commissions", requiredPlan: "business" },
+    { id: "stylists", label: "Staff", icon: Users },
     { id: "hours", label: "Horarios", icon: Clock },
+    { id: "commissions", label: "Comisiones", icon: Percent, requiredFeature: "commissions", requiredPlan: "business" },
   ];
 
   const isTabLocked = (tab: TabConfig): boolean => {
@@ -72,12 +69,8 @@ const TeamSection = ({ tenantId }: TeamSectionProps) => {
                   locked && "opacity-50 cursor-not-allowed"
                 )}
               >
-                {locked ? (
-                  <Lock className="h-3.5 w-3.5" />
-                ) : (
-                  <tab.icon className="h-3.5 w-3.5" />
-                )}
-                <span className="hidden sm:inline">{tab.label}</span>
+                {locked ? <Lock className="h-3.5 w-3.5" /> : <tab.icon className="h-3.5 w-3.5" />}
+                <span>{tab.label}</span>
                 {locked && (
                   <span className="hidden md:inline text-[10px] text-amber-600 dark:text-amber-400 ml-1">
                     Business
@@ -92,26 +85,16 @@ const TeamSection = ({ tenantId }: TeamSectionProps) => {
           <StylistsManager tenantId={tenantId} />
         </TabsContent>
 
-        <TabsContent value="services" className="mt-4">
-          <ServicesManager tenantId={tenantId} />
+        <TabsContent value="hours" className="mt-4">
+          <BusinessHoursManager tenantId={tenantId} />
         </TabsContent>
 
         <TabsContent value="commissions" className="mt-4">
           {isTabLocked(tabs[2]) ? (
-            <LockedFeature
-              featureName="Comisiones"
-              currentPlan={planSlug}
-              requiredPlan="business"
-              tenantId={tenantId}
-              variant="inline"
-            />
+            <LockedFeature featureName="Comisiones" currentPlan={planSlug} requiredPlan="business" tenantId={tenantId} variant="inline" />
           ) : (
             <CommissionsManager tenantId={tenantId} />
           )}
-        </TabsContent>
-
-        <TabsContent value="hours" className="mt-4">
-          <BusinessHoursManager tenantId={tenantId} />
         </TabsContent>
       </Tabs>
     </div>
