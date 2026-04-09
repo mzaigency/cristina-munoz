@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { QRCode, GraduationCap, TrendingUp } from "lucide-react";
 import { QRCardGenerator } from "@/components/admin/content/QRCardGenerator";
 import { TrainingChecklist } from "@/components/admin/content/TrainingChecklist";
 import { ROICalculator } from "@/components/admin/content/ROICalculator";
