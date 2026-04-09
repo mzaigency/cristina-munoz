@@ -4,10 +4,7 @@ import { motion, AnimatePresence, PanInfo } from "motion/react";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
-  Wallet,
-  MessageCircle,
   Settings,
-  X,
   ArrowRight,
   ArrowLeft,
   Sparkles,
@@ -15,7 +12,9 @@ import {
   Users,
   UserCircle,
   LayoutDashboard,
-  ChevronDown,
+  ShoppingBag,
+  Megaphone,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -51,56 +50,56 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: "agenda",
     title: "Agenda",
-    description: "Calendario visual y lista de espera para gestionar todas las citas.",
+    description: "Calendario, lista de espera y caja registradora. Todo lo que necesitas durante el día.",
     icon: <Calendar className="h-7 w-7" />,
     targetTab: "agenda",
-    tips: ["Arrastra citas", "Lista de espera integrada"],
+    tips: ["Arrastra citas", "Cobra desde aquí"],
     emoji: "📅",
   },
   {
     id: "clients",
     title: "Clientes",
-    description: "CRM completo con historial, notas y etiquetas VIP.",
+    description: "Directorio completo, mensajería directa y gestión de reseñas.",
     icon: <UserCircle className="h-7 w-7" />,
     targetTab: "clients",
-    tips: ["Busca por nombre o teléfono", "Notas privadas"],
+    tips: ["Historial y notas", "Chat en tiempo real"],
     emoji: "👥",
   },
   {
-    id: "business",
-    title: "Negocio",
-    description: "Caja, promociones, paquetes, productos, objetivos y estadísticas.",
-    icon: <Wallet className="h-7 w-7" />,
-    targetTab: "business",
-    tips: ["Cobros y descuentos", "Informes PDF"],
-    emoji: "💰",
+    id: "catalog",
+    title: "Catálogo",
+    description: "Servicios, productos, paquetes y promociones de tu negocio.",
+    icon: <ShoppingBag className="h-7 w-7" />,
+    targetTab: "catalog",
+    tips: ["Define precios y duración", "Crea paquetes atractivos"],
+    emoji: "🛍️",
   },
   {
-    id: "content",
-    title: "Contenido",
-    description: "Marketing con tarjetas QR personalizadas para tu salón.",
-    icon: <Sparkles className="h-7 w-7" />,
-    targetTab: "content",
-    tips: ["Tarjetas QR con tu marca", "Descarga e imprime"],
-    emoji: "🎨",
+    id: "marketing",
+    title: "Marketing",
+    description: "Publica tus trabajos y genera tarjetas QR personalizadas.",
+    icon: <Megaphone className="h-7 w-7" />,
+    targetTab: "marketing",
+    tips: ["Posts de tu portafolio", "Tarjetas QR con tu marca"],
+    emoji: "📣",
   },
   {
     id: "team",
     title: "Equipo",
-    description: "Gestiona estilistas, servicios, comisiones y horarios.",
+    description: "Gestiona staff, horarios y comisiones de tu equipo.",
     icon: <Users className="h-7 w-7" />,
     targetTab: "team",
     tips: ["Color por estilista", "Comisiones automáticas"],
     emoji: "✂️",
   },
   {
-    id: "communication",
-    title: "Comunicación",
-    description: "Mensajes directos, publicaciones del salón y reseñas.",
-    icon: <MessageCircle className="h-7 w-7" />,
-    targetTab: "communication",
-    tips: ["Chat en tiempo real", "Moderar reseñas"],
-    emoji: "💬",
+    id: "reports",
+    title: "Informes",
+    description: "Estadísticas de rendimiento, objetivos mensuales y reportes PDF.",
+    icon: <BarChart3 className="h-7 w-7" />,
+    targetTab: "reports",
+    tips: ["Evolución semanal", "Exporta en PDF"],
+    emoji: "📈",
   },
   {
     id: "settings",
@@ -121,7 +120,7 @@ const TOUR_STEPS: TourStep[] = [
   },
 ];
 
-const STORAGE_KEY = "glowapp_admin_tour_v3_completed";
+const STORAGE_KEY = "glowapp_admin_tour_v4_completed";
 const SWIPE_THRESHOLD = 60;
 
 interface InteractiveTourProps {
