@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence, PanInfo } from "motion/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -186,9 +187,167 @@ export function InteractiveTour({ onTabChange }: InteractiveTourProps) {
     exit: (d: number) => ({ x: d > 0 ? -200 : 200, opacity: 0 }),
   };
 
+  const tourOverlay = (
+    <AnimatePresence>
+      {isActive && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+            onClick={completeTour}
+          />
+
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className={cn(
+              "fixed inset-x-0 bottom-0 z-[101] bg-background rounded-t-3xl shadow-2xl",
+              "pb-[calc(env(safe-area-inset-bottom)+8px)]"
+            )}
+            style={{ maxHeight: "70vh" }}
+          >
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
+
+            <div className="flex gap-1 px-4 pb-3">
+              {TOUR_STEPS.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goToStep(i)}
+                  className="flex-1 h-1 rounded-full transition-all duration-300"
+                  style={{
+                    background: i <= currentStep
+                      ? "hsl(var(--primary))"
+                      : "hsl(var(--muted))",
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="overflow-hidden px-5 min-h-[200px]">
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={currentStep}
+                  custom={direction}
+                  variants={variants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ type: "spring", damping: 25, stiffness: 250, duration: 0.3 }}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.15}
+                  onDragEnd={handleDragEnd}
+                  className="cursor-grab active:cursor-grabbing"
+                >
+                  <div className="flex items-start gap-4 mb-3">
+                    <motion.div
+                      initial={{ scale: 0, rotate: -20 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.1 }}
+                      className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-primary shrink-0"
+                    >
+                      <span className="text-2xl">{step.emoji}</span>
+                    </motion.div>
+                    <div className="min-w-0">
+                      <motion.h3
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 }}
+                        className="text-lg font-bold text-foreground leading-tight"
+                      >
+                        {step.title}
+                      </motion.h3>
+                      <motion.p
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-sm text-muted-foreground mt-1 leading-relaxed"
+                      >
+                        {step.description}
+                      </motion.p>
+                    </div>
+                  </div>
+
+                  {step.tips && step.tips.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 }}
+                      className="flex flex-wrap gap-2 mt-2"
+                    >
+                      {step.tips.map((tip, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-xs font-medium text-primary"
+                        >
+                          <span className="text-primary/70">✓</span>
+                          {tip}
+                        </span>
+                      ))}
+                    </motion.div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div className="px-5 pt-3 pb-2 flex items-center justify-between gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={prevStep}
+                disabled={currentStep === 0}
+                className="gap-1 text-muted-foreground"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="sr-only sm:not-sr-only">Anterior</span>
+              </Button>
+
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {currentStep + 1}/{TOUR_STEPS.length}
+              </span>
+
+              <Button
+                size="sm"
+                onClick={isLast ? completeTour : nextStep}
+                className="gap-1"
+              >
+                {isLast ? (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    Empezar
+                  </>
+                ) : (
+                  <>
+                    <span className="sr-only sm:not-sr-only">Siguiente</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="text-center pb-2">
+              <button
+                onClick={completeTour}
+                className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+              >
+                Omitir tour
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+
   return (
     <>
-      {/* Trigger button */}
       <Button
         variant="ghost"
         size="icon"
@@ -199,172 +358,7 @@ export function InteractiveTour({ onTabChange }: InteractiveTourProps) {
         <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
       </Button>
 
-      {/* Tour bottom-sheet */}
-      <AnimatePresence>
-        {isActive && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-              onClick={completeTour}
-            />
-
-            {/* Bottom sheet */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className={cn(
-                "fixed bottom-0 left-0 right-0 z-[101] bg-background rounded-t-3xl shadow-2xl",
-                "pb-[calc(env(safe-area-inset-bottom)+8px)]"
-              )}
-              style={{ maxHeight: "70vh" }}
-            >
-              {/* Drag handle */}
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
-              </div>
-
-              {/* Segmented progress */}
-              <div className="flex gap-1 px-4 pb-3">
-                {TOUR_STEPS.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => goToStep(i)}
-                    className="flex-1 h-1 rounded-full transition-all duration-300"
-                    style={{
-                      background: i <= currentStep
-                        ? "hsl(var(--primary))"
-                        : "hsl(var(--muted))",
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Swipeable content */}
-              <div className="overflow-hidden px-5 min-h-[200px]">
-                <AnimatePresence mode="wait" custom={direction}>
-                  <motion.div
-                    key={currentStep}
-                    custom={direction}
-                    variants={variants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ type: "spring", damping: 25, stiffness: 250, duration: 0.3 }}
-                    drag="x"
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={0.15}
-                    onDragEnd={handleDragEnd}
-                    className="cursor-grab active:cursor-grabbing"
-                  >
-                    {/* Icon + header */}
-                    <div className="flex items-start gap-4 mb-3">
-                      <motion.div
-                        initial={{ scale: 0, rotate: -20 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.1 }}
-                        className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-primary shrink-0"
-                      >
-                        <span className="text-2xl">{step.emoji}</span>
-                      </motion.div>
-                      <div className="min-w-0">
-                        <motion.h3
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.15 }}
-                          className="text-lg font-bold text-foreground leading-tight"
-                        >
-                          {step.title}
-                        </motion.h3>
-                        <motion.p
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.2 }}
-                          className="text-sm text-muted-foreground mt-1 leading-relaxed"
-                        >
-                          {step.description}
-                        </motion.p>
-                      </div>
-                    </div>
-
-                    {/* Tips as chips */}
-                    {step.tips && step.tips.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.25 }}
-                        className="flex flex-wrap gap-2 mt-2"
-                      >
-                        {step.tips.map((tip, i) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-xs font-medium text-primary"
-                          >
-                            <span className="text-primary/70">✓</span>
-                            {tip}
-                          </span>
-                        ))}
-                      </motion.div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Navigation */}
-              <div className="px-5 pt-3 pb-2 flex items-center justify-between gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={prevStep}
-                  disabled={currentStep === 0}
-                  className="gap-1 text-muted-foreground"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span className="sr-only sm:not-sr-only">Anterior</span>
-                </Button>
-
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {currentStep + 1}/{TOUR_STEPS.length}
-                </span>
-
-                <Button
-                  size="sm"
-                  onClick={isLast ? completeTour : nextStep}
-                  className="gap-1"
-                >
-                  {isLast ? (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Empezar
-                    </>
-                  ) : (
-                    <>
-                      <span className="sr-only sm:not-sr-only">Siguiente</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              {/* Skip link */}
-              <div className="text-center pb-2">
-                <button
-                  onClick={completeTour}
-                  className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-                >
-                  Omitir tour
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {typeof document !== "undefined" ? createPortal(tourOverlay, document.body) : null}
     </>
   );
 }
