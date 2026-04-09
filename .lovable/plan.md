@@ -1,117 +1,46 @@
 
 
-# Plan Maestro SEO — GlowApp
+# Plan: Corregir 3 bugs del Onboarding Setup
 
-## Objetivo
-Que GlowApp aparezca en Google para cualquier busqueda de belleza en Espana: tanto genericas ("peluqueria cerca de mi") como locales ("peluqueria santpedor") como por nombre de salon ("Cristina Munoz peluqueria").
+## Problemas identificados
 
-## Estado actual
-- Structured data en `index.html`: WebApplication, Organization, WebSite+SearchAction — bien
-- SEO dinamico por salon en `TenantLanding.tsx` con LocalBusiness schema — basico
-- Sitemap dinamico con edge function — solo salones individuales + paginas estaticas
-- robots.txt bien configurado
-- Solo hay 1 tenant activo: Cristina Munoz (Santpedor, peluqueria)
+### 1. No deja subir imágenes
+El `ImagesStep` sube a `tenant-assets` con path `${tenantId}/logo/...`. La política RLS de INSERT en `storage.objects` verifica `foldername(name)[1] = get_user_tenant_id()`. 
 
-## Problema
-No existen paginas indexables de categoria/ciudad. Si buscas "peluqueria santpedor", Google no tiene una pagina de GlowApp que responda a eso. Solo existe `/cristina-munoz` que puede no asociarse con la busqueda.
+**Causa probable**: En modo demo, `provision-business` crea el tenant y el `tenant_admins`, pero `get_user_tenant_id()` podría no reflejar el nuevo tenant si hay caché o si la función no encuentra el registro por algún race condition. Además, el usuario puede estar en el paso de imágenes **antes** de que el `tenant_admins` se propague correctamente.
+
+**Solución**: Añadir una política RLS adicional para INSERT en `storage.objects` que permita subir a `tenant-assets` si el usuario es admin del tenant (verificando directamente contra `tenant_admins` con el folder name, sin depender de `get_user_tenant_id()`). Alternativamente, verificar que `get_user_tenant_id()` funciona y si no, crear un fallback. 
+
+Tras revisar, la política actual es: `(storage.foldername(name))[1] = (get_user_tenant_id())::text`. El problema es que `get_user_tenant_id()` hace una query a `tenant_admins` y devuelve el `tenant_id`. En el onboarding, esto debería funcionar porque `provision-business` ya insertó el registro. Voy a verificar la función `get_user_tenant_id` y si no hay bug ahí, probaré con un enfoque más directo: cambiar la política para verificar contra `tenant_admins` directamente usando el foldername.
+
+### 2. No deja borrar entero la duración de un servicio
+En las líneas 532, 559, 569, 580 de `OnboardingSetup.tsx`:
+```tsx
+onChange={(e) => updateService(index, "duration", parseInt(e.target.value) || 30)}
+```
+Cuando el usuario borra todo el contenido, `parseInt("")` es `NaN`, y `NaN || 30` = 30. Así que inmediatamente vuelve a 30 y no se puede borrar.
+
+**Solución**: Permitir que el campo esté vacío temporalmente (guardar el valor raw como string o permitir 0 durante edición), pero validar al guardar que no sea 0 ni null. Usar un approach donde se permite el string vacío durante edición y se convierte al enviar.
+
+### 3. Vista previa de temas se sale de la pantalla
+El `ThemePreviewModal` en `ThemeStep.tsx` usa `aspect-[9/19]` dentro de un contenedor con `max-w-[300px]`. En viewport 390px con padding, el modal con el phone frame + info + buttons se extiende más allá de la pantalla.
+
+**Solución**: Reducir el tamaño del phone frame, usar `max-h-[85vh]` con scroll, o hacer el preview modal más compacto para que quepa en 390x844.
 
 ---
 
-## Cambios
+## Cambios por archivo
 
-### 1. Nueva pagina: `src/pages/DirectoryLanding.tsx`
+### `src/pages/OnboardingSetup.tsx`
+- **Duración editable**: Cambiar los inputs de duración para usar string en el state y permitir campo vacío. Cambiar `parseInt(e.target.value) || 30` por una función que permita vacío durante edición.
+- Actualizar `updateService` para aceptar strings en los campos de duración.
+- En `handleSave`, validar que las duraciones sean >= 1 (no null/0), mostrando error si alguna es inválida.
 
-Componente que sirve como directorio SEO. Recibe `category` y opcionalmente `city` de la URL.
+### `src/components/onboarding/ThemeStep.tsx`
+- **Preview modal**: Reducir `max-w-[300px]` a `max-w-[260px]`, usar `max-h-[90vh] overflow-y-auto` en el contenedor del modal.
+- Ajustar el phone frame para que sea más compacto en móvil.
+- Reducir padding y espaciado del info/actions debajo del phone frame.
 
-- Mapea slugs URL a `business_type` en BD: `peluquerias` → `peluqueria`, `barberias` → `barberia`, `estetica` → `estetica`, `spa` → `spa`, `unas` → `unas`
-- Fetch tenants activos filtrando por `features->>'business_type'` y opcionalmente por `city` (case-insensitive, normalizado sin tildes)
-- H1 dinamico optimizado: "Peluquerias en Santpedor - Reserva Online | GlowApp"
-- Meta description unica por combinacion categoria+ciudad
-- Schema `CollectionPage` + `ItemList` con cada salon como `ListItem`
-- Listado de salones con card (nombre, ciudad, valoracion, link a `/{slug}`)
-- Si no hay resultados: mensaje amable + CTA para registrar salon
-- Mobile-first, safe areas respetadas
-- Links internos: cada salon enlaza a `/{slug}`, breadcrumbs de navegacion
-
-### 2. Actualizar `src/App.tsx` — Nuevas rutas
-
-Anadir ANTES del catch-all `/:slug`:
-```text
-/peluquerias            → DirectoryLanding (category="peluquerias")
-/peluquerias/:city      → DirectoryLanding (category="peluquerias", city param)
-/barberias              → DirectoryLanding
-/barberias/:city        → DirectoryLanding
-/estetica               → DirectoryLanding
-/estetica/:city         → DirectoryLanding
-/spa                    → DirectoryLanding
-/spa/:city              → DirectoryLanding
-/unas                   → DirectoryLanding
-/unas/:city             → DirectoryLanding
-```
-
-### 3. Actualizar `src/components/SEO.tsx`
-
-Anadir soporte para nuevos schemas:
-- `itemList` prop — genera `CollectionPage` + `ItemList` structured data
-- Cada item incluye `name`, `url`, `image`, `position`
-
-### 4. Mejorar structured data en `src/pages/TenantLanding.tsx`
-
-Pasar de un schema `LocalBusiness` basico a uno completo:
-- `hasOfferCatalog` con servicios reales del salon (fetch de tabla `services`)
-- Top 3 reviews individuales como schema `Review` (no solo aggregateRating)
-- `openingHoursSpecification` con horarios reales de `business_hours`
-- `sameAs` con redes sociales del salon (instagram, facebook, tiktok)
-- `hasMap` con `google_maps_url` del salon
-
-### 5. Actualizar `supabase/functions/generate-sitemap/index.ts`
-
-Fetch adicional: ciudades unicas agrupadas por business_type de tenants activos.
-
-Generar URLs de directorio dinamicamente:
-```text
-/peluquerias              (si hay >= 1 peluqueria)
-/peluquerias/santpedor    (si hay peluqueria en Santpedor)
-/barberias                (si hay >= 1 barberia)
-... etc
-```
-
-Query: `SELECT DISTINCT lower(city) as city, features->>'business_type' as type FROM tenants WHERE is_active = true AND city IS NOT NULL`
-
-Prioridades sitemap:
-- `/` → 1.0
-- `/peluquerias`, `/barberias`... → 0.9
-- `/peluquerias/santpedor`... → 0.85
-- `/{salon-slug}` → 0.8
-
-Anadir `<image:image>` con `logo_url` de cada salon en sus URLs individuales.
-
-### 6. Actualizar `index.html`
-
-Anadir schema `SoftwareApplication` apuntando a Play Store (cuando este disponible) para reforzar presencia de marca en busquedas de "GlowApp".
-
-### 7. Actualizar `public/robots.txt`
-
-Las nuevas rutas de directorio ya estan permitidas por defecto (no hay Disallow para `/peluquerias`, etc.). No se necesitan cambios, pero verificaremos.
-
----
-
-## Archivos
-
-| Archivo | Accion |
-|---|---|
-| `src/pages/DirectoryLanding.tsx` | Crear — directorio SEO dinamico |
-| `src/App.tsx` | Anadir 10 rutas de directorio |
-| `src/components/SEO.tsx` | Anadir soporte ItemList/CollectionPage |
-| `src/pages/TenantLanding.tsx` | Mejorar structured data (servicios, reviews, horarios, redes) |
-| `supabase/functions/generate-sitemap/index.ts` | Generar URLs de directorio + imagenes |
-| `index.html` | Anadir SoftwareApplication schema |
-
-## Resultado esperado
-
-- "peluqueria santpedor" → `glowapp.app/peluquerias/santpedor` con link a Cristina Munoz
-- "peluquerias cerca de mi" → `glowapp.app/peluquerias` con listado
-- "Cristina Munoz peluqueria" → `glowapp.app/cristina-munoz` con rich snippet (estrellas, horario, servicios)
-- "reservar peluqueria online" → `glowapp.app` con sitelinks
-- Cada nuevo salon registrado aparece automaticamente en su directorio de ciudad sin tocar codigo
+### Migración SQL (storage RLS)
+- Revisar/actualizar la política de INSERT en `storage.objects` para `tenant-assets` para que funcione correctamente durante onboarding. Posiblemente reescribir usando una verificación directa contra `tenant_admins` en vez de `get_user_tenant_id()`.
 
