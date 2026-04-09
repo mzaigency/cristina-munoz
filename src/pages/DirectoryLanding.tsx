@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { Loader2, MapPin, Star, ArrowRight, Scissors, Search } from "lucide-react";
@@ -34,7 +34,10 @@ const prettifyCity = (slug: string) =>
   decodeURIComponent(slug).split("-").map(capitalize).join(" ");
 
 const DirectoryLanding = () => {
-  const { category, city } = useParams<{ category: string; city?: string }>();
+  const { city } = useParams<{ city?: string }>();
+  const location = useLocation();
+  // Extract category from path: /peluquerias/city → peluquerias
+  const category = location.pathname.split("/")[1];
   const [tenants, setTenants] = useState<DirectoryTenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewCounts, setReviewCounts] = useState<Record<string, { avg: number; count: number }>>({});
