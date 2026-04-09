@@ -7,20 +7,21 @@ import {
   Calendar,
   CreditCard,
   MessageCircle,
-  Camera,
+  ImagePlus,
   BarChart3,
   CheckCircle2,
   Circle,
   Sparkles,
   ArrowRight,
+  Scissors,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 
 interface TrainingChecklistProps {
   tenantId: string;
-  onNavigate?: (tab: string) => void;
+  onNavigate?: (tab: string, subTab?: string) => void;
 }
 
 interface TrainingStep {
@@ -28,7 +29,8 @@ interface TrainingStep {
   title: string;
   description: string;
   icon: React.ReactNode;
-  navigateTo?: string;
+  navigateTo: string;
+  subTab?: string;
 }
 
 const TRAINING_STEPS: TrainingStep[] = [
@@ -36,8 +38,9 @@ const TRAINING_STEPS: TrainingStep[] = [
     id: "services",
     title: "Configura tus servicios",
     description: "Añade los servicios que ofreces con precios y duraciones",
-    icon: <Calendar className="h-5 w-5" />,
+    icon: <Scissors className="h-5 w-5" />,
     navigateTo: "team",
+    subTab: "services",
   },
   {
     id: "first_booking",
@@ -52,6 +55,7 @@ const TRAINING_STEPS: TrainingStep[] = [
     description: "Aprende a usar la caja registradora",
     icon: <CreditCard className="h-5 w-5" />,
     navigateTo: "business",
+    subTab: "cash",
   },
   {
     id: "first_message",
@@ -61,10 +65,10 @@ const TRAINING_STEPS: TrainingStep[] = [
     navigateTo: "communication",
   },
   {
-    id: "first_story",
-    title: "Publica tu primer Story",
+    id: "first_post",
+    title: "Publica tu primer Post",
     description: "Muestra tus trabajos y atrae nuevos clientes",
-    icon: <Camera className="h-5 w-5" />,
+    icon: <ImagePlus className="h-5 w-5" />,
     navigateTo: "communication",
   },
   {
@@ -73,6 +77,7 @@ const TRAINING_STEPS: TrainingStep[] = [
     description: "Consulta el rendimiento de tu primera semana",
     icon: <BarChart3 className="h-5 w-5" />,
     navigateTo: "business",
+    subTab: "stats",
   },
 ];
 
@@ -137,6 +142,19 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
     }
   };
 
+  const handleStepNavigate = (step: TrainingStep) => {
+    if (!onNavigate) return;
+    if (step.subTab) {
+      // Store sub-tab info in sessionStorage for the target section to pick up
+      if (step.navigateTo === "team") {
+        sessionStorage.setItem("openTeamSubTab", step.subTab);
+      } else if (step.navigateTo === "business") {
+        sessionStorage.setItem("openBusinessSubTab", step.subTab);
+      }
+    }
+    onNavigate(step.navigateTo);
+  };
+
   const completedCount = Object.values(stepsCompleted).filter(Boolean).length;
   const progress = (completedCount / TRAINING_STEPS.length) * 100;
 
@@ -151,7 +169,7 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Progress header */}
       <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
         <CardContent className="p-4">
@@ -160,7 +178,7 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold">Tu progreso</h3>
+              <h3 className="text-sm font-semibold">Formación</h3>
               <p className="text-xs text-muted-foreground">
                 {completedCount}/{TRAINING_STEPS.length} pasos completados
               </p>
@@ -211,11 +229,11 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
                       </p>
                       <p className="text-xs text-muted-foreground truncate">{step.description}</p>
                     </div>
-                    {step.navigateTo && !isCompleted && onNavigate && (
+                    {!isCompleted && onNavigate && (
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => onNavigate(step.navigateTo!)}
+                        onClick={() => handleStepNavigate(step)}
                         className="shrink-0 h-8 w-8 p-0"
                       >
                         <ArrowRight className="h-4 w-4" />

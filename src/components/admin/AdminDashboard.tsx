@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { OnboardingChecklist } from "@/components/admin/OnboardingChecklist";
+import { TrainingChecklist } from "@/components/admin/content/TrainingChecklist";
+import { ROICalculator } from "@/components/admin/content/ROICalculator";
 import { motion } from "framer-motion";
 import { 
   Calendar, 
@@ -13,11 +15,14 @@ import {
   CreditCard,
   Ban,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, isToday, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface AdminDashboardProps {
   tenantId: string;
@@ -53,6 +58,9 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
     weeklyGrowth: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [tenantAge, setTenantAge] = useState<number>(999);
+  const [trainingOpen, setTrainingOpen] = useState(true);
+  const [roiOpen, setRoiOpen] = useState(false);
 
   const quickActions: QuickAction[] = [
     { id: "new-booking", label: "Nueva cita", icon: <Plus className="h-5 w-5" />, color: "bg-primary" },
@@ -62,14 +70,26 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchTenantAge();
   }, [tenantId]);
+
+  const fetchTenantAge = async () => {
+    const { data } = await supabase
+      .from("tenants")
+      .select("created_at")
+      .eq("id", tenantId)
+      .single();
+    if (data?.created_at) {
+      const days = Math.floor((Date.now() - new Date(data.created_at).getTime()) / 86400000);
+      setTenantAge(days);
+    }
+  };
 
   const fetchDashboardStats = async () => {
     try {
       const today = format(new Date(), "yyyy-MM-dd");
       const now = format(new Date(), "HH:mm");
 
-      // Fetch today's bookings
       const { data: bookings, error: bookingsError } = await supabase
         .from("bookings")
         .select("Hora, customer_name, status")
@@ -80,11 +100,9 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
       if (bookingsError) throw bookingsError;
 
-      // Find next booking
       const upcomingBookings = bookings?.filter(b => b.Hora >= now) || [];
       const nextBooking = upcomingBookings[0];
 
-      // Fetch today's revenue
       const { data: transactions, error: transactionsError } = await supabase
         .from("transactions")
         .select("total")
@@ -97,7 +115,6 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
       const todayRevenue = transactions?.reduce((sum, t) => sum + (t.total || 0), 0) || 0;
 
-      // Fetch unread messages
       const { data: conversations, error: convError } = await supabase
         .from("conversations")
         .select("unread_count_salon")
@@ -107,14 +124,12 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
       const unreadMessages = conversations?.reduce((sum, c) => sum + (c.unread_count_salon || 0), 0) || 0;
 
-      // Fetch pending reviews
       const { count: pendingReviews } = await supabase
         .from("reviews")
         .select("*", { count: "exact", head: true })
         .eq("tenant_id", tenantId)
         .eq("approved", false);
 
-      // Calculate weekly growth (compare last 7 days vs previous 7 days)
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       const twoWeeksAgo = new Date();
@@ -158,10 +173,12 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount);
+    return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
+  };
+
+  const handleTrainingNavigate = (tab: string, subTab?: string) => {
+    // Sub-tab is already stored in sessionStorage by TrainingChecklist
+    onNavigate(tab);
   };
 
   const statCards = [
@@ -225,6 +242,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
     <div className="space-y-6 pb-6">
       {/* Onboarding checklist for new tenants */}
       <OnboardingChecklist tenantId={tenantId} onNavigate={onNavigate} />
+      
       {/* Welcome message */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -255,10 +273,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
             onClick={() => onNavigate(card.tab)}
             className="relative overflow-hidden rounded-2xl p-4 text-left transition-all active:scale-[0.98]"
           >
-            {/* Gradient background */}
             <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-90`} />
-            
-            {/* Content */}
             <div className="relative z-10 text-white">
               <div className="flex items-start justify-between mb-2">
                 <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm">
@@ -272,8 +287,6 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
               <p className="text-xs font-medium opacity-90">{card.label}</p>
               <p className="text-[10px] opacity-70 mt-1 line-clamp-1">{card.subtitle}</p>
             </div>
-
-            {/* Arrow indicator */}
             <ArrowRight className="absolute bottom-3 right-3 h-4 w-4 text-white/50" />
           </motion.button>
         ))}
@@ -355,6 +368,34 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
           </div>
         </div>
       </motion.div>
+
+      {/* Training — collapsible, shown for tenants < 30 days */}
+      {tenantAge < 30 && (
+        <Collapsible open={trainingOpen} onOpenChange={setTrainingOpen}>
+          <CollapsibleTrigger asChild>
+            <button className="w-full flex items-center justify-between px-1 py-2">
+              <h3 className="text-sm font-semibold text-foreground">📚 Formación</h3>
+              {trainingOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <TrainingChecklist tenantId={tenantId} onNavigate={handleTrainingNavigate} />
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+
+      {/* ROI — collapsible, always available */}
+      <Collapsible open={roiOpen} onOpenChange={setRoiOpen}>
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between px-1 py-2">
+            <h3 className="text-sm font-semibold text-foreground">📈 Retorno de inversión</h3>
+            {roiOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <ROICalculator tenantId={tenantId} />
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
