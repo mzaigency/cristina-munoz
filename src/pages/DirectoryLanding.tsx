@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useParams, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
-import { Loader2, MapPin, Star, ArrowRight, Search, Sparkles } from "lucide-react";
+import { Loader2, MapPin, ArrowRight, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
+import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { motion } from "motion/react";
 
 // URL slug → DB business_type
