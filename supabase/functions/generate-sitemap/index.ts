@@ -20,10 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
     // Fetch all active tenants
     const { data: tenants, error } = await supabase
@@ -40,7 +37,7 @@ serve(async (req) => {
     // Static pages
     const staticPages = [
       { url: "/", priority: "1.0", changefreq: "daily" },
-      { url: "/para-negocios", priority: "0.9", changefreq: "weekly" },
+      { url: "/negocios", priority: "0.9", changefreq: "weekly" },
       { url: "/auth", priority: "0.7", changefreq: "monthly" },
       { url: "/onboarding", priority: "0.8", changefreq: "monthly" },
       { url: "/privacidad", priority: "0.3", changefreq: "yearly" },
@@ -108,22 +105,20 @@ serve(async (req) => {
 
       // Add individual tenant/salon pages with images
       for (const tenant of tenants) {
-        const lastmod = tenant.updated_at
-          ? new Date(tenant.updated_at).toISOString().split("T")[0]
-          : today;
+        const lastmod = tenant.updated_at ? new Date(tenant.updated_at).toISOString().split("T")[0] : today;
 
         xml += `  <url>
     <loc>${baseUrl}/${tenant.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>${
-          tenant.logo_url
-            ? `
+      tenant.logo_url
+        ? `
     <image:image>
       <image:loc>${tenant.logo_url}</image:loc>
     </image:image>`
-            : ""
-        }
+        : ""
+    }
   </url>
 `;
       }
@@ -144,7 +139,7 @@ serve(async (req) => {
       {
         headers: { "Content-Type": "application/xml" },
         status: 500,
-      }
+      },
     );
   }
 });

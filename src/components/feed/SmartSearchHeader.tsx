@@ -57,10 +57,7 @@ export function SmartSearchHeader() {
 
             <div className="flex items-center gap-2">
               {isSuperadmin && (
-                <Link
-                  to="/superadmin"
-                  className="p-2 rounded-full liquid-glass-pill text-amber-500"
-                >
+                <Link to="/superadmin" className="p-2 rounded-full liquid-glass-pill text-amber-500">
                   <Crown className="h-5 w-5" />
                 </Link>
               )}
@@ -73,7 +70,7 @@ export function SmartSearchHeader() {
                   className="rounded-full gradient-primary border-0 shadow-lg shadow-primary/20"
                   asChild
                 >
-                  <Link to="/para-negocios" className="flex items-center gap-1.5">
+                  <Link to="/negocios" className="flex items-center gap-1.5">
                     <Building2 className="h-4 w-4" />
                     <span className="hidden sm:inline">Para negocios</span>
                     <span className="sm:hidden">Negocios</span>

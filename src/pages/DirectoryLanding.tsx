@@ -30,12 +30,15 @@ interface DirectoryTenant {
 }
 
 const normalizeForUrl = (str: string) =>
-  str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-");
+  str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-");
 
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
-const prettifyCity = (slug: string) =>
-  decodeURIComponent(slug).split("-").map(capitalize).join(" ");
+const prettifyCity = (slug: string) => decodeURIComponent(slug).split("-").map(capitalize).join(" ");
 
 const DirectoryLanding = () => {
   const { city } = useParams<{ city?: string }>();
@@ -184,7 +187,9 @@ const DirectoryLanding = () => {
             </p>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Search className="h-3.5 w-3.5" />
-              <span>{tenants.length} {tenants.length === 1 ? "establecimiento" : "establecimientos"}</span>
+              <span>
+                {tenants.length} {tenants.length === 1 ? "establecimiento" : "establecimientos"}
+              </span>
             </div>
           </motion.div>
         </div>
@@ -209,10 +214,14 @@ const DirectoryLanding = () => {
               Aún no hay {catInfo.labelPlural.toLowerCase()} {cityDisplay ? `en ${cityDisplay}` : "registrados"}
             </h2>
             <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-              ¿Tienes {catInfo.label.toLowerCase() === "spa" ? "un" : "una"} {catInfo.label.toLowerCase()}? Regístrate gratis y empieza a recibir reservas online.
+              ¿Tienes {catInfo.label.toLowerCase() === "spa" ? "un" : "una"} {catInfo.label.toLowerCase()}? Regístrate
+              gratis y empieza a recibir reservas online.
             </p>
-            <Link to="/para-negocios">
-              <Button size="lg" className="gap-2 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-xl">
+            <Link to="/negocios">
+              <Button
+                size="lg"
+                className="gap-2 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-xl"
+              >
                 Registrar mi negocio <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
@@ -251,9 +260,7 @@ const DirectoryLanding = () => {
             transition={{ delay: 0.5 }}
             className="mt-10"
           >
-            <h2 className="text-lg font-bold text-foreground mb-4">
-              {catInfo.labelPlural} por ciudad
-            </h2>
+            <h2 className="text-lg font-bold text-foreground mb-4">{catInfo.labelPlural} por ciudad</h2>
             <div className="flex flex-wrap gap-2">
               {[...new Set(tenants.map((t) => t.city).filter(Boolean) as string[])].sort().map((c) => (
                 <Link

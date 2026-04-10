@@ -20,10 +20,10 @@ export default function ForBusiness() {
         title="GlowApp para Negocios | Tu salón de belleza digitalizado"
         description="Reservas 24/7, calendario inteligente, caja registradora y analytics. Todo lo que tu salón necesita para crecer. 30 días gratis."
         keywords="software salón belleza, app peluquería, gestión barbería, reservas online spa, agenda profesional belleza"
-        canonicalUrl="/para-negocios"
+        canonicalUrl="/negocios"
         breadcrumbs={[
           { name: "Inicio", url: "/" },
-          { name: "Para Negocios", url: "/para-negocios" },
+          { name: "Negocios", url: "/negocios" },
         ]}
         faq={[
           {
