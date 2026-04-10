@@ -316,7 +316,7 @@ const featureItem = (emoji: string, text: string) => `
   </tr>
 `
 
-type EmailType = 'welcome' | 'password-reset' | 'email-verification'
+type EmailType = 'welcome' | 'password-reset' | 'email-verification' | 'b2b-lead-confirmation'
 
 interface EmailRequest {
   type: EmailType
@@ -426,6 +426,77 @@ const templates = {
           `)}
           
           ${button('Explorar salones', APP_URL)}
+          
+          <p style="color: ${BRAND.textSecondary}; font-size: 15px; text-align: center; line-height: 1.6; margin: 0;">
+            Con cariño,<br />
+            <strong style="color: ${BRAND.textPrimary}; font-weight: 600;">El equipo de GlowApp</strong> 💜
+          </p>
+          
+          ${emailFooter}
+        ${emailContainerEnd}
+      ${emailFooterWrapper}
+    `
+  }),
+
+  'b2b-lead-confirmation': (data: {
+    contactName?: string;
+    businessName?: string;
+  }) => ({
+    subject: '💜 Hemos recibido tu solicitud — GlowApp',
+    html: `
+      ${emailWrapper}
+        ${emailContainerStart}
+          ${logoHeader}
+          
+          ${badge('📩 Solicitud recibida', 'success')}
+          
+          <h1 style="
+            color: ${BRAND.textPrimary};
+            font-size: 28px;
+            text-align: center;
+            margin: 0 0 20px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+          ">
+            ¡Hola ${data.contactName || 'profesional'}!
+          </h1>
+          
+          <p style="color: ${BRAND.textSecondary}; font-size: 16px; line-height: 1.7; text-align: center; margin: 0 0 12px;">
+            Hemos recibido tu solicitud de información sobre <strong style="color: ${BRAND.primary};">GlowApp</strong> y nos alegra mucho que quieras dar el paso para profesionalizar tu salón.
+          </p>
+          
+          <p style="color: ${BRAND.textSecondary}; font-size: 16px; line-height: 1.7; text-align: center; margin: 0 0 12px;">
+            Lo ideal es que hablemos <strong style="color: ${BRAND.textPrimary};">10 minutos</strong> para entender las necesidades específicas de tu negocio y mostrarte cómo puedes empezar a ahorrar tiempo y dinero desde el primer día.
+          </p>
+
+          ${data.businessName ? infoBox(`
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <p style="color: ${BRAND.textMuted}; font-size: 13px; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Tu negocio</p>
+                  <p style="color: ${BRAND.textPrimary}; font-weight: 700; margin: 0; font-size: 18px;">${data.businessName}</p>
+                </td>
+              </tr>
+            </table>
+          `) : ''}
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+            <tr>
+              <td style="
+                background: linear-gradient(135deg, ${BRAND.bgSoft} 0%, ${BRAND.bgHighlight} 100%);
+                border-radius: 16px;
+                padding: 22px;
+                border: 1px solid ${BRAND.borderSoft};
+                text-align: center;
+              ">
+                <p style="color: ${BRAND.primary}; font-weight: 700; margin: 0 0 4px; font-size: 16px;">📞 Te contactaremos en las próximas 24 horas</p>
+                <p style="color: ${BRAND.textSecondary}; font-size: 14px; margin: 0; line-height: 1.5;">Prepárate para descubrir cómo GlowApp puede transformar tu negocio.</p>
+              </td>
+            </tr>
+          </table>
+          
+          ${button('Visita GlowApp', APP_URL)}
           
           <p style="color: ${BRAND.textSecondary}; font-size: 15px; text-align: center; line-height: 1.6; margin: 0;">
             Con cariño,<br />
