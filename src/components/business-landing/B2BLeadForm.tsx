@@ -70,6 +70,21 @@ export const B2BLeadForm = () => {
       });
 
       if (error) throw error;
+
+      // Fire n8n webhook (fire-and-forget)
+      fetch("https://n8n-n8n.fzgtc4.easypanel.host/webhook/ea27e11c-5dd6-4725-a94b-255923ee2a6f", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          business_name: parsed.data.business_name,
+          contact_name: parsed.data.contact_name,
+          email: parsed.data.email,
+          phone: parsed.data.phone,
+          city: parsed.data.city || null,
+          services: services.length > 0 ? services : null,
+        }),
+      }).catch(() => {});
+
       setSubmitted(true);
     } catch {
       toast({
