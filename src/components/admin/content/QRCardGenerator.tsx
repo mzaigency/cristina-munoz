@@ -23,16 +23,21 @@ interface TenantBranding {
 }
 
 const TEMPLATES = [
-  { id: "minimal", label: "Minimal" },
-  { id: "dark", label: "Elegante" },
-  { id: "brand", label: "Marca" },
-  { id: "nature", label: "Natural" },
   { id: "salon", label: "Tu Salón" },
-  { id: "gradient", label: "Gradiente" },
-  { id: "glass", label: "Glass" },
+  { id: "elegant", label: "Elegante" },
+  { id: "minimal", label: "Minimalista" },
+  { id: "dark", label: "Oscuro" },
 ] as const;
 
 type TemplateId = typeof TEMPLATES[number]["id"];
+
+// Each template uses its own fonts to match its personality
+const TEMPLATE_FONTS: Record<TemplateId, { heading: string; body: string }> = {
+  salon: { heading: "", body: "" }, // dynamic — uses tenant's own fonts
+  elegant: { heading: "Playfair Display", body: "Cormorant Garamond" },
+  minimal: { heading: "Inter", body: "Inter" },
+  dark: { heading: "Bebas Neue", body: "Raleway" },
+};
 
 function hexToRgba(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -41,18 +46,66 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-function darkenHex(hex: string, amount: number): string {
-  const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - amount);
-  const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - amount);
-  const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - amount);
-  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-}
-
 function isLightColor(hex: string): boolean {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+}
+
+interface TemplateStyle {
+  bg: string;
+  text: string;
+  sub: string;
+  accent: string;
+  qrBg: string;
+}
+
+function getTemplateStyles(tid: TemplateId, pc: string, sc: string): TemplateStyle {
+  switch (tid) {
+    case "salon":
+      return {
+        bg: pc,
+        text: isLightColor(pc) ? "#111827" : "#FFFFFF",
+        sub: isLightColor(pc) ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.6)",
+        accent: sc,
+        qrBg: "#FFFFFF",
+      };
+    case "elegant":
+      return {
+        bg: "#FAF7F2",
+        text: "#2C1810",
+        sub: "#8B7355",
+        accent: "#B8860B",
+        qrBg: "#FFFFFF",
+      };
+    case "minimal":
+      return {
+        bg: "#FFFFFF",
+        text: "#111111",
+        sub: "#888888",
+        accent: "#111111",
+        qrBg: "#F5F5F5",
+      };
+    case "dark":
+      return {
+        bg: "#0F0F0F",
+        text: "#FFFFFF",
+        sub: "rgba(255,255,255,0.55)",
+        accent: "#E5C07B",
+        qrBg: "#FFFFFF",
+      };
+  }
+}
+
+function getTemplateFonts(tid: TemplateId, branding: TenantBranding) {
+  if (tid === "salon") {
+    return {
+      heading: branding.font_heading || "Inter",
+      body: branding.font_body || "Inter",
+    };
+  }
+  return TEMPLATE_FONTS[tid];
 }
 
 export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) {
@@ -96,13 +149,22 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     fetchTenant();
   }, [tenantId]);
 
-  // Load Google Fonts
+  // Load all needed Google Fonts
   useEffect(() => {
     const loadFonts = async () => {
-      const fonts = [branding.font_heading, branding.font_body].filter((f, i, arr) => arr.indexOf(f) === i);
+      const allFonts = new Set<string>();
+      // Tenant fonts for "salon" template
+      if (branding.font_heading) allFonts.add(branding.font_heading);
+      if (branding.font_body) allFonts.add(branding.font_body);
+      // Static template fonts
+      Object.values(TEMPLATE_FONTS).forEach(({ heading, body }) => {
+        if (heading) allFonts.add(heading);
+        if (body) allFonts.add(body);
+      });
+
       try {
         await Promise.all(
-          fonts.map(async (fontName) => {
+          Array.from(allFonts).map(async (fontName) => {
             const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@400;700&display=swap`;
             const res = await fetch(url);
             const css = await res.text();
@@ -138,7 +200,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     img.src = branding.logo_url;
   }, [branding.logo_url]);
 
-  // Generate QR at high resolution
+  // Generate QR
   useEffect(() => {
     QRCode.toDataURL(bookingUrl, {
       width: 400,
@@ -151,19 +213,6 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
   const pc = branding.primary_color;
   const sc = branding.secondary_color;
 
-  const getTemplateStyles = (tid: TemplateId) => {
-    switch (tid) {
-      case "minimal": return { bg: "#FFFFFF", text: "#111827", sub: "#6B7280", accent: "#8B5CF6" };
-      case "dark": return { bg: "#1F2937", text: "#FFFFFF", sub: "rgba(255,255,255,0.7)", accent: "#F59E0B" };
-      case "brand": return { bg: pc, text: isLightColor(pc) ? "#111827" : "#FFFFFF", sub: isLightColor(pc) ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.7)", accent: isLightColor(pc) ? "#111827" : "#FFFFFF" };
-      case "nature": return { bg: "#ECFDF5", text: "#064E3B", sub: "#6B7280", accent: "#059669" };
-      case "salon": return { bg: pc, text: isLightColor(pc) ? "#111827" : "#FFFFFF", sub: isLightColor(pc) ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.6)", accent: sc };
-      case "gradient": return { bg: "gradient", text: "#FFFFFF", sub: "rgba(255,255,255,0.7)", accent: "#FFFFFF" };
-      case "glass": return { bg: "#FFFFFF", text: "#111827", sub: "#6B7280", accent: pc };
-      default: return { bg: "#FFFFFF", text: "#111827", sub: "#6B7280", accent: "#8B5CF6" };
-    }
-  };
-
   const generateCard = async (): Promise<HTMLCanvasElement | null> => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
@@ -174,115 +223,145 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     canvas.width = w;
     canvas.height = h;
 
-    const s = getTemplateStyles(template);
-    const headingFont = branding.font_heading || "Inter";
-    const bodyFont = branding.font_body || "Inter";
+    const s = getTemplateStyles(template, pc, sc);
+    const fonts = getTemplateFonts(template, branding);
 
-    // Background
-    if (template === "gradient") {
-      const grad = ctx.createLinearGradient(0, 0, w, h);
-      grad.addColorStop(0, pc);
-      grad.addColorStop(1, sc);
-      ctx.fillStyle = grad;
-    } else if (template === "glass") {
-      ctx.fillStyle = "#F8F9FA";
-      ctx.fillRect(0, 0, w, h);
-      // Glass border effect
-      ctx.strokeStyle = hexToRgba(pc, 0.3);
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.roundRect(16, 16, w - 32, h - 32, 32);
-      ctx.stroke();
-      // Inner subtle gradient
-      const gGlass = ctx.createLinearGradient(0, 0, w, h);
-      gGlass.addColorStop(0, hexToRgba(pc, 0.05));
-      gGlass.addColorStop(1, hexToRgba(sc, 0.08));
-      ctx.fillStyle = gGlass;
-    } else {
-      ctx.fillStyle = s.bg;
-    }
+    // — Background —
+    ctx.fillStyle = s.bg;
     ctx.beginPath();
     ctx.roundRect(0, 0, w, h, 32);
     ctx.fill();
 
-    // Border for non-glass
-    if (template !== "glass") {
-      ctx.strokeStyle = "rgba(0,0,0,0.08)";
-      ctx.lineWidth = 2;
+    // Elegant: subtle warm border
+    if (template === "elegant") {
+      ctx.strokeStyle = hexToRgba("#B8860B", 0.25);
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(20, 20, w - 40, h - 40, 24);
       ctx.stroke();
     }
 
-    // Logo
-    const logoSize = 80;
-    let textStartY = 140;
+    // Dark: subtle glow line at top
+    if (template === "dark") {
+      const glow = ctx.createLinearGradient(80, 24, w - 80, 24);
+      glow.addColorStop(0, "rgba(229,192,123,0)");
+      glow.addColorStop(0.5, "rgba(229,192,123,0.5)");
+      glow.addColorStop(1, "rgba(229,192,123,0)");
+      ctx.strokeStyle = glow;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(80, 24);
+      ctx.lineTo(w - 80, 24);
+      ctx.stroke();
+    }
+
+    // Minimal: thin border
+    if (template === "minimal") {
+      ctx.strokeStyle = "#E5E5E5";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(0, 0, w, h, 32);
+      ctx.stroke();
+    }
+
+    // Salon: subtle gradient overlay
+    if (template === "salon") {
+      const overlay = ctx.createLinearGradient(0, 0, w, h);
+      overlay.addColorStop(0, "rgba(255,255,255,0.08)");
+      overlay.addColorStop(1, "rgba(0,0,0,0.08)");
+      ctx.fillStyle = overlay;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // — Left content area —
+    const contentX = 80;
+    const contentMaxW = w - 480; // leave room for QR on right
+
+    // Logo — positioned with clear separation from name
+    let nameY = 200;
     if (logoImage) {
-      const logoX = 80, logoY = 60;
+      const logoSize = 72;
+      const logoX = contentX;
+      const logoY = 70;
       ctx.save();
       ctx.beginPath();
-      ctx.roundRect(logoX, logoY, logoSize, logoSize, 16);
+      ctx.roundRect(logoX, logoY, logoSize, logoSize, 14);
       ctx.clip();
       ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
       ctx.restore();
-      // Logo border
+      // logo border
       ctx.strokeStyle = hexToRgba(s.accent, 0.3);
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(logoX, logoY, logoSize, logoSize, 16);
+      ctx.roundRect(logoX, logoY, logoSize, logoSize, 14);
       ctx.stroke();
-      textStartY = 170;
+      nameY = 190; // extra gap after logo
     }
 
     // Name
     ctx.fillStyle = s.text;
-    ctx.font = `bold 56px "${headingFont}", sans-serif`;
-    ctx.fillText(branding.name || "Tu Salón", 80, textStartY);
+    ctx.font = `bold 52px "${fonts.heading}", sans-serif`;
+    ctx.textAlign = "left";
+    ctx.fillText(branding.name || "Tu Salón", contentX, nameY);
+
+    // Accent line
+    ctx.fillStyle = s.accent;
+    ctx.beginPath();
+    ctx.roundRect(contentX, nameY + 18, 60, 4, 2);
+    ctx.fill();
 
     // Tagline
     ctx.fillStyle = s.sub;
-    ctx.font = `32px "${bodyFont}", sans-serif`;
-    ctx.fillText(tagline, 80, textStartY + 50);
+    ctx.font = `28px "${fonts.body}", sans-serif`;
+    ctx.fillText(tagline, contentX, nameY + 60);
 
-    // URL
+    // URL at bottom-left
     ctx.fillStyle = s.accent;
-    ctx.font = `bold 24px "${bodyFont}", sans-serif`;
-    ctx.fillText(bookingUrl.replace("https://", ""), 80, h - 60);
+    ctx.font = `bold 22px "${fonts.body}", sans-serif`;
+    ctx.fillText(bookingUrl.replace("https://", ""), contentX, h - 60);
 
-    // Decorative accent line
-    ctx.fillStyle = s.accent;
-    ctx.beginPath();
-    ctx.roundRect(80, textStartY + 70, 80, 4, 2);
-    ctx.fill();
-
-    // QR Code
+    // — QR Code on right —
     if (qrDataUrl) {
       const qrImg = new Image();
       qrImg.crossOrigin = "anonymous";
       await new Promise<void>((resolve) => {
         qrImg.onload = () => {
-          const qrSize = 320;
-          const qrX = w - qrSize - 80;
-          const qrY = (h - qrSize) / 2;
-          // White bg for QR
-          ctx.fillStyle = "#FFFFFF";
+          const qrSize = 300;
+          const qrX = w - qrSize - 100;
+          const qrY = (h - qrSize - 50) / 2;
+
+          // QR background card
+          ctx.fillStyle = s.qrBg;
           ctx.beginPath();
-          ctx.roundRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 24);
+          ctx.roundRect(qrX - 24, qrY - 24, qrSize + 48, qrSize + 80, 20);
           ctx.fill();
-          ctx.shadowColor = "rgba(0,0,0,0.1)";
-          ctx.shadowBlur = 20;
+
+          // Subtle shadow for QR card
+          ctx.save();
+          ctx.shadowColor = "rgba(0,0,0,0.08)";
+          ctx.shadowBlur = 24;
+          ctx.shadowOffsetY = 8;
+          ctx.fillStyle = s.qrBg;
+          ctx.beginPath();
+          ctx.roundRect(qrX - 24, qrY - 24, qrSize + 48, qrSize + 80, 20);
+          ctx.fill();
+          ctx.restore();
+
+          // QR image
           ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-          ctx.shadowBlur = 0;
+
+          // "Escanea para reservar" below QR
+          ctx.fillStyle = template === "minimal" ? "#888888" : "#666666";
+          ctx.font = `20px "${fonts.body}", sans-serif`;
+          ctx.textAlign = "center";
+          ctx.fillText("Escanea para reservar", qrX + qrSize / 2, qrY + qrSize + 36);
+          ctx.textAlign = "left";
+
           resolve();
         };
         qrImg.src = qrDataUrl;
       });
     }
-
-    // "Escanea para reservar"
-    ctx.fillStyle = s.sub;
-    ctx.font = `24px "${bodyFont}", sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText("Escanea para reservar", w - 240, h - 60);
-    ctx.textAlign = "left";
 
     return canvas;
   };
@@ -312,35 +391,40 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     });
   };
 
-  // Preview colors per template
-  const previewStyles = getTemplateStyles(template);
+  // — Preview —
+  const previewStyles = getTemplateStyles(template, pc, sc);
+  const previewFonts = getTemplateFonts(template, branding);
+
+  // Template selector preview colors
+  const templatePreviewBgs: Record<TemplateId, string> = {
+    salon: pc,
+    elegant: "#FAF7F2",
+    minimal: "#FFFFFF",
+    dark: "#0F0F0F",
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Template selector */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">Elige una plantilla</h3>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-foreground">Estilo</h3>
+        <div className="grid grid-cols-4 gap-2">
           {TEMPLATES.map((t) => {
-            const ts = getTemplateStyles(t.id);
-            const bgStyle = t.id === "gradient"
-              ? { background: `linear-gradient(135deg, ${pc}, ${sc})` }
-              : t.id === "glass"
-              ? { background: "#F8F9FA", border: `2px solid ${hexToRgba(pc, 0.3)}` }
-              : { background: ts.bg };
-
+            const ts = getTemplateStyles(t.id, pc, sc);
             return (
               <button
                 key={t.id}
                 onClick={() => setTemplate(t.id)}
                 className={cn(
-                  "relative h-16 rounded-xl overflow-hidden transition-all",
-                  template === t.id ? "ring-2 ring-primary shadow-lg scale-[1.02]" : "ring-1 ring-border hover:ring-muted-foreground/30"
+                  "relative h-14 rounded-xl overflow-hidden transition-all",
+                  template === t.id
+                    ? "ring-2 ring-primary shadow-lg scale-[1.03]"
+                    : "ring-1 ring-border hover:ring-muted-foreground/30"
                 )}
-                style={bgStyle}
+                style={{ background: templatePreviewBgs[t.id] }}
               >
                 <span
-                  className="absolute bottom-1.5 left-2 text-[10px] font-medium"
+                  className="absolute bottom-1 left-2 text-[10px] font-medium"
                   style={{ color: ts.text }}
                 >
                   {t.label}
@@ -352,7 +436,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
       </div>
 
       {/* Tagline */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <label className="text-sm font-medium text-foreground">Eslogan</label>
         <Input
           value={tagline}
@@ -362,53 +446,76 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
         />
       </div>
 
-      {/* Preview */}
+      {/* Preview card */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           <div
             className="relative p-5 aspect-[3/2] flex"
-            style={
-              template === "gradient"
-                ? { background: `linear-gradient(135deg, ${pc}, ${sc})` }
-                : template === "glass"
-                ? { background: "#F8F9FA", border: `2px solid ${hexToRgba(pc, 0.3)}`, borderRadius: "0.75rem" }
-                : { background: previewStyles.bg }
-            }
+            style={{ background: previewStyles.bg }}
           >
-            <div className="flex-1 flex flex-col justify-between min-w-0">
-              <div>
+            {/* Left content */}
+            <div className="flex-1 flex flex-col justify-between min-w-0 pr-3">
+              <div className="space-y-2">
                 {branding.logo_url && (
                   <img
                     src={branding.logo_url}
                     alt=""
-                    className="h-8 w-8 rounded-lg object-cover mb-2"
+                    className="h-8 w-8 rounded-lg object-cover"
                   />
                 )}
-                <h3
-                  className="text-base font-bold truncate"
-                  style={{ color: previewStyles.text, fontFamily: `"${branding.font_heading}", sans-serif` }}
-                >
-                  {branding.name || "Tu Salón"}
-                </h3>
-                <p
-                  className="text-[10px] mt-0.5"
-                  style={{ color: previewStyles.sub, fontFamily: `"${branding.font_body}", sans-serif` }}
-                >
-                  {tagline}
-                </p>
-                <div className="w-8 h-0.5 rounded-full mt-2" style={{ background: previewStyles.accent }} />
+                <div className="pt-1">
+                  <h3
+                    className="text-base font-bold truncate"
+                    style={{
+                      color: previewStyles.text,
+                      fontFamily: `"${previewFonts.heading}", sans-serif`,
+                    }}
+                  >
+                    {branding.name || "Tu Salón"}
+                  </h3>
+                  <div
+                    className="w-6 h-0.5 rounded-full mt-1.5"
+                    style={{ background: previewStyles.accent }}
+                  />
+                  <p
+                    className="text-[10px] mt-2"
+                    style={{
+                      color: previewStyles.sub,
+                      fontFamily: `"${previewFonts.body}", sans-serif`,
+                    }}
+                  >
+                    {tagline}
+                  </p>
+                </div>
               </div>
               <p
-                className="text-[8px] font-mono truncate"
-                style={{ color: previewStyles.accent }}
+                className="text-[8px] font-medium truncate"
+                style={{
+                  color: previewStyles.accent,
+                  fontFamily: `"${previewFonts.body}", sans-serif`,
+                }}
               >
                 {bookingUrl.replace("https://", "")}
               </p>
             </div>
+
+            {/* QR right side */}
             <div className="flex items-center shrink-0">
               {qrDataUrl && (
-                <div className="bg-white p-1.5 rounded-lg shadow-sm">
+                <div
+                  className="p-1.5 rounded-lg shadow-sm flex flex-col items-center gap-1"
+                  style={{ background: previewStyles.qrBg }}
+                >
                   <img src={qrDataUrl} alt="QR Code" className="w-20 h-20" />
+                  <span
+                    className="text-[7px]"
+                    style={{
+                      color: "#888",
+                      fontFamily: `"${previewFonts.body}", sans-serif`,
+                    }}
+                  >
+                    Escanea para reservar
+                  </span>
                 </div>
               )}
             </div>
