@@ -71,6 +71,18 @@ export const B2BLeadForm = () => {
 
       if (error) throw error;
 
+      // Send confirmation email (fire-and-forget)
+      supabase.functions.invoke('send-email', {
+        body: {
+          type: 'b2b-lead-confirmation',
+          to: parsed.data.email,
+          data: {
+            contactName: parsed.data.contact_name,
+            businessName: parsed.data.business_name,
+          },
+        },
+      }).catch(() => {});
+
       // Fire n8n webhook (fire-and-forget)
       fetch("https://n8n-n8n.fzgtc4.easypanel.host/webhook/ea27e11c-5dd6-4725-a94b-255923ee2a6f", {
         method: "POST",
