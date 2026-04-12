@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, GripVertical, Banknote, ShieldAlert, UserCircle } from "lucide-react";
+import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, CheckCheck, GripVertical, Banknote, ShieldAlert, UserCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,7 @@ interface LocalBooking {
   recurrence_group_id: string | null;
   recurrence_pattern: any | null;
   skip_availability_check: boolean;
+  reminder_sent: string | null;
 }
 
 interface LocalCalendarCRMProps {
@@ -1364,6 +1365,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                             {isCompact ? (
                                               <div className="flex items-center gap-1 min-w-0 pr-10">
                                                 {isCompleted && <Check className="h-3 w-3 text-green-500 shrink-0" />}
+                                                {booking.reminder_sent === "confirmado" && (
+                                                  <span title="Confirmado por WhatsApp"><CheckCheck className="h-2.5 w-2.5 text-green-500 shrink-0" /></span>
+                                                )}
                                                 {booking.skip_availability_check && (
                                                   <ShieldAlert className="h-2.5 w-2.5 text-amber-500 shrink-0" />
                                                 )}
@@ -1379,6 +1383,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                                 <div className="flex items-center gap-1">
                                                   {isCompleted && (
                                                     <Check className="h-3 w-3 text-green-500 shrink-0" />
+                                                  )}
+                                                  {booking.reminder_sent === "confirmado" && (
+                                                    <span title="Confirmado por WhatsApp"><CheckCheck className="h-3 w-3 text-green-500 shrink-0" /></span>
                                                   )}
                                                   {booking.skip_availability_check && (
                                                     <ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" />
