@@ -1366,7 +1366,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                               <div className="flex items-center gap-1 min-w-0 pr-10">
                                                 {isCompleted && <Check className="h-3 w-3 text-green-500 shrink-0" />}
                                                 {booking.reminder_sent === "confirmado" && (
-                                                  <CheckCheck className="h-2.5 w-2.5 text-green-500 shrink-0" title="Confirmado por WhatsApp" />
+                                                  <span title="Confirmado por WhatsApp"><CheckCheck className="h-2.5 w-2.5 text-green-500 shrink-0" /></span>
                                                 )}
                                                 {booking.skip_availability_check && (
                                                   <ShieldAlert className="h-2.5 w-2.5 text-amber-500 shrink-0" />
@@ -1385,7 +1385,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                                     <Check className="h-3 w-3 text-green-500 shrink-0" />
                                                   )}
                                                   {booking.reminder_sent === "confirmado" && (
-                                                    <CheckCheck className="h-3 w-3 text-green-500 shrink-0" title="Confirmado por WhatsApp" />
+                                                    <span title="Confirmado por WhatsApp"><CheckCheck className="h-3 w-3 text-green-500 shrink-0" /></span>
                                                   )}
                                                   {booking.skip_availability_check && (
                                                     <ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" />
