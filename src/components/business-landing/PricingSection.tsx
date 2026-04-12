@@ -31,6 +31,7 @@ const FEATURE_LABELS: Record<string, string> = {
   monthly_goals: "Objetivos mensuales",
   waitlist: "Lista de espera",
   products: "Productos",
+  whatsapp_reminders: "Recordatorios por WhatsApp",
 };
 
 export const PricingSection = () => {
