@@ -1,41 +1,35 @@
+# Plan: Indicador visual de confirmación WhatsApp + Feature en planes
 
+## Parte 1: Indicador visual en la agenda
 
-# Plan: Email de confirmación B2B via Resend
+solo cuando leas en la tabla bookings que reminder_sent esta en "confirmado"
 
-## Implementación
+3. **Añadir indicador visual en las tarjetas de cita** — junto a los iconos existentes (Check completada, ShieldAlert), mostrar un pequeño icono de verificación WhatsApp (un `CheckCheck` de lucide o similar en verde) cuando `whatsapp_confirmed === true`. Se mostrará tanto en vista compacta como expandida.
+4. **Tooltip/title** — el icono tendrá `title="Confirmado por WhatsApp"`
 
-Añadir un template `b2b-lead-confirmation` al edge function `send-email` existente (que ya usa Resend) y dispararlo desde el formulario B2B.
+## Parte 2: Feature "whatsapp_reminders" en planes
 
-### 1. `supabase/functions/send-email/index.ts`
-- Ampliar `EmailType` con `'b2b-lead-confirmation'`
-- Añadir template con branding GlowApp: logo, gradiente indigo/violeta, copy aprobado
-- Copy del email:
-  > Hola [contact_name],
-  > Hemos recibido tu solicitud de información sobre GlowApp y nos alegra mucho que quieras dar el paso para profesionalizar tu salón.
-  > Lo ideal es que hablemos 10 minutos para entender las necesidades específicas de tu negocio y mostrarte cómo puedes empezar a ahorrar tiempo y dinero desde el primer día.
-  > Te contactaremos en las próximas 24 horas.
-  > — El equipo de GlowApp
-- Botón CTA: "Visita GlowApp" → glowapp.app
-- Info box con el nombre del negocio registrado
+### Migración SQL
 
-### 2. `src/components/business-landing/B2BLeadForm.tsx`
-- Después del insert exitoso y antes del webhook, añadir llamada fire-and-forget:
-```typescript
-supabase.functions.invoke('send-email', {
-  body: {
-    type: 'b2b-lead-confirmation',
-    to: parsed.data.email,
-    data: {
-      contactName: parsed.data.contact_name,
-      businessName: parsed.data.business_name,
-    },
-  },
-}).catch(() => {});
+Actualizar la tabla `subscription_plans` para añadir `whatsapp_reminders: true` en el JSON `features` de los planes `pro` y `business`, y `false` en `starter`:
+
+```sql
+UPDATE subscription_plans SET features = features || '{"whatsapp_reminders": true}' WHERE slug IN ('pro', 'business');
+UPDATE subscription_plans SET features = features || '{"whatsapp_reminders": false}' WHERE slug = 'starter';
 ```
 
-### 3. Deploy
-- Redesplegar `send-email` edge function
+### `src/components/business-landing/PricingSection.tsx`
 
-## Sin migraciones SQL
-No se necesitan cambios en base de datos.
+Añadir al mapa `FEATURE_LABELS`:
 
+```ts
+whatsapp_reminders: "Recordatorios por WhatsApp",
+```
+
+Esto hará que aparezca automáticamente como check en los planes Pro y Business.
+
+## Archivos a modificar
+
+- `src/components/admin/LocalCalendarCRM.tsx` — fetch con join + icono visual
+- `src/components/business-landing/PricingSection.tsx` — label del feature
+- Migración SQL — features JSON en subscription_plans
