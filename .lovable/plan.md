@@ -1,35 +1,34 @@
-# Plan: Indicador visual de confirmación WhatsApp + Feature en planes
 
-## Parte 1: Indicador visual en la agenda
 
-solo cuando leas en la tabla bookings que reminder_sent esta en "confirmado"
+# Plan: Cambiar colores principales a #22408b y #99329a
 
-3. **Añadir indicador visual en las tarjetas de cita** — junto a los iconos existentes (Check completada, ShieldAlert), mostrar un pequeño icono de verificación WhatsApp (un `CheckCheck` de lucide o similar en verde) cuando `whatsapp_confirmed === true`. Se mostrará tanto en vista compacta como expandida.
-4. **Tooltip/title** — el icono tendrá `title="Confirmado por WhatsApp"`
+## Resumen
+Actualizar los colores primario (azul) y acento (morado) de la app con los nuevos valores de marca, afectando botones con gradiente y toda la interfaz.
 
-## Parte 2: Feature "whatsapp_reminders" en planes
+## Conversión de colores
+- `#22408b` → HSL: 223 61% 34%
+- `#99329a` → HSL: 299 51% 40%
 
-### Migración SQL
+## Cambios en `src/index.css`
 
-Actualizar la tabla `subscription_plans` para añadir `whatsapp_reminders: true` en el JSON `features` de los planes `pro` y `business`, y `false` en `starter`:
+Líneas 21-32 y 46, 60-61, 65, 67-71: actualizar todas las referencias a primary y accent:
 
-```sql
-UPDATE subscription_plans SET features = features || '{"whatsapp_reminders": true}' WHERE slug IN ('pro', 'business');
-UPDATE subscription_plans SET features = features || '{"whatsapp_reminders": false}' WHERE slug = 'starter';
+```css
+--primary: 223 61% 34%;
+--accent: 299 51% 40%;
+--ring: 223 61% 34%;
+--gradient-start: 223 61% 34%;
+--gradient-end: 299 51% 40%;
+--sidebar-primary: 223 61% 34%;
+--sidebar-ring: 223 61% 34%;
 ```
 
-### `src/components/business-landing/PricingSection.tsx`
-
-Añadir al mapa `FEATURE_LABELS`:
-
-```ts
-whatsapp_reminders: "Recordatorios por WhatsApp",
+Ajustar también los soft gradients para que deriven de los nuevos tonos:
+```css
+--gradient-soft-start: 223 15% 97%;
+--gradient-soft-end: 299 12% 97%;
 ```
-
-Esto hará que aparezca automáticamente como check en los planes Pro y Business.
 
 ## Archivos a modificar
+- `src/index.css` — variables CSS root (unico archivo)
 
-- `src/components/admin/LocalCalendarCRM.tsx` — fetch con join + icono visual
-- `src/components/business-landing/PricingSection.tsx` — label del feature
-- Migración SQL — features JSON en subscription_plans
