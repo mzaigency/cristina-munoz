@@ -10,13 +10,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Moon, Sun, Monitor, Users, AtSign, Trash2, Bell } from "lucide-react";
+import { Loader2, User, Mail, Phone, ChevronRight, LogOut, Calendar, Star, Shield, FileText, Sun, Users, AtSign, Trash2, Bell } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { UserStats } from "@/components/profile/UserStats";
-import { useTheme } from "next-themes";
+
 import { useFollows } from "@/hooks/useFollows";
 
 const profileSchema = z.object({
@@ -38,7 +38,7 @@ export default function Profile() {
   const [originalUsername, setOriginalUsername] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
+  
   const { followingCount } = useFollows();
 
   const form = useForm<ProfileFormValues>({
@@ -444,58 +444,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Appearance */}
-            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
-              <div className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  {theme === 'dark' ? (
-                    <Moon className="h-5 w-5 text-primary" />
-                  ) : theme === 'light' ? (
-                    <Sun className="h-5 w-5 text-primary" />
-                  ) : (
-                    <Monitor className="h-5 w-5 text-primary" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">Apariencia</p>
-                  <p className="text-xs text-muted-foreground">
-                    {theme === 'dark' ? 'Modo oscuro' : theme === 'light' ? 'Modo claro' : 'Automático'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 liquid-glass-pill !rounded-lg p-1">
-                  <button
-                    onClick={() => setTheme('light')}
-                    className={`p-2 rounded-md transition-all ${
-                      theme === 'light' 
-                        ? 'bg-background shadow-sm text-foreground' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Sun className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setTheme('dark')}
-                    className={`p-2 rounded-md transition-all ${
-                      theme === 'dark' 
-                        ? 'bg-background shadow-sm text-foreground' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Moon className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setTheme('system')}
-                    className={`p-2 rounded-md transition-all ${
-                      theme === 'system' 
-                        ? 'bg-background shadow-sm text-foreground' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Monitor className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
 
             {/* Legal Links */}
             <div className="liquid-glass-card !rounded-2xl overflow-hidden divide-y divide-border/30">
