@@ -19,7 +19,7 @@
     --popover-foreground: 230 25% 10%;
 
     /* Primary: Blue from logo */
-    --primary: 230 85% 60%;
+    --primary: 223 61% 34%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 230 20% 96%;
@@ -29,7 +29,7 @@
     --muted-foreground: 230 10% 45%;
 
     /* Accent: Purple from logo */
-    --accent: 270 80% 60%;
+    --accent: 299 51% 40%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -43,7 +43,7 @@
 
     --border: 230 15% 90%;
     --input: 230 15% 90%;
-    --ring: 230 85% 60%;
+    --ring: 223 61% 34%;
 
     --radius: 1rem;
     
@@ -57,18 +57,18 @@
 
     --sidebar-background: 230 10% 98%;
     --sidebar-foreground: 230 25% 10%;
-    --sidebar-primary: 230 85% 60%;
+    --sidebar-primary: 223 61% 34%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 230 15% 96%;
     --sidebar-accent-foreground: 230 25% 10%;
     --sidebar-border: 230 15% 90%;
-    --sidebar-ring: 230 85% 60%;
+    --sidebar-ring: 223 61% 34%;
 
     /* Gradient colors - Blue to Purple like the logo */
-    --gradient-start: 230 85% 60%;
-    --gradient-end: 270 80% 60%;
-    --gradient-soft-start: 230 20% 98%;
-    --gradient-soft-end: 270 15% 98%;
+    --gradient-start: 223 61% 34%;
+    --gradient-end: 299 51% 40%;
+    --gradient-soft-start: 223 15% 97%;
+    --gradient-soft-end: 299 12% 97%;
   }
 
 }
