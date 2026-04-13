@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { NavigationProvider } from "@/contexts/NavigationContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ThemeProvider } from "next-themes";
+
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { MaintenanceScreen } from "@/components/MaintenanceScreen";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,7 +141,7 @@ const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <>
         <AuthProvider>
           <Suspense fallback={null}>
             <TooltipProvider>
@@ -202,7 +202,7 @@ const App = () => (
             </TooltipProvider>
           </Suspense>
         </AuthProvider>
-      </ThemeProvider>
+      </>
     </QueryClientProvider>
   </ErrorBoundary>
 );
