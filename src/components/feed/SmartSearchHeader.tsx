@@ -35,7 +35,7 @@ export function SmartSearchHeader() {
         <div className="h-[env(safe-area-inset-top)]" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
-        <div className="px-2 pt-3 pb-3">
+        <div className="px-4 pt-3 pb-3">
           <motion.div
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -44,11 +44,7 @@ export function SmartSearchHeader() {
           >
             <Link to="/">
               <motion.img
-                src={glowappLogo}
-                alt="GlowApp"
-                width={149}
-                height={56}
-                className="h-8 object-contain rounded-xl"
+                <img src={glowappLogo} alt="GlowApp" className="h-8 w-auto" />
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
