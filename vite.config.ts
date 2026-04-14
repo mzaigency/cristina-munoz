@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    versionJsonPlugin(),
+    VitePWA({
       registerType: "prompt",
       injectRegister: "script-defer",
       devOptions: {
