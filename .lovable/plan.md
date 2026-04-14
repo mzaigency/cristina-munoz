@@ -1,34 +1,46 @@
 
 
-# Plan: Cambiar colores principales a #22408b y #99329a
+# Plan: Auto-actualización en iOS + Actualizar logo PWA
 
-## Resumen
-Actualizar los colores primario (azul) y acento (morado) de la app con los nuevos valores de marca, afectando botones con gradiente y toda la interfaz.
+## Problema
+En iOS, las PWAs no soportan Service Workers de la misma manera que Android/Chrome. Safari no dispara eventos `updatefound` ni `controllerchange` de forma fiable, por lo que el `UpdatePrompt` actual no funciona en iOS. Además, iOS cachea agresivamente los assets de la PWA (incluidos iconos).
 
-## Conversión de colores
-- `#22408b` → HSL: 223 61% 34%
-- `#99329a` → HSL: 299 51% 40%
+## Solución
 
-## Cambios en `src/index.css`
+### 1. Sistema de versionado con auto-refresh para iOS
+Crear un mecanismo de detección de versión que funcione sin depender del Service Worker:
 
-Líneas 21-32 y 46, 60-61, 65, 67-71: actualizar todas las referencias a primary y accent:
+- **Añadir un archivo `public/version.json`** con un hash/timestamp de la build actual
+- **Crear un hook `useAppVersion`** que al abrir la app (y en cada `visibilitychange`) haga fetch a `/version.json?t=timestamp` (sin cache) y compare con la versión guardada en `localStorage`
+- Si hay nueva versión → mostrar aviso o recargar automáticamente
+- Esto funciona en iOS Safari, tanto en navegador como en modo standalone
 
-```css
---primary: 223 61% 34%;
---accent: 299 51% 40%;
---ring: 223 61% 34%;
---gradient-start: 223 61% 34%;
---gradient-end: 299 51% 40%;
---sidebar-primary: 223 61% 34%;
---sidebar-ring: 223 61% 34%;
+### 2. Mejorar `UpdatePrompt.tsx`
+- Integrar el nuevo hook de versión además del listener de SW existente
+- Detectar iOS: si es iOS en modo standalone, hacer auto-reload silencioso (ya que el usuario no puede "actualizar" manualmente fácil)
+- Si es iOS en navegador, mostrar el banner de actualización
+
+### 3. Actualizar `vite.config.ts`
+- Añadir un plugin inline que genere `version.json` en cada build con un hash único
+- Actualizar `theme_color` del manifest de `#4361ee` a `#22408b` (nuevo color de marca)
+
+### 4. Actualizar iconos PWA
+Los iconos en `public/` (`icon-192.png`, `icon-512.png`, `icon-192-maskable.png`, `icon-512-maskable.png`, `apple-touch-icon.png`, `favicon.png`, `favicon.ico`) ya fueron actualizados previamente con los nuevos assets del zip. Si necesitan regenerarse, se sobreescribirán con los archivos correctos del zip subido.
+
+## Archivos a modificar/crear
+- **Crear**: `public/version.json`
+- **Crear**: `src/hooks/useAppVersion.ts`
+- **Modificar**: `src/components/pwa/UpdatePrompt.tsx` — integrar detección de versión + lógica iOS
+- **Modificar**: `vite.config.ts` — plugin para generar version.json + actualizar theme_color
+- **Modificar**: `src/App.tsx` — asegurar que UpdatePrompt está montado
+
+## Detalle técnico: useAppVersion
+```typescript
+// Cada 30s (y en visibilitychange) hace fetch a /version.json
+// Compara con localStorage('app-version')
+// Si difiere → dispara callback o auto-reload
 ```
 
-Ajustar también los soft gradients para que deriven de los nuevos tonos:
-```css
---gradient-soft-start: 223 15% 97%;
---gradient-soft-end: 299 12% 97%;
-```
-
-## Archivos a modificar
-- `src/index.css` — variables CSS root (unico archivo)
+## Detalle técnico: iOS standalone auto-reload
+En iOS standalone, no hay barra de navegación para recargar. El sistema detectará versión nueva y hará `window.location.reload()` automáticamente cuando el usuario vuelva a la app (visibilitychange → visible).
 
