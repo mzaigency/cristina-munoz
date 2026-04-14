@@ -92,7 +92,9 @@ export function AIGenerationStep({ tenantId, onNext, loading, setLoading }: Step
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    // Activate tenant even when skipping AI generation
+    await activateTenant();
     onNext();
   };
 
