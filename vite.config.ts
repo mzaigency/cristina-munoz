@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    VitePWA({
+    versionJsonPlugin(),
       registerType: "prompt",
       injectRegister: "script-defer",
       devOptions: {
@@ -51,7 +51,7 @@ export default defineConfig(({ mode }) => ({
         name: "GlowApp",
         short_name: "GlowApp",
         description: "La red social de belleza. Descubre salones, reserva citas y conecta con profesionales.",
-        theme_color: "#4361ee",
+        theme_color: "#22408b",
         background_color: "#ffffff",
         display: "standalone",
         orientation: "portrait",
