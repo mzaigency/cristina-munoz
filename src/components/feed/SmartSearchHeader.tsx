@@ -35,7 +35,7 @@ export function SmartSearchHeader() {
         <div className="h-[env(safe-area-inset-top)]" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
-        <div className="px-4 pt-3 pb-3">
+        <div className="px-2 pt-3 pb-3">
           <motion.div
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
