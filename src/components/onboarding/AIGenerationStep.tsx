@@ -58,6 +58,14 @@ export function AIGenerationStep({ tenantId, onNext, loading, setLoading }: Step
     }
   };
 
+  const activateTenant = async () => {
+    const { error } = await supabase
+      .from("tenants")
+      .update({ is_active: true })
+      .eq("id", tenantId);
+    if (error) console.error("Error activating tenant:", error);
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
@@ -71,6 +79,9 @@ export function AIGenerationStep({ tenantId, onNext, loading, setLoading }: Step
         .eq("id", tenantId);
 
       if (error) throw error;
+
+      // Activate tenant — setup is complete
+      await activateTenant();
       
       toast.success("¡Contenido guardado!");
       onNext();

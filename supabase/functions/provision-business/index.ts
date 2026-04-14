@@ -176,7 +176,7 @@ serve(async (req) => {
         max_stylists: planConfig.max_stylists,
         max_services: planConfig.max_services,
         features: planConfig.features,
-        is_active: true,
+        is_active: false,
       })
       .select()
       .single();
