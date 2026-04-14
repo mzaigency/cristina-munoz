@@ -1,8 +1,20 @@
-import { defineConfig } from "vite";
+import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import fs from "fs";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
+
+function versionJsonPlugin(): Plugin {
+  return {
+    name: "version-json",
+    writeBundle() {
+      const version = Date.now().toString(36);
+      const content = JSON.stringify({ version, buildTime: new Date().toISOString() });
+      fs.writeFileSync(path.resolve(__dirname, "dist/version.json"), content);
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -39,7 +51,7 @@ export default defineConfig(({ mode }) => ({
         name: "GlowApp",
         short_name: "GlowApp",
         description: "La red social de belleza. Descubre salones, reserva citas y conecta con profesionales.",
-        theme_color: "#4361ee",
+        theme_color: "#22408b",
         background_color: "#ffffff",
         display: "standalone",
         orientation: "portrait",
@@ -149,6 +161,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
     }),
+    versionJsonPlugin(),
   ].filter(Boolean),
   resolve: {
     alias: {

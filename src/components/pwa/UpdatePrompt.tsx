@@ -2,26 +2,23 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAppVersion } from "@/hooks/useAppVersion";
 
 export function UpdatePrompt() {
-  const [needRefresh, setNeedRefresh] = useState(false);
+  const [swNeedRefresh, setSwNeedRefresh] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const { updateAvailable, acceptUpdate, dismissUpdate } = useAppVersion();
+
+  const needRefresh = swNeedRefresh || updateAvailable;
 
   useEffect(() => {
-    // Check for service worker updates
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((reg) => {
         setRegistration(reg);
-        
-        // Check for updates periodically
-        const interval = setInterval(() => {
-          reg.update();
-        }, 60 * 1000); // Every minute
-        
+        const interval = setInterval(() => { reg.update(); }, 60 * 1000);
         return () => clearInterval(interval);
       });
 
-      // Listen for new service worker (ignore firebase SW)
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         const newSW = navigator.serviceWorker.controller;
         if (newSW?.scriptURL?.includes('firebase-messaging-sw')) return;
@@ -29,23 +26,17 @@ export function UpdatePrompt() {
       });
     }
 
-    // Listen for custom update event
-    const handleUpdate = () => setNeedRefresh(true);
+    const handleUpdate = () => setSwNeedRefresh(true);
     window.addEventListener('swUpdated', handleUpdate);
-    
-    return () => {
-      window.removeEventListener('swUpdated', handleUpdate);
-    };
+    return () => { window.removeEventListener('swUpdated', handleUpdate); };
   }, []);
 
-  // Also check on visibility change (when user comes back to tab)
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'visible' && registration) {
         registration.update();
       }
     };
-    
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [registration]);
@@ -54,11 +45,12 @@ export function UpdatePrompt() {
     if (registration?.waiting) {
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     }
-    window.location.reload();
+    acceptUpdate();
   };
 
   const handleDismiss = () => {
-    setNeedRefresh(false);
+    setSwNeedRefresh(false);
+    dismissUpdate();
   };
 
   return (
@@ -91,19 +83,10 @@ export function UpdatePrompt() {
               </button>
             </div>
             <div className="flex gap-2 mt-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDismiss}
-                className="flex-1"
-              >
+              <Button variant="outline" size="sm" onClick={handleDismiss} className="flex-1">
                 Más tarde
               </Button>
-              <Button
-                size="sm"
-                onClick={handleUpdate}
-                className="flex-1"
-              >
+              <Button size="sm" onClick={handleUpdate} className="flex-1">
                 Actualizar
               </Button>
             </div>
