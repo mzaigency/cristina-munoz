@@ -2,9 +2,11 @@ import { SEO } from "@/components/SEO";
 import {
   StickyHeader,
   HeroSection,
+  ForWhoSection,
   PainPointsSection,
   FeaturesShowcase,
   BeforeAfterSection,
+  TestimonialsSection,
   PricingSection,
   FAQSection,
   FinalCTASection,
@@ -52,9 +54,11 @@ export default function ForBusiness() {
       <div className="min-h-screen bg-background">
         <StickyHeader />
         <HeroSection />
+        <ForWhoSection />
         <PainPointsSection />
         <FeaturesShowcase />
         <BeforeAfterSection />
+        <TestimonialsSection />
         <PricingSection />
         <B2BLeadForm />
         <FAQSection />
