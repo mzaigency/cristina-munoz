@@ -5,16 +5,24 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { DemoCalendar, DemoBookingFlow, DemoCashRegister, DemoAnalytics, DemoLanding } from "./demos";
 
+const BRAND_GRADIENT = "from-primary to-accent";
+
 const features = [
   {
     id: "landing",
     icon: Globe,
     title: "Tu web profesional",
     shortTitle: "Web",
-    headline: "Tu salón en internet en 5 minutos",
-    description: "Una página web profesional con tu marca, servicios y precios. Tus clientes te encontrarán en Google y podrán ver todo sobre tu negocio.",
-    benefits: ["Dominio personalizado (glowapp.app/tunombre)", "Optimizada para móviles y SEO", "Galería de trabajos y reseñas", "Información de contacto y ubicación"],
-    color: "from-blue-500 to-cyan-500",
+    headline: "Tu salón en Google, no escondido en Instagram",
+    description:
+      "Una web con tu nombre, tus precios y tus trabajos. Para que cuando alguien busque «peluquería cerca de mí», te encuentre a ti.",
+    benefits: [
+      "Dominio propio (glowapp.app/tunombre)",
+      "Optimizada para móvil y SEO",
+      "Galería de tus mejores trabajos",
+      "Tu ubicación, horarios y reseñas",
+    ],
+    color: BRAND_GRADIENT,
     Demo: DemoLanding,
   },
   {
@@ -22,10 +30,16 @@ const features = [
     icon: Calendar,
     title: "Reservas 24/7",
     shortTitle: "Reservas",
-    headline: "Tus clientes reservan mientras duermes",
-    description: "Sistema de reservas automático que funciona las 24 horas. Sin llamadas, sin WhatsApp, sin errores.",
-    benefits: ["Disponibilidad en tiempo real", "Confirmación automática por email", "Recordatorios antes de la cita", "Cancelaciones fáciles sin llamadas"],
-    color: "from-green-500 to-emerald-500",
+    headline: "Mientras cierras caja, ya tienes 3 reservas para mañana",
+    description:
+      "Tus clientes reservan ellos solos. Tú no contestas WhatsApps a las 23:47. Todos felices.",
+    benefits: [
+      "Disponibilidad real, en tiempo real",
+      "Confirmación automática por email",
+      "Recordatorio antes de la cita (−60% no-shows)",
+      "Si cancelan, el hueco vuelve a estar libre solo",
+    ],
+    color: BRAND_GRADIENT,
     Demo: DemoBookingFlow,
   },
   {
@@ -33,10 +47,15 @@ const features = [
     icon: LayoutDashboard,
     title: "Calendario inteligente",
     shortTitle: "Agenda",
-    headline: "Control total de tu agenda",
-    description: "Vista por estilista, por día o por semana. Arrastra citas, bloquea horas, gestiona vacaciones.",
-    benefits: ["Vista multi-estilista", "Bloqueos y descansos", "Citas recurrentes"],
-    color: "from-purple-500 to-pink-500",
+    headline: "Tu agenda, sin post-its ni dramas",
+    description:
+      "Vista por estilista, día o semana. Arrastra una cita, bloquea una hora, planifica vacaciones. Todo en un golpe de vista.",
+    benefits: [
+      "Vista multi-estilista en una pantalla",
+      "Bloqueos, descansos y vacaciones",
+      "Citas recurrentes con un clic",
+    ],
+    color: BRAND_GRADIENT,
     Demo: DemoCalendar,
   },
   {
@@ -44,10 +63,16 @@ const features = [
     icon: CreditCard,
     title: "Caja registradora",
     shortTitle: "Caja",
-    headline: "Cobros rápidos, cuentas claras",
-    description: "Cobra en efectivo o tarjeta, aplica descuentos, gestiona propinas. Historial completo.",
-    benefits: ["Cobro rápido al finalizar", "Descuentos y promociones", "Cierre de caja diario", "Historial de transacciones"],
-    color: "from-amber-500 to-orange-500",
+    headline: "Cierre de caja en 30 segundos, no en 30 minutos",
+    description:
+      "Cobra en efectivo o tarjeta, aplica descuentos, gestiona propinas. El cierre del día se hace solo.",
+    benefits: [
+      "Cobro al terminar el servicio",
+      "Descuentos y promociones",
+      "Cierre diario automático",
+      "Histórico completo de movimientos",
+    ],
+    color: BRAND_GRADIENT,
     Demo: DemoCashRegister,
   },
   {
@@ -55,10 +80,16 @@ const features = [
     icon: BarChart3,
     title: "Analytics y objetivos",
     shortTitle: "Datos",
-    headline: "Métricas que importan",
-    description: "Visualiza ingresos, reservas, servicios más populares. Establece objetivos mensuales.",
-    benefits: ["Dashboard de ingresos", "Servicios más vendidos", "Objetivos mensuales", "Comparativas temporales"],
-    color: "from-indigo-500 to-violet-500",
+    headline: "Sabe qué servicio te da más margen sin abrir Excel",
+    description:
+      "Ingresos, reservas, servicios estrella, clientes que vuelven. Sin hojas de cálculo, sin calculadora.",
+    benefits: [
+      "Dashboard de ingresos en vivo",
+      "Tus servicios más rentables",
+      "Objetivos mensuales con progreso",
+      "Comparativas mes a mes",
+    ],
+    color: BRAND_GRADIENT,
     Demo: DemoAnalytics,
   },
 ];
