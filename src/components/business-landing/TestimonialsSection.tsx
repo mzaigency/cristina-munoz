@@ -45,9 +45,9 @@ export const TestimonialsSection = () => {
           </div>
         </div>
 
-        <div className="hidden md:grid md:grid-cols-3 gap-5 max-w-6xl mx-auto">
+        <div className="hidden md:flex md:justify-center gap-5 max-w-6xl mx-auto">
           {testimonials.map((t, i) => (
-            <TestimonialCard key={t.name} t={t} i={i} />
+            <TestimonialCard key={t.name} t={t} i={i} className="max-w-md w-full" />
           ))}
         </div>
       </div>
