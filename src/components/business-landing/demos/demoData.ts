@@ -11,19 +11,20 @@ export const demoServices = [
 ];
 
 export const demoStylists = [
-  { id: "1", name: "Cristina", avatar: null, color: "#ec4899" },
-  { id: "2", name: "Desi", avatar: null, color: "#8b5cf6" },
-  { id: "3", name: "Laura", avatar: null, color: "#06b6d4" },
+  { id: "1", slug: "cristina", name: "Cristina", color: "#ec4899" },
+  { id: "2", slug: "desi", name: "Desi", color: "#8b5cf6" },
+  { id: "3", slug: "laura", name: "Laura", color: "#06b6d4" },
 ];
 
+// Citas con la misma forma que LocalBooking (Hora HH:mm, total_duration en min, color, status, reminder_sent)
 export const demoAppointments = [
-  { id: "1", time: "09:30", endTime: "10:15", client: "María García", service: "Corte señora", stylistId: "1", stylistName: "Cristina", color: "#ec4899" },
-  { id: "2", time: "10:00", endTime: "12:30", client: "Laura Martínez", service: "Mechas balayage", stylistId: "2", stylistName: "Desi", color: "#8b5cf6" },
-  { id: "3", time: "11:00", endTime: "12:30", client: "Ana López", service: "Tinte + Corte", stylistId: "1", stylistName: "Cristina", color: "#ec4899" },
-  { id: "4", time: "12:30", endTime: "13:30", client: "Sofía Ruiz", service: "Peinado evento", stylistId: "3", stylistName: "Laura", color: "#06b6d4" },
-  { id: "5", time: "14:00", endTime: "14:30", client: "Carmen Díaz", service: "Corte caballero", stylistId: "2", stylistName: "Desi", color: "#8b5cf6" },
-  { id: "6", time: "16:00", endTime: "17:30", client: "Elena Torres", service: "Tratamiento keratina", stylistId: "1", stylistName: "Cristina", color: "#ec4899" },
-  { id: "7", time: "17:00", endTime: "17:45", client: "Paula Sánchez", service: "Manicura", stylistId: "3", stylistName: "Laura", color: "#06b6d4" },
+  { id: "1", Hora: "09:30", total_duration: 45, customer_name: "María García", services: [{ name: "Corte señora" }], stylist: "cristina", color: "#ec4899", status: "confirmed", reminder_sent: "confirmado" },
+  { id: "2", Hora: "10:00", total_duration: 150, customer_name: "Laura Martínez", services: [{ name: "Mechas balayage" }], stylist: "desi", color: "#8b5cf6", status: "confirmed", reminder_sent: null },
+  { id: "3", Hora: "11:00", total_duration: 90, customer_name: "Ana López", services: [{ name: "Tinte + Corte" }], stylist: "cristina", color: "#ec4899", status: "confirmed", reminder_sent: "confirmado" },
+  { id: "4", Hora: "12:30", total_duration: 60, customer_name: "Sofía Ruiz", services: [{ name: "Peinado evento" }], stylist: "laura", color: "#06b6d4", status: "confirmed", reminder_sent: null },
+  { id: "5", Hora: "14:00", total_duration: 30, customer_name: "Carmen Díaz", services: [{ name: "Corte caballero" }], stylist: "desi", color: "#8b5cf6", status: "confirmed", reminder_sent: "confirmado" },
+  { id: "6", Hora: "16:00", total_duration: 90, customer_name: "Elena Torres", services: [{ name: "Keratina" }], stylist: "cristina", color: "#ec4899", status: "confirmed", reminder_sent: null },
+  { id: "7", Hora: "17:00", total_duration: 45, customer_name: "Paula Sánchez", services: [{ name: "Manicura" }], stylist: "laura", color: "#06b6d4", status: "confirmed", reminder_sent: "confirmado" },
 ];
 
 export const demoStats = {
@@ -36,13 +37,26 @@ export const demoStats = {
   avgTicket: 52,
   newClients: 8,
   returningRate: 78,
+  // Dashboard extras
+  nextBookingTime: "12:30",
+  nextBookingName: "Sofía",
+  unreadMessages: 3,
+  pendingReviews: 2,
+  weeklyGrowth: 18,
+  // Cash register split
+  cashTotal: 170,
+  cardTotal: 315,
+  transactionCount: 4,
+  // Goals
+  monthlyGoal: 12000,
+  monthlyProgress: 8750,
 };
 
 export const demoTransactions = [
-  { id: "1", time: "09:45", client: "María García", amount: 25, method: "card", service: "Corte señora" },
-  { id: "2", time: "12:35", client: "Laura Martínez", amount: 120, method: "card", service: "Mechas balayage" },
-  { id: "3", time: "13:00", client: "Ana López", amount: 70, method: "cash", service: "Tinte + Corte" },
-  { id: "4", time: "13:35", client: "Sofía Ruiz", amount: 40, method: "card", service: "Peinado evento" },
+  { id: "1", time: "09:45", client: "María García", amount: 25, method: "card" as const, service: "Corte señora", stylist: "Cristina" },
+  { id: "2", time: "12:35", client: "Laura Martínez", amount: 120, method: "card" as const, service: "Mechas balayage", stylist: "Desi" },
+  { id: "3", time: "13:00", client: "Ana López", amount: 70, method: "cash" as const, service: "Tinte + Corte", stylist: "Cristina" },
+  { id: "4", time: "13:35", client: "Sofía Ruiz", amount: 40, method: "card" as const, service: "Peinado evento", stylist: "Laura" },
 ];
 
 export const demoWeeklyData = [
@@ -56,11 +70,11 @@ export const demoWeeklyData = [
 ];
 
 export const demoPopularServices = [
-  { name: "Corte señora", count: 45, percentage: 28 },
-  { name: "Tinte raíz", count: 32, percentage: 20 },
-  { name: "Mechas", count: 28, percentage: 17 },
-  { name: "Peinado", count: 22, percentage: 14 },
-  { name: "Otros", count: 35, percentage: 21 },
+  { name: "Corte señora", count: 45, percentage: 28, value: 1125 },
+  { name: "Tinte raíz", count: 32, percentage: 20, value: 1440 },
+  { name: "Mechas", count: 28, percentage: 17, value: 3360 },
+  { name: "Peinado", count: 22, percentage: 14, value: 880 },
+  { name: "Otros", count: 35, percentage: 21, value: 945 },
 ];
 
 export const demoTimeSlots = [
@@ -78,6 +92,7 @@ export const demoSalonInfo = {
   reviewCount: 124,
   address: "Calle Gran Vía 45, Madrid",
   phone: "+34 612 345 678",
+  heroImage: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=80",
 };
 
 export const demoStories = [

@@ -1,119 +1,174 @@
-import { motion } from "motion/react";
-import { CreditCard, Banknote, TrendingUp, Receipt } from "lucide-react";
-import { demoTransactions, demoStats } from "./demoData";
+import { motion } from "framer-motion";
+import {
+  Banknote,
+  CreditCard,
+  TrendingUp,
+  Receipt,
+  Lock,
+  RefreshCw,
+} from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { DemoShell } from "./_shared/DemoShell";
+import { demoStats, demoTransactions } from "./demoData";
 
+const formatCurrency = (n: number) =>
+  new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
+
+/**
+ * Clon visual del CashRegisterManager + DailySummary + TransactionHistory.
+ * - 4 tarjetas (Efectivo / Tarjeta / Total / Operaciones) con sus gradientes exactos
+ * - Tabs Cobro / Historial / Resumen
+ * - Lista de transacciones con badges
+ */
 const DemoCashRegister = () => {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4 }}
-      className="bg-background min-h-full overflow-hidden flex flex-col"
-    >
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 px-4 py-3 border-b border-border/50">
+    <DemoShell>
+      <div className="bg-background min-h-full p-4 space-y-4">
+        {/* Header igual a DailySummary */}
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-sm">Caja del día</h3>
-            <p className="text-xs text-muted-foreground">Domingo, 19 Enero</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-bold text-foreground truncate">
+              Caja - {format(new Date(), "d MMM", { locale: es })}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {demoStats.transactionCount} transacciones
+            </p>
           </div>
-          <div className="text-right">
-            <motion.div 
-              className="text-xl font-bold text-green-500"
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.3, type: "spring" }}
-            >
-              {demoStats.todayRevenue}€
-            </motion.div>
-            <div className="text-[10px] text-green-500 flex items-center gap-0.5 justify-end">
-              <TrendingUp className="w-3 h-3" />
-              +12% vs ayer
+          <div className="flex gap-1.5 shrink-0">
+            <div className="h-8 w-8 rounded-md border border-border flex items-center justify-center">
+              <RefreshCw className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="h-8 px-3 rounded-md bg-primary text-primary-foreground flex items-center gap-1.5 text-xs font-medium">
+              <Lock className="h-3.5 w-3.5" /> Cerrar
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Quick actions */}
-      <div className="p-3 border-b border-border/30">
-        <div className="grid grid-cols-2 gap-2">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center justify-center gap-2 bg-blue-500 text-white py-2.5 rounded-xl text-xs font-semibold"
+        {/* 4 tarjetas idénticas a DailySummary */}
+        <div className="grid grid-cols-2 gap-3">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-lg border border-emerald-200/50 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 p-3"
           >
-            <CreditCard className="w-4 h-4" />
-            Cobrar tarjeta
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center justify-center gap-2 bg-green-500 text-white py-2.5 rounded-xl text-xs font-semibold"
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-emerald-500/20 shrink-0">
+                <Banknote className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-muted-foreground">Efectivo</p>
+                <p className="text-base font-bold text-emerald-600 truncate">
+                  {formatCurrency(demoStats.cashTotal)}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-lg border border-blue-200/50 bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-3"
           >
-            <Banknote className="w-4 h-4" />
-            Cobrar efectivo
-          </motion.button>
-        </div>
-      </div>
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-blue-500/20 shrink-0">
+                <CreditCard className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-muted-foreground">Tarjeta</p>
+                <p className="text-base font-bold text-blue-600 truncate">
+                  {formatCurrency(demoStats.cardTotal)}
+                </p>
+              </div>
+            </div>
+          </motion.div>
 
-      {/* Stats cards */}
-      <div className="p-3 grid grid-cols-3 gap-2 border-b border-border/30">
-        <div className="bg-muted/30 rounded-lg p-2 text-center">
-          <div className="text-lg font-bold">{demoStats.bookingsToday}</div>
-          <div className="text-[9px] text-muted-foreground">Citas</div>
-        </div>
-        <div className="bg-muted/30 rounded-lg p-2 text-center">
-          <div className="text-lg font-bold">{demoStats.avgTicket}€</div>
-          <div className="text-[9px] text-muted-foreground">Ticket medio</div>
-        </div>
-        <div className="bg-muted/30 rounded-lg p-2 text-center">
-          <div className="text-lg font-bold text-blue-500">65%</div>
-          <div className="text-[9px] text-muted-foreground">Tarjeta</div>
-        </div>
-      </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 p-3"
+          >
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-primary/20 shrink-0">
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-muted-foreground">Total</p>
+                <p className="text-base font-bold text-primary truncate">
+                  {formatCurrency(demoStats.todayRevenue)}
+                </p>
+              </div>
+            </div>
+          </motion.div>
 
-      {/* Recent transactions */}
-      <div className="p-3 flex-1">
-        <h4 className="text-xs font-medium text-muted-foreground mb-2">Últimos cobros</h4>
-        <div className="space-y-1.5 overflow-y-auto">
-          {demoTransactions.map((tx, index) => (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-lg border border-violet-200/50 bg-gradient-to-br from-violet-500/10 to-violet-600/5 p-3"
+          >
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-violet-500/20 shrink-0">
+                <Receipt className="h-4 w-4 text-violet-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-muted-foreground">Operaciones</p>
+                <p className="text-base font-bold text-violet-600">
+                  {demoStats.transactionCount}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Tabs estilo admin */}
+        <div className="flex gap-1 p-1 bg-muted rounded-lg">
+          <div className="flex-1 text-center py-1.5 rounded-md bg-background text-xs font-medium shadow-sm">
+            Historial
+          </div>
+          <div className="flex-1 text-center py-1.5 rounded-md text-xs text-muted-foreground">
+            Cobro
+          </div>
+          <div className="flex-1 text-center py-1.5 rounded-md text-xs text-muted-foreground">
+            Resumen
+          </div>
+        </div>
+
+        {/* Lista transacciones (clon de TransactionHistory mobile) */}
+        <div className="space-y-2">
+          {demoTransactions.map((tx, i) => (
             <motion.div
               key={tx.id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 + index * 0.1 }}
-              className="flex items-center justify-between p-2 bg-muted/20 rounded-lg"
+              transition={{ delay: 0.2 + i * 0.05 }}
+              className="p-3 rounded-lg border border-border"
             >
-              <div className="flex items-center gap-2">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
-                  tx.method === "card" ? "bg-blue-500/10 text-blue-500" : "bg-green-500/10 text-green-500"
-                }`}>
-                  {tx.method === "card" ? (
-                    <CreditCard className="w-3.5 h-3.5" />
-                  ) : (
-                    <Banknote className="w-3.5 h-3.5" />
-                  )}
-                </div>
-                <div>
-                  <div className="text-xs font-medium">{tx.client}</div>
-                  <div className="text-[10px] text-muted-foreground">{tx.service}</div>
-                </div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-mono text-xs font-medium">{tx.time}</span>
+                <span className="text-base font-bold">{formatCurrency(tx.amount)}</span>
               </div>
-              <div className="text-right">
-                <div className="text-xs font-bold">{tx.amount}€</div>
-                <div className="text-[10px] text-muted-foreground">{tx.time}</div>
+              <div className="text-[11px] text-muted-foreground mb-2">
+                Atendió: <strong className="text-foreground">{tx.stylist}</strong> · {tx.client}
+              </div>
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-border text-[10px]">
+                {tx.method === "cash" ? (
+                  <>
+                    <Banknote className="h-3 w-3" /> Efectivo
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-3 w-3" /> Tarjeta
+                  </>
+                )}
               </div>
             </motion.div>
           ))}
         </div>
       </div>
-
-      {/* Footer */}
-      <div className="bg-muted/30 px-4 py-2 border-t border-border/30 flex items-center justify-center gap-2">
-        <Receipt className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="text-[10px] text-muted-foreground">Ver historial completo</span>
-      </div>
-    </motion.div>
+    </DemoShell>
   );
 };
 

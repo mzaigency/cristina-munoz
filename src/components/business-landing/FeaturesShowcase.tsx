@@ -1,13 +1,30 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Check, ChevronRight } from "lucide-react";
+import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Check, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { DemoCalendar, DemoBookingFlow, DemoCashRegister, DemoAnalytics, DemoLanding } from "./demos";
+import { DemoCalendar, DemoBookingFlow, DemoCashRegister, DemoAnalytics, DemoLanding, DemoDashboard } from "./demos";
 
 const BRAND_GRADIENT = "from-primary to-accent";
 
 const features = [
+  {
+    id: "dashboard",
+    icon: Sparkles,
+    title: "Panel de control",
+    shortTitle: "Panel",
+    headline: "Abres la app y sabes cómo va el día en 3 segundos",
+    description:
+      "Ingresos, próxima cita, mensajes sin leer, reseñas pendientes. Todo a un golpe de vista, sin abrir 5 pantallas.",
+    benefits: [
+      "KPIs del día en tiempo real",
+      "Acciones rápidas (cobrar, nueva cita, bloquear)",
+      "Próxima cita siempre visible",
+      "Comparativa vs semana anterior",
+    ],
+    color: BRAND_GRADIENT,
+    Demo: DemoDashboard,
+  },
   {
     id: "landing",
     icon: Globe,

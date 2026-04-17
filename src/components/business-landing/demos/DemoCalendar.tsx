@@ -1,139 +1,163 @@
-import { motion } from "motion/react";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { demoAppointments, demoStylists } from "./demoData";
+import { motion } from "framer-motion";
+import { CheckCheck, Plus, Search } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { DemoShell } from "./_shared/DemoShell";
+import { demoStylists, demoAppointments } from "./demoData";
 
+// Misma constante visual que LocalCalendarCRM (2px/min = 120px/hora)
+const PIXELS_PER_MINUTE = 2;
+const START_HOUR = 9;
+const END_HOUR = 19;
+const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
+
+const timeToMinutes = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+};
+
+/**
+ * Clon visual del LocalCalendarCRM real.
+ * - 2px/minuto, columna de horas izquierda
+ * - Línea de hora actual roja
+ * - Badge CheckCheck verde para confirmadas por WhatsApp
+ * - Color por estilista
+ */
 const DemoCalendar = () => {
-  const hours = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
-  const currentHour = 11; // Simular hora actual
-
-  const getAppointmentPosition = (time: string) => {
-    const [hour, minutes] = time.split(":").map(Number);
-    return ((hour - 9) * 60 + minutes) / 60;
-  };
-
-  const getAppointmentDuration = (startTime: string, endTime: string) => {
-    const [startH, startM] = startTime.split(":").map(Number);
-    const [endH, endM] = endTime.split(":").map(Number);
-    return ((endH * 60 + endM) - (startH * 60 + startM)) / 60;
-  };
+  // Hora actual simulada: 11:45
+  const simulatedNowMinutes = 11 * 60 + 45;
+  const nowOffset = (simulatedNowMinutes - START_HOUR * 60) * PIXELS_PER_MINUTE;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4 }}
-      className="bg-background min-h-full overflow-hidden flex flex-col"
-    >
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 px-4 py-3 border-b border-border/50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
-              <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-            </button>
-            <span className="font-semibold text-sm">Hoy, 19 Enero</span>
-            <button className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </button>
+    <DemoShell>
+      <div className="bg-background min-h-full">
+        {/* Header tipo admin: fecha + acciones */}
+        <div className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="text-base font-bold text-foreground">
+                {format(new Date(), "EEEE d", { locale: es })}
+              </h2>
+              <p className="text-xs text-muted-foreground">Hoy · {demoAppointments.length} citas</p>
+            </div>
+            <div className="flex gap-1.5">
+              <div className="h-8 w-8 rounded-full border border-border flex items-center justify-center">
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="h-8 px-3 rounded-full bg-primary text-primary-foreground flex items-center gap-1 text-xs font-medium">
+                <Plus className="h-3.5 w-3.5" /> Nueva
+              </div>
+            </div>
           </div>
-          <button className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 hover:bg-primary/90 transition-colors">
-            <Plus className="w-3.5 h-3.5" />
-            Nueva cita
-          </button>
-        </div>
-        
-        {/* Stylists filter */}
-        <div className="flex gap-2 mt-3">
-          {demoStylists.map((stylist) => (
-            <div
-              key={stylist.id}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium"
-              style={{ backgroundColor: `${stylist.color}20`, color: stylist.color }}
-            >
-              <div 
-                className="w-2 h-2 rounded-full" 
-                style={{ backgroundColor: stylist.color }}
-              />
-              {stylist.name}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Calendar grid */}
-      <div className="relative flex-1 min-h-[320px] overflow-hidden">
-        {/* Time column */}
-        <div className="absolute left-0 top-0 w-12 h-full bg-muted/30 border-r border-border/30 z-10">
-          {hours.map((hour, i) => (
-            <div 
-              key={hour}
-              className="absolute left-0 w-full text-[10px] text-muted-foreground text-right pr-2"
-              style={{ top: `${i * 28}px` }}
-            >
-              {hour}
-            </div>
-          ))}
         </div>
 
-        {/* Grid lines */}
-        <div className="absolute left-12 right-0 top-0 h-full">
-          {hours.map((_, i) => (
-            <div 
-              key={i}
-              className="absolute left-0 right-0 border-t border-border/20"
-              style={{ top: `${i * 28}px` }}
-            />
-          ))}
-
-          {/* Current time line */}
-          <motion.div 
-            className="absolute left-0 right-0 h-0.5 bg-red-500 z-20"
-            style={{ top: `${(currentHour - 9) * 28 + 14}px` }}
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ delay: 0.5, duration: 0.3 }}
-          >
-            <div className="absolute -left-1 -top-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
-          </motion.div>
-
-          {/* Appointments */}
-          {demoAppointments.map((apt, index) => {
-            const top = getAppointmentPosition(apt.time) * 28;
-            const height = getAppointmentDuration(apt.time, apt.endTime) * 28;
-            const leftOffset = apt.stylistId === "1" ? 0 : apt.stylistId === "2" ? 33 : 66;
-            
-            return (
-              <motion.div
-                key={apt.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + index * 0.1 }}
-                className="absolute rounded-lg p-1.5 text-white overflow-hidden cursor-pointer hover:scale-[1.02] transition-transform"
-                style={{
-                  top: `${top}px`,
-                  height: `${Math.max(height - 2, 20)}px`,
-                  left: `${leftOffset}%`,
-                  width: "32%",
-                  backgroundColor: apt.color,
-                }}
+        {/* Grid del calendario */}
+        <div className="flex">
+          {/* Columna de horas */}
+          <div className="w-12 shrink-0 border-r border-border">
+            {HOURS.map((h) => (
+              <div
+                key={h}
+                className="text-[10px] text-muted-foreground text-right pr-2 font-mono"
+                style={{ height: `${60 * PIXELS_PER_MINUTE}px` }}
               >
-                <div className="text-[9px] font-semibold truncate">{apt.client}</div>
-                <div className="text-[8px] opacity-80 truncate">{apt.service}</div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
+                {String(h).padStart(2, "0")}:00
+              </div>
+            ))}
+          </div>
 
-      {/* Footer */}
-      <div className="bg-muted/30 px-4 py-2 border-t border-border/30 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">7 citas hoy</span>
-        <div className="flex gap-1">
-          <div className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-[10px] text-muted-foreground">3 disponibles</span>
+          {/* Columnas por estilista */}
+          <div className="flex-1 flex relative">
+            {demoStylists.map((stylist) => {
+              const stylistBookings = demoAppointments.filter((b) => b.stylist === stylist.slug);
+              return (
+                <div
+                  key={stylist.id}
+                  className="flex-1 relative border-r border-border last:border-r-0"
+                >
+                  {/* Header estilista */}
+                  <div className="sticky top-[60px] z-10 bg-background/95 backdrop-blur-sm border-b border-border px-2 py-1.5 text-center">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: stylist.color }}
+                      />
+                      <span className="text-[11px] font-semibold">{stylist.name}</span>
+                    </div>
+                  </div>
+
+                  {/* Lineas de hora */}
+                  <div
+                    className="relative"
+                    style={{
+                      height: `${(END_HOUR - START_HOUR + 1) * 60 * PIXELS_PER_MINUTE}px`,
+                    }}
+                  >
+                    {HOURS.map((h, i) => (
+                      <div
+                        key={h}
+                        className="absolute left-0 right-0 border-t border-border/40"
+                        style={{ top: `${i * 60 * PIXELS_PER_MINUTE}px` }}
+                      />
+                    ))}
+
+                    {/* Citas */}
+                    {stylistBookings.map((booking, idx) => {
+                      const startMin = timeToMinutes(booking.Hora) - START_HOUR * 60;
+                      const top = startMin * PIXELS_PER_MINUTE;
+                      const height = Math.max(booking.total_duration * PIXELS_PER_MINUTE, 40);
+                      return (
+                        <motion.div
+                          key={booking.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.05 * idx }}
+                          className="absolute left-0.5 right-0.5 rounded-md p-1.5 overflow-hidden shadow-sm"
+                          style={{
+                            top: `${top}px`,
+                            height: `${height}px`,
+                            backgroundColor: `${booking.color}20`,
+                            borderLeft: `3px solid ${booking.color}`,
+                          }}
+                        >
+                          <div className="flex items-center gap-1">
+                            <p className="text-[10px] font-mono font-semibold leading-tight">
+                              {booking.Hora}
+                            </p>
+                            {booking.reminder_sent === "confirmado" && (
+                              <CheckCheck className="h-2.5 w-2.5 text-green-500 shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-[10px] font-semibold leading-tight truncate">
+                            {booking.customer_name}
+                          </p>
+                          {height > 50 && (
+                            <p className="text-[9px] text-muted-foreground leading-tight truncate">
+                              {booking.services[0].name}
+                            </p>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+
+                    {/* Línea hora actual roja */}
+                    <div
+                      className="absolute left-0 right-0 z-20 pointer-events-none"
+                      style={{ top: `${nowOffset}px` }}
+                    >
+                      <div className="flex items-center">
+                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 -ml-0.5" />
+                        <div className="flex-1 h-px bg-red-500" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </motion.div>
+    </DemoShell>
   );
 };
 
