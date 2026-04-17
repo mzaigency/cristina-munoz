@@ -98,32 +98,13 @@ export const HeroSection = () => {
               </span>
             </motion.div>
 
-            {/* Salon names row */}
+            {/* Salon names row — dynamic from DB */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="mt-6 pt-6 border-t border-border/60"
             >
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-3">
-                Salones que ya brillan con GlowApp
-              </p>
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2 text-sm">
-                {[
-                  "Cristina Muñoz Perruqueria",
-                  "Barber Studio MAD",
-                  "Nails by Lucía",
-                  "Estética Aurora",
-                ].map((name) => (
-                  <span
-                    key={name}
-                    className="flex items-center gap-1.5 text-foreground/70 font-medium"
-                  >
-                    <MapPin className="w-3 h-3 text-accent/70" />
-                    {name}
-                  </span>
-                ))}
-              </div>
+              <LiveSalonsRow />
             </motion.div>
           </div>
 
