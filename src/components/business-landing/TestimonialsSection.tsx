@@ -13,28 +13,6 @@ const testimonials = [
     metric: "+22 reservas / semana",
     gradient: "from-primary/15 to-accent/10",
   },
-  {
-    initials: "DR",
-    name: "David Romero",
-    salon: "Barber Studio MAD",
-    city: "Madrid",
-    since: "2024",
-    quote:
-      "Antes perdía 2-3 clientes al día porque no contestaba el WhatsApp. Ahora reservan ellos solos y yo cobro.",
-    metric: "+1.800 € / mes",
-    gradient: "from-accent/15 to-primary/10",
-  },
-  {
-    initials: "LF",
-    name: "Lucía Fernández",
-    salon: "Nails by Lucía",
-    city: "Valencia",
-    since: "2024",
-    quote:
-      "La caja registradora me ahorra 1 hora al cierre. Y los recordatorios automáticos han bajado los no-shows un 60%.",
-    metric: "−60% ausencias",
-    gradient: "from-primary/10 to-accent/15",
-  },
 ];
 
 export const TestimonialsSection = () => {
