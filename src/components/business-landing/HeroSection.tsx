@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Scissors, Sparkles, MapPin } from "lucide-react";
+import { ArrowRight, Scissors, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AnimatedHeroBackground } from "./AnimatedHeroBackground";
 import { DemoLanding } from "./demos";
+import { LiveSalonsRow } from "./LiveSalonsRow";
 
 export const HeroSection = () => {
   const navigate = useNavigate();
