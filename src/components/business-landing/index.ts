@@ -1,8 +1,10 @@
 export { HeroSection } from './HeroSection';
 export { StickyHeader } from './StickyHeader';
 export { PainPointsSection } from './PainPointsSection';
+export { ForWhoSection } from './ForWhoSection';
 export { FeaturesShowcase } from './FeaturesShowcase';
 export { BeforeAfterSection } from './BeforeAfterSection';
+export { TestimonialsSection } from './TestimonialsSection';
 export { PricingSection } from './PricingSection';
 export { FAQSection } from './FAQSection';
 export { FinalCTASection } from './FinalCTASection';
