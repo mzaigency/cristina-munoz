@@ -57,7 +57,7 @@ export const FinalCTASection = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-white/80 mb-9 max-w-xl mx-auto">
-            30 días gratis. Sin tarjeta. Sin permanencia. Si no te enamora, te vas.
+            30 días gratis.. Sin permanencia. Si no te enamora, te vas.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
