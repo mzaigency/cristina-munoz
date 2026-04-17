@@ -2,84 +2,63 @@
 
 ## Diagnóstico
 
-El `WelcomeCarousel` actual (3 slides al abrir GlowApp por primera vez) tiene los problemas típicos de plantilla:
+### Problema 1: Bloquear periodo no funciona — RLS de `bookings`
 
-- **Demasiado invasivo**: ocupa el 100% de la pantalla con `bg-background` plano. El usuario no ve la app hasta terminar.
-- **Estética genérica**: 3 iconos Lucide (`Sparkles`, `Calendar`, `Heart`) en círculos con gradientes pastel (rosa, violeta, ámbar) que no tienen nada que ver con la paleta de marca (azul `#22408b` + púrpura `#99329a`).
-- **Copy plano**: "Descubre salones increíbles" / "Reserva en segundos" / "Guarda tus favoritos" — descripciones de SaaS sin alma.
-- **Sin contexto visual**: no muestra ni un solo salón real, ni un avatar, ni una foto. Es solo iconos abstractos.
-- **CTA grande genérico**: botón "Continuar" de 56px de alto que parece form de banca.
-- **No respeta la identidad Liquid Glass** de la app (backdrop-blur, glass overlays).
+La política INSERT actual de `bookings` es:
+```sql
+WITH CHECK ((auth.uid() = user_id) AND (user_id IS NOT NULL) AND (tenant_id IS NOT NULL))
+```
 
-## Objetivo
+`handleBlockPeriod` en `LocalCalendarCRM.tsx` (línea 504) hace `supabase.from("bookings").insert(...)` directo desde el cliente, **sin `user_id`** (porque un bloqueo no pertenece a un usuario, es del salón). RLS lo rechaza siempre.
 
-Convertirlo en un **bottom-sheet Liquid Glass** (estilo iOS 26, igual que el `InteractiveTour` del admin) con personalidad de marca, que:
+Lo mismo pasaría con cualquier inserción que haga el admin para un cliente sin cuenta — pero el `AdminBookingFlow` ya pasa por la edge function `create-booking` (que usa `service_role` y se salta RLS), así que ese flujo sí funciona. **El bloqueo es el único insert directo desde cliente que queda roto.**
 
-1. **Se vea menos**: en lugar de cubrir toda la pantalla, aparece como sheet desde abajo dejando ver el feed difuminado detrás → sensación de "ya estás dentro de GlowApp".
-2. **Tenga personalidad**: paleta de marca (azul + púrpura), copy con voz propia, mini-mockups visuales reales en lugar de iconos abstractos.
-3. **Sea swipeable**: arrastra a la derecha/izquierda para navegar, swipe abajo para cerrar (como el tour del admin).
-4. **Termine rápido**: 3 slides cortos, máx. 30 segundos.
+Falta una política INSERT para staff del tenant (admin/stylist) que permita crear bookings de su tenant aunque no tengan `user_id`.
 
-## Nuevo diseño (3 slides)
+### Problema 2: Tenant nuevo no permite reservar
 
-### Estructura común
-- **Bottom-sheet glass** con `bg-card/80 backdrop-blur-2xl` y `rounded-t-[28px]`, max-height `78vh`.
-- **Backdrop** semi-transparente con `bg-black/40 backdrop-blur-md` (dejando entrever el feed).
-- **Drag handle** superior (barrita) + progress bar segmentada (igual que tour admin v4).
-- **Header animado** con logo GlowApp pequeño + tagline corto.
-- **Footer**: dots minimalistas + botón "Continuar" / "Empezar a explorar" más compacto (h-12, no h-14).
-- **Skip discreto**: "Saltar" en gris pequeño centrado abajo (no con X agresiva arriba).
+Dijiste que lo creaste y lo borraste. Confirmado en BD: solo existe Cristina Muñoz. La causa más probable es la **estrategia de activación**: los tenants se crean con `is_active = false` y se activan tras el onboarding/generación AI (memoria `features/onboarding/tenant-activation-strategy`). El edge function `create-booking` rechaza con 403 "Este negocio no está activo" si el tenant no está activo aún (línea 191-195).
 
-### Slide 1 — "Bienvenido a GlowApp"
-- **Visual**: Mock-card de un salón premium real (estilo `PremiumSalonCard` reducido) flotando con glow purple → muestra desde el segundo 1 cómo se ve un salón en el feed.
-- **Copy**: 
-  - Título: *"Tu próxima cita, en un toque"*
-  - Sub: *"Descubre salones cerca de ti, con fotos reales y reseñas de gente como tú."*
-- **Color accent**: gradient `from-primary to-purple-600` (marca real).
+Como ya borraste el tenant, no puedo reproducirlo, pero dejaré una mejora defensiva.
 
-### Slide 2 — "Reserva sin llamar"
-- **Visual**: Mini-stepper visual (Servicio → Pro → Hora → ✓) con chips de hora animados (estilo `BookingFlow` real).
-- **Copy**:
-  - Título: *"Sin llamadas. Sin esperas."*
-  - Sub: *"Elige servicio, profesional y hora. Reservas confirmadas al instante."*
-- **Color accent**: gradient `from-purple-600 to-primary`.
+## Solución
 
-### Slide 3 — "Tu beauty diary"
-- **Visual**: Stack de 3 avatares de salones favoritos con corazones y badges "Nuevo post" (estilo feed Following).
-- **Copy**:
-  - Título: *"Sigue tus salones favoritos"*
-  - Sub: *"Recibe sus novedades, posts y promos. Como un Instagram, pero para reservar."*
-- **Color accent**: gradient `from-primary via-purple-500 to-pink-500` (suave, solo en el visual).
+### Fix 1 (crítico): Política RLS para que el staff del tenant pueda hacer INSERT directo
 
-## Detalles de personalidad
+Migración nueva:
 
-- **Microcopy con voz**: "Sin llamadas. Sin esperas." en lugar de "Reserva en segundos". "Como un Instagram, pero para reservar." en lugar de "Guarda tus favoritos".
-- **Tipografía**: títulos en `text-2xl font-semibold tracking-tight` (no `text-3xl font-bold` que se ve infantil).
-- **Animaciones**: spring suaves (`damping: 25, stiffness: 250`) en lugar de `ease: easeInOut`. Visuales con float-in escalonado.
-- **Haptic**: mantener `selection` en swipes y `success` al completar.
-- **Cero emojis** en el contenido (los emojis solo en el tour del admin que es más casual).
+```sql
+CREATE POLICY "Tenant staff can create bookings for their tenant"
+ON public.bookings
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  tenant_id = public.get_user_tenant_id()
+  AND (
+    public.has_role(auth.uid(), 'admin'::app_role)
+    OR public.has_role(auth.uid(), 'stylist'::app_role)
+  )
+);
+```
 
-## Comportamiento "menos invasivo"
+Esto convive con la política existente "Users can create their own bookings" (clientes finales reservando para sí mismos). Como son políticas permisivas, basta que una pase. El bloqueo de periodo (sin `user_id`) pasará por la nueva política porque el admin pertenece al tenant.
 
-- Sheet aparece **400ms después** de cargar el feed (no inmediato), para que el usuario vea el feed primero.
-- Backdrop con `pointer-events: none` en los bordes superiores → tap en el feed visible cierra el sheet.
-- Tap en el backdrop = cerrar (marcando como visto).
-- Swipe down > 100px = cerrar.
-- Botón "Saltar" muy discreto (gris pequeño abajo), no la X agresiva arriba.
+No toco el resto de políticas (SELECT/UPDATE/DELETE de staff ya están bien).
+
+### Fix 2 (defensivo): Mensaje claro cuando el tenant no está activo
+
+En `BookingConfirmation.tsx`, cuando `create-booking` devuelva 403 con "no está activo", mostrar toast amigable: *"Este salón aún no está disponible para reservas. Vuelve a intentarlo en unos minutos."* en lugar del error técnico.
+
+## Verificación post-fix
+
+1. Bloqueo de periodo → admin abre dialog "Bloquear periodo", elige fecha, click "Bloquear" → se crea registro tipo `🔒 BLOQUEADO` o `🌴 VACACIONES` y aparece pintado en rojo en la agenda.
+2. Reserva pública en tenant existente → sigue funcionando igual (vía edge function).
+3. Si creas otro tenant nuevo y aún no está activo → toast claro en lugar de error.
 
 ## Archivos
 
-**Reescribir:**
-- `src/components/onboarding/WelcomeCarousel.tsx` — bottom-sheet Liquid Glass + 3 slides nuevos con visuales reales
+**Migración SQL nueva**: política INSERT para staff del tenant en `bookings`.
+**Editar**: `src/components/booking/BookingConfirmation.tsx` — mejorar manejo de error 403 "tenant inactivo".
 
-**Sin cambios:**
-- `src/pages/Index.tsx` — sigue usando `useWelcomeOnboarding()` igual (misma API pública)
-- `localStorage` key se mantiene (`glowapp_onboarding_completed`) para no re-mostrar a usuarios actuales
-
-## Mobile-first (390x744)
-
-- Sheet ocupa ~70vh, deja ~200px del feed visible difuminado arriba → sensación de "estás dentro".
-- Visuales mock dimensionados a 320px máx ancho (caben en 390px con padding).
-- Safe areas: `pb-[calc(env(safe-area-inset-bottom)+12px)]` en el footer.
-- Drag horizontal con threshold 60px (igual que tour admin) para swipe entre slides.
+**Sin cambios**: `LocalCalendarCRM.tsx` (la lógica del cliente está bien; el problema era 100% RLS).
 
