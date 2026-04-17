@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 const VERSION_KEY = "app-version";
+const PENDING_VERSION_KEY = `${VERSION_KEY}-pending`;
+const DISMISSED_VERSION_KEY = `${VERSION_KEY}-dismissed`;
 const CHECK_INTERVAL = 30_000; // 30s
 
 function isIOSStandalone(): boolean {
@@ -29,20 +31,42 @@ export function useAppVersion() {
 
       const data = await res.json();
       const serverVersion = data.version || data.buildTime;
+
+      if (!serverVersion) return;
+
       const localVersion = localStorage.getItem(VERSION_KEY);
+      const dismissedVersion = localStorage.getItem(DISMISSED_VERSION_KEY);
 
       if (!localVersion) {
         // First visit — store current version
         localStorage.setItem(VERSION_KEY, serverVersion);
+        localStorage.removeItem(PENDING_VERSION_KEY);
+        localStorage.removeItem(DISMISSED_VERSION_KEY);
+        return;
+      }
+
+      if (serverVersion === localVersion) {
+        setUpdateAvailable(false);
+        localStorage.removeItem(PENDING_VERSION_KEY);
+        localStorage.removeItem(DISMISSED_VERSION_KEY);
         return;
       }
 
       if (serverVersion !== localVersion) {
+        localStorage.setItem(PENDING_VERSION_KEY, serverVersion);
+
         // New version detected
         if (isIOS() && isIOSStandalone()) {
           // iOS standalone: auto-reload silently
           localStorage.setItem(VERSION_KEY, serverVersion);
+          localStorage.removeItem(PENDING_VERSION_KEY);
+          localStorage.removeItem(DISMISSED_VERSION_KEY);
           window.location.reload();
+          return;
+        }
+
+        if (dismissedVersion === serverVersion) {
+          setUpdateAvailable(false);
           return;
         }
 
@@ -57,13 +81,19 @@ export function useAppVersion() {
 
   const acceptUpdate = useCallback(() => {
     try {
-      const serverVersion = localStorage.getItem(VERSION_KEY + "-pending");
+      const serverVersion = localStorage.getItem(PENDING_VERSION_KEY);
       if (serverVersion) localStorage.setItem(VERSION_KEY, serverVersion);
+      localStorage.removeItem(PENDING_VERSION_KEY);
+      localStorage.removeItem(DISMISSED_VERSION_KEY);
     } catch {}
     window.location.reload();
   }, []);
 
   const dismissUpdate = useCallback(() => {
+    try {
+      const serverVersion = localStorage.getItem(PENDING_VERSION_KEY);
+      if (serverVersion) localStorage.setItem(DISMISSED_VERSION_KEY, serverVersion);
+    } catch {}
     setUpdateAvailable(false);
   }, []);
 
