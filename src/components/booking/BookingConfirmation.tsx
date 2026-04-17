@@ -131,9 +131,19 @@ export const BookingConfirmation = ({
 
       if (error) {
         console.error('Error creating booking:', error);
+        // Detect "tenant inactive" 403 error
+        const errorMsg = (error as any)?.message || '';
+        const errorCtx = (error as any)?.context;
+        const isTenantInactive =
+          errorMsg.toLowerCase().includes('no está activo') ||
+          errorMsg.toLowerCase().includes('not active') ||
+          errorCtx?.status === 403;
+
         toast({
-          title: "Error",
-          description: "No se pudo completar la reserva. Por favor, intenta de nuevo.",
+          title: isTenantInactive ? "Salón no disponible" : "Error",
+          description: isTenantInactive
+            ? "Este salón aún no está disponible para reservas. Vuelve a intentarlo en unos minutos."
+            : "No se pudo completar la reserva. Por favor, intenta de nuevo.",
           variant: "destructive",
         });
         setLoading(false);
