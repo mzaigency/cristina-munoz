@@ -69,6 +69,7 @@ export default {
       fontFamily: {
         'sans': ['Plus Jakarta Sans', 'DM Sans', 'system-ui', 'sans-serif'],
         'display': ['Plus Jakarta Sans', 'sans-serif'],
+        'serif': ['"Playfair Display"', 'Georgia', 'serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
