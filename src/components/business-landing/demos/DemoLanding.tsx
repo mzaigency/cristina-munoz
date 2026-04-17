@@ -1,109 +1,97 @@
-import { motion } from "motion/react";
-import { Star, MapPin, Clock, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { Star, MapPin, Clock, Phone } from "lucide-react";
+import { DemoShell } from "./_shared/DemoShell";
 import { demoServices, demoSalonInfo } from "./demoData";
 
+/**
+ * Clon visual reducido de TenantHero (variante HeroGlass) + TenantServicesSection.
+ * - Foto de fondo + overlay glass
+ * - Badge de rating arriba
+ * - Glass card con nombre + tagline + CTA
+ * - Sección de servicios con cards
+ */
 const DemoLanding = () => {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4 }}
-      className="bg-background min-h-full overflow-hidden flex flex-col"
-    >
-      {/* Hero */}
-      <div className="relative h-32 bg-gradient-to-br from-primary/80 to-secondary/80 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyIiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjEiLz48L3N2Zz4=')] opacity-50" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
+    <DemoShell>
+      <div className="bg-background min-h-full">
+        {/* Hero Glass (clon de HeroGlass) */}
+        <div className="relative h-72">
+          {/* Foto de fondo */}
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${demoSalonInfo.heroImage})` }}
+          />
+          {/* Overlay degradado */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
+
+          {/* Rating badge top */}
+          <div className="absolute top-4 right-4 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30">
+            <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+            <span className="text-[11px] font-bold text-white">{demoSalonInfo.rating}</span>
+            <span className="text-[10px] text-white/80">({demoSalonInfo.reviewCount})</span>
+          </div>
+
+          {/* Glass card central */}
           <motion.div
-            initial={{ y: 10, opacity: 0 }}
+            initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-2"
+            className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-white/15 backdrop-blur-xl border border-white/20"
           >
-            <span className="text-xl font-bold">BS</span>
+            <h1 className="text-base font-bold text-white leading-tight mb-1">
+              {demoSalonInfo.name}
+            </h1>
+            <p className="text-[11px] text-white/80 mb-3">{demoSalonInfo.tagline}</p>
+            <div className="flex gap-2">
+              <div className="flex-1 h-8 rounded-full bg-white text-foreground text-[11px] font-semibold flex items-center justify-center">
+                Reservar
+              </div>
+              <div className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center">
+                <Phone className="h-3.5 w-3.5 text-white" />
+              </div>
+            </div>
           </motion.div>
-          <motion.h2
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-sm font-bold text-center"
-          >
-            {demoSalonInfo.name}
-          </motion.h2>
-          <motion.p
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-[10px] text-white/80"
-          >
-            {demoSalonInfo.tagline}
-          </motion.p>
         </div>
-      </div>
 
-      {/* Rating & Location */}
-      <div className="px-4 py-3 border-b border-border/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-            <span className="text-xs font-semibold">{demoSalonInfo.rating}</span>
-            <span className="text-[10px] text-muted-foreground">({demoSalonInfo.reviewCount} reseñas)</span>
+        {/* Info bar */}
+        <div className="px-4 py-3 border-b border-border flex items-center gap-3 text-[11px]">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            <span>Centro, Madrid</span>
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <MapPin className="w-3 h-3" />
-            Centro, Madrid
+          <div className="flex items-center gap-1 text-emerald-600">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Abierto</span>
           </div>
         </div>
-      </div>
 
-      {/* Services */}
-      <div className="p-3 flex-1">
-        <h4 className="text-xs font-semibold mb-2">Servicios</h4>
-        <div className="space-y-1.5">
-          {demoServices.slice(0, 4).map((service, index) => (
+        {/* Servicios (clon TenantServicesSection) */}
+        <div className="p-4 space-y-3">
+          <h3 className="text-sm font-bold">Nuestros servicios</h3>
+          {demoServices.slice(0, 4).map((service, i) => (
             <motion.div
               key={service.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 + index * 0.1 }}
-              className="flex items-center justify-between p-2 bg-muted/20 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.05 }}
+              className="flex items-center justify-between p-3 rounded-xl border border-border bg-card"
             >
-              <div>
-                <div className="text-xs font-medium">{service.name}</div>
-                <div className="text-[9px] text-muted-foreground flex items-center gap-1">
-                  <Clock className="w-2.5 h-2.5" />
-                  {service.duration} min
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold truncate">{service.name}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                    <Clock className="h-2.5 w-2.5" />
+                    {service.duration} min
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold">{service.price}€</span>
-                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+              <div className="text-right">
+                <p className="text-sm font-bold text-primary">{service.price}€</p>
               </div>
             </motion.div>
           ))}
         </div>
-        <button className="w-full mt-2 text-[10px] text-primary font-medium">
-          Ver todos los servicios →
-        </button>
       </div>
-
-      {/* CTA */}
-      <div className="p-3 pt-0">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl text-xs font-semibold"
-        >
-          Reservar ahora
-        </motion.button>
-      </div>
-
-      {/* Footer */}
-      <div className="bg-muted/30 px-4 py-2 border-t border-border/30 flex items-center justify-center gap-2">
-        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-        <span className="text-[10px] text-muted-foreground">Disponible hoy</span>
-      </div>
-    </motion.div>
+    </DemoShell>
   );
 };
 
