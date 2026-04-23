@@ -160,6 +160,40 @@ Deno.serve(async (req) => {
     const previousMonthCount = previousMonthTotal.count || 0;
 
     console.log(`Results - Daily: ${dailyCount}, Weekly: ${weeklyCount}, Monthly: ${monthlyCount}`);
+
+    // Get average rating from reviews
+    let reviewsQuery = supabase
+      .from('reviews')
+      .select('rating')
+      .eq('approved', true);
+
+    if (tenantId) {
+      reviewsQuery = reviewsQuery.eq('tenant_id', tenantId);
+    }
+
+    const { data: reviews } = await reviewsQuery;
+
+    const averageRating = reviews && reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : 0;
+
+    return new Response(
+      JSON.stringify({
+        daily: {
+          total: dailyCount,
+          previous: previousDayCount,
+          byChannel: { crm: dailyCrm.count || 0, web: dailyWeb.count || 0 },
+        },
+        weekly: {
+          total: weeklyCount,
+          previous: previousWeekCount,
+          byChannel: { crm: weeklyCrm.count || 0, web: weeklyWeb.count || 0 },
+        },
+        monthly: {
+          total: monthlyCount,
+          previous: previousMonthCount,
+          byChannel: { crm: monthlyCrm.count || 0, web: monthlyWeb.count || 0 },
+        },
         averageRating: Math.round(averageRating * 10) / 10,
       }),
       {
