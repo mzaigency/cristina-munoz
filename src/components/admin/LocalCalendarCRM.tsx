@@ -1410,6 +1410,22 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                             )}
                                           </div>
 
+                                          {/* Unblock button (only for blocked periods) */}
+                                          {isBlocked && (
+                                            <div className="absolute top-0.5 right-0.5 z-20">
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDeleteBooking(booking);
+                                                }}
+                                                className="p-1 rounded-md bg-white/20 text-white hover:bg-white hover:text-red-600 transition-all backdrop-blur-sm"
+                                                title="Desbloquear"
+                                              >
+                                                <Trash2 className="h-3 w-3" />
+                                              </button>
+                                            </div>
+                                          )}
+
                                           {/* Action buttons */}
                                           {!isBlocked && (!isMobile || activeBookingActions === booking.id) && (
                                             <div className={cn(
