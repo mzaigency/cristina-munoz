@@ -104,87 +104,95 @@ Deno.serve(async (req) => {
     console.log(`This week: ${weekStart.toISOString()} to ${todayEnd.toISOString()}`);
     console.log(`This month: ${monthStart.toISOString()} to ${todayEnd.toISOString()}`);
 
-    // Build query for a specific date range using created_at
-    const buildQuery = (startDate: Date, endDate: Date) => {
+    // Build COUNT-only query for a specific date range using created_at.
+    // Using { count: 'exact', head: true } avoids the default 1000-row cap on .select()
+    // so totals keep growing past 1000 bookings.
+    const buildCountQuery = (startDate: Date, endDate: Date, channelFilter?: 'crm' | 'web') => {
       let query = supabase
         .from('bookings')
-        .select('id, created_at, canal, status')
+        .select('id', { count: 'exact', head: true })
         .eq('status', 'confirmed')
         .gte('created_at', startDate.toISOString())
         .lt('created_at', endDate.toISOString());
-      
+
       if (tenantId) {
         query = query.eq('tenant_id', tenantId);
       }
-      
+
+      if (channelFilter === 'crm') {
+        query = query.eq('canal', 'crm');
+      } else if (channelFilter === 'web') {
+        // web = canal in ('web', 'whatsapp') OR canal IS NULL
+        query = query.or('canal.eq.web,canal.eq.whatsapp,canal.is.null');
+      }
+
       return query;
     };
 
-    // Fetch bookings for different periods
+    // Fetch counts (total + per-channel) for each period in parallel
     const [
-      dailyRes,
-      previousDayRes,
-      weeklyRes,
-      previousWeekRes,
-      monthlyRes,
-      previousMonthRes,
+      dailyTotal, dailyCrm, dailyWeb,
+      previousDayTotal,
+      weeklyTotal, weeklyCrm, weeklyWeb,
+      previousWeekTotal,
+      monthlyTotal, monthlyCrm, monthlyWeb,
+      previousMonthTotal,
     ] = await Promise.all([
-      buildQuery(todayStart, todayEnd),           // Today only
-      buildQuery(yesterdayStart, todayStart),     // Yesterday only
-      buildQuery(weekStart, todayEnd),            // Last 7 days
-      buildQuery(prevWeekStart, prevWeekEnd),     // Previous 7 days
-      buildQuery(monthStart, todayEnd),           // Last 30 days
-      buildQuery(prevMonthStart, prevMonthEnd),   // Previous 30 days
+      buildCountQuery(todayStart, todayEnd),
+      buildCountQuery(todayStart, todayEnd, 'crm'),
+      buildCountQuery(todayStart, todayEnd, 'web'),
+      buildCountQuery(yesterdayStart, todayStart),
+      buildCountQuery(weekStart, todayEnd),
+      buildCountQuery(weekStart, todayEnd, 'crm'),
+      buildCountQuery(weekStart, todayEnd, 'web'),
+      buildCountQuery(prevWeekStart, prevWeekEnd),
+      buildCountQuery(monthStart, todayEnd),
+      buildCountQuery(monthStart, todayEnd, 'crm'),
+      buildCountQuery(monthStart, todayEnd, 'web'),
+      buildCountQuery(prevMonthStart, prevMonthEnd),
     ]);
 
-    // Count by channel (only CRM and Web)
-    const countByChannel = (bookings: { canal: string | null }[]) => {
-      const crm = bookings.filter(b => b.canal === 'crm').length;
-      const web = bookings.filter(b => b.canal === 'web' || b.canal === 'whatsapp' || !b.canal).length;
-      return { crm, web };
-    };
+    const dailyCount = dailyTotal.count || 0;
+    const previousDayCount = previousDayTotal.count || 0;
+    const weeklyCount = weeklyTotal.count || 0;
+    const previousWeekCount = previousWeekTotal.count || 0;
+    const monthlyCount = monthlyTotal.count || 0;
+    const previousMonthCount = previousMonthTotal.count || 0;
 
-    const dailyBookings = dailyRes.data || [];
-    const previousDayBookings = previousDayRes.data || [];
-    const weeklyBookings = weeklyRes.data || [];
-    const previousWeekBookings = previousWeekRes.data || [];
-    const monthlyBookings = monthlyRes.data || [];
-    const previousMonthBookings = previousMonthRes.data || [];
-
-    console.log(`Results - Daily: ${dailyBookings.length}, Weekly: ${weeklyBookings.length}, Monthly: ${monthlyBookings.length}`);
+    console.log(`Results - Daily: ${dailyCount}, Weekly: ${weeklyCount}, Monthly: ${monthlyCount}`);
 
     // Get average rating from reviews
     let reviewsQuery = supabase
       .from('reviews')
       .select('rating')
       .eq('approved', true);
-    
+
     if (tenantId) {
       reviewsQuery = reviewsQuery.eq('tenant_id', tenantId);
     }
-    
+
     const { data: reviews } = await reviewsQuery;
-    
-    const averageRating = reviews && reviews.length > 0 
-      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+
+    const averageRating = reviews && reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
       : 0;
 
     return new Response(
       JSON.stringify({
         daily: {
-          total: dailyBookings.length,
-          previous: previousDayBookings.length,
-          byChannel: countByChannel(dailyBookings),
+          total: dailyCount,
+          previous: previousDayCount,
+          byChannel: { crm: dailyCrm.count || 0, web: dailyWeb.count || 0 },
         },
         weekly: {
-          total: weeklyBookings.length,
-          previous: previousWeekBookings.length,
-          byChannel: countByChannel(weeklyBookings),
+          total: weeklyCount,
+          previous: previousWeekCount,
+          byChannel: { crm: weeklyCrm.count || 0, web: weeklyWeb.count || 0 },
         },
         monthly: {
-          total: monthlyBookings.length,
-          previous: previousMonthBookings.length,
-          byChannel: countByChannel(monthlyBookings),
+          total: monthlyCount,
+          previous: previousMonthCount,
+          byChannel: { crm: monthlyCrm.count || 0, web: monthlyWeb.count || 0 },
         },
         averageRating: Math.round(averageRating * 10) / 10,
       }),
