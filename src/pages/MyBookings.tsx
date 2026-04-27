@@ -186,7 +186,12 @@ export default function MyBookings() {
 
   const upcomingBookings = visibleBookings.filter((b) => b.Fecha >= today);
   const pastBookings = visibleBookings.filter((b) => b.Fecha < today);
-  const displayedBookings = activeTab === "upcoming" ? upcomingBookings : pastBookings;
+  const displayedBookings =
+    activeTab === "upcoming"
+      ? upcomingBookings
+      : activeTab === "history"
+        ? pastBookings
+        : [];
 
   // Group by date
   const groupedBookings = displayedBookings.reduce(
@@ -236,13 +241,16 @@ export default function MyBookings() {
 
       {/* Content */}
       <div className="px-4 py-4 pb-8">
-        <AnimatePresence mode="wait">
-          {displayedBookings.length === 0 ? (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+        {activeTab === "waitlist" ? (
+          <MyWaitlistList />
+        ) : (
+          <AnimatePresence mode="wait">
+            {displayedBookings.length === 0 ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
               className="flex flex-col items-center justify-center py-16 px-6"
             >
               {/* Animated icon with liquid glass */}
