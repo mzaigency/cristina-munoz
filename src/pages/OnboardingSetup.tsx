@@ -47,6 +47,8 @@ import {
   ServiceForm,
   BusinessInfoStep,
   DesignStep,
+  getSuggestedServices,
+  businessTypeLabels,
 } from "@/components/onboarding";
 
 // Step: Business Hours with shifts support
