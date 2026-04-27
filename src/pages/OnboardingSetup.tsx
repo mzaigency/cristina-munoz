@@ -471,6 +471,55 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
         </p>
       </div>
 
+      {usingSuggestions && businessLabel && (
+        <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/10 p-4 backdrop-blur-xl">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <Wand2 className="h-4 w-4" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">
+                Te hemos precargado servicios típicos de {businessLabel}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Edita precios y duraciones, elimina los que no ofreces o añade nuevos. Los precios son orientativos.
+              </p>
+              <button
+                type="button"
+                onClick={startFromScratch}
+                className="mt-2 text-xs font-medium text-primary hover:underline"
+              >
+                Empezar de cero
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-border/60 bg-card/60 p-4 backdrop-blur-xl">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-secondary/15 text-secondary">
+            <Camera className="h-4 w-4" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              ¿Prefieres que lo configuremos por ti?
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Mándanos una foto de tu lista de precios y lo dejamos listo en menos de 24h. Sin coste.
+            </p>
+            <button
+              type="button"
+              onClick={requestWhiteGloveSetup}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Enviar foto por email
+            </button>
+          </div>
+        </div>
+      </div>
+
       <button
         type="button"
         onClick={() => setShowCompoundHelp(!showCompoundHelp)}
