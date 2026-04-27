@@ -417,24 +417,61 @@ export const TenantDateTimeSelection = ({
     try {
       const preferredStylistId = stylist !== "any" ? stylists.find((s) => s.slug === stylist)?.id : null;
 
-      const { error } = await supabase.from("waitlist" as any).insert({
-        tenant_id: tenantId,
-        user_id: currentUser.id,
-        client_name: nameToUse,
-        client_phone: null,
-        preferred_date: format(date, "yyyy-MM-dd"),
-        preferred_stylist_id: preferredStylistId,
-        services: services.map((s) => ({ id: s.id, name: s.name })),
-        notes: `Duración: ${totalDuration} min`,
-        status: "waiting",
-        priority: 3,
-      });
+      const { data: inserted, error } = await supabase
+        .from("waitlist" as any)
+        .insert({
+          tenant_id: tenantId,
+          user_id: currentUser.id,
+          client_name: nameToUse,
+          client_phone: null,
+          preferred_date: format(date, "yyyy-MM-dd"),
+          preferred_stylist_id: preferredStylistId,
+          services: services.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            duration:
+              s.duration ||
+              (s.duration_part1_active || 0) +
+                (s.duration_exposure_pause || 0) +
+                (s.duration_part2_active || 0),
+          })),
+          notes: `Duración: ${totalDuration} min`,
+          status: "waiting",
+          priority: 3,
+        })
+        .select("id")
+        .single();
 
       if (error) throw error;
 
+      // Notify salon admin so they can act on it
+      try {
+        const { data: admins } = await supabase
+          .from("tenant_admins")
+          .select("user_id")
+          .eq("tenant_id", tenantId);
+        if (admins && admins.length > 0) {
+          const dateStr = format(date, "d 'de' MMMM", { locale: es });
+          await supabase.from("notifications").insert(
+            admins.map((a: any) => ({
+              user_id: a.user_id,
+              tenant_id: tenantId,
+              type: "waitlist_new",
+              title: "Nueva clienta en lista de espera",
+              message: `${nameToUse} se ha apuntado para ${dateStr}. Proponle un hueco si puedes.`,
+              metadata: { waitlist_id: (inserted as any)?.id },
+              action_url: "/admin?tab=agenda",
+            }))
+          );
+        }
+      } catch (notifyErr) {
+        console.error("Could not notify admin:", notifyErr);
+      }
+
       toast({
-        title: "¡Añadido a la lista de espera!",
-        description: "Te notificaremos cuando haya disponibilidad",
+        title: "¡Te avisaremos! 🔔",
+        description:
+          "Estás en la lista de espera. Si surge un hueco, te llegará un aviso para confirmarlo con un toque.",
       });
 
       setShowWaitlistDialog(false);
