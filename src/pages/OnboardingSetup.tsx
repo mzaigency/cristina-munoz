@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Loader2, 
-  ArrowLeft, 
-  ArrowRight, 
-  Check, 
-  Palette, 
-  Clock, 
-  Scissors, 
+import {
+  Loader2,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Palette,
+  Clock,
+  Scissors,
   PartyPopper,
   Building2,
   HelpCircle,
@@ -62,7 +62,7 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
       afternoon_start: "16:00",
       afternoon_end: "20:00",
       has_afternoon: true,
-    }))
+    })),
   );
   const [selectedDaysToCopy, setSelectedDaysToCopy] = useState<number[]>([]);
   const [copyFromDay, setCopyFromDay] = useState<number | null>(null);
@@ -91,7 +91,7 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
       setCopyFromDay(copyFromDay === sourceIndex ? null : sourceIndex);
       return;
     }
-    
+
     const sourceDay = hours[sourceIndex];
     const newHours = [...hours];
     selectedDaysToCopy.forEach((targetIndex) => {
@@ -118,7 +118,7 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
 
   const toggleDaySelection = (index: number) => {
     if (selectedDaysToCopy.includes(index)) {
-      setSelectedDaysToCopy(selectedDaysToCopy.filter(i => i !== index));
+      setSelectedDaysToCopy(selectedDaysToCopy.filter((i) => i !== index));
     } else {
       setSelectedDaysToCopy([...selectedDaysToCopy, index]);
     }
@@ -127,24 +127,19 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
   const handleSave = async () => {
     setLoading(true);
     try {
-      await supabase
-        .from("tenant_business_hours")
-        .delete()
-        .eq("tenant_id", tenantId);
+      await supabase.from("tenant_business_hours").delete().eq("tenant_id", tenantId);
 
-      const { error } = await supabase
-        .from("tenant_business_hours")
-        .insert(
-          hours.map((h) => ({
-            tenant_id: tenantId,
-            day_of_week: h.day_of_week,
-            is_open: h.is_open,
-            open_time: h.is_open ? h.morning_start : null,
-            close_time: h.is_open ? (h.has_afternoon ? h.afternoon_end : h.morning_end) : null,
-            break_start: h.is_open && h.has_afternoon ? h.morning_end : null,
-            break_end: h.is_open && h.has_afternoon ? h.afternoon_start : null,
-          }))
-        );
+      const { error } = await supabase.from("tenant_business_hours").insert(
+        hours.map((h) => ({
+          tenant_id: tenantId,
+          day_of_week: h.day_of_week,
+          is_open: h.is_open,
+          open_time: h.is_open ? h.morning_start : null,
+          close_time: h.is_open ? (h.has_afternoon ? h.afternoon_end : h.morning_end) : null,
+          break_start: h.is_open && h.has_afternoon ? h.morning_end : null,
+          break_end: h.is_open && h.has_afternoon ? h.afternoon_start : null,
+        })),
+      );
 
       if (error) throw error;
       onNext();
@@ -166,9 +161,7 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
           <Clock className="h-5 w-5 text-primary" />
           Horarios de apertura
         </h3>
-        <p className="text-sm text-muted-foreground">
-          Configura tus turnos de trabajo
-        </p>
+        <p className="text-sm text-muted-foreground">Configura tus turnos de trabajo</p>
       </div>
 
       {copyFromDay !== null && (
@@ -177,21 +170,22 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
             Selecciona los días donde copiar el horario de {dayNames[copyFromDay]}
           </p>
           <div className="flex flex-wrap gap-2 justify-center mt-2">
-            {dayNames.map((day, index) => (
-              index !== copyFromDay && (
-                <button
-                  key={index}
-                  onClick={() => toggleDaySelection(index)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                    selectedDaysToCopy.includes(index)
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                  }`}
-                >
-                  {day.slice(0, 3)}
-                </button>
-              )
-            ))}
+            {dayNames.map(
+              (day, index) =>
+                index !== copyFromDay && (
+                  <button
+                    key={index}
+                    onClick={() => toggleDaySelection(index)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                      selectedDaysToCopy.includes(index)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    }`}
+                  >
+                    {day.slice(0, 3)}
+                  </button>
+                ),
+            )}
           </div>
           <div className="flex gap-2 mt-3 justify-center">
             <Button
@@ -219,8 +213,8 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
 
       <div className="space-y-3">
         {hours.map((day, index) => (
-          <div 
-            key={index} 
+          <div
+            key={index}
             className={`ios-card p-4 transition-all ${
               !day.is_open ? "opacity-60" : ""
             } ${copyFromDay === index ? "ring-2 ring-primary" : ""}`}
@@ -239,18 +233,13 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
                   </Button>
                 )}
               </div>
-              <Switch
-                checked={day.is_open}
-                onCheckedChange={() => handleToggleDay(index)}
-              />
+              <Switch checked={day.is_open} onCheckedChange={() => handleToggleDay(index)} />
             </div>
-            
+
             {day.is_open && (
               <div className="space-y-3">
                 <div className="bg-secondary/30 rounded-lg p-3">
-                  <Label className="text-xs text-muted-foreground font-medium mb-2 block">
-                    🌅 Turno mañana
-                  </Label>
+                  <Label className="text-xs text-muted-foreground font-medium mb-2 block">🌅 Turno mañana</Label>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs text-muted-foreground">Entrada</Label>
@@ -275,17 +264,12 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
 
                 <div className="flex items-center justify-between">
                   <Label className="text-sm text-muted-foreground">¿Turno de tarde?</Label>
-                  <Switch
-                    checked={day.has_afternoon}
-                    onCheckedChange={() => handleToggleAfternoon(index)}
-                  />
+                  <Switch checked={day.has_afternoon} onCheckedChange={() => handleToggleAfternoon(index)} />
                 </div>
 
                 {day.has_afternoon && (
                   <div className="bg-secondary/30 rounded-lg p-3">
-                    <Label className="text-xs text-muted-foreground font-medium mb-2 block">
-                      🌇 Turno tarde
-                    </Label>
+                    <Label className="text-xs text-muted-foreground font-medium mb-2 block">🌇 Turno tarde</Label>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs text-muted-foreground">Entrada</Label>
@@ -350,19 +334,14 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
   const businessLabel = businessType ? businessTypeLabels[businessType] : undefined;
 
   const [services, setServices] = useState<ServiceForm[]>(
-    suggested && suggested.length > 0 ? suggested : [{ ...EMPTY_SERVICE }]
+    suggested && suggested.length > 0 ? suggested : [{ ...EMPTY_SERVICE }],
   );
-  const [usingSuggestions, setUsingSuggestions] = useState(
-    Boolean(suggested && suggested.length > 0)
-  );
+  const [usingSuggestions, setUsingSuggestions] = useState(Boolean(suggested && suggested.length > 0));
   const [showCompoundHelp, setShowCompoundHelp] = useState(false);
   const { toast } = useToast();
 
   const addService = () => {
-    setServices([
-      ...services,
-      { ...EMPTY_SERVICE },
-    ]);
+    setServices([...services, { ...EMPTY_SERVICE }]);
   };
 
   const startFromScratch = () => {
@@ -371,13 +350,11 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
   };
 
   const requestWhiteGloveSetup = () => {
-    const subject = encodeURIComponent(
-      `Configuración de servicios — ${tenantName || "mi negocio"}`
-    );
+    const subject = encodeURIComponent(`Configuración de servicios — ${tenantName || "mi negocio"}`);
     const body = encodeURIComponent(
-      `Hola equipo de GlowApp,\n\nSoy ${tenantName || "[nombre del negocio]"} y me gustaría que me configuréis los servicios.\nAdjunto foto de mi lista de precios.\n\nGracias!`
+      `Hola equipo de GlowApp,\n\nSoy ${tenantName || "[nombre del negocio]"} y me gustaría que me configuréis los servicios.\nAdjunto foto de mi lista de precios.\n\nGracias!`,
     );
-    window.location.href = `mailto:hola@glowapp.app?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:contacto@glowapp.app?subject=${subject}&body=${body}`;
   };
 
   const removeService = (index: number) => {
@@ -394,8 +371,8 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
 
   const handleDurationChange = (index: number, field: keyof ServiceForm, value: string) => {
     // Allow empty string during editing
-    if (value === '') {
-      updateService(index, field, '' as any);
+    if (value === "") {
+      updateService(index, field, "" as any);
       return;
     }
     const parsed = parseInt(value);
@@ -406,7 +383,7 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
 
   const handleSave = async () => {
     const validServices = services.filter((s) => s.name.trim());
-    
+
     if (validServices.length === 0) {
       onNext();
       return;
@@ -416,13 +393,22 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
     for (const s of validServices) {
       if (s.type === "simple") {
         if (!s.duration || Number(s.duration) < 1) {
-          toast({ title: "Error", description: "La duración de cada servicio debe ser al menos 1 minuto", variant: "destructive" });
+          toast({
+            title: "Error",
+            description: "La duración de cada servicio debe ser al menos 1 minuto",
+            variant: "destructive",
+          });
           return;
         }
       } else {
-        if (!s.duration_part1_active || Number(s.duration_part1_active) < 1 ||
-            !s.duration_exposure_pause || Number(s.duration_exposure_pause) < 1 ||
-            !s.duration_part2_active || Number(s.duration_part2_active) < 1) {
+        if (
+          !s.duration_part1_active ||
+          Number(s.duration_part1_active) < 1 ||
+          !s.duration_exposure_pause ||
+          Number(s.duration_exposure_pause) < 1 ||
+          !s.duration_part2_active ||
+          Number(s.duration_part2_active) < 1
+        ) {
           toast({ title: "Error", description: "Todas las fases deben ser al menos 1 minuto", variant: "destructive" });
           return;
         }
@@ -431,20 +417,18 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("services")
-        .insert(
-          validServices.map((s) => ({
-            tenant_id: tenantId,
-            name: s.name.trim(),
-            type: s.type === "simple" ? "Simple" : "Compuesto",
-            duration_part1_active: s.type === "simple" ? Number(s.duration) : Number(s.duration_part1_active),
-            duration_exposure_pause: s.type === "compound" ? Number(s.duration_exposure_pause) : 0,
-            duration_part2_active: s.type === "compound" ? Number(s.duration_part2_active) : 0,
-            price: s.price ? parseFloat(s.price) : null,
-            category: s.category.trim() || "General",
-          }))
-        );
+      const { error } = await supabase.from("services").insert(
+        validServices.map((s) => ({
+          tenant_id: tenantId,
+          name: s.name.trim(),
+          type: s.type === "simple" ? "Simple" : "Compuesto",
+          duration_part1_active: s.type === "simple" ? Number(s.duration) : Number(s.duration_part1_active),
+          duration_exposure_pause: s.type === "compound" ? Number(s.duration_exposure_pause) : 0,
+          duration_part2_active: s.type === "compound" ? Number(s.duration_part2_active) : 0,
+          price: s.price ? parseFloat(s.price) : null,
+          category: s.category.trim() || "General",
+        })),
+      );
 
       if (error) throw error;
       onNext();
@@ -466,9 +450,7 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
           <Scissors className="h-5 w-5 text-primary" />
           Añade tus servicios
         </h3>
-        <p className="text-sm text-muted-foreground">
-          Servicios simples o compuestos. Podrás añadir más después.
-        </p>
+        <p className="text-sm text-muted-foreground">Servicios simples o compuestos. Podrás añadir más después.</p>
       </div>
 
       {usingSuggestions && businessLabel && (
@@ -502,9 +484,7 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
             <Camera className="h-4 w-4" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              ¿Prefieres que lo configuremos por ti?
-            </p>
+            <p className="text-sm font-semibold text-foreground">¿Prefieres que lo configuremos por ti?</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Mándanos una foto de tu lista de precios y lo dejamos listo en menos de 24h. Sin coste.
             </p>
@@ -528,26 +508,30 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
         <HelpCircle className="h-4 w-4" />
         ¿Qué es un servicio compuesto?
       </button>
-      
+
       {showCompoundHelp && (
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-sm space-y-3">
           <div className="flex items-start gap-3">
             <Layers className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-foreground mb-2">
-                Un servicio compuesto tiene 3 fases:
-              </p>
+              <p className="font-medium text-foreground mb-2">Un servicio compuesto tiene 3 fases:</p>
               <ol className="space-y-2 text-muted-foreground">
                 <li className="flex items-start gap-2">
-                  <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">1</span>
+                  <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    1
+                  </span>
                   <strong className="text-foreground">Fase activa 1:</strong> Aplicar el producto
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="bg-secondary text-secondary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">2</span>
+                  <span className="bg-secondary text-secondary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    2
+                  </span>
                   <strong className="text-foreground">Pausa:</strong> Tiempo de exposición
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">3</span>
+                  <span className="bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    3
+                  </span>
                   <strong className="text-foreground">Fase activa 2:</strong> Lavar y peinar
                 </li>
               </ol>
@@ -560,21 +544,14 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
         {services.map((service, index) => (
           <div key={index} className="ios-card p-4">
             <div className="flex justify-between items-start mb-3">
-              <span className="text-sm font-medium text-muted-foreground">
-                Servicio {index + 1}
-              </span>
+              <span className="text-sm font-medium text-muted-foreground">Servicio {index + 1}</span>
               {services.length > 1 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeService(index)}
-                  className="text-destructive h-8"
-                >
+                <Button variant="ghost" size="sm" onClick={() => removeService(index)} className="text-destructive h-8">
                   Eliminar
                 </Button>
               )}
             </div>
-            
+
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input
@@ -596,9 +573,7 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
                   type="button"
                   onClick={() => updateService(index, "type", "simple")}
                   className={`p-3 rounded-xl border-2 transition-all text-left ${
-                    service.type === "simple"
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
+                    service.type === "simple" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
                   }`}
                 >
                   <p className="font-medium text-sm text-foreground">Simple</p>
@@ -687,7 +662,8 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
                   <div className="flex items-center justify-between text-sm bg-primary/10 rounded-lg p-2">
                     <span className="text-muted-foreground">Total:</span>
                     <span className="font-medium text-primary">
-                      {service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active} min
+                      {service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active}{" "}
+                      min
                     </span>
                   </div>
                   <div>
@@ -708,11 +684,7 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
           </div>
         ))}
 
-        <Button
-          variant="outline"
-          onClick={addService}
-          className="w-full h-11 rounded-xl border-dashed"
-        >
+        <Button variant="outline" onClick={addService} className="w-full h-11 rounded-xl border-dashed">
           + Añadir otro servicio
         </Button>
       </div>
@@ -737,7 +709,15 @@ interface ServicesAndHoursStepProps extends StepProps {
   businessType?: string;
 }
 
-function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading, businessType }: ServicesAndHoursStepProps) {
+function ServicesAndHoursStep({
+  onNext,
+  onPrev,
+  tenantId,
+  tenantName,
+  loading,
+  setLoading,
+  businessType,
+}: ServicesAndHoursStepProps) {
   const [activeTab, setActiveTab] = useState("services");
   const [servicesCompleted, setServicesCompleted] = useState(false);
 
@@ -762,10 +742,13 @@ function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, s
     <div>
       <div className="flex items-center gap-2 mb-4">
         <button
-          onClick={() => { setServicesCompleted(false); setActiveTab("services"); }}
+          onClick={() => {
+            setServicesCompleted(false);
+            setActiveTab("services");
+          }}
           className={cn(
             "flex-1 py-2 rounded-lg text-sm font-medium transition-all text-center",
-            activeTab === "services" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground"
+            activeTab === "services" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground",
           )}
         >
           <Scissors className="h-3.5 w-3.5 inline mr-1" />
@@ -775,7 +758,7 @@ function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, s
           onClick={() => setActiveTab("hours")}
           className={cn(
             "flex-1 py-2 rounded-lg text-sm font-medium transition-all text-center",
-            activeTab === "hours" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground"
+            activeTab === "hours" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground",
           )}
         >
           <Clock className="h-3.5 w-3.5 inline mr-1" />
@@ -784,7 +767,10 @@ function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, s
       </div>
       <HoursStep
         onNext={onNext}
-        onPrev={() => { setServicesCompleted(false); setActiveTab("services"); }}
+        onPrev={() => {
+          setServicesCompleted(false);
+          setActiveTab("services");
+        }}
         tenantId={tenantId}
         tenantName={tenantName}
         loading={loading}
@@ -819,10 +805,13 @@ function ContentStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading
     <div>
       <div className="flex items-center gap-2 mb-4">
         <button
-          onClick={() => { setImagesCompleted(false); setActiveTab("images"); }}
+          onClick={() => {
+            setImagesCompleted(false);
+            setActiveTab("images");
+          }}
           className={cn(
             "flex-1 py-2 rounded-lg text-sm font-medium transition-all text-center",
-            activeTab === "images" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground"
+            activeTab === "images" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground",
           )}
         >
           <Image className="h-3.5 w-3.5 inline mr-1" />
@@ -832,7 +821,7 @@ function ContentStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading
           onClick={() => setActiveTab("team")}
           className={cn(
             "flex-1 py-2 rounded-lg text-sm font-medium transition-all text-center",
-            activeTab === "team" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground"
+            activeTab === "team" ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground",
           )}
         >
           <Users className="h-3.5 w-3.5 inline mr-1" />
@@ -841,7 +830,10 @@ function ContentStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading
       </div>
       <StylistsStep
         onNext={onNext}
-        onPrev={() => { setImagesCompleted(false); setActiveTab("images"); }}
+        onPrev={() => {
+          setImagesCompleted(false);
+          setActiveTab("images");
+        }}
         tenantId={tenantId}
         tenantName={tenantName}
         loading={loading}
@@ -865,23 +857,14 @@ function SuccessStep({ tenantSlug }: { tenantSlug: string }) {
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="text-center py-10"
-    >
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-10">
       <div className="w-24 h-24 rounded-[28px] liquid-glass-card flex items-center justify-center mx-auto mb-8">
-        <motion.div
-          animate={{ rotate: [0, -10, 10, -5, 5, 0] }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-        >
+        <motion.div animate={{ rotate: [0, -10, 10, -5, 5, 0] }} transition={{ duration: 0.8, delay: 0.3 }}>
           <PartyPopper className="h-10 w-10 text-primary" />
         </motion.div>
       </div>
-      
-      <h2 className="text-2xl font-bold text-foreground mb-2">
-        ¡Tu salón está listo!
-      </h2>
+
+      <h2 className="text-2xl font-bold text-foreground mb-2">¡Tu salón está listo!</h2>
       <p className="text-sm text-muted-foreground mb-8 max-w-xs mx-auto leading-relaxed">
         Tu landing page profesional está creada. Ya puedes empezar a recibir reservas.
       </p>
@@ -946,17 +929,19 @@ export default function OnboardingSetup() {
 
   useEffect(() => {
     const initSetup = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       if (!session) {
         navigate("/auth?redirect=/onboarding");
         return;
       }
 
       const isDemo = searchParams.get("demo") === "true";
-      
+
       if (isDemo) {
-        const { data: isSuperadmin } = await supabase.rpc('is_superadmin');
+        const { data: isSuperadmin } = await supabase.rpc("is_superadmin");
         if (!isSuperadmin) {
           toast({
             title: "Acceso denegado",
@@ -966,7 +951,7 @@ export default function OnboardingSetup() {
           navigate("/");
           return;
         }
-        
+
         try {
           const demoSlug = `demo-${Date.now()}`;
           const { data, error } = await supabase.functions.invoke("provision-business", {
@@ -1025,7 +1010,7 @@ export default function OnboardingSetup() {
         try {
           const businessName = localStorage.getItem("onboarding_business_name") || "Mi Salón";
           const businessSlug = localStorage.getItem("onboarding_business_slug") || `salon-${Date.now()}`;
-          
+
           const { data, error } = await supabase.functions.invoke("provision-business", {
             body: {
               businessName,
@@ -1072,11 +1057,7 @@ export default function OnboardingSetup() {
   useEffect(() => {
     if (!tenantId || step !== 3 || businessType) return;
     (async () => {
-      const { data } = await supabase
-        .from("tenants")
-        .select("features")
-        .eq("id", tenantId)
-        .maybeSingle();
+      const { data } = await supabase.from("tenants").select("features").eq("id", tenantId).maybeSingle();
       const features = (data?.features ?? {}) as Record<string, unknown>;
       const bt = features.business_type;
       if (typeof bt === "string" && bt.length > 0) {
@@ -1146,7 +1127,7 @@ export default function OnboardingSetup() {
       />
 
       {/* Compact Header */}
-      <div 
+      <div
         className="sticky top-0 z-40 bg-background/80 backdrop-blur-2xl border-b border-white/10"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
@@ -1154,19 +1135,19 @@ export default function OnboardingSetup() {
           {/* Row 1: back + step counter + actions */}
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-2">
-              {(step > 0 && step < totalSteps) ? (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+              {step > 0 && step < totalSteps ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setStep(step - 1)}
                   className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               ) : step === 0 ? (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => navigate("/")}
                   className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
                 >
@@ -1210,16 +1191,12 @@ export default function OnboardingSetup() {
             <h1 className="font-semibold text-sm text-foreground truncate">
               {step < totalSteps ? steps[step].title : "¡Completado!"}
             </h1>
-            {step < totalSteps && (
-              <p className="text-[11px] text-muted-foreground truncate">
-                {stepMicrocopy[step]}
-              </p>
-            )}
+            {step < totalSteps && <p className="text-[11px] text-muted-foreground truncate">{stepMicrocopy[step]}</p>}
           </div>
 
           {step < totalSteps && (
             <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
-              <motion.div 
+              <motion.div
                 className="absolute inset-y-0 left-0 rounded-full"
                 style={{
                   background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))",
