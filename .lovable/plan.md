@@ -1,175 +1,110 @@
-## Migración Lovable Cloud → Supabase Self-Hosted
+# Plan: Reducir fricción de entrada + Kit de Transición WhatsApp
 
-Plan completo para migrar el proyecto `lyeyzdbplrgqsvyxpfek` (GlowApp) desde Lovable Cloud a tu instancia self-hosted de Supabase, sin necesidad de pedir el password de Postgres a soporte.
-
----
-
-## Fase 1: Exportación (la hago yo desde aquí)
-
-### 1.1 Schema + datos de Postgres
-Uso `pg_dump` con el secret interno `SUPABASE_DB_URL` para generar:
-
-- `glowapp_schema.sql` → estructura completa (tablas, índices, RLS, funciones, triggers, secuencias, enums)
-- `glowapp_data.sql` → todos los datos del schema `public` (INSERT statements)
-- `glowapp_full.sql` → dump combinado (schema + datos en un solo archivo) por si prefieres restaurarlo de una
-
-Comandos que ejecutaré:
-```bash
-# Schema only
-pg_dump "$SUPABASE_DB_URL" --schema=public --schema-only \
-  --no-owner --no-acl --clean --if-exists \
-  -f /mnt/documents/glowapp_schema.sql
-
-# Data only (sin auth, storage, ni schemas internos)
-pg_dump "$SUPABASE_DB_URL" --schema=public --data-only \
-  --no-owner --no-acl --disable-triggers \
-  -f /mnt/documents/glowapp_data.sql
-
-# Full (schema + datos combinados)
-pg_dump "$SUPABASE_DB_URL" --schema=public \
-  --no-owner --no-acl --clean --if-exists \
-  -f /mnt/documents/glowapp_full.sql
-```
-
-### 1.2 Auth users (con hashes de contraseña)
-Los usuarios viven en el schema `auth` que `pg_dump` no toca por defecto. Uso un dump específico de `auth.users`, `auth.identities` y `auth.refresh_tokens`:
-
-```bash
-pg_dump "$SUPABASE_DB_URL" \
-  --table=auth.users \
-  --table=auth.identities \
-  --table=auth.refresh_tokens \
-  --data-only --no-owner \
-  -f /mnt/documents/glowapp_auth.sql
-```
-
-Esto preserva los hashes de contraseña (`encrypted_password`) → tus usuarios actuales seguirán entrando con su misma contraseña en el self-hosted.
-
-### 1.3 Storage (4 buckets)
-Listo y descargo todos los objetos de los 4 buckets vía REST API de Storage usando `SUPABASE_SERVICE_ROLE_KEY`:
-- `tenant-assets` (logos, hero images, fotos de salones)
-- `posts` (imágenes del feed Marketing)
-- `story-images`
-- `story-videos`
-
-Genero `/mnt/documents/storage_dump.tar.gz` con la estructura `bucket_name/path/to/file` y un `storage_manifest.json` con metadatos (paths, MIME types, tamaños) para poder reimportarlos preservando rutas.
-
-### 1.4 Edge Functions
-Ya están en tu repo en `supabase/functions/`. Te genero `/mnt/documents/edge_functions_list.md` con la lista completa de las 30+ funciones y su configuración (`verify_jwt` de cada una desde `supabase/config.toml`) para que sepas qué desplegar y con qué flags.
-
-### 1.5 Lista de secretos a reconfigurar
-Genero `/mnt/documents/secrets_checklist.md` con los nombres (no valores — esos los tienes que poner tú) que tu self-hosted necesita:
-- `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`
-- `RESEND_API_KEY`
-- `FIREBASE_SERVICE_ACCOUNT`
-- `LOVABLE_API_KEY` (para Lovable AI Gateway — si quieres seguir usándolo desde self-hosted, sí funciona; si no, hay que sustituir las edge functions que lo usan)
-- Variables internas de Supabase (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`) — las genera tu self-hosted automáticamente
-
-### 1.6 Configuración adicional crítica
-Genero `/mnt/documents/post_migration_config.md` con:
-- Cron jobs activos (`pg_cron`) — `send_booking_reminders` cada 30 min
-- Settings de Postgres usados por triggers: `app.supabase_url` y `app.service_role_key` (los triggers de notificaciones los necesitan)
-- Webhooks de Stripe a reapuntar a tu nueva URL
-- DNS/dominios custom (`glowapp.app`, `cristinamunozperruqueria.es`) — solo cambian el `VITE_SUPABASE_URL`
-- Realtime publications (`supabase_realtime`) — qué tablas hay que añadir tras el restore
+Dos cambios para acelerar la activación de nuevos negocios y darles munición para avisar a sus clientes desde el día uno.
 
 ---
 
-## Fase 2: Restauración en tu self-hosted (la haces tú con mis instrucciones)
+## 1. Servicios precargados por tipo de negocio (Prioridad Alta)
 
-### Orden de restore
-```bash
-# 1. Restaurar schema público
-psql "$NEW_DB_URL" -f glowapp_schema.sql
+**Objetivo:** Que cuando un negocio elija "Peluquería" (u otro tipo) en el onboarding, llegue al paso de servicios con ~10 servicios típicos ya rellenos, no con un folio en blanco.
 
-# 2. Restaurar usuarios de auth (ANTES que los datos, por las FKs)
-psql "$NEW_DB_URL" -f glowapp_auth.sql
+### Qué hacemos
 
-# 3. Restaurar datos públicos
-psql "$NEW_DB_URL" -f glowapp_data.sql
+**a) Crear catálogo de servicios sugeridos por tipo de negocio**
+Nuevo archivo `src/components/onboarding/suggested-services.ts` con un diccionario `business_type → ServiceForm[]` que cubre los 7 tipos existentes (peluquería, barbería, salón de belleza, estética, spa, uñas, multiservicios). Cada tipo tendrá entre 8 y 12 servicios típicos del sector con nombre, categoría, duración y precio orientativo en EUR. Ejemplos:
 
-# 4. Restaurar storage
-./restore_storage.sh   # script que te genero con las llamadas a la API
-```
+- **Peluquería:** Corte mujer, Corte hombre, Lavar y peinar, Tinte raíz, Tinte completo, Mechas, Mechas californianas, Tratamiento hidratación, Recogido, Flequillo.
+- **Barbería:** Corte clásico, Corte + barba, Afeitado tradicional, Arreglo de barba, Corte niño, Tinte barba, Ritual completo, Cejas.
+- **Uñas:** Manicura básica, Manicura semipermanente, Pedicura básica, Pedicura spa, Uñas acrílicas, Uñas gel, Nail art, Retirada esmalte.
+- (Igual para los demás tipos.)
 
-### Settings de Postgres (CRÍTICO para notificaciones)
-```sql
-ALTER DATABASE postgres SET app.supabase_url = 'https://tu-self-hosted.com';
-ALTER DATABASE postgres SET app.service_role_key = 'tu-service-role-key';
-```
-Sin esto los triggers `trigger_new_booking_notification`, `trigger_booking_status_change` y `trigger_message_notification` fallan en silencio.
+**b) Pasar el `business_type` al ServicesStep**
+El tipo elegido en `BusinessTypeStep` ya se guarda en `tenants.features.business_type`. En `OnboardingSetup.tsx` lo pasaremos como prop al `ServicesStep` (o lo lee directamente del tenant al montar).
 
-### Cron jobs
-```sql
-SELECT cron.schedule(
-  'send-booking-reminders',
-  '*/30 * * * *',
-  'SELECT public.send_booking_reminders();'
-);
-```
+**c) Auto-rellenar al entrar al paso**
+Al montar el `ServicesStep`, si el catálogo tiene servicios para ese tipo, en vez de un único servicio vacío se inicializa el array con la lista sugerida. El usuario puede:
 
-### Realtime
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.bookings;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.conversations;
--- (lista completa en el manifest que te genero)
-```
+- Editar nombre/precio/duración de cualquiera.
+- Eliminar los que no ofrece (botón "Eliminar" ya existe).
+- Añadir nuevos (botón "Añadir servicio" ya existe).
+
+**d) Banner informativo + botón "Empezar de cero"**
+Encima de la lista, un banner sutil tipo Liquid Glass:
+
+> "Hemos precargado servicios típicos de [Peluquería]. Edita precios y duraciones, elimina los que no ofreces, o empieza de cero."
+
+Con un botón secundario "Empezar de cero" que vacía la lista y deja un único servicio en blanco (comportamiento actual).
+
+**e) "Servicio de Guante Blanco" — CTA de ayuda humana**
+En el mismo paso, un segundo bloque pequeño tipo card con icono de cámara / WhatsApp:
+
+> "¿Prefieres que lo configuremos por ti? Mándanos una foto de tu lista de precios por correo y lo dejamos listo en menos de 24h."
+
+Con botón que abre `contacto@glowapp.app` con un mensaje pre-rellenado: *"Hola, soy [nombre del negocio] y quiero que me configuréis los servicios. Os adjunto foto de mi lista de precios."* El correo lo dejamos como constante editable.
 
 ---
 
-## Fase 3: Reapuntar el frontend
+## 2. Kit de Transición WhatsApp (Prioridad Media)
 
-Cambias `.env` (o variables de build):
+**Objetivo:** Dar al negocio plantillas listas para copiar y pegar para anunciar a sus clientes que ahora reservan por la app.
+
+### Qué hacemos
+
+**a) Nueva pestaña "Kit WhatsApp" en Marketing**
+En `src/components/admin/sections/MarketingSection.tsx` añadimos una tercera pestaña junto a "Posts" y "Tarjetas QR":
+
 ```
-VITE_SUPABASE_URL=https://tu-self-hosted.com
-VITE_SUPABASE_PUBLISHABLE_KEY=tu-anon-key-self-hosted
-VITE_SUPABASE_PROJECT_ID=tu-ref-self-hosted
+[ Posts ] [ Tarjetas QR ] [ Kit WhatsApp ]
 ```
 
-Y regeneras los tipos: `npx supabase gen types typescript --project-id tu-ref > src/integrations/supabase/types.ts` (o con `--db-url` apuntando a tu self-hosted).
+**b) Nuevo componente `WhatsAppKit.tsx**`
+Contenido organizado en categorías colapsables o tabs internas:
+
+1. **Estado de WhatsApp** (textos cortos, ≤139 caracteres)
+  - "Reserva tu cita 24/7 en mi nueva app 💇‍♀️ link en bio"
+  - "Ya no hace falta llamar — reserva online: [enlace]"
+  - 3-4 variantes.
+2. **Mensaje masivo a clientas** (texto largo personalizable)
+  - Plantilla con `{nombre_cliente}` y `{nombre_salon}` que se sustituye en vivo si el negocio escribe su nombre.
+  - Ejemplo: *"Hola {nombre}! Te escribo desde {salon}. A partir de ahora puedes reservar tu cita directamente desde el móvil sin llamadas ni esperas: [enlace]. ¡Pruébalo y dime qué te parece!"*
+3. **Bio de Instagram / TikTok**
+  - "📅 Reserva online 24/7 → [enlace]"
+4. **Story / Post de anuncio**
+  - Texto para acompañar una imagen anunciando el cambio.
+5. **Respuesta automática WhatsApp Business**
+  - Texto sugerido para configurar como mensaje de bienvenida/ausencia.
+
+**c) UX del kit**
+Cada plantilla en una card con:
+
+- Texto previsualizado (ya con el enlace del salón sustituido: `https://glowapp.app/{slug}`).
+- Botón **"Copiar"** (usa `navigator.clipboard` + toast "Copiado").
+- Botón **"Compartir por WhatsApp"** que abre `https://wa.me/?text=<encoded>` (Web Share API en móvil).
+
+El enlace del salón se obtiene del tenant actual (`tenants.slug`). Si aún no tiene slug, mostramos placeholder con aviso suave.
 
 ---
 
-## Entregables finales en `/mnt/documents/`
+## Detalles técnicos
 
-```
-glowapp_schema.sql            (~200 KB estimado)
-glowapp_data.sql              (peso depende de tus datos)
-glowapp_full.sql              (schema + data combinado)
-glowapp_auth.sql              (usuarios con hashes)
-storage_dump.tar.gz           (los 4 buckets)
-storage_manifest.json         (metadatos de archivos)
-edge_functions_list.md        (lista + verify_jwt)
-secrets_checklist.md          (qué secretos reconfigurar)
-post_migration_config.md      (cron, settings, realtime, webhooks)
-restore_storage.sh            (script para reimportar storage)
-RESTORE_GUIDE.md              (guía paso a paso end-to-end)
-```
+**Archivos nuevos**
 
----
+- `src/components/onboarding/suggested-services.ts` — diccionario de servicios por tipo.
+- `src/components/admin/marketing/WhatsAppKit.tsx` — componente del kit.
 
-## Lo que NO migra automáticamente
+**Archivos modificados**
 
-- **Webhooks de Stripe**: tienes que crear uno nuevo en el dashboard de Stripe apuntando a `https://tu-self-hosted.com/functions/v1/stripe-webhook` y actualizar `STRIPE_WEBHOOK_SECRET`.
-- **Service Worker de FCM** (`public/firebase-messaging-sw.js`): seguirá funcionando igual, no depende del backend.
-- **Custom domains**: tu dominio `glowapp.app` es de Lovable hosting (frontend) → si también te llevas el frontend, hay que reapuntar DNS. Si solo te llevas el backend, no toques el dominio.
-- **Backups históricos** de Lovable Cloud: no se migran. Solo tendrás el snapshot del momento del dump.
+- `src/pages/OnboardingSetup.tsx` — leer `business_type` del tenant en `ServicesStep`, pre-rellenar estado inicial, añadir banner + CTA Guante Blanco.
+- `src/components/admin/sections/MarketingSection.tsx` — añadir tercera pestaña.
+
+**Sin cambios de base de datos.** Los servicios precargados se insertan con la lógica `INSERT` que ya existe en `handleSave`. No tocamos RLS ni edge functions.
+
+**Estética:** Liquid Glass coherente con el resto de la app, mobile-first, respetando safe areas.
+
+**Sin emojis innecesarios en código** — los emojis solo dentro de las plantillas WhatsApp donde aportan al mensaje real.
 
 ---
 
-## Riesgos y consideraciones
+## Pregunta abierta antes de implementar
 
-- **Downtime estimado**: 5–15 min si haces el dump y el restore en ventana corta. Si quieres zero-downtime hay que hacer dual-write temporal (más complejo, fuera de este plan).
-- **Tamaño de storage**: si tienes muchas imágenes/vídeos, `storage_dump.tar.gz` puede ser grande. Te aviso del tamaño antes de subirlo a `/mnt/documents/`.
-- **Diferencia de versiones de Postgres**: tu self-hosted tiene que ser ≥ que la versión de Lovable Cloud (probable PG 15). Si es menor, el restore puede fallar en algunas funciones.
-- **Extensiones**: tu self-hosted necesita tener instaladas: `pg_cron`, `pg_net`, `pgcrypto`, `pgsodium`, `pg_graphql`, `vault`. Casi todas vienen con la imagen oficial de Supabase self-hosted.
-
----
-
-## Confirmación antes de empezar
-
-Cuando apruebes este plan, en modo build hago la **Fase 1 completa** y te dejo todos los archivos en `/mnt/documents/` listos para descargar. La Fase 2 y 3 las haces tú con los archivos + la guía `RESTORE_GUIDE.md`.
-
-¿Lanzo?
+Necesito confirmar **el número de WhatsApp del "Servicio de Guante Blanco"** para enlazar el `wa.me`. Si me lo pasas al aprobar, lo dejo cableado; si no, lo dejo como constante en `src/config/support.ts` con un valor placeholder bien marcado.

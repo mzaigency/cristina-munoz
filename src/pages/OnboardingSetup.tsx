@@ -24,7 +24,10 @@ import {
   Paintbrush,
   Users,
   Image,
-  SkipForward
+  SkipForward,
+  Wand2,
+  Mail,
+  Camera,
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { motion, AnimatePresence } from "motion/react";
@@ -44,6 +47,8 @@ import {
   ServiceForm,
   BusinessInfoStep,
   DesignStep,
+  getSuggestedServices,
+  businessTypeLabels,
 } from "@/components/onboarding";
 
 // Step: Business Hours with shifts support
@@ -325,36 +330,54 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
 }
 
 // Step: Services
-function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps) {
-  const [services, setServices] = useState<ServiceForm[]>([
-    { 
-      name: "", 
-      price: "", 
-      type: "simple", 
-      duration: 30,
-      duration_part1_active: 15,
-      duration_exposure_pause: 30,
-      duration_part2_active: 15,
-      category: "",
-    },
-  ]);
+interface ServicesStepProps extends StepProps {
+  businessType?: string;
+}
+
+const EMPTY_SERVICE: ServiceForm = {
+  name: "",
+  price: "",
+  type: "simple",
+  duration: 30,
+  duration_part1_active: 15,
+  duration_exposure_pause: 30,
+  duration_part2_active: 15,
+  category: "",
+};
+
+function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading, businessType }: ServicesStepProps) {
+  const suggested = getSuggestedServices(businessType);
+  const businessLabel = businessType ? businessTypeLabels[businessType] : undefined;
+
+  const [services, setServices] = useState<ServiceForm[]>(
+    suggested && suggested.length > 0 ? suggested : [{ ...EMPTY_SERVICE }]
+  );
+  const [usingSuggestions, setUsingSuggestions] = useState(
+    Boolean(suggested && suggested.length > 0)
+  );
   const [showCompoundHelp, setShowCompoundHelp] = useState(false);
   const { toast } = useToast();
 
   const addService = () => {
     setServices([
-      ...services, 
-      { 
-        name: "", 
-        price: "", 
-        type: "simple", 
-        duration: 30,
-        duration_part1_active: 15,
-        duration_exposure_pause: 30,
-        duration_part2_active: 15,
-        category: "",
-      }
+      ...services,
+      { ...EMPTY_SERVICE },
     ]);
+  };
+
+  const startFromScratch = () => {
+    setServices([{ ...EMPTY_SERVICE }]);
+    setUsingSuggestions(false);
+  };
+
+  const requestWhiteGloveSetup = () => {
+    const subject = encodeURIComponent(
+      `Configuración de servicios — ${tenantName || "mi negocio"}`
+    );
+    const body = encodeURIComponent(
+      `Hola equipo de GlowApp,\n\nSoy ${tenantName || "[nombre del negocio]"} y me gustaría que me configuréis los servicios.\nAdjunto foto de mi lista de precios.\n\nGracias!`
+    );
+    window.location.href = `mailto:hola@glowapp.app?subject=${subject}&body=${body}`;
   };
 
   const removeService = (index: number) => {
@@ -446,6 +469,55 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
         <p className="text-sm text-muted-foreground">
           Servicios simples o compuestos. Podrás añadir más después.
         </p>
+      </div>
+
+      {usingSuggestions && businessLabel && (
+        <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/10 p-4 backdrop-blur-xl">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <Wand2 className="h-4 w-4" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">
+                Te hemos precargado servicios típicos de {businessLabel}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Edita precios y duraciones, elimina los que no ofreces o añade nuevos. Los precios son orientativos.
+              </p>
+              <button
+                type="button"
+                onClick={startFromScratch}
+                className="mt-2 text-xs font-medium text-primary hover:underline"
+              >
+                Empezar de cero
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-border/60 bg-card/60 p-4 backdrop-blur-xl">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-secondary/15 text-secondary">
+            <Camera className="h-4 w-4" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              ¿Prefieres que lo configuremos por ti?
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Mándanos una foto de tu lista de precios y lo dejamos listo en menos de 24h. Sin coste.
+            </p>
+            <button
+              type="button"
+              onClick={requestWhiteGloveSetup}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Enviar foto por email
+            </button>
+          </div>
+        </div>
       </div>
 
       <button
@@ -661,7 +733,11 @@ function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepPro
 }
 
 // Combined Services + Hours step with tabs
-function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading }: StepProps) {
+interface ServicesAndHoursStepProps extends StepProps {
+  businessType?: string;
+}
+
+function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading, businessType }: ServicesAndHoursStepProps) {
   const [activeTab, setActiveTab] = useState("services");
   const [servicesCompleted, setServicesCompleted] = useState(false);
 
@@ -677,6 +753,7 @@ function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, s
         tenantName={tenantName}
         loading={loading}
         setLoading={setLoading}
+        businessType={businessType}
       />
     );
   }
@@ -845,6 +922,7 @@ export default function OnboardingSetup() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState<string>("Mi Salón");
+  const [businessType, setBusinessType] = useState<string | undefined>(undefined);
   const [initializing, setInitializing] = useState(true);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -989,6 +1067,26 @@ export default function OnboardingSetup() {
     initSetup();
   }, [navigate, searchParams, toast, totalSteps]);
 
+  // Cargar el business_type del tenant cuando vayamos al paso de servicios,
+  // para precargar servicios sugeridos según el tipo de negocio.
+  useEffect(() => {
+    if (!tenantId || step !== 3 || businessType) return;
+    (async () => {
+      const { data } = await supabase
+        .from("tenants")
+        .select("features")
+        .eq("id", tenantId)
+        .maybeSingle();
+      const features = (data?.features ?? {}) as Record<string, unknown>;
+      const bt = features.business_type;
+      if (typeof bt === "string" && bt.length > 0) {
+        setBusinessType(bt);
+      } else {
+        setBusinessType(""); // marcamos como cargado aunque no exista
+      }
+    })();
+  }, [tenantId, step, businessType]);
+
   if (initializing) {
     return (
       <AppLayout hideNavigation>
@@ -1024,7 +1122,7 @@ export default function OnboardingSetup() {
       case 2:
         return <ContentStep {...stepProps} />;
       case 3:
-        return <ServicesAndHoursStep {...stepProps} />;
+        return <ServicesAndHoursStep {...stepProps} businessType={businessType} />;
       case 4:
         return <DesignStep {...stepProps} tenantName={tenantName} />;
       case 5:
