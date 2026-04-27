@@ -330,36 +330,54 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
 }
 
 // Step: Services
-function ServicesStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps) {
-  const [services, setServices] = useState<ServiceForm[]>([
-    { 
-      name: "", 
-      price: "", 
-      type: "simple", 
-      duration: 30,
-      duration_part1_active: 15,
-      duration_exposure_pause: 30,
-      duration_part2_active: 15,
-      category: "",
-    },
-  ]);
+interface ServicesStepProps extends StepProps {
+  businessType?: string;
+}
+
+const EMPTY_SERVICE: ServiceForm = {
+  name: "",
+  price: "",
+  type: "simple",
+  duration: 30,
+  duration_part1_active: 15,
+  duration_exposure_pause: 30,
+  duration_part2_active: 15,
+  category: "",
+};
+
+function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading, businessType }: ServicesStepProps) {
+  const suggested = getSuggestedServices(businessType);
+  const businessLabel = businessType ? businessTypeLabels[businessType] : undefined;
+
+  const [services, setServices] = useState<ServiceForm[]>(
+    suggested && suggested.length > 0 ? suggested : [{ ...EMPTY_SERVICE }]
+  );
+  const [usingSuggestions, setUsingSuggestions] = useState(
+    Boolean(suggested && suggested.length > 0)
+  );
   const [showCompoundHelp, setShowCompoundHelp] = useState(false);
   const { toast } = useToast();
 
   const addService = () => {
     setServices([
-      ...services, 
-      { 
-        name: "", 
-        price: "", 
-        type: "simple", 
-        duration: 30,
-        duration_part1_active: 15,
-        duration_exposure_pause: 30,
-        duration_part2_active: 15,
-        category: "",
-      }
+      ...services,
+      { ...EMPTY_SERVICE },
     ]);
+  };
+
+  const startFromScratch = () => {
+    setServices([{ ...EMPTY_SERVICE }]);
+    setUsingSuggestions(false);
+  };
+
+  const requestWhiteGloveSetup = () => {
+    const subject = encodeURIComponent(
+      `Configuración de servicios — ${tenantName || "mi negocio"}`
+    );
+    const body = encodeURIComponent(
+      `Hola equipo de GlowApp,\n\nSoy ${tenantName || "[nombre del negocio]"} y me gustaría que me configuréis los servicios.\nAdjunto foto de mi lista de precios.\n\nGracias!`
+    );
+    window.location.href = `mailto:hola@glowapp.app?subject=${subject}&body=${body}`;
   };
 
   const removeService = (index: number) => {
