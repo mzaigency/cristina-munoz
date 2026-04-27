@@ -11,3 +11,4 @@ export { BusinessInfoStep } from "./BusinessInfoStep";
 export { DesignStep } from "./DesignStep";
 export * from "./types";
 export * from "./landing-themes";
+export { getSuggestedServices, businessTypeLabels } from "./suggested-services";
