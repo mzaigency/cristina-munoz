@@ -2169,6 +2169,11 @@ export type Database = {
           preferred_time_end: string | null
           preferred_time_start: string | null
           priority: number | null
+          proposed_at: string | null
+          proposed_date: string | null
+          proposed_expires_at: string | null
+          proposed_stylist_id: string | null
+          proposed_time: string | null
           services: Json | null
           status: string | null
           tenant_id: string
@@ -2188,6 +2193,11 @@ export type Database = {
           preferred_time_end?: string | null
           preferred_time_start?: string | null
           priority?: number | null
+          proposed_at?: string | null
+          proposed_date?: string | null
+          proposed_expires_at?: string | null
+          proposed_stylist_id?: string | null
+          proposed_time?: string | null
           services?: Json | null
           status?: string | null
           tenant_id: string
@@ -2207,6 +2217,11 @@ export type Database = {
           preferred_time_end?: string | null
           preferred_time_start?: string | null
           priority?: number | null
+          proposed_at?: string | null
+          proposed_date?: string | null
+          proposed_expires_at?: string | null
+          proposed_stylist_id?: string | null
+          proposed_time?: string | null
           services?: Json | null
           status?: string | null
           tenant_id?: string
@@ -2446,6 +2461,7 @@ export type Database = {
         Args: { _plaintext: string; _tenant_id: string }
         Returns: string
       }
+      expire_old_waitlist_entries: { Args: never; Returns: undefined }
       get_follower_count: { Args: { _tenant_id: string }; Returns: number }
       get_following_posts: {
         Args: { _limit?: number; _offset?: number; _user_id: string }
