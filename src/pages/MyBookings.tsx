@@ -6,7 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { format, isToday, isTomorrow, isThisWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Loader2, CalendarPlus, ChevronRight, X, Star, Sparkles } from "lucide-react";
+import { Calendar, Loader2, CalendarPlus, ChevronRight, X, Star, Sparkles, Hourglass } from "lucide-react";
+import { MyWaitlistList } from "@/components/booking/MyWaitlistList";
 import { BookingSkeleton } from "@/components/ui/BookingSkeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +51,7 @@ type Booking = {
 
 const TABS = [
   { value: "upcoming", label: "Próximas" },
+  { value: "waitlist", label: "En espera" },
   { value: "history", label: "Historial" },
 ];
 
@@ -57,7 +59,13 @@ export default function MyBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") === "history" ? "history" : "upcoming";
+  const tabParam = searchParams.get("tab");
+  const initialTab =
+    tabParam === "history"
+      ? "history"
+      : tabParam === "waitlist"
+        ? "waitlist"
+        : "upcoming";
   const [activeTab, setActiveTab] = useState(initialTab);
   const [dateToCancel, setDateToCancel] = useState<string | null>(null);
   const [cancelingDate, setCancelingDate] = useState<string | null>(null);
