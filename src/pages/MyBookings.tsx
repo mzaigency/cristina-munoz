@@ -470,9 +470,10 @@ export default function MyBookings() {
                   </motion.section>
                 );
               })}
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
       </div>
 
       {/* Reschedule Flow */}
