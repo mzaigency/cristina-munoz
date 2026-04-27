@@ -47,9 +47,9 @@ function fillTemplate(
   vars: { salon: string; link: string; nombre?: string }
 ): string {
   return text
-    .replaceAll("{salon}", vars.salon)
-    .replaceAll("{enlace}", vars.link)
-    .replaceAll("{nombre}", vars.nombre ?? "{nombre}");
+    .split("{salon}").join(vars.salon)
+    .split("{enlace}").join(vars.link)
+    .split("{nombre}").join(vars.nombre ?? "{nombre}");
 }
 
 const buildCategories = (): Category[] => [
