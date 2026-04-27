@@ -733,7 +733,11 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
 }
 
 // Combined Services + Hours step with tabs
-function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading }: StepProps) {
+interface ServicesAndHoursStepProps extends StepProps {
+  businessType?: string;
+}
+
+function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading, businessType }: ServicesAndHoursStepProps) {
   const [activeTab, setActiveTab] = useState("services");
   const [servicesCompleted, setServicesCompleted] = useState(false);
 
@@ -749,6 +753,7 @@ function ServicesAndHoursStep({ onNext, onPrev, tenantId, tenantName, loading, s
         tenantName={tenantName}
         loading={loading}
         setLoading={setLoading}
+        businessType={businessType}
       />
     );
   }
