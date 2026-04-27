@@ -1067,6 +1067,26 @@ export default function OnboardingSetup() {
     initSetup();
   }, [navigate, searchParams, toast, totalSteps]);
 
+  // Cargar el business_type del tenant cuando vayamos al paso de servicios,
+  // para precargar servicios sugeridos según el tipo de negocio.
+  useEffect(() => {
+    if (!tenantId || step !== 3 || businessType) return;
+    (async () => {
+      const { data } = await supabase
+        .from("tenants")
+        .select("features")
+        .eq("id", tenantId)
+        .maybeSingle();
+      const features = (data?.features ?? {}) as Record<string, unknown>;
+      const bt = features.business_type;
+      if (typeof bt === "string" && bt.length > 0) {
+        setBusinessType(bt);
+      } else {
+        setBusinessType(""); // marcamos como cargado aunque no exista
+      }
+    })();
+  }, [tenantId, step, businessType]);
+
   if (initializing) {
     return (
       <AppLayout hideNavigation>
