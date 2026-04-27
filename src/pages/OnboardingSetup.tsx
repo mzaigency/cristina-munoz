@@ -1122,7 +1122,7 @@ export default function OnboardingSetup() {
       case 2:
         return <ContentStep {...stepProps} />;
       case 3:
-        return <ServicesAndHoursStep {...stepProps} />;
+        return <ServicesAndHoursStep {...stepProps} businessType={businessType} />;
       case 4:
         return <DesignStep {...stepProps} tenantName={tenantName} />;
       case 5:
