@@ -24,7 +24,10 @@ import {
   Paintbrush,
   Users,
   Image,
-  SkipForward
+  SkipForward,
+  Wand2,
+  Mail,
+  Camera,
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { motion, AnimatePresence } from "motion/react";
