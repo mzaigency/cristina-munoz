@@ -4,8 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +27,7 @@ import {
   Plus,
   Clock,
   Phone,
-  Calendar,
+  Calendar as CalendarIcon,
   Trash2,
   Bell,
   CheckCircle,
@@ -23,9 +35,14 @@ import {
   ListOrdered,
   Smartphone,
   MessageCircle,
-  ChevronRight,
   User,
-  MoreVertical
+  MoreVertical,
+  Sparkles,
+  CalendarPlus,
+  Hourglass,
+  XCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -33,6 +50,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProposeSlotDialog } from "./ProposeSlotDialog";
+import { cn } from "@/lib/utils";
 
 interface WaitlistEntry {
   id: string;
@@ -50,23 +70,36 @@ interface WaitlistEntry {
   notified_at: string | null;
   notes: string | null;
   created_at: string;
+  proposed_date?: string | null;
+  proposed_time?: string | null;
+  proposed_stylist_id?: string | null;
+  proposed_at?: string | null;
+  proposed_expires_at?: string | null;
 }
 
 interface Stylist {
   id: string;
   name: string;
+  slug: string;
 }
 
 interface WaitlistManagerProps {
   tenantId: string;
 }
 
+type TabValue = "active" | "proposed" | "history";
+
 export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   const [entries, setEntries] = useState<WaitlistEntry[]>([]);
   const [stylists, setStylists] = useState<Stylist[]>([]);
+  const [tenantSlug, setTenantSlug] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [proposeEntry, setProposeEntry] = useState<WaitlistEntry | null>(null);
+  const [activeTab, setActiveTab] = useState<TabValue>("active");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     client_name: "",
     client_phone: "",
@@ -76,7 +109,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
     preferred_time_end: "",
     preferred_stylist_id: "",
     priority: 0,
-    notes: ""
+    notes: "",
   });
   const { toast } = useToast();
 
@@ -86,24 +119,26 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
   const fetchData = async () => {
     try {
-      const [waitlistRes, stylistsRes] = await Promise.all([
+      const [waitlistRes, stylistsRes, tenantRes] = await Promise.all([
         supabase
           .from("waitlist" as any)
           .select("*")
           .eq("tenant_id", tenantId)
-          .in("status", ["waiting", "notified"])
+          .in("status", ["waiting", "notified", "proposed", "booked", "expired", "cancelled"])
           .order("priority", { ascending: false })
-          .order("created_at", { ascending: true }),
+          .order("created_at", { ascending: false }),
         supabase
           .from("tenant_stylists")
-          .select("id, name")
+          .select("id, name, slug")
           .eq("tenant_id", tenantId)
-          .eq("is_active", true)
+          .eq("is_active", true),
+        supabase.from("tenants").select("slug").eq("id", tenantId).single(),
       ]);
 
       if (waitlistRes.error) throw waitlistRes.error;
       setEntries((waitlistRes.data || []) as unknown as WaitlistEntry[]);
       setStylists(stylistsRes.data || []);
+      setTenantSlug(tenantRes.data?.slug || "");
     } catch (error) {
       console.error("Error fetching waitlist:", error);
     } finally {
@@ -113,31 +148,33 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
   const handleSave = async () => {
     if (!formData.client_name.trim()) {
-      toast({ title: "Error", description: "El nombre es obligatorio", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "El nombre es obligatorio",
+        variant: "destructive",
+      });
       return;
     }
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("waitlist" as any)
-        .insert({
-          tenant_id: tenantId,
-          client_name: formData.client_name.trim(),
-          client_phone: formData.client_phone.trim() || null,
-          client_email: formData.client_email.trim() || null,
-          preferred_date: formData.preferred_date || null,
-          preferred_time_start: formData.preferred_time_start || null,
-          preferred_time_end: formData.preferred_time_end || null,
-          preferred_stylist_id: formData.preferred_stylist_id || null,
-          priority: formData.priority,
-          notes: formData.notes.trim() || null
-        });
+      const { error } = await supabase.from("waitlist" as any).insert({
+        tenant_id: tenantId,
+        client_name: formData.client_name.trim(),
+        client_phone: formData.client_phone.trim() || null,
+        client_email: formData.client_email.trim() || null,
+        preferred_date: formData.preferred_date || null,
+        preferred_time_start: formData.preferred_time_start || null,
+        preferred_time_end: formData.preferred_time_end || null,
+        preferred_stylist_id: formData.preferred_stylist_id || null,
+        priority: formData.priority,
+        notes: formData.notes.trim() || null,
+      });
 
       if (error) throw error;
-      
+
       toast({ title: "Añadido a lista de espera" });
-      setIsDialogOpen(false);
+      setIsAddOpen(false);
       setFormData({
         client_name: "",
         client_phone: "",
@@ -147,31 +184,13 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
         preferred_time_end: "",
         preferred_stylist_id: "",
         priority: 0,
-        notes: ""
+        notes: "",
       });
       fetchData();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleNotify = async (entry: WaitlistEntry) => {
-    try {
-      const { error } = await supabase
-        .from("waitlist" as any)
-        .update({ 
-          status: "notified", 
-          notified_at: new Date().toISOString() 
-        })
-        .eq("id", entry.id);
-
-      if (error) throw error;
-      toast({ title: "Cliente notificado", description: `Se ha notificado a ${entry.client_name}` });
-      fetchData();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   };
 
@@ -190,9 +209,24 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
     }
   };
 
+  const handleCancel = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("waitlist" as any)
+        .update({ status: "cancelled" })
+        .eq("id", id);
+
+      if (error) throw error;
+      toast({ title: "Entrada cancelada" });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar de la lista de espera?")) return;
-    
+    if (!confirm("¿Eliminar definitivamente?")) return;
+
     try {
       const { error } = await supabase
         .from("waitlist" as any)
@@ -200,54 +234,96 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
         .eq("id", id);
 
       if (error) throw error;
-      toast({ title: "Eliminado de la lista" });
+      toast({ title: "Eliminado" });
       fetchData();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   };
 
-  const getPriorityIndicator = (priority: number) => {
-    if (priority >= 2) return <div className="w-1 h-full bg-red-500 absolute left-0 top-0 rounded-l-xl" />;
-    if (priority === 1) return <div className="w-1 h-full bg-amber-500 absolute left-0 top-0 rounded-l-xl" />;
-    return null;
+  const handleSendWhatsApp = (entry: WaitlistEntry) => {
+    if (!entry.client_phone) return;
+    const phone = entry.client_phone.replace(/\D/g, "");
+    const dateText = entry.preferred_date
+      ? format(new Date(entry.preferred_date), "d 'de' MMMM", { locale: es })
+      : "tu fecha preferida";
+    const msg = encodeURIComponent(
+      `¡Hola ${entry.client_name}! Te escribo desde el salón. Estás en nuestra lista de espera para ${dateText}. ¿Sigues interesad@? 💜`
+    );
+    window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+  };
+
+  // Filter by tab
+  const activeEntries = entries.filter((e) =>
+    ["waiting", "notified"].includes(e.status)
+  );
+  const proposedEntries = entries.filter((e) => e.status === "proposed");
+  const historyEntries = entries.filter((e) =>
+    ["booked", "cancelled", "expired"].includes(e.status)
+  );
+
+  const tabEntries =
+    activeTab === "active"
+      ? activeEntries
+      : activeTab === "proposed"
+        ? proposedEntries
+        : historyEntries;
+
+  const getStylistName = (id?: string | null) => {
+    if (!id) return null;
+    return stylists.find((s) => s.id === id)?.name;
+  };
+
+  const getServicesText = (services: any[]) => {
+    if (!Array.isArray(services) || services.length === 0) return null;
+    return services.map((s: any) => s.name).filter(Boolean).join(", ");
   };
 
   const getStatusBadge = (entry: WaitlistEntry) => {
+    if (entry.status === "proposed") {
+      return (
+        <Badge className="text-[10px] px-1.5 py-0.5 bg-blue-500 hover:bg-blue-600 text-white border-0">
+          <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+          Hueco propuesto
+        </Badge>
+      );
+    }
     if (entry.status === "notified") {
       return (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-600 border-blue-500/30">
+        <Badge
+          variant="outline"
+          className="text-[10px] px-1.5 py-0.5 bg-amber-500/10 text-amber-700 border-amber-500/30"
+        >
           <Bell className="h-2.5 w-2.5 mr-0.5" />
-          Avisado
+          Avisada
+        </Badge>
+      );
+    }
+    if (entry.status === "booked") {
+      return (
+        <Badge className="text-[10px] px-1.5 py-0.5 bg-emerald-500 text-white border-0">
+          <CheckCircle className="h-2.5 w-2.5 mr-0.5" />
+          Reservada
+        </Badge>
+      );
+    }
+    if (entry.status === "cancelled") {
+      return (
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 text-muted-foreground">
+          <XCircle className="h-2.5 w-2.5 mr-0.5" />
+          Cancelada
+        </Badge>
+      );
+    }
+    if (entry.status === "expired") {
+      return (
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 text-muted-foreground">
+          <Hourglass className="h-2.5 w-2.5 mr-0.5" />
+          Caducada
         </Badge>
       );
     }
     return null;
-  };
-
-  const getContactIcon = (entry: WaitlistEntry) => {
-    if (entry.user_id) {
-      return (
-        <div className="flex items-center gap-1 text-emerald-600">
-          <Smartphone className="h-3.5 w-3.5" />
-          <span className="text-xs">App</span>
-        </div>
-      );
-    }
-    if (entry.client_phone) {
-      return (
-        <a href={`tel:${entry.client_phone}`} className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
-          <Phone className="h-3.5 w-3.5" />
-          <span className="text-xs">{entry.client_phone}</span>
-        </a>
-      );
-    }
-    return (
-      <div className="flex items-center gap-1 text-muted-foreground">
-        <User className="h-3.5 w-3.5" />
-        <span className="text-xs">Sin contacto</span>
-      </div>
-    );
   };
 
   if (loading) {
@@ -268,115 +344,238 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
           </div>
           <div>
             <h2 className="text-lg font-bold">Lista de Espera</h2>
-            <p className="text-xs text-muted-foreground">{entries.length} esperando</p>
+            <p className="text-xs text-muted-foreground">
+              {activeEntries.length} esperando · {proposedEntries.length}{" "}
+              propuestas
+            </p>
           </div>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} size="sm" className="rounded-full h-9 px-4">
+        <Button
+          onClick={() => setIsAddOpen(true)}
+          size="sm"
+          className="rounded-full h-9 px-4"
+        >
           <Plus className="h-4 w-4 mr-1" />
           Añadir
         </Button>
       </div>
 
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
+        <TabsList className="grid grid-cols-3 w-full h-9">
+          <TabsTrigger value="active" className="text-xs">
+            Esperando {activeEntries.length > 0 && `(${activeEntries.length})`}
+          </TabsTrigger>
+          <TabsTrigger value="proposed" className="text-xs">
+            Propuestas {proposedEntries.length > 0 && `(${proposedEntries.length})`}
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-xs">
+            Historial
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Empty state */}
-      {entries.length === 0 ? (
+      {tabEntries.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
             <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
               <Clock className="h-6 w-6 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground font-medium">Sin clientes en espera</p>
+            <p className="text-muted-foreground font-medium">
+              {activeTab === "active" && "Sin clientes en espera"}
+              {activeTab === "proposed" && "Sin propuestas activas"}
+              {activeTab === "history" && "Sin historial todavía"}
+            </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Los clientes pueden unirse cuando no haya huecos disponibles
+              {activeTab === "active" &&
+                "Los clientes pueden unirse cuando no haya huecos"}
+              {activeTab === "proposed" &&
+                "Propón un hueco a alguien de la lista de espera"}
             </p>
           </CardContent>
         </Card>
       ) : (
-        /* List */
         <div className="space-y-2">
-          {entries.map((entry, index) => (
-            <Card key={entry.id} className="relative overflow-hidden">
-              {getPriorityIndicator(entry.priority)}
-              <CardContent className="p-3 pl-4">
-                <div className="flex items-center gap-3">
-                  {/* Position indicator */}
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-bold text-primary">{index + 1}</span>
-                  </div>
+          {tabEntries.map((entry, index) => {
+            const isExpanded = expandedId === entry.id;
+            const servicesText = getServicesText(entry.services);
+            const stylistName = getStylistName(entry.preferred_stylist_id);
+            const proposedStylistName = getStylistName(entry.proposed_stylist_id);
 
-                  {/* Main content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className="font-semibold text-sm truncate">{entry.client_name}</h3>
-                      {getStatusBadge(entry)}
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      {getContactIcon(entry)}
-                      
-                      {entry.preferred_date && (
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5" />
-                          <span className="text-xs">
-                            {format(new Date(entry.preferred_date), "d MMM", { locale: es })}
-                            {entry.preferred_time_start && ` · ${entry.preferred_time_start.slice(0, 5)}`}
-                          </span>
+            return (
+              <Card
+                key={entry.id}
+                className={cn(
+                  "relative overflow-hidden transition-all",
+                  entry.status === "proposed" && "border-blue-300 bg-blue-50/30",
+                  entry.priority >= 2 && "border-l-4 border-l-red-500",
+                  entry.priority === 1 && "border-l-4 border-l-amber-500"
+                )}
+              >
+                <CardContent className="p-3">
+                  {/* Top row */}
+                  <div className="flex items-start gap-3">
+                    {activeTab === "active" && (
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-xs font-bold text-primary">
+                          {index + 1}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h3 className="font-semibold text-sm truncate">
+                          {entry.client_name}
+                        </h3>
+                        {getStatusBadge(entry)}
+                      </div>
+
+                      {/* Contact + preferred date */}
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        {entry.user_id ? (
+                          <div className="flex items-center gap-1 text-emerald-600">
+                            <Smartphone className="h-3.5 w-3.5" />
+                            <span className="text-xs">App</span>
+                          </div>
+                        ) : entry.client_phone ? (
+                          <a
+                            href={`tel:${entry.client_phone}`}
+                            className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                          >
+                            <Phone className="h-3.5 w-3.5" />
+                            <span className="text-xs">{entry.client_phone}</span>
+                          </a>
+                        ) : (
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <User className="h-3.5 w-3.5" />
+                            <span className="text-xs">Sin contacto</span>
+                          </div>
+                        )}
+
+                        {entry.preferred_date && (
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <CalendarIcon className="h-3.5 w-3.5" />
+                            <span className="text-xs">
+                              {format(new Date(entry.preferred_date), "d MMM", {
+                                locale: es,
+                              })}
+                              {entry.preferred_time_start &&
+                                ` · ${entry.preferred_time_start.slice(0, 5)}`}
+                              {entry.preferred_time_end &&
+                                `–${entry.preferred_time_end.slice(0, 5)}`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Proposed slot info */}
+                      {entry.status === "proposed" && entry.proposed_date && (
+                        <div className="mt-2 px-2.5 py-1.5 bg-blue-100/60 border border-blue-200 rounded-lg">
+                          <p className="text-[11px] text-blue-900 font-medium">
+                            🎯 Propuesto:{" "}
+                            {format(new Date(entry.proposed_date), "d MMM", {
+                              locale: es,
+                            })}{" "}
+                            · {String(entry.proposed_time).slice(0, 5)}
+                            {proposedStylistName && ` · ${proposedStylistName}`}
+                          </p>
                         </div>
+                      )}
+
+                      {/* Expanded details */}
+                      {isExpanded && (
+                        <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                          {servicesText && (
+                            <p>
+                              <span className="font-medium text-foreground">
+                                Servicios:
+                              </span>{" "}
+                              {servicesText}
+                            </p>
+                          )}
+                          {stylistName && (
+                            <p>
+                              <span className="font-medium text-foreground">
+                                Profesional preferido:
+                              </span>{" "}
+                              {stylistName}
+                            </p>
+                          )}
+                          {entry.notes && (
+                            <p className="italic">"{entry.notes}"</p>
+                          )}
+                          <p className="text-[10px]">
+                            Apuntada{" "}
+                            {format(new Date(entry.created_at), "d MMM HH:mm", {
+                              locale: es,
+                            })}
+                          </p>
+                        </div>
+                      )}
+
+                      {(servicesText || entry.notes || stylistName) && (
+                        <button
+                          onClick={() =>
+                            setExpandedId(isExpanded ? null : entry.id)
+                          }
+                          className="mt-1.5 text-[11px] text-primary flex items-center gap-0.5 hover:underline"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="h-3 w-3" />
+                              Menos detalles
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-3 w-3" />
+                              Ver detalles
+                            </>
+                          )}
+                        </button>
                       )}
                     </div>
 
-                    {entry.notes && (
-                      <p className="text-[11px] text-muted-foreground mt-1 truncate italic">
-                        "{entry.notes}"
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    {entry.user_id && entry.status === "waiting" && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                        onClick={() => handleNotify(entry)}
-                        title="Enviar mensaje"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </Button>
-                    )}
-                    
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                      onClick={() => handleMarkBooked(entry.id)}
-                      title="Marcar como reservado"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                    </Button>
-
+                    {/* More menu */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuContent align="end" className="w-52">
                         {entry.client_phone && (
                           <DropdownMenuItem asChild>
-                            <a href={`tel:${entry.client_phone}`} className="flex items-center">
+                            <a href={`tel:${entry.client_phone}`}>
                               <Phone className="h-4 w-4 mr-2" />
                               Llamar
                             </a>
                           </DropdownMenuItem>
                         )}
-                        {entry.status === "waiting" && !entry.user_id && entry.client_phone && (
-                          <DropdownMenuItem onClick={() => handleNotify(entry)}>
-                            <Bell className="h-4 w-4 mr-2" />
-                            Marcar notificado
+                        {entry.client_phone && (
+                          <DropdownMenuItem onClick={() => handleSendWhatsApp(entry)}>
+                            <MessageCircle className="h-4 w-4 mr-2" />
+                            Mensaje WhatsApp
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem 
+                        {["waiting", "notified", "proposed"].includes(
+                          entry.status
+                        ) && (
+                          <DropdownMenuItem onClick={() => handleMarkBooked(entry.id)}>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Marcar como reservada
+                          </DropdownMenuItem>
+                        )}
+                        {["waiting", "notified", "proposed"].includes(
+                          entry.status
+                        ) && (
+                          <DropdownMenuItem onClick={() => handleCancel(entry.id)}>
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Cancelar entrada
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
                           onClick={() => handleDelete(entry.id)}
                           className="text-destructive focus:text-destructive"
                         >
@@ -386,25 +585,51 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                  {/* Action buttons (only for active entries) */}
+                  {["waiting", "notified"].includes(entry.status) && (
+                    <div className="flex gap-2 mt-3 pt-3 border-t border-border/50">
+                      <Button
+                        size="sm"
+                        onClick={() => setProposeEntry(entry)}
+                        className="flex-1 h-8 text-xs gap-1"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Proponer hueco
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleMarkBooked(entry.id)}
+                        className="flex-1 h-8 text-xs gap-1"
+                      >
+                        <CalendarPlus className="h-3.5 w-3.5" />
+                        Ya reservada
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
       {/* Info card */}
-      {entries.length > 0 && (
+      {activeTab === "active" && activeEntries.length > 0 && (
         <Card className="bg-muted/30 border-dashed">
           <CardContent className="p-3">
             <div className="flex items-start gap-2">
               <div className="p-1.5 rounded-lg bg-primary/10 mt-0.5">
-                <Bell className="h-3.5 w-3.5 text-primary" />
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-medium">Aviso automático</p>
+                <p className="text-xs font-medium">Cómo funciona</p>
                 <p className="text-[11px] text-muted-foreground">
-                  Cuando se cancele una cita, los clientes con la app recibirán un mensaje automático si hay hueco para su fecha preferida.
+                  Pulsa <b>Proponer hueco</b> para ofrecer una fecha y hora a la
+                  clienta. Si tiene la app, le llega un aviso y puede confirmar
+                  con un toque (la cita se crea sola en tu agenda). Si no, se
+                  abre WhatsApp con un mensaje listo.
                 </p>
               </div>
             </div>
@@ -413,21 +638,23 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
       )}
 
       {/* Add Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto pb-[max(env(safe-area-inset-bottom),1rem)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5 text-primary" />
               Añadir a Lista de Espera
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-2">
             <div>
               <Label className="text-xs">Nombre del cliente *</Label>
               <Input
                 value={formData.client_name}
-                onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, client_name: e.target.value })
+                }
                 placeholder="Nombre completo"
                 className="mt-1"
               />
@@ -437,7 +664,9 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
               <Label className="text-xs">Teléfono</Label>
               <Input
                 value={formData.client_phone}
-                onChange={(e) => setFormData({ ...formData, client_phone: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, client_phone: e.target.value })
+                }
                 placeholder="612 345 678 (opcional)"
                 type="tel"
                 className="mt-1"
@@ -449,7 +678,9 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
               <Input
                 type="date"
                 value={formData.preferred_date}
-                onChange={(e) => setFormData({ ...formData, preferred_date: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, preferred_date: e.target.value })
+                }
                 className="mt-1"
               />
             </div>
@@ -460,7 +691,12 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                 <Input
                   type="time"
                   value={formData.preferred_time_start}
-                  onChange={(e) => setFormData({ ...formData, preferred_time_start: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      preferred_time_start: e.target.value,
+                    })
+                  }
                   className="mt-1"
                 />
               </div>
@@ -469,7 +705,12 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                 <Input
                   type="time"
                   value={formData.preferred_time_end}
-                  onChange={(e) => setFormData({ ...formData, preferred_time_end: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      preferred_time_end: e.target.value,
+                    })
+                  }
                   className="mt-1"
                 />
               </div>
@@ -477,17 +718,24 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
             <div>
               <Label className="text-xs">Profesional preferido</Label>
-              <Select 
-                value={formData.preferred_stylist_id || "none"} 
-                onValueChange={(v) => setFormData({ ...formData, preferred_stylist_id: v === "none" ? "" : v })}
+              <Select
+                value={formData.preferred_stylist_id || "none"}
+                onValueChange={(v) =>
+                  setFormData({
+                    ...formData,
+                    preferred_stylist_id: v === "none" ? "" : v,
+                  })
+                }
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Sin preferencia" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sin preferencia</SelectItem>
-                  {stylists.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  {stylists.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -495,9 +743,11 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
             <div>
               <Label className="text-xs">Prioridad</Label>
-              <Select 
-                value={formData.priority.toString()} 
-                onValueChange={(v) => setFormData({ ...formData, priority: parseInt(v) })}
+              <Select
+                value={formData.priority.toString()}
+                onValueChange={(v) =>
+                  setFormData({ ...formData, priority: parseInt(v) })
+                }
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue />
@@ -529,7 +779,9 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
               <Label className="text-xs">Notas</Label>
               <Textarea
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
                 placeholder="Observaciones adicionales..."
                 rows={2}
                 className="mt-1"
@@ -538,16 +790,39 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddOpen(false)}
+              className="flex-1 sm:flex-none"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none">
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 sm:flex-none"
+            >
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Añadir
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Propose Slot Dialog */}
+      {proposeEntry && (
+        <ProposeSlotDialog
+          open={!!proposeEntry}
+          onOpenChange={(open) => !open && setProposeEntry(null)}
+          waitlistEntry={proposeEntry}
+          stylists={stylists}
+          tenantSlug={tenantSlug}
+          onProposed={() => {
+            fetchData();
+            setActiveTab("proposed");
+          }}
+        />
+      )}
     </div>
   );
 }
