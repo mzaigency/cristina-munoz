@@ -922,6 +922,7 @@ export default function OnboardingSetup() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState<string>("Mi Salón");
+  const [businessType, setBusinessType] = useState<string | undefined>(undefined);
   const [initializing, setInitializing] = useState(true);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
