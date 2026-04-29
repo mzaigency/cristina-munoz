@@ -1,84 +1,104 @@
-# Mejorar el flujo de Lista de Espera
+# Tienda de productos en el salón
 
-## Diagnóstico actual (qué falla)
+Añadimos una **mini-tienda** dentro de la landing de cada tenant para vender los productos en stock, integrada con el flujo de reserva y con un panel admin en tiempo real para ver los pedidos.
 
-**Cliente que se apunta:**
-- Se inserta en `waitlist` y recibe un toast de confirmación. Punto.
-- No tiene visibilidad de su posición ni puede cancelar/editar su solicitud.
-- No recibe ningún mensaje de WhatsApp/push cuando se apunta.
-- En "Mis citas" no aparece nada.
+## 1. Base de datos
 
-**Salón en el panel (`WaitlistManager`):**
-- Ve la lista, pero las acciones reales son escasas: "marcar notificado" no envía nada, solo cambia un campo en BD.
-- No hay botón claro para **convertir en cita** (crear booking real desde la entrada).
-- No hay botón para **proponer un hueco concreto** ("te puedo dar el martes a las 11").
-- No se ve el contexto: servicios pedidos, duración, profesional preferido están escondidos o truncados.
-- No hay indicador de "¿qué huecos libres tengo cerca de su preferencia?" → el admin tiene que ir a la agenda manualmente y volver.
+### Tabla `products` — añadir campos
+- `image_url text` — foto del producto
+- `is_featured boolean default false` — para destacar en tienda
+- `short_description text` — descripción corta para la card
 
-**Cron `check-waitlist-availability`:**
-- Existe pero solo se dispara cuando se cancela una cita y, además, requiere coincidencia exacta de fecha. Si no encaja, la entrada se queda muerta para siempre.
+### Nueva tabla `product_orders`
+Pedidos de productos, ligados opcionalmente a una reserva.
+- `tenant_id`, `user_id` (nullable para invitados)
+- `booking_id` (nullable, si se añadió al confirmar una cita)
+- `customer_name`, `customer_phone`
+- `items jsonb` — `[{product_id, name, price, quantity}]`
+- `total numeric`
+- `status text` — `pending` / `ready` / `delivered` / `cancelled`
+- `pickup_type text` — `with_appointment` / `pickup` 
+- `notes text`
+- `created_at`, `updated_at`
 
----
+**RLS:**
+- Cliente: ve / crea sus propios pedidos
+- Admin del tenant: ve y gestiona los pedidos del tenant
+- Realtime activado para notificación instantánea
 
-## Plan de mejora (3 bloques)
+### Trigger de stock
+Función `decrement_product_stock()` que al insertar un `product_order` con status distinto de `cancelled`, descuenta el stock de cada item. Si algún producto no tiene stock suficiente → rechazar.
 
-### 1) Cliente: visibilidad y comunicación
+### Bucket de Storage
+Nuevo bucket público `product-images` con políticas para que los admins del tenant suban imágenes en `{tenant_id}/...`.
 
-- **Confirmación real**: al apuntarse se manda un push (si tiene la app) y un mensaje automático en la conversación con el salón: *"Te hemos añadido a la lista de espera para el {fecha}. Te avisaremos en cuanto haya un hueco."*
-- **Sección "En espera" dentro de "Mis citas"**: nueva pestaña que lista las entradas activas del usuario con:
-  - Salón, servicios pedidos, fecha preferida, profesional.
-  - Estado: *Esperando · Avisado · Hueco propuesto*.
-  - Botón **Cancelar** (borra/cancela su entrada).
-- **Hueco propuesto**: cuando el salón le ofrece un hueco concreto (ver bloque 2), el cliente recibe push + mensaje con dos botones: **Aceptar** (crea booking automáticamente) o **Rechazar** (entrada vuelve a "esperando").
+## 2. Admin — gestionar productos con imagen
 
-### 2) Panel del salón: acciones potentes
+`ProductsManager.tsx`: añadir campo de subida de imagen (reusando `TenantImageUploader` o input file → bucket), y campos de "destacar en tienda" y "descripción corta".
 
-Rediseño de cada tarjeta del `WaitlistManager` para que el admin **pueda resolver desde ahí mismo** sin saltar a la agenda:
+## 3. Tienda en la landing (todos los temas)
 
-- **Botón "Proponer hueco"**: abre un mini-selector con los huecos libres del día/fecha preferida (reusa la lógica de `TenantDateTimeSelection`). Al elegir uno:
-  - Si el cliente tiene cuenta → envía push + mensaje con botones aceptar/rechazar; estado pasa a `proposed`.
-  - Si solo hay teléfono → genera un mensaje de WhatsApp pre-rellenado (`wa.me/...?text=...`) y marca como `notified`.
-- **Botón "Convertir en cita"**: abre directamente el modal de creación de cita del CRM con todos los campos pre-rellenados (nombre, teléfono, servicios, profesional). Al guardar, la entrada de waitlist pasa a `booked` automáticamente.
-- **Vista expandida** de cada tarjeta: muestra los servicios pedidos, duración total, rango horario preferido y notas (hoy se truncan).
-- **Filtros y orden**: pestañas *Esperando / Avisados / Propuestos* y orden por fecha preferida (no solo por prioridad).
-- **Indicador "Tienes hueco"**: badge verde en las entradas cuya fecha preferida tiene huecos libres que encajan con la duración pedida (cálculo en background al cargar).
+Nuevo componente `TenantShopSection.tsx`, insertado en `TenantLanding.tsx` después de `TenantServicesSection`. Solo se renderiza si el tenant tiene al menos 1 producto activo con stock.
 
-### 3) Backend: estados y automatismos
+**Diseño Liquid Glass mobile-first:**
+- Header con título "Tienda" y línea acento
+- Grid 2 columnas en móvil / 3-4 en desktop
+- Cards con `backdrop-blur`, borde sutil, imagen cuadrada arriba, nombre, precio, badge de stock bajo si aplica
+- Tap en card → `ProductDetailDialog` (bottom sheet en móvil, dialog en desktop) con imagen grande, descripción, precio, selector de cantidad y dos botones:
+  - **"Añadir al carrito"** (estado local del carrito de tienda)
+  - **"Comprar ahora"** → abre formulario de checkout simple (nombre/teléfono o usuario logueado) y crea `product_order` con `pickup_type=pickup`
 
-- **Nuevos estados en `waitlist.status`**: añadir `proposed` y `expired` además de `waiting / notified / booked / cancelled`.
-- **Edge function `propose-waitlist-slot`**: recibe `waitlist_id` + `date` + `time` + `stylist_id`, marca como `proposed`, guarda el hueco propuesto en columnas nuevas (`proposed_date`, `proposed_time`, `proposed_stylist_id`, `proposed_at`), y envía push + mensaje al cliente.
-- **Edge function `accept-waitlist-proposal`**: el cliente la llama desde "Mis citas", crea el `booking` real validando que el hueco siga libre, y marca la entrada como `booked`.
-- **Mejora del cron `check-waitlist-availability`**: además de fecha exacta, busca huecos en ±3 días de la fecha preferida y notifica al **admin** (no al cliente directamente) con un push *"Hay hueco para Cristina (lista de espera)"*, para que el admin decida proponer.
-- **Auto-expiración**: entradas con fecha preferida ya pasada se marcan como `expired` automáticamente (trigger o limpieza diaria).
+**Carrito flotante** estilo iOS (botón sticky abajo derecha con badge cantidad) cuando hay items.
 
----
+## 4. Integración en el flujo de reserva
 
-## Detalle técnico
+En `BookingFlow.tsx` / `TenantBookingFlow.tsx`, **paso intermedio antes de confirmar (paso 4)**:
+
+Nuevo bloque opcional **"¿Quieres añadir algún producto a tu cita?"**
+- Carrusel horizontal de productos destacados con stock
+- Tap → añade al pedido asociado a la reserva
+- Resumen muestra: servicios + productos + total combinado
+- Al confirmar booking → se crea también `product_order` con `booking_id` y `pickup_type=with_appointment`
+
+Si el cliente ya tenía items en el carrito de tienda al iniciar la reserva, se preservan y se ofrecen para añadir.
+
+## 5. Panel admin: Pedidos en tiempo real
+
+Nueva sub-tab **"Tienda"** dentro de `CatalogSection` (o nueva sección si prefieres) con:
+- **Lista de pedidos** ordenada por `created_at desc`
+- Filtros por estado (Pendiente / Listo / Entregado)
+- Cada pedido muestra: cliente, items, total, si tiene cita asociada (link), botones de cambio de estado
+- **Suscripción Realtime** a `product_orders` filtrado por `tenant_id` → toast + sonido + badge en sidebar al llegar uno nuevo
+- Notificación push al admin reusando `send-push-notification`
+
+## 6. Notificaciones
+
+- Al crear pedido → notificar al admin (push + in-app)
+- Al cambiar estado a `ready` → notificar al cliente (push si tiene cuenta)
+- Reusar la infraestructura existente (`notifications` table + `send-push-notification` edge function)
+
+## Archivos a crear/editar
 
 **Migración SQL:**
-```sql
-ALTER TABLE waitlist 
-  ADD COLUMN proposed_date date,
-  ADD COLUMN proposed_time time,
-  ADD COLUMN proposed_stylist_id uuid,
-  ADD COLUMN proposed_at timestamptz,
-  ADD COLUMN proposed_expires_at timestamptz;
+- Nueva migración: campos en `products`, tabla `product_orders` + RLS + trigger stock + bucket storage + realtime
 
--- RLS: usuarios pueden leer/cancelar sus propias entradas
-CREATE POLICY "Users view own waitlist" ON waitlist 
-  FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users cancel own waitlist" ON waitlist 
-  FOR UPDATE USING (auth.uid() = user_id) 
-  WITH CHECK (status = 'cancelled');
-```
+**Nuevos:**
+- `src/components/tenant/TenantShopSection.tsx`
+- `src/components/tenant/ProductDetailDialog.tsx`
+- `src/components/tenant/ShopCart.tsx` (carrito flotante)
+- `src/components/booking/BookingProductsAddon.tsx`
+- `src/components/admin/ProductOrdersManager.tsx`
+- `src/contexts/ShopCartContext.tsx` (estado carrito)
 
-**Archivos a tocar:**
-- `src/components/admin/WaitlistManager.tsx` → rediseño con acciones reales (proponer hueco, convertir en cita, vista expandida, filtros).
-- `src/components/admin/WaitlistProposeSlotDialog.tsx` (nuevo) → selector de huecos libres reusando lógica de disponibilidad.
-- `src/pages/MyBookings.tsx` → nueva pestaña "En espera" con cancelar y aceptar/rechazar propuestas.
-- `src/components/tenant/TenantDateTimeSelection.tsx` y `src/components/booking/DateTimeSelection.tsx` → tras apuntarse, enviar mensaje automático en conversación.
-- `supabase/functions/propose-waitlist-slot/index.ts` (nueva).
-- `supabase/functions/accept-waitlist-proposal/index.ts` (nueva).
-- `supabase/functions/check-waitlist-availability/index.ts` → ampliar a ±3 días y notificar al admin.
+**Editar:**
+- `src/components/admin/ProductsManager.tsx` (subida imagen + featured)
+- `src/pages/TenantLanding.tsx` (renderizar shop section)
+- `src/components/booking/BookingFlow.tsx` y `TenantBookingFlow.tsx` (addon productos)
+- `src/components/booking/BookingConfirmation.tsx` (incluir productos en resumen y crear orden)
+- `src/components/admin/sections/CatalogSection.tsx` (añadir tab "Pedidos")
 
-**Mobile-first**: todas las tarjetas del admin y del cliente con safe-area, dialogs `max-h-[90vh]`, botones grandes táctiles, estética Liquid Glass coherente.
+## Notas técnicas
+- Stock se valida server-side en el trigger para evitar race conditions
+- Realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE product_orders`
+- Imágenes optimizadas con `loading="lazy"` y aspect-ratio fijo
+- Soporta usuarios invitados (sin login) para compra rápida — `user_id` nullable
