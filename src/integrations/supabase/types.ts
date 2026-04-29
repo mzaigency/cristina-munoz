@@ -824,6 +824,54 @@ export type Database = {
           },
         ]
       }
+      product_orders: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          items: Json
+          notes: string | null
+          pickup_type: string
+          status: string
+          tenant_id: string
+          total: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          pickup_type?: string
+          status?: string
+          tenant_id: string
+          total?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          pickup_type?: string
+          status?: string
+          tenant_id?: string
+          total?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string | null
@@ -832,10 +880,13 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          image_url: string | null
           is_active: boolean | null
+          is_featured: boolean
           min_stock: number | null
           name: string
           price: number
+          short_description: string | null
           stock: number | null
           tenant_id: string | null
           updated_at: string | null
@@ -847,10 +898,13 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
+          is_featured?: boolean
           min_stock?: number | null
           name: string
           price?: number
+          short_description?: string | null
           stock?: number | null
           tenant_id?: string | null
           updated_at?: string | null
@@ -862,10 +916,13 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
+          is_featured?: boolean
           min_stock?: number | null
           name?: string
           price?: number
+          short_description?: string | null
           stock?: number | null
           tenant_id?: string | null
           updated_at?: string | null
