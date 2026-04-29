@@ -38,12 +38,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Pencil, Trash2, Package, AlertTriangle, PackagePlus } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Package, AlertTriangle, PackagePlus, Star, ImagePlus, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Product {
   id: string;
   name: string;
   description: string | null;
+  short_description: string | null;
+  image_url: string | null;
+  is_featured: boolean;
   price: number;
   cost: number;
   category: string | null;
@@ -70,6 +75,9 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    short_description: "",
+    image_url: "",
+    is_featured: false,
     price: "",
     cost: "",
     category: "",
@@ -77,6 +85,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
     stock: "",
     min_stock: "",
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [stockEntry, setStockEntry] = useState({
     quantity: "",
     cost: "",
@@ -112,6 +121,9 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
       setFormData({
         name: product.name,
         description: product.description || "",
+        short_description: product.short_description || "",
+        image_url: product.image_url || "",
+        is_featured: product.is_featured || false,
         price: product.price.toString(),
         cost: product.cost.toString(),
         category: product.category || "",
@@ -121,9 +133,48 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
       });
     } else {
       setSelectedProduct(null);
-      setFormData({ name: "", description: "", price: "", cost: "", category: "", barcode: "", stock: "0", min_stock: "0" });
+      setFormData({
+        name: "",
+        description: "",
+        short_description: "",
+        image_url: "",
+        is_featured: false,
+        price: "",
+        cost: "",
+        category: "",
+        barcode: "",
+        stock: "0",
+        min_stock: "0",
+      });
     }
     setDialogOpen(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagen demasiado grande", description: "Máximo 5MB", variant: "destructive" });
+      return;
+    }
+    try {
+      setUploadingImage(true);
+      const ext = file.name.split(".").pop();
+      const filePath = `${tenantId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("product-images").upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("product-images").getPublicUrl(filePath);
+      setFormData((f) => ({ ...f, image_url: data.publicUrl }));
+      toast({ title: "Imagen subida" });
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Error", description: "No se pudo subir la imagen", variant: "destructive" });
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const openStockDialog = (product: Product) => {
@@ -144,6 +195,9 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
         tenant_id: tenantId,
         name: formData.name.trim(),
         description: formData.description.trim() || null,
+        short_description: formData.short_description.trim() || null,
+        image_url: formData.image_url || null,
+        is_featured: formData.is_featured,
         price: parseFloat(formData.price) || 0,
         cost: parseFloat(formData.cost) || 0,
         category: formData.category || null,
@@ -272,13 +326,55 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
               <DialogTitle>{selectedProduct ? "Editar producto" : "Nuevo producto"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              {/* Imagen */}
+              <div className="space-y-2">
+                <Label>Foto del producto</Label>
+                {formData.image_url ? (
+                  <div className="relative w-full aspect-square max-w-[200px] rounded-lg overflow-hidden border bg-muted">
+                    <img src={formData.image_url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image_url: "" })}
+                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center shadow-md"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full max-w-[200px] aspect-square border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:bg-muted/50 transition">
+                    {uploadingImage ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    ) : (
+                      <>
+                        <ImagePlus className="h-6 w-6 text-muted-foreground mb-1" />
+                        <span className="text-xs text-muted-foreground">Subir foto</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
+                  </label>
+                )}
+              </div>
               <div className="space-y-2">
                 <Label>Nombre *</Label>
                 <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Nombre del producto" />
               </div>
               <div className="space-y-2">
-                <Label>Descripción</Label>
-                <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Descripción opcional" />
+                <Label>Descripción corta (tienda)</Label>
+                <Input value={formData.short_description} onChange={(e) => setFormData({ ...formData, short_description: e.target.value })} placeholder="Una línea para la card de tienda" maxLength={80} />
+              </div>
+              <div className="space-y-2">
+                <Label>Descripción completa</Label>
+                <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Descripción detallada" rows={3} />
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500" />
+                  <div>
+                    <p className="text-sm font-medium">Destacar en tienda</p>
+                    <p className="text-xs text-muted-foreground">Aparecerá primero y en la reserva</p>
+                  </div>
+                </div>
+                <Switch checked={formData.is_featured} onCheckedChange={(v) => setFormData({ ...formData, is_featured: v })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
