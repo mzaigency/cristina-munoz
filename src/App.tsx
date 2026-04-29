@@ -203,6 +203,7 @@ const App = () => (
               </NavigationProvider>
             </TooltipProvider>
           </Suspense>
+          </ShopCartProvider>
         </AuthProvider>
       </>
     </QueryClientProvider>
