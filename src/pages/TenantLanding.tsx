@@ -426,6 +426,8 @@ const TenantLanding = () => {
             />
           </div>
 
+          {/* Shop Section - productos */}
+          <TenantShopSection tenantId={tenant.id} tenantSlug={tenant.slug} />
 
           {/* Gallery Section - Tenant specific */}
           <div id="galeria">
