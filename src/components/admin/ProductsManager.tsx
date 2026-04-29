@@ -326,13 +326,55 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
               <DialogTitle>{selectedProduct ? "Editar producto" : "Nuevo producto"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              {/* Imagen */}
+              <div className="space-y-2">
+                <Label>Foto del producto</Label>
+                {formData.image_url ? (
+                  <div className="relative w-full aspect-square max-w-[200px] rounded-lg overflow-hidden border bg-muted">
+                    <img src={formData.image_url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image_url: "" })}
+                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center shadow-md"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full max-w-[200px] aspect-square border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:bg-muted/50 transition">
+                    {uploadingImage ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    ) : (
+                      <>
+                        <ImagePlus className="h-6 w-6 text-muted-foreground mb-1" />
+                        <span className="text-xs text-muted-foreground">Subir foto</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
+                  </label>
+                )}
+              </div>
               <div className="space-y-2">
                 <Label>Nombre *</Label>
                 <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Nombre del producto" />
               </div>
               <div className="space-y-2">
-                <Label>Descripción</Label>
-                <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Descripción opcional" />
+                <Label>Descripción corta (tienda)</Label>
+                <Input value={formData.short_description} onChange={(e) => setFormData({ ...formData, short_description: e.target.value })} placeholder="Una línea para la card de tienda" maxLength={80} />
+              </div>
+              <div className="space-y-2">
+                <Label>Descripción completa</Label>
+                <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Descripción detallada" rows={3} />
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500" />
+                  <div>
+                    <p className="text-sm font-medium">Destacar en tienda</p>
+                    <p className="text-xs text-muted-foreground">Aparecerá primero y en la reserva</p>
+                  </div>
+                </div>
+                <Switch checked={formData.is_featured} onCheckedChange={(v) => setFormData({ ...formData, is_featured: v })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
