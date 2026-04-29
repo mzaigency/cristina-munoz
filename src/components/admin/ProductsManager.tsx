@@ -75,6 +75,9 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    short_description: "",
+    image_url: "",
+    is_featured: false,
     price: "",
     cost: "",
     category: "",
@@ -82,6 +85,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
     stock: "",
     min_stock: "",
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [stockEntry, setStockEntry] = useState({
     quantity: "",
     cost: "",
