@@ -38,12 +38,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Pencil, Trash2, Package, AlertTriangle, PackagePlus } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Package, AlertTriangle, PackagePlus, Star, ImagePlus, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Product {
   id: string;
   name: string;
   description: string | null;
+  short_description: string | null;
+  image_url: string | null;
+  is_featured: boolean;
   price: number;
   cost: number;
   category: string | null;
