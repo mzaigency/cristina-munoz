@@ -144,6 +144,7 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <>
         <AuthProvider>
+          <ShopCartProvider>
           <Suspense fallback={null}>
             <TooltipProvider>
               <NavigationProvider>
