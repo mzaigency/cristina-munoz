@@ -121,6 +121,9 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
       setFormData({
         name: product.name,
         description: product.description || "",
+        short_description: product.short_description || "",
+        image_url: product.image_url || "",
+        is_featured: product.is_featured || false,
         price: product.price.toString(),
         cost: product.cost.toString(),
         category: product.category || "",
@@ -130,9 +133,48 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
       });
     } else {
       setSelectedProduct(null);
-      setFormData({ name: "", description: "", price: "", cost: "", category: "", barcode: "", stock: "0", min_stock: "0" });
+      setFormData({
+        name: "",
+        description: "",
+        short_description: "",
+        image_url: "",
+        is_featured: false,
+        price: "",
+        cost: "",
+        category: "",
+        barcode: "",
+        stock: "0",
+        min_stock: "0",
+      });
     }
     setDialogOpen(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagen demasiado grande", description: "Máximo 5MB", variant: "destructive" });
+      return;
+    }
+    try {
+      setUploadingImage(true);
+      const ext = file.name.split(".").pop();
+      const filePath = `${tenantId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("product-images").upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("product-images").getPublicUrl(filePath);
+      setFormData((f) => ({ ...f, image_url: data.publicUrl }));
+      toast({ title: "Imagen subida" });
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Error", description: "No se pudo subir la imagen", variant: "destructive" });
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const openStockDialog = (product: Product) => {
@@ -153,6 +195,9 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
         tenant_id: tenantId,
         name: formData.name.trim(),
         description: formData.description.trim() || null,
+        short_description: formData.short_description.trim() || null,
+        image_url: formData.image_url || null,
+        is_featured: formData.is_featured,
         price: parseFloat(formData.price) || 0,
         cost: parseFloat(formData.cost) || 0,
         category: formData.category || null,
