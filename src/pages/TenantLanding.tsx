@@ -18,6 +18,7 @@ import { TenantAdminBar } from "@/components/tenant/TenantAdminBar";
 import { TenantEditPanel } from "@/components/tenant/TenantEditPanel";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
 import TenantContactSection from "@/components/tenant/TenantContactSection";
+import { TenantShopSection } from "@/components/tenant/TenantShopSection";
 import { HeroImmersive, HeroMinimal, HeroSplit, HeroBold, HeroGlass } from "@/components/tenant/heroes";
 import { getThemeById } from "@/components/onboarding/landing-themes";
 
