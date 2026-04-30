@@ -56,57 +56,68 @@ export const TenantShopSection = ({ tenantId, tenantSlug }: TenantShopSectionPro
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl mx-auto">
             {products.map((p, idx) => (
               <motion.button
                 key={p.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: Math.min(idx * 0.05, 0.4) }}
+                transition={{ duration: 0.35, delay: Math.min(idx * 0.04, 0.3) }}
                 onClick={() => setSelected(p)}
                 className={cn(
                   "group relative text-left overflow-hidden rounded-2xl",
-                  "bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/40",
-                  "shadow-[0_8px_32px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)]",
-                  "transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
+                  "bg-card border border-border/60",
+                  "shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.10)]",
+                  "transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]",
+                  "flex flex-col"
                 )}
               >
-                <div className="relative aspect-square overflow-hidden bg-muted">
+                <div className="relative aspect-square overflow-hidden bg-muted/40">
                   {p.image_url ? (
                     <img
                       src={p.image_url}
                       alt={p.name}
                       loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
-                      <ShoppingBag className="h-12 w-12" />
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+                      <ShoppingBag className="h-10 w-10" strokeWidth={1.5} />
                     </div>
                   )}
-                  {p.is_featured && (
-                    <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-amber-500/90 text-white text-[10px] font-semibold flex items-center gap-1 backdrop-blur-sm">
-                      <Star className="h-3 w-3 fill-white" />
-                      <span>Destacado</span>
-                    </div>
-                  )}
-                  {p.stock <= 3 && (
-                    <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-background/90 text-foreground text-[10px] font-medium backdrop-blur-sm border">
-                      Solo {p.stock}
-                    </div>
-                  )}
+
+                  {/* Badges */}
+                  <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2 pointer-events-none">
+                    {p.is_featured ? (
+                      <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-semibold tracking-wide flex items-center gap-1 shadow-sm">
+                        <Star className="h-2.5 w-2.5 fill-white" strokeWidth={0} />
+                        TOP
+                      </span>
+                    ) : <span />}
+                    {p.stock <= 3 && (
+                      <span className="px-2 py-0.5 rounded-md bg-background/90 text-foreground text-[10px] font-medium backdrop-blur-sm border border-border/60 shadow-sm">
+                        {p.stock} uds
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="p-3 md:p-4 space-y-1">
-                  <h3 className="font-semibold text-sm md:text-base line-clamp-1">{p.name}</h3>
+
+                <div className="p-3 flex flex-col gap-1 flex-1">
+                  <h3 className="font-semibold text-sm leading-snug line-clamp-2 text-foreground">
+                    {p.name}
+                  </h3>
                   {p.short_description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2rem]">
+                    <p className="text-xs text-muted-foreground line-clamp-1">
                       {p.short_description}
                     </p>
                   )}
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-base md:text-lg font-bold text-primary">
-                      {p.price.toFixed(2)} €
+                  <div className="mt-auto pt-2 flex items-baseline justify-between">
+                    <span className="text-base font-bold text-foreground tabular-nums">
+                      {p.price.toFixed(2)}<span className="text-xs font-medium text-muted-foreground ml-0.5">€</span>
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                      Ver →
                     </span>
                   </div>
                 </div>
