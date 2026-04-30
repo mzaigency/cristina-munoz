@@ -39,6 +39,7 @@ export const BookingConfirmation = ({
   tenantId,
   totalPrice = 0,
   discountedPrice,
+  addonProducts = [],
 }: BookingConfirmationProps) => {
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
