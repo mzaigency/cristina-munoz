@@ -40,6 +40,7 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
     appliedPromotion: null,
     packageId: null,
   });
+  const [addonProducts, setAddonProducts] = useState<SelectedAddon[]>([]);
 
   // Load services and packages from database
   useEffect(() => {
