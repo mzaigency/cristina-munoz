@@ -14,7 +14,7 @@ interface CatalogSectionProps {
   tenantId: string;
 }
 
-type CatalogTab = "services" | "products" | "packages" | "promos";
+type CatalogTab = "services" | "products" | "orders" | "packages" | "promos";
 
 interface TabConfig {
   id: CatalogTab;
@@ -30,7 +30,7 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
 
   useEffect(() => {
     const subTab = sessionStorage.getItem("openCatalogSubTab");
-    if (subTab && ["services", "products", "packages", "promos"].includes(subTab)) {
+    if (subTab && ["services", "products", "orders", "packages", "promos"].includes(subTab)) {
       setActiveTab(subTab as CatalogTab);
       sessionStorage.removeItem("openCatalogSubTab");
     }
@@ -39,6 +39,7 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
   const tabs: TabConfig[] = [
     { id: "services", label: "Servicios", icon: Scissors },
     { id: "products", label: "Productos", icon: ShoppingBag },
+    { id: "orders", label: "Pedidos", icon: ShoppingCart },
     { id: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages", requiredPlan: "pro" },
     { id: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions", requiredPlan: "pro" },
   ];
