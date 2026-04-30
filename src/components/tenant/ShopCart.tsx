@@ -218,18 +218,27 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
                 </div>
 
                 {/* Datos contacto */}
-                {!user && (
-                  <div className="space-y-3 pt-2">
+                {user && name && phone ? (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/15">
+                    <UserIcon className="h-4 w-4 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0 text-xs">
+                      <p className="font-medium text-foreground truncate">{name}</p>
+                      <p className="text-muted-foreground">{phone}</p>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">Datos de tu cuenta</span>
+                  </div>
+                ) : (
+                  <>
                     <div className="space-y-1.5">
                       <Label className="text-xs">Tu nombre *</Label>
                       <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre completo" />
                     </div>
-                  </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Teléfono *</Label>
+                      <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="612 345 678" type="tel" />
+                    </div>
+                  </>
                 )}
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Teléfono {!user && "*"}</Label>
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="612 345 678" type="tel" />
-                </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Notas (opcional)</Label>
                   <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Algo a tener en cuenta..." rows={2} />
