@@ -332,13 +332,23 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
                         />
                       )}
                       
+                      {tenantId && (
+                        <BookingProductsAddon
+                          tenantId={tenantId}
+                          selected={addonProducts}
+                          onChange={setAddonProducts}
+                        />
+                      )}
+
                       <BookingConfirmation
                         bookingData={bookingData}
                         totalDuration={totalDuration}
                         onConfirm={handleConfirmBooking}
                         onBack={handleBack}
+                        tenantId={tenantId}
                         totalPrice={totalPrice}
                         discountedPrice={discountedPrice}
+                        addonProducts={addonProducts}
                       />
                     </motion.div>
                   )}
