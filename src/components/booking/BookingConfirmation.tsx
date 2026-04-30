@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
 import { BookingData } from "@/types/booking";
 import { PushPermissionPrompt } from "@/components/notifications/PushPermissionPrompt";
+import { SelectedAddon } from "./BookingProductsAddon";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
@@ -17,6 +18,7 @@ interface BookingConfirmationProps {
   tenantId?: string;
   totalPrice?: number;
   discountedPrice?: number;
+  addonProducts?: SelectedAddon[];
 }
 
 interface UserProfile {
@@ -37,6 +39,7 @@ export const BookingConfirmation = ({
   tenantId,
   totalPrice = 0,
   discountedPrice,
+  addonProducts = [],
 }: BookingConfirmationProps) => {
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -154,6 +157,30 @@ export const BookingConfirmation = ({
       setConfirmed(true);
       setShowPushPrompt(true);
       onConfirm(userProfile.full_name, userProfile.phone);
+
+      // Crear pedido de productos asociado a la cita (si hay addons)
+      if (addonProducts.length > 0 && tenantId) {
+        const addonsTotal = addonProducts.reduce((s, a) => s + a.price * a.quantity, 0);
+        const { error: orderErr } = await supabase.from("product_orders").insert([{
+          tenant_id: tenantId,
+          user_id: session?.user?.id ?? null,
+          customer_name: userProfile.full_name,
+          customer_phone: userProfile.phone,
+          items: addonProducts as any,
+          total: addonsTotal,
+          status: "pending",
+          pickup_type: "appointment",
+          notes: `Recoger en cita del ${bookingDate} a las ${bookingData.time}`,
+        }]);
+        if (orderErr) {
+          console.error("Error creating product order:", orderErr);
+          toast({
+            title: "Cita confirmada (productos pendientes)",
+            description: "No se pudo registrar el pedido de productos. Avisa en el salón.",
+            variant: "destructive",
+          });
+        }
+      }
       
       // Trigger confetti animation
       setTimeout(() => {

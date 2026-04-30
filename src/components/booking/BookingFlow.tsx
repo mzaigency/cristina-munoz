@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { Service, Stylist, BookingData, Promotion, ServicePackage } from "@/types/booking";
 import { useAuth } from "@/contexts/AuthContext";
+import { BookingProductsAddon, SelectedAddon } from "./BookingProductsAddon";
 
 interface BookingFlowProps {
   tenantId?: string;
@@ -39,6 +40,7 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
     appliedPromotion: null,
     packageId: null,
   });
+  const [addonProducts, setAddonProducts] = useState<SelectedAddon[]>([]);
 
   // Load services and packages from database
   useEffect(() => {
@@ -330,13 +332,23 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
                         />
                       )}
                       
+                      {tenantId && (
+                        <BookingProductsAddon
+                          tenantId={tenantId}
+                          selected={addonProducts}
+                          onChange={setAddonProducts}
+                        />
+                      )}
+
                       <BookingConfirmation
                         bookingData={bookingData}
                         totalDuration={totalDuration}
                         onConfirm={handleConfirmBooking}
                         onBack={handleBack}
+                        tenantId={tenantId}
                         totalPrice={totalPrice}
                         discountedPrice={discountedPrice}
+                        addonProducts={addonProducts}
                       />
                     </motion.div>
                   )}
