@@ -54,8 +54,12 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
       .select("*")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
-    setOrders((data || []) as unknown as ProductOrder[]);
+    const list = (data || []) as unknown as ProductOrder[];
+    setOrders(list);
     setLoading(false);
+    // Marcar todos los pendientes como vistos al abrir el panel
+    const pendingIds = list.filter((o) => o.status === "pending").map((o) => o.id);
+    markOrdersSeen(tenantId, pendingIds);
   };
 
   useEffect(() => {
