@@ -40,13 +40,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   cancelled: { label: "Cancelado", color: "bg-red-500/15 text-red-700 border-red-300" },
 };
 
-const SEEN_KEY = (tid: string) => `product_orders_seen_${tid}`;
-const getSeenIds = (tid: string): Set<string> => {
-  try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY(tid)) || "[]")); } catch { return new Set(); }
-};
-const markAllSeen = (tid: string, ids: string[]) => {
-  localStorage.setItem(SEEN_KEY(tid), JSON.stringify(ids));
-};
+import { markOrdersSeen } from "@/hooks/useUnseenOrders";
 
 export const ProductOrdersManager = ({ tenantId }: Props) => {
   const [orders, setOrders] = useState<ProductOrder[]>([]);
