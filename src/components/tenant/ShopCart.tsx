@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useShopCart } from "@/contexts/ShopCartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { ShoppingBag, X, Plus, Minus, Trash2, Loader2, Check } from "lucide-react";
+import { ShoppingBag, X, Plus, Minus, Trash2, Loader2, Check, User as UserIcon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
