@@ -57,12 +57,13 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
   if (totalQty === 0 && !open) return null;
 
   const handleSubmit = async () => {
-    const finalName = user?.user_metadata?.full_name || user?.email || name.trim();
+    const finalName = name.trim() || (user?.user_metadata?.full_name as string) || user?.email || "";
+    const finalPhone = phone.trim();
     if (!finalName) {
       toast({ title: "Necesitamos tu nombre", variant: "destructive" });
       return;
     }
-    if (!phone.trim() && !user) {
+    if (!finalPhone) {
       toast({ title: "Necesitamos un teléfono de contacto", variant: "destructive" });
       return;
     }
@@ -73,7 +74,7 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
         tenant_id: tenantId,
         user_id: user?.id ?? null,
         customer_name: finalName,
-        customer_phone: phone.trim() || (user?.user_metadata?.phone ?? ""),
+        customer_phone: finalPhone,
         items: items.map((i) => ({
           product_id: i.id,
           name: i.name,
