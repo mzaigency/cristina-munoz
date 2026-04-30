@@ -208,13 +208,15 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
                   {o.status !== "delivered" && o.status !== "cancelled" && (
                     <div className="flex gap-2 pt-1">
                       {o.status === "pending" && (
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => updateStatus(o.id, "ready")}>
-                          <PackageIcon className="h-4 w-4 mr-1" /> Marcar listo
+                        <Button size="sm" className="flex-1" onClick={() => updateStatus(o.id, "ready")}>
+                          <Check className="h-4 w-4 mr-1" /> Reservar pedido
                         </Button>
                       )}
-                      <Button size="sm" className="flex-1" onClick={() => updateStatus(o.id, "delivered")}>
-                        <Check className="h-4 w-4 mr-1" /> Entregado
-                      </Button>
+                      {o.status === "ready" && (
+                        <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => updateStatus(o.id, "delivered")}>
+                          <PackageIcon className="h-4 w-4 mr-1" /> Marcar entregado
+                        </Button>
+                      )}
                       <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => updateStatus(o.id, "cancelled")}>
                         <X className="h-4 w-4" />
                       </Button>
