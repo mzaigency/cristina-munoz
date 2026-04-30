@@ -28,6 +28,7 @@ interface TabConfig {
 const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
   const [activeTab, setActiveTab] = useState<CatalogTab>("services");
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
+  const unseenOrders = useUnseenOrders(tenantId);
 
   useEffect(() => {
     const subTab = sessionStorage.getItem("openCatalogSubTab");
