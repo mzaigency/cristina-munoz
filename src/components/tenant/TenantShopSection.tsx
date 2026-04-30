@@ -60,13 +60,15 @@ export const TenantShopSection = ({ tenantId, tenantSlug }: TenantShopSectionPro
             {products.map((p, idx) => (
               <motion.button
                 key={p.id}
+                data-fixed-radius
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.35, delay: Math.min(idx * 0.04, 0.3) }}
                 onClick={() => setSelected(p)}
+                style={{ borderRadius: "1rem" }}
                 className={cn(
-                  "group relative text-left overflow-hidden rounded-2xl",
+                  "group relative text-left overflow-hidden",
                   "bg-card border border-border/60",
                   "shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.10)]",
                   "transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]",
