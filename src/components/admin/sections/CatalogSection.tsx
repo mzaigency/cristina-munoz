@@ -8,6 +8,7 @@ import { PromotionsManager } from "../PromotionsManager";
 import { ProductOrdersManager } from "../ProductOrdersManager";
 import { LockedFeature } from "../LockedFeature";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
+import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { cn } from "@/lib/utils";
 
 interface CatalogSectionProps {
