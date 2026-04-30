@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useShopCart } from "@/contexts/ShopCartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { ShoppingBag, X, Plus, Minus, Trash2, Loader2, Check } from "lucide-react";
+import { ShoppingBag, X, Plus, Minus, Trash2, Loader2, Check, User as UserIcon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -27,16 +27,43 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  // Auto-cargar datos del usuario logueado desde su perfil
+  useEffect(() => {
+    if (!user || profileLoaded) return;
+    (async () => {
+      const metaName = (user.user_metadata?.full_name as string) || "";
+      const metaPhone = (user.user_metadata?.phone as string) || "";
+      let finalName = metaName;
+      let finalPhone = metaPhone;
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name, phone")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (data) {
+          finalName = (data as any).full_name || finalName;
+          finalPhone = (data as any).phone || finalPhone;
+        }
+      } catch {}
+      if (finalName) setName(finalName);
+      if (finalPhone) setPhone(finalPhone);
+      setProfileLoaded(true);
+    })();
+  }, [user, profileLoaded]);
 
   if (totalQty === 0 && !open) return null;
 
   const handleSubmit = async () => {
-    const finalName = user?.user_metadata?.full_name || user?.email || name.trim();
+    const finalName = name.trim() || (user?.user_metadata?.full_name as string) || user?.email || "";
+    const finalPhone = phone.trim();
     if (!finalName) {
       toast({ title: "Necesitamos tu nombre", variant: "destructive" });
       return;
     }
-    if (!phone.trim() && !user) {
+    if (!finalPhone) {
       toast({ title: "Necesitamos un teléfono de contacto", variant: "destructive" });
       return;
     }
@@ -47,7 +74,7 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
         tenant_id: tenantId,
         user_id: user?.id ?? null,
         customer_name: finalName,
-        customer_phone: phone.trim() || (user?.user_metadata?.phone ?? ""),
+        customer_phone: finalPhone,
         items: items.map((i) => ({
           product_id: i.id,
           name: i.name,
@@ -191,18 +218,27 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
                 </div>
 
                 {/* Datos contacto */}
-                {!user && (
-                  <div className="space-y-3 pt-2">
+                {user && name && phone ? (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/15">
+                    <UserIcon className="h-4 w-4 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0 text-xs">
+                      <p className="font-medium text-foreground truncate">{name}</p>
+                      <p className="text-muted-foreground">{phone}</p>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">Datos de tu cuenta</span>
+                  </div>
+                ) : (
+                  <>
                     <div className="space-y-1.5">
                       <Label className="text-xs">Tu nombre *</Label>
                       <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre completo" />
                     </div>
-                  </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Teléfono *</Label>
+                      <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="612 345 678" type="tel" />
+                    </div>
+                  </>
                 )}
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Teléfono {!user && "*"}</Label>
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="612 345 678" type="tel" />
-                </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Notas (opcional)</Label>
                   <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Algo a tener en cuenta..." rows={2} />

@@ -8,6 +8,7 @@ import { PromotionsManager } from "../PromotionsManager";
 import { ProductOrdersManager } from "../ProductOrdersManager";
 import { LockedFeature } from "../LockedFeature";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
+import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { cn } from "@/lib/utils";
 
 interface CatalogSectionProps {
@@ -27,6 +28,7 @@ interface TabConfig {
 const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
   const [activeTab, setActiveTab] = useState<CatalogTab>("services");
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
+  const unseenOrders = useUnseenOrders(tenantId);
 
   useEffect(() => {
     const subTab = sessionStorage.getItem("openCatalogSubTab");
@@ -75,6 +77,11 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
               >
                 {locked ? <Lock className="h-3.5 w-3.5" /> : <tab.icon className="h-3.5 w-3.5" />}
                 <span>{tab.label}</span>
+                {tab.id === "orders" && unseenOrders > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+                    {unseenOrders > 9 ? "9+" : unseenOrders}
+                  </span>
+                )}
                 {locked && (
                   <span className="hidden md:inline text-[10px] text-amber-600 dark:text-amber-400 ml-1">
                     Pro

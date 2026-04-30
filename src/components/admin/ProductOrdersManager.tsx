@@ -34,11 +34,13 @@ interface Props {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pendiente", color: "bg-amber-500/15 text-amber-700 border-amber-300" },
-  ready: { label: "Listo", color: "bg-blue-500/15 text-blue-700 border-blue-300" },
+  pending: { label: "Nuevo", color: "bg-amber-500/15 text-amber-700 border-amber-300" },
+  ready: { label: "Reservado", color: "bg-blue-500/15 text-blue-700 border-blue-300" },
   delivered: { label: "Entregado", color: "bg-green-500/15 text-green-700 border-green-300" },
   cancelled: { label: "Cancelado", color: "bg-red-500/15 text-red-700 border-red-300" },
 };
+
+import { markOrdersSeen } from "@/hooks/useUnseenOrders";
 
 export const ProductOrdersManager = ({ tenantId }: Props) => {
   const [orders, setOrders] = useState<ProductOrder[]>([]);
@@ -52,8 +54,12 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
       .select("*")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
-    setOrders((data || []) as unknown as ProductOrder[]);
+    const list = (data || []) as unknown as ProductOrder[];
+    setOrders(list);
     setLoading(false);
+    // Marcar todos los pendientes como vistos al abrir el panel
+    const pendingIds = list.filter((o) => o.status === "pending").map((o) => o.id);
+    markOrdersSeen(tenantId, pendingIds);
   };
 
   useEffect(() => {
@@ -200,13 +206,15 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
                   {o.status !== "delivered" && o.status !== "cancelled" && (
                     <div className="flex gap-2 pt-1">
                       {o.status === "pending" && (
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => updateStatus(o.id, "ready")}>
-                          <PackageIcon className="h-4 w-4 mr-1" /> Marcar listo
+                        <Button size="sm" className="flex-1" onClick={() => updateStatus(o.id, "ready")}>
+                          <Check className="h-4 w-4 mr-1" /> Reservar pedido
                         </Button>
                       )}
-                      <Button size="sm" className="flex-1" onClick={() => updateStatus(o.id, "delivered")}>
-                        <Check className="h-4 w-4 mr-1" /> Entregado
-                      </Button>
+                      {o.status === "ready" && (
+                        <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => updateStatus(o.id, "delivered")}>
+                          <PackageIcon className="h-4 w-4 mr-1" /> Marcar entregado
+                        </Button>
+                      )}
                       <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => updateStatus(o.id, "cancelled")}>
                         <X className="h-4 w-4" />
                       </Button>
