@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
 import { BookingData } from "@/types/booking";
 import { PushPermissionPrompt } from "@/components/notifications/PushPermissionPrompt";
+import { SelectedAddon } from "./BookingProductsAddon";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
@@ -17,6 +18,7 @@ interface BookingConfirmationProps {
   tenantId?: string;
   totalPrice?: number;
   discountedPrice?: number;
+  addonProducts?: SelectedAddon[];
 }
 
 interface UserProfile {
