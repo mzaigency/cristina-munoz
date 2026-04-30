@@ -161,17 +161,17 @@ export const BookingConfirmation = ({
       // Crear pedido de productos asociado a la cita (si hay addons)
       if (addonProducts.length > 0 && tenantId) {
         const addonsTotal = addonProducts.reduce((s, a) => s + a.price * a.quantity, 0);
-        const { error: orderErr } = await supabase.from("product_orders").insert({
+        const { error: orderErr } = await supabase.from("product_orders").insert([{
           tenant_id: tenantId,
           user_id: session?.user?.id ?? null,
           customer_name: userProfile.full_name,
           customer_phone: userProfile.phone,
-          items: addonProducts,
+          items: addonProducts as any,
           total: addonsTotal,
           status: "pending",
           pickup_type: "appointment",
           notes: `Recoger en cita del ${bookingDate} a las ${bookingData.time}`,
-        });
+        }]);
         if (orderErr) {
           console.error("Error creating product order:", orderErr);
           toast({
