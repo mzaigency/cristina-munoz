@@ -27,6 +27,32 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  // Auto-cargar datos del usuario logueado desde su perfil
+  useEffect(() => {
+    if (!user || profileLoaded) return;
+    (async () => {
+      const metaName = (user.user_metadata?.full_name as string) || "";
+      const metaPhone = (user.user_metadata?.phone as string) || "";
+      let finalName = metaName;
+      let finalPhone = metaPhone;
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name, phone")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (data) {
+          finalName = (data as any).full_name || finalName;
+          finalPhone = (data as any).phone || finalPhone;
+        }
+      } catch {}
+      if (finalName) setName(finalName);
+      if (finalPhone) setPhone(finalPhone);
+      setProfileLoaded(true);
+    })();
+  }, [user, profileLoaded]);
 
   if (totalQty === 0 && !open) return null;
 
