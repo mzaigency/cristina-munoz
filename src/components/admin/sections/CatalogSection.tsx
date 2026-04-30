@@ -93,6 +93,10 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
           <ProductsManager tenantId={tenantId} />
         </TabsContent>
 
+        <TabsContent value="orders" className="mt-4">
+          <ProductOrdersManager tenantId={tenantId} />
+        </TabsContent>
+
         <TabsContent value="packages" className="mt-4">
           {isTabLocked(tabs[2]) ? (
             <LockedFeature featureName="Paquetes" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
