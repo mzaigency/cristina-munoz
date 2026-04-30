@@ -34,10 +34,18 @@ interface Props {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pendiente", color: "bg-amber-500/15 text-amber-700 border-amber-300" },
-  ready: { label: "Listo", color: "bg-blue-500/15 text-blue-700 border-blue-300" },
+  pending: { label: "Nuevo", color: "bg-amber-500/15 text-amber-700 border-amber-300" },
+  ready: { label: "Reservado", color: "bg-blue-500/15 text-blue-700 border-blue-300" },
   delivered: { label: "Entregado", color: "bg-green-500/15 text-green-700 border-green-300" },
   cancelled: { label: "Cancelado", color: "bg-red-500/15 text-red-700 border-red-300" },
+};
+
+const SEEN_KEY = (tid: string) => `product_orders_seen_${tid}`;
+const getSeenIds = (tid: string): Set<string> => {
+  try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY(tid)) || "[]")); } catch { return new Set(); }
+};
+const markAllSeen = (tid: string, ids: string[]) => {
+  localStorage.setItem(SEEN_KEY(tid), JSON.stringify(ids));
 };
 
 export const ProductOrdersManager = ({ tenantId }: Props) => {
