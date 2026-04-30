@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useShopCart } from "@/contexts/ShopCartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { ShoppingBag, X, Plus, Minus, Trash2, Loader2, Check } from "lucide-react";
