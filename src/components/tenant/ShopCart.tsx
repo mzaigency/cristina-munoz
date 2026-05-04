@@ -11,6 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { z } from "zod";
+
+const checkoutSchema = z.object({
+  name: z.string().trim().min(2, "Nombre demasiado corto").max(120),
+  phone: z.string().trim().min(6, "Teléfono no válido").max(30),
+  notes: z.string().trim().max(500, "Máximo 500 caracteres").optional(),
+});
 
 interface ShopCartProps {
   tenantId: string;
