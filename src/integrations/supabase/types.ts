@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_seen_state: {
+        Row: {
+          key: string
+          last_seen_at: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          key: string
+          last_seen_at?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          key?: string
+          last_seen_at?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_config: {
         Row: {
           created_at: string | null
