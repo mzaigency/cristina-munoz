@@ -161,9 +161,11 @@ export const BookingConfirmation = ({
       // Crear pedido de productos asociado a la cita (si hay addons)
       if (addonProducts.length > 0 && tenantId) {
         const addonsTotal = addonProducts.reduce((s, a) => s + a.price * a.quantity, 0);
+        const createdBookingId = (data as any)?.bookings?.[0]?.id ?? null;
         const { error: orderErr } = await supabase.from("product_orders").insert([{
           tenant_id: tenantId,
           user_id: session?.user?.id ?? null,
+          booking_id: createdBookingId,
           customer_name: userProfile.full_name,
           customer_phone: userProfile.phone,
           items: addonProducts as any,
