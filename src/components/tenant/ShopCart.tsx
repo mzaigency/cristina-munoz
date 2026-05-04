@@ -11,6 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { z } from "zod";
+
+const checkoutSchema = z.object({
+  name: z.string().trim().min(2, "Nombre demasiado corto").max(120),
+  phone: z.string().trim().min(6, "Teléfono no válido").max(30),
+  notes: z.string().trim().max(500, "Máximo 500 caracteres").optional(),
+});
 
 interface ShopCartProps {
   tenantId: string;
@@ -59,12 +66,9 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
   const handleSubmit = async () => {
     const finalName = name.trim() || (user?.user_metadata?.full_name as string) || user?.email || "";
     const finalPhone = phone.trim();
-    if (!finalName) {
-      toast({ title: "Necesitamos tu nombre", variant: "destructive" });
-      return;
-    }
-    if (!finalPhone) {
-      toast({ title: "Necesitamos un teléfono de contacto", variant: "destructive" });
+    const parsed = checkoutSchema.safeParse({ name: finalName, phone: finalPhone, notes: notes.trim() || undefined });
+    if (!parsed.success) {
+      toast({ title: parsed.error.errors[0]?.message || "Datos inválidos", variant: "destructive" });
       return;
     }
 
