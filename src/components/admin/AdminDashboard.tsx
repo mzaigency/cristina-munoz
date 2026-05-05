@@ -165,6 +165,23 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
         ? Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100) 
         : 0;
 
+      // Pedidos: pendientes y métricas de los últimos 7 días
+      const { count: pendingOrdersCount } = await supabase
+        .from("product_orders")
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tenantId)
+        .eq("status", "pending");
+
+      const { data: orders7d } = await supabase
+        .from("product_orders")
+        .select("total, status")
+        .eq("tenant_id", tenantId)
+        .gte("created_at", weekAgo.toISOString())
+        .neq("status", "cancelled");
+
+      const ordersRevenue7d = orders7d?.reduce((sum, o: any) => sum + Number(o.total || 0), 0) || 0;
+      const ordersCount7d = orders7d?.length || 0;
+
       setStats({
         todayBookings: bookings?.length || 0,
         nextBookingTime: nextBooking?.Hora || null,
@@ -173,6 +190,9 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
         unreadMessages,
         pendingReviews: pendingReviews || 0,
         weeklyGrowth,
+        pendingOrders: pendingOrdersCount || 0,
+        ordersRevenue7d,
+        ordersCount7d,
       });
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
