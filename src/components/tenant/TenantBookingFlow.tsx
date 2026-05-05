@@ -36,6 +36,10 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const scrollToProgress = () => {
+    progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const haptic = useHaptic();
   const { user } = useAuth();
   const [bookingData, setBookingData] = useState<BookingData>({
@@ -149,7 +153,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     haptic.selection();
     setBookingData({ ...bookingData, services: selectedServices, packageId: packageId || null });
     setStep(2);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   // Handle successful authentication
@@ -166,7 +170,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
       });
       setPendingServices(null);
       setStep(2);
-      bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      scrollToProgress();
     }
   };
 
@@ -175,14 +179,14 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     const stylist = stylistSlug as Stylist;
     setBookingData({ ...bookingData, stylist });
     setStep(3);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: string) => {
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist as Stylist });
     setStep(4);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   const handleConfirmBooking = (name: string, phone: string) => {
@@ -231,7 +235,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
         <div className="mx-auto max-w-5xl">
           {/* Enhanced Progress Bar */}
-          <div className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto">
+          <div ref={progressRef} className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto scroll-mt-4">
             <div className="flex justify-between items-center text-xs sm:text-sm text-muted-foreground px-1">
               <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
               <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Profesional</span>
