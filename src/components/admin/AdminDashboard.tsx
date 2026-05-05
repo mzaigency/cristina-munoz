@@ -18,6 +18,9 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  ShoppingCart,
+  Package,
+  Euro,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -38,6 +41,9 @@ interface DashboardStats {
   unreadMessages: number;
   pendingReviews: number;
   weeklyGrowth: number;
+  pendingOrders: number;
+  ordersRevenue7d: number;
+  ordersCount7d: number;
 }
 
 interface QuickAction {
@@ -56,6 +62,9 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
     unreadMessages: 0,
     pendingReviews: 0,
     weeklyGrowth: 0,
+    pendingOrders: 0,
+    ordersRevenue7d: 0,
+    ordersCount7d: 0,
   });
   const [loading, setLoading] = useState(true);
   const [tenantAge, setTenantAge] = useState<number>(999);
