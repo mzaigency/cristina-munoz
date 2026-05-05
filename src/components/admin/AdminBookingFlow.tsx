@@ -12,23 +12,23 @@ import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { RecurrenceSelector, RecurrenceConfig } from "@/components/admin/RecurrenceSelector";
 import { Loader2, UserCircle, AtSign, Check } from "lucide-react";
 import { Service, Stylist } from "@/types/booking";
-import { GuidedHeader } from "@/components/guided/GuidedHeader";
-import { GuidedHelperBar } from "@/components/guided/GuidedHelperBar";
 import { GuidedStep } from "@/components/guided/GuidedStep";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 
 const STEP_TITLES = [
-  "Elige los servicios",
+  "Selecciona los servicios",
   "Elige la profesional",
-  "Elige fecha y hora",
+  "Selecciona fecha y hora",
   "Datos del cliente",
 ] as const;
 
-const STEP_HELPERS: Array<string> = [
-  "Toca los servicios y luego pulsa Continuar abajo",
-  "Toca la profesional que atenderá la cita",
-  "Toca un día y luego una hora libre",
-  "Escribe nombre y teléfono y pulsa Crear cita",
-];
+const STEP_DESCRIPTIONS = [
+  "Puedes seleccionar varios servicios",
+  "Elige quién atenderá la cita",
+  "Elige el día y la hora libre",
+  "Últimos detalles para crear la cita",
+] as const;
 
 interface UserProfile {
   id: string;
@@ -336,15 +336,39 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <div className="p-6 flex flex-col min-h-[60vh]">
-        <GuidedHeader
-          step={step}
-          totalSteps={4}
-          title={STEP_TITLES[step - 1]}
-          onExit={onCancel}
-          exitLabel="Salir"
-        />
+    <Card className="w-full max-w-4xl mx-auto border-none card-elevated glass relative">
+      <div className="p-6 flex flex-col min-h-[60vh] pb-28">
+        {/* Header with exit */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-foreground">{STEP_TITLES[step - 1]}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{STEP_DESCRIPTIONS[step - 1]}</p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onCancel} className="shrink-0">
+            <X className="h-4 w-4 mr-1" /> Salir
+          </Button>
+        </div>
+
+        {/* Progress bar (mirror public booking) */}
+        <div className="mb-6 space-y-3 max-w-3xl mx-auto w-full">
+          <div className="flex justify-between items-center text-sm text-muted-foreground px-1">
+            <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
+            <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Profesional</span>
+            <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Fecha</span>
+            <span className={cn("transition-colors duration-300", step >= 4 && "text-primary font-medium")}>Confirmar</span>
+          </div>
+          <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out shadow-glow"
+              style={{ width: `${(step / 4) * 100}%` }}
+            />
+          </div>
+          <div className="text-center">
+            <span className="text-xs text-muted-foreground">
+              Paso {step} de 4 ({Math.round((step / 4) * 100)}% completado)
+            </span>
+          </div>
+        </div>
 
         {/* Step Content */}
         {step === 1 && (
@@ -571,7 +595,22 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
           </GuidedStep>
         )}
 
-        <GuidedHelperBar helperText={STEP_HELPERS[step - 1]} />
+      </div>
+
+      {/* Guided helper banner — same style as public booking */}
+      <div
+        className="sticky bottom-0 left-0 right-0 z-30 px-4 py-2.5 bg-background/90 backdrop-blur-xl border-t border-border flex items-center gap-2 rounded-b-lg"
+        style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}
+        role="status"
+        aria-live="polite"
+      >
+        <span className="text-base shrink-0" aria-hidden>👉</span>
+        <p className="text-xs sm:text-sm text-foreground/90 leading-snug">
+          {step === 1 && <>Elige uno o varios servicios y pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
+          {step === 2 && <>Elige la profesional o "Siguiente disponible" para asignar automáticamente.</>}
+          {step === 3 && <>Selecciona un día y luego una hora libre. Después pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
+          {step === 4 && <>Revisa los datos y pulsa <span className="font-semibold text-primary">Crear Cita</span> abajo.</>}
+        </p>
       </div>
     </Card>
   );
