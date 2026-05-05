@@ -1,62 +1,45 @@
-## Diagnóstico
+## Problema
 
-Revisando logs de consola y políticas RLS encontré dos bugs distintos que explican que "no se guarde nada":
+En el panel `/admin/montserratfaig`, al crear una cita, aparecen "Cris" y "Desi" (las profesionales de Cristina Muñoz) en lugar de las profesionales reales de Montse.
 
-### Bug 1 · Subida de imagen Hero/Logo falla con RLS
-Console muestra:
-```
-StorageApiError: new row violates row-level security policy
-status 403 — handleImageUpload (TenantSettings.tsx:85)
-```
-Las políticas del bucket `tenant-assets` exigen que `storage.foldername(name)[1] = get_user_tenant_id()` o que exista fila en `tenant_admins`. Si el usuario logueado es **superadmin** (ej. impersonando desde `/admin/montserratfaig`) **no tiene fila** en `tenant_admins` para ese tenant → `get_user_tenant_id()` devuelve `NULL` → la subida falla. **No existe política de SuperAdmin para storage**.
+## Causa
 
-### Bug 2 · UPDATE de `tenants` no guarda nada (silencioso)
-Políticas actuales en `public.tenants`:
-- `SuperAdmin can update tenants` → UPDATE ✅
-- `Tenant admins can view their tenant` → SELECT ✅
-- **No hay política UPDATE para `tenant_admins`** ❌
+`src/components/admin/AdminBookingFlow.tsx` reutiliza `src/components/booking/StylistSelection.tsx`, que tiene la lista de estilistas **hardcodeada**:
 
-Resultado: cuando un admin de tenant (no superadmin) pulsa "Guardar" en TenantSettings, el `update()` afecta 0 filas pero **no devuelve error** → el toast dice "Guardado" pero no se persiste nada (teléfono, dirección, hero_image_url, etc.). Esto coincide exactamente con el síntoma reportado en el onboarding ("no se ha guardado nada... solo el servicio").
-
----
-
-## Plan
-
-### 1. Migración SQL
-
-**a) Política UPDATE en `tenants` para tenant_admins:**
-```sql
-CREATE POLICY "Tenant admins can update their tenant"
-ON public.tenants FOR UPDATE
-TO authenticated
-USING (EXISTS (SELECT 1 FROM tenant_admins ta WHERE ta.tenant_id = tenants.id AND ta.user_id = auth.uid()))
-WITH CHECK (EXISTS (SELECT 1 FROM tenant_admins ta WHERE ta.tenant_id = tenants.id AND ta.user_id = auth.uid()));
+```tsx
+const stylists = [
+  { id: "cris", name: "Cris" },
+  { id: "desi", name: "Desi" },
+  { id: "any", name: "Siguiente disponible" },
+];
 ```
 
-**b) Políticas SuperAdmin en `storage.objects` para `tenant-assets`** (INSERT/UPDATE/DELETE) usando `is_superadmin()`.
+No hace ninguna consulta a `tenant_stylists` filtrada por `tenant_id`. Por eso siempre muestra Cris/Desi independientemente del tenant.
 
-**c) Reforzar política upload tenant_admins** (ya existe `tenant_admins_upload_assets`, verificar que cubre el caso).
+Además, `DateTimeSelection` ya carga correctamente las estilistas reales del tenant desde `tenant_stylists` (línea 96), pero al pintar disponibilidad usa el `stylist` (slug) seleccionado en el paso anterior — que es "cris" o "desi", slugs que no existen en el tenant de Montse — por lo que los huecos mostrados son inconsistentes.
 
-### 2. Frontend: `TenantSettings.tsx`
+## Solución
 
-Cambiar `handleSave()` para añadir `.select("id")` después del `update()` y lanzar error si `data.length === 0`. Así nunca volverá a aparecer "Guardado" sin haberse guardado realmente.
+1. **Crear un nuevo componente `AdminStylistSelection`** (en `src/components/admin/`) que:
+   - Reciba `tenantId` por props.
+   - Cargue de `tenant_stylists` los profesionales activos de ese tenant (`slug`, `name`, `color`, `avatar_url`).
+   - Renderice una tarjeta por profesional + una opción "Siguiente disponible" (`any`) solo si hay 2+ profesionales.
+   - Si solo hay 1 profesional, auto-seleccionarlo y saltar este paso (consistente con la lógica existente de booking público).
+   - Mantenga el mismo estilo visual de `StylistSelection` actual.
 
-```typescript
-const { data, error } = await supabase
-  .from("tenants")
-  .update({ ...payload })
-  .eq("id", tenantId)
-  .select("id");
-if (error) throw error;
-if (!data || data.length === 0) throw new Error("Sin permisos para guardar");
-```
+2. **Actualizar `AdminBookingFlow.tsx`**:
+   - Sustituir `import { StylistSelection }` por `AdminStylistSelection` y pasarle `tenantId`.
+   - Cambiar la línea 509 (resumen) para mostrar el nombre real del estilista en vez de hardcodear `cris ? "Cris" : "Desi"`.
+   - Tipar `stylist` como `string` (slug dinámico) en lugar del tipo unión `Stylist` ('cris'|'desi'|'any'), o ampliar el tipo.
 
-### 3. Verificación
+3. **Verificar `DateTimeSelection`**: ya acepta cualquier slug y filtra por `tenant_id` en la edge function `check-availability` — no requiere cambios.
 
-- Probar guardar teléfono/dirección como admin del tenant Montserrat
-- Probar subir imagen hero como superadmin impersonando
-- Confirmar que el toast de error aparece si falla
+## Archivos afectados
 
-### Archivos afectados
-- Nueva migración SQL (políticas RLS)
-- `src/components/admin/TenantSettings.tsx` (validación post-update)
+- **Nuevo**: `src/components/admin/AdminStylistSelection.tsx`
+- **Editado**: `src/components/admin/AdminBookingFlow.tsx`
+
+## Notas
+
+- No tocamos `src/components/booking/StylistSelection.tsx` porque podría usarse en otros flujos legacy; el panel admin usará el nuevo componente tenant-aware.
+- Sin cambios de base de datos: `tenant_stylists` ya contiene los datos correctos por tenant.
