@@ -235,7 +235,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
         <div className="mx-auto max-w-5xl">
           {/* Enhanced Progress Bar */}
-          <div className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto">
+          <div ref={progressRef} className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto scroll-mt-4">
             <div className="flex justify-between items-center text-xs sm:text-sm text-muted-foreground px-1">
               <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
               <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Profesional</span>
