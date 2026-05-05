@@ -30,6 +30,11 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
+
+  const scrollToProgress = () => {
+    progressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   const { user } = useAuth();
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
@@ -146,20 +151,20 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
     
     setBookingData({ ...bookingData, services, packageId: packageId || null });
     setStep(2);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   const handleStylistSelect = (stylist: Stylist) => {
     setBookingData({ ...bookingData, stylist });
     setStep(3);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: Stylist) => {
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist });
     setStep(4);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   const handleConfirmBooking = (name: string, phone: string) => {
@@ -201,7 +206,7 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
 
         <div className="mx-auto max-w-5xl">
           {/* Enhanced Progress Bar */}
-          <div className="mb-8 space-y-3 max-w-3xl mx-auto">
+          <div ref={progressRef} className="mb-8 space-y-3 max-w-3xl mx-auto scroll-mt-4">
             <div className="flex justify-between items-center text-sm text-muted-foreground px-1">
               <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
               <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Peluquera</span>

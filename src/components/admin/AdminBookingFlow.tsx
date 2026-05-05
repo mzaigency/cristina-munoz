@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -235,14 +235,21 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     0,
   );
 
+  const progressRef = useRef<HTMLDivElement>(null);
+  const scrollToProgress = () => {
+    progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const handleServicesSelect = (selectedServices: Service[]) => {
     setBookingData({ ...bookingData, services: selectedServices });
     setStep(2);
+    scrollToProgress();
   };
 
   const handleStylistSelect = (stylist: Stylist) => {
     setBookingData({ ...bookingData, stylist });
     setStep(3);
+    scrollToProgress();
   };
 
   const handleDateTimeSelect = (
@@ -254,6 +261,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist, skipAvailabilityCheck });
     setStep(4);
+    scrollToProgress();
   };
 
   const handleConfirmBooking = async () => {
@@ -350,7 +358,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
         </div>
 
         {/* Progress bar (mirror public booking) */}
-        <div className="mb-6 space-y-3 max-w-3xl mx-auto w-full">
+        <div ref={progressRef} className="mb-6 space-y-3 max-w-3xl mx-auto w-full scroll-mt-4">
           <div className="flex justify-between items-center text-sm text-muted-foreground px-1">
             <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
             <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Profesional</span>
