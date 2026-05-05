@@ -281,6 +281,7 @@ export function DesignStep({ onNext, onPrev, tenantId, tenantName, loading, setL
             }} 
             className="flex-1 h-12 rounded-xl" 
             disabled={loading}
+            data-guided-cta="true"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             {activeTab === "typography" ? "Crear mi página ✨" : "Siguiente"}
