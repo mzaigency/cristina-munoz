@@ -358,7 +358,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
         </div>
 
         {/* Progress bar (mirror public booking) */}
-        <div className="mb-6 space-y-3 max-w-3xl mx-auto w-full">
+        <div ref={progressRef} className="mb-6 space-y-3 max-w-3xl mx-auto w-full scroll-mt-4">
           <div className="flex justify-between items-center text-sm text-muted-foreground px-1">
             <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
             <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Profesional</span>
