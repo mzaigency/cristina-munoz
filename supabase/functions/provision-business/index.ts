@@ -199,6 +199,8 @@ serve(async (req) => {
     if (skipStripe) {
       // Demo mode: 7 days only
       subscriptionEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    } else if (subscriptionEndOverride) {
+      subscriptionEnd = subscriptionEndOverride;
     } else {
       // Normal mode: 30 days trial
       subscriptionEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -224,6 +226,8 @@ serve(async (req) => {
         max_services: planConfig.max_services,
         features: planConfig.features,
         is_active: false,
+        stripe_customer_id: stripeCustomerId,
+        stripe_subscription_id: stripeSubscriptionId,
       })
       .select()
       .single();
