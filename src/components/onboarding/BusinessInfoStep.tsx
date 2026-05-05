@@ -50,7 +50,7 @@ export function BusinessInfoStep({ onNext, onPrev, tenantId, loading, setLoading
         tiktokUrl = `https://tiktok.com/@${tiktok.replace("@", "")}`;
       }
 
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from("tenants")
         .update({
           address: address || null,
@@ -64,9 +64,13 @@ export function BusinessInfoStep({ onNext, onPrev, tenantId, loading, setLoading
           facebook_url: facebookUrl || null,
           tiktok_url: tiktokUrl || null,
         })
-        .eq("id", tenantId);
+        .eq("id", tenantId)
+        .select("id");
 
       if (error) throw error;
+      if (!updated || updated.length === 0) {
+        throw new Error("No se ha podido guardar (sin permisos). Vuelve a iniciar sesión e inténtalo de nuevo.");
+      }
       onNext();
     } catch (error: unknown) {
       toast({
