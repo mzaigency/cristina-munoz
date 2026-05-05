@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
-import { StylistSelection } from "@/components/booking/StylistSelection";
+import { AdminStylistSelection } from "@/components/admin/AdminStylistSelection";
 import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { RecurrenceSelector, RecurrenceConfig } from "@/components/admin/RecurrenceSelector";
 import { Loader2, UserCircle, AtSign, Check } from "lucide-react";
@@ -52,6 +52,7 @@ interface AdminBookingFlowProps {
 export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookingFlowProps) => {
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
+  const [tenantStylists, setTenantStylists] = useState<Array<{ slug: string; name: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [searchUsername, setSearchUsername] = useState("");
   const [searching, setSearching] = useState(false);
@@ -180,7 +181,15 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
   useEffect(() => {
     fetchServices();
-  }, []);
+    supabase
+      .from("tenant_stylists")
+      .select("slug, name")
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .then(({ data }) => {
+        if (data) setTenantStylists(data as Array<{ slug: string; name: string }>);
+      });
+  }, [tenantId]);
 
   const fetchServices = async () => {
     const { data, error } = await supabase.from("services").select("*").eq("tenant_id", tenantId).order("name");
@@ -340,7 +349,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
         )}
 
         {step === 2 && (
-          <StylistSelection selectedStylist={bookingData.stylist} onNext={handleStylistSelect} onBack={handleBack} />
+          <AdminStylistSelection tenantId={tenantId} selectedStylist={bookingData.stylist} onNext={handleStylistSelect} onBack={handleBack} />
         )}
 
         {step === 3 && (
@@ -505,8 +514,10 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                   <strong>Servicios:</strong> {bookingData.services.map((s) => s.name).join(", ")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  <strong>Peluquera:</strong>{" "}
-                  {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist === "cris" ? "Cris" : "Desi"}
+                  <strong>Profesional:</strong>{" "}
+                  {bookingData.stylist === "any"
+                    ? "Siguiente disponible"
+                    : tenantStylists.find((s) => s.slug === bookingData.stylist)?.name || bookingData.stylist}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   <strong>Fecha y hora:</strong> {bookingData.date?.toLocaleDateString("es-ES")} a las{" "}
