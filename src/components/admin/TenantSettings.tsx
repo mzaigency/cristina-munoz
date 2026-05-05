@@ -169,7 +169,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
   if (!tenant) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       {/* Header - Mobile responsive */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
