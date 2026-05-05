@@ -12,6 +12,23 @@ import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { RecurrenceSelector, RecurrenceConfig } from "@/components/admin/RecurrenceSelector";
 import { Loader2, UserCircle, AtSign, Check } from "lucide-react";
 import { Service, Stylist } from "@/types/booking";
+import { GuidedHeader } from "@/components/guided/GuidedHeader";
+import { GuidedHelperBar } from "@/components/guided/GuidedHelperBar";
+import { GuidedStep } from "@/components/guided/GuidedStep";
+
+const STEP_TITLES = [
+  "Elige los servicios",
+  "Elige la profesional",
+  "Elige fecha y hora",
+  "Datos del cliente",
+] as const;
+
+const STEP_HELPERS: Array<string> = [
+  "Toca los servicios y luego pulsa Continuar abajo",
+  "Toca la profesional que atenderá la cita",
+  "Toca un día y luego una hora libre",
+  "Escribe nombre y teléfono y pulsa Crear cita",
+];
 
 interface UserProfile {
   id: string;
