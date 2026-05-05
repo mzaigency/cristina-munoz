@@ -18,7 +18,7 @@ const DEFAULT_CATEGORIES = [
   { id: "spa", label: "Spa", icon: Droplets },
   { id: "unas", label: "Uñas", icon: Hand },
   { id: "estetica", label: "Estética", icon: Brush },
-  { id: "maquillaje", label: "Maquillaje", icon: Sparkles },
+  { id: "fisioterapia", label: "Fisioterapia", icon: Sparkles },
 ];
 
 const QUICK_FILTERS = [
@@ -26,14 +26,14 @@ const QUICK_FILTERS = [
   { id: "huecos", label: "Huecos hoy", icon: Clock, color: "emerald" },
 ];
 
-export function CategoryPills({ 
-  categories = DEFAULT_CATEGORIES, 
-  selected, 
+export function CategoryPills({
+  categories = DEFAULT_CATEGORIES,
+  selected,
   onSelect,
   tenantsWithAvailability = [],
   loadingAvailability = false,
   hasCheckedAvailability = false,
-  onCheckAvailability
+  onCheckAvailability,
 }: CategoryPillsProps) {
   const items = categories.length > 0 ? categories : DEFAULT_CATEGORIES;
   const availableCount = tenantsWithAvailability.length;
@@ -53,7 +53,7 @@ export function CategoryPills({
         const isSelected = selected === filter.id;
         const isHuecos = filter.id === "huecos";
         const isPopular = filter.id === "popular";
-        
+
         return (
           <motion.button
             key={filter.id}
@@ -64,7 +64,7 @@ export function CategoryPills({
               isHuecos && isSelected && "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25",
               isHuecos && !isSelected && "liquid-glass-pill !bg-emerald-500/8 text-emerald-600 dark:text-emerald-400",
               isPopular && isSelected && "bg-amber-500 text-white shadow-lg shadow-amber-500/25",
-              isPopular && !isSelected && "liquid-glass-pill !bg-amber-500/8 text-amber-600 dark:text-amber-400"
+              isPopular && !isSelected && "liquid-glass-pill !bg-amber-500/8 text-amber-600 dark:text-amber-400",
             )}
           >
             {loadingAvailability && isHuecos ? (
@@ -74,10 +74,12 @@ export function CategoryPills({
             )}
             {filter.label}
             {isHuecos && hasCheckedAvailability && availableCount > 0 && !loadingAvailability && (
-              <span className={cn(
-                "ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
-                isSelected ? "bg-white/20" : "bg-emerald-500 text-white"
-              )}>
+              <span
+                className={cn(
+                  "ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                  isSelected ? "bg-white/20" : "bg-emerald-500 text-white",
+                )}
+              >
                 {availableCount}
               </span>
             )}
@@ -96,7 +98,7 @@ export function CategoryPills({
           "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs transition-all duration-300",
           selected === null
             ? "gradient-primary text-primary-foreground shadow-md shadow-primary/20"
-            : "liquid-glass-pill text-muted-foreground"
+            : "liquid-glass-pill text-muted-foreground",
         )}
       >
         <Sparkles className="h-3.5 w-3.5" />
@@ -107,7 +109,7 @@ export function CategoryPills({
       {items.map((category) => {
         const Icon = category.icon;
         const isSelected = selected === category.id;
-        
+
         return (
           <motion.button
             key={category.id}
@@ -117,7 +119,7 @@ export function CategoryPills({
               "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs transition-all duration-300",
               isSelected
                 ? "gradient-primary text-primary-foreground shadow-md shadow-primary/20"
-                : "liquid-glass-pill text-muted-foreground"
+                : "liquid-glass-pill text-muted-foreground",
             )}
           >
             <Icon className="h-3.5 w-3.5" />
