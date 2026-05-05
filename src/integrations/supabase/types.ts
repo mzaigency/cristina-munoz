@@ -1940,6 +1940,8 @@ export type Database = {
           secondary_color: string | null
           show_logo_on_landing: boolean | null
           slug: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           subscription_expires_at: string | null
           subscription_plan: string | null
           tagline: string | null
@@ -1984,6 +1986,8 @@ export type Database = {
           secondary_color?: string | null
           show_logo_on_landing?: boolean | null
           slug: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
           tagline?: string | null
@@ -2028,6 +2032,8 @@ export type Database = {
           secondary_color?: string | null
           show_logo_on_landing?: boolean | null
           slug?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
           tagline?: string | null
