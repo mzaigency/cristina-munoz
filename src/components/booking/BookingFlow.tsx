@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Service, Stylist, BookingData, Promotion, ServicePackage } from "@/types/booking";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookingProductsAddon, SelectedAddon } from "./BookingProductsAddon";
+import { GuidedStep } from "@/components/guided/GuidedStep";
 
 interface BookingFlowProps {
   tenantId?: string;
