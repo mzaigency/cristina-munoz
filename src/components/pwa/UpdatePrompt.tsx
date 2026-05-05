@@ -12,29 +12,28 @@ export function UpdatePrompt() {
   const needRefresh = swNeedRefresh || updateAvailable;
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then((reg) => {
-        setRegistration(reg);
-        const interval = setInterval(() => { reg.update(); }, 60 * 1000);
-        return () => clearInterval(interval);
-      });
-
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        const newSW = navigator.serviceWorker.controller;
-        if (newSW?.scriptURL?.includes('firebase-messaging-sw')) return;
-        window.location.reload();
-      });
-    }
-
+    // Solo escuchamos eventos explícitos de SW (vite-plugin-pwa). No recargamos
+    // automáticamente en controllerchange porque el SW de Firebase Messaging
+    // dispara ese evento al recibir tokens y provocaba reloads y prompts repetidos.
     const handleUpdate = () => setSwNeedRefresh(true);
     window.addEventListener('swUpdated', handleUpdate);
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((reg) => {
+        // Ignoramos el SW de Firebase: no queremos pedirle "update" cada minuto
+        if (reg.active?.scriptURL?.includes('firebase-messaging-sw')) return;
+        setRegistration(reg);
+      }).catch(() => {});
+    }
+
     return () => { window.removeEventListener('swUpdated', handleUpdate); };
   }, []);
 
   useEffect(() => {
+    if (!registration) return;
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && registration) {
-        registration.update();
+      if (document.visibilityState === 'visible') {
+        registration.update().catch(() => {});
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);

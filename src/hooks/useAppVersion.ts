@@ -3,7 +3,9 @@ import { useEffect, useRef, useState, useCallback } from "react";
 const VERSION_KEY = "app-version";
 const PENDING_VERSION_KEY = `${VERSION_KEY}-pending`;
 const DISMISSED_VERSION_KEY = `${VERSION_KEY}-dismissed`;
-const CHECK_INTERVAL = 30_000; // 30s
+const DISMISSED_AT_KEY = `${VERSION_KEY}-dismissed-at`;
+const CHECK_INTERVAL = 5 * 60_000; // 5 min
+const DISMISS_COOLDOWN = 6 * 60 * 60_000; // 6h
 
 function isIOSStandalone(): boolean {
   return (
@@ -31,17 +33,15 @@ export function useAppVersion() {
 
       const data = await res.json();
       const serverVersion = data.version || data.buildTime;
-
       if (!serverVersion) return;
 
       const localVersion = localStorage.getItem(VERSION_KEY);
-      const dismissedVersion = localStorage.getItem(DISMISSED_VERSION_KEY);
 
       if (!localVersion) {
-        // First visit — store current version
         localStorage.setItem(VERSION_KEY, serverVersion);
         localStorage.removeItem(PENDING_VERSION_KEY);
         localStorage.removeItem(DISMISSED_VERSION_KEY);
+        localStorage.removeItem(DISMISSED_AT_KEY);
         return;
       }
 
@@ -49,29 +49,35 @@ export function useAppVersion() {
         setUpdateAvailable(false);
         localStorage.removeItem(PENDING_VERSION_KEY);
         localStorage.removeItem(DISMISSED_VERSION_KEY);
+        localStorage.removeItem(DISMISSED_AT_KEY);
         return;
       }
 
-      if (serverVersion !== localVersion) {
-        localStorage.setItem(PENDING_VERSION_KEY, serverVersion);
+      // Nueva versión detectada
+      localStorage.setItem(PENDING_VERSION_KEY, serverVersion);
 
-        // New version detected
-        if (isIOS() && isIOSStandalone()) {
-          // iOS standalone: auto-reload silently
-          localStorage.setItem(VERSION_KEY, serverVersion);
-          localStorage.removeItem(PENDING_VERSION_KEY);
-          localStorage.removeItem(DISMISSED_VERSION_KEY);
-          window.location.reload();
-          return;
-        }
-
-        if (dismissedVersion === serverVersion) {
-          setUpdateAvailable(false);
-          return;
-        }
-
-        setUpdateAvailable(true);
+      if (isIOS() && isIOSStandalone()) {
+        localStorage.setItem(VERSION_KEY, serverVersion);
+        localStorage.removeItem(PENDING_VERSION_KEY);
+        localStorage.removeItem(DISMISSED_VERSION_KEY);
+        localStorage.removeItem(DISMISSED_AT_KEY);
+        window.location.reload();
+        return;
       }
+
+      // Cooldown: si ya descartó esta misma versión hace menos de 6h, no mostrar
+      const dismissedVersion = localStorage.getItem(DISMISSED_VERSION_KEY);
+      const dismissedAt = parseInt(localStorage.getItem(DISMISSED_AT_KEY) || "0", 10);
+      if (
+        dismissedVersion === serverVersion &&
+        dismissedAt &&
+        Date.now() - dismissedAt < DISMISS_COOLDOWN
+      ) {
+        setUpdateAvailable(false);
+        return;
+      }
+
+      setUpdateAvailable(true);
     } catch {
       // Network error — ignore
     } finally {
@@ -85,6 +91,7 @@ export function useAppVersion() {
       if (serverVersion) localStorage.setItem(VERSION_KEY, serverVersion);
       localStorage.removeItem(PENDING_VERSION_KEY);
       localStorage.removeItem(DISMISSED_VERSION_KEY);
+      localStorage.removeItem(DISMISSED_AT_KEY);
     } catch {}
     window.location.reload();
   }, []);
@@ -92,21 +99,23 @@ export function useAppVersion() {
   const dismissUpdate = useCallback(() => {
     try {
       const serverVersion = localStorage.getItem(PENDING_VERSION_KEY);
-      if (serverVersion) localStorage.setItem(DISMISSED_VERSION_KEY, serverVersion);
+      if (serverVersion) {
+        localStorage.setItem(DISMISSED_VERSION_KEY, serverVersion);
+        localStorage.setItem(DISMISSED_AT_KEY, Date.now().toString());
+      }
     } catch {}
     setUpdateAvailable(false);
   }, []);
 
   useEffect(() => {
-    // Initial check after short delay
-    const timeout = setTimeout(checkVersion, 3000);
-
-    // Periodic check
+    const timeout = setTimeout(checkVersion, 5000);
     const interval = setInterval(checkVersion, CHECK_INTERVAL);
 
-    // Check on visibility change (user comes back to app)
+    // Solo chequear al volver a foco si pasaron >5 min desde el último check
+    let lastCheck = Date.now();
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState === "visible" && Date.now() - lastCheck > CHECK_INTERVAL) {
+        lastCheck = Date.now();
         checkVersion();
       }
     };
