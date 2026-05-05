@@ -568,6 +568,7 @@ export const DateTimeSelection = ({
         <Button
           onClick={handleNext}
           disabled={!date || !time}
+          data-guided-cta="true"
           className="transition-transform duration-200 hover:scale-105 disabled:scale-100"
         >
           Continuar

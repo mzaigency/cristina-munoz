@@ -12,6 +12,23 @@ import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { RecurrenceSelector, RecurrenceConfig } from "@/components/admin/RecurrenceSelector";
 import { Loader2, UserCircle, AtSign, Check } from "lucide-react";
 import { Service, Stylist } from "@/types/booking";
+import { GuidedHeader } from "@/components/guided/GuidedHeader";
+import { GuidedHelperBar } from "@/components/guided/GuidedHelperBar";
+import { GuidedStep } from "@/components/guided/GuidedStep";
+
+const STEP_TITLES = [
+  "Elige los servicios",
+  "Elige la profesional",
+  "Elige fecha y hora",
+  "Datos del cliente",
+] as const;
+
+const STEP_HELPERS: Array<string> = [
+  "Toca los servicios y luego pulsa Continuar abajo",
+  "Toca la profesional que atenderá la cita",
+  "Toca un día y luego una hora libre",
+  "Escribe nombre y teléfono y pulsa Crear cita",
+];
 
 interface UserProfile {
   id: string;
@@ -320,53 +337,46 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
-      <div className="p-6">
-        {/* Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            {[1, 2, 3, 4].map((s) => (
-              <div
-                key={s}
-                className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                  s <= step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {s}
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Servicios</span>
-            <span>Peluquera</span>
-            <span>Fecha/Hora</span>
-            <span>Contacto</span>
-          </div>
-        </div>
+      <div className="p-6 flex flex-col min-h-[60vh]">
+        <GuidedHeader
+          step={step}
+          totalSteps={4}
+          title={STEP_TITLES[step - 1]}
+          onExit={onCancel}
+          exitLabel="Salir"
+        />
 
         {/* Step Content */}
         {step === 1 && (
-          <ServiceSelection services={services} selectedServices={bookingData.services} onNext={handleServicesSelect} />
+          <GuidedStep isActive>
+            <ServiceSelection services={services} selectedServices={bookingData.services} onNext={handleServicesSelect} />
+          </GuidedStep>
         )}
 
         {step === 2 && (
-          <AdminStylistSelection tenantId={tenantId} selectedStylist={bookingData.stylist} onNext={handleStylistSelect} onBack={handleBack} />
+          <GuidedStep isActive>
+            <AdminStylistSelection tenantId={tenantId} selectedStylist={bookingData.stylist} onNext={handleStylistSelect} onBack={handleBack} />
+          </GuidedStep>
         )}
 
         {step === 3 && (
-          <DateTimeSelection
-            selectedDate={bookingData.date}
-            selectedTime={bookingData.time}
-            totalDuration={totalDuration}
-            services={bookingData.services}
-            stylist={bookingData.stylist!}
-            tenantId={tenantId}
-            onNext={handleDateTimeSelect}
-            onBack={handleBack}
-            isAdmin={true}
-          />
+          <GuidedStep isActive>
+            <DateTimeSelection
+              selectedDate={bookingData.date}
+              selectedTime={bookingData.time}
+              totalDuration={totalDuration}
+              services={bookingData.services}
+              stylist={bookingData.stylist!}
+              tenantId={tenantId}
+              onNext={handleDateTimeSelect}
+              onBack={handleBack}
+              isAdmin={true}
+            />
+          </GuidedStep>
         )}
 
         {step === 4 && (
+          <GuidedStep isActive>
           <div className="space-y-6">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Datos del cliente</h3>
@@ -544,7 +554,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
               <Button variant="outline" onClick={handleBack} disabled={loading}>
                 Volver
               </Button>
-              <Button onClick={handleConfirmBooking} disabled={loading}>
+              <Button onClick={handleConfirmBooking} disabled={loading} data-guided-cta="true">
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -558,7 +568,10 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
               </Button>
             </div>
           </div>
+          </GuidedStep>
         )}
+
+        <GuidedHelperBar helperText={STEP_HELPERS[step - 1]} />
       </div>
     </Card>
   );
