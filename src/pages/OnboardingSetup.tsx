@@ -304,7 +304,7 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
           <ArrowLeft className="h-4 w-4 mr-2" />
           Atrás
         </Button>
-        <Button onClick={handleSave} className="flex-1 h-12 rounded-xl" disabled={loading}>
+        <Button onClick={handleSave} className="flex-1 h-12 rounded-xl" disabled={loading} data-guided-cta="true">
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
           Continuar
           <ArrowRight className="h-4 w-4 ml-2" />
