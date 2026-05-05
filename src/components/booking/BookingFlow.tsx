@@ -151,20 +151,20 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
     
     setBookingData({ ...bookingData, services, packageId: packageId || null });
     setStep(2);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   const handleStylistSelect = (stylist: Stylist) => {
     setBookingData({ ...bookingData, stylist });
     setStep(3);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: Stylist) => {
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist });
     setStep(4);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   const handleConfirmBooking = (name: string, phone: string) => {
