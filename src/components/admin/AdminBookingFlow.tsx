@@ -52,6 +52,7 @@ interface AdminBookingFlowProps {
 export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookingFlowProps) => {
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
+  const [tenantStylists, setTenantStylists] = useState<Array<{ slug: string; name: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [searchUsername, setSearchUsername] = useState("");
   const [searching, setSearching] = useState(false);
