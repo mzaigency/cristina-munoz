@@ -340,7 +340,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
         )}
 
         {step === 2 && (
-          <StylistSelection selectedStylist={bookingData.stylist} onNext={handleStylistSelect} onBack={handleBack} />
+          <AdminStylistSelection tenantId={tenantId} selectedStylist={bookingData.stylist} onNext={handleStylistSelect} onBack={handleBack} />
         )}
 
         {step === 3 && (
