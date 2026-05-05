@@ -37,6 +37,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [tenant, setTenant] = useState<TenantData | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
