@@ -595,7 +595,22 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
           </GuidedStep>
         )}
 
-        <GuidedHelperBar helperText={STEP_HELPERS[step - 1]} />
+      </div>
+
+      {/* Guided helper banner — same style as public booking */}
+      <div
+        className="sticky bottom-0 left-0 right-0 z-30 px-4 py-2.5 bg-background/90 backdrop-blur-xl border-t border-border flex items-center gap-2 rounded-b-lg"
+        style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}
+        role="status"
+        aria-live="polite"
+      >
+        <span className="text-base shrink-0" aria-hidden>👉</span>
+        <p className="text-xs sm:text-sm text-foreground/90 leading-snug">
+          {step === 1 && <>Elige uno o varios servicios y pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
+          {step === 2 && <>Elige la profesional o "Siguiente disponible" para asignar automáticamente.</>}
+          {step === 3 && <>Selecciona un día y luego una hora libre. Después pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
+          {step === 4 && <>Revisa los datos y pulsa <span className="font-semibold text-primary">Crear Cita</span> abajo.</>}
+        </p>
       </div>
     </Card>
   );
