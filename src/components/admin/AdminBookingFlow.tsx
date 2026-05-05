@@ -514,8 +514,10 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                   <strong>Servicios:</strong> {bookingData.services.map((s) => s.name).join(", ")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  <strong>Peluquera:</strong>{" "}
-                  {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist === "cris" ? "Cris" : "Desi"}
+                  <strong>Profesional:</strong>{" "}
+                  {bookingData.stylist === "any"
+                    ? "Siguiente disponible"
+                    : tenantStylists.find((s) => s.slug === bookingData.stylist)?.name || bookingData.stylist}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   <strong>Fecha y hora:</strong> {bookingData.date?.toLocaleDateString("es-ES")} a las{" "}
