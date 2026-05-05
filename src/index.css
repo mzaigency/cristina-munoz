@@ -1015,3 +1015,23 @@
     to { transform: rotate(360deg); }
   }
 }
+/* ============================================
+   Guided Flow — halo animado sobre el CTA actual
+   ============================================ */
+@layer utilities {
+  .guided-halo {
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.55), 0 0 0 10px hsl(var(--primary) / 0.18);
+    border-radius: var(--radius, 0.75rem);
+    animation: guided-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes guided-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 4px hsl(var(--primary) / 0.55), 0 0 0 10px hsl(var(--primary) / 0.18);
+    }
+    50% {
+      box-shadow: 0 0 0 6px hsl(var(--primary) / 0.75), 0 0 0 16px hsl(var(--primary) / 0.10);
+    }
+  }
+}
