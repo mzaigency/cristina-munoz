@@ -103,12 +103,16 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
       }
 
       if (Object.keys(updateData).length > 0) {
-        const { error } = await supabase
+        const { data: updated, error } = await supabase
           .from("tenants")
           .update(updateData)
-          .eq("id", tenantId);
+          .eq("id", tenantId)
+          .select("id");
 
         if (error) throw error;
+        if (!updated || updated.length === 0) {
+          throw new Error("No se ha podido guardar las imágenes (sin permisos).");
+        }
       }
       onNext();
     } catch (error: unknown) {
