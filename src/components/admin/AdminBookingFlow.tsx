@@ -181,7 +181,15 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
   useEffect(() => {
     fetchServices();
-  }, []);
+    supabase
+      .from("tenant_stylists")
+      .select("slug, name")
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .then(({ data }) => {
+        if (data) setTenantStylists(data as Array<{ slug: string; name: string }>);
+      });
+  }, [tenantId]);
 
   const fetchServices = async () => {
     const { data, error } = await supabase.from("services").select("*").eq("tenant_id", tenantId).order("name");
