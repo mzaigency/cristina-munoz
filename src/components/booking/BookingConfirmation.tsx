@@ -409,6 +409,7 @@ export const BookingConfirmation = ({
           onClick={handleConfirm} 
           disabled={loading} 
           className="w-full sm:w-auto h-11 transition-transform duration-200 hover:scale-105 touch-manipulation"
+          data-guided-cta="true"
         >
           {loading ? (
             <>
