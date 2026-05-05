@@ -36,6 +36,10 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const scrollToProgress = () => {
+    progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const haptic = useHaptic();
   const { user } = useAuth();
   const [bookingData, setBookingData] = useState<BookingData>({
