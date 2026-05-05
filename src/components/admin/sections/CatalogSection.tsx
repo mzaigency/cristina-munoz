@@ -1,21 +1,19 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Scissors, ShoppingBag, Package, Percent, Lock, ShoppingCart } from "lucide-react";
+import { Scissors, ShoppingBag, Package, Percent, Lock } from "lucide-react";
 import { ServicesManager } from "../ServicesManager";
 import { ProductsManager } from "../ProductsManager";
 import { ServicePackagesManager } from "../ServicePackagesManager";
 import { PromotionsManager } from "../PromotionsManager";
-import { ProductOrdersManager } from "../ProductOrdersManager";
 import { LockedFeature } from "../LockedFeature";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
-import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { cn } from "@/lib/utils";
 
 interface CatalogSectionProps {
   tenantId: string;
 }
 
-type CatalogTab = "services" | "products" | "orders" | "packages" | "promos";
+type CatalogTab = "services" | "products" | "packages" | "promos";
 
 interface TabConfig {
   id: CatalogTab;
@@ -28,11 +26,10 @@ interface TabConfig {
 const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
   const [activeTab, setActiveTab] = useState<CatalogTab>("services");
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
-  const unseenOrders = useUnseenOrders(tenantId);
 
   useEffect(() => {
     const subTab = sessionStorage.getItem("openCatalogSubTab");
-    if (subTab && ["services", "products", "orders", "packages", "promos"].includes(subTab)) {
+    if (subTab && ["services", "products", "packages", "promos"].includes(subTab)) {
       setActiveTab(subTab as CatalogTab);
       sessionStorage.removeItem("openCatalogSubTab");
     }
@@ -41,7 +38,6 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
   const tabs: TabConfig[] = [
     { id: "services", label: "Servicios", icon: Scissors },
     { id: "products", label: "Productos", icon: ShoppingBag },
-    { id: "orders", label: "Pedidos", icon: ShoppingCart },
     { id: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages", requiredPlan: "pro" },
     { id: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions", requiredPlan: "pro" },
   ];
@@ -77,13 +73,8 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
               >
                 {locked ? <Lock className="h-3.5 w-3.5" /> : <tab.icon className="h-3.5 w-3.5" />}
                 <span>{tab.label}</span>
-                {tab.id === "orders" && unseenOrders > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
-                    {unseenOrders > 9 ? "9+" : unseenOrders}
-                  </span>
-                )}
                 {locked && (
-                  <span className="hidden md:inline text-[10px] text-amber-600 dark:text-amber-400 ml-1">
+                  <span className="hidden md:inline text-[10px] text-amber-600 ml-1">
                     Pro
                   </span>
                 )}
@@ -98,10 +89,6 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
 
         <TabsContent value="products" className="mt-4">
           <ProductsManager tenantId={tenantId} />
-        </TabsContent>
-
-        <TabsContent value="orders" className="mt-4">
-          <ProductOrdersManager tenantId={tenantId} />
         </TabsContent>
 
         <TabsContent value="packages" className="mt-4">
