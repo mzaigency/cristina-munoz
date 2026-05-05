@@ -126,62 +126,80 @@ serve(async (req) => {
     }
 
     // 8. Calculate score for each tenant
+    const now = Date.now();
     const tenantScores: TenantScore[] = tenants.map(tenant => {
       let score = 0;
       const matchReasons: string[] = [];
       const features = tenant.features as any || {};
       const businessType = features.business_type;
 
-      // Location score (30%)
+      // Location score (25%)
       if (profile?.city && tenant.city?.toLowerCase() === profile.city.toLowerCase()) {
-        score += 30;
+        score += 25;
         matchReasons.push('Cerca de ti');
       } else if (profile?.province && tenant.city) {
-        // Could add province matching here if we had province data in tenants
         score += 5;
       }
 
-      // Booking history score (25%)
-      if (bookedTenantIds.includes(tenant.id)) {
+      // Similar to favorites (25%) — descubrir nuevos del mismo tipo
+      if (
+        preferredBusinessTypes.length > 0 &&
+        businessType &&
+        preferredBusinessTypes.includes(businessType) &&
+        !favoriteIds.includes(tenant.id)
+      ) {
         score += 25;
-        matchReasons.push('Ya lo visitaste');
-      }
-
-      // Similar to favorites score (15%)
-      if (preferredBusinessTypes.length > 0 && businessType && preferredBusinessTypes.includes(businessType)) {
-        score += 15;
         matchReasons.push('Similar a tus favoritos');
       }
 
-      // Is a favorite (bonus)
-      if (favoriteIds.includes(tenant.id)) {
-        score += 10;
-        matchReasons.push('En tus favoritos');
-      }
-
-      // Rating score (15%)
+      // Rating score (20%)
       const tenantRating = ratingsByTenant[tenant.id];
       if (tenantRating && tenantRating.count > 0) {
         const avgRating = tenantRating.sum / tenantRating.count;
-        score += (avgRating / 5) * 15;
+        score += (avgRating / 5) * 20;
+        // Boost por volumen de reviews (confianza)
+        if (tenantRating.count >= 10) score += 3;
         if (avgRating >= 4.5) {
           matchReasons.push('Muy bien valorado');
         }
       }
 
-      // Follows score (10%)
+      // Booking history (15%) — ya lo conoces, vuelve
+      if (bookedTenantIds.includes(tenant.id)) {
+        score += 15;
+        matchReasons.push('Ya lo visitaste');
+      }
+
+      // Follows (10%)
       if (followIds.includes(tenant.id)) {
         score += 10;
         matchReasons.push('Lo sigues');
       }
 
-      // Add some randomness to avoid stale results (±5%)
-      score += Math.random() * 5;
+      // Recency boost (5%) — destacar nuevos del último mes
+      const createdAt = (tenant as any).created_at ? new Date((tenant as any).created_at).getTime() : 0;
+      if (createdAt) {
+        const daysOld = (now - createdAt) / (1000 * 60 * 60 * 24);
+        if (daysOld <= 30) {
+          score += 5;
+          matchReasons.push('Recién llegado');
+        } else if (daysOld <= 90) {
+          score += 2;
+        }
+      }
+
+      // Penalizar si ya está en favoritos (se muestra en su propia sección)
+      if (favoriteIds.includes(tenant.id)) {
+        score -= 20;
+      }
+
+      // Pequeña aleatoriedad para frescura (±3)
+      score += (Math.random() - 0.5) * 6;
 
       return {
         tenant_id: tenant.id,
         score: Math.round(score * 10) / 10,
-        matchReasons: matchReasons.slice(0, 3) // Max 3 reasons
+        matchReasons: matchReasons.slice(0, 3)
       };
     });
 
