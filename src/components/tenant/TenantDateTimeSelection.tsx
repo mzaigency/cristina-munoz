@@ -245,7 +245,7 @@ export const TenantDateTimeSelection = ({
 
   // Fetch booked appointments when date changes
   useEffect(() => {
-    if (!date || stylistsLoading || hoursLoading) return;
+    if (!date || stylistsLoading || hoursLoading || !tenantId) return;
 
     const fetchBookedSlots = async () => {
       setLoading(true);
