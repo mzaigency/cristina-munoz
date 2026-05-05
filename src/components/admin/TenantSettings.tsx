@@ -114,7 +114,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
     try {
       setSaving(true);
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("tenants")
         .update({
           name: tenant.name,
@@ -133,9 +133,13 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
           heading_size: tenant.heading_size,
           theme_id: tenant.theme_id,
         })
-        .eq("id", tenantId);
+        .eq("id", tenantId)
+        .select("id");
 
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Sin permisos para guardar. Contacta con soporte.");
+      }
 
       toast({
         title: "Guardado",
