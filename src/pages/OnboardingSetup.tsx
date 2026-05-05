@@ -1,4 +1,5 @@
 import { SEO } from "@/components/SEO";
+import { GuidedStep } from "@/components/guided/GuidedStep";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
