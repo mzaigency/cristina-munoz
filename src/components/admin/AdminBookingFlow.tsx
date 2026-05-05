@@ -336,15 +336,39 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <div className="p-6 flex flex-col min-h-[60vh]">
-        <GuidedHeader
-          step={step}
-          totalSteps={4}
-          title={STEP_TITLES[step - 1]}
-          onExit={onCancel}
-          exitLabel="Salir"
-        />
+    <Card className="w-full max-w-4xl mx-auto border-none card-elevated glass relative">
+      <div className="p-6 flex flex-col min-h-[60vh] pb-28">
+        {/* Header with exit */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-foreground">{STEP_TITLES[step - 1]}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{STEP_DESCRIPTIONS[step - 1]}</p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onCancel} className="shrink-0">
+            <X className="h-4 w-4 mr-1" /> Salir
+          </Button>
+        </div>
+
+        {/* Progress bar (mirror public booking) */}
+        <div className="mb-6 space-y-3 max-w-3xl mx-auto w-full">
+          <div className="flex justify-between items-center text-sm text-muted-foreground px-1">
+            <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
+            <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Profesional</span>
+            <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Fecha</span>
+            <span className={cn("transition-colors duration-300", step >= 4 && "text-primary font-medium")}>Confirmar</span>
+          </div>
+          <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out shadow-glow"
+              style={{ width: `${(step / 4) * 100}%` }}
+            />
+          </div>
+          <div className="text-center">
+            <span className="text-xs text-muted-foreground">
+              Paso {step} de 4 ({Math.round((step / 4) * 100)}% completado)
+            </span>
+          </div>
+        </div>
 
         {/* Step Content */}
         {step === 1 && (
