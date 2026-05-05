@@ -202,6 +202,7 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
         disabled={saving || !selectedType || !tenantName.trim() || (selectedType === "otro" && !customType.trim())}
         className="w-full h-12 rounded-xl"
         size="lg"
+        data-guided-cta="true"
       >
         {saving ? "Guardando..." : "Continuar"}
         <ArrowRight className="h-4 w-4 ml-2" />
