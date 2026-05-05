@@ -1226,10 +1226,26 @@ export default function OnboardingSetup() {
               exit={{ opacity: 0, x: -40 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
             >
-              {renderStep()}
+              <GuidedStep isActive={true}>{renderStep()}</GuidedStep>
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {step < totalSteps && (
+          <div
+            className="fixed bottom-0 left-0 right-0 z-40 px-4 py-2.5 bg-background/90 backdrop-blur-xl border-t border-white/10 flex items-center gap-2"
+            style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}
+            role="status"
+            aria-live="polite"
+          >
+            <span className="text-base shrink-0" aria-hidden>👉</span>
+            <p className="text-xs sm:text-sm text-foreground/90 leading-snug">
+              {step === totalSteps - 1
+                ? <>Último paso. Pulsa <span className="font-semibold text-primary">Generar</span> para terminar.</>
+                : <>Rellena los campos y pulsa <span className="font-semibold text-primary">Continuar</span> abajo.</>}
+            </p>
+          </div>
+        )}
       </div>
     </AppLayout>
   );
