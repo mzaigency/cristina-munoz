@@ -235,14 +235,21 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     0,
   );
 
+  const progressRef = useRef<HTMLDivElement>(null);
+  const scrollToProgress = () => {
+    progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const handleServicesSelect = (selectedServices: Service[]) => {
     setBookingData({ ...bookingData, services: selectedServices });
     setStep(2);
+    scrollToProgress();
   };
 
   const handleStylistSelect = (stylist: Stylist) => {
     setBookingData({ ...bookingData, stylist });
     setStep(3);
+    scrollToProgress();
   };
 
   const handleDateTimeSelect = (
@@ -254,6 +261,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist, skipAvailabilityCheck });
     setStep(4);
+    scrollToProgress();
   };
 
   const handleConfirmBooking = async () => {
