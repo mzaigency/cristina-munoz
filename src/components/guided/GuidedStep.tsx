@@ -32,7 +32,7 @@ export const GuidedStep = ({
     const t = setTimeout(() => {
       const target = halo ?? ref.current;
       target?.scrollIntoView({ behavior: "smooth", block: halo ? "center" : "start" });
-    }, 120);
+    }, 500);
 
     if (halo) halo.classList.add("guided-halo");
 
