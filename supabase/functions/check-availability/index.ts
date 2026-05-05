@@ -10,16 +10,16 @@ const corsHeaders = {
 // Validation schema
 const availabilityRequestSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
-  stylist: z.enum(['cris', 'desi', 'any']).or(z.string()),
+  stylist: z.string().min(1),
   totalDuration: z.number().int().min(0).max(960).optional(),
-  tenant_id: z.string().uuid().optional()
+  tenant_id: z.string().uuid({ message: "tenant_id is required" })
 });
 
 interface AvailabilityRequest {
   date: string;
   stylist: string;
   totalDuration?: number;
-  tenant_id?: string;
+  tenant_id: string;
 }
 
 interface StylistHours {
@@ -30,18 +30,6 @@ interface StylistHours {
   end_time: string | null;
   break_start: string | null;
   break_end: string | null;
-}
-
-// Helper to get default tenant ID
-async function getDefaultTenantId(supabase: any): Promise<string | null> {
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('id')
-    .eq('is_active', true)
-    .limit(1)
-    .maybeSingle();
-  
-  return tenant?.id || null;
 }
 
 // Helper to get tenant stylists
@@ -166,22 +154,15 @@ serve(async (req) => {
     }
     
     const { date, stylist, totalDuration, tenant_id }: AvailabilityRequest = validationResult.data;
-    console.log(`Checking availability for ${stylist} on ${date}${totalDuration ? ` (duration: ${totalDuration}min)` : ''}`);
+    console.log(`Checking availability for ${stylist} on ${date}${totalDuration ? ` (duration: ${totalDuration}min)` : ''} tenant=${tenant_id}`);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Determine tenant ID
-    let tenantId: string | undefined = tenant_id;
-    if (!tenantId) {
-      const defaultTenant = await getDefaultTenantId(supabase);
-      if (!defaultTenant) {
-        throw new Error('No active tenant found');
-      }
-      tenantId = defaultTenant;
-    }
+    // tenant_id is now strictly required by the schema — no fallback.
+    const tenantId: string = tenant_id;
 
     // Calculate day of week (0=Sunday, 1=Monday, etc.)
     const dateObj = new Date(date + 'T12:00:00Z');

@@ -265,9 +265,47 @@ serve(async (req) => {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         logStep("Checkout session completed", { sessionId: session.id });
-        
-        // This is handled by create-business-checkout success flow
-        // but we can add additional processing here if needed
+
+        const businessSlug = session.metadata?.business_slug;
+        const planSlug = session.metadata?.plan_slug;
+        const customerId = session.customer as string | null;
+        const subscriptionId = session.subscription as string | null;
+
+        if (businessSlug && planSlug && PLAN_CONFIG[planSlug]) {
+          const config = PLAN_CONFIG[planSlug];
+          let expiresAt: string | null = null;
+          if (subscriptionId) {
+            try {
+              const sub = await stripe.subscriptions.retrieve(subscriptionId);
+              if (sub.current_period_end) {
+                expiresAt = new Date(sub.current_period_end * 1000).toISOString();
+              }
+            } catch (e) {
+              logStep("Could not fetch subscription for expires_at", { error: String(e) });
+            }
+          }
+
+          const updatePayload: Record<string, unknown> = {
+            subscription_plan: planSlug,
+            max_stylists: config.max_stylists,
+            max_services: config.max_services,
+            features: config.features,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
+          };
+          if (expiresAt) updatePayload.subscription_expires_at = expiresAt;
+
+          const { error: updErr } = await supabase
+            .from("tenants")
+            .update(updatePayload)
+            .eq("slug", businessSlug);
+
+          if (updErr) {
+            logStep("Failed to sync tenant from checkout.session.completed", { error: updErr.message });
+          } else {
+            logStep("Tenant synced from checkout.session.completed", { businessSlug, planSlug });
+          }
+        }
         break;
       }
       

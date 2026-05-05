@@ -257,6 +257,13 @@ export default function BusinessOnboarding() {
 
     setLoading(true);
     try {
+      // Persist selected plan + business data so OnboardingSetup can provision correctly
+      // after returning from Stripe checkout
+      localStorage.setItem("onboarding_plan_slug", selectedPlan);
+      localStorage.setItem("onboarding_billing_cycle", billingCycle);
+      localStorage.setItem("onboarding_business_name", values.businessName);
+      localStorage.setItem("onboarding_business_slug", values.businessSlug);
+
       const { data, error } = await supabase.functions.invoke("create-business-checkout", {
         body: {
           planSlug: selectedPlan,

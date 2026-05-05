@@ -46,7 +46,7 @@ export function DesignStep({ onNext, onPrev, tenantId, tenantName, loading, setL
       const primaryColor = useCustomColor ? customPrimary : selectedColor.primary;
       const secondaryColor = useCustomColor ? customSecondary : selectedColor.secondary;
 
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from("tenants")
         .update({
           primary_color: primaryColor,
@@ -55,9 +55,13 @@ export function DesignStep({ onNext, onPrev, tenantId, tenantName, loading, setL
           font_body: bodyFont,
           button_style: buttonStyle,
         })
-        .eq("id", tenantId);
+        .eq("id", tenantId)
+        .select("id");
 
       if (error) throw error;
+      if (!updated || updated.length === 0) {
+        throw new Error("No se ha podido guardar el diseño (sin permisos).");
+      }
       onNext();
     } catch (error: unknown) {
       toast({

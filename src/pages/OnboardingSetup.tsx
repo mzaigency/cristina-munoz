@@ -1010,13 +1010,17 @@ export default function OnboardingSetup() {
         try {
           const businessName = localStorage.getItem("onboarding_business_name") || "Mi Salón";
           const businessSlug = localStorage.getItem("onboarding_business_slug") || `salon-${Date.now()}`;
+          const planSlug = localStorage.getItem("onboarding_plan_slug") || "starter";
+          const billingCycle = localStorage.getItem("onboarding_billing_cycle") || "monthly";
 
           const { data, error } = await supabase.functions.invoke("provision-business", {
             body: {
               businessName,
               businessSlug,
               email: session.user.email,
-              plan: localStorage.getItem("onboarding_plan") || "monthly",
+              planSlug,
+              billingCycle,
+              sessionId,
             },
           });
 
@@ -1029,6 +1033,8 @@ export default function OnboardingSetup() {
 
           localStorage.removeItem("onboarding_business_name");
           localStorage.removeItem("onboarding_business_slug");
+          localStorage.removeItem("onboarding_plan_slug");
+          localStorage.removeItem("onboarding_billing_cycle");
           localStorage.removeItem("onboarding_plan");
 
           toast({

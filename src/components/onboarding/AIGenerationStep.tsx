@@ -70,15 +70,19 @@ export function AIGenerationStep({ tenantId, onNext, loading, setLoading }: Step
     setLoading(true);
     try {
       // Update tenant with final content
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from("tenants")
         .update({
           tagline: tagline || branding?.tagline,
           description: description || branding?.description,
         })
-        .eq("id", tenantId);
+        .eq("id", tenantId)
+        .select("id");
 
       if (error) throw error;
+      if (!updated || updated.length === 0) {
+        throw new Error("No se ha podido guardar el contenido (sin permisos).");
+      }
 
       // Activate tenant — setup is complete
       await activateTenant();
@@ -86,7 +90,7 @@ export function AIGenerationStep({ tenantId, onNext, loading, setLoading }: Step
       toast.success("¡Contenido guardado!");
       onNext();
     } catch (error: unknown) {
-      toast.error("Error al guardar");
+      toast.error(error instanceof Error ? error.message : "Error al guardar");
     } finally {
       setLoading(false);
     }

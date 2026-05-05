@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -109,11 +110,57 @@ serve(async (req) => {
       secondaryColor,
       tagline,
       description,
-      planSlug = "starter",
+      planSlug: rawPlanSlug = "starter",
+      billingCycle,
+      sessionId,
       skipStripe,
     } = body;
 
-    logStep("Request body", { businessName, businessSlug, planSlug, skipStripe });
+    logStep("Request body", { businessName, businessSlug, planSlug: rawPlanSlug, billingCycle, sessionId, skipStripe });
+
+    let planSlug = rawPlanSlug;
+    let stripeCustomerId: string | null = null;
+    let stripeSubscriptionId: string | null = null;
+    let subscriptionEndOverride: Date | null = null;
+
+    // If we have a Stripe checkout session, verify against Stripe and use the
+    // *real* plan from the metadata (defense against tampered planSlug)
+    if (sessionId && !skipStripe) {
+      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+      if (stripeKey) {
+        try {
+          const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+          const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId, {
+            expand: ["subscription"],
+          });
+          logStep("Stripe session retrieved", { 
+            id: checkoutSession.id, 
+            status: checkoutSession.status,
+            metadataPlan: checkoutSession.metadata?.plan_slug,
+          });
+
+          const verifiedPlan = checkoutSession.metadata?.plan_slug;
+          if (verifiedPlan && PLAN_CONFIG[verifiedPlan]) {
+            planSlug = verifiedPlan;
+            logStep("Plan verified from Stripe metadata", { planSlug });
+          }
+
+          stripeCustomerId = (checkoutSession.customer as string) || null;
+          const sub = checkoutSession.subscription as Stripe.Subscription | null;
+          if (sub && typeof sub === "object") {
+            stripeSubscriptionId = sub.id;
+            if (sub.current_period_end) {
+              subscriptionEndOverride = new Date(sub.current_period_end * 1000);
+            }
+          }
+        } catch (stripeErr) {
+          logStep("Warning: failed to verify Stripe session", { 
+            error: stripeErr instanceof Error ? stripeErr.message : String(stripeErr),
+          });
+          // Don't fail provisioning — fall back to the planSlug provided by the client.
+        }
+      }
+    }
 
     // Validate plan
     const validPlanSlug = PLAN_CONFIG[planSlug] ? planSlug : "starter";
@@ -152,6 +199,8 @@ serve(async (req) => {
     if (skipStripe) {
       // Demo mode: 7 days only
       subscriptionEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    } else if (subscriptionEndOverride) {
+      subscriptionEnd = subscriptionEndOverride;
     } else {
       // Normal mode: 30 days trial
       subscriptionEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -177,6 +226,8 @@ serve(async (req) => {
         max_services: planConfig.max_services,
         features: planConfig.features,
         is_active: false,
+        stripe_customer_id: stripeCustomerId,
+        stripe_subscription_id: stripeSubscriptionId,
       })
       .select()
       .single();
