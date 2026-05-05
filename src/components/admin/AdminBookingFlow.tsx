@@ -376,6 +376,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
         )}
 
         {step === 4 && (
+          <GuidedStep isActive>
           <div className="space-y-6">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Datos del cliente</h3>
