@@ -87,7 +87,8 @@ serve(async (req) => {
         logo_url,
         tagline,
         primary_color,
-        features
+        features,
+        created_at
       `)
       .eq('is_active', true);
 
