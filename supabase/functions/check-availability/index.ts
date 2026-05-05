@@ -154,22 +154,15 @@ serve(async (req) => {
     }
     
     const { date, stylist, totalDuration, tenant_id }: AvailabilityRequest = validationResult.data;
-    console.log(`Checking availability for ${stylist} on ${date}${totalDuration ? ` (duration: ${totalDuration}min)` : ''}`);
+    console.log(`Checking availability for ${stylist} on ${date}${totalDuration ? ` (duration: ${totalDuration}min)` : ''} tenant=${tenant_id}`);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Determine tenant ID
-    let tenantId: string | undefined = tenant_id;
-    if (!tenantId) {
-      const defaultTenant = await getDefaultTenantId(supabase);
-      if (!defaultTenant) {
-        throw new Error('No active tenant found');
-      }
-      tenantId = defaultTenant;
-    }
+    // tenant_id is now strictly required by the schema — no fallback.
+    const tenantId: string = tenant_id;
 
     // Calculate day of week (0=Sunday, 1=Monday, etc.)
     const dateObj = new Date(date + 'T12:00:00Z');
