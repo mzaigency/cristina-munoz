@@ -142,9 +142,10 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
       }
 
       toast({
-        title: "Guardado",
+        title: "✅ Guardado",
         description: "La configuración se ha guardado correctamente",
       });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error: any) {
       console.error("Error saving tenant:", error);
       toast({
@@ -168,7 +169,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
   if (!tenant) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       {/* Header - Mobile responsive */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -519,6 +520,28 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Sticky guided save bar */}
+      <div
+        className="sticky bottom-0 left-0 right-0 z-30 -mx-4 md:-mx-6 mt-6 px-4 md:px-6 py-3 bg-background/95 backdrop-blur-md border-t border-border flex items-center gap-3"
+        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        role="status"
+        aria-live="polite"
+      >
+        <div className="flex-1 text-sm">
+          <span className="text-base mr-1" aria-hidden>👉</span>
+          <span className="font-medium">Cuando termines, pulsa <span className="text-primary">Guardar Cambios</span> para aplicar.</span>
+        </div>
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="h-11 guided-halo"
+          data-guided-cta="true"
+        >
+          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+          Guardar
+        </Button>
       </div>
     </div>
   );
