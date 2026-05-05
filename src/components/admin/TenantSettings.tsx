@@ -142,9 +142,10 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
       }
 
       toast({
-        title: "Guardado",
+        title: "✅ Guardado",
         description: "La configuración se ha guardado correctamente",
       });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error: any) {
       console.error("Error saving tenant:", error);
       toast({
