@@ -337,50 +337,42 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
-      <div className="p-6">
-        {/* Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            {[1, 2, 3, 4].map((s) => (
-              <div
-                key={s}
-                className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                  s <= step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {s}
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Servicios</span>
-            <span>Peluquera</span>
-            <span>Fecha/Hora</span>
-            <span>Contacto</span>
-          </div>
-        </div>
+      <div className="p-6 flex flex-col min-h-[60vh]">
+        <GuidedHeader
+          step={step}
+          totalSteps={4}
+          title={STEP_TITLES[step - 1]}
+          onExit={onCancel}
+          exitLabel="Salir"
+        />
 
         {/* Step Content */}
         {step === 1 && (
-          <ServiceSelection services={services} selectedServices={bookingData.services} onNext={handleServicesSelect} />
+          <GuidedStep isActive>
+            <ServiceSelection services={services} selectedServices={bookingData.services} onNext={handleServicesSelect} />
+          </GuidedStep>
         )}
 
         {step === 2 && (
-          <AdminStylistSelection tenantId={tenantId} selectedStylist={bookingData.stylist} onNext={handleStylistSelect} onBack={handleBack} />
+          <GuidedStep isActive>
+            <AdminStylistSelection tenantId={tenantId} selectedStylist={bookingData.stylist} onNext={handleStylistSelect} onBack={handleBack} />
+          </GuidedStep>
         )}
 
         {step === 3 && (
-          <DateTimeSelection
-            selectedDate={bookingData.date}
-            selectedTime={bookingData.time}
-            totalDuration={totalDuration}
-            services={bookingData.services}
-            stylist={bookingData.stylist!}
-            tenantId={tenantId}
-            onNext={handleDateTimeSelect}
-            onBack={handleBack}
-            isAdmin={true}
-          />
+          <GuidedStep isActive>
+            <DateTimeSelection
+              selectedDate={bookingData.date}
+              selectedTime={bookingData.time}
+              totalDuration={totalDuration}
+              services={bookingData.services}
+              stylist={bookingData.stylist!}
+              tenantId={tenantId}
+              onNext={handleDateTimeSelect}
+              onBack={handleBack}
+              isAdmin={true}
+            />
+          </GuidedStep>
         )}
 
         {step === 4 && (
