@@ -381,6 +381,25 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Guided helper banner */}
+      <div
+        className="fixed left-0 right-0 z-30 px-4 py-2.5 bg-background/90 backdrop-blur-xl border-t border-border flex items-center gap-2 lg:bottom-0"
+        style={{
+          bottom: bookingData.services.length > 0 ? "76px" : "0px",
+          paddingBottom: bookingData.services.length > 0 ? "0.625rem" : "calc(0.625rem + env(safe-area-inset-bottom))",
+        }}
+        role="status"
+        aria-live="polite"
+      >
+        <span className="text-base shrink-0" aria-hidden>👉</span>
+        <p className="text-xs sm:text-sm text-foreground/90 leading-snug">
+          {step === 1 && <>Elige uno o varios servicios y pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
+          {step === 2 && <>Elige tu profesional o "Sin preferencia" para que te asignemos una.</>}
+          {step === 3 && <>Selecciona un día y luego una hora libre. Después pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
+          {step === 4 && <>Revisa los datos y pulsa <span className="font-semibold text-primary">Confirmar Reserva</span> abajo.</>}
+        </p>
+      </div>
     </section>
   );
 };
