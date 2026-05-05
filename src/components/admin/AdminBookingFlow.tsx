@@ -554,7 +554,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
               <Button variant="outline" onClick={handleBack} disabled={loading}>
                 Volver
               </Button>
-              <Button onClick={handleConfirmBooking} disabled={loading}>
+              <Button onClick={handleConfirmBooking} disabled={loading} data-guided-cta="true">
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -568,7 +568,10 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
               </Button>
             </div>
           </div>
+          </GuidedStep>
         )}
+
+        <GuidedHelperBar helperText={STEP_HELPERS[step - 1]} />
       </div>
     </Card>
   );
