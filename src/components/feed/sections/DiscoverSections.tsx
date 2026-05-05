@@ -145,6 +145,51 @@ export function DiscoverSections({
 
   return (
     <div className="space-y-1">
+      {/* 1. FAVORITOS (solo si tiene) */}
+      {isAuthenticated && favs.length > 0 && (
+        <FeedSection
+          icon={Heart}
+          title="Tus favoritos"
+          subtitle="Vuelve siempre a los que más te gustan"
+          count={favs.length}
+          expanded={expanded.favorites}
+          onToggleExpand={() => toggle("favorites")}
+          iconTint="rose"
+        >
+          {renderCards(favs, expanded.favorites, "favorites")}
+        </FeedSection>
+      )}
+
+      {/* 2. PARA TI */}
+      {forYou.length > 0 && (
+        <FeedSection
+          icon={Sparkles}
+          title="Para ti"
+          subtitle="Recomendaciones según tus gustos"
+          count={forYou.length}
+          expanded={expanded.foryou}
+          onToggleExpand={() => toggle("foryou")}
+          iconTint="primary"
+        >
+          {renderCards(forYou, expanded.foryou, "foryou")}
+        </FeedSection>
+      )}
+
+      {/* 3. EN TENDENCIA */}
+      {popular.length > 0 && (
+        <FeedSection
+          icon={Flame}
+          title="En tendencia"
+          subtitle="Los favoritos de la comunidad"
+          count={popular.length}
+          expanded={expanded.popular}
+          onToggleExpand={() => toggle("popular")}
+          iconTint="amber"
+        >
+          {renderCards(popular, expanded.popular, "popular")}
+        </FeedSection>
+      )}
+
       {/* CERCA DE TI */}
       {hasLocation && nearby.length > 0 && (
         <FeedSection
@@ -207,37 +252,7 @@ export function DiscoverSections({
         </FeedSection>
       )}
 
-      {/* PARA TI */}
-      {forYou.length > 0 && (
-        <FeedSection
-          icon={Sparkles}
-          title="Para ti"
-          subtitle="Recomendaciones según tus gustos"
-          count={forYou.length}
-          expanded={expanded.foryou}
-          onToggleExpand={() => toggle("foryou")}
-          iconTint="primary"
-        >
-          {renderCards(forYou, expanded.foryou, "foryou")}
-        </FeedSection>
-      )}
-
-      {/* POPULAR */}
-      {popular.length > 0 && (
-        <FeedSection
-          icon={Flame}
-          title="En tendencia"
-          subtitle="Los favoritos de la comunidad"
-          count={popular.length}
-          expanded={expanded.popular}
-          onToggleExpand={() => toggle("popular")}
-          iconTint="amber"
-        >
-          {renderCards(popular, expanded.popular, "popular")}
-        </FeedSection>
-      )}
-
-      {/* NUEVOS */}
+      {/* RECIÉN LLEGADOS */}
       {recent.length > 0 && (
         <FeedSection
           icon={PartyPopper}
@@ -249,21 +264,6 @@ export function DiscoverSections({
           iconTint="primary"
         >
           {renderCards(recent, expanded.new, "new")}
-        </FeedSection>
-      )}
-
-      {/* FAVORITOS */}
-      {isAuthenticated && favs.length > 0 && (
-        <FeedSection
-          icon={Heart}
-          title="Tus favoritos"
-          subtitle="Vuelve siempre a los que más te gustan"
-          count={favs.length}
-          expanded={expanded.favorites}
-          onToggleExpand={() => toggle("favorites")}
-          iconTint="rose"
-        >
-          {renderCards(favs, expanded.favorites, "favorites")}
         </FeedSection>
       )}
     </div>
