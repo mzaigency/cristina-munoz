@@ -96,8 +96,8 @@ export default function TenantAdmin() {
   const navItems: NavItem[] = useMemo(() => {
     const clientsBadge = notificationCounts.messages + notificationCounts.reviews;
     const allItems: NavItem[] = [
-      { value: "dashboard", label: "Inicio", icon: <LayoutDashboard className="h-4 w-4" /> },
-      { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
+      { value: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
+      { value: "agenda", label: "Inicio", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
       { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: clientsBadge },
       { value: "catalog", label: "Catálogo", icon: <ShoppingBag className="h-4 w-4" /> },
       { value: "marketing", label: "Marketing", icon: <Megaphone className="h-4 w-4" /> },

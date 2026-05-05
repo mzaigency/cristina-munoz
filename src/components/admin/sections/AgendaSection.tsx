@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Wallet, Lock } from "lucide-react";
+import { Calendar, Clock, Wallet, Lock, ShoppingCart } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
 import { WaitlistManager } from "../WaitlistManager";
 import { CashRegisterManager } from "../CashRegisterManager";
+import { ProductOrdersManager } from "../ProductOrdersManager";
 import { LockedFeature } from "../LockedFeature";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -15,13 +17,14 @@ interface AgendaSectionProps {
   onSelectClient?: (clientId: string) => void;
 }
 
-type AgendaTab = "calendar" | "waitlist" | "cash";
+type AgendaTab = "calendar" | "waitlist" | "orders" | "cash";
 
 const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
   const [activeTab, setActiveTab] = useState<AgendaTab>("calendar");
   const [stylists, setStylists] = useState<Array<{ slug: string; name: string; color: string }>>([]);
   const [waitlistCount, setWaitlistCount] = useState(0);
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
+  const unseenOrders = useUnseenOrders(tenantId);
 
   useEffect(() => {
     const openCashTab = sessionStorage.getItem("openCashTab");
@@ -29,6 +32,11 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
     if ((openCashTab || pendingBooking) && hasFeature("cash_register")) {
       setActiveTab("cash");
       sessionStorage.removeItem("openCashTab");
+    }
+    const subTab = sessionStorage.getItem("openAgendaSubTab");
+    if (subTab && ["calendar", "waitlist", "orders", "cash"].includes(subTab)) {
+      setActiveTab(subTab as AgendaTab);
+      sessionStorage.removeItem("openAgendaSubTab");
     }
   }, [hasFeature]);
 
@@ -77,6 +85,7 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
   const tabs = [
     { id: "calendar" as AgendaTab, label: "Calendario", icon: Calendar, badge: 0, locked: false },
     { id: "waitlist" as AgendaTab, label: "Espera", icon: Clock, badge: waitlistCount, locked: false },
+    { id: "orders" as AgendaTab, label: "Pedidos", icon: ShoppingCart, badge: unseenOrders, locked: false },
     { id: "cash" as AgendaTab, label: "Caja", icon: Wallet, badge: 0, locked: cashLocked },
   ];
 
@@ -90,7 +99,7 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
               value={tab.id}
               disabled={tab.locked}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 text-sm px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm relative",
+                "flex-1 flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm relative",
                 tab.locked && "opacity-50 cursor-not-allowed"
               )}
             >
@@ -102,7 +111,7 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
                 </Badge>
               )}
               {tab.locked && (
-                <span className="text-[10px] text-amber-600 dark:text-amber-400 ml-0.5">Pro</span>
+                <span className="text-[10px] text-amber-600 ml-0.5">Pro</span>
               )}
             </TabsTrigger>
           ))}
@@ -114,6 +123,10 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
 
         <TabsContent value="waitlist" className="mt-4">
           <WaitlistManager tenantId={tenantId} />
+        </TabsContent>
+
+        <TabsContent value="orders" className="mt-4">
+          <ProductOrdersManager tenantId={tenantId} />
         </TabsContent>
 
         <TabsContent value="cash" className="mt-4">
