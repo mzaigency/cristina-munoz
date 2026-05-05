@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
-import { StylistSelection } from "@/components/booking/StylistSelection";
+import { AdminStylistSelection } from "@/components/admin/AdminStylistSelection";
 import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { RecurrenceSelector, RecurrenceConfig } from "@/components/admin/RecurrenceSelector";
 import { Loader2, UserCircle, AtSign, Check } from "lucide-react";
