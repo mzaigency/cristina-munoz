@@ -11,6 +11,7 @@ import { CategoryPills } from "@/components/feed/CategoryPills";
 import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { PremiumSkeleton } from "@/components/feed/PremiumSkeleton";
 import { EmptyState } from "@/components/feed/EmptyState";
+import { DiscoverSections } from "@/components/feed/sections/DiscoverSections";
 
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -400,8 +401,18 @@ const Index = () => {
                 />
               </motion.div>
 
-              {/* Salons Grid - Sin skeleton, contenido directo */}
-              {visibleSalons && visibleSalons.length > 0 ? (
+              {/* Modo SECCIONES (sin búsqueda ni filtro) o GRID (con filtros activos) */}
+              {!searchQuery && !selectedCategory && !showFavoritesOnly && !sortByDistance && salonsWithDistance.length > 0 ? (
+                <DiscoverSections
+                  salons={salonsWithDistance}
+                  hasLocation={hasLocation}
+                  tenantsWithAvailability={tenantsWithAvailability}
+                  scoresMap={scoresMap}
+                  hasRecommendations={hasRecommendations}
+                  onRequestLocation={requestLocation}
+                  geoLoading={geoLoading}
+                />
+              ) : visibleSalons && visibleSalons.length > 0 ? (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {visibleSalons.map((salon, index) => {

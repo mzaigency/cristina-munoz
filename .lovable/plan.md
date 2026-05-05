@@ -1,26 +1,75 @@
-## Problema
+# Feed por secciones (estilo Booksy, alma GlowApp)
 
-En la vista de cliente (`BookingFlow.tsx`), al avanzar de paso se hace scroll al `<section>` completo (que incluye el título "Reserva tu Cita"), por lo que el usuario aterriza arriba del todo y no ve dónde está. Además, el auto-scroll al CTA del `GuidedStep` queda tapado por ese scroll inicial.
+Reorganizar el feed Discover de un grid plano a un **scroll vertical de secciones temáticas**, cada una con su carrusel horizontal de tarjetas (snap, mobile-first). Mantenemos la estética Liquid Glass, los `PremiumSalonCard` y los degradados Primary/Purple — solo cambia la **arquitectura de presentación**.
 
-## Cambios
+## Secciones propuestas (orden mobile)
 
-### 1. `src/components/booking/BookingFlow.tsx`
-- Añadir un nuevo `ref` (`progressRef`) sobre el contenedor de la barra de progresión (el div con "Servicios / Peluquera / Fecha / Confirmar").
-- Reemplazar las 3 llamadas `bookingRef.current?.scrollIntoView(...)` en `handleServicesSelect`, `handleStylistSelect` y `handleDateTimeSelect` por `progressRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })` con un pequeño offset superior (usando `scrollMarginTop` por CSS) para no quedar pegado al borde.
-- Mantener `bookingRef` solo como contenedor de la sección.
+1. **Cerca de ti** — usa `useGeolocation` + ordena por distancia. Si no hay permiso, muestra un CTA suave "Activar ubicación" en la propia sección.
+2. **Huecos hoy** — `useTodayAvailability`. Solo aparece si hay 1+ salones disponibles hoy. Badge verde de urgencia.
+3. **Para ti** (solo logueados) — orden por `scoresMap` de `useRecommendations`. Si el usuario no tiene historial, se oculta.
+4. **Tendencia / Popular** — top por rating ≥4 y reviews. Sustituye al "Destacados" actual.
+5. **Recién llegados** — orden por `created_at` desc, limitado a últimas 4 semanas.
+6. **Explora por categoría** — chips horizontales (peluquería, barbería, uñas, spa…). Al tocar uno, abre vista filtrada (modo grid actual reutilizado).
+7. **Tus favoritos** (solo si hay) — atajo a la sección de favoritos completa.
 
-### 2. `src/components/guided/GuidedStep.tsx`
-- Asegurar que el scroll al CTA (cuando el paso se activa o cuando el botón pasa de `disabled` → habilitado) se ejecute **después** del scroll al progreso, aumentando el `setTimeout` inicial (de 120ms → ~450ms) para que no compita con el smooth-scroll a la barra de progresión.
-- En el `MutationObserver` que detecta el cambio `disabled → enabled`, mantener el scroll al CTA con `block: "center"` (ya está, pero validar que se dispara tras una interacción del usuario, p. ej. tras seleccionar servicio).
+Cada sección solo se renderiza si tiene contenido relevante → evita feed vacío.
 
-### 3. Comportamiento resultante
-- **Al cambiar de paso** (`step 1 → 2`, etc.): scroll suave a la barra de progresión (el usuario ve "voy por el paso 2 de 4").
-- **Al completar la acción dentro del paso** (ej. seleccionar servicio que habilita "Continuar"): scroll suave hacia abajo al CTA destacado con halo.
+## Patrón visual de cada sección
 
-### 4. Aplicar mismo patrón en admin
-- Verificar `src/components/admin/AdminBookingFlow.tsx`: si hace `scrollIntoView` al header en cambio de paso, redirigirlo también a su barra de progresión (4 pasos Servicios/Profesional/Fecha/Confirmar) con un `progressRef` análogo. El comportamiento del CTA ya viene de `GuidedStep` y heredará el ajuste de timing.
+```text
+[icono] Título sección             Ver todo →
+─────────────────────────────────────────────
+ ◀ [card] [card] [card] [card] ▶   (snap-x)
+```
 
-## Notas técnicas (mobile-first)
+- Header compacto: icono Lucide + título bold + contador sutil + link "Ver todo".
+- Carrusel horizontal con `scroll-snap-x mandatory`, `overflow-x-auto`, fade lateral con máscara CSS.
+- Tarjetas: variante compacta de `PremiumSalonCard` (~280px ancho en mobile, full alto), reutilizando el componente con un prop `variant="carousel"`.
+- Sin flechas en mobile (swipe nativo); flechas discretas solo en ≥md.
+- Animación `motion` stagger por sección al entrar en viewport (`whileInView`).
 
-- Usar `scroll-margin-top` (Tailwind: `scroll-mt-4` o similar) en el contenedor del progreso para respetar la safe-area / sticky headers en iPhone.
-- No tocar lógica de negocio ni de reserva, solo navegación visual.
+## Búsqueda y filtros
+
+- Cuando hay `searchQuery` o `selectedCategory` activo → se **colapsan las secciones** y se muestra el grid clásico de resultados (comportamiento actual). Esto preserva la UX de búsqueda focalizada.
+- Pills de categoría siguen visibles arriba como navegación rápida.
+- Toggle `Cerca` / `Favoritos` se mantiene pero se vuelve redundante con las secciones → lo movemos a un único botón de "Ordenar" o lo retiramos en modo secciones.
+
+## Personalidad GlowApp (no es Booksy)
+
+- Fondo Liquid Glass animado se mantiene.
+- Headers de sección con micro-gradiente Primary→Purple en el icono.
+- Tarjetas conservan halo/sombra premium y badges de recomendación.
+- Tipografía display GlowApp para títulos de sección.
+- Transiciones suaves entre secciones (no cortes duros tipo Booksy).
+
+## Arquitectura técnica
+
+Nuevos archivos:
+
+- `src/components/feed/sections/FeedSection.tsx` — wrapper genérico (header + carrusel snap).
+- `src/components/feed/sections/DiscoverSections.tsx` — orquesta las 6-7 secciones, recibe `salons`, `scoresMap`, etc.
+- `src/components/feed/PremiumSalonCard.tsx` — añadir prop `variant?: "grid" | "carousel"` (carousel = ancho fijo ~280px, mismo diseño).
+
+Cambios en `src/pages/Index.tsx`:
+
+- Si `searchQuery || selectedCategory` activo → render grid actual.
+- Si no → render `<DiscoverSections salons={salonsWithDistance} ... />`.
+- Reusa todos los hooks existentes (`useGeolocation`, `useTodayAvailability`, `useRecommendations`, `useFavorites`).
+- Sin cambios de datos / RPC / RLS.
+
+Mobile-first y safe-area:
+
+- Carruseles con `pl-4 pr-4 -mx-4` para sangrado bonito edge-to-edge.
+- Respeta `pb-28` actual para bottom nav.
+- Snap por tarjeta (`snap-start`).
+
+## Fuera de scope
+
+- No tocamos backend, RPCs, ni el modo "Following".
+- No tocamos Admin ni Booking.
+- No añadimos nuevas tablas ni columnas.
+
+## Preguntas opcionales (puedo decidir yo si prefieres)
+
+- ¿Mantener el toggle "Cerca/Favoritos" arriba o retirarlo al haber sección dedicada? retirarlo
+- ¿"Ver todo" navega a una página filtrada o expande la sección inline? expande la seccion
