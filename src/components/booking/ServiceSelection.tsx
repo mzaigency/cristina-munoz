@@ -296,6 +296,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
         <Button 
           onClick={handleNext} 
           disabled={selected.length === 0}
+          data-guided-cta="true"
           className="w-full sm:w-auto h-11 transition-transform duration-200 hover:scale-105 disabled:scale-100 touch-manipulation"
         >
           Continuar
