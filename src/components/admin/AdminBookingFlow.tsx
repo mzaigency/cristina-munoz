@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,25 +10,25 @@ import { ServiceSelection } from "@/components/booking/ServiceSelection";
 import { AdminStylistSelection } from "@/components/admin/AdminStylistSelection";
 import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { RecurrenceSelector, RecurrenceConfig } from "@/components/admin/RecurrenceSelector";
-import { Loader2, UserCircle, AtSign, Check } from "lucide-react";
+import { Loader2, UserCircle, AtSign, Check, X } from "lucide-react";
 import { Service, Stylist } from "@/types/booking";
-import { GuidedHeader } from "@/components/guided/GuidedHeader";
-import { GuidedHelperBar } from "@/components/guided/GuidedHelperBar";
 import { GuidedStep } from "@/components/guided/GuidedStep";
+import { motion, AnimatePresence } from "motion/react";
+import { cn } from "@/lib/utils";
 
 const STEP_TITLES = [
-  "Elige los servicios",
+  "Selecciona los servicios",
   "Elige la profesional",
-  "Elige fecha y hora",
+  "Selecciona fecha y hora",
   "Datos del cliente",
 ] as const;
 
-const STEP_HELPERS: Array<string> = [
-  "Toca los servicios y luego pulsa Continuar abajo",
-  "Toca la profesional que atenderá la cita",
-  "Toca un día y luego una hora libre",
-  "Escribe nombre y teléfono y pulsa Crear cita",
-];
+const STEP_DESCRIPTIONS = [
+  "Puedes seleccionar varios servicios",
+  "Elige quién atenderá la cita o deja que se asigne automáticamente",
+  "Selecciona un día disponible y luego una hora libre",
+  "Vincula a un cliente existente o crea uno nuevo",
+] as const;
 
 interface UserProfile {
   id: string;
