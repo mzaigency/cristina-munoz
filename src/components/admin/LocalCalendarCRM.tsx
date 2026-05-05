@@ -897,7 +897,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           <p className="text-xs md:text-sm text-muted-foreground">Sistema local</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button onClick={() => setIsCreateDialogOpen(true)} className="flex-1" size="sm" data-tour-step="new-appointment">
+          <Button
+            onClick={() => setIsCreateDialogOpen(true)}
+            className={cn("flex-1", todayBookings.length === 0 && "guided-halo")}
+            size="sm"
+            data-tour-step="new-appointment"
+            data-guided-cta={todayBookings.length === 0 ? "true" : undefined}
+          >
             <Plus className="h-4 w-4 mr-1 md:mr-2" />
             <span className="hidden sm:inline">Nueva </span>Cita
           </Button>
@@ -907,6 +913,15 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           </Button>
         </div>
       </div>
+
+      {todayBookings.length === 0 && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 flex items-center gap-2 text-sm">
+          <span className="text-base" aria-hidden>👉</span>
+          <span className="text-foreground/90">
+            Para empezar, pulsa <span className="font-semibold text-primary">Nueva Cita</span> arriba a la derecha.
+          </span>
+        </div>
+      )}
 
       {/* Today's quick summary */}
       {isSameDay(weekDays.find(d => isSameDay(d, new Date())) || new Date(), new Date()) && todayBookings.length > 0 && (
