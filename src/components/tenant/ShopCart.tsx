@@ -123,6 +123,7 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
             initial={{ scale: 0, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0, y: 20 }}
+            aria-label={`Abrir carrito con ${totalQty} productos, total ${totalPrice.toFixed(2)} euros`}
             onClick={() => setOpen(true)}
             className={cn(
               "fixed z-40 right-4 bottom-[calc(env(safe-area-inset-bottom)+88px)] md:bottom-6",
@@ -183,7 +184,7 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
                       className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border"
                     >
                       {item.image_url ? (
-                        <img src={item.image_url} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                        <img src={item.image_url} alt={item.name} loading="lazy" width={56} height={56} className="h-14 w-14 rounded-lg object-cover" />
                       ) : (
                         <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center">
                           <ShoppingBag className="h-5 w-5 text-muted-foreground" />
