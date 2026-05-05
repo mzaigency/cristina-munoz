@@ -260,12 +260,14 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      <ServiceSelection
-                        services={services}
-                        selectedServices={bookingData.services}
-                        onNext={handleServicesSelect}
-                        tenantId={tenantId}
-                      />
+                      <GuidedStep isActive={true}>
+                        <ServiceSelection
+                          services={services}
+                          selectedServices={bookingData.services}
+                          onNext={handleServicesSelect}
+                          tenantId={tenantId}
+                        />
+                      </GuidedStep>
                     </motion.div>
                   )}
                   {step === 1 && loading && (
@@ -288,11 +290,13 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      <StylistSelection
-                        selectedStylist={bookingData.stylist}
-                        onNext={handleStylistSelect}
-                        onBack={handleBack}
-                      />
+                      <GuidedStep isActive={true}>
+                        <StylistSelection
+                          selectedStylist={bookingData.stylist}
+                          onNext={handleStylistSelect}
+                          onBack={handleBack}
+                        />
+                      </GuidedStep>
                     </motion.div>
                   )}
                   {step === 3 && (
@@ -303,15 +307,17 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      <DateTimeSelection
-                        selectedDate={bookingData.date}
-                        selectedTime={bookingData.time}
-                        totalDuration={totalDuration}
-                        services={bookingData.services}
-                        stylist={bookingData.stylist!}
-                        onNext={handleDateTimeSelect}
-                        onBack={handleBack}
-                      />
+                      <GuidedStep isActive={true}>
+                        <DateTimeSelection
+                          selectedDate={bookingData.date}
+                          selectedTime={bookingData.time}
+                          totalDuration={totalDuration}
+                          services={bookingData.services}
+                          stylist={bookingData.stylist!}
+                          onNext={handleDateTimeSelect}
+                          onBack={handleBack}
+                        />
+                      </GuidedStep>
                     </motion.div>
                   )}
                   {step === 4 && (
@@ -341,16 +347,18 @@ export const BookingFlow = ({ tenantId }: BookingFlowProps) => {
                         />
                       )}
 
-                      <BookingConfirmation
-                        bookingData={bookingData}
-                        totalDuration={totalDuration}
-                        onConfirm={handleConfirmBooking}
-                        onBack={handleBack}
-                        tenantId={tenantId}
-                        totalPrice={totalPrice}
-                        discountedPrice={discountedPrice}
-                        addonProducts={addonProducts}
-                      />
+                      <GuidedStep isActive={true}>
+                        <BookingConfirmation
+                          bookingData={bookingData}
+                          totalDuration={totalDuration}
+                          onConfirm={handleConfirmBooking}
+                          onBack={handleBack}
+                          tenantId={tenantId}
+                          totalPrice={totalPrice}
+                          discountedPrice={discountedPrice}
+                          addonProducts={addonProducts}
+                        />
+                      </GuidedStep>
                     </motion.div>
                   )}
                 </AnimatePresence>
