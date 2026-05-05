@@ -153,7 +153,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     haptic.selection();
     setBookingData({ ...bookingData, services: selectedServices, packageId: packageId || null });
     setStep(2);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   // Handle successful authentication
@@ -170,7 +170,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
       });
       setPendingServices(null);
       setStep(2);
-      bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      scrollToProgress();
     }
   };
 
@@ -179,14 +179,14 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     const stylist = stylistSlug as Stylist;
     setBookingData({ ...bookingData, stylist });
     setStep(3);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: string) => {
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist as Stylist });
     setStep(4);
-    bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToProgress();
   };
 
   const handleConfirmBooking = (name: string, phone: string) => {
