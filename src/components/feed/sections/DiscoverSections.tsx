@@ -4,6 +4,7 @@ import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { FeedSection, FeedCarouselItem } from "./FeedSection";
 import { useFavorites } from "@/hooks/useFavorites";
 import { differenceInDays } from "date-fns";
+import { rememberSectionClick, trackEvent, type FeedSectionId } from "@/lib/telemetry";
 
 type SectionId = "near" | "today" | "foryou" | "popular" | "new" | "favorites";
 
@@ -135,10 +136,34 @@ export function DiscoverSections({
           matchReasons={rec?.matchReasons}
         />
       );
-      return sectionExpanded ? (
-        <div key={`${sectionId}-${salon.id}`}>{card}</div>
-      ) : (
-        <FeedCarouselItem key={`${sectionId}-${salon.id}`}>{card}</FeedCarouselItem>
+      if (sectionExpanded) {
+        const handleClickCapture = () => {
+          rememberSectionClick(sectionId, salon.id, index, rec?.score);
+          void trackEvent({
+            event_type: "click",
+            section_id: sectionId,
+            tenant_id: salon.id,
+            position: index,
+            score: rec?.score ?? null,
+            metadata: { kind: "card", layout: "grid" },
+          });
+        };
+        return (
+          <div key={`${sectionId}-${salon.id}`} onClickCapture={handleClickCapture}>
+            {card}
+          </div>
+        );
+      }
+      return (
+        <FeedCarouselItem
+          key={`${sectionId}-${salon.id}`}
+          sectionId={sectionId as FeedSectionId}
+          tenantId={salon.id}
+          position={index}
+          score={rec?.score}
+        >
+          {card}
+        </FeedCarouselItem>
       );
     });
   };
@@ -155,6 +180,7 @@ export function DiscoverSections({
           expanded={expanded.favorites}
           onToggleExpand={() => toggle("favorites")}
           iconTint="rose"
+          sectionId="favorites"
         >
           {renderCards(favs, expanded.favorites, "favorites")}
         </FeedSection>
@@ -170,6 +196,7 @@ export function DiscoverSections({
           expanded={expanded.foryou}
           onToggleExpand={() => toggle("foryou")}
           iconTint="primary"
+          sectionId="foryou"
         >
           {renderCards(forYou, expanded.foryou, "foryou")}
         </FeedSection>
@@ -185,6 +212,7 @@ export function DiscoverSections({
           expanded={expanded.popular}
           onToggleExpand={() => toggle("popular")}
           iconTint="amber"
+          sectionId="popular"
         >
           {renderCards(popular, expanded.popular, "popular")}
         </FeedSection>
@@ -200,6 +228,7 @@ export function DiscoverSections({
           expanded={expanded.near}
           onToggleExpand={() => toggle("near")}
           iconTint="primary"
+          sectionId="near"
         >
           {renderCards(nearby, expanded.near, "near")}
         </FeedSection>
@@ -211,6 +240,7 @@ export function DiscoverSections({
           title="Cerca de ti"
           subtitle="Activa tu ubicación para ver los salones más cercanos"
           iconTint="primary"
+          sectionId="near"
         >
           <FeedCarouselItem>
             <button
@@ -247,6 +277,7 @@ export function DiscoverSections({
           expanded={expanded.today}
           onToggleExpand={() => toggle("today")}
           iconTint="emerald"
+          sectionId="today"
         >
           {renderCards(today, expanded.today, "today")}
         </FeedSection>
@@ -262,6 +293,7 @@ export function DiscoverSections({
           expanded={expanded.new}
           onToggleExpand={() => toggle("new")}
           iconTint="primary"
+          sectionId="new"
         >
           {renderCards(recent, expanded.new, "new")}
         </FeedSection>

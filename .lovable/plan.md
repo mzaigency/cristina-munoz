@@ -1,75 +1,80 @@
-# Feed por secciones (estilo Booksy, alma GlowApp)
+# Telemetría de secciones del feed Discover
 
-Reorganizar el feed Discover de un grid plano a un **scroll vertical de secciones temáticas**, cada una con su carrusel horizontal de tarjetas (snap, mobile-first). Mantenemos la estética Liquid Glass, los `PremiumSalonCard` y los degradados Primary/Purple — solo cambia la **arquitectura de presentación**.
+Objetivo: medir **impresiones**, **clics** y **conversiones (reservas)** por sección (`favorites`, `foryou`, `popular`, `near`, `today`, `new`) para poder iterar el algoritmo de recomendaciones con datos reales.
 
-## Secciones propuestas (orden mobile)
+## 1. Modelo de datos
 
-1. **Cerca de ti** — usa `useGeolocation` + ordena por distancia. Si no hay permiso, muestra un CTA suave "Activar ubicación" en la propia sección.
-2. **Huecos hoy** — `useTodayAvailability`. Solo aparece si hay 1+ salones disponibles hoy. Badge verde de urgencia.
-3. **Para ti** (solo logueados) — orden por `scoresMap` de `useRecommendations`. Si el usuario no tiene historial, se oculta.
-4. **Tendencia / Popular** — top por rating ≥4 y reviews. Sustituye al "Destacados" actual.
-5. **Recién llegados** — orden por `created_at` desc, limitado a últimas 4 semanas.
-6. **Explora por categoría** — chips horizontales (peluquería, barbería, uñas, spa…). Al tocar uno, abre vista filtrada (modo grid actual reutilizado).
-7. **Tus favoritos** (solo si hay) — atajo a la sección de favoritos completa.
+Nueva tabla `feed_events` (insert-only, append log):
 
-Cada sección solo se renderiza si tiene contenido relevante → evita feed vacío.
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | uuid pk | gen_random_uuid |
+| user_id | uuid null | auth.uid() o null si anónimo |
+| session_id | text | id estable por sesión (localStorage) |
+| event_type | text | `impression` \| `click` \| `conversion` |
+| section_id | text | `favorites`, `foryou`, `popular`, `near`, `today`, `new` |
+| tenant_id | uuid null | salón impactado |
+| position | int null | índice dentro del carrusel (0-based) |
+| score | numeric null | score de recomendación si aplica |
+| metadata | jsonb | `{ matchReasons, distance, hasAvailability, source }` |
+| created_at | timestamptz default now() |
 
-## Patrón visual de cada sección
+Índices: `(section_id, created_at)`, `(tenant_id, event_type)`, `(user_id, created_at)`.
 
-```text
-[icono] Título sección             Ver todo →
-─────────────────────────────────────────────
- ◀ [card] [card] [card] [card] ▶   (snap-x)
-```
+**RLS**:
+- INSERT: anon + authenticated (con validación de longitud y `event_type` en {impression,click,conversion}).
+- SELECT: solo `is_superadmin()`.
+- UPDATE/DELETE: nadie.
 
-- Header compacto: icono Lucide + título bold + contador sutil + link "Ver todo".
-- Carrusel horizontal con `scroll-snap-x mandatory`, `overflow-x-auto`, fade lateral con máscara CSS.
-- Tarjetas: variante compacta de `PremiumSalonCard` (~280px ancho en mobile, full alto), reutilizando el componente con un prop `variant="carousel"`.
-- Sin flechas en mobile (swipe nativo); flechas discretas solo en ≥md.
-- Animación `motion` stagger por sección al entrar en viewport (`whileInView`).
+## 2. Eventos (qué se mide)
 
-## Búsqueda y filtros
+- **impression**: cuando una `<FeedSection>` entra en viewport ≥50% durante ≥500ms (IntersectionObserver). Una impresión por sección por sesión cada 30 min para evitar spam, y una impresión por tarjeta visible (lazy en el carrusel al hacer scroll).
+- **click**: tap en una `PremiumSalonCard` dentro de una sección → registra section_id + tenant_id + position.
+- **conversion**: al confirmarse una reserva (`create-booking` success), se envía un evento con la sección/tenant_id de origen recuperado de un atributo `?ref=section:foryou` añadido al link del card o de un `sessionStorage` (`glow_last_section_click`).
 
-- Cuando hay `searchQuery` o `selectedCategory` activo → se **colapsan las secciones** y se muestra el grid clásico de resultados (comportamiento actual). Esto preserva la UX de búsqueda focalizada.
-- Pills de categoría siguen visibles arriba como navegación rápida.
-- Toggle `Cerca` / `Favoritos` se mantiene pero se vuelve redundante con las secciones → lo movemos a un único botón de "Ordenar" o lo retiramos en modo secciones.
+## 3. Arquitectura cliente
 
-## Personalidad GlowApp (no es Booksy)
+Nuevo módulo `src/lib/telemetry.ts`:
+- `getSessionId()` — uuid persistido en localStorage.
+- `trackEvent(event)` — encola en memoria, hace flush por batches cada 5s o cada 10 eventos vía un único insert a `feed_events` (Supabase client). No bloquea UI; usa `requestIdleCallback`.
+- `useTrackImpression(sectionId, ref)` — hook con IntersectionObserver para `<FeedSection>`.
+- `useTrackCardImpression(sectionId, tenantId, position)` — para cada `FeedCarouselItem` cuando entra en viewport.
 
-- Fondo Liquid Glass animado se mantiene.
-- Headers de sección con micro-gradiente Primary→Purple en el icono.
-- Tarjetas conservan halo/sombra premium y badges de recomendación.
-- Tipografía display GlowApp para títulos de sección.
-- Transiciones suaves entre secciones (no cortes duros tipo Booksy).
+Cambios mínimos:
+- `FeedSection.tsx` → acepta prop `sectionId`, dispara impression al entrar en viewport.
+- `FeedCarouselItem.tsx` → acepta `sectionId`, `tenantId`, `position`, dispara impression de tarjeta.
+- `DiscoverSections.tsx` → pasa `sectionId` a cada sección y a cada item.
+- `PremiumSalonCard.tsx` → si recibe prop `trackContext`, intercepta el click del Link y registra `click` antes de navegar; también guarda el contexto en `sessionStorage` para correlacionar con la conversión.
+- En el flujo de reserva (`BookingFlow` / `create-booking` success) → leer `glow_last_section_click` y disparar evento `conversion` con `section_id` y `tenant_id`.
 
-## Arquitectura técnica
+## 4. Privacidad y rendimiento
 
-Nuevos archivos:
+- Sin PII en `metadata`.
+- Batching y `keepalive: true` en el último flush (`beforeunload`) para no perder eventos.
+- Toggle global `localStorage.glow_disable_telemetry === '1'` para opt-out.
+- Tamaño payload acotado por RLS check (`length(section_id) <= 32`, etc.).
 
-- `src/components/feed/sections/FeedSection.tsx` — wrapper genérico (header + carrusel snap).
-- `src/components/feed/sections/DiscoverSections.tsx` — orquesta las 6-7 secciones, recibe `salons`, `scoresMap`, etc.
-- `src/components/feed/PremiumSalonCard.tsx` — añadir prop `variant?: "grid" | "carousel"` (carousel = ancho fijo ~280px, mismo diseño).
+## 5. Vista superadmin (fuera de scope inmediato, propuesta)
 
-Cambios en `src/pages/Index.tsx`:
+Sección nueva en SuperAdmin → "Feed Analytics":
+- CTR por sección = clicks / impressions.
+- CVR por sección = conversions / clicks.
+- Top tenants por sección.
+- Comparativa "Para ti" vs "Tendencia" para validar el algoritmo.
 
-- Si `searchQuery || selectedCategory` activo → render grid actual.
-- Si no → render `<DiscoverSections salons={salonsWithDistance} ... />`.
-- Reusa todos los hooks existentes (`useGeolocation`, `useTodayAvailability`, `useRecommendations`, `useFavorites`).
-- Sin cambios de datos / RPC / RLS.
+Esto se puede añadir en una segunda iteración con un par de RPCs `SECURITY DEFINER` que agreguen métricas semanalmente.
 
-Mobile-first y safe-area:
+## 6. Entregables de esta tarea
 
-- Carruseles con `pl-4 pr-4 -mx-4` para sangrado bonito edge-to-edge.
-- Respeta `pb-28` actual para bottom nav.
-- Snap por tarjeta (`snap-start`).
+1. Migración: tabla `feed_events` + RLS.
+2. `src/lib/telemetry.ts` con batching y session id.
+3. Hooks de tracking en `FeedSection` y `FeedCarouselItem`.
+4. Click tracking en `PremiumSalonCard` (opt-in vía prop).
+5. Conversion tracking en el handler de reserva exitosa.
+6. Wiring en `DiscoverSections` para pasar `sectionId` y `position`.
 
 ## Fuera de scope
 
-- No tocamos backend, RPCs, ni el modo "Following".
-- No tocamos Admin ni Booking.
-- No añadimos nuevas tablas ni columnas.
-
-## Preguntas opcionales (puedo decidir yo si prefieres)
-
-- ¿Mantener el toggle "Cerca/Favoritos" arriba o retirarlo al haber sección dedicada? retirarlo
-- ¿"Ver todo" navega a una página filtrada o expande la sección inline? expande la seccion
+- Dashboard de analítica (se hará después con datos ya recogidos).
+- A/B testing del algoritmo.
+- Exportación a herramientas externas (PostHog, GA, etc.).

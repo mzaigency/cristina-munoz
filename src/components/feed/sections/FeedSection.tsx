@@ -1,7 +1,14 @@
+import { useRef } from "react";
 import { motion } from "motion/react";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useHaptic } from "@/hooks/useHaptic";
+import {
+  useSectionImpression,
+  trackEvent,
+  rememberSectionClick,
+  type FeedSectionId,
+} from "@/lib/telemetry";
 
 interface FeedSectionProps {
   icon: LucideIcon;
@@ -12,6 +19,8 @@ interface FeedSectionProps {
   onToggleExpand?: () => void;
   /** Tinte del icono (gradiente). default: primary→purple */
   iconTint?: "primary" | "emerald" | "amber" | "rose";
+  /** Identificador para telemetría */
+  sectionId?: FeedSectionId;
   children: React.ReactNode;
 }
 
@@ -30,22 +39,40 @@ export function FeedSection({
   expanded = false,
   onToggleExpand,
   iconTint = "primary",
+  sectionId,
   children,
 }: FeedSectionProps) {
   const haptic = useHaptic();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Telemetry: impression once per mount
+  useSectionImpression(
+    sectionRef,
+    sectionId ?? ("foryou" as FeedSectionId),
+    typeof count === "number" ? count : 0,
+  );
 
   const handleToggle = () => {
     haptic.light();
+    if (sectionId) {
+      void trackEvent({
+        event_type: "click",
+        section_id: sectionId,
+        metadata: { kind: "toggle_expand", expanded: !expanded },
+      });
+    }
     onToggleExpand?.();
   };
 
   return (
     <motion.section
+      ref={sectionRef as any}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className="mb-7"
+      data-section-id={sectionId}
     >
       {/* Header */}
       <div className="flex items-end justify-between mb-3 px-0">
@@ -114,12 +141,37 @@ export function FeedSection({
 
 interface CarouselItemProps {
   children: React.ReactNode;
+  sectionId?: FeedSectionId;
+  tenantId?: string;
+  position?: number;
+  score?: number;
 }
 
 /** Wrapper de ancho fijo para cada tarjeta dentro del carrusel */
-export function FeedCarouselItem({ children }: CarouselItemProps) {
+export function FeedCarouselItem({
+  children,
+  sectionId,
+  tenantId,
+  position,
+  score,
+}: CarouselItemProps) {
+  const handleClickCapture = () => {
+    if (!sectionId || !tenantId) return;
+    rememberSectionClick(sectionId, tenantId, position, score);
+    void trackEvent({
+      event_type: "click",
+      section_id: sectionId,
+      tenant_id: tenantId,
+      position: position ?? null,
+      score: score ?? null,
+      metadata: { kind: "card" },
+    });
+  };
   return (
-    <div className="snap-start shrink-0 w-[78vw] max-w-[300px]">
+    <div
+      className="snap-start shrink-0 w-[78vw] max-w-[300px]"
+      onClickCapture={handleClickCapture}
+    >
       {children}
     </div>
   );

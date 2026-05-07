@@ -9,6 +9,7 @@ import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
 import { BookingData } from "@/types/booking";
 import { PushPermissionPrompt } from "@/components/notifications/PushPermissionPrompt";
 import { SelectedAddon } from "./BookingProductsAddon";
+import { consumeSectionClickFor, trackEvent } from "@/lib/telemetry";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
@@ -156,6 +157,22 @@ export const BookingConfirmation = ({
       setLoading(false);
       setConfirmed(true);
       setShowPushPrompt(true);
+
+      // Telemetry: attribute conversion to source section if applicable
+      if (tenantId) {
+        const ctx = consumeSectionClickFor(tenantId);
+        if (ctx) {
+          void trackEvent({
+            event_type: "conversion",
+            section_id: ctx.sectionId,
+            tenant_id: tenantId,
+            position: ctx.position,
+            score: ctx.score,
+            metadata: { kind: "booking" },
+          });
+        }
+      }
+
       onConfirm(userProfile.full_name, userProfile.phone);
 
       // Crear pedido de productos asociado a la cita (si hay addons)
