@@ -516,6 +516,45 @@ export type Database = {
           },
         ]
       }
+      feed_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          position: number | null
+          score: number | null
+          section_id: string
+          session_id: string
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          position?: number | null
+          score?: number | null
+          section_id: string
+          session_id: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          position?: number | null
+          score?: number | null
+          section_id?: string
+          session_id?: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string | null
