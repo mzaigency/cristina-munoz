@@ -54,6 +54,13 @@ export function FeedSection({
 
   const handleToggle = () => {
     haptic.light();
+    if (sectionId) {
+      void trackEvent({
+        event_type: "click",
+        section_id: sectionId,
+        metadata: { kind: "toggle_expand", expanded: !expanded },
+      });
+    }
     onToggleExpand?.();
   };
 
