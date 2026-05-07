@@ -13,7 +13,7 @@ interface ReportsSectionProps {
   tenantId: string;
 }
 
-type ReportsTab = "stats" | "goals" | "pdf";
+type ReportsTab = "stats" | "feed" | "goals" | "pdf";
 
 interface TabConfig {
   id: ReportsTab;
