@@ -2585,6 +2585,26 @@ export type Database = {
         Returns: string
       }
       expire_old_waitlist_entries: { Args: never; Returns: undefined }
+      get_feed_section_metrics: {
+        Args: { days?: number }
+        Returns: {
+          clicks: number
+          conversions: number
+          impressions: number
+          section_id: string
+        }[]
+      }
+      get_feed_tenant_metrics: {
+        Args: { days?: number; limit_count?: number }
+        Returns: {
+          clicks: number
+          conversions: number
+          impressions: number
+          section_id: string
+          tenant_id: string
+          tenant_name: string
+        }[]
+      }
       get_follower_count: { Args: { _tenant_id: string }; Returns: number }
       get_following_posts: {
         Args: { _limit?: number; _offset?: number; _user_id: string }
