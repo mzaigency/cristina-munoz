@@ -9,6 +9,7 @@ import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
 import { BookingData } from "@/types/booking";
 import { PushPermissionPrompt } from "@/components/notifications/PushPermissionPrompt";
 import { SelectedAddon } from "./BookingProductsAddon";
+import { consumeSectionClickFor, trackEvent } from "@/lib/telemetry";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
