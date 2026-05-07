@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Building2, Users, BarChart3, Shield, LayoutDashboard,
-  Heart, Activity, FileImage, Moon, Sun, ChevronLeft, Menu, CreditCard
+  Heart, Activity, FileImage, Moon, Sun, ChevronLeft, Menu, CreditCard, Sparkles
 } from "lucide-react";
 import { TenantsManager } from "@/components/superadmin/TenantsManager";
 import { UsersManager } from "@/components/superadmin/UsersManager";
@@ -16,6 +16,7 @@ import { ActivityCenter } from "@/components/superadmin/ActivityCenter";
 import { ContentManager } from "@/components/superadmin/ContentManager";
 import { MaintenanceToggle } from "@/components/superadmin/MaintenanceToggle";
 import { LeadsManager } from "@/components/superadmin/LeadsManager";
+import { FeedAnalytics } from "@/components/superadmin/FeedAnalytics";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "motion/react";
@@ -104,6 +105,10 @@ const SuperAdmin = () => {
     id: "analytics",
     label: "Analytics",
     icon: BarChart3
+  }, {
+    id: "feed",
+    label: "Feed",
+    icon: Sparkles
   }, {
     id: "favorites",
     label: "Favoritos",
@@ -269,6 +274,7 @@ const SuperAdmin = () => {
                 {activeTab === "users" && <UsersManager />}
                 {activeTab === "plans" && <SubscriptionPlansManager />}
                 {activeTab === "analytics" && <PlatformAnalytics />}
+                {activeTab === "feed" && <FeedAnalytics />}
                 {activeTab === "favorites" && <FavoritesManager />}
                 {activeTab === "activity" && <ActivityCenter />}
                 {activeTab === "content" && <ContentManager />}
