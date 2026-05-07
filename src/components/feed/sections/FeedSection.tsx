@@ -39,9 +39,18 @@ export function FeedSection({
   expanded = false,
   onToggleExpand,
   iconTint = "primary",
+  sectionId,
   children,
 }: FeedSectionProps) {
   const haptic = useHaptic();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Telemetry: impression once per mount
+  useSectionImpression(
+    sectionRef,
+    sectionId ?? ("foryou" as FeedSectionId),
+    typeof count === "number" ? count : 0,
+  );
 
   const handleToggle = () => {
     haptic.light();
