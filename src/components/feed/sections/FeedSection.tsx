@@ -59,11 +59,13 @@ export function FeedSection({
 
   return (
     <motion.section
+      ref={sectionRef as any}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className="mb-7"
+      data-section-id={sectionId}
     >
       {/* Header */}
       <div className="flex items-end justify-between mb-3 px-0">
