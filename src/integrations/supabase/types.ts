@@ -2738,6 +2738,24 @@ export type Database = {
         }[]
       }
       get_tenant_by_slug: { Args: { _slug: string }; Returns: string }
+      get_tenant_feed_daily_metrics: {
+        Args: { days?: number; p_tenant_id: string }
+        Returns: {
+          clicks: number
+          conversions: number
+          day: string
+          impressions: number
+        }[]
+      }
+      get_tenant_feed_section_metrics: {
+        Args: { days?: number; p_tenant_id: string }
+        Returns: {
+          clicks: number
+          conversions: number
+          impressions: number
+          section_id: string
+        }[]
+      }
       get_tenant_reviews: {
         Args: { p_limit?: number; p_tenant_id: string }
         Returns: {
