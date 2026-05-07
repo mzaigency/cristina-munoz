@@ -1,7 +1,14 @@
+import { useRef } from "react";
 import { motion } from "motion/react";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useHaptic } from "@/hooks/useHaptic";
+import {
+  useSectionImpression,
+  trackEvent,
+  rememberSectionClick,
+  type FeedSectionId,
+} from "@/lib/telemetry";
 
 interface FeedSectionProps {
   icon: LucideIcon;
@@ -12,6 +19,8 @@ interface FeedSectionProps {
   onToggleExpand?: () => void;
   /** Tinte del icono (gradiente). default: primary→purple */
   iconTint?: "primary" | "emerald" | "amber" | "rose";
+  /** Identificador para telemetría */
+  sectionId?: FeedSectionId;
   children: React.ReactNode;
 }
 
