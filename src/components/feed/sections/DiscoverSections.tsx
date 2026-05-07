@@ -136,10 +136,34 @@ export function DiscoverSections({
           matchReasons={rec?.matchReasons}
         />
       );
-      return sectionExpanded ? (
-        <div key={`${sectionId}-${salon.id}`}>{card}</div>
-      ) : (
-        <FeedCarouselItem key={`${sectionId}-${salon.id}`}>{card}</FeedCarouselItem>
+      if (sectionExpanded) {
+        const handleClickCapture = () => {
+          rememberSectionClick(sectionId, salon.id, index, rec?.score);
+          void trackEvent({
+            event_type: "click",
+            section_id: sectionId,
+            tenant_id: salon.id,
+            position: index,
+            score: rec?.score ?? null,
+            metadata: { kind: "card", layout: "grid" },
+          });
+        };
+        return (
+          <div key={`${sectionId}-${salon.id}`} onClickCapture={handleClickCapture}>
+            {card}
+          </div>
+        );
+      }
+      return (
+        <FeedCarouselItem
+          key={`${sectionId}-${salon.id}`}
+          sectionId={sectionId as FeedSectionId}
+          tenantId={salon.id}
+          position={index}
+          score={rec?.score}
+        >
+          {card}
+        </FeedCarouselItem>
       );
     });
   };
