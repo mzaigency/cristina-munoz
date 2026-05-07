@@ -196,6 +196,7 @@ export function DiscoverSections({
           expanded={expanded.foryou}
           onToggleExpand={() => toggle("foryou")}
           iconTint="primary"
+          sectionId="foryou"
         >
           {renderCards(forYou, expanded.foryou, "foryou")}
         </FeedSection>
@@ -211,6 +212,7 @@ export function DiscoverSections({
           expanded={expanded.popular}
           onToggleExpand={() => toggle("popular")}
           iconTint="amber"
+          sectionId="popular"
         >
           {renderCards(popular, expanded.popular, "popular")}
         </FeedSection>
@@ -226,6 +228,7 @@ export function DiscoverSections({
           expanded={expanded.near}
           onToggleExpand={() => toggle("near")}
           iconTint="primary"
+          sectionId="near"
         >
           {renderCards(nearby, expanded.near, "near")}
         </FeedSection>
@@ -237,6 +240,7 @@ export function DiscoverSections({
           title="Cerca de ti"
           subtitle="Activa tu ubicación para ver los salones más cercanos"
           iconTint="primary"
+          sectionId="near"
         >
           <FeedCarouselItem>
             <button
@@ -273,6 +277,7 @@ export function DiscoverSections({
           expanded={expanded.today}
           onToggleExpand={() => toggle("today")}
           iconTint="emerald"
+          sectionId="today"
         >
           {renderCards(today, expanded.today, "today")}
         </FeedSection>
@@ -288,6 +293,7 @@ export function DiscoverSections({
           expanded={expanded.new}
           onToggleExpand={() => toggle("new")}
           iconTint="primary"
+          sectionId="new"
         >
           {renderCards(recent, expanded.new, "new")}
         </FeedSection>
