@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Target, FileText, Lock } from "lucide-react";
+import { BarChart3, Target, FileText, Lock, Sparkles } from "lucide-react";
 import { BusinessStats } from "../BusinessStats";
 import { MonthlyGoals } from "../MonthlyGoals";
 import { PDFReportsGenerator } from "../PDFReportsGenerator";
 import { LockedFeature } from "../LockedFeature";
+import { TenantFeedAnalytics } from "../TenantFeedAnalytics";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
 import { cn } from "@/lib/utils";
 
