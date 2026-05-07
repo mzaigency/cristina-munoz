@@ -141,12 +141,37 @@ export function FeedSection({
 
 interface CarouselItemProps {
   children: React.ReactNode;
+  sectionId?: FeedSectionId;
+  tenantId?: string;
+  position?: number;
+  score?: number;
 }
 
 /** Wrapper de ancho fijo para cada tarjeta dentro del carrusel */
-export function FeedCarouselItem({ children }: CarouselItemProps) {
+export function FeedCarouselItem({
+  children,
+  sectionId,
+  tenantId,
+  position,
+  score,
+}: CarouselItemProps) {
+  const handleClickCapture = () => {
+    if (!sectionId || !tenantId) return;
+    rememberSectionClick(sectionId, tenantId, position, score);
+    void trackEvent({
+      event_type: "click",
+      section_id: sectionId,
+      tenant_id: tenantId,
+      position: position ?? null,
+      score: score ?? null,
+      metadata: { kind: "card" },
+    });
+  };
   return (
-    <div className="snap-start shrink-0 w-[78vw] max-w-[300px]">
+    <div
+      className="snap-start shrink-0 w-[78vw] max-w-[300px]"
+      onClickCapture={handleClickCapture}
+    >
       {children}
     </div>
   );
