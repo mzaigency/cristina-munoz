@@ -95,8 +95,12 @@ const ReportsSection = ({ tenantId }: ReportsSectionProps) => {
           )}
         </TabsContent>
 
+        <TabsContent value="feed" className="mt-4">
+          <TenantFeedAnalytics tenantId={tenantId} />
+        </TabsContent>
+
         <TabsContent value="goals" className="mt-4">
-          {isTabLocked(tabs[1]) ? (
+          {isTabLocked(tabs[2]) ? (
             <LockedFeature featureName="Objetivos" currentPlan={planSlug} requiredPlan="business" tenantId={tenantId} variant="inline" />
           ) : (
             <MonthlyGoals tenantId={tenantId} />
@@ -104,7 +108,7 @@ const ReportsSection = ({ tenantId }: ReportsSectionProps) => {
         </TabsContent>
 
         <TabsContent value="pdf" className="mt-4">
-          {isTabLocked(tabs[2]) ? (
+          {isTabLocked(tabs[3]) ? (
             <LockedFeature featureName="Reportes PDF" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
           ) : (
             <PDFReportsGenerator tenantId={tenantId} tenantName="" />
