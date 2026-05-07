@@ -4,6 +4,7 @@ import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { FeedSection, FeedCarouselItem } from "./FeedSection";
 import { useFavorites } from "@/hooks/useFavorites";
 import { differenceInDays } from "date-fns";
+import { rememberSectionClick, trackEvent, type FeedSectionId } from "@/lib/telemetry";
 
 type SectionId = "near" | "today" | "foryou" | "popular" | "new" | "favorites";
 
