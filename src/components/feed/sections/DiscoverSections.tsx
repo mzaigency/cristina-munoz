@@ -180,6 +180,7 @@ export function DiscoverSections({
           expanded={expanded.favorites}
           onToggleExpand={() => toggle("favorites")}
           iconTint="rose"
+          sectionId="favorites"
         >
           {renderCards(favs, expanded.favorites, "favorites")}
         </FeedSection>
