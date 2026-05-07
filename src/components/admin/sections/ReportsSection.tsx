@@ -29,7 +29,7 @@ const ReportsSection = ({ tenantId }: ReportsSectionProps) => {
 
   useEffect(() => {
     const subTab = sessionStorage.getItem("openReportsSubTab");
-    if (subTab && ["stats", "goals", "pdf"].includes(subTab)) {
+    if (subTab && ["stats", "feed", "goals", "pdf"].includes(subTab)) {
       setActiveTab(subTab as ReportsTab);
       sessionStorage.removeItem("openReportsSubTab");
     }
@@ -37,6 +37,7 @@ const ReportsSection = ({ tenantId }: ReportsSectionProps) => {
 
   const tabs: TabConfig[] = [
     { id: "stats", label: "Stats", icon: BarChart3, requiredFeature: "advanced_analytics", requiredPlan: "pro" },
+    { id: "feed", label: "Feed", icon: Sparkles },
     { id: "goals", label: "Objetivos", icon: Target, requiredFeature: "monthly_goals", requiredPlan: "business" },
     { id: "pdf", label: "Reportes", icon: FileText, requiredFeature: "advanced_analytics", requiredPlan: "pro" },
   ];
