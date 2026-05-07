@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Target, FileText, Lock } from "lucide-react";
+import { BarChart3, Target, FileText, Lock, Sparkles } from "lucide-react";
 import { BusinessStats } from "../BusinessStats";
 import { MonthlyGoals } from "../MonthlyGoals";
 import { PDFReportsGenerator } from "../PDFReportsGenerator";
 import { LockedFeature } from "../LockedFeature";
+import { TenantFeedAnalytics } from "../TenantFeedAnalytics";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ interface ReportsSectionProps {
   tenantId: string;
 }
 
-type ReportsTab = "stats" | "goals" | "pdf";
+type ReportsTab = "stats" | "feed" | "goals" | "pdf";
 
 interface TabConfig {
   id: ReportsTab;
@@ -28,7 +29,7 @@ const ReportsSection = ({ tenantId }: ReportsSectionProps) => {
 
   useEffect(() => {
     const subTab = sessionStorage.getItem("openReportsSubTab");
-    if (subTab && ["stats", "goals", "pdf"].includes(subTab)) {
+    if (subTab && ["stats", "feed", "goals", "pdf"].includes(subTab)) {
       setActiveTab(subTab as ReportsTab);
       sessionStorage.removeItem("openReportsSubTab");
     }
@@ -36,6 +37,7 @@ const ReportsSection = ({ tenantId }: ReportsSectionProps) => {
 
   const tabs: TabConfig[] = [
     { id: "stats", label: "Stats", icon: BarChart3, requiredFeature: "advanced_analytics", requiredPlan: "pro" },
+    { id: "feed", label: "Feed", icon: Sparkles },
     { id: "goals", label: "Objetivos", icon: Target, requiredFeature: "monthly_goals", requiredPlan: "business" },
     { id: "pdf", label: "Reportes", icon: FileText, requiredFeature: "advanced_analytics", requiredPlan: "pro" },
   ];
@@ -93,8 +95,12 @@ const ReportsSection = ({ tenantId }: ReportsSectionProps) => {
           )}
         </TabsContent>
 
+        <TabsContent value="feed" className="mt-4">
+          <TenantFeedAnalytics tenantId={tenantId} />
+        </TabsContent>
+
         <TabsContent value="goals" className="mt-4">
-          {isTabLocked(tabs[1]) ? (
+          {isTabLocked(tabs[2]) ? (
             <LockedFeature featureName="Objetivos" currentPlan={planSlug} requiredPlan="business" tenantId={tenantId} variant="inline" />
           ) : (
             <MonthlyGoals tenantId={tenantId} />
@@ -102,7 +108,7 @@ const ReportsSection = ({ tenantId }: ReportsSectionProps) => {
         </TabsContent>
 
         <TabsContent value="pdf" className="mt-4">
-          {isTabLocked(tabs[2]) ? (
+          {isTabLocked(tabs[3]) ? (
             <LockedFeature featureName="Reportes PDF" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
           ) : (
             <PDFReportsGenerator tenantId={tenantId} tenantName="" />
