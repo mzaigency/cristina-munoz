@@ -41,6 +41,7 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
     { id: "products", label: "Productos", icon: ShoppingBag },
     { id: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages", requiredPlan: "pro" },
     { id: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions", requiredPlan: "pro" },
+    { id: "import", label: "Importar", icon: Upload },
   ];
 
   const isTabLocked = (tab: TabConfig): boolean => {
