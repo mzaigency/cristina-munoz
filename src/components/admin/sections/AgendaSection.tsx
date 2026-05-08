@@ -35,7 +35,7 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
       sessionStorage.removeItem("openCashTab");
     }
     const subTab = sessionStorage.getItem("openAgendaSubTab");
-    if (subTab && ["calendar", "waitlist", "orders", "cash"].includes(subTab)) {
+    if (subTab && ["calendar", "waitlist", "orders", "cash", "import"].includes(subTab)) {
       setActiveTab(subTab as AgendaTab);
       sessionStorage.removeItem("openAgendaSubTab");
     }
