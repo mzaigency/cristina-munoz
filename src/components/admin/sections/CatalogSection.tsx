@@ -108,6 +108,11 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
             <PromotionsManager tenantId={tenantId} />
           )}
         </TabsContent>
+
+
+        <TabsContent value="import" className="mt-4">
+          <AgendaImporter tenantId={tenantId} defaultMode="services" />
+        </TabsContent>
       </Tabs>
     </div>
   );
