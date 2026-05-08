@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Scissors, ShoppingBag, Package, Percent, Lock } from "lucide-react";
+import { Scissors, ShoppingBag, Package, Percent, Lock, Upload } from "lucide-react";
 import { ServicesManager } from "../ServicesManager";
 import { ProductsManager } from "../ProductsManager";
 import { ServicePackagesManager } from "../ServicePackagesManager";
 import { PromotionsManager } from "../PromotionsManager";
 import { LockedFeature } from "../LockedFeature";
+import { AgendaImporter } from "../import/AgendaImporter";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
 import { cn } from "@/lib/utils";
 
