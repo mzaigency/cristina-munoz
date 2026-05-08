@@ -18,7 +18,7 @@ interface AgendaSectionProps {
   onSelectClient?: (clientId: string) => void;
 }
 
-type AgendaTab = "calendar" | "waitlist" | "orders" | "cash";
+type AgendaTab = "calendar" | "waitlist" | "orders" | "cash" | "import";
 
 const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
   const [activeTab, setActiveTab] = useState<AgendaTab>("calendar");
