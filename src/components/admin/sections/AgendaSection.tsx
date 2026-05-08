@@ -87,6 +87,7 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
     { id: "calendar" as AgendaTab, label: "Calendario", icon: Calendar, badge: 0, locked: false },
     { id: "waitlist" as AgendaTab, label: "Espera", icon: Clock, badge: waitlistCount, locked: false },
     { id: "orders" as AgendaTab, label: "Pedidos", icon: ShoppingCart, badge: unseenOrders, locked: false },
+    { id: "import" as AgendaTab, label: "Importar", icon: Upload, badge: 0, locked: false },
     { id: "cash" as AgendaTab, label: "Caja", icon: Wallet, badge: 0, locked: cashLocked },
   ];
 
