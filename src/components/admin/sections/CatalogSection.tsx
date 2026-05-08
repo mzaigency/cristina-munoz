@@ -14,7 +14,7 @@ interface CatalogSectionProps {
   tenantId: string;
 }
 
-type CatalogTab = "services" | "products" | "packages" | "promos";
+type CatalogTab = "services" | "products" | "packages" | "promos" | "import";
 
 interface TabConfig {
   id: CatalogTab;
