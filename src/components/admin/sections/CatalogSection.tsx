@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Scissors, ShoppingBag, Package, Percent, Lock } from "lucide-react";
+import { Scissors, ShoppingBag, Package, Percent, Lock, Upload } from "lucide-react";
 import { ServicesManager } from "../ServicesManager";
 import { ProductsManager } from "../ProductsManager";
 import { ServicePackagesManager } from "../ServicePackagesManager";
 import { PromotionsManager } from "../PromotionsManager";
 import { LockedFeature } from "../LockedFeature";
+import { AgendaImporter } from "../import/AgendaImporter";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +14,7 @@ interface CatalogSectionProps {
   tenantId: string;
 }
 
-type CatalogTab = "services" | "products" | "packages" | "promos";
+type CatalogTab = "services" | "products" | "packages" | "promos" | "import";
 
 interface TabConfig {
   id: CatalogTab;
@@ -40,6 +41,7 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
     { id: "products", label: "Productos", icon: ShoppingBag },
     { id: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages", requiredPlan: "pro" },
     { id: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions", requiredPlan: "pro" },
+    { id: "import", label: "Importar", icon: Upload },
   ];
 
   const isTabLocked = (tab: TabConfig): boolean => {
@@ -105,6 +107,11 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
           ) : (
             <PromotionsManager tenantId={tenantId} />
           )}
+        </TabsContent>
+
+
+        <TabsContent value="import" className="mt-4">
+          <AgendaImporter tenantId={tenantId} defaultMode="services" />
         </TabsContent>
       </Tabs>
     </div>

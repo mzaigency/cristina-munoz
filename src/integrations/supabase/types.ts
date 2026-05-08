@@ -584,6 +584,47 @@ export type Database = {
           },
         ]
       }
+      import_jobs: {
+        Row: {
+          created_at: string
+          id: string
+          image_count: number
+          mode: string
+          rows_committed: number
+          rows_extracted: number
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_count?: number
+          mode: string
+          rows_committed?: number
+          rows_extracted?: number
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_count?: number
+          mode?: string
+          rows_committed?: number
+          rows_extracted?: number
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_jobs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_goals: {
         Row: {
           bookings_goal: number | null

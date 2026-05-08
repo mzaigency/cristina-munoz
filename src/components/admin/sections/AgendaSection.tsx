@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Wallet, Lock, ShoppingCart } from "lucide-react";
+import { Calendar, Clock, Wallet, Lock, ShoppingCart, Upload } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
 import { WaitlistManager } from "../WaitlistManager";
 import { CashRegisterManager } from "../CashRegisterManager";
 import { ProductOrdersManager } from "../ProductOrdersManager";
 import { LockedFeature } from "../LockedFeature";
+import { AgendaImporter } from "../import/AgendaImporter";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +18,7 @@ interface AgendaSectionProps {
   onSelectClient?: (clientId: string) => void;
 }
 
-type AgendaTab = "calendar" | "waitlist" | "orders" | "cash";
+type AgendaTab = "calendar" | "waitlist" | "orders" | "cash" | "import";
 
 const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
   const [activeTab, setActiveTab] = useState<AgendaTab>("calendar");
@@ -34,7 +35,7 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
       sessionStorage.removeItem("openCashTab");
     }
     const subTab = sessionStorage.getItem("openAgendaSubTab");
-    if (subTab && ["calendar", "waitlist", "orders", "cash"].includes(subTab)) {
+    if (subTab && ["calendar", "waitlist", "orders", "cash", "import"].includes(subTab)) {
       setActiveTab(subTab as AgendaTab);
       sessionStorage.removeItem("openAgendaSubTab");
     }
@@ -86,6 +87,7 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
     { id: "calendar" as AgendaTab, label: "Calendario", icon: Calendar, badge: 0, locked: false },
     { id: "waitlist" as AgendaTab, label: "Espera", icon: Clock, badge: waitlistCount, locked: false },
     { id: "orders" as AgendaTab, label: "Pedidos", icon: ShoppingCart, badge: unseenOrders, locked: false },
+    { id: "import" as AgendaTab, label: "Importar", icon: Upload, badge: 0, locked: false },
     { id: "cash" as AgendaTab, label: "Caja", icon: Wallet, badge: 0, locked: cashLocked },
   ];
 
@@ -127,6 +129,10 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
 
         <TabsContent value="orders" className="mt-4">
           <ProductOrdersManager tenantId={tenantId} />
+        </TabsContent>
+
+        <TabsContent value="import" className="mt-4">
+          <AgendaImporter tenantId={tenantId} defaultMode="bookings" />
         </TabsContent>
 
         <TabsContent value="cash" className="mt-4">
