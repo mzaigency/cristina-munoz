@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Wallet, Lock, ShoppingCart } from "lucide-react";
+import { Calendar, Clock, Wallet, Lock, ShoppingCart, Upload } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
 import { WaitlistManager } from "../WaitlistManager";
 import { CashRegisterManager } from "../CashRegisterManager";
 import { ProductOrdersManager } from "../ProductOrdersManager";
 import { LockedFeature } from "../LockedFeature";
+import { AgendaImporter } from "../import/AgendaImporter";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { supabase } from "@/integrations/supabase/client";
