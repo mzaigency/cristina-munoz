@@ -131,6 +131,10 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
           <ProductOrdersManager tenantId={tenantId} />
         </TabsContent>
 
+        <TabsContent value="import" className="mt-4">
+          <AgendaImporter tenantId={tenantId} defaultMode="bookings" />
+        </TabsContent>
+
         <TabsContent value="cash" className="mt-4">
           {cashLocked ? (
             <LockedFeature featureName="Caja Registradora" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
