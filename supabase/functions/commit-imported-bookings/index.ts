@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
     const skipped: { row: BookingRow; reason: string }[] = [];
 
     // Cache existing clients by normalized phone for this tenant
-    const { data: existingClients } = await supabase
+    const { data: existingClients } = await adminClient
       .from("clients")
       .select("id, name, phone")
       .eq("tenant_id", tenant_id);
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
         if (nameIdx.has(key)) clientId = nameIdx.get(key);
       }
       if (!clientId) {
-        const { data: newClient, error: clientErr } = await supabase
+        const { data: newClient, error: clientErr } = await adminClient
           .from("clients")
           .insert({
             tenant_id,
@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
         price: 0,
       }];
 
-      const { error: bookingErr } = await supabase.from("bookings").insert({
+      const { error: bookingErr } = await adminClient.from("bookings").insert({
         tenant_id,
         user_id: null,
         customer_name: r.customer_name.trim(),
@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
     }
 
     // Update audit with last job
-    await supabase
+    await adminClient
       .from("import_jobs")
       .update({ rows_committed: createdBookings })
       .eq("tenant_id", tenant_id)
