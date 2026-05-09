@@ -151,6 +151,26 @@ async function callAI(mode: "bookings" | "services", image: string) {
   }
 }
 
+async function getAuthenticatedUserId(supabase: ReturnType<typeof createClient>, token: string) {
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user?.id) return null;
+  return data.user.id;
+}
+
+async function canManageTenant(supabase: ReturnType<typeof createClient>, tenantId: string, userId: string) {
+  const { data: adminRow } = await supabase
+    .from("tenant_admins")
+    .select("tenant_id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (adminRow) return true;
+
+  const { data: isSuperadmin } = await supabase.rpc("is_superadmin");
+  return Boolean(isSuperadmin);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -163,22 +183,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
+      supabaseUrl,
+      anonKey,
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const { data: claims, error: claimsErr } = await supabase.auth.getClaims(
-      authHeader.replace("Bearer ", ""),
-    );
-    if (claimsErr || !claims?.claims) {
+    const token = authHeader.replace("Bearer ", "");
+    const userId = await getAuthenticatedUserId(supabase, token);
+    if (!userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = claims.claims.sub;
 
     const payload = await req.json();
     const { tenant_id, mode, images } = payload ?? {};
@@ -202,20 +224,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify tenant admin
-    const { data: adminRow } = await supabase
-      .from("tenant_admins")
-      .select("tenant_id")
-      .eq("tenant_id", tenant_id)
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (!adminRow) {
+    if (!(await canManageTenant(supabase, tenant_id, userId))) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const adminClient = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
 
     // Process images sequentially to avoid rate limits
     const allRows: any[] = [];
@@ -245,7 +263,7 @@ Deno.serve(async (req) => {
     }
 
     // Audit
-    await supabase.from("import_jobs").insert({
+    await adminClient.from("import_jobs").insert({
       tenant_id,
       user_id: userId,
       mode,
