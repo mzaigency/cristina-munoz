@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
         Hora: r.time,
         services,
         total_duration: duration,
-        stylist: r.stylist_name ?? "any",
+        stylist: matchStylist(r.stylist_name),
         status: "confirmed",
         canal: "crm",
         skip_availability_check: true,
