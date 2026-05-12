@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Scissors, ShoppingBag, Package, Percent, Lock, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Scissors, ShoppingBag, Package, Percent, Lock, Sparkles } from "lucide-react";
 import { ServicesManager } from "../ServicesManager";
 import { ProductsManager } from "../ProductsManager";
 import { ServicePackagesManager } from "../ServicePackagesManager";
@@ -14,7 +16,7 @@ interface CatalogSectionProps {
   tenantId: string;
 }
 
-type CatalogTab = "services" | "products" | "packages" | "promos" | "import";
+type CatalogTab = "services" | "products" | "packages" | "promos";
 
 interface TabConfig {
   id: CatalogTab;
