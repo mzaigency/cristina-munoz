@@ -120,7 +120,21 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
           ))}
         </TabsList>
 
-        <TabsContent value="calendar" className="mt-4">
+        <TabsContent value="calendar" className="mt-4 space-y-3">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5">
+                <Sparkles className="h-4 w-4" />
+                Importar citas desde foto con IA
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-2xl">
+              <SheetHeader className="text-left mb-2">
+                <SheetTitle>Importar citas</SheetTitle>
+              </SheetHeader>
+              <AgendaImporter tenantId={tenantId} defaultMode="bookings" />
+            </SheetContent>
+          </Sheet>
           <LocalCalendarCRM tenantId={tenantId} stylists={stylists} onSelectClient={onSelectClient} />
         </TabsContent>
 
@@ -130,10 +144,6 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
 
         <TabsContent value="orders" className="mt-4">
           <ProductOrdersManager tenantId={tenantId} />
-        </TabsContent>
-
-        <TabsContent value="import" className="mt-4">
-          <AgendaImporter tenantId={tenantId} defaultMode="bookings" />
         </TabsContent>
 
         <TabsContent value="cash" className="mt-4">
