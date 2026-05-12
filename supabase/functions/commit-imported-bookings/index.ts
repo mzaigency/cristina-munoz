@@ -97,6 +97,23 @@ Deno.serve(async (req) => {
     let createdClients = 0;
     const skipped: { row: BookingRow; reason: string }[] = [];
 
+    // Load active stylists for matching
+    const { data: stylistsData } = await adminClient
+      .from("tenant_stylists")
+      .select("slug, name")
+      .eq("tenant_id", tenant_id)
+      .eq("is_active", true);
+    const stylists = stylistsData ?? [];
+    const defaultStylistSlug = stylists[0]?.slug ?? "any";
+    const matchStylist = (raw: string | null): string => {
+      if (!raw) return defaultStylistSlug;
+      const norm = raw.trim().toLowerCase();
+      const match = stylists.find(
+        (s: any) => s.slug.toLowerCase() === norm || s.name.toLowerCase() === norm || s.name.toLowerCase().includes(norm) || norm.includes(s.name.toLowerCase()),
+      );
+      return match?.slug ?? defaultStylistSlug;
+    };
+
     // Cache existing clients by normalized phone for this tenant
     const { data: existingClients } = await adminClient
       .from("clients")
@@ -162,7 +179,7 @@ Deno.serve(async (req) => {
         Hora: r.time,
         services,
         total_duration: duration,
-        stylist: r.stylist_name ?? "any",
+        stylist: matchStylist(r.stylist_name),
         status: "confirmed",
         canal: "crm",
         skip_availability_check: true,
