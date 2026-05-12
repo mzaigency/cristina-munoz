@@ -86,7 +86,21 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
           })}
         </TabsList>
 
-        <TabsContent value="services" className="mt-4">
+        <TabsContent value="services" className="mt-4 space-y-3">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5">
+                <Sparkles className="h-4 w-4" />
+                Importar carta desde foto con IA
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-2xl">
+              <SheetHeader className="text-left mb-2">
+                <SheetTitle>Importar servicios</SheetTitle>
+              </SheetHeader>
+              <AgendaImporter tenantId={tenantId} defaultMode="services" />
+            </SheetContent>
+          </Sheet>
           <ServicesManager tenantId={tenantId} />
         </TabsContent>
 
@@ -108,11 +122,6 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
           ) : (
             <PromotionsManager tenantId={tenantId} />
           )}
-        </TabsContent>
-
-
-        <TabsContent value="import" className="mt-4">
-          <AgendaImporter tenantId={tenantId} defaultMode="services" />
         </TabsContent>
       </Tabs>
     </div>
