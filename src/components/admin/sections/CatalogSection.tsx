@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Scissors, ShoppingBag, Package, Percent, Lock, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Scissors, ShoppingBag, Package, Percent, Lock, Sparkles } from "lucide-react";
 import { ServicesManager } from "../ServicesManager";
 import { ProductsManager } from "../ProductsManager";
 import { ServicePackagesManager } from "../ServicePackagesManager";
@@ -14,7 +16,7 @@ interface CatalogSectionProps {
   tenantId: string;
 }
 
-type CatalogTab = "services" | "products" | "packages" | "promos" | "import";
+type CatalogTab = "services" | "products" | "packages" | "promos";
 
 interface TabConfig {
   id: CatalogTab;
@@ -41,7 +43,6 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
     { id: "products", label: "Productos", icon: ShoppingBag },
     { id: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages", requiredPlan: "pro" },
     { id: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions", requiredPlan: "pro" },
-    { id: "import", label: "Importar", icon: Upload },
   ];
 
   const isTabLocked = (tab: TabConfig): boolean => {
@@ -85,7 +86,21 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
           })}
         </TabsList>
 
-        <TabsContent value="services" className="mt-4">
+        <TabsContent value="services" className="mt-4 space-y-3">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5">
+                <Sparkles className="h-4 w-4" />
+                Importar carta desde foto con IA
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-2xl">
+              <SheetHeader className="text-left mb-2">
+                <SheetTitle>Importar servicios</SheetTitle>
+              </SheetHeader>
+              <AgendaImporter tenantId={tenantId} defaultMode="services" />
+            </SheetContent>
+          </Sheet>
           <ServicesManager tenantId={tenantId} />
         </TabsContent>
 
@@ -107,11 +122,6 @@ const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
           ) : (
             <PromotionsManager tenantId={tenantId} />
           )}
-        </TabsContent>
-
-
-        <TabsContent value="import" className="mt-4">
-          <AgendaImporter tenantId={tenantId} defaultMode="services" />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Wallet, Lock, ShoppingCart, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Calendar, Clock, Wallet, Lock, ShoppingCart, Sparkles } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
 import { WaitlistManager } from "../WaitlistManager";
 import { CashRegisterManager } from "../CashRegisterManager";
@@ -18,7 +20,7 @@ interface AgendaSectionProps {
   onSelectClient?: (clientId: string) => void;
 }
 
-type AgendaTab = "calendar" | "waitlist" | "orders" | "cash" | "import";
+type AgendaTab = "calendar" | "waitlist" | "orders" | "cash";
 
 const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
   const [activeTab, setActiveTab] = useState<AgendaTab>("calendar");
@@ -35,7 +37,7 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
       sessionStorage.removeItem("openCashTab");
     }
     const subTab = sessionStorage.getItem("openAgendaSubTab");
-    if (subTab && ["calendar", "waitlist", "orders", "cash", "import"].includes(subTab)) {
+    if (subTab && ["calendar", "waitlist", "orders", "cash"].includes(subTab)) {
       setActiveTab(subTab as AgendaTab);
       sessionStorage.removeItem("openAgendaSubTab");
     }
@@ -87,7 +89,6 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
     { id: "calendar" as AgendaTab, label: "Calendario", icon: Calendar, badge: 0, locked: false },
     { id: "waitlist" as AgendaTab, label: "Espera", icon: Clock, badge: waitlistCount, locked: false },
     { id: "orders" as AgendaTab, label: "Pedidos", icon: ShoppingCart, badge: unseenOrders, locked: false },
-    { id: "import" as AgendaTab, label: "Importar", icon: Upload, badge: 0, locked: false },
     { id: "cash" as AgendaTab, label: "Caja", icon: Wallet, badge: 0, locked: cashLocked },
   ];
 
@@ -119,7 +120,21 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
           ))}
         </TabsList>
 
-        <TabsContent value="calendar" className="mt-4">
+        <TabsContent value="calendar" className="mt-4 space-y-3">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5">
+                <Sparkles className="h-4 w-4" />
+                Importar citas desde foto con IA
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-2xl">
+              <SheetHeader className="text-left mb-2">
+                <SheetTitle>Importar citas</SheetTitle>
+              </SheetHeader>
+              <AgendaImporter tenantId={tenantId} defaultMode="bookings" />
+            </SheetContent>
+          </Sheet>
           <LocalCalendarCRM tenantId={tenantId} stylists={stylists} onSelectClient={onSelectClient} />
         </TabsContent>
 
@@ -129,10 +144,6 @@ const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
 
         <TabsContent value="orders" className="mt-4">
           <ProductOrdersManager tenantId={tenantId} />
-        </TabsContent>
-
-        <TabsContent value="import" className="mt-4">
-          <AgendaImporter tenantId={tenantId} defaultMode="bookings" />
         </TabsContent>
 
         <TabsContent value="cash" className="mt-4">
