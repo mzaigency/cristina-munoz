@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Wallet, Lock, ShoppingCart, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Calendar, Clock, Wallet, Lock, ShoppingCart, Sparkles } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
 import { WaitlistManager } from "../WaitlistManager";
 import { CashRegisterManager } from "../CashRegisterManager";
