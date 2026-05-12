@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
         total_duration: duration,
         stylist: r.stylist_name ?? "any",
         status: "confirmed",
-        canal: "imported",
+        canal: "crm",
         skip_availability_check: true,
         notes: r.notes,
       } as any);
