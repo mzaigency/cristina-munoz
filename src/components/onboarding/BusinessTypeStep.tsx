@@ -79,7 +79,7 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
 
       {/* Business Type Grid */}
       <div className="grid grid-cols-2 gap-2.5">
-        {businessTypes.map((type) => {
+        {BUSINESS_TYPES.map((type) => {
           const isSelected = selectedType === type.id;
 
           return (
