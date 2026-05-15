@@ -36,7 +36,7 @@ export function FeedToggle({ mode, onChange, followingCount = 0, className }: Fe
                 : "text-muted-foreground font-medium hover:text-foreground/70"
             )}
           >
-            {tab === "discover" ? "Para ti" : "Siguiendo"}
+            {tab === "discover" ? "Descubrir" : "Siguiendo"}
             {tab === "following" && followingCount > 0 && (
               <span className="ml-1 text-xs text-muted-foreground">
                 {followingCount}
