@@ -262,6 +262,8 @@ export function DiscoverSections({
           onToggleExpand={visited.length > CAROUSEL_LIMIT ? () => toggle("visited") : undefined}
           iconTint="amber"
           sectionId="visited"
+        >
+          {renderCards(visited, "visited", expanded.visited)}
         </FeedSection>
       )}
 
