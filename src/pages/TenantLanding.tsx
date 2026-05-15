@@ -57,23 +57,15 @@ interface Tenant {
     [key: string]: unknown;
   } | null;
 }
-// Map business_type → display label and URL slug for breadcrumbs
-const CATEGORY_MAP: Record<string, string> = {
-  peluqueria: "Peluquerías",
-  barberia: "Barberías",
-  estetica: "Centros de Estética",
-  spa: "Spas",
-  unas: "Centros de Uñas",
-  salon_belleza: "Salones de Belleza",
-  multiservicios: "Multiservicios",
-};
-const CATEGORY_SLUG_MAP: Record<string, string> = {
-  peluqueria: "peluquerias",
-  barberia: "barberias",
-  estetica: "estetica",
-  spa: "spa",
-  unas: "unas",
-};
+// Mapas derivados del catálogo canónico (src/constants/businessTypes.ts)
+import { BUSINESS_TYPES_BY_ID } from "@/constants/businessTypes";
+
+const CATEGORY_MAP: Record<string, string> = Object.fromEntries(
+  Object.values(BUSINESS_TYPES_BY_ID).map((t) => [t.id, t.labelPlural]),
+);
+const CATEGORY_SLUG_MAP: Record<string, string> = Object.fromEntries(
+  Object.values(BUSINESS_TYPES_BY_ID).map((t) => [t.id, t.urlSlug]),
+);
 
 const TenantLanding = () => {
   const { slug } = useParams<{ slug: string }>();
