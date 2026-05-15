@@ -40,7 +40,8 @@ const DirectoryLanding = () => {
   const [loading, setLoading] = useState(true);
   const [reviewCounts, setReviewCounts] = useState<Record<string, { avg: number; count: number }>>({});
 
-  const catInfo = category ? CATEGORY_MAP[category] : null;
+  const bt = category ? BUSINESS_TYPES_BY_URL_SLUG[category] : null;
+  const catInfo = bt ? { type: bt.id, label: bt.label, labelPlural: bt.labelPlural } : null;
   const cityDisplay = city ? prettifyCity(city) : null;
 
   useEffect(() => {
