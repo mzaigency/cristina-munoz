@@ -26,6 +26,8 @@ interface PremiumSalonCardProps {
   hasAvailabilityToday?: boolean;
   recommendationScore?: number;
   matchReasons?: string[];
+  /** "default" para carruseles, "featured" para grid vertical principal (imagen más grande) */
+  variant?: "default" | "featured";
 }
 
 export function PremiumSalonCard({
@@ -34,8 +36,10 @@ export function PremiumSalonCard({
   distance,
   hasAvailabilityToday = false,
   recommendationScore,
-  matchReasons
+  matchReasons,
+  variant = "default",
 }: PremiumSalonCardProps) {
+  const isFeatured = variant === "featured";
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isFollowing, toggleFollow, isLoading: followLoading } = useFollows();
   const haptic = useHaptic();
