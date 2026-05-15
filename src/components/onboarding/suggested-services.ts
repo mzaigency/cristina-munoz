@@ -122,12 +122,11 @@ export function getSuggestedServices(
   return list.map((s) => ({ ...s }));
 }
 
+/**
+ * Etiquetas legibles. Re-exporta el catálogo canónico y añade extras
+ * propios del onboarding (multiservicios) que no son tipos públicos.
+ */
 export const businessTypeLabels: Record<string, string> = {
-  peluqueria: "Peluquería",
-  barberia: "Barbería",
-  salon_belleza: "Salón de Belleza",
-  estetica: "Centro de Estética",
-  spa: "Spa & Wellness",
-  unas: "Salón de Uñas",
+  ...canonicalLabels,
   multiservicios: "Multiservicios",
 };
