@@ -1,0 +1,27 @@
+# GlowApp
+
+> La red social de belleza y bienestar de España. Descubre salones cerca de ti, conecta con profesionales y reserva citas online al instante.
+
+GlowApp es una plataforma que conecta clientes con peluquerías, barberías, centros de estética, spas y profesionales del bienestar. Los clientes descubren negocios, ven sus servicios, fotos y reseñas, y reservan online. Los negocios disponen de su propia landing personalizada (https://www.glowapp.app/{slug}) y un panel de gestión completo (agenda, CRM, caja, marketing, productos, equipo y estadísticas).
+
+## Páginas principales
+
+- [Inicio](/): Feed social y descubrimiento de salones de belleza cercanos.
+- [Para negocios](/negocios): Información, planes y registro para profesionales del sector belleza.
+- [Iniciar sesión / Registro](/auth): Acceso para clientes y para negocios.
+- [Mis citas](/mis-citas): Gestión de reservas próximas e historial (requiere login).
+- [Perfil](/perfil): Perfil del usuario, favoritos y preferencias (requiere login).
+- [Mensajes](/messages): Conversaciones entre clientes y salones (requiere login).
+
+## Salones
+
+- [Ejemplo de landing de salón](/cristina-munoz): Cada negocio dispone de una página pública en `/{slug}` con servicios, equipo, horarios, galería, reseñas y reserva online.
+
+## Legal
+
+- [Política de privacidad](/privacidad): Cómo tratamos los datos personales.
+- [Términos de uso](/terminos): Condiciones de uso de la plataforma.
+
+## Optional
+
+- [Para negocios — onboarding](/onboarding): Asistente guiado de alta de un negocio en GlowApp.
