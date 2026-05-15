@@ -76,7 +76,7 @@ export function PremiumSalonCard({
         <div className="relative overflow-hidden liquid-glass-card">
           
           {/* Image Container */}
-          <div className="relative h-52 overflow-hidden rounded-t-[24px]">
+          <div className={cn("relative overflow-hidden rounded-t-[24px]", isFeatured ? "h-64 sm:h-56" : "h-52")}>
             {salon.hero_image_url ? (
               index === 0 ? (
                 <img
