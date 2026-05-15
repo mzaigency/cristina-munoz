@@ -57,23 +57,15 @@ interface Tenant {
     [key: string]: unknown;
   } | null;
 }
-// Map business_type → display label and URL slug for breadcrumbs
-const CATEGORY_MAP: Record<string, string> = {
-  peluqueria: "Peluquerías",
-  barberia: "Barberías",
-  estetica: "Centros de Estética",
-  spa: "Spas",
-  unas: "Centros de Uñas",
-  salon_belleza: "Salones de Belleza",
-  multiservicios: "Multiservicios",
-};
-const CATEGORY_SLUG_MAP: Record<string, string> = {
-  peluqueria: "peluquerias",
-  barberia: "barberias",
-  estetica: "estetica",
-  spa: "spa",
-  unas: "unas",
-};
+// Mapas derivados del catálogo canónico (src/constants/businessTypes.ts)
+import { BUSINESS_TYPES_BY_ID } from "@/constants/businessTypes";
+
+const CATEGORY_MAP: Record<string, string> = Object.fromEntries(
+  Object.values(BUSINESS_TYPES_BY_ID).map((t) => [t.id, t.labelPlural]),
+);
+const CATEGORY_SLUG_MAP: Record<string, string> = Object.fromEntries(
+  Object.values(BUSINESS_TYPES_BY_ID).map((t) => [t.id, t.urlSlug]),
+);
 
 const TenantLanding = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -227,35 +219,19 @@ const TenantLanding = () => {
     return null;
   }
 
-  // Get business type for SEO
+  // Get business type for SEO (desde catálogo canónico)
+  const businessTypeId = (tenant.features as { business_type?: string } | null)?.business_type;
   const businessTypeLabel = (tenant.features as { business_type_label?: string } | null)?.business_type_label;
-  const businessType = (tenant.features as { business_type?: string } | null)?.business_type;
-  
-  // SEO keyword mappings by business type
-  const seoKeywordsByType: Record<string, string> = {
-    peluqueria: "corte de pelo, coloración, mechas, balayage, peinados, tratamientos capilares",
-    barberia: "corte de pelo hombre, afeitado clásico, arreglo de barba, degradado, fade",
-    salon_belleza: "maquillaje, tratamientos faciales, depilación, manicura, pedicura, belleza integral",
-    estetica: "tratamientos faciales, limpieza facial, rejuvenecimiento, tratamientos corporales, radiofrecuencia",
-    spa: "masajes relajantes, tratamientos wellness, aromaterapia, circuito spa, relajación",
-    unas: "manicura, pedicura, uñas acrílicas, uñas de gel, nail art, esmaltado permanente",
-    multiservicios: "peluquería, estética, belleza integral, tratamientos, cuidado personal",
-  };
+  const btMeta = businessTypeId ? BUSINESS_TYPES_BY_ID[businessTypeId as keyof typeof BUSINESS_TYPES_BY_ID] : null;
 
-  // Dynamic SEO based on tenant data and business type
-  const businessLabel = businessTypeLabel || "Salón de belleza";
-  const typeKeywords = businessType ? seoKeywordsByType[businessType] || "" : "";
-  
+  const businessLabel = btMeta?.label || businessTypeLabel || "Salón de belleza";
+  const typeKeywords = btMeta?.seoKeywords || "";
+
   const seoTitle = `${tenant.name} | ${businessLabel}${tenant.city ? ` en ${tenant.city}` : ''} - Reserva Online`;
-  
-  const seoDescription = tenant.description || 
+
+  const seoDescription = tenant.description ||
     `${businessLabel} profesional${tenant.city ? ` en ${tenant.city}` : ''}. ${
-      businessType === 'barberia' ? 'Especialistas en cortes masculinos, afeitado clásico y cuidado de barba.' :
-      businessType === 'estetica' ? 'Expertos en tratamientos faciales, corporales y rejuvenecimiento.' :
-      businessType === 'spa' ? 'Centro de bienestar con masajes, tratamientos relajantes y circuito spa.' :
-      businessType === 'unas' ? 'Especialistas en manicura, pedicura, uñas de gel y nail art.' :
-      businessType === 'salon_belleza' ? 'Servicios integrales de belleza: maquillaje, tratamientos y más.' :
-      'Especialistas en corte, coloración, mechas, balayage, peinados y tratamientos capilares.'
+      btMeta?.tenantTagline ?? 'Especialistas en corte, coloración, mechas, balayage, peinados y tratamientos capilares.'
     } Reserva tu cita online.`;
   
   const seoKeywords = [
@@ -339,8 +315,8 @@ const TenantLanding = () => {
           localBusiness={localBusinessData}
           breadcrumbs={[
             { name: "Inicio", url: "/" },
-            ...(businessType && CATEGORY_MAP[businessType]
-              ? [{ name: CATEGORY_MAP[businessType], url: `/${CATEGORY_SLUG_MAP[businessType] || businessType}` }]
+            ...(businessTypeId && CATEGORY_MAP[businessTypeId]
+              ? [{ name: CATEGORY_MAP[businessTypeId], url: `/${CATEGORY_SLUG_MAP[businessTypeId] || businessTypeId}` }]
               : [{ name: businessLabel, url: "/" }]),
             { name: tenant.name, url: `/${tenant.slug}` }
           ]}

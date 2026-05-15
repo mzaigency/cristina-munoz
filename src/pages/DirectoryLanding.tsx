@@ -8,15 +8,7 @@ import { AppLayout } from "@/components/navigation/AppLayout";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
 import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { motion } from "motion/react";
-
-// URL slug → DB business_type
-const CATEGORY_MAP: Record<string, { type: string; label: string; labelPlural: string }> = {
-  peluquerias: { type: "peluqueria", label: "Peluquería", labelPlural: "Peluquerías" },
-  barberias: { type: "barberia", label: "Barbería", labelPlural: "Barberías" },
-  estetica: { type: "estetica", label: "Centro de Estética", labelPlural: "Centros de Estética" },
-  spa: { type: "spa", label: "Spa", labelPlural: "Spas" },
-  unas: { type: "unas", label: "Centro de Uñas", labelPlural: "Centros de Uñas" },
-};
+import { BUSINESS_TYPES_BY_URL_SLUG } from "@/constants/businessTypes";
 
 interface DirectoryTenant {
   id: string;
@@ -48,7 +40,8 @@ const DirectoryLanding = () => {
   const [loading, setLoading] = useState(true);
   const [reviewCounts, setReviewCounts] = useState<Record<string, { avg: number; count: number }>>({});
 
-  const catInfo = category ? CATEGORY_MAP[category] : null;
+  const bt = category ? BUSINESS_TYPES_BY_URL_SLUG[category] : null;
+  const catInfo = bt ? { type: bt.id, label: bt.label, labelPlural: bt.labelPlural } : null;
   const cityDisplay = city ? prettifyCity(city) : null;
 
   useEffect(() => {

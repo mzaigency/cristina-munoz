@@ -190,6 +190,10 @@ const App = () => (
                         <Route path="/spa/:city" element={<DirectoryLanding />} />
                         <Route path="/unas" element={<DirectoryLanding />} />
                         <Route path="/unas/:city" element={<DirectoryLanding />} />
+                        <Route path="/salones-belleza" element={<DirectoryLanding />} />
+                        <Route path="/salones-belleza/:city" element={<DirectoryLanding />} />
+                        <Route path="/fisioterapia" element={<DirectoryLanding />} />
+                        <Route path="/fisioterapia/:city" element={<DirectoryLanding />} />
 
                         {/* Catch-all para salones - DEBE IR AL FINAL */}
                         <Route path="/:slug" element={<TenantLanding />} />

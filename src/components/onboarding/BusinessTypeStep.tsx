@@ -1,79 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StepProps } from "./types";
-
-const businessTypes = [
-  {
-    id: "peluqueria",
-    label: "Peluquería",
-    emoji: "✂️",
-    description: "Cortes, peinados y color",
-    color: "from-violet-500/20 to-purple-500/20",
-    borderActive: "border-violet-500",
-  },
-  {
-    id: "barberia",
-    label: "Barbería",
-    emoji: "💈",
-    description: "Cortes, afeitado y barba",
-    color: "from-amber-500/20 to-orange-500/20",
-    borderActive: "border-amber-500",
-  },
-  {
-    id: "salon_belleza",
-    label: "Salón de Belleza",
-    emoji: "💅",
-    description: "Servicios integrales de belleza",
-    color: "from-pink-500/20 to-rose-500/20",
-    borderActive: "border-pink-500",
-  },
-  {
-    id: "estetica",
-    label: "Centro Estética",
-    emoji: "🧖‍♀️",
-    description: "Faciales y tratamientos corporales",
-    color: "from-teal-500/20 to-cyan-500/20",
-    borderActive: "border-teal-500",
-  },
-  {
-    id: "spa",
-    label: "Spa & Wellness",
-    emoji: "🧘",
-    description: "Masajes y bienestar",
-    color: "from-green-500/20 to-emerald-500/20",
-    borderActive: "border-green-500",
-  },
-  {
-    id: "unas",
-    label: "Salón de Uñas",
-    emoji: "💎",
-    description: "Manicura, pedicura y nail art",
-    color: "from-fuchsia-500/20 to-purple-500/20",
-    borderActive: "border-fuchsia-500",
-  },
-  {
-    id: "fisioterapia",
-    label: "Fisioterapia",
-    emoji: "🌟",
-    description: "Combina varios servicios",
-    color: "from-indigo-500/20 to-violet-500/20",
-    borderActive: "border-indigo-500",
-  },
-  {
-    id: "otro",
-    label: "Otro",
-    emoji: "🏠",
-    description: "Especifica tu negocio",
-    color: "from-gray-500/20 to-slate-500/20",
-    borderActive: "border-gray-500",
-  },
-];
+import { BUSINESS_TYPES, BUSINESS_TYPES_BY_ID, type BusinessTypeId } from "@/constants/businessTypes";
 
 interface BusinessTypeStepProps extends StepProps {
   tenantName: string;
@@ -81,8 +14,7 @@ interface BusinessTypeStepProps extends StepProps {
 }
 
 export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }: BusinessTypeStepProps) {
-  const [selectedType, setSelectedType] = useState<string>("");
-  const [customType, setCustomType] = useState("");
+  const [selectedType, setSelectedType] = useState<BusinessTypeId | "">("");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -91,16 +23,9 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
       return;
     }
 
-    if (selectedType === "otro" && !customType.trim()) {
-      toast.error("Por favor, especifica tu tipo de negocio");
-      return;
-    }
-
     setSaving(true);
     try {
-      const businessType = selectedType === "otro" ? customType : selectedType;
-      const businessTypeLabel =
-        selectedType === "otro" ? customType : businessTypes.find((t) => t.id === selectedType)?.label || selectedType;
+      const businessTypeLabel = BUSINESS_TYPES_BY_ID[selectedType]?.label ?? selectedType;
 
       const { error } = await supabase
         .from("tenants")
@@ -111,7 +36,7 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
             whatsapp: true,
             cash_register: true,
             google_calendar: true,
-            business_type: businessType,
+            business_type: selectedType,
             business_type_label: businessTypeLabel,
           },
         })
@@ -154,7 +79,7 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
 
       {/* Business Type Grid */}
       <div className="grid grid-cols-2 gap-2.5">
-        {businessTypes.map((type) => {
+        {BUSINESS_TYPES.map((type) => {
           const isSelected = selectedType === type.id;
 
           return (
@@ -181,25 +106,9 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
         })}
       </div>
 
-      {/* Custom Type Input */}
-      {selectedType === "otro" && (
-        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-          <Label htmlFor="customType" className="text-sm">
-            Especifica tu tipo de negocio
-          </Label>
-          <Input
-            id="customType"
-            value={customType}
-            onChange={(e) => setCustomType(e.target.value)}
-            placeholder="Ej: Centro de micropigmentación..."
-            className="h-12 rounded-xl"
-          />
-        </div>
-      )}
-
       <Button
         onClick={handleSave}
-        disabled={saving || !selectedType || !tenantName.trim() || (selectedType === "otro" && !customType.trim())}
+        disabled={saving || !selectedType || !tenantName.trim()}
         className="w-full h-12 rounded-xl"
         size="lg"
         data-guided-cta="true"

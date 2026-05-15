@@ -1,4 +1,5 @@
 import { ServiceForm } from "./types";
+import { businessTypeLabels as canonicalLabels } from "@/constants/businessTypes";
 
 /**
  * Catálogo de servicios sugeridos por tipo de negocio.
@@ -93,6 +94,16 @@ export const suggestedServicesByType: Record<string, ServiceForm[]> = {
     make("Retirada de esmaltado", "Extras", 20, 8),
     make("Retirada de acrílico/gel", "Extras", 30, 12),
   ],
+  fisioterapia: [
+    make("Sesión de fisioterapia 30 min", "Fisioterapia", 30, 30),
+    make("Sesión de fisioterapia 60 min", "Fisioterapia", 60, 50),
+    make("Masaje terapéutico", "Masajes", 60, 45),
+    make("Punción seca", "Tratamientos", 30, 35),
+    make("Drenaje linfático", "Tratamientos", 60, 50),
+    make("Recuperación deportiva", "Deporte", 60, 55),
+    make("Valoración inicial", "Consulta", 45, 40),
+    make("Electroterapia", "Aparatología", 30, 30),
+  ],
   multiservicios: [
     make("Corte mujer", "Peluquería", 45, 20),
     make("Corte hombre", "Peluquería", 30, 15),
@@ -121,12 +132,11 @@ export function getSuggestedServices(
   return list.map((s) => ({ ...s }));
 }
 
+/**
+ * Etiquetas legibles. Re-exporta el catálogo canónico y añade extras
+ * propios del onboarding (multiservicios) que no son tipos públicos.
+ */
 export const businessTypeLabels: Record<string, string> = {
-  peluqueria: "Peluquería",
-  barberia: "Barbería",
-  salon_belleza: "Salón de Belleza",
-  estetica: "Centro de Estética",
-  spa: "Spa & Wellness",
-  unas: "Salón de Uñas",
+  ...canonicalLabels,
   multiservicios: "Multiservicios",
 };
