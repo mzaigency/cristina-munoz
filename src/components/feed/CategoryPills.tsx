@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
-import { Scissors, Sparkles, Droplets, Hand, Brush, Clock, Flame } from "lucide-react";
+import { Sparkles, Clock, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BUSINESS_TYPES } from "@/constants/businessTypes";
 
 interface CategoryPillsProps {
   categories?: { id: string; label: string; icon: React.ElementType }[];
@@ -12,14 +13,11 @@ interface CategoryPillsProps {
   onCheckAvailability?: () => void;
 }
 
-const DEFAULT_CATEGORIES = [
-  { id: "peluqueria", label: "Peluquería", icon: Scissors },
-  { id: "barberia", label: "Barbería", icon: Scissors },
-  { id: "spa", label: "Spa", icon: Droplets },
-  { id: "unas", label: "Uñas", icon: Hand },
-  { id: "estetica", label: "Estética", icon: Brush },
-  { id: "fisioterapia", label: "Fisioterapia", icon: Sparkles },
-];
+const DEFAULT_CATEGORIES = BUSINESS_TYPES.map((t) => ({
+  id: t.id,
+  label: t.label,
+  icon: t.icon,
+}));
 
 const QUICK_FILTERS = [
   { id: "popular", label: "Popular", icon: Flame, color: "amber" },
