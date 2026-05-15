@@ -1,10 +1,12 @@
-import { useMemo } from "react";
-import { Navigation, Zap, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Navigation, Zap, Sparkles, Heart, History } from "lucide-react";
 import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { FeedSection, FeedCarouselItem } from "./FeedSection";
-import { rememberSectionClick, trackEvent, type FeedSectionId } from "@/lib/telemetry";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useVisitedTenants } from "@/hooks/useVisitedTenants";
+import { type FeedSectionId } from "@/lib/telemetry";
 
-type SectionId = "near" | "today" | "foryou";
+type SectionId = "today" | "near" | "favorites" | "visited" | "foryou";
 
 interface SalonItem {
   id: string;
@@ -36,7 +38,7 @@ interface DiscoverSectionsProps {
   geoLoading: boolean;
 }
 
-const CAROUSEL_LIMIT = 8;
+const CAROUSEL_LIMIT = 10;
 
 export function DiscoverSections({
   salons,
@@ -47,28 +49,66 @@ export function DiscoverSections({
   onRequestLocation,
   geoLoading,
 }: DiscoverSectionsProps) {
-  // 1. HUECOS HOY (carrusel)
+  const { favorites, isAuthenticated } = useFavorites();
+  const { tenantIds: visitedIds } = useVisitedTenants();
+
+  const [expanded, setExpanded] = useState<Record<SectionId, boolean>>({
+    today: false,
+    near: false,
+    favorites: false,
+    visited: false,
+    foryou: false,
+  });
+  const toggle = (id: SectionId) =>
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const byId = useMemo(() => {
+    const m = new Map<string, SalonItem>();
+    salons.forEach((s) => m.set(s.id, s));
+    return m;
+  }, [salons]);
+
+  // 1. DISPONIBLES HOY
   const today = useMemo(
-    () => salons.filter((s) => tenantsWithAvailability.includes(s.id)).slice(0, CAROUSEL_LIMIT),
+    () => salons.filter((s) => tenantsWithAvailability.includes(s.id)),
     [salons, tenantsWithAvailability],
   );
 
-  // 2. CERCA DE TI (carrusel)
+  // 2. CERCA DE TI
   const nearby = useMemo(() => {
     if (!hasLocation) return [];
     return [...salons]
       .filter((s) => s.distance !== null && s.distance !== undefined)
-      .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity))
-      .slice(0, CAROUSEL_LIMIT);
+      .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
   }, [salons, hasLocation]);
 
-  // 3. PARA TI (grid vertical principal, dedup contra los carruseles)
+  // 3. FAVORITOS
+  const favs = useMemo(
+    () =>
+      favorites
+        .map((id) => byId.get(id))
+        .filter((s): s is SalonItem => Boolean(s)),
+    [favorites, byId],
+  );
+
+  // 4. VOLVER A VISITAR (excluye favoritos para no duplicar emoción)
+  const visited = useMemo(() => {
+    const favSet = new Set(favorites);
+    return visitedIds
+      .filter((id) => !favSet.has(id))
+      .map((id) => byId.get(id))
+      .filter((s): s is SalonItem => Boolean(s));
+  }, [visitedIds, favorites, byId]);
+
+  // 5. RECOMENDADOS PARA TI (excluye lo ya mostrado en otras secciones)
   const dedupSet = useMemo(() => {
     const ids = new Set<string>();
-    today.forEach((s) => ids.add(s.id));
-    nearby.forEach((s) => ids.add(s.id));
+    today.slice(0, CAROUSEL_LIMIT).forEach((s) => ids.add(s.id));
+    nearby.slice(0, CAROUSEL_LIMIT).forEach((s) => ids.add(s.id));
+    favs.slice(0, CAROUSEL_LIMIT).forEach((s) => ids.add(s.id));
+    visited.slice(0, CAROUSEL_LIMIT).forEach((s) => ids.add(s.id));
     return ids;
-  }, [today, nearby]);
+  }, [today, nearby, favs, visited]);
 
   const forYou = useMemo(() => {
     const remaining = salons.filter((s) => !dedupSet.has(s.id));
@@ -77,14 +117,12 @@ export function DiscoverSections({
         const sa = scoresMap.get(a.id)?.score ?? 0;
         const sb = scoresMap.get(b.id)?.score ?? 0;
         if (sb !== sa) return sb - sa;
-        // tiebreak: rating + reviews
         const ra = a.avgRating ?? 0;
         const rb = b.avgRating ?? 0;
         if (rb !== ra) return rb - ra;
         return b.reviewCount - a.reviewCount;
       });
     }
-    // Sin recomendaciones: mejor valoración primero, luego nº reseñas
     return [...remaining].sort((a, b) => {
       const ra = a.avgRating ?? 0;
       const rb = b.avgRating ?? 0;
@@ -93,9 +131,29 @@ export function DiscoverSections({
     });
   }, [salons, dedupSet, hasRecommendations, scoresMap]);
 
-  const renderCarousel = (list: SalonItem[], sectionId: SectionId) =>
-    list.map((salon, index) => {
+  const renderCards = (
+    list: SalonItem[],
+    sectionId: SectionId,
+    sectionExpanded: boolean,
+  ) => {
+    const items = sectionExpanded ? list : list.slice(0, CAROUSEL_LIMIT);
+    return items.map((salon, index) => {
       const rec = scoresMap.get(salon.id);
+      const card = (
+        <PremiumSalonCard
+          salon={salon}
+          index={index}
+          distance={salon.formattedDistance}
+          hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
+          recommendationScore={rec?.score}
+          matchReasons={rec?.matchReasons}
+        />
+      );
+      if (sectionExpanded) {
+        return (
+          <div key={`${sectionId}-${salon.id}`}>{card}</div>
+        );
+      }
       return (
         <FeedCarouselItem
           key={`${sectionId}-${salon.id}`}
@@ -104,74 +162,43 @@ export function DiscoverSections({
           position={index}
           score={rec?.score}
         >
-          <PremiumSalonCard
-            salon={salon}
-            index={index}
-            distance={salon.formattedDistance}
-            hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
-            recommendationScore={rec?.score}
-            matchReasons={rec?.matchReasons}
-          />
+          {card}
         </FeedCarouselItem>
       );
     });
-
-  const renderFeaturedGrid = (list: SalonItem[]) =>
-    list.map((salon, index) => {
-      const rec = scoresMap.get(salon.id);
-      const handleClickCapture = () => {
-        rememberSectionClick("foryou", salon.id, index, rec?.score);
-        void trackEvent({
-          event_type: "click",
-          section_id: "foryou",
-          tenant_id: salon.id,
-          position: index,
-          score: rec?.score ?? null,
-          metadata: { kind: "card", layout: "featured-grid" },
-        });
-      };
-      return (
-        <div key={`foryou-${salon.id}`} onClickCapture={handleClickCapture}>
-          <PremiumSalonCard
-            salon={salon}
-            index={index}
-            distance={salon.formattedDistance}
-            hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
-            recommendationScore={rec?.score}
-            matchReasons={rec?.matchReasons}
-            variant="featured"
-          />
-        </div>
-      );
-    });
+  };
 
   return (
     <div className="space-y-1">
-      {/* HUECOS HOY */}
+      {/* 1. DISPONIBLES HOY (siempre visible si hay) */}
       {today.length > 0 && (
         <FeedSection
           icon={Zap}
           title="Disponibles hoy"
           subtitle="Reserva ahora, atiende hoy mismo"
           count={today.length}
+          expanded={expanded.today}
+          onToggleExpand={today.length > CAROUSEL_LIMIT ? () => toggle("today") : undefined}
           iconTint="emerald"
           sectionId="today"
         >
-          {renderCarousel(today, "today")}
+          {renderCards(today, "today", expanded.today)}
         </FeedSection>
       )}
 
-      {/* CERCA DE TI */}
+      {/* 2. CERCA DE TI */}
       {hasLocation && nearby.length > 0 && (
         <FeedSection
           icon={Navigation}
           title="Cerca de ti"
           subtitle="Lo más próximo a tu ubicación"
           count={nearby.length}
+          expanded={expanded.near}
+          onToggleExpand={nearby.length > CAROUSEL_LIMIT ? () => toggle("near") : undefined}
           iconTint="primary"
           sectionId="near"
         >
-          {renderCarousel(nearby, "near")}
+          {renderCards(nearby, "near", expanded.near)}
         </FeedSection>
       )}
 
@@ -208,29 +235,52 @@ export function DiscoverSections({
         </FeedSection>
       )}
 
-      {/* PARA TI — GRID VERTICAL PRINCIPAL */}
+      {/* 3. FAVORITOS */}
+      {isAuthenticated && favs.length > 0 && (
+        <FeedSection
+          icon={Heart}
+          title="Tus favoritos"
+          subtitle="Vuelve a los que más te gustan"
+          count={favs.length}
+          expanded={expanded.favorites}
+          onToggleExpand={favs.length > CAROUSEL_LIMIT ? () => toggle("favorites") : undefined}
+          iconTint="rose"
+          sectionId="favorites"
+        >
+          {renderCards(favs, "favorites", expanded.favorites)}
+        </FeedSection>
+      )}
+
+      {/* 4. VOLVER A VISITAR */}
+      {isAuthenticated && visited.length > 0 && (
+        <FeedSection
+          icon={History}
+          title="Volver a visitar"
+          subtitle="Salones donde ya has reservado"
+          count={visited.length}
+          expanded={expanded.visited}
+          onToggleExpand={visited.length > CAROUSEL_LIMIT ? () => toggle("visited") : undefined}
+          iconTint="amber"
+          sectionId="visited"
+        >
+          {renderCards(visited, "visited", expanded.visited)}
+        </FeedSection>
+      )}
+
+      {/* 5. RECOMENDADOS PARA TI (carrusel también) */}
       {forYou.length > 0 && (
-        <section className="mt-2">
-          <div className="flex items-end justify-between mb-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="h-9 w-9 rounded-2xl flex items-center justify-center shadow-md shrink-0 bg-gradient-to-br from-primary to-[#99329a] text-white">
-                <Sparkles className="h-[18px] w-[18px]" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-[17px] font-bold text-foreground leading-tight truncate">
-                  {hasRecommendations && scoresMap.size > 0 ? "Recomendados para ti" : "Destacados"}
-                  <span className="ml-2 text-xs font-semibold text-muted-foreground">{forYou.length}</span>
-                </h2>
-                <p className="text-[11px] text-muted-foreground leading-tight truncate">
-                  Los mejores salones de la comunidad
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {renderFeaturedGrid(forYou)}
-          </div>
-        </section>
+        <FeedSection
+          icon={Sparkles}
+          title={hasRecommendations && scoresMap.size > 0 ? "Recomendados para ti" : "Destacados"}
+          subtitle="Los mejores de la comunidad"
+          count={forYou.length}
+          expanded={expanded.foryou}
+          onToggleExpand={forYou.length > CAROUSEL_LIMIT ? () => toggle("foryou") : undefined}
+          iconTint="primary"
+          sectionId="foryou"
+        >
+          {renderCards(forYou, "foryou", expanded.foryou)}
+        </FeedSection>
       )}
     </div>
   );

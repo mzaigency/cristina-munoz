@@ -155,8 +155,14 @@ const Index = () => {
   // Get all tenant IDs for availability check
   const tenantIds = useMemo(() => salons?.map(s => s.id) || [], [salons]);
   
-  // Check today's availability for "Huecos hoy" filter - lazy loading
+  // Check today's availability for "Disponibles hoy" — auto on mount once we have tenants
   const { tenantsWithAvailability, loading: availabilityLoading, hasChecked, checkAvailability } = useTodayAvailability(tenantIds);
+
+  useEffect(() => {
+    if (tenantIds.length > 0 && !hasChecked && !availabilityLoading) {
+      checkAvailability();
+    }
+  }, [tenantIds, hasChecked, availabilityLoading, checkAvailability]);
 
   // Calculate distances for salons
   const salonsWithDistance = useMemo(() => {
