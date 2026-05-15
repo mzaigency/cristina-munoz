@@ -7,73 +7,9 @@ import { Check, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StepProps } from "./types";
+import { BUSINESS_TYPES, BUSINESS_TYPES_BY_ID } from "@/constants/businessTypes";
 
-const businessTypes = [
-  {
-    id: "peluqueria",
-    label: "Peluquería",
-    emoji: "✂️",
-    description: "Cortes, peinados y color",
-    color: "from-violet-500/20 to-purple-500/20",
-    borderActive: "border-violet-500",
-  },
-  {
-    id: "barberia",
-    label: "Barbería",
-    emoji: "💈",
-    description: "Cortes, afeitado y barba",
-    color: "from-amber-500/20 to-orange-500/20",
-    borderActive: "border-amber-500",
-  },
-  {
-    id: "salon_belleza",
-    label: "Salón de Belleza",
-    emoji: "💅",
-    description: "Servicios integrales de belleza",
-    color: "from-pink-500/20 to-rose-500/20",
-    borderActive: "border-pink-500",
-  },
-  {
-    id: "estetica",
-    label: "Centro Estética",
-    emoji: "🧖‍♀️",
-    description: "Faciales y tratamientos corporales",
-    color: "from-teal-500/20 to-cyan-500/20",
-    borderActive: "border-teal-500",
-  },
-  {
-    id: "spa",
-    label: "Spa & Wellness",
-    emoji: "🧘",
-    description: "Masajes y bienestar",
-    color: "from-green-500/20 to-emerald-500/20",
-    borderActive: "border-green-500",
-  },
-  {
-    id: "unas",
-    label: "Salón de Uñas",
-    emoji: "💎",
-    description: "Manicura, pedicura y nail art",
-    color: "from-fuchsia-500/20 to-purple-500/20",
-    borderActive: "border-fuchsia-500",
-  },
-  {
-    id: "fisioterapia",
-    label: "Fisioterapia",
-    emoji: "🌟",
-    description: "Combina varios servicios",
-    color: "from-indigo-500/20 to-violet-500/20",
-    borderActive: "border-indigo-500",
-  },
-  {
-    id: "otro",
-    label: "Otro",
-    emoji: "🏠",
-    description: "Especifica tu negocio",
-    color: "from-gray-500/20 to-slate-500/20",
-    borderActive: "border-gray-500",
-  },
-];
+const businessTypes = BUSINESS_TYPES;
 
 interface BusinessTypeStepProps extends StepProps {
   tenantName: string;
