@@ -74,7 +74,6 @@ async function buildEntries() {
       url: `/${t.slug}`,
       priority: "0.9",
       changefreq: "weekly",
-      lastmod: t.updated_at ? t.updated_at.slice(0, 10) : undefined,
     });
   }
 
