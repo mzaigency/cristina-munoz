@@ -1,11 +1,19 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
+
+/**
+ * Auto-update silencioso.
+ * - Detecta nueva versión vía /version.json.
+ * - Recarga automáticamente cuando el usuario no está mirando (pestaña oculta)
+ *   o lleva inactivo más de IDLE_RELOAD_MS sin interactuar.
+ * - Nunca muestra prompt visible. Tras recargar, deja un flag en sessionStorage
+ *   que el caller puede usar para enseñar un toast discreto.
+ */
 
 const VERSION_KEY = "app-version";
-const PENDING_VERSION_KEY = `${VERSION_KEY}-pending`;
-const DISMISSED_VERSION_KEY = `${VERSION_KEY}-dismissed`;
-const DISMISSED_AT_KEY = `${VERSION_KEY}-dismissed-at`;
+const JUST_UPDATED_KEY = "glowapp_just_updated";
 const CHECK_INTERVAL = 5 * 60_000; // 5 min
-const DISMISS_COOLDOWN = 6 * 60 * 60_000; // 6h
+const IDLE_RELOAD_MS = 60_000; // 60s sin interactuar → recarga
+const REFOCUS_GRACE_MS = 2 * 60_000; // si volvió a la pestaña hace <2min, no recargar de golpe
 
 function isIOSStandalone(): boolean {
   return (
@@ -20,17 +28,52 @@ function isIOS(): boolean {
 }
 
 export function useAppVersion() {
-  const [updateAvailable, setUpdateAvailable] = useState(false);
   const checking = useRef(false);
+  const pendingVersion = useRef<string | null>(null);
+  const lastInteraction = useRef<number>(Date.now());
+  const lastVisible = useRef<number>(Date.now());
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const performReload = useCallback(() => {
+    const v = pendingVersion.current;
+    if (!v) return;
+    try {
+      localStorage.setItem(VERSION_KEY, v);
+      sessionStorage.setItem(JUST_UPDATED_KEY, "1");
+    } catch {}
+    window.location.reload();
+  }, []);
+
+  const scheduleSilentReload = useCallback(() => {
+    // Si la pestaña ya está oculta, recarga inmediata (no molesta a nadie).
+    if (document.visibilityState === "hidden") {
+      performReload();
+      return;
+    }
+    // Si está visible: programa recarga cuando esté idle IDLE_RELOAD_MS.
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    const tick = () => {
+      const idleFor = Date.now() - lastInteraction.current;
+      const visibleFor = Date.now() - lastVisible.current;
+      if (
+        document.visibilityState === "hidden" ||
+        (idleFor >= IDLE_RELOAD_MS && visibleFor >= REFOCUS_GRACE_MS)
+      ) {
+        performReload();
+        return;
+      }
+      const remaining = Math.max(5_000, IDLE_RELOAD_MS - idleFor);
+      idleTimer.current = setTimeout(tick, remaining);
+    };
+    idleTimer.current = setTimeout(tick, IDLE_RELOAD_MS);
+  }, [performReload]);
 
   const checkVersion = useCallback(async () => {
     if (checking.current) return;
     checking.current = true;
-
     try {
       const res = await fetch(`/version.json?t=${Date.now()}`, { cache: "no-store" });
       if (!res.ok) return;
-
       const data = await res.json();
       const serverVersion = data.version || data.buildTime;
       if (!serverVersion) return;
@@ -39,94 +82,75 @@ export function useAppVersion() {
 
       if (!localVersion) {
         localStorage.setItem(VERSION_KEY, serverVersion);
-        localStorage.removeItem(PENDING_VERSION_KEY);
-        localStorage.removeItem(DISMISSED_VERSION_KEY);
-        localStorage.removeItem(DISMISSED_AT_KEY);
         return;
       }
 
-      if (serverVersion === localVersion) {
-        setUpdateAvailable(false);
-        localStorage.removeItem(PENDING_VERSION_KEY);
-        localStorage.removeItem(DISMISSED_VERSION_KEY);
-        localStorage.removeItem(DISMISSED_AT_KEY);
-        return;
-      }
+      if (serverVersion === localVersion) return;
 
-      // Nueva versión detectada
-      localStorage.setItem(PENDING_VERSION_KEY, serverVersion);
+      // Nueva versión real
+      pendingVersion.current = serverVersion;
 
+      // PWA iOS standalone: recarga directa, ya estaba así
       if (isIOS() && isIOSStandalone()) {
-        localStorage.setItem(VERSION_KEY, serverVersion);
-        localStorage.removeItem(PENDING_VERSION_KEY);
-        localStorage.removeItem(DISMISSED_VERSION_KEY);
-        localStorage.removeItem(DISMISSED_AT_KEY);
-        window.location.reload();
+        performReload();
         return;
       }
 
-      // Cooldown: si ya descartó esta misma versión hace menos de 6h, no mostrar
-      const dismissedVersion = localStorage.getItem(DISMISSED_VERSION_KEY);
-      const dismissedAt = parseInt(localStorage.getItem(DISMISSED_AT_KEY) || "0", 10);
-      if (
-        dismissedVersion === serverVersion &&
-        dismissedAt &&
-        Date.now() - dismissedAt < DISMISS_COOLDOWN
-      ) {
-        setUpdateAvailable(false);
-        return;
-      }
-
-      setUpdateAvailable(true);
+      scheduleSilentReload();
     } catch {
-      // Network error — ignore
+      // ignore network
     } finally {
       checking.current = false;
     }
-  }, []);
-
-  const acceptUpdate = useCallback(() => {
-    try {
-      const serverVersion = localStorage.getItem(PENDING_VERSION_KEY);
-      if (serverVersion) localStorage.setItem(VERSION_KEY, serverVersion);
-      localStorage.removeItem(PENDING_VERSION_KEY);
-      localStorage.removeItem(DISMISSED_VERSION_KEY);
-      localStorage.removeItem(DISMISSED_AT_KEY);
-    } catch {}
-    window.location.reload();
-  }, []);
-
-  const dismissUpdate = useCallback(() => {
-    try {
-      const serverVersion = localStorage.getItem(PENDING_VERSION_KEY);
-      if (serverVersion) {
-        localStorage.setItem(DISMISSED_VERSION_KEY, serverVersion);
-        localStorage.setItem(DISMISSED_AT_KEY, Date.now().toString());
-      }
-    } catch {}
-    setUpdateAvailable(false);
-  }, []);
+  }, [performReload, scheduleSilentReload]);
 
   useEffect(() => {
-    const timeout = setTimeout(checkVersion, 5000);
-    const interval = setInterval(checkVersion, CHECK_INTERVAL);
+    const bumpInteraction = () => {
+      lastInteraction.current = Date.now();
+    };
+    const events: (keyof WindowEventMap)[] = ["mousemove", "touchstart", "keydown", "scroll", "click"];
+    events.forEach((e) => window.addEventListener(e, bumpInteraction, { passive: true }));
 
-    // Solo chequear al volver a foco si pasaron >5 min desde el último check
-    let lastCheck = Date.now();
     const handleVisibility = () => {
-      if (document.visibilityState === "visible" && Date.now() - lastCheck > CHECK_INTERVAL) {
-        lastCheck = Date.now();
+      if (document.visibilityState === "visible") {
+        lastVisible.current = Date.now();
+        lastInteraction.current = Date.now();
+        // Re-chequear si han pasado >5min
         checkVersion();
+      } else if (pendingVersion.current) {
+        // Oculto y hay update pendiente → recarga ya
+        performReload();
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
 
-    return () => {
-      clearTimeout(timeout);
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [checkVersion]);
+    const initial = setTimeout(checkVersion, 5_000);
+    const interval = setInterval(checkVersion, CHECK_INTERVAL);
 
-  return { updateAvailable, acceptUpdate, dismissUpdate };
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, bumpInteraction));
+      document.removeEventListener("visibilitychange", handleVisibility);
+      clearTimeout(initial);
+      clearInterval(interval);
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+    };
+  }, [checkVersion, performReload]);
+
+  // API legacy mantenida (no se usa) por si algún consumidor sobrevive
+  return {
+    updateAvailable: false,
+    acceptUpdate: () => {},
+    dismissUpdate: () => {},
+  };
+}
+
+/** Llamar al boot para mostrar toast post-actualización si procede. */
+export function consumeJustUpdatedFlag(): boolean {
+  try {
+    if (sessionStorage.getItem(JUST_UPDATED_KEY) === "1") {
+      sessionStorage.removeItem(JUST_UPDATED_KEY);
+      return true;
+    }
+  } catch {}
+  return false;
 }
