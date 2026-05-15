@@ -315,8 +315,8 @@ const TenantLanding = () => {
           localBusiness={localBusinessData}
           breadcrumbs={[
             { name: "Inicio", url: "/" },
-            ...(businessType && CATEGORY_MAP[businessType]
-              ? [{ name: CATEGORY_MAP[businessType], url: `/${CATEGORY_SLUG_MAP[businessType] || businessType}` }]
+            ...(businessTypeId && CATEGORY_MAP[businessTypeId]
+              ? [{ name: CATEGORY_MAP[businessTypeId], url: `/${CATEGORY_SLUG_MAP[businessTypeId] || businessTypeId}` }]
               : [{ name: businessLabel, url: "/" }]),
             { name: tenant.name, url: `/${tenant.slug}` }
           ]}
