@@ -19,7 +19,8 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 
-const CATEGORY_SLUGS = ["peluquerias", "barberias", "estetica", "spa", "unas"];
+// Catálogo canónico (debe coincidir con src/constants/businessTypes.ts)
+const CATEGORY_SLUGS = ["peluquerias", "barberias", "estetica", "spa", "unas", "salones-belleza", "fisioterapia"];
 // URL slug -> features.business_type stored in DB
 const CATEGORY_TO_BT = {
   peluquerias: "peluqueria",
@@ -27,6 +28,8 @@ const CATEGORY_TO_BT = {
   estetica: "estetica",
   spa: "spa",
   unas: "unas",
+  "salones-belleza": "salon_belleza",
+  fisioterapia: "fisioterapia",
 };
 
 // Same normalization rule used by DirectoryLanding.tsx
