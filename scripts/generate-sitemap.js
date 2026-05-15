@@ -59,13 +59,11 @@ async function buildEntries() {
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-  const { data: tenants, error } = await supabase
-    .from("tenants")
-    .select("slug, city, features, updated_at")
-    .eq("is_active", true);
+  // Use the public RPC (anon-safe) — direct SELECT is blocked by RLS
+  const { data: tenants, error } = await supabase.rpc("get_public_tenants");
 
   if (error) {
-    console.warn("[sitemap] Supabase query failed:", error.message);
+    console.warn("[sitemap] Supabase RPC failed:", error.message);
     return entries;
   }
 
