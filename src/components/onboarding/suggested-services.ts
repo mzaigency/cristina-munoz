@@ -1,4 +1,5 @@
 import { ServiceForm } from "./types";
+import { businessTypeLabels as canonicalLabels } from "@/constants/businessTypes";
 
 /**
  * Catálogo de servicios sugeridos por tipo de negocio.
