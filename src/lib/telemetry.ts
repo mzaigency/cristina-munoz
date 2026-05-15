@@ -13,7 +13,8 @@ export type FeedSectionId =
   | "popular"
   | "near"
   | "today"
-  | "new";
+  | "new"
+  | "visited";
 
 export interface FeedEventInput {
   event_type: FeedEventType;
