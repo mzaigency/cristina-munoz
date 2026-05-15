@@ -106,25 +106,9 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
         })}
       </div>
 
-      {/* Custom Type Input */}
-      {selectedType === "otro" && (
-        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-          <Label htmlFor="customType" className="text-sm">
-            Especifica tu tipo de negocio
-          </Label>
-          <Input
-            id="customType"
-            value={customType}
-            onChange={(e) => setCustomType(e.target.value)}
-            placeholder="Ej: Centro de micropigmentación..."
-            className="h-12 rounded-xl"
-          />
-        </div>
-      )}
-
       <Button
         onClick={handleSave}
-        disabled={saving || !selectedType || !tenantName.trim() || (selectedType === "otro" && !customType.trim())}
+        disabled={saving || !selectedType || !tenantName.trim()}
         className="w-full h-12 rounded-xl"
         size="lg"
         data-guided-cta="true"
