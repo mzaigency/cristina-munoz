@@ -1,15 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StepProps } from "./types";
-import { BUSINESS_TYPES, BUSINESS_TYPES_BY_ID } from "@/constants/businessTypes";
-
-const businessTypes = BUSINESS_TYPES;
+import { BUSINESS_TYPES, BUSINESS_TYPES_BY_ID, type BusinessTypeId } from "@/constants/businessTypes";
 
 interface BusinessTypeStepProps extends StepProps {
   tenantName: string;
@@ -17,8 +14,7 @@ interface BusinessTypeStepProps extends StepProps {
 }
 
 export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }: BusinessTypeStepProps) {
-  const [selectedType, setSelectedType] = useState<string>("");
-  const [customType, setCustomType] = useState("");
+  const [selectedType, setSelectedType] = useState<BusinessTypeId | "">("");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
