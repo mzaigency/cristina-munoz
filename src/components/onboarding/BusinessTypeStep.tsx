@@ -23,16 +23,9 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
       return;
     }
 
-    if (selectedType === "otro" && !customType.trim()) {
-      toast.error("Por favor, especifica tu tipo de negocio");
-      return;
-    }
-
     setSaving(true);
     try {
-      const businessType = selectedType === "otro" ? customType : selectedType;
-      const businessTypeLabel =
-        selectedType === "otro" ? customType : businessTypes.find((t) => t.id === selectedType)?.label || selectedType;
+      const businessTypeLabel = BUSINESS_TYPES_BY_ID[selectedType]?.label ?? selectedType;
 
       const { error } = await supabase
         .from("tenants")
@@ -43,7 +36,7 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
             whatsapp: true,
             cash_register: true,
             google_calendar: true,
-            business_type: businessType,
+            business_type: selectedType,
             business_type_label: businessTypeLabel,
           },
         })
