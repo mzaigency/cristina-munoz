@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { BUSINESS_TYPES } from "@/constants/businessTypes";
 
 const leadSchema = z.object({
   business_name: z.string().trim().min(2, "Mínimo 2 caracteres").max(100),
@@ -17,12 +18,7 @@ const leadSchema = z.object({
   city: z.string().trim().max(100).optional(),
 });
 
-const SERVICE_OPTIONS = [
-  { id: "peluqueria", label: "Peluquería" },
-  { id: "unas", label: "Uñas" },
-  { id: "estetica", label: "Estética" },
-  { id: "barberia", label: "Barbería" },
-];
+const SERVICE_OPTIONS = BUSINESS_TYPES.map((t) => ({ id: t.id, label: t.label }));
 
 export const B2BLeadForm = () => {
   const [form, setForm] = useState({
