@@ -91,27 +91,32 @@ export function DiscoverSections({
     [favorites, byId],
   );
 
-  // 4. VOLVER A VISITAR (excluye favoritos para no duplicar emoción)
+  // 4. VOLVER A VISITAR (puede solapar con favoritos, sin problema)
   const visited = useMemo(() => {
-    const favSet = new Set(favorites);
     return visitedIds
-      .filter((id) => !favSet.has(id))
       .map((id) => byId.get(id))
       .filter((s): s is SalonItem => Boolean(s));
-  }, [visitedIds, favorites, byId]);
+  }, [visitedIds, byId]);
 
-  // 5. RECOMENDADOS PARA TI (excluye lo ya mostrado en otras secciones)
-  const dedupSet = useMemo(() => {
-    const ids = new Set<string>();
-    today.slice(0, CAROUSEL_LIMIT).forEach((s) => ids.add(s.id));
-    nearby.slice(0, CAROUSEL_LIMIT).forEach((s) => ids.add(s.id));
-    favs.slice(0, CAROUSEL_LIMIT).forEach((s) => ids.add(s.id));
-    visited.slice(0, CAROUSEL_LIMIT).forEach((s) => ids.add(s.id));
-    return ids;
+  // 5. RECOMENDADOS PARA TI
+  // Permitimos que un salón aparezca en varias secciones (máx 3 en total).
+  // Contamos apariciones en las secciones previas; si ya está en 3, lo
+  // excluimos de "Recomendados". Si está en menos, puede repetirse aquí.
+  const MAX_APPEARANCES = 3;
+  const appearanceCount = useMemo(() => {
+    const counts = new Map<string, number>();
+    const bump = (id: string) => counts.set(id, (counts.get(id) ?? 0) + 1);
+    today.slice(0, CAROUSEL_LIMIT).forEach((s) => bump(s.id));
+    nearby.slice(0, CAROUSEL_LIMIT).forEach((s) => bump(s.id));
+    favs.slice(0, CAROUSEL_LIMIT).forEach((s) => bump(s.id));
+    visited.slice(0, CAROUSEL_LIMIT).forEach((s) => bump(s.id));
+    return counts;
   }, [today, nearby, favs, visited]);
 
   const forYou = useMemo(() => {
-    const remaining = salons.filter((s) => !dedupSet.has(s.id));
+    const remaining = salons.filter(
+      (s) => (appearanceCount.get(s.id) ?? 0) < MAX_APPEARANCES,
+    );
     if (hasRecommendations && scoresMap.size > 0) {
       return [...remaining].sort((a, b) => {
         const sa = scoresMap.get(a.id)?.score ?? 0;
@@ -129,7 +134,7 @@ export function DiscoverSections({
       if (rb !== ra) return rb - ra;
       return b.reviewCount - a.reviewCount;
     });
-  }, [salons, dedupSet, hasRecommendations, scoresMap]);
+  }, [salons, appearanceCount, hasRecommendations, scoresMap]);
 
   const renderCards = (
     list: SalonItem[],
