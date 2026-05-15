@@ -1,265 +1,80 @@
-# Importador con IA: agenda + servicios desde foto
+## 1. Feed de inicio — estilo Treatwell/Fresha
 
-## Objetivo
+**Diagnóstico actual:** 6 carruseles apilados (Favoritos, Para ti, Tendencia, Cerca, Hoy, Recién llegados) + cabecera + AISearchBar + FeedToggle + filtros + CategoryPills. Demasiado scroll antes de ver un salón. Las `PremiumSalonCard` repiten el mismo salón en varias secciones, lo que hace sentir el feed pobre y redundante.
 
-Eliminar la fricción de migrar a GlowApp permitiendo al admin **subir fotos** de su agenda física (o de otra app) y de su lista de servicios/tarifas. La IA extrae los datos y un wizard los valida antes de crearlos en bloque.
-
----
-
-## Dos importadores, un mismo patrón
-
-### A) Importador de Agenda (citas existentes)
-### B) Importador de Servicios (carta de precios / tarifa)
-
-Comparten arquitectura, edge functions y componentes UI. Cambian prompt, schema de extracción y tabla destino.
-
----
-
-## Flujo de usuario
+**Nueva estructura (mobile-first, prioridad 843px y menores):**
 
 ```text
-1. Entrada
-   ├─ Onboarding: paso opcional "¿Tienes ya citas o servicios?"
-   └─ Dashboard admin: banner dismissible "Importa tus datos en 2 minutos"
-        │
-        ▼
-2. Selector: ¿Qué quieres importar?  [Citas]  [Servicios]
-        │
-        ▼
-3. Pantalla de subida con GUÍA visual
-   ┌──────────────────────────────────┐
-   │  📷 Sube fotos claras de tu...   │
-   │                                   │
-   │  Para CITAS, asegúrate de que     │
-   │  se vea:                          │
-   │   ✓ Fecha visible (día/mes)       │
-   │   ✓ Hora de cada cita             │
-   │   ✓ Nombre del cliente            │
-   │   ✓ Servicio (si lo apuntas)      │
-   │                                   │
-   │  Para SERVICIOS:                  │
-   │   ✓ Nombre del servicio           │
-   │   ✓ Precio                        │
-   │   ✓ Duración (si la tienes)       │
-   │                                   │
-   │  💡 Tips:                         │
-   │   • Buena luz, sin reflejos       │
-   │   • Una página por foto            │
-   │   • Hasta 10 fotos por importación│
-   │                                   │
-   │  [📸 Hacer foto]  [🖼️ Galería]   │
-   └──────────────────────────────────┘
-        │
-        ▼
-4. Procesamiento IA (loader con progreso)
-   • Edge function `import-from-photos`
-   • Lovable AI (google/gemini-2.5-pro vision)
-   • Devuelve JSON estructurado vía tool calling
-   • Campos faltantes = null/vacío (NUNCA inventa)
-        │
-        ▼
-5. Wizard de revisión (editable)
-   ├─ Cada fila con badge: ✓ completa | ⚠ faltan datos | ✗ descartar
-   ├─ Edición inline de cualquier campo
-   ├─ Match automático con clients/services existentes
-   └─ Resumen al pie: X listas, Y con huecos, Z descartadas
-        │
-        ▼
-6. Confirmación → batch insert
-   • Citas: bookings con skip_availability_check=true, canal='imported'
-   • Servicios: services nuevos
-   • Clientes nuevos: se crean en clients
-   • Toast con resumen + enlace a la sección
+┌──────────────────────────────┐
+│ Header (logo + notif + B2B)  │
+├──────────────────────────────┤
+│ HERO buscador + ubicación    │  ← protagonista
+│ "Encuentra tu salón ideal"   │
+│ [🔍 Busca servicio o lugar]  │
+│ 📍 Cerca de mí · ✨ Hoy      │
+├──────────────────────────────┤
+│ Categorías (chips horiz)     │  ← CategoryPills compacto
+├──────────────────────────────┤
+│ ⚡ Disponibles HOY (carrusel)│  ← solo si hay
+├──────────────────────────────┤
+│ 📍 Cerca de ti (carrusel)    │  ← solo si hay ubicación
+├──────────────────────────────┤
+│ ✨ Recomendados para ti      │  ← grid vertical principal,
+│ [card grande]                │     scroll infinito, dedup
+│ [card grande]                │     contra los carruseles
+│ [card grande]                │     de arriba
+└──────────────────────────────┘
 ```
 
-Si el plan es **Business**, en el paso 3 aparece además el botón **"Lo hacemos por ti gratis"** (Guante Blanco) que envía las fotos a soporte vía webhook n8n.
+**Cambios concretos:**
 
----
+1. **Hero buscador unificado** — fusionar `SmartSearchHeader` + `AISearchBar` + filtros "Cerca/Favoritos" en un único bloque hero compacto (≈180px alto) con buscador grande, atajos de ubicación y "huecos hoy", y favoritos como icono.
+2. **Reducir a 3 secciones máximo** (en este orden):
+   - **Huecos hoy** (carrusel, solo si `tenantsWithAvailability.length > 0`).
+   - **Cerca de ti** (carrusel, solo si `hasLocation`; CTA para activar ubicación si no).
+   - **Para ti / Destacados** (grid vertical principal, no carrusel — es el cuerpo del feed).
+3. **Eliminar como secciones independientes**: Favoritos (acceso vía icono header), Tendencia (mezclado en Para ti via score), Recién llegados (badge "Nuevo" en card, ya existe).
+4. **Deduplicación**: los salones que aparecen en "Huecos hoy" o "Cerca de ti" se excluyen del grid principal "Para ti" para evitar repetición.
+5. **Tarjeta principal mejorada**: en el grid "Para ti", usar variante full-width de `PremiumSalonCard` con imagen 16:9 más grande (h-64), badges más limpios (max 1 visible), botón "Reservar" prominente. En carruseles seguir usando la versión compacta actual.
+6. **Quitar `FeedToggle`** del nivel superior y mover "Siguiendo" como tab secundario más sutil (chip en el hero) — el modo descubrir es lo principal.
 
-## Detalle de prompts IA
+**Archivos afectados:**
+- `src/pages/Index.tsx` — reorganizar layout, lógica de dedup, simplificar render.
+- `src/components/feed/sections/DiscoverSections.tsx` — reducir a 3 secciones, marcar el grid "Para ti" como sección principal vertical.
+- `src/components/feed/PremiumSalonCard.tsx` — añadir variante `featured` con imagen mayor y layout más editorial.
+- `src/components/feed/SmartSearchHeader.tsx` + `AISearchBar.tsx` — fusionar en un nuevo `FeedHero.tsx` (o reorganizar para que visualmente sean un bloque continuo con búsqueda protagonista).
+- `src/components/feed/FeedToggle.tsx` — degradarlo a chip inline en el hero o eliminarlo si "Siguiendo" se mueve a otra ruta.
 
-### Prompt para AGENDA (citas)
+## 2. Auto-actualización silenciosa
 
-```
-Eres un experto en digitalizar agendas de salones de belleza/peluquería.
-Analiza la imagen y extrae TODAS las citas visibles.
+**Problema actual:** `UpdatePrompt` aparece muy seguido y a veces aunque no haya cambios reales. Causa: se dispara con `swUpdated` (vite-plugin-pwa), `controllerchange` ya estaba excluido pero `useAppVersion` también muestra prompt cuando detecta `version.json` distinto, y los SW de Firebase Messaging interfieren.
 
-REGLAS CRÍTICAS:
-1. NUNCA inventes datos. Si un campo no está claro o no aparece, déjalo como null.
-2. Extrae EXACTAMENTE lo que ves, sin asumir.
-3. Para fechas: usa formato YYYY-MM-DD. Si solo ves "Lunes" o "15", deja date=null
-   y pon la pista en raw_date_text.
-4. Para horas: formato HH:MM 24h. Si ves "10" sin AM/PM, asume horario laboral
-   (8:00-21:00) y elige el más probable. Si imposible saber, deja null.
-5. Para clientes: extrae el nombre tal cual aparece. Si solo hay un mote o inicial,
-   úsalo. Si no hay nombre legible, deja null.
-6. Para servicios: usa palabras simples (corte, tinte, mechas, manicura...).
-   Si solo hay un código o abreviatura, déjalo en raw_service_text.
-7. Por cada fila incluye un campo confidence (0-1) según lo segura que estés.
-8. Si la imagen no es una agenda, devuelve rows vacío y reason='not_an_agenda'.
+**Solución — auto-update silencioso:**
 
-Devuelve JSON con la estructura definida en la tool.
-```
+1. **Eliminar `UpdatePrompt` visible.** Sustituirlo por recarga automática controlada:
+   - Cuando `useAppVersion` detecte versión nueva, en vez de poner `setUpdateAvailable(true)`, llamar directamente a `acceptUpdate()` **si la pestaña está oculta** o **el usuario está inactivo >30s** (sin scroll/click). Así nunca interrumpe.
+   - Si el usuario está activo, esperar al próximo `visibilitychange` → `hidden` (bloquea pestaña) o al volver a `visible` después de >2min de inactividad → recargar entonces.
+2. **Ignorar `swUpdated` cuando viene del SW de Firebase**: el evento ya se intenta filtrar pero vamos a quitar el prompt visual por completo, así esos falsos positivos dejan de molestar.
+3. **`useAppVersion` mejoras:**
+   - Comparar siempre `data.version` (no `buildTime`) para evitar ruido por rebuilds idénticos.
+   - Añadir guard: si `serverVersion` cambió pero el hash del bundle servido en `index.html` no, ignorar (evita flapping de CDN).
+4. **Toast opcional minimal post-recarga**: tras `reload`, leer `sessionStorage.glowapp_just_updated` y mostrar un toast `"Actualizado a la última versión"` 2s con el `useToast` existente. Sin botones, no bloquea.
 
-Schema (tool calling):
-```json
-{
-  "rows": [{
-    "date": "string|null",        // YYYY-MM-DD
-    "time": "string|null",         // HH:MM
-    "duration_minutes": "number|null",
-    "customer_name": "string|null",
-    "customer_phone": "string|null",
-    "service_name": "string|null",
-    "stylist_name": "string|null",
-    "notes": "string|null",
-    "raw_text": "string|null",     // texto original si algo no se pudo parsear
-    "confidence": "number"          // 0-1
-  }],
-  "reason": "string|null"
-}
-```
+**Archivos afectados:**
+- `src/hooks/useAppVersion.ts` — quitar el modelo "prompt + dismiss", convertir en hook que recarga sola con heurística de inactividad.
+- `src/components/pwa/UpdatePrompt.tsx` — **eliminar** (o reducir a un toast `Sonner` muy discreto).
+- `src/main.tsx` o `src/App.tsx` — al boot, leer flag de "just updated" y mostrar toast 2s.
+- `public/firebase-messaging-sw.js` — verificar que no emite eventos que `vite-plugin-pwa` interprete como update.
 
-### Prompt para SERVICIOS
+## Detalles técnicos
 
-```
-Eres un experto en digitalizar cartas de servicios de salones.
-Analiza la imagen y extrae TODOS los servicios visibles con su precio y duración.
+- **Dedup de carruseles vs grid:** mantener un `Set<id>` con los ids ya mostrados arriba; filtrar antes del `.map` del grid principal.
+- **Inactividad:** detectar con listeners `mousemove`, `touchstart`, `scroll`, `keydown` reseteando un timer; tras 30s sin eventos + pestaña visible, considerar idle.
+- **Safe areas iOS:** el nuevo hero respeta `env(safe-area-inset-top)` (ya cubierto globalmente vía `html`).
+- **Sin cambios de schema ni edge functions.**
 
-REGLAS CRÍTICAS:
-1. NUNCA inventes precios ni duraciones. Si no aparecen, déjalos null.
-2. Extrae el NOMBRE tal cual aparece (puedes corregir mayúsculas/tildes obvias).
-3. Precios: número en euros (sin símbolo). "25€" → 25. "Desde 30" → 30.
-   Si hay rango "20-30", usa el menor y anota en notes "Desde 20€".
-4. Duración: en minutos. "1h" → 60. "1h30" → 90. "30 min" → 30.
-   Si no aparece, deja null (el admin la rellenará).
-5. Categoría: agrupa con la cabecera de la sección si la ves
-   (Corte, Color, Tratamientos, Manicura, etc.). Si no, deja null.
-6. Confidence (0-1) por fila.
-7. Si la imagen no es una carta de servicios, devuelve rows vacío.
+## Fuera de alcance
 
-Devuelve JSON con la estructura definida en la tool.
-```
-
-Schema:
-```json
-{
-  "rows": [{
-    "name": "string",              // requerido
-    "price": "number|null",
-    "duration_minutes": "number|null",
-    "category": "string|null",
-    "description": "string|null",
-    "notes": "string|null",
-    "confidence": "number"
-  }]
-}
-```
-
-**Modelo:** `google/gemini-2.5-pro` (vision + razonamiento + contexto largo). Fallback a `google/gemini-2.5-flash` si rate limit.
-
----
-
-## Componentes React (mobile-first)
-
-```
-src/components/admin/import/
-  ├── ImportEntryPoint.tsx        # Selector citas/servicios + guía visual
-  ├── PhotoUploader.tsx           # input capture="environment", drag&drop, previews
-  ├── ImportGuideCard.tsx         # Instrucciones "en la foto debe aparecer..."
-  ├── ProcessingState.tsx         # Loader con progreso por imagen
-  ├── ReviewBookingsTable.tsx     # Wizard de revisión de citas (cards en mobile)
-  ├── ReviewServicesTable.tsx     # Wizard de revisión de servicios
-  ├── ImportSummary.tsx           # Confirmación final con totales
-  ├── WhiteGloveCTA.tsx           # Solo plan Business
-  └── useAgendaImport.ts          # Hook orquestador
-```
-
-Diseño: Liquid Glass, safe areas iPhone, cards en móvil → tabla en desktop.
-
----
-
-## Edge functions
-
-### `extract-from-photos` (genérica)
-- Input: `{ images: string[] (data URLs), mode: 'bookings'|'services', tenant_id }`
-- Valida JWT + admin del tenant
-- Por imagen: llama Lovable AI con el prompt y schema correspondiente (tool calling)
-- Combina resultados, normaliza, devuelve `{ rows: [...], stats }`
-- Maneja 429 / 402 con mensajes claros
-
-### `commit-imported-bookings`
-- Input: `{ tenant_id, rows: [...] }`
-- Upsert clientes por teléfono normalizado o nombre+tenant
-- Insert bookings (`skip_availability_check=true`, `canal='imported'`, `status='confirmed'`)
-- Solo filas con date+time+customer_name no nulos; el resto se rechaza con motivo
-- Devuelve `{ created_bookings, created_clients, skipped }`
-
-### `commit-imported-services`
-- Input: `{ tenant_id, rows: [...] }`
-- Solo filas con `name` no nulo
-- Insert en `services` con campos faltantes a null/0
-- Devuelve `{ created_services, skipped }`
-
-### `request-import-concierge` (solo Business)
-- Sube fotos a bucket privado, dispara webhook n8n con metadata + URLs firmadas (24h)
-- Email de confirmación al admin (Resend)
-
----
-
-## Base de datos
-
-```sql
--- Bucket privado
-insert into storage.buckets (id, name, public)
-values ('agenda-imports', 'agenda-imports', false);
-
--- RLS: solo el admin del tenant sube/lee sus archivos
--- path: {tenant_id}/{job_id}/{filename}
-
--- Auditoría opcional
-create table public.import_jobs (
-  id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null,
-  user_id uuid not null,
-  mode text not null check (mode in ('bookings','services')),
-  image_count int not null default 0,
-  rows_extracted int not null default 0,
-  rows_committed int not null default 0,
-  created_at timestamptz not null default now()
-);
-alter table public.import_jobs enable row level security;
--- Policy: admins del tenant ven los suyos
-
--- Marca para ocultar el banner
-alter table public.tenant_settings
-  add column if not exists imported_data_at timestamptz;
-```
-
-Cron: borrar archivos de `agenda-imports` con > 7 días.
-
----
-
-## Integración UI
-
-- **Onboarding**: nuevo paso opcional `ImportDataStep` antes de la generación AI. Botón "Saltar" prominente.
-- **Dashboard admin**: banner dismissible (siguiendo patrón de `OnboardingChecklist`) que desaparece cuando `imported_data_at` está marcado o el admin lo cierra.
-- **Acceso permanente**: subpestaña "Importar" dentro de Agenda y dentro de Catálogo (servicios).
-
----
-
-## Consideraciones
-
-- **Privacidad**: aviso visible antes de subir (datos personales de clientes), borrado automático a 7 días, bucket privado.
-- **Coste IA**: máx 10 fotos/job; throttle 3 jobs/día en Free/Pro, ilimitado en Business.
-- **Robustez**: si confidence < 0.5 → fila marcada en amarillo y forzada a revisar.
-- **Campos faltantes**: nunca se inventan; el wizard los muestra vacíos para que el admin decida (rellenar, dejar en blanco, o descartar la fila).
-- **Mobile-first**: cámara nativa iPhone, safe areas respetadas en todos los modales.
-
----
-
-## Fuera de alcance (siguientes iteraciones)
-
-- Importación CSV/Excel/.ics
-- Sincronización continua con Google Calendar
-- OCR offline en cliente
+- Cambios al modo "Siguiendo" más allá de mover su entry point.
+- Rediseño de `PremiumSalonCard` carrusel (solo se añade variante `featured`).
+- Cambios en SEO / sitemap / Google Search Console.

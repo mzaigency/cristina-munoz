@@ -1,12 +1,10 @@
-import { useMemo, useState } from "react";
-import { Navigation, Zap, Sparkles, Flame, PartyPopper, Heart } from "lucide-react";
+import { useMemo } from "react";
+import { Navigation, Zap, Sparkles } from "lucide-react";
 import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { FeedSection, FeedCarouselItem } from "./FeedSection";
-import { useFavorites } from "@/hooks/useFavorites";
-import { differenceInDays } from "date-fns";
 import { rememberSectionClick, trackEvent, type FeedSectionId } from "@/lib/telemetry";
 
-type SectionId = "near" | "today" | "foryou" | "popular" | "new" | "favorites";
+type SectionId = "near" | "today" | "foryou";
 
 interface SalonItem {
   id: string;
@@ -49,111 +47,55 @@ export function DiscoverSections({
   onRequestLocation,
   geoLoading,
 }: DiscoverSectionsProps) {
-  const { favorites, isAuthenticated } = useFavorites();
-  const [expanded, setExpanded] = useState<Record<SectionId, boolean>>({
-    near: false,
-    today: false,
-    foryou: false,
-    popular: false,
-    new: false,
-    favorites: false,
-  });
+  // 1. HUECOS HOY (carrusel)
+  const today = useMemo(
+    () => salons.filter((s) => tenantsWithAvailability.includes(s.id)).slice(0, CAROUSEL_LIMIT),
+    [salons, tenantsWithAvailability],
+  );
 
-  const toggle = (id: SectionId) =>
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
-
+  // 2. CERCA DE TI (carrusel)
   const nearby = useMemo(() => {
     if (!hasLocation) return [];
     return [...salons]
       .filter((s) => s.distance !== null && s.distance !== undefined)
-      .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+      .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity))
+      .slice(0, CAROUSEL_LIMIT);
   }, [salons, hasLocation]);
 
-  const today = useMemo(
-    () => salons.filter((s) => tenantsWithAvailability.includes(s.id)),
-    [salons, tenantsWithAvailability],
-  );
+  // 3. PARA TI (grid vertical principal, dedup contra los carruseles)
+  const dedupSet = useMemo(() => {
+    const ids = new Set<string>();
+    today.forEach((s) => ids.add(s.id));
+    nearby.forEach((s) => ids.add(s.id));
+    return ids;
+  }, [today, nearby]);
 
   const forYou = useMemo(() => {
-    if (!hasRecommendations || scoresMap.size === 0) return [];
-    return [...salons]
-      .filter((s) => (scoresMap.get(s.id)?.score ?? 0) > 0)
-      .sort(
-        (a, b) =>
-          (scoresMap.get(b.id)?.score ?? 0) - (scoresMap.get(a.id)?.score ?? 0),
-      );
-  }, [salons, scoresMap, hasRecommendations]);
+    const remaining = salons.filter((s) => !dedupSet.has(s.id));
+    if (hasRecommendations && scoresMap.size > 0) {
+      return [...remaining].sort((a, b) => {
+        const sa = scoresMap.get(a.id)?.score ?? 0;
+        const sb = scoresMap.get(b.id)?.score ?? 0;
+        if (sb !== sa) return sb - sa;
+        // tiebreak: rating + reviews
+        const ra = a.avgRating ?? 0;
+        const rb = b.avgRating ?? 0;
+        if (rb !== ra) return rb - ra;
+        return b.reviewCount - a.reviewCount;
+      });
+    }
+    // Sin recomendaciones: mejor valoración primero, luego nº reseñas
+    return [...remaining].sort((a, b) => {
+      const ra = a.avgRating ?? 0;
+      const rb = b.avgRating ?? 0;
+      if (rb !== ra) return rb - ra;
+      return b.reviewCount - a.reviewCount;
+    });
+  }, [salons, dedupSet, hasRecommendations, scoresMap]);
 
-  const popular = useMemo(
-    () =>
-      [...salons]
-        .filter(
-          (s) =>
-            (s.avgRating !== null && s.avgRating >= 4) || s.reviewCount >= 2,
-        )
-        .sort((a, b) => {
-          const ra = a.avgRating ?? 0;
-          const rb = b.avgRating ?? 0;
-          if (rb !== ra) return rb - ra;
-          return b.reviewCount - a.reviewCount;
-        }),
-    [salons],
-  );
-
-  const recent = useMemo(() => {
-    const now = new Date();
-    return [...salons]
-      .filter((s) => {
-        if (!s.created_at) return false;
-        return differenceInDays(now, new Date(s.created_at)) <= 60;
-      })
-      .sort(
-        (a, b) =>
-          new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime(),
-      );
-  }, [salons]);
-
-  const favs = useMemo(
-    () => salons.filter((s) => favorites.includes(s.id)),
-    [salons, favorites],
-  );
-
-  const renderCards = (
-    list: SalonItem[],
-    sectionExpanded: boolean,
-    sectionId: SectionId,
-  ) => {
-    const items = sectionExpanded ? list : list.slice(0, CAROUSEL_LIMIT);
-    return items.map((salon, index) => {
+  const renderCarousel = (list: SalonItem[], sectionId: SectionId) =>
+    list.map((salon, index) => {
       const rec = scoresMap.get(salon.id);
-      const card = (
-        <PremiumSalonCard
-          salon={salon}
-          index={index}
-          distance={salon.formattedDistance}
-          hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
-          recommendationScore={rec?.score}
-          matchReasons={rec?.matchReasons}
-        />
-      );
-      if (sectionExpanded) {
-        const handleClickCapture = () => {
-          rememberSectionClick(sectionId, salon.id, index, rec?.score);
-          void trackEvent({
-            event_type: "click",
-            section_id: sectionId,
-            tenant_id: salon.id,
-            position: index,
-            score: rec?.score ?? null,
-            metadata: { kind: "card", layout: "grid" },
-          });
-        };
-        return (
-          <div key={`${sectionId}-${salon.id}`} onClickCapture={handleClickCapture}>
-            {card}
-          </div>
-        );
-      }
       return (
         <FeedCarouselItem
           key={`${sectionId}-${salon.id}`}
@@ -162,59 +104,60 @@ export function DiscoverSections({
           position={index}
           score={rec?.score}
         >
-          {card}
+          <PremiumSalonCard
+            salon={salon}
+            index={index}
+            distance={salon.formattedDistance}
+            hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
+            recommendationScore={rec?.score}
+            matchReasons={rec?.matchReasons}
+          />
         </FeedCarouselItem>
       );
     });
-  };
+
+  const renderFeaturedGrid = (list: SalonItem[]) =>
+    list.map((salon, index) => {
+      const rec = scoresMap.get(salon.id);
+      const handleClickCapture = () => {
+        rememberSectionClick("foryou", salon.id, index, rec?.score);
+        void trackEvent({
+          event_type: "click",
+          section_id: "foryou",
+          tenant_id: salon.id,
+          position: index,
+          score: rec?.score ?? null,
+          metadata: { kind: "card", layout: "featured-grid" },
+        });
+      };
+      return (
+        <div key={`foryou-${salon.id}`} onClickCapture={handleClickCapture}>
+          <PremiumSalonCard
+            salon={salon}
+            index={index}
+            distance={salon.formattedDistance}
+            hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
+            recommendationScore={rec?.score}
+            matchReasons={rec?.matchReasons}
+            variant="featured"
+          />
+        </div>
+      );
+    });
 
   return (
     <div className="space-y-1">
-      {/* 1. FAVORITOS (solo si tiene) */}
-      {isAuthenticated && favs.length > 0 && (
+      {/* HUECOS HOY */}
+      {today.length > 0 && (
         <FeedSection
-          icon={Heart}
-          title="Tus favoritos"
-          subtitle="Vuelve siempre a los que más te gustan"
-          count={favs.length}
-          expanded={expanded.favorites}
-          onToggleExpand={() => toggle("favorites")}
-          iconTint="rose"
-          sectionId="favorites"
+          icon={Zap}
+          title="Disponibles hoy"
+          subtitle="Reserva ahora, atiende hoy mismo"
+          count={today.length}
+          iconTint="emerald"
+          sectionId="today"
         >
-          {renderCards(favs, expanded.favorites, "favorites")}
-        </FeedSection>
-      )}
-
-      {/* 2. PARA TI */}
-      {forYou.length > 0 && (
-        <FeedSection
-          icon={Sparkles}
-          title="Para ti"
-          subtitle="Recomendaciones según tus gustos"
-          count={forYou.length}
-          expanded={expanded.foryou}
-          onToggleExpand={() => toggle("foryou")}
-          iconTint="primary"
-          sectionId="foryou"
-        >
-          {renderCards(forYou, expanded.foryou, "foryou")}
-        </FeedSection>
-      )}
-
-      {/* 3. EN TENDENCIA */}
-      {popular.length > 0 && (
-        <FeedSection
-          icon={Flame}
-          title="En tendencia"
-          subtitle="Los favoritos de la comunidad"
-          count={popular.length}
-          expanded={expanded.popular}
-          onToggleExpand={() => toggle("popular")}
-          iconTint="amber"
-          sectionId="popular"
-        >
-          {renderCards(popular, expanded.popular, "popular")}
+          {renderCarousel(today, "today")}
         </FeedSection>
       )}
 
@@ -225,12 +168,10 @@ export function DiscoverSections({
           title="Cerca de ti"
           subtitle="Lo más próximo a tu ubicación"
           count={nearby.length}
-          expanded={expanded.near}
-          onToggleExpand={() => toggle("near")}
           iconTint="primary"
           sectionId="near"
         >
-          {renderCards(nearby, expanded.near, "near")}
+          {renderCarousel(nearby, "near")}
         </FeedSection>
       )}
 
@@ -238,7 +179,7 @@ export function DiscoverSections({
         <FeedSection
           icon={Navigation}
           title="Cerca de ti"
-          subtitle="Activa tu ubicación para ver los salones más cercanos"
+          subtitle="Activa tu ubicación para ver salones cercanos"
           iconTint="primary"
           sectionId="near"
         >
@@ -246,7 +187,7 @@ export function DiscoverSections({
             <button
               onClick={onRequestLocation}
               disabled={geoLoading}
-              className="w-full h-full min-h-[280px] liquid-glass-card flex flex-col items-center justify-center gap-3 p-6 text-center hover:scale-[1.02] transition-transform"
+              className="w-full h-full min-h-[260px] liquid-glass-card flex flex-col items-center justify-center gap-3 p-6 text-center hover:scale-[1.02] transition-transform"
             >
               <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-[#99329a] flex items-center justify-center shadow-lg">
                 <Navigation className="h-7 w-7 text-white" />
@@ -256,7 +197,7 @@ export function DiscoverSections({
                   Activar ubicación
                 </p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Descubre salones cerca de ti y ahorra tiempo
+                  Descubre salones cerca de ti
                 </p>
               </div>
               <span className="mt-1 px-4 py-2 rounded-full gradient-primary text-primary-foreground text-xs font-semibold shadow-md">
@@ -267,36 +208,29 @@ export function DiscoverSections({
         </FeedSection>
       )}
 
-      {/* HUECOS HOY */}
-      {today.length > 0 && (
-        <FeedSection
-          icon={Zap}
-          title="Huecos hoy"
-          subtitle="Reserva ahora, atiende hoy mismo"
-          count={today.length}
-          expanded={expanded.today}
-          onToggleExpand={() => toggle("today")}
-          iconTint="emerald"
-          sectionId="today"
-        >
-          {renderCards(today, expanded.today, "today")}
-        </FeedSection>
-      )}
-
-      {/* RECIÉN LLEGADOS */}
-      {recent.length > 0 && (
-        <FeedSection
-          icon={PartyPopper}
-          title="Recién llegados"
-          subtitle="Los nuevos salones de GlowApp"
-          count={recent.length}
-          expanded={expanded.new}
-          onToggleExpand={() => toggle("new")}
-          iconTint="primary"
-          sectionId="new"
-        >
-          {renderCards(recent, expanded.new, "new")}
-        </FeedSection>
+      {/* PARA TI — GRID VERTICAL PRINCIPAL */}
+      {forYou.length > 0 && (
+        <section className="mt-2">
+          <div className="flex items-end justify-between mb-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-9 w-9 rounded-2xl flex items-center justify-center shadow-md shrink-0 bg-gradient-to-br from-primary to-[#99329a] text-white">
+                <Sparkles className="h-[18px] w-[18px]" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-[17px] font-bold text-foreground leading-tight truncate">
+                  {hasRecommendations && scoresMap.size > 0 ? "Recomendados para ti" : "Destacados"}
+                  <span className="ml-2 text-xs font-semibold text-muted-foreground">{forYou.length}</span>
+                </h2>
+                <p className="text-[11px] text-muted-foreground leading-tight truncate">
+                  Los mejores salones de la comunidad
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {renderFeaturedGrid(forYou)}
+          </div>
+        </section>
       )}
     </div>
   );
