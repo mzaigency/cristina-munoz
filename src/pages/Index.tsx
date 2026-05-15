@@ -329,24 +329,28 @@ const Index = () => {
                 transition={{ delay: 0.2, duration: 0.4 }}
                 className="mb-4"
               >
-                {/* Top row: Title + Actions */}
+                {/* Top row: Title (solo en modo grid filtrado) + Actions */}
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    {hasRecommendations && scoresMap.size > 0 ? (
-                      <Sparkles className="h-5 w-5 text-primary" />
+                  <div className="flex items-center gap-2 min-w-0">
+                    {(searchQuery || selectedCategory || showFavoritesOnly || sortByDistance) ? (
+                      <>
+                        {hasRecommendations && scoresMap.size > 0 ? (
+                          <Sparkles className="h-5 w-5 text-primary shrink-0" />
+                        ) : (
+                          <TrendingUp className="h-5 w-5 text-primary shrink-0" />
+                        )}
+                        <h2 className="text-lg font-bold text-foreground truncate">
+                          {searchQuery ? "Resultados" : "Filtrados"}
+                        </h2>
+                        <span className="text-xs text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full shrink-0">
+                          {filteredSalons?.length || 0}
+                        </span>
+                      </>
                     ) : (
-                      <TrendingUp className="h-5 w-5 text-primary" />
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Filtros rápidos
+                      </span>
                     )}
-                    <h2 className="text-lg font-bold text-foreground">
-                      {searchQuery 
-                        ? "Resultados" 
-                        : hasRecommendations && scoresMap.size > 0 
-                          ? "Para ti" 
-                          : "Destacados"}
-                    </h2>
-                    <span className="text-xs text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full">
-                      {filteredSalons?.length || 0}
-                    </span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
