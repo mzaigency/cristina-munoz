@@ -30,6 +30,9 @@ import { useTenantAccess } from "@/hooks/useTenantAccess";
 import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
 import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpiredScreen";
 import { NotifBadge } from "@/components/admin/layout/NotifBadge";
+import { AdminAccountMenu } from "@/components/admin/layout/AdminAccountMenu";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 
 import {
   ClientsSection,
@@ -399,7 +402,17 @@ export default function TenantAdmin() {
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <h2 className="text-sm font-bold text-foreground truncate">{tenant.name}</h2>
+                <div className="flex items-center gap-1.5">
+                  <h2 className="text-sm font-bold text-foreground truncate">{tenant.name}</h2>
+                  {subscriptionPlan && (
+                    <Badge
+                      variant="secondary"
+                      className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wide bg-gradient-to-r from-primary/15 to-purple-500/15 text-primary border-0 shrink-0"
+                    >
+                      {subscriptionPlan}
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-[11px] text-muted-foreground truncate">{userEmail}</p>
               </div>
             </div>
@@ -501,19 +514,20 @@ export default function TenantAdmin() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   <InteractiveTour onTabChange={(tab) => handleNavigate(tab)} />
                   <HelpTutorial />
-                  <Button onClick={() => navigate(`/${slug}`)} variant="outline" size="sm" className="gap-1 h-9 px-3 text-sm">
-                    <ExternalLink className="h-4 w-4" />
-                    <span>Ver web</span>
-                  </Button>
-                  <Button onClick={() => navigate("/")} variant="ghost" size="icon" className="h-9 w-9" title="Inicio">
-                    <Home className="h-5 w-5" />
-                  </Button>
-                  <Button onClick={handleSignOut} variant="ghost" size="icon" className="h-9 w-9" title="Cerrar sesión">
-                    <LogOut className="h-5 w-5" />
-                  </Button>
+                  <div className="w-px h-6 bg-border/60 mx-1" aria-hidden />
+                  <AdminAccountMenu
+                    tenantName={tenant.name}
+                    tenantSlug={tenant.slug}
+                    logoUrl={tenant.logo_url}
+                    userEmail={userEmail}
+                    plan={subscriptionPlan}
+                    onViewWeb={() => navigate(`/${slug}`)}
+                    onGoHome={() => navigate("/")}
+                    onSignOut={handleSignOut}
+                  />
                 </div>
               </div>
 
