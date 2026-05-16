@@ -31,9 +31,8 @@ import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpire
 import { NotifBadge } from "@/components/admin/layout/NotifBadge";
 import { AdminAccountMenu } from "@/components/admin/layout/AdminAccountMenu";
 import { AdminCommandPalette } from "@/components/admin/layout/AdminCommandPalette";
-import { AdminSubNav, ADMIN_SUB_NAV, getDefaultSubTab, type AdminSection } from "@/components/admin/layout/AdminSubNav";
+import { AdminSubNav, getDefaultSubTab, type AdminSection } from "@/components/admin/layout/AdminSubNav";
 import { useUnseenOrders } from "@/hooks/useUnseenOrders";
-import { supabase as sb } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 
