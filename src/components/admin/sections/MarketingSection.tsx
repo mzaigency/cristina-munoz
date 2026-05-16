@@ -14,11 +14,12 @@ interface MarketingSectionProps {
   tenantSlug: string;
   subTab?: string;
   onSubTabChange?: (subTab: string) => void;
+  hideTabs?: boolean;
 }
 
 type MarketingTab = "posts" | "qr" | "whatsapp";
 
-const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange }: MarketingSectionProps) => {
+const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTabs }: MarketingSectionProps) => {
   const [internalTab, setInternalTab] = useState<MarketingTab>("posts");
   const activeTab: MarketingTab = (subTab as MarketingTab) || internalTab;
   const setActiveTab = (t: MarketingTab) => {
