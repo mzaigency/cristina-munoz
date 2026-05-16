@@ -121,6 +121,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const [activeBookingActions, setActiveBookingActions] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
+  // Quick booking sheet (click on empty slot)
+  const [quickBooking, setQuickBooking] = useState<{
+    date: Date;
+    time: string;
+    stylistSlug: string;
+  } | null>(null);
+
   // Client lookup state for edit dialog
   const [matchedClient, setMatchedClient] = useState<{ id: string; name: string; tags: string[]; total_visits: number; total_spent: number; last_visit_at: string | null; notes: string | null } | null>(null);
   const [clientLoading, setClientLoading] = useState(false);
