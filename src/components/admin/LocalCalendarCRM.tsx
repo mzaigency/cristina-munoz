@@ -430,7 +430,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   const performBookingDeletion = async (booking: LocalBooking, cancelSeries: boolean) => {
     try {
-      setLoading(true);
+      // Optimistic: remove from local state immediately to keep scroll stable
+      setBookings((prev) => prev.filter((b) => b.id !== booking.id));
 
       // Call cancel-booking function which handles all cleanup
       const { error } = await supabase.functions.invoke("cancel-booking", {
