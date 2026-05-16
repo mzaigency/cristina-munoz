@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle } from "lucide-react";
+import { SectionEyebrow } from "./SectionEyebrow";
 
 const faqs = [
   {
