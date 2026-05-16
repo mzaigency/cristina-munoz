@@ -116,6 +116,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   // Series cancellation dialog
   const [seriesCancelDialogOpen, setSeriesCancelDialogOpen] = useState(false);
   const [pendingCancelBooking, setPendingCancelBooking] = useState<LocalBooking | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [pendingDeleteBooking, setPendingDeleteBooking] = useState<LocalBooking | null>(null);
 
   // Mobile action buttons state
   const [activeBookingActions, setActiveBookingActions] = useState<string | null>(null);
