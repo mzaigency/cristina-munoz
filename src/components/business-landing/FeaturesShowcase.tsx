@@ -111,7 +111,6 @@ const features = [
 
 export const FeaturesShowcase = () => {
   const [activeFeature, setActiveFeature] = useState(features[0]);
-  const navigate = useNavigate();
   const ActiveDemo = activeFeature.Demo;
   const contentRef = useRef<HTMLDivElement>(null);
 
