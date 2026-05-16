@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Check, Sparkles } from "lucide-react";
+import { SectionEyebrow } from "./SectionEyebrow";
 import { DemoCalendar, DemoBookingFlow, DemoCashRegister, DemoAnalytics, DemoLanding, DemoDashboard } from "./demos";
 
 const BRAND_GRADIENT = "from-primary to-accent";
