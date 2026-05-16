@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     question: "¿Mis clientes tienen que instalar algo?",
-    answer: "No. Tus clientes acceden a tu página web y reservan directamente desde el navegador de su móvil. No necesitan descargar nada aunque es aconsejable Glowapp.",
+    answer: "No. Tus clientes acceden a tu página web y reservan desde el navegador del móvil. Si quieren, pueden añadir GlowApp a la pantalla de inicio como una app — es opcional, pero más cómodo.",
   },
   {
     question: "¿Funciona con mi equipo de estilistas?",
