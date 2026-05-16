@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { SectionEyebrow } from "./SectionEyebrow";
 
 const points = [
   {
