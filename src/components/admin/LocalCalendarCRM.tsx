@@ -459,7 +459,6 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
       setSeriesCancelDialogOpen(false);
       setPendingCancelBooking(null);
     }
