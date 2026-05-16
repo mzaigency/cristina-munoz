@@ -344,7 +344,7 @@ export default function TenantAdmin() {
       >
         <div className="relative">
           {item.icon}
-          <NotifBadge count={badgeCount} variant="dot" hidden={!showBadge} />
+          {showBadge && <NotifBadge count={badgeCount} dot />}
         </div>
         <span className={cn("font-medium leading-none whitespace-nowrap", isMobile ? "text-[10px]" : "text-xs")}>
           {item.label}
@@ -423,7 +423,7 @@ export default function TenantAdmin() {
                   >
                     {item.icon}
                     <span className="flex-1 text-left">{item.label}</span>
-                    {showBadge && <NotifBadge count={badgeCount} variant="count" />}
+                    {showBadge && <NotifBadge count={badgeCount} position="inline" />}
                   </button>
                 );
               })}
