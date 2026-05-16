@@ -14,13 +14,32 @@ interface UseGeolocationOptions {
   maximumAge?: number;
 }
 
+const STORAGE_KEY = "glow_geo_v1";
+const PERM_DENIED_KEY = "glow_geo_denied_v1";
+
+function readPersisted(): Pick<GeolocationState, "latitude" | "longitude"> {
+  if (typeof window === "undefined") return { latitude: null, longitude: null };
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { latitude: null, longitude: null };
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.lat === "number" && typeof parsed?.lon === "number") {
+      return { latitude: parsed.lat, longitude: parsed.lon };
+    }
+  } catch {}
+  return { latitude: null, longitude: null };
+}
+
 export function useGeolocation(options: UseGeolocationOptions = {}) {
-  const [state, setState] = useState<GeolocationState>({
-    latitude: null,
-    longitude: null,
-    error: null,
-    loading: false,
-    permissionDenied: false,
+  const [state, setState] = useState<GeolocationState>(() => {
+    const persisted = readPersisted();
+    return {
+      latitude: persisted.latitude,
+      longitude: persisted.longitude,
+      error: null,
+      loading: false,
+      permissionDenied: false,
+    };
   });
 
   const { enableHighAccuracy = true, timeout = 10000, maximumAge = 300000 } = options;
