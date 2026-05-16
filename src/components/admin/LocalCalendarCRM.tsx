@@ -35,6 +35,7 @@ import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks,
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
+import { QuickBookingSheet } from "./QuickBookingSheet";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
 
 interface LocalBooking {
