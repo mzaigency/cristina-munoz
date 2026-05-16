@@ -590,6 +590,13 @@ export default function TenantAdmin() {
             </>
           )}
         </div>
+        <AdminSubNav
+          tenantId={tenant.id}
+          section={activeSection as AdminSection}
+          activeSubTab={activeSubTab}
+          counts={subNavCounts}
+          onSelect={(t) => goToSection(activeSection, t)}
+        />
       </header>
 
       {/* Content */}
