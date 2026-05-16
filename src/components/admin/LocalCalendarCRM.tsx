@@ -297,7 +297,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   const handleBookingComplete = () => {
     setIsCreateDialogOpen(false);
-    fetchBookings();
+    fetchBookings(true);
   };
 
   const handleUpdateBooking = async () => {
