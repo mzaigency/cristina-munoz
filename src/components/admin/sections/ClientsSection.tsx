@@ -12,11 +12,12 @@ interface ClientsSectionProps {
   initialClientId?: string;
   subTab?: string;
   onSubTabChange?: (subTab: string) => void;
+  hideTabs?: boolean;
 }
 
 type ClientsTab = "directory" | "reviews" | "messages";
 
-const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange }: ClientsSectionProps) => {
+const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange, hideTabs }: ClientsSectionProps) => {
   const [internalTab, setInternalTab] = useState<ClientsTab>("directory");
   // Map URL slugs (directorio/mensajes/resenas) to internal ids
   const slugToId: Record<string, ClientsTab> = { directorio: "directory", mensajes: "messages", resenas: "reviews" };
