@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
+import { SectionEyebrow } from "./SectionEyebrow";
 
 const testimonials = [
   {
