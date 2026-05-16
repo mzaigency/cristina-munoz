@@ -17,6 +17,8 @@ import { AppLayout } from "@/components/navigation/AppLayout";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
 import { WelcomeCarousel, useWelcomeOnboarding } from "@/components/onboarding/WelcomeCarousel";
+import { ClientCoachmark } from "@/components/coachmark/ClientCoachmark";
+import { Compass } from "lucide-react";
 import { useGeolocation, CITY_COORDINATES } from "@/hooks/useGeolocation";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useTodayAvailability } from "@/hooks/useTodayAvailability";
