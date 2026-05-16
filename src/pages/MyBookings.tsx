@@ -27,6 +27,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { parseISODateToLocal } from "@/lib/datetime";
 import { formatTimeHHmm } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
+import { ClientCoachmark } from "@/components/coachmark/ClientCoachmark";
 
 type Booking = {
   id: string;
