@@ -133,7 +133,7 @@ export const FeaturesShowcase = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <span className="text-sm font-medium text-primary uppercase tracking-wider">Todo lo que necesitas</span>
+          <SectionEyebrow icon={Sparkles} label="Todo lo que necesitas" />
           <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4 text-foreground">Funciones que transforman tu negocio</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Desde reservas automáticas hasta analytics avanzados. Todo diseñado para profesionales de la belleza.
