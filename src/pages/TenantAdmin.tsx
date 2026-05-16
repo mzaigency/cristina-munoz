@@ -301,9 +301,8 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             tenantSlug={slug || ""}
-            subTab={subTabParam}
+            subTab={activeSubTab}
             onNavigate={(path) => {
-              // path may be a legacy tab key or absolute path
               if (path.startsWith("/")) handlePathNavigate(path);
               else handleNavigate(path);
             }}
@@ -315,8 +314,9 @@ export default function TenantAdmin() {
           <ClientsSection
             key={refreshKey}
             tenantId={tenant.id}
-            subTab={subTabParam}
+            subTab={activeSubTab}
             onSubTabChange={(t) => goToSection("clientes", t)}
+            hideTabs
           />
         );
       case "catalogo":
@@ -324,8 +324,9 @@ export default function TenantAdmin() {
           <CatalogSection
             key={refreshKey}
             tenantId={tenant.id}
-            subTab={subTabParam}
+            subTab={activeSubTab}
             onSubTabChange={(t) => goToSection("catalogo", t)}
+            hideTabs
           />
         );
       case "marketing":
@@ -334,8 +335,9 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             tenantSlug={tenant.slug}
-            subTab={subTabParam}
+            subTab={activeSubTab}
             onSubTabChange={(t) => goToSection("marketing", t)}
+            hideTabs
           />
         );
       case "negocio":
