@@ -372,45 +372,8 @@ const Index = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    {/* Near Me Button — liquid glass */}
-                    <motion.button
-                      whileTap={{ scale: 0.92 }}
-                      onClick={handleNearMeClick}
-                      disabled={geoLoading}
-                      aria-label="Buscar salones cerca de mí"
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
-                        sortByDistance && hasLocation
-                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
-                          : "liquid-glass-pill text-muted-foreground"
-                      )}
-                    >
-                      {geoLoading ? (
-                        <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Navigation className="h-3.5 w-3.5" />
-                      )}
-                      <span className="hidden xs:inline">Cerca</span>
-                    </motion.button>
+                  <div className="flex items-center gap-1.5" />
 
-                    {isAuthenticated && (
-                      <motion.button
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                        aria-label={showFavoritesOnly ? "Mostrar todos los salones" : "Mostrar solo favoritos"}
-                        className={cn(
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
-                          showFavoritesOnly
-                            ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
-                            : "liquid-glass-pill text-muted-foreground"
-                        )}
-                      >
-                        <Heart className={cn("h-3.5 w-3.5", showFavoritesOnly && "fill-current")} />
-                        <span className="hidden xs:inline">Favoritos</span>
-                      </motion.button>
-                    )}
-                  </div>
                 </div>
 
                 {/* Category Pills - more compact */}
