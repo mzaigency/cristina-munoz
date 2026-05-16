@@ -58,7 +58,6 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
   marketing: [
     { value: "posts", label: "Posts", icon: ImagePlus },
     { value: "qr", label: "Tarjetas QR", icon: QrCode },
-    { value: "whatsapp", label: "WhatsApp", icon: MessageCircle },
   ],
   negocio: [
     { value: "equipo", label: "Equipo", icon: Users },
