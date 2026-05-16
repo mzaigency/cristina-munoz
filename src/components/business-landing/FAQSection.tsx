@@ -61,7 +61,7 @@ export const FAQSection = () => {
               >
                 <button
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className={`w-full text-left p-5 rounded-xl transition-all ${
+                  className={`w-full text-left p-5 rounded-2xl transition-all ${
                     openIndex === index
                       ? "bg-primary/5 shadow-sm border border-primary/20"
                       : "bg-secondary/50 border border-border hover:border-primary/20"
