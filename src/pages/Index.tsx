@@ -264,14 +264,6 @@ const Index = () => {
     setVisibleCount(prev => prev + ITEMS_PER_PAGE);
   };
 
-  const handleNearMeClick = () => {
-    haptic.medium();
-    if (!hasLocation) {
-      requestLocation();
-      return;
-    }
-    setSortByDistance(prev => !prev);
-  };
 
   return (
     <>
