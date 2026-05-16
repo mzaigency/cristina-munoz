@@ -5,3 +5,6 @@ export { default as ClientsSection } from "./ClientsSection";
 export { default as CatalogSection } from "./CatalogSection";
 export { default as MarketingSection } from "./MarketingSection";
 export { default as ReportsSection } from "./ReportsSection";
+export { default as InicioSection } from "./InicioSection";
+export { default as NegocioSection } from "./NegocioSection";
+
