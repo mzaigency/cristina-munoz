@@ -18,30 +18,41 @@ import { cn } from "@/lib/utils";
 interface AgendaSectionProps {
   tenantId: string;
   onSelectClient?: (clientId: string) => void;
+  /** Controlled sub-tab from URL. If provided, overrides internal state. */
+  subTab?: string;
+  /** Called when user clicks a sub-tab; parent should navigate the URL. */
+  onSubTabChange?: (subTab: string) => void;
 }
 
 type AgendaTab = "calendar" | "waitlist" | "orders" | "cash";
 
-const AgendaSection = ({ tenantId, onSelectClient }: AgendaSectionProps) => {
-  const [activeTab, setActiveTab] = useState<AgendaTab>("calendar");
+const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange }: AgendaSectionProps) => {
+  const [internalTab, setInternalTab] = useState<AgendaTab>("calendar");
+  const activeTab: AgendaTab = (subTab as AgendaTab) || internalTab;
+  const setActiveTab = (t: AgendaTab) => {
+    if (onSubTabChange) onSubTabChange(t);
+    else setInternalTab(t);
+  };
   const [stylists, setStylists] = useState<Array<{ slug: string; name: string; color: string }>>([]);
   const [waitlistCount, setWaitlistCount] = useState(0);
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
   const unseenOrders = useUnseenOrders(tenantId);
 
+  // Legacy sessionStorage compat (only when no subTab prop is provided)
   useEffect(() => {
+    if (subTab) return;
     const openCashTab = sessionStorage.getItem("openCashTab");
     const pendingBooking = sessionStorage.getItem("pendingChargeBooking");
     if ((openCashTab || pendingBooking) && hasFeature("cash_register")) {
-      setActiveTab("cash");
+      setInternalTab("cash");
       sessionStorage.removeItem("openCashTab");
     }
-    const subTab = sessionStorage.getItem("openAgendaSubTab");
-    if (subTab && ["calendar", "waitlist", "orders", "cash"].includes(subTab)) {
-      setActiveTab(subTab as AgendaTab);
+    const legacySubTab = sessionStorage.getItem("openAgendaSubTab");
+    if (legacySubTab && ["calendar", "waitlist", "orders", "cash"].includes(legacySubTab)) {
+      setInternalTab(legacySubTab as AgendaTab);
       sessionStorage.removeItem("openAgendaSubTab");
     }
-  }, [hasFeature]);
+  }, [hasFeature, subTab]);
 
   useEffect(() => {
     const fetchStylists = async () => {
