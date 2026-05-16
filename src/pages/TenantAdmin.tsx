@@ -83,7 +83,7 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   marketing: { section: "marketing" },
   posts: { section: "marketing", subTab: "posts" },
   qr: { section: "marketing", subTab: "qr" },
-  whatsapp: { section: "marketing", subTab: "whatsapp" },
+  whatsapp: { section: "marketing", subTab: "posts" },
   team: { section: "negocio", subTab: "equipo" },
   stylists: { section: "negocio", subTab: "equipo" },
   hours: { section: "negocio", subTab: "equipo" },
