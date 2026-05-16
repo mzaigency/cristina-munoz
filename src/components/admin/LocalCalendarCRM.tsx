@@ -185,9 +185,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     fetchBookings();
   }, [weekStart, tenantId]);
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
 
       const { data, error } = await supabase
