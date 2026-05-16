@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle } from "lucide-react";
+import { SectionEyebrow } from "./SectionEyebrow";
 
 const faqs = [
   {
@@ -41,11 +42,8 @@ export const FAQSection = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 text-primary mb-4">
-            <HelpCircle className="w-5 h-5" />
-            <span className="text-sm font-medium uppercase tracking-wider">Preguntas frecuentes</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-foreground">¿Tienes dudas?</h2>
+          <SectionEyebrow icon={HelpCircle} label="Preguntas frecuentes" />
+          <h2 className="text-3xl sm:text-4xl font-bold mt-3 mb-4 text-foreground">¿Tienes dudas?</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Aquí respondemos las preguntas más comunes. Si no encuentras lo que buscas, escríbenos y te ayudamos.
           </p>
@@ -63,7 +61,7 @@ export const FAQSection = () => {
               >
                 <button
                   onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className={`w-full text-left p-5 rounded-xl transition-all ${
+                  className={`w-full text-left p-5 rounded-2xl transition-all ${
                     openIndex === index
                       ? "bg-primary/5 shadow-sm border border-primary/20"
                       : "bg-secondary/50 border border-border hover:border-primary/20"
