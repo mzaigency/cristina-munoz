@@ -35,6 +35,7 @@ import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks,
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
+import { QuickBookingSheet } from "./QuickBookingSheet";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
 
 interface LocalBooking {
@@ -119,6 +120,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   // Mobile action buttons state
   const [activeBookingActions, setActiveBookingActions] = useState<string | null>(null);
   const isMobile = useIsMobile();
+
+  // Quick booking sheet (click on empty slot)
+  const [quickBooking, setQuickBooking] = useState<{
+    date: Date;
+    time: string;
+    stylistSlug: string;
+  } | null>(null);
 
   // Client lookup state for edit dialog
   const [matchedClient, setMatchedClient] = useState<{ id: string; name: string; tags: string[]; total_visits: number; total_spent: number; last_visit_at: string | null; notes: string | null } | null>(null);
@@ -1212,11 +1220,32 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                               .map((stylist) => (
                               <div key={stylist.slug} className="flex-1 min-w-[100px] md:min-w-[180px]">
                                 <div
-                                  className="relative rounded-lg overflow-hidden"
+                                  className="relative rounded-lg overflow-hidden cursor-pointer group/col"
                                   style={{ backgroundColor: "hsl(var(--muted) / 0.3)" }}
                                   onDragOver={(e) => handleDragOverColumn(e, stylist.slug, schedule.startHour)}
                                   onDragLeave={handleDragLeave}
                                   onDrop={(e) => handleDropOnColumn(e, stylist.slug, schedule.startHour, dateKey)}
+                                  onClick={(e) => {
+                                    // Ignore clicks on bookings or controls
+                                    const target = e.target as HTMLElement;
+                                    if (target.closest("[data-booking-id]")) return;
+                                    if (target.closest("button")) return;
+                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                    const y = e.clientY - rect.top;
+                                    const totalMinutes = Math.max(0, Math.floor(y / PIXELS_PER_MINUTE));
+                                    // Snap to 15 min
+                                    const snapped = Math.round(totalMinutes / 15) * 15;
+                                    const totalAbs = schedule.startHour * 60 + snapped;
+                                    const hh = Math.floor(totalAbs / 60);
+                                    const mm = totalAbs % 60;
+                                    if (hh >= schedule.endHour) return;
+                                    const timeStr = `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+                                    setQuickBooking({
+                                      date: day,
+                                      time: timeStr,
+                                      stylistSlug: stylist.slug,
+                                    });
+                                  }}
                                 >
                                   {/* Hour grid lines */}
                                   {schedule.hours.map((hour) => (
@@ -1541,6 +1570,27 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           />
         </DialogContent>
       </Dialog>
+
+      {/* Quick Booking Sheet - opens on click on empty calendar slot */}
+      {quickBooking && (
+        <QuickBookingSheet
+          open={!!quickBooking}
+          onOpenChange={(open) => !open && setQuickBooking(null)}
+          tenantId={tenantId}
+          initialDate={quickBooking.date}
+          initialTime={quickBooking.time}
+          initialStylistSlug={quickBooking.stylistSlug}
+          stylists={stylists}
+          onCreated={() => {
+            setQuickBooking(null);
+            fetchBookings();
+          }}
+          onMoreOptions={() => {
+            setQuickBooking(null);
+            setIsCreateDialogOpen(true);
+          }}
+        />
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
