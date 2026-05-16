@@ -346,7 +346,7 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             tenantSlug={tenant.slug}
-            subTab={subTabParam}
+            subTab={activeSubTab}
           />
         );
       default:
