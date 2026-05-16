@@ -232,10 +232,6 @@ export const FeaturesShowcase = () => {
                     </motion.li>
                   ))}
                 </ul>
-                <Button onClick={() => navigate("/onboarding")} className="rounded-full gradient-primary border-0">
-                  Probar esta función
-                  <ChevronRight className="ml-1 w-4 h-4" />
-                </Button>
               </div>
 
               <div className="relative mx-auto w-[280px]" style={{ aspectRatio: "9/19.5" }}>
