@@ -16,6 +16,7 @@ interface CatalogSectionProps {
   tenantId: string;
   subTab?: string;
   onSubTabChange?: (subTab: string) => void;
+  hideTabs?: boolean;
 }
 
 type CatalogTab = "services" | "products" | "packages" | "promos";
@@ -28,7 +29,7 @@ interface TabConfig {
   requiredPlan?: string;
 }
 
-const CatalogSection = ({ tenantId, subTab, onSubTabChange }: CatalogSectionProps) => {
+const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogSectionProps) => {
   const [internalTab, setInternalTab] = useState<CatalogTab>("services");
   const activeTab: CatalogTab = (subTab as CatalogTab) || internalTab;
   const setActiveTab = (t: CatalogTab) => {
