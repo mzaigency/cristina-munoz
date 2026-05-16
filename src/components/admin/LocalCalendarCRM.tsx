@@ -1571,6 +1571,27 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         </DialogContent>
       </Dialog>
 
+      {/* Quick Booking Sheet - opens on click on empty calendar slot */}
+      {quickBooking && (
+        <QuickBookingSheet
+          open={!!quickBooking}
+          onOpenChange={(open) => !open && setQuickBooking(null)}
+          tenantId={tenantId}
+          initialDate={quickBooking.date}
+          initialTime={quickBooking.time}
+          initialStylistSlug={quickBooking.stylistSlug}
+          stylists={stylists}
+          onCreated={() => {
+            setQuickBooking(null);
+            fetchBookings();
+          }}
+          onMoreOptions={() => {
+            setQuickBooking(null);
+            setIsCreateDialogOpen(true);
+          }}
+        />
+      )}
+
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
