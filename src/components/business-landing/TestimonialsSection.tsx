@@ -26,9 +26,7 @@ export const TestimonialsSection = () => {
           viewport={{ once: true }}
           className="text-center mb-10 md:mb-14"
         >
-          <span className="text-xs font-semibold text-accent uppercase tracking-wider">
-            Voces de verdad
-          </span>
+          <SectionEyebrow label="Voces de verdad" tone="accent" />
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mt-3 mb-3 text-foreground">
             Lo que dicen quienes ya brillan
           </h2>
