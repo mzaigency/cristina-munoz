@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 
 interface CatalogSectionProps {
   tenantId: string;
+  subTab?: string;
+  onSubTabChange?: (subTab: string) => void;
 }
 
 type CatalogTab = "services" | "products" | "packages" | "promos";
@@ -26,17 +28,23 @@ interface TabConfig {
   requiredPlan?: string;
 }
 
-const CatalogSection = ({ tenantId }: CatalogSectionProps) => {
-  const [activeTab, setActiveTab] = useState<CatalogTab>("services");
+const CatalogSection = ({ tenantId, subTab, onSubTabChange }: CatalogSectionProps) => {
+  const [internalTab, setInternalTab] = useState<CatalogTab>("services");
+  const activeTab: CatalogTab = (subTab as CatalogTab) || internalTab;
+  const setActiveTab = (t: CatalogTab) => {
+    if (onSubTabChange) onSubTabChange(t);
+    else setInternalTab(t);
+  };
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
 
   useEffect(() => {
-    const subTab = sessionStorage.getItem("openCatalogSubTab");
-    if (subTab && ["services", "products", "packages", "promos"].includes(subTab)) {
-      setActiveTab(subTab as CatalogTab);
+    if (subTab) return;
+    const legacy = sessionStorage.getItem("openCatalogSubTab");
+    if (legacy && ["services", "products", "packages", "promos"].includes(legacy)) {
+      setInternalTab(legacy as CatalogTab);
       sessionStorage.removeItem("openCatalogSubTab");
     }
-  }, []);
+  }, [subTab]);
 
   const tabs: TabConfig[] = [
     { id: "services", label: "Servicios", icon: Scissors },
