@@ -22,11 +22,13 @@ interface AgendaSectionProps {
   subTab?: string;
   /** Called when user clicks a sub-tab; parent should navigate the URL. */
   onSubTabChange?: (subTab: string) => void;
+  /** Hide internal TabsList (parent renders sub-nav). */
+  hideTabs?: boolean;
 }
 
 type AgendaTab = "calendar" | "waitlist" | "orders" | "cash";
 
-const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange }: AgendaSectionProps) => {
+const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideTabs }: AgendaSectionProps) => {
   const [internalTab, setInternalTab] = useState<AgendaTab>("calendar");
   const activeTab: AgendaTab = (subTab as AgendaTab) || internalTab;
   const setActiveTab = (t: AgendaTab) => {
