@@ -1,80 +1,78 @@
-## 1. Feed de inicio — estilo Treatwell/Fresha
 
-**Diagnóstico actual:** 6 carruseles apilados (Favoritos, Para ti, Tendencia, Cerca, Hoy, Recién llegados) + cabecera + AISearchBar + FeedToggle + filtros + CategoryPills. Demasiado scroll antes de ver un salón. Las `PremiumSalonCard` repiten el mismo salón en varias secciones, lo que hace sentir el feed pobre y redundante.
+# Plan: Crear cita rápida con click directo en el calendario
 
-**Nueva estructura (mobile-first, prioridad 843px y menores):**
+## Problema
+
+Crear una cita desde el panel admin obliga a recorrer 4 pasos secuenciales (servicios → profesional → fecha → hora → cliente) en `AdminBookingFlow.tsx`, igual que un cliente final. Para uso diario en el salón es lento y repetitivo, sobre todo cuando ya estás mirando el calendario y sabes exactamente dónde quieres meter la cita.
+
+## Idea principal
+
+Hacer que **cada hueco libre del calendario sea clicable**. Al pulsar, se abre un mini-modal "Cita rápida" con la **fecha, hora y profesional ya rellenas** (las inferimos del hueco que has tocado). Tú solo eliges cliente + servicio y guardas. Si necesitas el flujo largo (recurrencia, varios servicios, etc.), sigue disponible con el botón "+" actual.
+
+## Diseño del flujo nuevo
+
+### 1. Click en hueco libre del calendario
+
+En `LocalCalendarCRM.tsx`, añadir capa clicable en cada celda vacía del grid (por día + franja horaria + columna de profesional). Visualmente:
+- Hover: fondo `bg-primary/5` + cursor pointer + icono `+` sutil en el centro.
+- Al clicar: abre `QuickBookingSheet` con `{ date, time, stylistSlug }` precargados.
+
+### 2. QuickBookingSheet (componente nuevo, mobile-first)
+
+Bottom sheet estilo iOS (Liquid Glass) con **una sola pantalla**, sin pasos:
 
 ```text
-┌──────────────────────────────┐
-│ Header (logo + notif + B2B)  │
-├──────────────────────────────┤
-│ HERO buscador + ubicación    │  ← protagonista
-│ "Encuentra tu salón ideal"   │
-│ [🔍 Busca servicio o lugar]  │
-│ 📍 Cerca de mí · ✨ Hoy      │
-├──────────────────────────────┤
-│ Categorías (chips horiz)     │  ← CategoryPills compacto
-├──────────────────────────────┤
-│ ⚡ Disponibles HOY (carrusel)│  ← solo si hay
-├──────────────────────────────┤
-│ 📍 Cerca de ti (carrusel)    │  ← solo si hay ubicación
-├──────────────────────────────┤
-│ ✨ Recomendados para ti      │  ← grid vertical principal,
-│ [card grande]                │     scroll infinito, dedup
-│ [card grande]                │     contra los carruseles
-│ [card grande]                │     de arriba
-└──────────────────────────────┘
+┌────────────────────────────────┐
+│  Nueva cita                  ✕ │
+│  Lunes 18 nov · 10:30 · Montse │ ← chip editable
+├────────────────────────────────┤
+│  Cliente                       │
+│  [🔍 Buscar o escribir nombre] │ ← autocomplete CRM (ya existe)
+│  └─ resultados / "Nuevo: ..."  │
+├────────────────────────────────┤
+│  Servicio                      │
+│  [chips de servicios + buscar] │ ← multi-select compacto
+│  Duración total: 45 min        │
+├────────────────────────────────┤
+│  [ Crear cita ]   [Más opciones]│
+└────────────────────────────────┘
 ```
 
-**Cambios concretos:**
+- **Cliente**: reutiliza el autocomplete ya implementado en `AdminBookingFlow` (búsqueda en `clients` con stats badge). Si no existe → "Crear nuevo: {nombre}" inline, solo nombre + teléfono opcional.
+- **Servicio**: grid de chips agrupados por categoría, con buscador encima. Multi-select. La duración se recalcula y se muestra.
+- **Chip fecha/hora/profesional**: clicable para editar inline (popover) sin salir del sheet.
+- **"Más opciones"**: abre el `AdminBookingFlow` largo actual con los datos ya rellenos, para casos con recurrencia, promos, etc.
 
-1. **Hero buscador unificado** — fusionar `SmartSearchHeader` + `AISearchBar` + filtros "Cerca/Favoritos" en un único bloque hero compacto (≈180px alto) con buscador grande, atajos de ubicación y "huecos hoy", y favoritos como icono.
-2. **Reducir a 3 secciones máximo** (en este orden):
-   - **Huecos hoy** (carrusel, solo si `tenantsWithAvailability.length > 0`).
-   - **Cerca de ti** (carrusel, solo si `hasLocation`; CTA para activar ubicación si no).
-   - **Para ti / Destacados** (grid vertical principal, no carrusel — es el cuerpo del feed).
-3. **Eliminar como secciones independientes**: Favoritos (acceso vía icono header), Tendencia (mezclado en Para ti via score), Recién llegados (badge "Nuevo" en card, ya existe).
-4. **Deduplicación**: los salones que aparecen en "Huecos hoy" o "Cerca de ti" se excluyen del grid principal "Para ti" para evitar repetición.
-5. **Tarjeta principal mejorada**: en el grid "Para ti", usar variante full-width de `PremiumSalonCard` con imagen 16:9 más grande (h-64), badges más limpios (max 1 visible), botón "Reservar" prominente. En carruseles seguir usando la versión compacta actual.
-6. **Quitar `FeedToggle`** del nivel superior y mover "Siguiendo" como tab secundario más sutil (chip en el hero) — el modo descubrir es lo principal.
+### 3. Crear cita
 
-**Archivos afectados:**
-- `src/pages/Index.tsx` — reorganizar layout, lógica de dedup, simplificar render.
-- `src/components/feed/sections/DiscoverSections.tsx` — reducir a 3 secciones, marcar el grid "Para ti" como sección principal vertical.
-- `src/components/feed/PremiumSalonCard.tsx` — añadir variante `featured` con imagen mayor y layout más editorial.
-- `src/components/feed/SmartSearchHeader.tsx` + `AISearchBar.tsx` — fusionar en un nuevo `FeedHero.tsx` (o reorganizar para que visualmente sean un bloque continuo con búsqueda protagonista).
-- `src/components/feed/FeedToggle.tsx` — degradarlo a chip inline en el hero o eliminarlo si "Siguiendo" se mueve a otra ruta.
+Reutiliza la misma lógica de inserción que `AdminBookingFlow` (función `handleCreateBooking`). Tras crear:
+- Cierra el sheet.
+- Toast de éxito.
+- La cita aparece animada en el calendario (ya hay realtime).
 
-## 2. Auto-actualización silenciosa
+## Archivos a tocar
 
-**Problema actual:** `UpdatePrompt` aparece muy seguido y a veces aunque no haya cambios reales. Causa: se dispara con `swUpdated` (vite-plugin-pwa), `controllerchange` ya estaba excluido pero `useAppVersion` también muestra prompt cuando detecta `version.json` distinto, y los SW de Firebase Messaging interfieren.
+- **Nuevo**: `src/components/admin/QuickBookingSheet.tsx` — el sheet de una pantalla.
+- **Modificar**: `src/components/admin/LocalCalendarCRM.tsx`
+  - Añadir overlay clicable en celdas vacías del grid horario.
+  - Estado `quickBooking: { date, time, stylistSlug } | null` y render del sheet.
+- **Reutilizar tal cual**: lógica de autocomplete de clientes, lista de servicios, función de creación de booking (extraer a hook `useCreateBooking` si hace falta para no duplicar).
+- **Mantener intacto**: `AdminBookingFlow.tsx` (sigue siendo el flujo "Más opciones" / botón "+").
 
-**Solución — auto-update silencioso:**
+## Detalles UX importantes
 
-1. **Eliminar `UpdatePrompt` visible.** Sustituirlo por recarga automática controlada:
-   - Cuando `useAppVersion` detecte versión nueva, en vez de poner `setUpdateAvailable(true)`, llamar directamente a `acceptUpdate()` **si la pestaña está oculta** o **el usuario está inactivo >30s** (sin scroll/click). Así nunca interrumpe.
-   - Si el usuario está activo, esperar al próximo `visibilitychange` → `hidden` (bloquea pestaña) o al volver a `visible` después de >2min de inactividad → recargar entonces.
-2. **Ignorar `swUpdated` cuando viene del SW de Firebase**: el evento ya se intenta filtrar pero vamos a quitar el prompt visual por completo, así esos falsos positivos dejan de molestar.
-3. **`useAppVersion` mejoras:**
-   - Comparar siempre `data.version` (no `buildTime`) para evitar ruido por rebuilds idénticos.
-   - Añadir guard: si `serverVersion` cambió pero el hash del bundle servido en `index.html` no, ignorar (evita flapping de CDN).
-4. **Toast opcional minimal post-recarga**: tras `reload`, leer `sessionStorage.glowapp_just_updated` y mostrar un toast `"Actualizado a la última versión"` 2s con el `useToast` existente. Sin botones, no bloquea.
+- **Defaults estrictos**: como pediste, no asumimos servicio ni cliente. Solo precargamos lo que viene implícito del click (fecha + hora + columna de profesional).
+- **Safe area iPhone**: sheet respeta `env(safe-area-inset-bottom)` y deja margen para la bottom nav.
+- **Móvil primero**: el grid del calendario en móvil ya es estrecho; el área clicable debe ser ≥ 44px de alto para ser cómoda con el dedo.
+- **Conflictos**: si el hueco resulta no estar libre (ya hay cita), el botón "Crear cita" se deshabilita con aviso.
+- **Click vs drag**: si en el futuro hay drag-to-create (arrastrar para definir duración), este click es el caso simple; el drag sería complementario.
 
-**Archivos afectados:**
-- `src/hooks/useAppVersion.ts` — quitar el modelo "prompt + dismiss", convertir en hook que recarga sola con heurística de inactividad.
-- `src/components/pwa/UpdatePrompt.tsx` — **eliminar** (o reducir a un toast `Sonner` muy discreto).
-- `src/main.tsx` o `src/App.tsx` — al boot, leer flag de "just updated" y mostrar toast 2s.
-- `public/firebase-messaging-sw.js` — verificar que no emite eventos que `vite-plugin-pwa` interprete como update.
+## Lo que NO entra en este plan
 
-## Detalles técnicos
+- Drag de servicio sobre hueco (lo descartamos por ahora, click es suficiente).
+- "Servicio favorito por cliente" / defaults inteligentes (rechazado explícitamente).
+- Rediseñar el flujo largo `AdminBookingFlow` — se mantiene como fallback.
 
-- **Dedup de carruseles vs grid:** mantener un `Set<id>` con los ids ya mostrados arriba; filtrar antes del `.map` del grid principal.
-- **Inactividad:** detectar con listeners `mousemove`, `touchstart`, `scroll`, `keydown` reseteando un timer; tras 30s sin eventos + pestaña visible, considerar idle.
-- **Safe areas iOS:** el nuevo hero respeta `env(safe-area-inset-top)` (ya cubierto globalmente vía `html`).
-- **Sin cambios de schema ni edge functions.**
+## Resultado esperado
 
-## Fuera de alcance
-
-- Cambios al modo "Siguiendo" más allá de mover su entry point.
-- Rediseño de `PremiumSalonCard` carrusel (solo se añade variante `featured`).
-- Cambios en SEO / sitemap / Google Search Console.
+De **4 pasos + búsqueda manual** → a **1 click en el hueco + 2 selects en un sheet**. Crear una cita debería pasar de ~30s a ~5-8s.
