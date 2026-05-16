@@ -344,17 +344,12 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto border-none card-elevated glass relative">
-      <div className="p-6 flex flex-col min-h-[60vh] pb-28">
-        {/* Header with exit */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold text-foreground">{STEP_TITLES[step - 1]}</h2>
-            <p className="text-sm text-muted-foreground mt-1">{STEP_DESCRIPTIONS[step - 1]}</p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={onCancel} className="shrink-0">
-            <X className="h-4 w-4 mr-1" /> Salir
-          </Button>
+    <div className="w-full">
+      <div className="flex flex-col">
+        {/* Header */}
+        <div className="mb-4 pr-8">
+          <h2 className="text-lg sm:text-xl font-bold text-foreground">{STEP_TITLES[step - 1]}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{STEP_DESCRIPTIONS[step - 1]}</p>
         </div>
 
         {/* Progress bar (mirror public booking) */}
