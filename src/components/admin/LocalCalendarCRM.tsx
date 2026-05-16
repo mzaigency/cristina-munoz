@@ -1220,11 +1220,32 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                               .map((stylist) => (
                               <div key={stylist.slug} className="flex-1 min-w-[100px] md:min-w-[180px]">
                                 <div
-                                  className="relative rounded-lg overflow-hidden"
+                                  className="relative rounded-lg overflow-hidden cursor-pointer group/col"
                                   style={{ backgroundColor: "hsl(var(--muted) / 0.3)" }}
                                   onDragOver={(e) => handleDragOverColumn(e, stylist.slug, schedule.startHour)}
                                   onDragLeave={handleDragLeave}
                                   onDrop={(e) => handleDropOnColumn(e, stylist.slug, schedule.startHour, dateKey)}
+                                  onClick={(e) => {
+                                    // Ignore clicks on bookings or controls
+                                    const target = e.target as HTMLElement;
+                                    if (target.closest("[data-booking-id]")) return;
+                                    if (target.closest("button")) return;
+                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                    const y = e.clientY - rect.top;
+                                    const totalMinutes = Math.max(0, Math.floor(y / PIXELS_PER_MINUTE));
+                                    // Snap to 15 min
+                                    const snapped = Math.round(totalMinutes / 15) * 15;
+                                    const totalAbs = schedule.startHour * 60 + snapped;
+                                    const hh = Math.floor(totalAbs / 60);
+                                    const mm = totalAbs % 60;
+                                    if (hh >= schedule.endHour) return;
+                                    const timeStr = `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+                                    setQuickBooking({
+                                      date: day,
+                                      time: timeStr,
+                                      stylistSlug: stylist.slug,
+                                    });
+                                  }}
                                 >
                                   {/* Hour grid lines */}
                                   {schedule.hours.map((hour) => (
