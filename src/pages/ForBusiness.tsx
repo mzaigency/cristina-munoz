@@ -5,7 +5,6 @@ import {
   ForWhoSection,
   PainPointsSection,
   FeaturesShowcase,
-  BeforeAfterSection,
   TestimonialsSection,
   PricingSection,
   FAQSection,
