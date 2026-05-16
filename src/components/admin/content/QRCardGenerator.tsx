@@ -352,24 +352,26 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
       ctx.beginPath();
       ctx.roundRect(logoX, y, logoSize, logoSize, 32);
       ctx.stroke();
-      y += logoSize + 80;
+      y += logoSize + 180;
     } else {
-      y += 40;
+      y += 60;
     }
 
     // H1 "RESERVA TU CITA"
     ctx.textAlign = "center";
+    ctx.textBaseline = "top";
     ctx.fillStyle = s.text;
     ctx.font = `bold 200px "${fonts.heading}", sans-serif`;
     ctx.fillText("RESERVA TU CITA", centerX, y);
-    y += 140;
+    y += 230;
 
     // H2 "en {salon}"
     ctx.fillStyle = s.text;
     ctx.font = `100px "${fonts.heading}", sans-serif`;
     const salonLine = `en ${branding.name || "nuestro salón"}`;
     ctx.fillText(salonLine, centerX, y);
-    y += 80;
+    y += 130;
+    ctx.textBaseline = "alphabetic";
 
     // Accent line
     ctx.fillStyle = s.accent;
