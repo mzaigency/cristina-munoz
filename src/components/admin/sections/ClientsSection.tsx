@@ -71,26 +71,28 @@ const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange, hid
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ClientsTab)}>
-        <TabsList className="w-full flex bg-muted/50 p-1 rounded-lg">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="flex-1 flex items-center justify-center gap-2 text-sm px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm relative"
-            >
-              <tab.icon className="h-4 w-4" />
-              <span>{tab.label}</span>
-              {tab.badge > 0 && activeTab !== tab.id && (
-                <Badge
-                  variant="destructive"
-                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center text-xs px-1.5"
-                >
-                  {tab.badge > 99 ? "99+" : tab.badge}
-                </Badge>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        {!hideTabs && (
+          <TabsList className="w-full flex bg-muted/50 p-1 rounded-lg">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="flex-1 flex items-center justify-center gap-2 text-sm px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm relative"
+              >
+                <tab.icon className="h-4 w-4" />
+                <span>{tab.label}</span>
+                {tab.badge > 0 && activeTab !== tab.id && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center text-xs px-1.5"
+                  >
+                    {tab.badge > 99 ? "99+" : tab.badge}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        )}
 
         <TabsContent value="directory" className="mt-4">
           <ClientsCRM tenantId={tenantId} initialClientId={initialClientId} />
