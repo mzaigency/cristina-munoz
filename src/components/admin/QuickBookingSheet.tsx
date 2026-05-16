@@ -229,7 +229,7 @@ export const QuickBookingSheet = ({
         time,
         stylist: stylistSlug,
         total_duration: totalDuration,
-        skipAvailabilityCheck: false,
+        skipAvailabilityCheck: true,
         tenant_id: tenantId,
         canal: "crm" as const,
         recurrence: null,
@@ -247,9 +247,14 @@ export const QuickBookingSheet = ({
       onCreated();
       onOpenChange(false);
     } catch (e: any) {
+      let description = e?.message || "No se pudo crear la cita";
+      try {
+        const body = await e?.context?.json?.();
+        if (body?.error) description = body.error;
+      } catch {}
       toast({
         title: "Error",
-        description: e.message || "No se pudo crear la cita",
+        description,
         variant: "destructive",
       });
     } finally {
