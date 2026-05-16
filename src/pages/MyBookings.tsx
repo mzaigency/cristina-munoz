@@ -27,6 +27,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { parseISODateToLocal } from "@/lib/datetime";
 import { formatTimeHHmm } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
+import { ClientCoachmark } from "@/components/coachmark/ClientCoachmark";
 
 type Booking = {
   id: string;
@@ -228,6 +229,13 @@ export default function MyBookings() {
   return (
     <AppLayout>
       <SEO title="Mis Citas" description="Gestiona tus reservas" canonicalUrl="/mis-citas" noindex={true} />
+      <ClientCoachmark
+        storageKey="my-bookings-intro"
+        title="Tus citas, siempre a mano"
+        description="Aquí ves tus próximas reservas y tu historial. Toca una cita para reprogramar o cancelar."
+        icon={Calendar}
+        enabled={!!user}
+      />
 
       {/* iOS-style Header */}
       <div className="sticky top-0 z-40 liquid-glass-solid pt-[env(safe-area-inset-top)]">

@@ -11,7 +11,8 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
-import { User } from "lucide-react";
+import { User, CalendarCheck } from "lucide-react";
+import { ClientCoachmark } from "@/components/coachmark/ClientCoachmark";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -215,6 +216,13 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
   return (
     <section ref={bookingRef} className={cn("py-16 md:py-20 relative overflow-hidden", bookingData.services.length > 0 && "pb-36 lg:pb-20")}>
+      <ClientCoachmark
+        storageKey="booking-flow-intro"
+        title="Reserva en 3 pasos"
+        description="Elige servicio, profesional y horario. Confirmas al final, sin compromiso."
+        icon={CalendarCheck}
+        delay={1600}
+      />
       {/* Decorative background */}
       <div className="absolute inset-0 gradient-radial pointer-events-none" />
       <div className="absolute top-10 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
