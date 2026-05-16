@@ -543,15 +543,35 @@ export default function TenantAdmin() {
       </header>
 
       {/* Content */}
-      {isMobile ? (
-        <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
-          <main className="mx-auto max-w-7xl px-3 py-3 safe-area-bottom pb-24" {...swipeHandlers}>
-            {renderContent()}
-          </main>
-        </PullToRefresh>
-      ) : (
-        <main className="mx-auto max-w-7xl px-4 py-6 safe-area-bottom">{renderContent()}</main>
-      )}
+      {(() => {
+        const animatedContent = (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        );
+
+        return isMobile ? (
+          <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
+            <main
+              className="mx-auto max-w-7xl px-3 py-3"
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
+              {...swipeHandlers}
+            >
+              {animatedContent}
+            </main>
+          </PullToRefresh>
+        ) : (
+          <main className="mx-auto max-w-7xl px-4 py-6 safe-area-bottom">{animatedContent}</main>
+        );
+      })()}
     </div>
   );
 }
