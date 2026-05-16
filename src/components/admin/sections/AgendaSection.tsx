@@ -108,30 +108,32 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="w-full flex bg-muted/50 p-1 rounded-lg">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              disabled={tab.locked}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm relative",
-                tab.locked && "opacity-50 cursor-not-allowed"
-              )}
-            >
-              {tab.locked ? <Lock className="h-4 w-4" /> : <tab.icon className="h-4 w-4" />}
-              <span>{tab.label}</span>
-              {tab.badge > 0 && activeTab !== tab.id && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center text-xs px-1.5">
-                  {tab.badge > 99 ? "99+" : tab.badge}
-                </Badge>
-              )}
-              {tab.locked && (
-                <span className="text-[10px] text-amber-600 ml-0.5">Pro</span>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        {!hideTabs && (
+          <TabsList className="w-full flex bg-muted/50 p-1 rounded-lg">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                disabled={tab.locked}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm relative",
+                  tab.locked && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {tab.locked ? <Lock className="h-4 w-4" /> : <tab.icon className="h-4 w-4" />}
+                <span>{tab.label}</span>
+                {tab.badge > 0 && activeTab !== tab.id && (
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center text-xs px-1.5">
+                    {tab.badge > 99 ? "99+" : tab.badge}
+                  </Badge>
+                )}
+                {tab.locked && (
+                  <span className="text-[10px] text-amber-600 ml-0.5">Pro</span>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        )}
 
         <TabsContent value="calendar" className="mt-4 space-y-3">
           <Sheet>
