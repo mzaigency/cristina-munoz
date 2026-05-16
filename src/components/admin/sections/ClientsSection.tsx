@@ -10,22 +10,33 @@ import { Badge } from "@/components/ui/badge";
 interface ClientsSectionProps {
   tenantId: string;
   initialClientId?: string;
+  subTab?: string;
+  onSubTabChange?: (subTab: string) => void;
 }
 
 type ClientsTab = "directory" | "reviews" | "messages";
 
-const ClientsSection = ({ tenantId, initialClientId }: ClientsSectionProps) => {
-  const [activeTab, setActiveTab] = useState<ClientsTab>("directory");
+const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange }: ClientsSectionProps) => {
+  const [internalTab, setInternalTab] = useState<ClientsTab>("directory");
+  // Map URL slugs (directorio/mensajes/resenas) to internal ids
+  const slugToId: Record<string, ClientsTab> = { directorio: "directory", mensajes: "messages", resenas: "reviews" };
+  const idToSlug: Record<ClientsTab, string> = { directory: "directorio", messages: "mensajes", reviews: "resenas" };
+  const activeTab: ClientsTab = (subTab && slugToId[subTab]) || internalTab;
+  const setActiveTab = (t: ClientsTab) => {
+    if (onSubTabChange) onSubTabChange(idToSlug[t]);
+    else setInternalTab(t);
+  };
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingReviews, setPendingReviews] = useState(0);
 
   useEffect(() => {
-    const subTab = sessionStorage.getItem("openClientsSubTab");
-    if (subTab && ["directory", "reviews", "messages"].includes(subTab)) {
-      setActiveTab(subTab as ClientsTab);
+    if (subTab) return;
+    const legacy = sessionStorage.getItem("openClientsSubTab");
+    if (legacy && ["directory", "reviews", "messages"].includes(legacy)) {
+      setInternalTab(legacy as ClientsTab);
       sessionStorage.removeItem("openClientsSubTab");
     }
-  }, []);
+  }, [subTab]);
 
   useEffect(() => {
     const fetchBadges = async () => {
