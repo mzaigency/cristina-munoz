@@ -31,6 +31,8 @@ import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpire
 import { NotifBadge } from "@/components/admin/layout/NotifBadge";
 import { AdminAccountMenu } from "@/components/admin/layout/AdminAccountMenu";
 import { AdminCommandPalette } from "@/components/admin/layout/AdminCommandPalette";
+import { AdminSubNav, getDefaultSubTab, type AdminSection } from "@/components/admin/layout/AdminSubNav";
+import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 
@@ -114,6 +116,35 @@ export default function TenantAdmin() {
     markSectionViewed,
   } = useAdminNotifications(tenant?.id || null);
 
+  const unseenOrders = useUnseenOrders(tenant?.id || "");
+  const [waitlistCount, setWaitlistCount] = useState(0);
+
+  useEffect(() => {
+    if (!tenant?.id) return;
+    let cancelled = false;
+    const fetchWaitlist = async () => {
+      const { count } = await supabase
+        .from("waitlist")
+        .select("id", { count: "exact", head: true })
+        .eq("tenant_id", tenant.id)
+        .eq("status", "waiting");
+      if (!cancelled) setWaitlistCount(count || 0);
+    };
+    fetchWaitlist();
+    const channel = supabase
+      .channel(`tenant-admin-waitlist-${tenant.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "waitlist", filter: `tenant_id=eq.${tenant.id}` },
+        () => fetchWaitlist(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [tenant?.id]);
+
   // Resolve active section from URL (default = inicio)
   const activeSection: SectionValue = useMemo(() => {
     if (sectionParam && VALID_SECTIONS.includes(sectionParam as SectionValue)) {
@@ -121,6 +152,18 @@ export default function TenantAdmin() {
     }
     return "inicio";
   }, [sectionParam]);
+
+  const activeSubTab = subTabParam || getDefaultSubTab(activeSection as AdminSection);
+
+  const subNavCounts = useMemo(
+    () => ({
+      waitlist: waitlistCount,
+      orders: unseenOrders,
+      messages: notificationCounts.messages,
+      reviews: notificationCounts.reviews,
+    }),
+    [waitlistCount, unseenOrders, notificationCounts.messages, notificationCounts.reviews],
+  );
 
   const navItems: NavItem[] = useMemo(() => {
     const clientsBadge = notificationCounts.messages + notificationCounts.reviews;
@@ -258,9 +301,8 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             tenantSlug={slug || ""}
-            subTab={subTabParam}
+            subTab={activeSubTab}
             onNavigate={(path) => {
-              // path may be a legacy tab key or absolute path
               if (path.startsWith("/")) handlePathNavigate(path);
               else handleNavigate(path);
             }}
@@ -272,8 +314,9 @@ export default function TenantAdmin() {
           <ClientsSection
             key={refreshKey}
             tenantId={tenant.id}
-            subTab={subTabParam}
+            subTab={activeSubTab}
             onSubTabChange={(t) => goToSection("clientes", t)}
+            hideTabs
           />
         );
       case "catalogo":
@@ -281,8 +324,9 @@ export default function TenantAdmin() {
           <CatalogSection
             key={refreshKey}
             tenantId={tenant.id}
-            subTab={subTabParam}
+            subTab={activeSubTab}
             onSubTabChange={(t) => goToSection("catalogo", t)}
+            hideTabs
           />
         );
       case "marketing":
@@ -291,8 +335,9 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             tenantSlug={tenant.slug}
-            subTab={subTabParam}
+            subTab={activeSubTab}
             onSubTabChange={(t) => goToSection("marketing", t)}
+            hideTabs
           />
         );
       case "negocio":
@@ -301,7 +346,7 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             tenantSlug={tenant.slug}
-            subTab={subTabParam}
+            subTab={activeSubTab}
           />
         );
       default:
@@ -545,6 +590,13 @@ export default function TenantAdmin() {
             </>
           )}
         </div>
+        <AdminSubNav
+          tenantId={tenant.id}
+          section={activeSection as AdminSection}
+          activeSubTab={activeSubTab}
+          counts={subNavCounts}
+          onSelect={(t) => goToSection(activeSection, t)}
+        />
       </header>
 
       {/* Content */}

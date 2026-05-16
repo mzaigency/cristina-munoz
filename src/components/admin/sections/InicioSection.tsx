@@ -71,8 +71,8 @@ const InicioSection = ({ tenantId, tenantSlug, subTab, onNavigate, onSelectClien
       tenantId={tenantId}
       onSelectClient={onSelectClient}
       subTab={agendaInternalTab}
+      hideTabs
       onSubTabChange={(t) => {
-        // Reverse map: internal id → URL slug
         const slug =
           t === "calendar" ? "agenda" : t === "cash" ? "caja" : t === "waitlist" ? "espera" : "pedidos";
         onNavigate(`/admin/${tenantSlug}/inicio/${slug}`);

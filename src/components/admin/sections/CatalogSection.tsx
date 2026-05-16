@@ -16,6 +16,7 @@ interface CatalogSectionProps {
   tenantId: string;
   subTab?: string;
   onSubTabChange?: (subTab: string) => void;
+  hideTabs?: boolean;
 }
 
 type CatalogTab = "services" | "products" | "packages" | "promos";
@@ -28,7 +29,7 @@ interface TabConfig {
   requiredPlan?: string;
 }
 
-const CatalogSection = ({ tenantId, subTab, onSubTabChange }: CatalogSectionProps) => {
+const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogSectionProps) => {
   const [internalTab, setInternalTab] = useState<CatalogTab>("services");
   const activeTab: CatalogTab = (subTab as CatalogTab) || internalTab;
   const setActiveTab = (t: CatalogTab) => {
@@ -68,31 +69,33 @@ const CatalogSection = ({ tenantId, subTab, onSubTabChange }: CatalogSectionProp
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="w-full flex overflow-x-auto no-scrollbar bg-muted/50 p-1 rounded-lg">
-          {tabs.map((tab) => {
-            const locked = isTabLocked(tab);
-            return (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                disabled={locked}
-                className={cn(
-                  "flex-1 min-w-fit flex items-center gap-1.5 text-xs px-3 py-2",
-                  "data-[state=active]:bg-background data-[state=active]:shadow-sm",
-                  locked && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                {locked ? <Lock className="h-3.5 w-3.5" /> : <tab.icon className="h-3.5 w-3.5" />}
-                <span>{tab.label}</span>
-                {locked && (
-                  <span className="hidden md:inline text-[10px] text-amber-600 ml-1">
-                    Pro
-                  </span>
-                )}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
+        {!hideTabs && (
+          <TabsList className="w-full flex overflow-x-auto no-scrollbar bg-muted/50 p-1 rounded-lg">
+            {tabs.map((tab) => {
+              const locked = isTabLocked(tab);
+              return (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  disabled={locked}
+                  className={cn(
+                    "flex-1 min-w-fit flex items-center gap-1.5 text-xs px-3 py-2",
+                    "data-[state=active]:bg-background data-[state=active]:shadow-sm",
+                    locked && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {locked ? <Lock className="h-3.5 w-3.5" /> : <tab.icon className="h-3.5 w-3.5" />}
+                  <span>{tab.label}</span>
+                  {locked && (
+                    <span className="hidden md:inline text-[10px] text-amber-600 ml-1">
+                      Pro
+                    </span>
+                  )}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        )}
 
         <TabsContent value="services" className="mt-4 space-y-3">
           <Sheet>

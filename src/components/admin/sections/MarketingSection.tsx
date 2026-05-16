@@ -14,11 +14,12 @@ interface MarketingSectionProps {
   tenantSlug: string;
   subTab?: string;
   onSubTabChange?: (subTab: string) => void;
+  hideTabs?: boolean;
 }
 
 type MarketingTab = "posts" | "qr" | "whatsapp";
 
-const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange }: MarketingSectionProps) => {
+const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTabs }: MarketingSectionProps) => {
   const [internalTab, setInternalTab] = useState<MarketingTab>("posts");
   const activeTab: MarketingTab = (subTab as MarketingTab) || internalTab;
   const setActiveTab = (t: MarketingTab) => {
@@ -59,18 +60,20 @@ const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange }: Mark
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MarketingTab)}>
-        <TabsList className="w-full flex bg-muted/50 p-1 rounded-lg">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="flex-1 flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <tab.icon className="h-4 w-4" />
-              <span className="hidden xs:inline sm:inline">{tab.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        {!hideTabs && (
+          <TabsList className="w-full flex bg-muted/50 p-1 rounded-lg">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="flex-1 flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <tab.icon className="h-4 w-4" />
+                <span className="hidden xs:inline sm:inline">{tab.label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        )}
 
         <TabsContent value="posts" className="mt-4 space-y-4">
           <div className="flex justify-end">
