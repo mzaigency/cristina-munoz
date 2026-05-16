@@ -1,8 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Check, ChevronRight, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Check, Sparkles } from "lucide-react";
 import { DemoCalendar, DemoBookingFlow, DemoCashRegister, DemoAnalytics, DemoLanding, DemoDashboard } from "./demos";
 
 const BRAND_GRADIENT = "from-primary to-accent";
