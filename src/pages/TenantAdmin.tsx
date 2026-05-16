@@ -17,8 +17,7 @@ import {
   Sparkles,
   Briefcase,
 } from "lucide-react";
-import { HelpTutorial } from "@/components/admin/HelpTutorial";
-import { InteractiveTour } from "@/components/admin/InteractiveTour";
+import { AdminHelpMenu } from "@/components/admin/layout/AdminHelpMenu";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
@@ -501,8 +500,7 @@ export default function TenantAdmin() {
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                <InteractiveTour onTabChange={(tab) => handleNavigate(tab)} />
-                <HelpTutorial />
+                <AdminHelpMenu onTourTabChange={(tab) => handleNavigate(tab)} />
               </div>
             </div>
           ) : (
@@ -523,8 +521,7 @@ export default function TenantAdmin() {
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
-                  <InteractiveTour onTabChange={(tab) => handleNavigate(tab)} />
-                  <HelpTutorial />
+                  <AdminHelpMenu onTourTabChange={(tab) => handleNavigate(tab)} />
                   <div className="w-px h-6 bg-border/60 mx-1" aria-hidden />
                   <AdminAccountMenu
                     tenantName={tenant.name}

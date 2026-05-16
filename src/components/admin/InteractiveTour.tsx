@@ -125,10 +125,18 @@ const SWIPE_THRESHOLD = 60;
 
 interface InteractiveTourProps {
   onTabChange?: (tab: string) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
-export function InteractiveTour({ onTabChange }: InteractiveTourProps) {
-  const [isActive, setIsActive] = useState(false);
+export function InteractiveTour({ onTabChange, open: openProp, onOpenChange, hideTrigger }: InteractiveTourProps) {
+  const [isActiveInternal, setIsActiveInternal] = useState(false);
+  const isActive = openProp ?? isActiveInternal;
+  const setIsActive = (v: boolean) => {
+    if (onOpenChange) onOpenChange(v);
+    else setIsActiveInternal(v);
+  };
   const [currentStep, setCurrentStep] = useState(0);
   const [hasSeenTour, setHasSeenTour] = useState(true);
   const [direction, setDirection] = useState(0);
@@ -347,15 +355,17 @@ export function InteractiveTour({ onTabChange }: InteractiveTourProps) {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => { setCurrentStep(0); setDirection(0); setIsActive(true); }}
-        className="h-8 w-8 sm:h-9 sm:w-9"
-        title="Tour guiado"
-      >
-        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
-      </Button>
+      {!hideTrigger && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => { setCurrentStep(0); setDirection(0); setIsActive(true); }}
+          className="h-8 w-8 sm:h-9 sm:w-9"
+          title="Tour guiado"
+        >
+          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
+        </Button>
+      )}
 
       {typeof document !== "undefined" ? createPortal(tourOverlay, document.body) : null}
     </>

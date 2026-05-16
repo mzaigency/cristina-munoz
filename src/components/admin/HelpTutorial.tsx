@@ -282,8 +282,19 @@ const helpSections: HelpSection[] = [
   },
 ];
 
-export const HelpTutorial = () => {
-  const [open, setOpen] = useState(false);
+interface HelpTutorialProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}
+
+export const HelpTutorial = ({ open: openProp, onOpenChange, hideTrigger }: HelpTutorialProps = {}) => {
+  const [openInternal, setOpenInternal] = useState(false);
+  const open = openProp ?? openInternal;
+  const setOpen = (v: boolean) => {
+    if (onOpenChange) onOpenChange(v);
+    else setOpenInternal(v);
+  };
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
@@ -394,16 +405,18 @@ export const HelpTutorial = () => {
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8"
-            title="Centro de ayuda"
-          >
-            <HelpCircle className="h-4 w-4" />
-          </Button>
-        </DrawerTrigger>
+        {!hideTrigger && (
+          <DrawerTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              title="Centro de ayuda"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          </DrawerTrigger>
+        )}
         <DrawerContent className="max-h-[85vh]">
           <DrawerHeader className="border-b pb-3">
             <DrawerTitle className="flex items-center gap-2">
@@ -423,16 +436,18 @@ export const HelpTutorial = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 sm:h-9 sm:w-9"
-          title="Centro de ayuda"
-        >
-          <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 sm:h-9 sm:w-9"
+            title="Centro de ayuda"
+          >
+            <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg max-h-[85vh] p-0 gap-0">
         <DialogHeader className="p-4 pb-3 border-b">
           <DialogTitle className="flex items-center gap-2">
