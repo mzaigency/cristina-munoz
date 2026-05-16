@@ -89,8 +89,8 @@ export const PricingSection = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <span className="text-sm font-medium text-primary uppercase tracking-wider">Precios transparentes</span>
-          <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4 text-foreground">Elige tu plan</h2>
+          <SectionEyebrow icon={Sparkles} label="Precios transparentes" />
+          <h2 className="text-3xl sm:text-4xl font-bold mt-3 mb-4 text-foreground">Elige tu plan</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
             Todos los planes incluyen 30 días de prueba gratis. Cancela cuando quieras.
           </p>
