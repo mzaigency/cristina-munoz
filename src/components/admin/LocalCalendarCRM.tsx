@@ -185,9 +185,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     fetchBookings();
   }, [weekStart, tenantId]);
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
 
       const { data, error } = await supabase
@@ -210,7 +210,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       });
       setBookings([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -297,7 +297,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   const handleBookingComplete = () => {
     setIsCreateDialogOpen(false);
-    fetchBookings();
+    fetchBookings(true);
   };
 
   const handleUpdateBooking = async () => {
@@ -321,7 +321,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       });
       setIsEditDialogOpen(false);
       setSelectedBooking(null);
-      fetchBookings();
+      fetchBookings(true);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -449,7 +449,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           ? "Todas las citas futuras de la serie han sido canceladas"
           : "La cita se ha eliminado correctamente",
       });
-      fetchBookings();
+      fetchBookings(true);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -529,7 +529,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       setBlockStylist("all");
       setBlockStartTime("09:00");
       setBlockEndTime("19:00");
-      fetchBookings();
+      fetchBookings(true);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -782,7 +782,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         description: `${draggedBooking.customer_name} → ${stylists.find((s) => s.slug === targetStylist)?.name} a las ${newTime}`,
       });
 
-      fetchBookings();
+      fetchBookings(true);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -867,7 +867,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           description: error.message || "No se pudo actualizar",
           variant: "destructive",
         });
-        fetchBookings();
+        fetchBookings(true);
       }
 
       setResizingBooking(null);
@@ -1586,7 +1586,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           stylists={stylists}
           onCreated={() => {
             setQuickBooking(null);
-            fetchBookings();
+            fetchBookings(true);
           }}
           onMoreOptions={() => {
             setQuickBooking(null);
