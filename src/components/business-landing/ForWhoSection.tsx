@@ -36,9 +36,7 @@ export const ForWhoSection = () => {
           viewport={{ once: true }}
           className="text-center mb-10 md:mb-14"
         >
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" /> Hecho para ti
-          </span>
+          <SectionEyebrow icon={Sparkles} label="Hecho para ti" tone="primary" />
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mt-3 mb-3 text-foreground">
             Hablamos tu idioma
           </h2>
