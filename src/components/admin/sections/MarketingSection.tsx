@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ImagePlus, QrCode, Plus, MessageCircle } from "lucide-react";
+import { ImagePlus, QrCode, Plus } from "lucide-react";
 import { QRCardGenerator } from "@/components/admin/content/QRCardGenerator";
 import { PostCreator } from "@/components/social/PostCreator";
 import { PostGrid } from "@/components/social/PostGrid";
 import { usePosts } from "@/hooks/usePosts";
 import { Button } from "@/components/ui/button";
-import { WhatsAppKit } from "@/components/admin/marketing/WhatsAppKit";
-import { supabase } from "@/integrations/supabase/client";
 
 interface MarketingSectionProps {
   tenantId: string;
@@ -17,44 +15,31 @@ interface MarketingSectionProps {
   hideTabs?: boolean;
 }
 
-type MarketingTab = "posts" | "qr" | "whatsapp";
+type MarketingTab = "posts" | "qr";
 
 const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTabs }: MarketingSectionProps) => {
   const [internalTab, setInternalTab] = useState<MarketingTab>("posts");
-  const activeTab: MarketingTab = (subTab as MarketingTab) || internalTab;
+  const normalized: MarketingTab = subTab === "qr" ? "qr" : subTab === "posts" ? "posts" : internalTab;
+  const activeTab: MarketingTab = normalized;
   const setActiveTab = (t: MarketingTab) => {
     if (onSubTabChange) onSubTabChange(t);
     else setInternalTab(t);
   };
   const [postCreatorOpen, setPostCreatorOpen] = useState(false);
-  const [tenantName, setTenantName] = useState<string>("");
   const { tenantPosts, deletePost, refetchTenantPosts } = usePosts(tenantId);
 
   useEffect(() => {
     if (subTab) return;
     const legacy = sessionStorage.getItem("openMarketingSubTab");
-    if (legacy && ["posts", "qr", "whatsapp"].includes(legacy)) {
+    if (legacy && ["posts", "qr"].includes(legacy)) {
       setInternalTab(legacy as MarketingTab);
       sessionStorage.removeItem("openMarketingSubTab");
     }
   }, [subTab]);
 
-  useEffect(() => {
-    if (!tenantId) return;
-    supabase
-      .from("tenants")
-      .select("name")
-      .eq("id", tenantId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.name) setTenantName(data.name);
-      });
-  }, [tenantId]);
-
   const tabs = [
     { id: "posts" as MarketingTab, label: "Posts", icon: ImagePlus },
     { id: "qr" as MarketingTab, label: "Tarjetas QR", icon: QrCode },
-    { id: "whatsapp" as MarketingTab, label: "Kit WhatsApp", icon: MessageCircle },
   ];
 
   return (
@@ -69,7 +54,7 @@ const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTa
                 className="flex-1 flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
               >
                 <tab.icon className="h-4 w-4" />
-                <span className="hidden xs:inline sm:inline">{tab.label}</span>
+                <span>{tab.label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
@@ -95,10 +80,6 @@ const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTa
 
         <TabsContent value="qr" className="mt-4">
           <QRCardGenerator tenantId={tenantId} tenantSlug={tenantSlug} />
-        </TabsContent>
-
-        <TabsContent value="whatsapp" className="mt-4">
-          <WhatsAppKit tenantSlug={tenantSlug} tenantName={tenantName} />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,95 +1,83 @@
-## Problema
+## Cambios
 
-La barra de sub-tabs no es consistente entre secciones:
+### 1. Quitar WhatsApp de Marketing
 
-- **Inicio** (`/admin/:slug/inicio`) muestra el Dashboard sin ninguna pestaña secundaria; Agenda / Caja / Espera / Pedidos solo aparecen si se entra por URL.
-- **Negocio** muestra directamente Equipo sin tabs para Informes / Ajustes.
-- **Clientes / Catálogo / Marketing** sí muestran sus tabs internos, pero cada sección los pinta a su manera (estilos distintos, scroll diferente, sin badges).
+- `src/components/admin/sections/MarketingSection.tsx`: eliminar la pestaña `whatsapp` del array `tabs`, su `TabsContent`, el import de `WhatsAppKit` y de `MessageCircle`, el fetch de `tenantName` (solo se usaba ahí) y el tipo `MarketingTab` queda como `"posts" | "qr"`.
+- `src/components/admin/layout/AdminSubNav.tsx`: quitar el item `whatsapp` de `ADMIN_SUB_NAV.marketing`.
+- `src/pages/TenantAdmin.tsx`: quitar `whatsapp` del `LEGACY_NAV_MAP` para que cualquier deep-link viejo redirija a `posts`.
+- `WhatsAppKit.tsx` se deja en el repo por si se reutiliza luego.
 
-El usuario quiere que en cada sección aparezcan **todos** los sub-tabs visibles y accesibles desde la cabecera.
+### 2. Mejorar tarjetas QR — añadir formato A4 imprimible
 
-## Solución
+Hoy el generador solo produce una tarjeta horizontal 1200×800. Añadimos un **selector de formato** con dos opciones, manteniendo todo lo demás (estilos, fuentes, branding):
 
-Crear una **sub-nav única** renderizada por `TenantAdmin` justo debajo del nav principal (sticky, debajo del header), alimentada por una definición central de sub-tabs por sección. Cada sección composite deja de pintar su propio `TabsList` y se vuelve solo "contenido".
+- **Tarjeta** (actual, horizontal 1200×800, ideal redes/pantalla)
+- **Cartel A4** (vertical 2480×3508 @ 300 DPI, ideal imprimir en mostrador)
 
-### 1. Nueva definición central de sub-tabs
-
-`src/components/admin/layout/adminSubNav.ts`:
-
-```ts
-export type AdminSubTab = {
-  value: string;
-  label: string;
-  icon: LucideIcon;
-  badgeKey?: "waitlist" | "orders" | "messages" | "reviews";
-  lockedFeature?: "cash_register"; // muestra "Pro" + bloqueo
-};
-
-export const ADMIN_SUB_NAV: Record<SectionValue, AdminSubTab[]> = {
-  inicio:   [resumen, agenda, caja(lock), espera(badge), pedidos(badge)],
-  clientes: [directorio, mensajes(badge), resenas(badge)],
-  catalogo: [services, products, packages, promos],
-  marketing:[posts, qr, whatsapp],
-  negocio:  [equipo, informes, ajustes],
-};
-```
-
-### 2. Nuevo componente `AdminSubNav`
-
-`src/components/admin/layout/AdminSubNav.tsx`:
-
-- Sticky bajo el header (`top` calculado con `env(safe-area-inset-top)` + altura del header).
-- Mobile-first: scroll horizontal con `ScrollArea`, chips compactos (icono + label corto), badge rojo con `NotifBadge` para pendientes, candado + "Pro" para `lockedFeature`.
-- Subrayado animado con `framer-motion` (`layoutId="admin-subnav-underline"`).
-- Recibe: `section`, `activeSubTab`, `counts` (waitlist, orders, messages, reviews), `lockedFeatures` (de `usePlanLimits`), `onSelect(subTab)`.
-
-### 3. Cambios en `TenantAdmin.tsx`
-
-- Importar y montar `<AdminSubNav>` dentro del `<header>`, debajo de `<nav>` principal (desktop) y debajo de la fila top (mobile).
-- Calcular el `subTab` por defecto cuando la URL no lo trae (primer item de `ADMIN_SUB_NAV[activeSection]`).
-- `onSelect={(t) => goToSection(activeSection, t)}` reutiliza el navegador existente.
-- Pasar `counts` desde `notificationCounts` (que ya existe).
-
-### 4. Simplificar las secciones composite
-
-Eliminar `<TabsList>` interno de:
-
-- `InicioSection`: ya no necesita lógica de tabs porque la sub-nav vive arriba; mantiene el switch `tab === "resumen"` → Dashboard, resto → AgendaSection con `subTab` mapeado. Sigue igual la lógica de mapeo `agenda/caja/espera/pedidos → calendar/cash/waitlist/orders`.
-- `AgendaSection`: cuando recibe `subTab` controlado desde fuera, **ocultar** su `TabsList` propio (añadir prop `hideTabs`). Mantener `TabsContent` para que el `Tabs` siga gestionando el cambio interno.
-- `ClientsSection`, `CatalogSection`, `MarketingSection`, `SettingsSection`: añadir prop `hideTabs` (o simplemente no renderizar `TabsList` cuando se pasa `subTab` desde el padre). El contenido por sub-tab ya está controlado por `subTab`.
-- `NegocioSection`: ya no necesita switch interno extra; sigue mapeando `equipo|informes|ajustes` a los componentes hijos. Pero **importante**: `equipo` y `ajustes` tienen sus *propios* sub-sub-tabs (estilistas/horarios/comisiones y general/plan/alertas). Esos sub-sub-tabs **se mantienen dentro de la sección**, no se mueven a la sub-nav global (evitamos 3 niveles de nav). Eso significa que la sub-nav global solo va al nivel sección → sub-tab, no a sub-sub-tab.
-
-### 5. Resultado visual
+#### Layout del cartel A4 (vertical)
 
 ```text
-┌──────────────────────────────────────────────────────┐
-│ [logo] Cristina Muñoz       [?] | [avatar plan▾]     │  ← header
-├──────────────────────────────────────────────────────┤
-│ [Inicio] [Clientes] [Catálogo] [Marketing] [Negocio] │  ← nav principal
-├──────────────────────────────────────────────────────┤
-│ Resumen · Agenda · Caja🔒 · Espera•3 · Pedidos•1     │  ← sub-nav nueva
-├──────────────────────────────────────────────────────┤
-│ ...contenido...                                      │
-└──────────────────────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│                                     │
+│            [logo salón 180px]       │
+│                                     │
+│           RESERVA TU CITA           │   ← H1 grande (≈180-200px)
+│                                     │
+│          en {Nombre del Salón}      │   ← H2 (≈90px)
+│                                     │
+│          ──── accent ────           │
+│                                     │
+│       ┌─────────────────┐           │
+│       │                 │           │
+│       │                 │           │
+│       │       QR        │           │   ← QR 1400px (centrado)
+│       │                 │           │
+│       │                 │           │
+│       └─────────────────┘           │
+│                                     │
+│      Escanea con tu móvil           │   ← Sub (≈48px)
+│                                     │
+│     glowapp.app/{slug}              │   ← URL accent (≈50px)
+│                                     │
+│                                     │
+│   ─────────────────────────────     │   ← separador sutil
+│                                     │
+│   Hecho con [Glowapp Letras.png]    │   ← footer (logo texto h≈80px)
+│                                     │
+└─────────────────────────────────────┘
 ```
 
-## Detalles técnicos
+- Márgenes seguros: 200px por lado (deja sangrado para impresión doméstica).
+- Mantiene los 4 estilos actuales (Tu Salón / Elegante / Minimalista / Oscuro) — solo cambia disposición.
+- QR con `errorCorrectionLevel: "H"` y tamaño 1400 px para que sea nítido al imprimir y escaneable a >1m.
+- Footer: imagen `src/assets/Glowapp Letras.png` cargada como `<img>` (igual patrón que el logo del salón) y dibujada en canvas. Texto "Hecho con" en `sub` color, logo a la derecha, altura ~80px.
+- Preview en pantalla: aspect-ratio `210/297` (A4) usando un `<div>` escalado con los mismos estilos del tema; igual que hoy con la versión horizontal.
 
-- **Badges**: reutilizar `NotifBadge` con `variant="inline"` y mapping desde `notificationCounts` ya disponible en `TenantAdmin`.
-- **Locked**: `usePlanLimits(tenantId).hasFeature("cash_register")` decide si se muestra candado. Click en bloqueado abre el flujo de upgrade existente (igual que hoy en AgendaSection).
-- **Default sub-tab**: cuando se entra a una sección sin `subTab`, no se redirige la URL automáticamente (evitamos historial sucio); el `AdminSubNav` resalta el primer item y el componente hijo lo trata como default.
-- **Mobile safe-area**: el sticky sub-nav suma su altura (~44px) al `paddingBottom` del main no se ve afectado; el `top` sticky usa la altura combinada del header. Probar en viewport iPhone para que no tape contenido.
-- **Animación**: subrayado con `motion.div layoutId` para transición fluida al cambiar de sub-tab; respeta `prefers-reduced-motion`.
-- **Accesibilidad**: `role="tablist"`, `aria-selected`, `aria-label` con conteo de pendientes en cada tab.
+#### Botones de acción
 
-## Archivos
+- **Descargar PNG**: filename `cartel-${slug}-A4.png` o `tarjeta-${slug}.png` según formato.
+- **Descargar PDF (solo A4)**: nueva acción usando `jspdf` para generar un PDF A4 con la imagen embedida — facilita imprimir desde cualquier visor. *Si añadir jspdf incrementa el bundle más de lo deseado, se puede omitir y el PNG @ 300 DPI imprime perfecto desde el visor del SO.* Decisión: **omitir jspdf**; el PNG 2480×3508 se imprime perfecto como A4 desde cualquier sistema.
+- **Compartir** se mantiene igual.
 
-- **Nuevo**: `src/components/admin/layout/adminSubNav.ts` (config), `src/components/admin/layout/AdminSubNav.tsx` (UI).
-- **Editar**: `src/pages/TenantAdmin.tsx` (montar sub-nav + pasar counts/locks).
-- **Editar**: `AgendaSection.tsx`, `ClientsSection.tsx`, `CatalogSection.tsx`, `MarketingSection.tsx`, `SettingsSection.tsx` → añadir prop `hideTabs` y ocultar `TabsList` cuando esté activa.
-- **Editar**: `InicioSection.tsx`, `NegocioSection.tsx` → ningún `TabsList` extra (ya delegan).
+#### UI del selector de formato
 
-## Fuera de alcance
+Antes del selector de estilo, un toggle de 2 botones:
 
-- No tocar los sub-sub-tabs dentro de Equipo (estilistas/horarios/comisiones) ni Ajustes (general/plan/alertas): mantienen su `Tabs` interno.
-- No cambiar URLs ni el mapeo `LEGACY_NAV_MAP`.
+```
+[ 🖼  Tarjeta ]  [ 📄  Cartel A4 ]
+```
+
+Pequeño, mobile-first, mismo patrón que el selector de estilo.
+
+### Archivos
+
+- **Editar**: `src/components/admin/sections/MarketingSection.tsx` (quitar whatsapp).
+- **Editar**: `src/components/admin/layout/AdminSubNav.tsx` (quitar whatsapp).
+- **Editar**: `src/pages/TenantAdmin.tsx` (LEGACY_NAV_MAP).
+- **Editar**: `src/components/admin/content/QRCardGenerator.tsx` (formato A4, carga logo glowapp, preview vertical, branching del render).
+
+### Fuera de alcance
+
+- No tocar `WhatsAppKit.tsx` (queda inactivo pero disponible).
+- No añadir nuevos templates de color; reutilizamos los 4 existentes en ambos formatos.
+- No generar PDF nativo — el PNG @ 300 DPI cumple para impresión A4.
