@@ -116,6 +116,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   // Series cancellation dialog
   const [seriesCancelDialogOpen, setSeriesCancelDialogOpen] = useState(false);
   const [pendingCancelBooking, setPendingCancelBooking] = useState<LocalBooking | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [pendingDeleteBooking, setPendingDeleteBooking] = useState<LocalBooking | null>(null);
 
   // Mobile action buttons state
   const [activeBookingActions, setActiveBookingActions] = useState<string | null>(null);
@@ -422,14 +424,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       return;
     }
 
-    if (!confirm("¿Estás segura de que quieres eliminar esta cita?")) return;
-
-    await performBookingDeletion(booking, false);
+    setPendingDeleteBooking(booking);
+    setDeleteConfirmOpen(true);
   };
 
   const performBookingDeletion = async (booking: LocalBooking, cancelSeries: boolean) => {
     try {
-      setLoading(true);
+      // Optimistic: remove from local state immediately to keep scroll stable
+      setBookings((prev) => prev.filter((b) => b.id !== booking.id));
 
       // Call cancel-booking function which handles all cleanup
       const { error } = await supabase.functions.invoke("cancel-booking", {
@@ -457,7 +459,6 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
       setSeriesCancelDialogOpen(false);
       setPendingCancelBooking(null);
     }
@@ -1851,6 +1852,41 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
               onClick={() => pendingCancelBooking && performBookingDeletion(pendingCancelBooking, true)}
             >
               Toda la serie futura
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta cita?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDeleteBooking
+                ? `Se eliminará la cita de ${pendingDeleteBooking.customer_name} (${pendingDeleteBooking.Hora?.slice(0, 5)}). Esta acción no se puede deshacer.`
+                : "Esta acción no se puede deshacer."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setPendingDeleteBooking(null);
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                const b = pendingDeleteBooking;
+                setDeleteConfirmOpen(false);
+                setPendingDeleteBooking(null);
+                if (b) await performBookingDeletion(b, false);
+              }}
+            >
+              Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
