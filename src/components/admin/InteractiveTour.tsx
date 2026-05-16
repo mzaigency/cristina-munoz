@@ -214,7 +214,7 @@ const STORAGE_KEY = "glowapp_admin_tour_v5_completed";
 const SWIPE_THRESHOLD = 60;
 
 interface InteractiveTourProps {
-  onTabChange?: (tab: string) => void;
+  onTabChange?: (tab: string, subTab?: string) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
