@@ -191,8 +191,8 @@ export function DiscoverSections({
         </FeedSection>
       )}
 
-      {/* 2. CERCA DE TI */}
-      {hasLocation && nearby.length > 0 && (
+      {/* 2. CERCA DE TI — siempre visible */}
+      {hasLocation && nearby.length > 0 ? (
         <FeedSection
           icon={Navigation}
           title="Cerca de ti"
@@ -205,36 +205,42 @@ export function DiscoverSections({
         >
           {renderCards(nearby, "near", expanded.near)}
         </FeedSection>
-      )}
-
-      {!hasLocation && (
+      ) : (
         <FeedSection
           icon={Navigation}
           title="Cerca de ti"
-          subtitle="Activa tu ubicación para ver salones cercanos"
+          subtitle={
+            hasLocation
+              ? "Aún no encontramos salones cerca de tu ubicación"
+              : "Activa tu ubicación para ver salones cercanos"
+          }
           iconTint="primary"
           sectionId="near"
         >
           <FeedCarouselItem>
             <button
-              onClick={onRequestLocation}
-              disabled={geoLoading}
-              className="w-full h-full min-h-[260px] liquid-glass-card flex flex-col items-center justify-center gap-3 p-6 text-center hover:scale-[1.02] transition-transform"
+              onClick={hasLocation ? undefined : onRequestLocation}
+              disabled={geoLoading || hasLocation}
+              className="w-full h-full min-h-[260px] liquid-glass-card flex flex-col items-center justify-center gap-3 p-6 text-center hover:scale-[1.02] transition-transform disabled:hover:scale-100"
             >
               <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-[#99329a] flex items-center justify-center shadow-lg">
                 <Navigation className="h-7 w-7 text-white" />
               </div>
               <div>
                 <p className="font-bold text-foreground text-base mb-1">
-                  Activar ubicación
+                  {hasLocation ? "Sin salones cercanos" : "Activar ubicación"}
                 </p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Descubre salones cerca de ti
+                  {hasLocation
+                    ? "Prueba ampliando tu búsqueda o explora otras secciones"
+                    : "Descubre salones cerca de ti"}
                 </p>
               </div>
-              <span className="mt-1 px-4 py-2 rounded-full gradient-primary text-primary-foreground text-xs font-semibold shadow-md">
-                {geoLoading ? "Buscando…" : "Permitir"}
-              </span>
+              {!hasLocation && (
+                <span className="mt-1 px-4 py-2 rounded-full gradient-primary text-primary-foreground text-xs font-semibold shadow-md">
+                  {geoLoading ? "Buscando…" : "Permitir"}
+                </span>
+              )}
             </button>
           </FeedCarouselItem>
         </FeedSection>
