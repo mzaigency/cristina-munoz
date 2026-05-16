@@ -75,11 +75,18 @@ export function DiscoverSections({
   );
 
   // 2. CERCA DE TI
+  // Si tenemos ubicación pero ningún salón tiene distancia calculada
+  // (ciudad fuera del mapa de coordenadas), mostramos todos como fallback
+  // para que el carrusel nunca quede vacío.
   const nearby = useMemo(() => {
     if (!hasLocation) return [];
-    return [...salons]
-      .filter((s) => s.distance !== null && s.distance !== undefined)
-      .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+    const withDistance = salons.filter(
+      (s) => s.distance !== null && s.distance !== undefined,
+    );
+    if (withDistance.length === 0) return salons;
+    return [...withDistance].sort(
+      (a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity),
+    );
   }, [salons, hasLocation]);
 
   // 3. FAVORITOS
