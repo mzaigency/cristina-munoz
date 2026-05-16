@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Check, ChevronRight, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { Globe, Calendar, LayoutDashboard, CreditCard, BarChart3, Check, Sparkles } from "lucide-react";
+import { SectionEyebrow } from "./SectionEyebrow";
 import { DemoCalendar, DemoBookingFlow, DemoCashRegister, DemoAnalytics, DemoLanding, DemoDashboard } from "./demos";
 
 const BRAND_GRADIENT = "from-primary to-accent";
@@ -53,7 +52,7 @@ const features = [
     benefits: [
       "Disponibilidad real, en tiempo real",
       "Confirmación automática por email",
-      "Recordatorio antes de la cita (−60% no-shows)",
+      "Recordatorio automático antes de la cita",
       "Si cancelan, el hueco vuelve a estar libre solo",
     ],
     color: BRAND_GRADIENT,
@@ -113,7 +112,6 @@ const features = [
 
 export const FeaturesShowcase = () => {
   const [activeFeature, setActiveFeature] = useState(features[0]);
-  const navigate = useNavigate();
   const ActiveDemo = activeFeature.Demo;
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -135,7 +133,7 @@ export const FeaturesShowcase = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <span className="text-sm font-medium text-primary uppercase tracking-wider">Todo lo que necesitas</span>
+          <SectionEyebrow icon={Sparkles} label="Todo lo que necesitas" />
           <h2 className="text-3xl sm:text-4xl font-bold mt-2 mb-4 text-foreground">Funciones que transforman tu negocio</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Desde reservas automáticas hasta analytics avanzados. Todo diseñado para profesionales de la belleza.
@@ -205,10 +203,6 @@ export const FeaturesShowcase = () => {
                     </li>
                   ))}
                 </ul>
-                <Button onClick={() => navigate("/onboarding")} className="rounded-full gradient-primary border-0">
-                  Probar esta función
-                  <ChevronRight className="ml-1 w-4 h-4" />
-                </Button>
               </div>
             </div>
 
@@ -236,10 +230,6 @@ export const FeaturesShowcase = () => {
                     </motion.li>
                   ))}
                 </ul>
-                <Button onClick={() => navigate("/onboarding")} className="rounded-full gradient-primary border-0">
-                  Probar esta función
-                  <ChevronRight className="ml-1 w-4 h-4" />
-                </Button>
               </div>
 
               <div className="relative mx-auto w-[280px]" style={{ aspectRatio: "9/19.5" }}>

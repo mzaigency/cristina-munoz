@@ -82,7 +82,7 @@ export const HeroSection = () => {
               </Button>
             </motion.div>
 
-            {/* Live counter / proof */}
+            {/* Live status / proof */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -94,7 +94,7 @@ export const HeroSection = () => {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
               </span>
               <span>
-                <span className="font-semibold text-foreground">+1.247 reservas</span> procesadas hoy
+                <span className="font-semibold text-foreground">Reservas online</span> activas ahora mismo
               </span>
             </motion.div>
 

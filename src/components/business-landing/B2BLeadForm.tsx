@@ -115,14 +115,15 @@ export const B2BLeadForm = () => {
           className="max-w-lg mx-auto"
         >
           <div className="text-center mb-8">
-            <span className="text-sm font-medium text-primary uppercase tracking-wider">
-              ¿Te interesa?
+            <span className="text-xs font-semibold text-accent uppercase tracking-wider">
+              Opción guante blanco
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold mt-2 mb-3 text-foreground">
-              Déjanos tus datos y te contactamos
+              ¿Prefieres que lo montemos contigo?
             </h2>
             <p className="text-muted-foreground text-sm">
-              Sin compromiso. Te explicamos todo en una llamada de 10 minutos.
+              Si no quieres configurarlo tú, déjanos tus datos y un humano te llama en 24 h
+              para montarte la web, los servicios y la agenda en una sola sesión. Sin coste.
             </p>
           </div>
 
