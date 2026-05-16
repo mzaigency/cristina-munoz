@@ -42,11 +42,8 @@ export const FAQSection = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 text-primary mb-4">
-            <HelpCircle className="w-5 h-5" />
-            <span className="text-sm font-medium uppercase tracking-wider">Preguntas frecuentes</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-foreground">¿Tienes dudas?</h2>
+          <SectionEyebrow icon={HelpCircle} label="Preguntas frecuentes" />
+          <h2 className="text-3xl sm:text-4xl font-bold mt-3 mb-4 text-foreground">¿Tienes dudas?</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Aquí respondemos las preguntas más comunes. Si no encuentras lo que buscas, escríbenos y te ayudamos.
           </p>
