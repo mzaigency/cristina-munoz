@@ -1219,44 +1219,47 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                               .filter(s => selectedStylistFilter === "all" || s.slug === selectedStylistFilter)
                               .map((stylist) => (
                               <div key={stylist.slug} className="flex-1 min-w-[100px] md:min-w-[180px]">
-                                <div
-                                  className="relative rounded-lg overflow-hidden cursor-pointer group/col"
-                                  style={{ backgroundColor: "hsl(var(--muted) / 0.3)" }}
-                                  onDragOver={(e) => handleDragOverColumn(e, stylist.slug, schedule.startHour)}
-                                  onDragLeave={handleDragLeave}
-                                  onDrop={(e) => handleDropOnColumn(e, stylist.slug, schedule.startHour, dateKey)}
-                                  onClick={(e) => {
-                                    // Ignore clicks on bookings or controls
-                                    const target = e.target as HTMLElement;
-                                    if (target.closest("[data-booking-id]")) return;
-                                    if (target.closest("button")) return;
-                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                    const y = e.clientY - rect.top;
-                                    const totalMinutes = Math.max(0, Math.floor(y / PIXELS_PER_MINUTE));
-                                    // Snap to 15 min
-                                    const snapped = Math.round(totalMinutes / 15) * 15;
-                                    const totalAbs = schedule.startHour * 60 + snapped;
-                                    const hh = Math.floor(totalAbs / 60);
-                                    const mm = totalAbs % 60;
-                                    if (hh >= schedule.endHour) return;
-                                    const timeStr = `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
-                                    setQuickBooking({
-                                      date: day,
-                                      time: timeStr,
-                                      stylistSlug: stylist.slug,
-                                    });
-                                  }}
-                                >
-                                  {/* Hour grid lines */}
-                                  {schedule.hours.map((hour) => (
-                                    <div
-                                      key={hour}
-                                      className="h-[120px] border-b border-border/20 relative pointer-events-none"
-                                    >
-                                      {/* Half-hour line */}
-                                      <div className="absolute top-[60px] left-0 right-0 border-t border-dashed border-border/15" />
-                                    </div>
-                                  ))}
+                                 <div
+                                   className="relative rounded-lg overflow-hidden group/col"
+                                   style={{ backgroundColor: "hsl(var(--muted) / 0.3)" }}
+                                   onDragOver={(e) => handleDragOverColumn(e, stylist.slug, schedule.startHour)}
+                                   onDragLeave={handleDragLeave}
+                                   onDrop={(e) => handleDropOnColumn(e, stylist.slug, schedule.startHour, dateKey)}
+                                 >
+                                   {/* Hour grid with clickable 30-min blocks (:00 and :30) */}
+                                   {schedule.hours.map((hour) => {
+                                     const openQuick = (mm: 0 | 30) => {
+                                       if (hour >= schedule.endHour) return;
+                                       const timeStr = `${String(hour).padStart(2, "0")}:${mm === 0 ? "00" : "30"}`;
+                                       setQuickBooking({ date: day, time: timeStr, stylistSlug: stylist.slug });
+                                     };
+                                     return (
+                                       <div key={hour} className="h-[120px] border-b border-border/20 relative">
+                                         {/* :00 block */}
+                                         <div
+                                           role="button"
+                                           tabIndex={-1}
+                                           className="absolute inset-x-0 top-0 h-[60px] cursor-pointer transition-colors hover:bg-foreground/[0.04]"
+                                           onClick={(e) => {
+                                             const target = e.target as HTMLElement;
+                                             if (target.closest("[data-booking-id]")) return;
+                                             openQuick(0);
+                                           }}
+                                         />
+                                         {/* :30 block */}
+                                         <div
+                                           role="button"
+                                           tabIndex={-1}
+                                           className="absolute inset-x-0 top-[60px] h-[60px] cursor-pointer transition-colors hover:bg-foreground/[0.04] border-t border-dashed border-border/15"
+                                           onClick={(e) => {
+                                             const target = e.target as HTMLElement;
+                                             if (target.closest("[data-booking-id]")) return;
+                                             openQuick(30);
+                                           }}
+                                         />
+                                       </div>
+                                     );
+                                   })}
                                   
                                   {/* Break zone - positioned exactly based on minutes */}
                                   {schedule.breakStartMinutes !== null && schedule.breakEndMinutes !== null && (() => {
