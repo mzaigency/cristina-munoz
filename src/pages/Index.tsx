@@ -276,7 +276,17 @@ const Index = () => {
     <>
       {/* Welcome Onboarding for new users */}
       {showWelcome && <WelcomeCarousel onComplete={handleOnboardingComplete} />}
-      
+
+      {/* Contextual coachmark — shown once, after WelcomeCarousel is dismissed */}
+      <ClientCoachmark
+        storageKey="feed-intro"
+        title="Encuentra tu salón ideal"
+        description="Filtra por categoría, distancia o disponibilidad. Toca el corazón para guardar tus favoritos."
+        icon={Compass}
+        enabled={!showWelcome}
+        delay={1400}
+      />
+
       <AppLayout>
       <SEO
         title="GlowApp | Reserva Cita en Salones de Belleza Cerca de Ti"
