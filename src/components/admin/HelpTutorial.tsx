@@ -436,16 +436,18 @@ export const HelpTutorial = ({ open: openProp, onOpenChange, hideTrigger }: Help
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 sm:h-9 sm:w-9"
-          title="Centro de ayuda"
-        >
-          <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 sm:h-9 sm:w-9"
+            title="Centro de ayuda"
+          >
+            <HelpCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg max-h-[85vh] p-0 gap-0">
         <DialogHeader className="p-4 pb-3 border-b">
           <DialogTitle className="flex items-center gap-2">
