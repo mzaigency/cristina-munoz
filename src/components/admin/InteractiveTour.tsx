@@ -23,73 +23,190 @@ interface TourStep {
   id: string;
   title: string;
   description: string;
-  icon: React.ReactNode;
-  targetTab?: string;
-  tips?: string[];
   emoji: string;
+  targetTab?: string;
+  targetSubTab?: string;
+  tips?: string[];
 }
 
 const TOUR_STEPS: TourStep[] = [
   {
     id: "welcome",
     title: "¡Bienvenido al Panel!",
-    description: "Te guiamos por las 5 secciones principales. ¡Solo 1 minuto!",
-    icon: <Sparkles className="h-7 w-7" />,
-    tips: ["Cada sección tiene sub-pestañas", "Desliza para avanzar"],
+    description: "Recorrido por las 5 secciones y todas sus sub-pestañas. ¡Solo 2 minutos!",
     emoji: "🎉",
+    tips: ["Desliza para avanzar", "Toca los puntos para saltar"],
   },
+
+  // ── INICIO ─────────────────────────────
   {
-    id: "inicio",
-    title: "Inicio",
-    description: "Tu día a día: Resumen, Agenda, Caja, Lista de espera y Pedidos de tienda.",
-    icon: <LayoutDashboard className="h-7 w-7" />,
+    id: "inicio-resumen",
+    title: "Inicio · Resumen",
+    description: "Tu centro de control: métricas del día, próximas citas y acciones rápidas.",
+    emoji: "📊",
     targetTab: "inicio",
-    tips: ["Citas y cobros", "Lista de espera", "Pedidos online"],
-    emoji: "🏠",
+    targetSubTab: "resumen",
+    tips: ["KPIs del día", "Checklist inicial"],
   },
   {
-    id: "clientes",
-    title: "Clientes",
-    description: "Directorio completo con mensajería en tiempo real y gestión de reseñas.",
-    icon: <UserCircle className="h-7 w-7" />,
-    targetTab: "clientes",
-    tips: ["Historial y notas", "Chat directo", "Reseñas verificadas"],
+    id: "inicio-agenda",
+    title: "Inicio · Agenda",
+    description: "Calendario por día/semana. Arrastra citas y confirma WhatsApp con un toque.",
+    emoji: "📅",
+    targetTab: "inicio",
+    targetSubTab: "agenda",
+    tips: ["Drag & drop", "Color por estilista"],
+  },
+  {
+    id: "inicio-caja",
+    title: "Inicio · Caja",
+    description: "Cobra al finalizar la cita: efectivo, tarjeta o mixto. Exporta a Excel.",
+    emoji: "💰",
+    targetTab: "inicio",
+    targetSubTab: "caja",
+    tips: ["Plan Pro", "Cierres diarios"],
+  },
+  {
+    id: "inicio-espera",
+    title: "Inicio · Lista de espera",
+    description: "Clientes sin hueco. Se avisan automáticamente si se libera una cita.",
+    emoji: "⏳",
+    targetTab: "inicio",
+    targetSubTab: "espera",
+    tips: ["Aviso automático"],
+  },
+  {
+    id: "inicio-pedidos",
+    title: "Inicio · Pedidos",
+    description: "Pedidos online de tu tienda. Gestiona estado y entrega desde aquí.",
+    emoji: "🛒",
+    targetTab: "inicio",
+    targetSubTab: "pedidos",
+    tips: ["Tienda integrada"],
+  },
+
+  // ── CLIENTES ───────────────────────────
+  {
+    id: "clientes-directorio",
+    title: "Clientes · Directorio",
+    description: "Tu CRM completo: historial, notas, etiquetas VIP y métricas financieras.",
     emoji: "👥",
+    targetTab: "clientes",
+    targetSubTab: "directorio",
+    tips: ["VIP automático", "Notas privadas"],
   },
   {
-    id: "catalogo",
-    title: "Catálogo",
-    description: "Servicios, productos de tienda, paquetes combinados y promociones.",
-    icon: <ShoppingBag className="h-7 w-7" />,
+    id: "clientes-mensajes",
+    title: "Clientes · Mensajes",
+    description: "Chat en tiempo real con notificaciones push para no perder ningún mensaje.",
+    emoji: "💬",
+    targetTab: "clientes",
+    targetSubTab: "mensajes",
+    tips: ["Push instantáneo"],
+  },
+  {
+    id: "clientes-resenas",
+    title: "Clientes · Reseñas",
+    description: "Modera las opiniones de tus clientes y decide cuáles se publican.",
+    emoji: "⭐",
+    targetTab: "clientes",
+    targetSubTab: "resenas",
+    tips: ["Aprueba o rechaza"],
+  },
+
+  // ── CATÁLOGO ───────────────────────────
+  {
+    id: "catalogo-services",
+    title: "Catálogo · Servicios",
+    description: "Define servicios con precio, duración y categoría. Visibles al reservar.",
+    emoji: "✂️",
     targetTab: "catalogo",
-    tips: ["Precios y duración", "Paquetes y promos"],
-    emoji: "🛍️",
+    targetSubTab: "services",
+    tips: ["Precio y duración"],
   },
   {
-    id: "marketing",
-    title: "Marketing",
-    description: "Publica Posts de tus trabajos y genera tarjetas QR (sociales y A4 imprimibles).",
-    icon: <Megaphone className="h-7 w-7" />,
+    id: "catalogo-products",
+    title: "Catálogo · Productos",
+    description: "Inventario de tu tienda online con alertas de stock bajo.",
+    emoji: "📦",
+    targetTab: "catalogo",
+    targetSubTab: "products",
+    tips: ["Stock automático"],
+  },
+  {
+    id: "catalogo-packages",
+    title: "Catálogo · Paquetes",
+    description: "Combina varios servicios en un pack con descuento automático.",
+    emoji: "🎁",
+    targetTab: "catalogo",
+    targetSubTab: "packages",
+    tips: ["Plan Pro"],
+  },
+  {
+    id: "catalogo-promos",
+    title: "Catálogo · Promos",
+    description: "Cupones de descuento y puntos de fidelidad para tus clientes.",
+    emoji: "🎫",
+    targetTab: "catalogo",
+    targetSubTab: "promos",
+    tips: ["Plan Pro"],
+  },
+
+  // ── MARKETING ──────────────────────────
+  {
+    id: "marketing-posts",
+    title: "Marketing · Posts",
+    description: "Publica tus trabajos. Tu portafolio visual aparece en la landing del salón.",
+    emoji: "📸",
     targetTab: "marketing",
-    tips: ["Posts de tu portafolio", "QR A4 para imprimir"],
-    emoji: "📣",
+    targetSubTab: "posts",
+    tips: ["Portafolio público"],
   },
   {
-    id: "negocio",
-    title: "Negocio",
-    description: "Equipo y comisiones, Informes con estadísticas y Ajustes del salón.",
-    icon: <Settings className="h-7 w-7" />,
-    targetTab: "negocio",
-    tips: ["Staff y horarios", "Informes PDF", "Tema y notificaciones"],
-    emoji: "⚙️",
+    id: "marketing-qr",
+    title: "Marketing · Tarjetas QR",
+    description: "Genera tarjetas sociales y carteles A4 listos para imprimir con tu QR.",
+    emoji: "🔳",
+    targetTab: "marketing",
+    targetSubTab: "qr",
+    tips: ["Cartel A4 print", "Tarjeta social"],
   },
+
+  // ── NEGOCIO ────────────────────────────
+  {
+    id: "negocio-equipo",
+    title: "Negocio · Equipo",
+    description: "Staff, color por estilista, horarios y comisiones automáticas.",
+    emoji: "✂️",
+    targetTab: "negocio",
+    targetSubTab: "equipo",
+    tips: ["Comisiones Business"],
+  },
+  {
+    id: "negocio-informes",
+    title: "Negocio · Informes",
+    description: "Estadísticas, objetivos mensuales y exportación de informes en PDF.",
+    emoji: "📈",
+    targetTab: "negocio",
+    targetSubTab: "informes",
+    tips: ["PDF descargable"],
+  },
+  {
+    id: "negocio-ajustes",
+    title: "Negocio · Ajustes",
+    description: "Tema, logo, dirección, notificaciones y seguridad del salón.",
+    emoji: "⚙️",
+    targetTab: "negocio",
+    targetSubTab: "ajustes",
+    tips: ["Tema personalizable"],
+  },
+
   {
     id: "complete",
     title: "¡Listo para empezar!",
-    description: "Ya lo conoces todo. Toca ✨ arriba para repetir el tour cuando quieras.",
-    icon: <CheckCircle className="h-7 w-7" />,
-    tips: ["Explora cada sub-pestaña", "Ayuda siempre disponible"],
+    description: "Ya conoces todo. Toca ✨ arriba para repetir el tour cuando quieras.",
     emoji: "🚀",
+    tips: ["Centro de ayuda siempre disponible"],
   },
 ];
 
@@ -97,7 +214,7 @@ const STORAGE_KEY = "glowapp_admin_tour_v5_completed";
 const SWIPE_THRESHOLD = 60;
 
 interface InteractiveTourProps {
-  onTabChange?: (tab: string) => void;
+  onTabChange?: (tab: string, subTab?: string) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
@@ -128,7 +245,7 @@ export function InteractiveTour({ onTabChange, open: openProp, onOpenChange, hid
     if (idx < 0 || idx >= TOUR_STEPS.length) return;
     setDirection(idx > currentStep ? 1 : -1);
     const step = TOUR_STEPS[idx];
-    if (step.targetTab && onTabChange) onTabChange(step.targetTab);
+    if (step.targetTab && onTabChange) onTabChange(step.targetTab, step.targetSubTab);
     setCurrentStep(idx);
   }, [currentStep, onTabChange]);
 

@@ -545,7 +545,7 @@ export default function TenantAdmin() {
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                <AdminHelpMenu onTourTabChange={(tab) => handleNavigate(tab)} />
+                <AdminHelpMenu onTourTabChange={handleNavigate} />
               </div>
             </div>
           ) : (
@@ -566,7 +566,7 @@ export default function TenantAdmin() {
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
-                  <AdminHelpMenu onTourTabChange={(tab) => handleNavigate(tab)} />
+                  <AdminHelpMenu onTourTabChange={handleNavigate} />
                   <div className="w-px h-6 bg-border/60 mx-1" aria-hidden />
                   <AdminAccountMenu
                     tenantName={tenant.name}

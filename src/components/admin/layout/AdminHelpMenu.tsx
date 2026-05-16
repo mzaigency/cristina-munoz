@@ -6,7 +6,7 @@ import { HelpTutorial } from "@/components/admin/HelpTutorial";
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
 
 interface AdminHelpMenuProps {
-  onTourTabChange?: (tab: string) => void;
+  onTourTabChange?: (tab: string, subTab?: string) => void;
 }
 
 /**
