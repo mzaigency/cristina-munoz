@@ -43,108 +43,106 @@ interface HelpSection {
   }[];
 }
 
-// Help matching the new 8-tab structure
+// Help matching the new 5-section structure (inicio, clientes, catalogo, marketing, negocio)
 const helpSections: HelpSection[] = [
   {
-    id: "dashboard",
+    id: "inicio",
     title: "Inicio",
     icon: <LayoutDashboard className="h-5 w-5" />,
-    description: "Centro de control principal",
+    description: "Resumen, agenda, caja, espera y pedidos",
     subsections: [
       {
-        name: "Vista general",
+        name: "Resumen",
         items: [
           "📊 Métricas del día: citas, ingresos",
           "⚡ Acciones rápidas: crear cita, cobrar",
-          "📅 Próximas citas programadas",
-          "🔔 Alertas y notificaciones",
+          "✅ Checklist de configuración inicial",
+          "🔔 Alertas y próximas citas",
         ],
       },
-    ],
-  },
-  {
-    id: "agenda",
-    title: "Agenda",
-    icon: <Calendar className="h-5 w-5" />,
-    description: "Calendario, espera y caja",
-    subsections: [
       {
-        name: "Calendario",
+        name: "Agenda",
         items: [
-          "📅 Vista por día o semana",
+          "📅 Calendario por día o semana",
           "🎨 Citas por color de estilista",
           "✋ Arrastra para mover citas",
-          "⏰ Indicador de hora actual",
-        ],
-      },
-      {
-        name: "Lista de espera",
-        items: [
-          "📋 Clientes sin hueco disponible",
-          "🔔 Notificación si se cancela cita",
-          "⬆️ Gestión de prioridades",
+          "✔️ Confirmaciones de WhatsApp",
         ],
       },
       {
         name: "Caja (Pro)",
         items: [
-          "💰 Registrar cobros al finalizar cita",
+          "💰 Cobrar al finalizar cita",
           "💳 Efectivo, tarjeta o mixto",
           "📧 Exportar a Excel",
+        ],
+      },
+      {
+        name: "Espera",
+        items: [
+          "📋 Clientes sin hueco disponible",
+          "🔔 Aviso si se libera cita",
+        ],
+      },
+      {
+        name: "Pedidos",
+        items: [
+          "🛒 Pedidos online de tu tienda",
+          "📦 Gestiona estado y entrega",
         ],
       },
     ],
   },
   {
-    id: "clients",
+    id: "clientes",
     title: "Clientes",
     icon: <UserCircle className="h-5 w-5" />,
-    description: "CRM, mensajes y reseñas",
+    description: "Directorio, mensajes y reseñas",
     subsections: [
       {
         name: "Directorio",
         items: [
-          "👥 Lista de todos los clientes",
+          "👥 Lista completa de clientes",
           "🔍 Búsqueda por nombre/teléfono",
           "📝 Notas y preferencias",
           "🏷️ Etiquetas: VIP, Frecuente",
-          "📊 Historial de visitas",
+          "📊 Historial financiero",
         ],
       },
       {
         name: "Mensajes",
         items: [
-          "💬 Chat con clientes",
-          "🔔 Notificaciones en tiempo real",
+          "💬 Chat en tiempo real",
+          "🔔 Notificaciones push",
         ],
       },
       {
         name: "Reseñas",
         items: [
-          "⭐ Moderar opiniones",
-          "✅ Aprobar/rechazar",
+          "⭐ Modera opiniones",
+          "✅ Aprueba/rechaza públicas",
         ],
       },
     ],
   },
   {
-    id: "catalog",
+    id: "catalogo",
     title: "Catálogo",
     icon: <ShoppingBag className="h-5 w-5" />,
-    description: "Servicios, productos y promos",
+    description: "Servicios, productos, paquetes y promos",
     subsections: [
       {
         name: "Servicios",
         items: [
           "✂️ Catálogo de servicios",
-          "⏱️ Duraciones y precios",
+          "⏱️ Duración y precios",
           "📂 Categorías",
         ],
       },
       {
         name: "Productos",
         items: [
-          "📦 Inventario",
+          "📦 Inventario de tienda",
           "⚠️ Alertas de stock bajo",
         ],
       },
@@ -160,7 +158,6 @@ const helpSections: HelpSection[] = [
         items: [
           "🎫 Cupones de descuento",
           "⭐ Puntos de fidelidad",
-          "📤 Códigos compartibles",
         ],
       },
     ],
@@ -169,7 +166,7 @@ const helpSections: HelpSection[] = [
     id: "marketing",
     title: "Marketing",
     icon: <Camera className="h-5 w-5" />,
-    description: "Posts y tarjetas QR",
+    description: "Posts y tarjetas QR imprimibles",
     subsections: [
       {
         name: "Posts",
@@ -182,100 +179,44 @@ const helpSections: HelpSection[] = [
       {
         name: "Tarjetas QR",
         items: [
-          "📱 Genera tarjetas con QR",
-          "🖨️ Descarga en PNG para imprimir",
+          "📱 Tarjeta social (1200x800)",
+          "🖨️ Cartel A4 listo para imprimir",
           "🎨 Varias plantillas de diseño",
-          "🔗 Link de reserva compartible",
+          "🔗 Link de reserva incluido",
         ],
       },
     ],
   },
   {
-    id: "team",
-    title: "Equipo",
-    icon: <Users className="h-5 w-5" />,
-    description: "Staff, horarios y comisiones",
-    subsections: [
-      {
-        name: "Staff",
-        items: [
-          "👥 Gestión de equipo",
-          "🎨 Color por estilista",
-          "📷 Foto de perfil",
-        ],
-      },
-      {
-        name: "Horarios",
-        items: [
-          "🕐 Horarios de apertura",
-          "☕ Pausas de comida",
-        ],
-      },
-      {
-        name: "Comisiones (Business)",
-        items: [
-          "💰 % por estilista",
-          "📊 Cálculo automático",
-        ],
-      },
-    ],
-  },
-  {
-    id: "reports",
-    title: "Informes",
-    icon: <Wallet className="h-5 w-5" />,
-    description: "Stats, objetivos y reportes",
-    subsections: [
-      {
-        name: "Stats (Pro)",
-        items: [
-          "📊 Análisis de ventas",
-          "📈 Comparativas semanales",
-        ],
-      },
-      {
-        name: "Objetivos (Business)",
-        items: [
-          "🎯 Metas mensuales",
-          "📈 Progreso y predicción",
-        ],
-      },
-      {
-        name: "Reportes PDF (Pro)",
-        items: [
-          "📄 Exporta informes completos",
-          "📊 Datos de rendimiento",
-        ],
-      },
-    ],
-  },
-  {
-    id: "settings",
-    title: "Ajustes",
+    id: "negocio",
+    title: "Negocio",
     icon: <Settings className="h-5 w-5" />,
-    description: "Configuración del salón",
+    description: "Equipo, informes y ajustes",
     subsections: [
       {
-        name: "General",
+        name: "Equipo",
         items: [
-          "🎨 Colores y tema",
-          "📷 Logo del salón",
+          "👥 Gestión de staff",
+          "🎨 Color por estilista",
+          "🕐 Horarios y pausas",
+          "💰 Comisiones (Business)",
+        ],
+      },
+      {
+        name: "Informes",
+        items: [
+          "📊 Análisis de ventas (Pro)",
+          "🎯 Objetivos mensuales (Business)",
+          "📄 Reportes PDF",
+        ],
+      },
+      {
+        name: "Ajustes",
+        items: [
+          "🎨 Colores, logo y tema",
           "📍 Dirección y contacto",
-        ],
-      },
-      {
-        name: "Alertas",
-        items: [
-          "🔔 Notificaciones push",
-          "📧 Avisos por email",
-          "📊 Resumen diario",
-        ],
-      },
-      {
-        name: "Seguridad",
-        items: [
-          "🔒 Accesos y permisos",
-          "📊 Monitor de actividad",
+          "🔔 Notificaciones push y email",
+          "🔒 Accesos y seguridad",
         ],
       },
     ],
