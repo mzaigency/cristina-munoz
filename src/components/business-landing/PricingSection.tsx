@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Zap, Crown, Building2 } from "lucide-react";
+import { Check, Zap, Crown, Building2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { SectionEyebrow } from "./SectionEyebrow";
 
-const PLAN_ICONS: Record<string, { icon: typeof Zap; gradient: string }> = {
-  starter: { icon: Zap, gradient: "from-blue-400 to-blue-600" },
-  pro: { icon: Crown, gradient: "from-amber-400 to-orange-500" },
-  business: { icon: Building2, gradient: "from-purple-400 to-pink-500" },
+// Todos los planes usan el gradiente de marca (primary → accent).
+// La diferenciación entre tiers se hace con el icono y la opacidad.
+const PLAN_ICONS: Record<string, { icon: typeof Zap; opacity: string }> = {
+  starter: { icon: Zap, opacity: "opacity-70" },
+  pro: { icon: Crown, opacity: "opacity-100" },
+  business: { icon: Building2, opacity: "opacity-100" },
 };
 
 const PLAN_SUBTITLES: Record<string, string> = {
