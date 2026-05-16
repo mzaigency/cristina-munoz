@@ -7,21 +7,16 @@ import {
   LogOut,
   Loader2,
   Home,
-  Calendar,
-  MessageCircle,
-  Wallet,
   ExternalLink,
-  Settings,
   Scissors,
   Users,
-  LayoutDashboard,
   Menu,
   ShoppingBag,
   Megaphone,
-  BarChart3,
   UserCircle,
+  Sparkles,
+  Briefcase,
 } from "lucide-react";
-import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { HelpTutorial } from "@/components/admin/HelpTutorial";
 import { InteractiveTour } from "@/components/admin/InteractiveTour";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
@@ -34,15 +29,14 @@ import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
 import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
 import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpiredScreen";
+import { NotifBadge } from "@/components/admin/layout/NotifBadge";
 
 import {
-  TeamSection,
-  SettingsSection,
-  AgendaSection,
   ClientsSection,
   CatalogSection,
   MarketingSection,
-  ReportsSection,
+  InicioSection,
+  NegocioSection,
 } from "@/components/admin/sections";
 
 interface Tenant {
@@ -53,82 +47,134 @@ interface Tenant {
   primary_color: string | null;
 }
 
-interface Stylist {
-  id: string;
-  name: string;
-  slug: string;
-  color: string;
-}
-
-type TabValue = "dashboard" | "agenda" | "clients" | "catalog" | "marketing" | "team" | "reports" | "settings";
+type SectionValue = "inicio" | "clientes" | "catalogo" | "marketing" | "negocio";
 
 interface NavItem {
-  value: TabValue;
+  value: SectionValue;
   label: string;
   icon: React.ReactNode;
   badge?: number;
 }
 
+const VALID_SECTIONS: SectionValue[] = ["inicio", "clientes", "catalogo", "marketing", "negocio"];
+
+// Map legacy dashboard/tour navigation keys → new (section, subTab) URL slugs
+const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }> = {
+  dashboard: { section: "inicio", subTab: "resumen" },
+  calendar: { section: "inicio", subTab: "agenda" },
+  agenda: { section: "inicio", subTab: "agenda" },
+  cash: { section: "inicio", subTab: "caja" },
+  waitlist: { section: "inicio", subTab: "espera" },
+  orders: { section: "inicio", subTab: "pedidos" },
+  clients: { section: "clientes", subTab: "directorio" },
+  directory: { section: "clientes", subTab: "directorio" },
+  messages: { section: "clientes", subTab: "mensajes" },
+  reviews: { section: "clientes", subTab: "resenas" },
+  services: { section: "catalogo", subTab: "services" },
+  products: { section: "catalogo", subTab: "products" },
+  packages: { section: "catalogo", subTab: "packages" },
+  promos: { section: "catalogo", subTab: "promos" },
+  catalog: { section: "catalogo" },
+  marketing: { section: "marketing" },
+  posts: { section: "marketing", subTab: "posts" },
+  qr: { section: "marketing", subTab: "qr" },
+  whatsapp: { section: "marketing", subTab: "whatsapp" },
+  team: { section: "negocio", subTab: "equipo" },
+  stylists: { section: "negocio", subTab: "equipo" },
+  hours: { section: "negocio", subTab: "equipo" },
+  reports: { section: "negocio", subTab: "informes" },
+  stats: { section: "negocio", subTab: "informes" },
+  goals: { section: "negocio", subTab: "informes" },
+  settings: { section: "negocio", subTab: "ajustes" },
+};
+
 export default function TenantAdmin() {
   const [userEmail, setUserEmail] = useState("");
-  const [activeTab, setActiveTab] = useState<TabValue>("dashboard");
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [stylists, setStylists] = useState<Stylist[]>([]);
   const [tenantLoading, setTenantLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
-  const { adminSlug: slug } = useParams<{ adminSlug: string }>();
+  const { adminSlug: slug, section: sectionParam, subTab: subTabParam } =
+    useParams<{ adminSlug: string; section?: string; subTab?: string }>();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  const { isAdmin, isStylist, hasAccess, loading: accessLoading, userId } = useTenantAccess(tenant?.id);
-  const { isExpired: subscriptionExpired, plan: subscriptionPlan, loading: subscriptionLoading } = useSubscriptionStatus(tenant?.id);
+  const { isAdmin, isStylist, hasAccess, loading: accessLoading } = useTenantAccess(tenant?.id);
+  const { isExpired: subscriptionExpired, plan: subscriptionPlan, loading: subscriptionLoading } =
+    useSubscriptionStatus(tenant?.id);
 
   const {
     counts: notificationCounts,
-    getCommunicationCount,
     refetch: refetchNotifications,
     markSectionViewed,
   } = useAdminNotifications(tenant?.id || null);
 
+  // Resolve active section from URL (default = inicio)
+  const activeSection: SectionValue = useMemo(() => {
+    if (sectionParam && VALID_SECTIONS.includes(sectionParam as SectionValue)) {
+      return sectionParam as SectionValue;
+    }
+    return "inicio";
+  }, [sectionParam]);
+
   const navItems: NavItem[] = useMemo(() => {
     const clientsBadge = notificationCounts.messages + notificationCounts.reviews;
     const allItems: NavItem[] = [
-      { value: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
-      { value: "agenda", label: "Inicio", icon: <Calendar className="h-4 w-4" />, badge: notificationCounts.agenda },
-      { value: "clients", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: clientsBadge },
-      { value: "catalog", label: "Catálogo", icon: <ShoppingBag className="h-4 w-4" /> },
+      { value: "inicio", label: "Inicio", icon: <Home className="h-4 w-4" />, badge: notificationCounts.agenda },
+      { value: "clientes", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: clientsBadge },
+      { value: "catalogo", label: "Catálogo", icon: <ShoppingBag className="h-4 w-4" /> },
       { value: "marketing", label: "Marketing", icon: <Megaphone className="h-4 w-4" /> },
-      { value: "team", label: "Equipo", icon: <Users className="h-4 w-4" /> },
-      { value: "reports", label: "Informes", icon: <BarChart3 className="h-4 w-4" /> },
-      { value: "settings", label: "Ajustes", icon: <Settings className="h-4 w-4" /> },
+      { value: "negocio", label: "Negocio", icon: <Briefcase className="h-4 w-4" /> },
     ];
-
     if (isStylist && !isAdmin) {
-      return allItems.filter((item) => !["settings", "team", "reports"].includes(item.value));
+      return allItems.filter((item) => !["marketing", "negocio"].includes(item.value));
     }
-
     return allItems;
   }, [notificationCounts, isAdmin, isStylist]);
 
   const tabOrder = navItems.map((item) => item.value);
 
+  const goToSection = useCallback(
+    (section: SectionValue, subTab?: string) => {
+      if (!slug) return;
+      const path = subTab ? `/admin/${slug}/${section}/${subTab}` : `/admin/${slug}/${section}`;
+      navigate(path);
+    },
+    [navigate, slug],
+  );
+
   const { handlers: swipeHandlers } = useSwipeNavigation({
     tabs: tabOrder,
-    currentTab: activeTab,
-    onTabChange: (tab) => setActiveTab(tab as TabValue),
+    currentTab: activeSection,
+    onTabChange: (tab) => goToSection(tab as SectionValue),
     enabled: isMobile,
   });
 
+  // Normalize URL: if user lands on /admin/:slug without section, push to /inicio
   useEffect(() => {
-    if (!slug) { navigate("/"); return; }
+    if (!slug) return;
+    if (!sectionParam) {
+      navigate(`/admin/${slug}/inicio`, { replace: true });
+    } else if (!VALID_SECTIONS.includes(sectionParam as SectionValue)) {
+      navigate(`/admin/${slug}/inicio`, { replace: true });
+    }
+  }, [slug, sectionParam, navigate]);
+
+  useEffect(() => {
+    if (!slug) {
+      navigate("/");
+      return;
+    }
 
     const fetchTenant = async () => {
       setTenantLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate("/auth"); return; }
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
       setUserEmail(session.user.email || "");
 
       const { data: tenantData, error: tenantError } = await supabase
@@ -158,22 +204,13 @@ export default function TenantAdmin() {
     }
   }, [tenantLoading, accessLoading, hasAccess, tenant]);
 
+  // Mark section as viewed when navigating
   useEffect(() => {
-    if (tenant?.id) fetchStylists();
-  }, [tenant?.id]);
-
-  const fetchStylists = async () => {
     if (!tenant?.id) return;
-    const { data, error } = await supabase
-      .from("tenant_stylists")
-      .select("id, name, slug, color")
-      .eq("tenant_id", tenant.id)
-      .eq("is_active", true);
-
-    if (!error && data) {
-      setStylists(data.map((s) => ({ id: s.id, name: s.name, slug: s.slug, color: s.color || "#8B5CF6" })));
-    }
-  };
+    if (activeSection === "clientes") markSectionViewed("clients");
+    else if (activeSection === "inicio") markSectionViewed("agenda");
+    else markSectionViewed(activeSection as any);
+  }, [activeSection, tenant?.id]);
 
   const handleSignOut = async () => {
     try { await supabase.auth.signOut({ scope: "local" }); } catch (error) { console.error("Error during sign out:", error); }
@@ -183,120 +220,101 @@ export default function TenantAdmin() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshKey((prev) => prev + 1);
-    if (tenant?.id) await Promise.all([refetchNotifications(), fetchStylists()]);
+    if (tenant?.id) await refetchNotifications();
     toast({ title: "Actualizado", description: "Datos actualizados correctamente" });
   }, [tenant?.id, refetchNotifications]);
 
-  const handleQuickAction = (action: string) => {
-    switch (action) {
-      case "new-booking": setActiveTab("agenda"); break;
-      case "new-payment":
-        sessionStorage.setItem("openCashTab", "true");
-        setActiveTab("agenda");
-        break;
-      case "block-slot": setActiveTab("agenda"); break;
-      case "new-service":
-        sessionStorage.setItem("openCatalogSubTab", "services");
-        setActiveTab("catalog");
-        break;
-      default: break;
-    }
-  };
+  // Legacy navigate adapter used by AdminDashboard/InteractiveTour
+  const handleNavigate = useCallback(
+    (tab: string, subTab?: string) => {
+      const mapped = LEGACY_NAV_MAP[tab];
+      if (mapped) {
+        goToSection(mapped.section, subTab || mapped.subTab);
+      } else if (VALID_SECTIONS.includes(tab as SectionValue)) {
+        goToSection(tab as SectionValue, subTab);
+      }
+    },
+    [goToSection],
+  );
 
-  // Map from dashboard/training navigation keys to actual tabs
-  const TAB_MAP: Record<string, TabValue> = {
-    calendar: "agenda",
-    agenda: "agenda",
-    cash: "agenda",
-    clients: "clients",
-    directory: "clients",
-    messages: "clients",
-    reviews: "clients",
-    services: "catalog",
-    products: "catalog",
-    catalog: "catalog",
-    marketing: "marketing",
-    posts: "marketing",
-    qr: "marketing",
-    team: "team",
-    stylists: "team",
-    hours: "team",
-    reports: "reports",
-    stats: "reports",
-    goals: "reports",
-    settings: "settings",
-    dashboard: "dashboard",
-  };
-
-  const handleNavigate = useCallback((tab: string, subTab?: string) => {
-    // Store sub-tab in sessionStorage if provided
-    if (subTab) {
-      const targetTab = TAB_MAP[tab] || tab;
-      const storageKeyMap: Record<string, string> = {
-        agenda: "openCashTab",
-        clients: "openClientsSubTab",
-        catalog: "openCatalogSubTab",
-        marketing: "openMarketingSubTab",
-        team: "openTeamSubTab",
-        reports: "openReportsSubTab",
-      };
-      const key = storageKeyMap[targetTab];
-      if (key) sessionStorage.setItem(key, subTab);
-    }
-    setActiveTab(TAB_MAP[tab] || (tab as TabValue));
-  }, []);
+  // Absolute-path navigate used by composite sections (InicioSection)
+  const handlePathNavigate = useCallback(
+    (path: string) => {
+      navigate(path);
+    },
+    [navigate],
+  );
 
   const renderContent = () => {
     if (!tenant) return null;
 
-    switch (activeTab) {
-      case "dashboard":
+    switch (activeSection) {
+      case "inicio":
         return (
-          <AdminDashboard
+          <InicioSection
             key={refreshKey}
             tenantId={tenant.id}
-            onNavigate={handleNavigate}
-            onQuickAction={handleQuickAction}
-          />
-        );
-      case "agenda":
-        return (
-          <AgendaSection
-            key={refreshKey}
-            tenantId={tenant.id}
-            onSelectClient={(clientId) => {
-              sessionStorage.setItem("openClientsSubTab", "directory");
-              setActiveTab("clients");
+            tenantSlug={slug || ""}
+            subTab={subTabParam}
+            onNavigate={(path) => {
+              // path may be a legacy tab key or absolute path
+              if (path.startsWith("/")) handlePathNavigate(path);
+              else handleNavigate(path);
             }}
+            onSelectClient={() => goToSection("clientes", "directorio")}
           />
         );
-      case "clients":
-        return <ClientsSection key={refreshKey} tenantId={tenant.id} />;
-      case "catalog":
-        return <CatalogSection key={refreshKey} tenantId={tenant.id} />;
+      case "clientes":
+        return (
+          <ClientsSection
+            key={refreshKey}
+            tenantId={tenant.id}
+            subTab={subTabParam}
+            onSubTabChange={(t) => goToSection("clientes", t)}
+          />
+        );
+      case "catalogo":
+        return (
+          <CatalogSection
+            key={refreshKey}
+            tenantId={tenant.id}
+            subTab={subTabParam}
+            onSubTabChange={(t) => goToSection("catalogo", t)}
+          />
+        );
       case "marketing":
-        return <MarketingSection key={refreshKey} tenantId={tenant.id} tenantSlug={tenant.slug} />;
-      case "team":
-        return <TeamSection key={refreshKey} tenantId={tenant.id} />;
-      case "reports":
-        return <ReportsSection key={refreshKey} tenantId={tenant.id} />;
-      case "settings":
-        return <SettingsSection key={refreshKey} tenantId={tenant.id} tenantSlug={tenant.slug} />;
+        return (
+          <MarketingSection
+            key={refreshKey}
+            tenantId={tenant.id}
+            tenantSlug={tenant.slug}
+            subTab={subTabParam}
+            onSubTabChange={(t) => goToSection("marketing", t)}
+          />
+        );
+      case "negocio":
+        return (
+          <NegocioSection
+            key={refreshKey}
+            tenantId={tenant.id}
+            tenantSlug={tenant.slug}
+            subTab={subTabParam}
+          />
+        );
       default:
         return null;
     }
   };
 
-  const handleTabClick = (tab: TabValue) => {
-    if (tab !== "dashboard") markSectionViewed(tab);
-    setActiveTab(tab);
+  const handleTabClick = (section: SectionValue) => {
+    goToSection(section);
     if (isMobile) setSidebarOpen(false);
   };
 
   const renderNavButton = (item: NavItem) => {
-    const isActive = activeTab === item.value;
+    const isActive = activeSection === item.value;
     const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-    const showBadge = badgeCount > 0 && activeTab !== item.value;
+    const showBadge = badgeCount > 0 && !isActive;
 
     return (
       <button
@@ -326,14 +344,7 @@ export default function TenantAdmin() {
       >
         <div className="relative">
           {item.icon}
-          {showBadge && (
-            <span
-              className="absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground"
-              aria-hidden="true"
-            >
-              {badgeCount > 9 ? "9+" : badgeCount}
-            </span>
-          )}
+          {showBadge && <NotifBadge count={badgeCount} dot />}
         </div>
         <span className={cn("font-medium leading-none whitespace-nowrap", isMobile ? "text-[10px]" : "text-xs")}>
           {item.label}
@@ -395,7 +406,7 @@ export default function TenantAdmin() {
 
             <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
               {navItems.map((item) => {
-                const isActive = activeTab === item.value;
+                const isActive = activeSection === item.value;
                 const badgeCount = typeof item.badge === "number" ? item.badge : 0;
                 const showBadge = badgeCount > 0 && !isActive;
 
@@ -407,16 +418,12 @@ export default function TenantAdmin() {
                       "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                       isActive
                         ? "bg-primary text-primary-foreground shadow-md"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     {item.icon}
                     <span className="flex-1 text-left">{item.label}</span>
-                    {showBadge && (
-                      <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
-                        {badgeCount > 9 ? "9+" : badgeCount}
-                      </span>
-                    )}
+                    {showBadge && <NotifBadge count={badgeCount} position="inline" />}
                   </button>
                 );
               })}
@@ -473,7 +480,7 @@ export default function TenantAdmin() {
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                <InteractiveTour onTabChange={(tab) => setActiveTab(TAB_MAP[tab] || (tab as TabValue))} />
+                <InteractiveTour onTabChange={(tab) => handleNavigate(tab)} />
                 <HelpTutorial />
               </div>
             </div>
@@ -495,7 +502,7 @@ export default function TenantAdmin() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <InteractiveTour onTabChange={(tab) => setActiveTab(TAB_MAP[tab] || (tab as TabValue))} />
+                  <InteractiveTour onTabChange={(tab) => handleNavigate(tab)} />
                   <HelpTutorial />
                   <Button onClick={() => navigate(`/${slug}`)} variant="outline" size="sm" className="gap-1 h-9 px-3 text-sm">
                     <ExternalLink className="h-4 w-4" />
