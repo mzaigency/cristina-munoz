@@ -381,6 +381,13 @@ export default function TenantAdmin() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      <AdminCommandPalette
+        tenantSlug={slug || ""}
+        onNavigate={(path) => navigate(path)}
+        onNewBooking={() => goToSection("inicio", "agenda")}
+        onViewWeb={() => navigate(`/${slug}`)}
+        onSignOut={handleSignOut}
+      />
       {/* Liquid Glass ambient background */}
       <div className="fixed inset-0 -z-10 bg-background">
         <div className="absolute inset-0 opacity-40 dark:opacity-20">
