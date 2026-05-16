@@ -164,6 +164,8 @@ const App = () => (
                         <Route path="/auth" element={<Auth />} />
                         <Route path="/admin" element={<Admin />} />
                         <Route path="/admin/:adminSlug" element={<TenantAdmin />} />
+                        <Route path="/admin/:adminSlug/:section" element={<TenantAdmin />} />
+                        <Route path="/admin/:adminSlug/:section/:subTab" element={<TenantAdmin />} />
                         <Route path="/superadmin" element={<SuperAdmin />} />
                         <Route path="/mis-citas" element={<MyBookings />} />
                         <Route path="/perfil" element={<Profile />} />
