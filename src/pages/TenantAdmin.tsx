@@ -31,6 +31,7 @@ import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
 import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpiredScreen";
 import { NotifBadge } from "@/components/admin/layout/NotifBadge";
 import { AdminAccountMenu } from "@/components/admin/layout/AdminAccountMenu";
+import { AdminCommandPalette } from "@/components/admin/layout/AdminCommandPalette";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 
