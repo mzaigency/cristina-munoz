@@ -615,6 +615,6 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
           {step === 4 && <>Revisa los datos y pulsa <span className="font-semibold text-primary">Crear Cita</span> abajo.</>}
         </p>
       </div>
-    </Card>
+    </div>
   );
 };
