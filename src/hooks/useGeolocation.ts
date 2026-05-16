@@ -14,13 +14,32 @@ interface UseGeolocationOptions {
   maximumAge?: number;
 }
 
+const STORAGE_KEY = "glow_geo_v1";
+const PERM_DENIED_KEY = "glow_geo_denied_v1";
+
+function readPersisted(): Pick<GeolocationState, "latitude" | "longitude"> {
+  if (typeof window === "undefined") return { latitude: null, longitude: null };
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { latitude: null, longitude: null };
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.lat === "number" && typeof parsed?.lon === "number") {
+      return { latitude: parsed.lat, longitude: parsed.lon };
+    }
+  } catch {}
+  return { latitude: null, longitude: null };
+}
+
 export function useGeolocation(options: UseGeolocationOptions = {}) {
-  const [state, setState] = useState<GeolocationState>({
-    latitude: null,
-    longitude: null,
-    error: null,
-    loading: false,
-    permissionDenied: false,
+  const [state, setState] = useState<GeolocationState>(() => {
+    const persisted = readPersisted();
+    return {
+      latitude: persisted.latitude,
+      longitude: persisted.longitude,
+      error: null,
+      loading: false,
+      permissionDenied: false,
+    };
   });
 
   const { enableHighAccuracy = true, timeout = 10000, maximumAge = 300000 } = options;
@@ -46,6 +65,10 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
           loading: false,
           permissionDenied: false,
         });
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ lat: position.coords.latitude, lon: position.coords.longitude, ts: Date.now() }));
+          localStorage.removeItem(PERM_DENIED_KEY);
+        } catch {}
       },
       (error) => {
         let errorMessage = 'Error al obtener ubicación';
@@ -55,6 +78,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
           case error.PERMISSION_DENIED:
             errorMessage = 'Permiso de ubicación denegado';
             permissionDenied = true;
+            try { localStorage.setItem(PERM_DENIED_KEY, "1"); } catch {}
             break;
           case error.POSITION_UNAVAILABLE:
             errorMessage = 'Ubicación no disponible';
@@ -64,13 +88,13 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
             break;
         }
 
-        setState({
-          latitude: null,
-          longitude: null,
+        setState(prev => ({
+          latitude: prev.latitude,
+          longitude: prev.longitude,
           error: errorMessage,
           loading: false,
           permissionDenied,
-        });
+        }));
       },
       {
         enableHighAccuracy,
@@ -79,6 +103,17 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
       }
     );
   }, [enableHighAccuracy, timeout, maximumAge]);
+
+  // Auto-request on mount unless previously denied
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (state.latitude !== null && state.longitude !== null) return;
+    try {
+      if (localStorage.getItem(PERM_DENIED_KEY)) return;
+    } catch {}
+    requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Calculate distance between two points using Haversine formula
   const calculateDistance = useCallback(
