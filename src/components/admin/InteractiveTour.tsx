@@ -245,7 +245,7 @@ export function InteractiveTour({ onTabChange, open: openProp, onOpenChange, hid
     if (idx < 0 || idx >= TOUR_STEPS.length) return;
     setDirection(idx > currentStep ? 1 : -1);
     const step = TOUR_STEPS[idx];
-    if (step.targetTab && onTabChange) onTabChange(step.targetTab);
+    if (step.targetTab && onTabChange) onTabChange(step.targetTab, step.targetSubTab);
     setCurrentStep(idx);
   }, [currentStep, onTabChange]);
 
