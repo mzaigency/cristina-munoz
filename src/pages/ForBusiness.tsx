@@ -56,7 +56,6 @@ export default function ForBusiness() {
         <ForWhoSection />
         <PainPointsSection />
         <FeaturesShowcase />
-        <BeforeAfterSection />
         <TestimonialsSection />
         <PricingSection />
         <B2BLeadForm />
