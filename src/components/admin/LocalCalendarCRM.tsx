@@ -1856,6 +1856,41 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta cita?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDeleteBooking
+                ? `Se eliminará la cita de ${pendingDeleteBooking.customer_name} (${pendingDeleteBooking.Hora?.slice(0, 5)}). Esta acción no se puede deshacer.`
+                : "Esta acción no se puede deshacer."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setPendingDeleteBooking(null);
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                const b = pendingDeleteBooking;
+                setDeleteConfirmOpen(false);
+                setPendingDeleteBooking(null);
+                if (b) await performBookingDeletion(b, false);
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
