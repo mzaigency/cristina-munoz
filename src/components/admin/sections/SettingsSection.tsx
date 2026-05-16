@@ -8,12 +8,19 @@ import { SubscriptionManager } from "../SubscriptionManager";
 interface SettingsSectionProps {
   tenantId: string;
   tenantSlug: string;
+  subTab?: string;
+  onSubTabChange?: (subTab: string) => void;
 }
 
 type SettingsTab = "general" | "notifications" | "subscription";
 
-const SettingsSection = ({ tenantId, tenantSlug }: SettingsSectionProps) => {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+const SettingsSection = ({ tenantId, tenantSlug, subTab, onSubTabChange }: SettingsSectionProps) => {
+  const [internalTab, setInternalTab] = useState<SettingsTab>("general");
+  const activeTab: SettingsTab = (subTab as SettingsTab) || internalTab;
+  const setActiveTab = (t: SettingsTab) => {
+    if (onSubTabChange) onSubTabChange(t);
+    else setInternalTab(t);
+  };
 
   const tabs = [
     { id: "general" as SettingsTab, label: "General", icon: Store },
