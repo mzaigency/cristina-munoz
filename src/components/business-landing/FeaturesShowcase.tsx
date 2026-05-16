@@ -53,7 +53,7 @@ const features = [
     benefits: [
       "Disponibilidad real, en tiempo real",
       "Confirmación automática por email",
-      "Recordatorio antes de la cita (−60% no-shows)",
+      "Recordatorio automático antes de la cita",
       "Si cancelan, el hueco vuelve a estar libre solo",
     ],
     color: BRAND_GRADIENT,
