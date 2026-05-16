@@ -1,78 +1,30 @@
+# Plan revisado
 
-# Plan: Crear cita rápida con click directo en el calendario
+## 1. Permitir solapamiento desde cita rápida
+- En `QuickBookingSheet.tsx → handleCreate`, enviar `skipAvailabilityCheck: true`.
+- Quitar cualquier bloqueo/aviso de hueco; el admin decide y ya moverá si hace falta.
+- Aun así, leer `error.context.json()` para que cualquier error futuro muestre el mensaje real en lugar de *"non 2xx status code"*.
 
-## Problema
+## 2. Áreas de click solo cada 30 min (en lugar de cada 15)
+En `LocalCalendarCRM.tsx`:
 
-Crear una cita desde el panel admin obliga a recorrer 4 pasos secuenciales (servicios → profesional → fecha → hora → cliente) en `AdminBookingFlow.tsx`, igual que un cliente final. Para uso diario en el salón es lento y repetitivo, sobre todo cuando ya estás mirando el calendario y sabes exactamente dónde quieres meter la cita.
+- Reemplazar el handler único de la columna por **dos zonas clicables por hora**: `:00` y `:30`.
+- Cada zona ocupa 30 min de alto (según `PIXELS_PER_MINUTE`).
+- Se renderizan **debajo** de las citas existentes (`z-0`) para no robar clicks a las tarjetas de cita.
+- Al hacer click: abre `QuickBookingSheet` con `time` = `HH:00` o `HH:30` exacto (no se snapea por coordenadas).
 
-## Idea principal
-
-Hacer que **cada hueco libre del calendario sea clicable**. Al pulsar, se abre un mini-modal "Cita rápida" con la **fecha, hora y profesional ya rellenas** (las inferimos del hueco que has tocado). Tú solo eliges cliente + servicio y guardas. Si necesitas el flujo largo (recurrencia, varios servicios, etc.), sigue disponible con el botón "+" actual.
-
-## Diseño del flujo nuevo
-
-### 1. Click en hueco libre del calendario
-
-En `LocalCalendarCRM.tsx`, añadir capa clicable en cada celda vacía del grid (por día + franja horaria + columna de profesional). Visualmente:
-- Hover: fondo `bg-primary/5` + cursor pointer + icono `+` sutil en el centro.
-- Al clicar: abre `QuickBookingSheet` con `{ date, time, stylistSlug }` precargados.
-
-### 2. QuickBookingSheet (componente nuevo, mobile-first)
-
-Bottom sheet estilo iOS (Liquid Glass) con **una sola pantalla**, sin pasos:
-
-```text
-┌────────────────────────────────┐
-│  Nueva cita                  ✕ │
-│  Lunes 18 nov · 10:30 · Montse │ ← chip editable
-├────────────────────────────────┤
-│  Cliente                       │
-│  [🔍 Buscar o escribir nombre] │ ← autocomplete CRM (ya existe)
-│  └─ resultados / "Nuevo: ..."  │
-├────────────────────────────────┤
-│  Servicio                      │
-│  [chips de servicios + buscar] │ ← multi-select compacto
-│  Duración total: 45 min        │
-├────────────────────────────────┤
-│  [ Crear cita ]   [Más opciones]│
-└────────────────────────────────┘
-```
-
-- **Cliente**: reutiliza el autocomplete ya implementado en `AdminBookingFlow` (búsqueda en `clients` con stats badge). Si no existe → "Crear nuevo: {nombre}" inline, solo nombre + teléfono opcional.
-- **Servicio**: grid de chips agrupados por categoría, con buscador encima. Multi-select. La duración se recalcula y se muestra.
-- **Chip fecha/hora/profesional**: clicable para editar inline (popover) sin salir del sheet.
-- **"Más opciones"**: abre el `AdminBookingFlow` largo actual con los datos ya rellenos, para casos con recurrencia, promos, etc.
-
-### 3. Crear cita
-
-Reutiliza la misma lógica de inserción que `AdminBookingFlow` (función `handleCreateBooking`). Tras crear:
-- Cierra el sheet.
-- Toast de éxito.
-- La cita aparece animada en el calendario (ya hay realtime).
+## 3. Hover sutil
+- Cada zona `:00` / `:30`:
+  - `cursor-pointer`
+  - `hover:bg-foreground/[0.04]` (oscurecimiento muy sutil, neutro)
+  - `transition-colors`
+- Sin icono `+`, sin borde. Solo el oscurecimiento al pasar el ratón.
+- En mobile (touch) no hay hover; el click sigue funcionando igual.
 
 ## Archivos a tocar
+- `src/components/admin/QuickBookingSheet.tsx` — `skipAvailabilityCheck: true` + parseo de error.
+- `src/components/admin/LocalCalendarCRM.tsx` — sustituir overlay único por grid de bloques de 30 min con hover.
 
-- **Nuevo**: `src/components/admin/QuickBookingSheet.tsx` — el sheet de una pantalla.
-- **Modificar**: `src/components/admin/LocalCalendarCRM.tsx`
-  - Añadir overlay clicable en celdas vacías del grid horario.
-  - Estado `quickBooking: { date, time, stylistSlug } | null` y render del sheet.
-- **Reutilizar tal cual**: lógica de autocomplete de clientes, lista de servicios, función de creación de booking (extraer a hook `useCreateBooking` si hace falta para no duplicar).
-- **Mantener intacto**: `AdminBookingFlow.tsx` (sigue siendo el flujo "Más opciones" / botón "+").
-
-## Detalles UX importantes
-
-- **Defaults estrictos**: como pediste, no asumimos servicio ni cliente. Solo precargamos lo que viene implícito del click (fecha + hora + columna de profesional).
-- **Safe area iPhone**: sheet respeta `env(safe-area-inset-bottom)` y deja margen para la bottom nav.
-- **Móvil primero**: el grid del calendario en móvil ya es estrecho; el área clicable debe ser ≥ 44px de alto para ser cómoda con el dedo.
-- **Conflictos**: si el hueco resulta no estar libre (ya hay cita), el botón "Crear cita" se deshabilita con aviso.
-- **Click vs drag**: si en el futuro hay drag-to-create (arrastrar para definir duración), este click es el caso simple; el drag sería complementario.
-
-## Lo que NO entra en este plan
-
-- Drag de servicio sobre hueco (lo descartamos por ahora, click es suficiente).
-- "Servicio favorito por cliente" / defaults inteligentes (rechazado explícitamente).
-- Rediseñar el flujo largo `AdminBookingFlow` — se mantiene como fallback.
-
-## Resultado esperado
-
-De **4 pasos + búsqueda manual** → a **1 click en el hueco + 2 selects en un sheet**. Crear una cita debería pasar de ~30s a ~5-8s.
+## Lo que NO cambia
+- Validación del backend `create-booking` sigue intacta (la usaremos para reservas de clientes, no para cita rápida del admin).
+- Click sobre una cita existente sigue abriendo su detalle (los bloques quedan detrás).
