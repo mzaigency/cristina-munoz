@@ -1563,8 +1563,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
-          <DialogHeader>
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-4xl max-h-[92vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6 gap-0">
+          <DialogHeader className="sr-only">
             <DialogTitle>Nueva Cita</DialogTitle>
           </DialogHeader>
           <AdminBookingFlow
