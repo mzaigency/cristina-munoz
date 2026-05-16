@@ -68,7 +68,7 @@ const Index = () => {
   const queryClient = useQueryClient();
   const { hasLocation, requestLocation, calculateDistance, formatDistance, loading: geoLoading } = useGeolocation();
   const haptic = useHaptic();
-  const [sortByDistance, setSortByDistance] = useState(false);
+  const [sortByDistance, setSortByDistance] = useState(true);
   const { scoresMap, isAuthenticated: hasRecommendations } = useRecommendations();
 
   // Check if current user is superadmin — uses auth context, no extra getUser call
