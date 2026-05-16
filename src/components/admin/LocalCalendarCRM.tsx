@@ -424,9 +424,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       return;
     }
 
-    if (!confirm("¿Estás segura de que quieres eliminar esta cita?")) return;
-
-    await performBookingDeletion(booking, false);
+    setPendingDeleteBooking(booking);
+    setDeleteConfirmOpen(true);
   };
 
   const performBookingDeletion = async (booking: LocalBooking, cancelSeries: boolean) => {
