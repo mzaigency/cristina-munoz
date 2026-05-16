@@ -12,23 +12,31 @@ import { supabase } from "@/integrations/supabase/client";
 interface MarketingSectionProps {
   tenantId: string;
   tenantSlug: string;
+  subTab?: string;
+  onSubTabChange?: (subTab: string) => void;
 }
 
 type MarketingTab = "posts" | "qr" | "whatsapp";
 
-const MarketingSection = ({ tenantId, tenantSlug }: MarketingSectionProps) => {
-  const [activeTab, setActiveTab] = useState<MarketingTab>("posts");
+const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange }: MarketingSectionProps) => {
+  const [internalTab, setInternalTab] = useState<MarketingTab>("posts");
+  const activeTab: MarketingTab = (subTab as MarketingTab) || internalTab;
+  const setActiveTab = (t: MarketingTab) => {
+    if (onSubTabChange) onSubTabChange(t);
+    else setInternalTab(t);
+  };
   const [postCreatorOpen, setPostCreatorOpen] = useState(false);
   const [tenantName, setTenantName] = useState<string>("");
   const { tenantPosts, deletePost, refetchTenantPosts } = usePosts(tenantId);
 
   useEffect(() => {
-    const subTab = sessionStorage.getItem("openMarketingSubTab");
-    if (subTab && ["posts", "qr", "whatsapp"].includes(subTab)) {
-      setActiveTab(subTab as MarketingTab);
+    if (subTab) return;
+    const legacy = sessionStorage.getItem("openMarketingSubTab");
+    if (legacy && ["posts", "qr", "whatsapp"].includes(legacy)) {
+      setInternalTab(legacy as MarketingTab);
       sessionStorage.removeItem("openMarketingSubTab");
     }
-  }, []);
+  }, [subTab]);
 
   useEffect(() => {
     if (!tenantId) return;

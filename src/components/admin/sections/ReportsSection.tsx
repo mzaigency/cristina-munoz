@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 
 interface ReportsSectionProps {
   tenantId: string;
+  subTab?: string;
+  onSubTabChange?: (subTab: string) => void;
 }
 
 type ReportsTab = "stats" | "feed" | "goals" | "pdf";
@@ -23,17 +25,23 @@ interface TabConfig {
   requiredPlan?: string;
 }
 
-const ReportsSection = ({ tenantId }: ReportsSectionProps) => {
-  const [activeTab, setActiveTab] = useState<ReportsTab>("stats");
+const ReportsSection = ({ tenantId, subTab, onSubTabChange }: ReportsSectionProps) => {
+  const [internalTab, setInternalTab] = useState<ReportsTab>("stats");
+  const activeTab: ReportsTab = (subTab as ReportsTab) || internalTab;
+  const setActiveTab = (t: ReportsTab) => {
+    if (onSubTabChange) onSubTabChange(t);
+    else setInternalTab(t);
+  };
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
 
   useEffect(() => {
-    const subTab = sessionStorage.getItem("openReportsSubTab");
-    if (subTab && ["stats", "feed", "goals", "pdf"].includes(subTab)) {
-      setActiveTab(subTab as ReportsTab);
+    if (subTab) return;
+    const legacy = sessionStorage.getItem("openReportsSubTab");
+    if (legacy && ["stats", "feed", "goals", "pdf"].includes(legacy)) {
+      setInternalTab(legacy as ReportsTab);
       sessionStorage.removeItem("openReportsSubTab");
     }
-  }, []);
+  }, [subTab]);
 
   const tabs: TabConfig[] = [
     { id: "stats", label: "Stats", icon: BarChart3, requiredFeature: "advanced_analytics", requiredPlan: "pro" },

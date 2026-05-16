@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 
 interface TeamSectionProps {
   tenantId: string;
+  subTab?: string;
+  onSubTabChange?: (subTab: string) => void;
 }
 
 type TeamTab = "stylists" | "hours" | "commissions";
@@ -22,17 +24,23 @@ interface TabConfig {
   requiredPlan?: string;
 }
 
-const TeamSection = ({ tenantId }: TeamSectionProps) => {
-  const [activeTab, setActiveTab] = useState<TeamTab>("stylists");
+const TeamSection = ({ tenantId, subTab, onSubTabChange }: TeamSectionProps) => {
+  const [internalTab, setInternalTab] = useState<TeamTab>("stylists");
+  const activeTab: TeamTab = (subTab as TeamTab) || internalTab;
+  const setActiveTab = (t: TeamTab) => {
+    if (onSubTabChange) onSubTabChange(t);
+    else setInternalTab(t);
+  };
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
 
   useEffect(() => {
-    const subTab = sessionStorage.getItem("openTeamSubTab");
-    if (subTab && ["stylists", "hours", "commissions"].includes(subTab)) {
-      setActiveTab(subTab as TeamTab);
+    if (subTab) return;
+    const legacy = sessionStorage.getItem("openTeamSubTab");
+    if (legacy && ["stylists", "hours", "commissions"].includes(legacy)) {
+      setInternalTab(legacy as TeamTab);
       sessionStorage.removeItem("openTeamSubTab");
     }
-  }, []);
+  }, [subTab]);
 
   const tabs: TabConfig[] = [
     { id: "stylists", label: "Staff", icon: Users },
