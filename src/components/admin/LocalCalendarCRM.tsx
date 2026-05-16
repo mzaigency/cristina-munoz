@@ -210,7 +210,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       });
       setBookings([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
