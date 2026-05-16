@@ -268,6 +268,7 @@ const Index = () => {
     haptic.medium();
     if (!hasLocation) {
       requestLocation();
+      return;
     }
     setSortByDistance(prev => !prev);
   };
