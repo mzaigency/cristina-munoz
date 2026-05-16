@@ -31,6 +31,7 @@ import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
 import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpiredScreen";
 import { NotifBadge } from "@/components/admin/layout/NotifBadge";
 import { AdminAccountMenu } from "@/components/admin/layout/AdminAccountMenu";
+import { AdminCommandPalette } from "@/components/admin/layout/AdminCommandPalette";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 
@@ -380,6 +381,13 @@ export default function TenantAdmin() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      <AdminCommandPalette
+        tenantSlug={slug || ""}
+        onNavigate={(path) => navigate(path)}
+        onNewBooking={() => goToSection("inicio", "agenda")}
+        onViewWeb={() => navigate(`/${slug}`)}
+        onSignOut={handleSignOut}
+      />
       {/* Liquid Glass ambient background */}
       <div className="fixed inset-0 -z-10 bg-background">
         <div className="absolute inset-0 opacity-40 dark:opacity-20">
