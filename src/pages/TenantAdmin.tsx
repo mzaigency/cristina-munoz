@@ -17,8 +17,7 @@ import {
   Sparkles,
   Briefcase,
 } from "lucide-react";
-import { HelpTutorial } from "@/components/admin/HelpTutorial";
-import { InteractiveTour } from "@/components/admin/InteractiveTour";
+import { AdminHelpMenu } from "@/components/admin/layout/AdminHelpMenu";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
