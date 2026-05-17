@@ -72,6 +72,10 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
     pendingOrders: 0,
     ordersRevenue7d: 0,
     ordersCount7d: 0,
+    newBookingsTodayTotal: 0,
+    newBookingsTodayCrm: 0,
+    newBookingsTodayWeb: 0,
+    newBookingsYesterday: 0,
   });
   const [loading, setLoading] = useState(true);
   const [tenantAge, setTenantAge] = useState<number>(999);
