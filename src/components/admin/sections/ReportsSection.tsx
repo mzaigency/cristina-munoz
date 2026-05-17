@@ -7,6 +7,7 @@ import { PDFReportsGenerator } from "../PDFReportsGenerator";
 import { LockedFeature } from "../LockedFeature";
 import { TenantFeedAnalytics } from "../TenantFeedAnalytics";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface ReportsSectionProps {
