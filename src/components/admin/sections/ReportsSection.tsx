@@ -126,7 +126,7 @@ const ReportsSection = ({ tenantId, subTab, onSubTabChange }: ReportsSectionProp
           {isTabLocked(tabs[3]) ? (
             <LockedFeature featureName="Reportes PDF" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
           ) : (
-            <PDFReportsGenerator tenantId={tenantId} tenantName="" />
+            <PDFReportsGenerator tenantId={tenantId} tenantName={tenantName} />
           )}
         </TabsContent>
       </Tabs>
