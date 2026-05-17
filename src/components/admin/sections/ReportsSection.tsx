@@ -34,6 +34,12 @@ const ReportsSection = ({ tenantId, subTab, onSubTabChange }: ReportsSectionProp
     else setInternalTab(t);
   };
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
+  const [tenantName, setTenantName] = useState<string>("Salón");
+
+  useEffect(() => {
+    supabase.from("tenants").select("name").eq("id", tenantId).maybeSingle()
+      .then(({ data }) => { if (data?.name) setTenantName(data.name); });
+  }, [tenantId]);
 
   useEffect(() => {
     if (subTab) return;
