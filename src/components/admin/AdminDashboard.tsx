@@ -18,9 +18,11 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
-  ShoppingCart,
+  ShoppingCart, 
   Package,
   Euro,
+  Globe,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
