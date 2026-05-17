@@ -1,106 +1,108 @@
 
-## Crítica de la página `/negocios`
+# Pulido del módulo Informes (Admin → Negocio → Informes)
 
-Revisión a fondo (mobile 390px, que es la prioridad) de hero, secciones, contenido y funnel. Aquí no propongo aún cambios de código — esto es la auditoría con recomendaciones priorizadas.
-
----
-
-### 1. Lo que funciona bien ✅
-
-- **Hero copy emocional**: "Tu libreta no debería decidir cuánto facturas este mes" conecta con el dolor real.
-- **Mockup con stickers flotantes** ("+8h ahorro", "Nueva reserva María 17:30") aporta prueba visual.
-- **LiveSalonsRow** carga salones reales de la BD → social proof auténtico (no mockeado).
-- **PainPointsSection** con bento + emojis es memorable; el "📓 La libreta tiene la última palabra" como big card está bien resuelto.
-- **FeaturesShowcase** con tabs + demos reales del producto es lo más fuerte: explica funcionalidades con UI propia, no con stock illustrations.
-- **PricingSection** consume datos reales (`useSubscriptionPlans`) → sin riesgo de precios desincronizados con Stripe.
-- **FloatingMobileCTA** aparece tras 500px de scroll y respeta `safe-area-inset-bottom` ✓.
-- **B2BLeadForm** pre-relleno de tipos de servicio desde `BUSINESS_TYPES` → coherencia con la app.
+Mantenemos los 4 subtabs (Stats · Feed · Objetivos · Reportes). Solo tocamos **Stats** y **Reportes**. Feed y Objetivos quedan como están.
 
 ---
 
-### 2. Problemas críticos 🔴
+## 1. Stats — unificar y reforzar
 
-#### A. Inconsistencias de contenido / hechos
+**Archivo principal:** `src/components/admin/BusinessStats.tsx`
 
-1. **Pricing duplicado y desincronizable**: el `SEO.faq` JSON-LD afirma "Starter 19€ · Pro 39€ · Business 79€" pero `PricingSection` lo lee de BD. Si cambias precios, Google verá los antiguos.
-2. **Métrica inventada**: "+1.247 reservas procesadas hoy" está hardcodeada. Si tienes 2 salones reales, es deshonesto y arruina la confianza si alguien lo cruza con `LiveSalonsRow` (que muestra 1-2 nombres).
-3. **Claim sin sustento**: "−60% no-shows" en feature *Reservas 24/7*. Sin estudio, sin asterisco.
-4. **Erratas en FAQ**: "No necesitan descargar nada aunque es aconsejable Glowapp" — frase rota, marca mal escrita ("Glowapp" debería ser "GlowApp"), falta puntuación.
-5. **Testimonial único** en sección plural "Testimonials": 1 sola card en un carrusel snap → parece placeholder o catálogo en construcción.
+### 1.1 Eliminar los 4 sub-sub-tabs internos
+Quitamos el `<Tabs>` interno (`overview / stylists / services / clients`, líneas ~527-545 y su contenido). Pasamos a **una sola vista vertical** organizada por bloques con jerarquía clara, todo filtrado por `tenantId` (ya lo está, pero auditamos cada query para garantizarlo).
 
-#### B. Funnel confuso (doble vía sin contexto)
+### 1.2 Estructura nueva (scroll único, mobile-first)
+Selector de período arriba (`7 días / Este mes / Trimestre`) → ya existe.
 
-6. La página tiene **dos conversiones contradictorias** sin separación clara:
-   - Self-serve: `Probar 30 días gratis` → `/onboarding` (×8 CTAs en la página)
-   - Sales-led: `B2BLeadForm` justo después de pricing pidiendo nombre/email/teléfono
-   No se explica *cuándo* usar cada uno. Resultado: el usuario decidido a probar gratis se encuentra un formulario y duda; el indeciso ya pasó por 3 CTAs y abandona.
-7. **Fatiga de CTA**: 8 botones "Empezar" en una sola página. Hero (x2) + 1 por feature (x6) + Antes/Después + Pricing (x3) + Form + FinalCTA + FloatingMobile + StickyHeader. Saturación.
+Bloques en orden:
 
-#### C. Inconsistencia visual / de marca
+1. **KPIs principales (grid 2×2 en mobile, 4×1 en desktop)** — los actuales:
+   - Ingresos · Ticket medio · Reservas · Valoración
+   - Cada uno con `% vs período anterior`.
+2. **Citas nuevas hoy (NUEVO bloque destacado)** — card con desglose por canal:
+   - Total · Vía Admin (canal=`crm`) · Vía Web (canal=`web`/`whatsapp`/null)
+   - Mini bar comparativa visual.
+   - Esta misma métrica se replica en el Dashboard (ver §3).
+3. **Objetivo del mes** (si existe) — barra de progreso + proyección. Ya existe, se mantiene.
+4. **Evolución de ingresos** — AreaChart actual.
+5. **Métodos de pago + Resumen rápido** (propinas, descuentos, transacciones, media/día) — grid 2 columnas.
+6. **Equipo: Ingresos por estilista** — PieChart + leyenda con %. Es la vista que más valor aporta del antiguo tab "Equipo".
+7. **Top servicios** — lista compacta top 8 con ingresos + nº de veces realizado (BarChart horizontal o lista con barra de progreso).
+8. **Clientes** — 4 mini-KPIs en línea: Total · Nuevos este mes · Recurrentes · Retención %. Sin tab propio.
+9. **Horas pico** — BarChart por hora (se mantiene).
 
-8. **Iconos de planes con paletas ajenas**: `starter` azul claro, `pro` amber/orange, `business` purple/pink. Introducen 6 colores nuevos que **no aparecen en ninguna otra parte** de la landing ni de la app (que usa `#22408b` + `#99329a`). Rompe identidad.
-9. **Eyebrows con 6 estilos distintos** en 8 secciones — cada sección inventa su propio header (uppercase accent con sparkles / sin icono / con HelpCircle / con badge white-on-gradient). No hay sistema.
-10. **Mezcla de border-radius**: `rounded-xl`, `rounded-2xl`, `rounded-3xl`, `rounded-[2.4rem]`, `rounded-full` conviven sin lógica.
-11. **Emojis vs liquid glass**: 💇‍♀️💈💅📓📵🤷🧾📞 chocan con el resto de la app (iOS-26 liquid glass, minimal). Funcionan en PainPoints pero rompen el premium feel.
-12. **Doble sticky en mobile**: `StickyHeader` (top:0) + tabs de `FeaturesShowcase` (sticky top:16) + `FloatingMobileCTA` (bottom) → tres capas persistentes que reducen el área de lectura a ~60%.
+### 1.3 Métricas nuevas que tienen sentido añadir
+- **Tasa de cancelación** (cancelled / total bookings) → mini-KPI en la card de Reservas.
+- **% reservas online vs CRM** del período → ya tenemos los datos en `bookingStats.channels`, lo exponemos como barra dual debajo de la KPI de Reservas.
+- **Mejor día / mejor hora** del período → texto resumen sobre Horas Pico ("Tu mejor día: jueves · Hora estrella: 18:00").
 
-#### D. Problemas de mobile (prioridad del proyecto)
-
-13. **Stickers flotantes invaden el mockup**: en 390px el mockup mide 260px y los stickers `-left-4` / `-right-3` se salen o tapan contenido.
-14. **Bento PainPoints colapsa**: en mobile todo es stack vertical de 5 cards iguales → se pierde el efecto "bento" y la card "big" deja de ser hero.
-15. **Hero h1 con 5 líneas** en móvil ("Tu libreta no debería / decidir cuánto / facturas / este mes."): salto de línea forzado por width corto rompe el ritmo poético del copy.
-16. **Carrusel de testimonios con 1 card** ocupa 85vw y deja un void enorme a la derecha.
-
-#### E. Tono / temática
-
-17. **Voz inconsistente**: copy coloquial directo ("que la gente salga guapa por la puerta", "Walk-ins sin caos", "WhatsApp a las 23:47") conviven con corporativo seco ("KPIs en tiempo real", "Analytics avanzados", "Dashboard de ingresos en vivo"). Decide una voz.
-18. **"Hecho en España" no se explota**: aparece en el eyebrow del hero y desaparece. Cero referencia a soporte local, idioma, fiscalidad ES, etc.
-19. **No menciona PWA / instalable / iOS** pese a que es uno de los diferenciadores reales de la app.
-20. **Falta diferenciación competitiva** (Booksy, Treatwell, Fresha). El visitante no sabe por qué *este* en vez de *aquel*.
+### 1.4 Auditoría tenant_id
+Recorremos cada `fetch*Stats()` en `BusinessStats.tsx` (líneas 145-411) y confirmamos `.eq("tenant_id", tenantId)` en todas las consultas a `transactions`, `bookings`, `monthly_goals`, `clients`, `reviews`, `tenant_stylists`. Ya están filtradas; lo dejamos explícito y añadimos comentario para futuras métricas.
 
 ---
 
-### 3. Plan de mejora propuesto (priorizado)
+## 2. Reportes (PDF) — rediseño profundo con identidad GlowApp
 
-#### Sprint 1 — Higiene urgente (1-2h)
+**Archivo:** `src/components/admin/PDFReportsGenerator.tsx`
 
-- **Borrar contadores inventados**: quitar "+1.247 reservas procesadas hoy" o sustituir por dato real desde BD (count de bookings hoy). Misma vara que LiveSalonsRow.
-- **Quitar claim "−60% no-shows"** o añadir asterisco con base (estudio interno tras X envíos).
-- **Sincronizar pricing en `SEO.faq`**: leer del mismo hook o eliminar las cifras y dejar "desde X€/mes, consulta planes".
-- **Corregir FAQ**: "No necesitan descargar nada, aunque tener GlowApp instalada como app es lo más cómodo."
-- **Marca consistente**: buscar/reemplazar "Glowapp" → "GlowApp" en todos los componentes business-landing.
+### 2.1 Problemas actuales
+- HTML básico color violeta plano `#8B5CF6` (no coincide con marca `#22408b` + `#99329a`).
+- No tiene logo, no respira identidad GlowApp.
+- Sin gráficos, solo tablas.
+- Solo 3 plantillas, ninguna realmente útil para imprimir o compartir con socio/asesoría.
 
-#### Sprint 2 — Funnel limpio (medio día)
+### 2.2 Rediseño visual
+- **Header** con logo GlowApp + nombre del salón + período + fecha generación.
+- **Paleta de marca:** gradiente `#22408b → #99329a` en headers de sección y barras.
+- Tipografía limpia (system-ui), jerarquía clara, mucho whitespace.
+- Tarjetas KPI grandes con iconos SVG inline.
+- **Mini-gráficos SVG inline** (no recharts, demasiado pesado para print): barras horizontales para top servicios y estilistas; sparkline simple para evolución diaria.
+- Footer con `glowapp.app` y nº de página.
+- Print-optimized: márgenes A4, page-break entre secciones, sin sombras.
 
-- **Separar las dos vías** con un H3 antes del `B2BLeadForm`:
-  - Bloque self-serve = "Lánzate solo en 5 min" → `/onboarding`
-  - Bloque guante blanco = "¿Prefieres que lo montemos contigo? Déjanos tus datos" → el form actual
-- **Reducir CTAs**: eliminar el botón "Probar esta función" de cada feature (×6) — basta el sticky + final.
-- **Quitar `BeforeAfterSection`** o fusionarlo con `PainPointsSection` (mismo mensaje contado dos veces).
+### 2.3 Plantillas reorganizadas (4 informes, no 3)
+1. **Resumen mensual ejecutivo** — un PDF "todo en uno" para el dueño/asesor: KPIs, evolución, métodos de pago, top servicios, top estilistas, comparativa mes anterior.
+2. **Productividad por estilista** — detalle por profesional: servicios, ventas, propinas, ticket medio, ranking, comisiones estimadas (si activas).
+3. **Servicios y catálogo** — top servicios, peor desempeño, servicios sin ventas, mix de categorías.
+4. **Informe para asesoría / fiscal (NUEVO)** — desglose por días con totales en efectivo, tarjeta, IVA estimado, propinas. Pensado para imprimir y entregar al gestor.
 
-#### Sprint 3 — Consistencia visual (medio día)
-
-- **Sistema de eyebrows único**: chip pill con `text-xs uppercase tracking-wider text-primary` + icono opcional. Un solo componente `<SectionEyebrow icon? label>` reutilizado en todas las secciones.
-- **Reemplazar iconos de planes** por `Zap`/`Crown`/`Building2` pero **con el gradient de marca** (`from-primary to-accent`) en lugar de azul/amber/purple ajenos.
-- **Unificar radius**: `rounded-2xl` para cards, `rounded-3xl` para hero/CTA, `rounded-full` para pills/botones. Eliminar `rounded-xl` y `rounded-[2.4rem]` salvo el frame del iPhone.
-- **Doble sticky → uno**: las tabs de `FeaturesShowcase` no deberían ser sticky si ya hay header sticky. Quitar `sticky top-16`.
-
-#### Sprint 4 — Mobile polish
-
-- **Stickers flotantes condicionales**: ocultar en `<sm` o reposicionar dentro del mockup (overlay sobre la pantalla).
-- **Bento PainPoints mobile**: alternativa de 2 columnas en mobile (3 cards arriba "compactas" + 1 hero abajo) en lugar de 5 stacks iguales.
-- **Hero h1**: rebajar a `text-[2rem]` en xs y permitir wrap natural sin `<br/>` forzados.
-- **Sección Testimonials**: o bien recoger 2 testimonios reales más, o cambiar el formato a una sola card grande centrada sin pretexto de carrusel.
-
-#### Sprint 5 — Voz y temática (refinado)
-
-- **Decidir voz**: recomiendo *coloquial cálido* (la del hero), y reescribir features/benefits para que digan "Sabes lo que ingresaste hoy sin abrir Excel" en lugar de "Dashboard de ingresos en vivo".
-- **Sección "Hecho en España"** real: soporte en español, equipo en Barcelona, integración con TPVs/IVA ES, factura simplificada — convierte el eyebrow en valor.
-- **Bloque diferenciación**: tabla rápida vs Booksy/Treatwell/Fresha (3 filas: comisión, propiedad de cliente, tienda integrada).
-- **Mención PWA**: en `FeaturesShowcase` añadir una feature "Instalable como app" con `Smartphone` icon.
+### 2.4 Selector de período mejorado
+Además del selector mensual actual, añadimos: **Personalizado (rango de fechas)** y **Trimestre actual / anterior**.
 
 ---
 
-### 4. Cómo seguir
+## 3. Dashboard — métrica "Citas nuevas hoy"
 
-Si quieres, ejecuto los sprints en orden (cada uno como mensaje independiente para poder revisar). Mi recomendación: empezar por **Sprint 1 (higiene)** y **Sprint 3 (consistencia visual)** porque son los que más impacto tienen sobre la percepción premium con menos cambio de copy.
+**Archivo:** `src/components/admin/AdminDashboard.tsx` (interface `DashboardStats` línea 36)
+
+Actualmente `todayBookings` cuenta las citas **del día** (campo `Fecha`). Añadimos una **métrica distinta**: citas **creadas hoy** (`created_at` ≥ inicio del día), desglosadas por canal:
+
+- `newBookingsTodayTotal`
+- `newBookingsTodayCrm` (canal = `'crm'`)
+- `newBookingsTodayWeb` (canal in `('web','whatsapp')` o NULL)
+
+Se renderiza como una card destacada en el grid superior del dashboard, con el desglose 50/50 (Admin · Web) y un pequeño indicador de tendencia vs ayer.
+
+---
+
+## Detalles técnicos
+
+- **Stats:** todas las queries ya usan `.eq("tenant_id", tenantId)`. Auditamos línea por línea y añadimos test manual con dos tenants para verificar aislamiento.
+- **Canal web** sigue la convención del edge function `get-bookings-stats`: `canal IN ('web','whatsapp') OR canal IS NULL`.
+- **PDF:** seguimos usando `window.open` + `print()` (no añadimos dependencia pesada). El HTML generado pasa a ser un template modular con helpers (`renderKPI`, `renderBar`, `renderTable`).
+- **Mobile safety zones:** las cards del dashboard mantienen el padding actual y el `pb-safe` global.
+- **Sin cambios de BD ni de RLS.** Solo frontend.
+
+## Archivos a modificar
+
+```text
+src/components/admin/BusinessStats.tsx        (refactor vista única + métricas nuevas)
+src/components/admin/PDFReportsGenerator.tsx  (rediseño completo + 4ª plantilla)
+src/components/admin/AdminDashboard.tsx       (nueva métrica "citas nuevas hoy" por canal)
+```
+
+## Fuera de alcance
+- TenantFeedAnalytics (Feed) — sin cambios.
+- MonthlyGoals (Objetivos) — sin cambios.
+- Estructura de subtabs de ReportsSection — sin cambios.
