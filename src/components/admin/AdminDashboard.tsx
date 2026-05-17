@@ -193,6 +193,35 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       const ordersRevenue7d = orders7d?.reduce((sum, o: any) => sum + Number(o.total || 0), 0) || 0;
       const ordersCount7d = orders7d?.length || 0;
 
+      // Citas CREADAS hoy y ayer (no las del día), por canal — filtrado por tenant
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const tomorrowStart = new Date(todayStart);
+      tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+      const [{ data: createdToday }, { count: createdYesterday }] = await Promise.all([
+        supabase
+          .from("bookings")
+          .select("canal")
+          .eq("tenant_id", tenantId)
+          .neq("status", "cancelled")
+          .gte("created_at", todayStart.toISOString())
+          .lt("created_at", tomorrowStart.toISOString()),
+        supabase
+          .from("bookings")
+          .select("*", { count: "exact", head: true })
+          .eq("tenant_id", tenantId)
+          .neq("status", "cancelled")
+          .gte("created_at", yesterdayStart.toISOString())
+          .lt("created_at", todayStart.toISOString()),
+      ]);
+
+      const newBookingsTodayCrm = (createdToday || []).filter((b: any) => b.canal === "crm").length;
+      const newBookingsTodayWeb = (createdToday || []).filter((b: any) => b.canal !== "crm").length;
+      const newBookingsTodayTotal = createdToday?.length || 0;
+
       setStats({
         todayBookings: bookings?.length || 0,
         nextBookingTime: nextBooking?.Hora || null,
@@ -204,6 +233,10 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
         pendingOrders: pendingOrdersCount || 0,
         ordersRevenue7d,
         ordersCount7d,
+        newBookingsTodayTotal,
+        newBookingsTodayCrm,
+        newBookingsTodayWeb,
+        newBookingsYesterday: createdYesterday || 0,
       });
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
