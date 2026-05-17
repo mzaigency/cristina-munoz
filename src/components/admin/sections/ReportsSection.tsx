@@ -7,6 +7,7 @@ import { PDFReportsGenerator } from "../PDFReportsGenerator";
 import { LockedFeature } from "../LockedFeature";
 import { TenantFeedAnalytics } from "../TenantFeedAnalytics";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface ReportsSectionProps {
@@ -33,6 +34,12 @@ const ReportsSection = ({ tenantId, subTab, onSubTabChange }: ReportsSectionProp
     else setInternalTab(t);
   };
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
+  const [tenantName, setTenantName] = useState<string>("Salón");
+
+  useEffect(() => {
+    supabase.from("tenants").select("name").eq("id", tenantId).maybeSingle()
+      .then(({ data }) => { if (data?.name) setTenantName(data.name); });
+  }, [tenantId]);
 
   useEffect(() => {
     if (subTab) return;
@@ -119,7 +126,7 @@ const ReportsSection = ({ tenantId, subTab, onSubTabChange }: ReportsSectionProp
           {isTabLocked(tabs[3]) ? (
             <LockedFeature featureName="Reportes PDF" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
           ) : (
-            <PDFReportsGenerator tenantId={tenantId} tenantName="" />
+            <PDFReportsGenerator tenantId={tenantId} tenantName={tenantName} />
           )}
         </TabsContent>
       </Tabs>
