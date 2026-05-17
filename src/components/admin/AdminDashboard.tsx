@@ -363,6 +363,71 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
         </div>
       </motion.div>
 
+      {/* Citas nuevas hoy (creadas hoy, por canal) */}
+      {(() => {
+        const total = stats.newBookingsTodayTotal;
+        const crm = stats.newBookingsTodayCrm;
+        const web = stats.newBookingsTodayWeb;
+        const yest = stats.newBookingsYesterday;
+        const crmPct = total > 0 ? Math.round((crm / total) * 100) : 0;
+        const webPct = total > 0 ? 100 - crmPct : 0;
+        const diff = total - yest;
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-2xl border bg-card p-4 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white flex items-center justify-center shadow-md">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Citas nuevas hoy</p>
+                  <p className="text-2xl font-bold leading-none tabular-nums">{total}</p>
+                </div>
+              </div>
+              <div className={`text-[11px] font-medium px-2 py-1 rounded-full ${diff >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+                {diff >= 0 ? "+" : ""}{diff} vs ayer
+              </div>
+            </div>
+
+            {total > 0 ? (
+              <>
+                <div className="flex h-2 rounded-full overflow-hidden bg-muted">
+                  <div className="bg-primary transition-all" style={{ width: `${crmPct}%` }} />
+                  <div className="bg-purple-500 transition-all" style={{ width: `${webPct}%` }} />
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Briefcase className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Admin</p>
+                      <p className="text-sm font-semibold tabular-nums">{crm} <span className="text-[10px] text-muted-foreground font-normal">({crmPct}%)</span></p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                      <Globe className="h-3.5 w-3.5 text-purple-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Web</p>
+                      <p className="text-sm font-semibold tabular-nums">{web} <span className="text-[10px] text-muted-foreground font-normal">({webPct}%)</span></p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground py-2">Aún no se han creado citas hoy</p>
+            )}
+          </motion.div>
+        );
+      })()}
+
       {/* Acciones rápidas */}
       <div className="grid grid-cols-3 gap-2.5">
         {quickActions.map((action, index) => (
