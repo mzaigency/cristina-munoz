@@ -46,6 +46,11 @@ interface DashboardStats {
   pendingOrders: number;
   ordersRevenue7d: number;
   ordersCount7d: number;
+  // Citas CREADAS hoy (no las del día), desglosadas por canal
+  newBookingsTodayTotal: number;
+  newBookingsTodayCrm: number;
+  newBookingsTodayWeb: number;
+  newBookingsYesterday: number;
 }
 
 interface QuickAction {
