@@ -119,6 +119,8 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
     retentionRate: 0,
   });
   const [peakHours, setPeakHours] = useState<any[]>([]);
+  const [newToday, setNewToday] = useState({ total: 0, crm: 0, web: 0, previous: 0 });
+  const [insights, setInsights] = useState<{ bestDay: string | null; bestHour: string | null }>({ bestDay: null, bestHour: null });
 
   useEffect(() => {
     fetchAllStats();
