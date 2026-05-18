@@ -929,6 +929,16 @@ function MetricCard({
   );
 }
 
+function MiniKPI({ icon: Icon, label, value, color, bg }: { icon: React.ElementType; label: string; value: string; color: string; bg: string }) {
+  return (
+    <div className={cn("p-3 rounded-xl text-center", bg)}>
+      <Icon className={cn("h-5 w-5 mx-auto mb-1", color)} />
+      <p className="text-xl font-bold leading-tight">{value}</p>
+      <p className="text-[10px] text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
 // Empty State Component
 function EmptyState({ message }: { message: string }) {
   return (
