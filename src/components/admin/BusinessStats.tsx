@@ -85,7 +85,6 @@ const formatCompact = (amount: number) =>
 export function BusinessStats({ tenantId }: BusinessStatsProps) {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>("month");
-  const [activeTab, setActiveTab] = useState("overview");
 
   // Data states
   const [revenueData, setRevenueData] = useState<any[]>([]);
