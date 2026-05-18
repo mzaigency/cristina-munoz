@@ -135,6 +135,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
         fetchMonthlyGoal(),
         fetchClientMetrics(),
         fetchPeakHours(),
+        fetchNewToday(),
       ]);
     } catch (error) {
       console.error("Error fetching stats:", error);
