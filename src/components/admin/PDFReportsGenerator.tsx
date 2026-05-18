@@ -17,15 +17,7 @@ import {
   parseISO,
 } from "date-fns";
 import { es } from "date-fns/locale";
-import {
-  FileText,
-  Loader2,
-  Euro,
-  Users,
-  TrendingUp,
-  Receipt,
-  Sparkles,
-} from "lucide-react";
+import { FileText, Loader2, Euro, Users, TrendingUp, Receipt, Sparkles } from "lucide-react";
 
 interface PDFReportsGeneratorProps {
   tenantId: string;
@@ -38,8 +30,7 @@ type RangeMode = "month" | "quarter" | "prev_quarter" | "custom";
 const BRAND_PRIMARY = "#22408b";
 const BRAND_ACCENT = "#99329a";
 
-const fmtEUR = (n: number) =>
-  new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n || 0);
+const fmtEUR = (n: number) => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n || 0);
 
 export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFReportsGeneratorProps) {
   const [generating, setGenerating] = useState<ReportType | null>(null);
@@ -60,18 +51,30 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
     if (rangeMode === "quarter") {
       const start = startOfQuarter(now);
       const end = endOfQuarter(now);
-      return { start, end, label: `Trimestre actual (${format(start, "MMM yyyy", { locale: es })} – ${format(end, "MMM yyyy", { locale: es })})` };
+      return {
+        start,
+        end,
+        label: `Trimestre actual (${format(start, "MMM yyyy", { locale: es })} – ${format(end, "MMM yyyy", { locale: es })})`,
+      };
     }
     if (rangeMode === "prev_quarter") {
       const ref = subQuarters(now, 1);
       const start = startOfQuarter(ref);
       const end = endOfQuarter(ref);
-      return { start, end, label: `Trimestre anterior (${format(start, "MMM yyyy", { locale: es })} – ${format(end, "MMM yyyy", { locale: es })})` };
+      return {
+        start,
+        end,
+        label: `Trimestre anterior (${format(start, "MMM yyyy", { locale: es })} – ${format(end, "MMM yyyy", { locale: es })})`,
+      };
     }
     // custom
     const start = parseISO(customFrom + "T00:00:00");
     const end = parseISO(customTo + "T23:59:59");
-    return { start, end, label: `${format(start, "d MMM yyyy", { locale: es })} – ${format(end, "d MMM yyyy", { locale: es })}` };
+    return {
+      start,
+      end,
+      label: `${format(start, "d MMM yyyy", { locale: es })} – ${format(end, "d MMM yyyy", { locale: es })}`,
+    };
   };
 
   const generate = async (type: ReportType) => {
@@ -113,16 +116,23 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
       const total = (tx || []).reduce((s, t: any) => s + Number(t.total || 0), 0);
       const txCount = tx?.length || 0;
       const avg = txCount > 0 ? total / txCount : 0;
-      const cash = (tx || []).filter((t: any) => t.payment_method === "cash").reduce((s, t: any) => s + Number(t.total || 0), 0);
-      const card = (tx || []).filter((t: any) => t.payment_method === "card").reduce((s, t: any) => s + Number(t.total || 0), 0);
-      const mixed = (tx || []).filter((t: any) => t.payment_method === "mixed").reduce((s, t: any) => s + Number(t.total || 0), 0);
+      const cash = (tx || [])
+        .filter((t: any) => t.payment_method === "cash")
+        .reduce((s, t: any) => s + Number(t.total || 0), 0);
+      const card = (tx || [])
+        .filter((t: any) => t.payment_method === "card")
+        .reduce((s, t: any) => s + Number(t.total || 0), 0);
+      const mixed = (tx || [])
+        .filter((t: any) => t.payment_method === "mixed")
+        .reduce((s, t: any) => s + Number(t.total || 0), 0);
       const tips = (tx || []).reduce((s, t: any) => s + Number(t.tip_amount || 0), 0);
       const discounts = (tx || []).reduce((s, t: any) => s + Number(t.discount || 0), 0);
       const prevTotal = (prevTx || []).reduce((s, t: any) => s + Number(t.total || 0), 0);
       const growth = prevTotal > 0 ? ((total - prevTotal) / prevTotal) * 100 : 0;
 
       // Por estilista
-      const byStylist: Record<string, { name: string; sales: number; count: number; tips: number; services: number }> = {};
+      const byStylist: Record<string, { name: string; sales: number; count: number; tips: number; services: number }> =
+        {};
       (tx || []).forEach((t: any) => {
         const key = t.stylist || "Sin asignar";
         if (!byStylist[key]) byStylist[key] = { name: key, sales: 0, count: 0, tips: 0, services: 0 };
@@ -149,7 +159,10 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
 
       // Evolución diaria (para sparkline + fiscal)
       const days = eachDayOfInterval({ start, end });
-      const dailyMap: Record<string, { date: Date; total: number; cash: number; card: number; count: number; tips: number }> = {};
+      const dailyMap: Record<
+        string,
+        { date: Date; total: number; cash: number; card: number; count: number; tips: number }
+      > = {};
       days.forEach((d) => {
         const key = format(d, "yyyy-MM-dd");
         dailyMap[key] = { date: d, total: 0, cash: 0, card: 0, count: 0, tips: 0 };
@@ -175,10 +188,23 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
         tenantName,
         rangeLabel: label,
         generatedAt: format(new Date(), "d MMM yyyy 'a las' HH:mm", { locale: es }),
-        total, txCount, avg, cash, card, mixed, tips, discounts,
-        prevTotal, growth,
-        stylists, services, daily,
-        bookingsTotal, bookingsCancelled, bookingsCrm, bookingsWeb,
+        total,
+        txCount,
+        avg,
+        cash,
+        card,
+        mixed,
+        tips,
+        discounts,
+        prevTotal,
+        growth,
+        stylists,
+        services,
+        daily,
+        bookingsTotal,
+        bookingsCancelled,
+        bookingsCrm,
+        bookingsWeb,
         iva: total - total / 1.21, // IVA 21% estimado
         netSinIva: total / 1.21,
       };
@@ -207,10 +233,30 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
   });
 
   const reports: { id: ReportType; title: string; desc: string; icon: React.ElementType }[] = [
-    { id: "monthly", title: "Resumen ejecutivo", desc: "Todo en uno: KPIs, evolución, métodos de pago, top equipo y servicios.", icon: Sparkles },
-    { id: "productivity", title: "Productividad equipo", desc: "Detalle por profesional: ventas, servicios, propinas y ticket medio.", icon: Users },
-    { id: "services", title: "Catálogo y servicios", desc: "Top servicios, ingresos por servicio y oportunidades.", icon: TrendingUp },
-    { id: "fiscal", title: "Informe asesoría / fiscal", desc: "Desglose día a día: efectivo, tarjeta, IVA estimado. Para tu gestor.", icon: Receipt },
+    {
+      id: "monthly",
+      title: "Resumen ejecutivo",
+      desc: "Todo en uno: KPIs, evolución, métodos de pago, top equipo y servicios.",
+      icon: Sparkles,
+    },
+    {
+      id: "productivity",
+      title: "Productividad equipo",
+      desc: "Detalle por profesional: ventas, servicios, propinas y ticket medio.",
+      icon: Users,
+    },
+    {
+      id: "services",
+      title: "Catálogo y servicios",
+      desc: "Top servicios, ingresos por servicio y oportunidades.",
+      icon: TrendingUp,
+    },
+    {
+      id: "fiscal",
+      title: "Informe asesoría / fiscal",
+      desc: "Desglose día a día: efectivo, tarjeta, IVA estimado. Para tu gestor.",
+      icon: Receipt,
+    },
   ];
 
   return (
@@ -220,7 +266,7 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
           <FileText className="h-5 w-5" style={{ color: BRAND_PRIMARY }} />
           Informes PDF
         </CardTitle>
-        <CardDescription>Informes con identidad GlowApp listos para imprimir o enviar.</CardDescription>
+        <CardDescription>Informes listos para imprimir o enviar.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Selector de período */}
@@ -245,7 +291,9 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
               </SelectTrigger>
               <SelectContent>
                 {monthOptions.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -536,7 +584,10 @@ function renderProductivity(d: any) {
 
     <div class="section">
       <div class="section-title">Detalle por profesional</div>
-      ${d.stylists.length === 0 ? `<div class="empty">Sin datos en el período</div>` : `
+      ${
+        d.stylists.length === 0
+          ? `<div class="empty">Sin datos en el período</div>`
+          : `
       <table>
         <thead>
           <tr>
@@ -549,7 +600,9 @@ function renderProductivity(d: any) {
           </tr>
         </thead>
         <tbody>
-          ${d.stylists.map((s: any) => `
+          ${d.stylists
+            .map(
+              (s: any) => `
             <tr>
               <td><strong>${escapeHtml(s.name)}</strong></td>
               <td class="num">${s.count}</td>
@@ -558,9 +611,12 @@ function renderProductivity(d: any) {
               <td class="num"><strong>${fmtEUR(s.sales)}</strong></td>
               <td class="num">${fmtEUR(s.count > 0 ? s.sales / s.count : 0)}</td>
             </tr>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </tbody>
-      </table>`}
+      </table>`
+      }
     </div>
 
     <div class="section">
@@ -593,7 +649,10 @@ function renderServices(d: any) {
 
     <div class="section">
       <div class="section-title">Top 15 servicios</div>
-      ${top.length === 0 ? `<div class="empty">Sin servicios en el período</div>` : `
+      ${
+        top.length === 0
+          ? `<div class="empty">Sin servicios en el período</div>`
+          : `
       <table>
         <thead>
           <tr>
@@ -605,7 +664,9 @@ function renderServices(d: any) {
           </tr>
         </thead>
         <tbody>
-          ${top.map((s: any, i: number) => `
+          ${top
+            .map(
+              (s: any, i: number) => `
             <tr>
               <td>${i + 1}</td>
               <td><strong>${escapeHtml(s.name)}</strong></td>
@@ -613,9 +674,12 @@ function renderServices(d: any) {
               <td class="num"><strong>${fmtEUR(s.revenue)}</strong></td>
               <td class="num">${fmtEUR(s.count > 0 ? s.revenue / s.count : 0)}</td>
             </tr>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </tbody>
-      </table>`}
+      </table>`
+      }
     </div>
 
     <div class="section">
@@ -682,7 +746,10 @@ function renderFiscal(d: any) {
           </tr>
         </thead>
         <tbody>
-          ${d.daily.filter((x: any) => x.count > 0).map((x: any) => `
+          ${d.daily
+            .filter((x: any) => x.count > 0)
+            .map(
+              (x: any) => `
             <tr>
               <td>${format(x.date, "EEE d MMM yyyy", { locale: es })}</td>
               <td class="num">${x.count}</td>
@@ -691,7 +758,9 @@ function renderFiscal(d: any) {
               <td class="num">${fmtEUR(x.tips)}</td>
               <td class="num"><strong>${fmtEUR(x.total)}</strong></td>
             </tr>
-          `).join("")}
+          `,
+            )
+            .join("")}
           <tr style="background: #f1f5f9">
             <td><strong>TOTAL</strong></td>
             <td class="num"><strong>${d.txCount}</strong></td>
@@ -722,16 +791,18 @@ function renderPaymentBars(cash: number, card: number, mixed: number, total: num
     { label: "Tarjeta", value: card },
     { label: "Mixto", value: mixed },
   ].filter((r) => r.value > 0);
-  return rows.map((r) => {
-    const pct = (r.value / total) * 100;
-    return `
+  return rows
+    .map((r) => {
+      const pct = (r.value / total) * 100;
+      return `
       <div class="bar-row">
         <div class="bar-label">${r.label}</div>
         <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
         <div class="bar-value">${fmtEUR(r.value)} (${pct.toFixed(0)}%)</div>
       </div>
     `;
-  }).join("");
+    })
+    .join("");
 }
 
 function renderStylistTable(stylists: any[]) {
@@ -747,14 +818,18 @@ function renderStylistTable(stylists: any[]) {
         </tr>
       </thead>
       <tbody>
-        ${stylists.map((s) => `
+        ${stylists
+          .map(
+            (s) => `
           <tr>
             <td><strong>${escapeHtml(s.name)}</strong></td>
             <td class="num">${s.services}</td>
             <td class="num"><strong>${fmtEUR(s.sales)}</strong></td>
             <td class="num">${fmtEUR(s.count > 0 ? s.sales / s.count : 0)}</td>
           </tr>
-        `).join("")}
+        `,
+          )
+          .join("")}
       </tbody>
     </table>
   `;
@@ -763,30 +838,40 @@ function renderStylistTable(stylists: any[]) {
 function renderStylistBars(stylists: any[]) {
   if (stylists.length === 0) return `<div class="empty">Sin datos</div>`;
   const max = Math.max(...stylists.map((s) => s.sales), 1);
-  return stylists.map((s) => `
+  return stylists
+    .map(
+      (s) => `
     <div class="bar-row">
       <div class="bar-label">${escapeHtml(s.name)}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${(s.sales / max) * 100}%"></div></div>
       <div class="bar-value">${fmtEUR(s.sales)}</div>
     </div>
-  `).join("");
+  `,
+    )
+    .join("");
 }
 
 function renderServiceBars(services: any[]) {
   if (services.length === 0) return `<div class="empty">Sin servicios</div>`;
   const max = Math.max(...services.map((s) => s.revenue), 1);
-  return services.map((s) => `
+  return services
+    .map(
+      (s) => `
     <div class="bar-row">
       <div class="bar-label">${escapeHtml(s.name)}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${(s.revenue / max) * 100}%"></div></div>
       <div class="bar-value">${fmtEUR(s.revenue)} · ${s.count}u</div>
     </div>
-  `).join("");
+  `,
+    )
+    .join("");
 }
 
 function renderSparkline(daily: any[]) {
   if (!daily.length) return `<div class="empty">Sin datos</div>`;
-  const W = 640, H = 120, P = 10;
+  const W = 640,
+    H = 120,
+    P = 10;
   const max = Math.max(...daily.map((d) => d.total), 1);
   const stepX = (W - P * 2) / Math.max(daily.length - 1, 1);
   const points = daily.map((d, i) => {
