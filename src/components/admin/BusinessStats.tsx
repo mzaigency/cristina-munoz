@@ -390,19 +390,24 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
 
   const fetchPeakHours = async () => {
     const now = new Date();
-    const startDate = startOfMonth(now);
+    const startDate = period === "week" ? subDays(now, 7) : period === "month" ? startOfMonth(now) : subMonths(now, 3);
 
     const { data: bookings } = await supabase
       .from("bookings")
-      .select("Hora")
+      .select("Hora, Fecha")
       .eq("tenant_id", tenantId)
       .eq("status", "confirmed")
       .gte("created_at", startDate.toISOString());
 
     const hourCounts: Record<string, number> = {};
-    (bookings || []).forEach((b) => {
-      const hour = b.Hora.split(":")[0];
-      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+    const dayCounts: Record<number, number> = {};
+    (bookings || []).forEach((b: any) => {
+      const hour = b.Hora?.split(":")[0];
+      if (hour) hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+      if (b.Fecha) {
+        const d = new Date(b.Fecha).getDay();
+        dayCounts[d] = (dayCounts[d] || 0) + 1;
+      }
     });
 
     const peakData = Object.entries(hourCounts)
@@ -410,6 +415,33 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       .sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
     setPeakHours(peakData);
+
+    const bestHourEntry = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
+    const bestDayEntry = Object.entries(dayCounts).sort((a, b) => b[1] - a[1])[0];
+    const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+    setInsights({
+      bestHour: bestHourEntry ? `${bestHourEntry[0]}:00` : null,
+      bestDay: bestDayEntry ? dayNames[Number(bestDayEntry[0])] : null,
+    });
+  };
+
+  const fetchNewToday = async () => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+    const [{ data: today }, { count: prevCount }] = await Promise.all([
+      supabase.from("bookings").select("canal").eq("tenant_id", tenantId)
+        .gte("created_at", todayStart.toISOString()).lt("created_at", tomorrowStart.toISOString()),
+      supabase.from("bookings").select("id", { count: "exact", head: true }).eq("tenant_id", tenantId)
+        .gte("created_at", yesterdayStart.toISOString()).lt("created_at", todayStart.toISOString()),
+    ]);
+
+    const list = today || [];
+    const crm = list.filter((b: any) => b.canal === "crm").length;
+    const web = list.length - crm;
+    setNewToday({ total: list.length, crm, web, previous: prevCount || 0 });
   };
 
   const getChangePercent = (current: number, previous: number) => {
