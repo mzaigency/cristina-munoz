@@ -85,7 +85,6 @@ const formatCompact = (amount: number) =>
 export function BusinessStats({ tenantId }: BusinessStatsProps) {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>("month");
-  const [activeTab, setActiveTab] = useState("overview");
 
   // Data states
   const [revenueData, setRevenueData] = useState<any[]>([]);
@@ -120,6 +119,8 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
     retentionRate: 0,
   });
   const [peakHours, setPeakHours] = useState<any[]>([]);
+  const [newToday, setNewToday] = useState({ total: 0, crm: 0, web: 0, previous: 0 });
+  const [insights, setInsights] = useState<{ bestDay: string | null; bestHour: string | null }>({ bestDay: null, bestHour: null });
 
   useEffect(() => {
     fetchAllStats();
@@ -134,6 +135,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
         fetchMonthlyGoal(),
         fetchClientMetrics(),
         fetchPeakHours(),
+        fetchNewToday(),
       ]);
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -388,19 +390,24 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
 
   const fetchPeakHours = async () => {
     const now = new Date();
-    const startDate = startOfMonth(now);
+    const startDate = period === "week" ? subDays(now, 7) : period === "month" ? startOfMonth(now) : subMonths(now, 3);
 
     const { data: bookings } = await supabase
       .from("bookings")
-      .select("Hora")
+      .select("Hora, Fecha")
       .eq("tenant_id", tenantId)
       .eq("status", "confirmed")
       .gte("created_at", startDate.toISOString());
 
     const hourCounts: Record<string, number> = {};
-    (bookings || []).forEach((b) => {
-      const hour = b.Hora.split(":")[0];
-      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+    const dayCounts: Record<number, number> = {};
+    (bookings || []).forEach((b: any) => {
+      const hour = b.Hora?.split(":")[0];
+      if (hour) hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+      if (b.Fecha) {
+        const d = new Date(b.Fecha).getDay();
+        dayCounts[d] = (dayCounts[d] || 0) + 1;
+      }
     });
 
     const peakData = Object.entries(hourCounts)
@@ -408,6 +415,33 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       .sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
     setPeakHours(peakData);
+
+    const bestHourEntry = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
+    const bestDayEntry = Object.entries(dayCounts).sort((a, b) => b[1] - a[1])[0];
+    const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+    setInsights({
+      bestHour: bestHourEntry ? `${bestHourEntry[0]}:00` : null,
+      bestDay: bestDayEntry ? dayNames[Number(bestDayEntry[0])] : null,
+    });
+  };
+
+  const fetchNewToday = async () => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+    const [{ data: today }, { count: prevCount }] = await Promise.all([
+      supabase.from("bookings").select("canal").eq("tenant_id", tenantId)
+        .gte("created_at", todayStart.toISOString()).lt("created_at", tomorrowStart.toISOString()),
+      supabase.from("bookings").select("id", { count: "exact", head: true }).eq("tenant_id", tenantId)
+        .gte("created_at", yesterdayStart.toISOString()).lt("created_at", todayStart.toISOString()),
+    ]);
+
+    const list = today || [];
+    const crm = list.filter((b: any) => b.canal === "crm").length;
+    const web = list.length - crm;
+    setNewToday({ total: list.length, crm, web, previous: prevCount || 0 });
   };
 
   const getChangePercent = (current: number, previous: number) => {
@@ -523,541 +557,325 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
         </Card>
       )}
 
-      {/* Tabs for detailed stats */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-4 h-auto p-1">
-          <TabsTrigger value="overview" className="gap-1.5 py-2.5 text-xs">
-            <Activity className="h-4 w-4" />
-            <span className="hidden sm:inline">General</span>
-          </TabsTrigger>
-          <TabsTrigger value="stylists" className="gap-1.5 py-2.5 text-xs">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Equipo</span>
-          </TabsTrigger>
-          <TabsTrigger value="services" className="gap-1.5 py-2.5 text-xs">
-            <Scissors className="h-4 w-4" />
-            <span className="hidden sm:inline">Servicios</span>
-          </TabsTrigger>
-          <TabsTrigger value="clients" className="gap-1.5 py-2.5 text-xs">
-            <UserPlus className="h-4 w-4" />
-            <span className="hidden sm:inline">Clientes</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <AnimatePresence mode="wait">
-          <TabsContent value="overview" className="mt-4 space-y-4">
-            {/* Revenue Chart */}
-            {revenueData.length > 0 ? (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    Evolución de ingresos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[220px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={revenueData}>
-                        <defs>
-                          <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                        <XAxis
-                          dataKey="date"
-                          tickFormatter={(d) => format(new Date(d), "d MMM", { locale: es })}
-                          fontSize={10}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          tickFormatter={(v) => formatCompact(v)}
-                          fontSize={10}
-                          tickLine={false}
-                          axisLine={false}
-                          width={50}
-                        />
-                        <Tooltip
-                          content={({ active, payload, label }) =>
-                            active && payload?.length ? (
-                              <div className="bg-background/95 backdrop-blur border rounded-lg p-3 shadow-lg">
-                                <p className="text-xs text-muted-foreground mb-1">
-                                  {format(new Date(label), "d MMMM yyyy", { locale: es })}
-                                </p>
-                                <p className="font-semibold">{formatCurrency(payload[0].value as number)}</p>
-                              </div>
-                            ) : null
-                          }
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="revenue"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth={2}
-                          fill="url(#revenueGradient)"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <EmptyState message="Sin datos de ingresos en este período" />
-            )}
-
-            {/* Payment Methods & Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Payment Methods */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <CreditCard className="h-4 w-4" />
-                    Métodos de pago
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {paymentMethods.length > 0 ? (
-                    <div className="space-y-3">
-                      {paymentMethods.map((pm) => {
-                        const total = paymentMethods.reduce((sum, p) => sum + p.value, 0);
-                        const percent = total > 0 ? (pm.value / total) * 100 : 0;
-                        return (
-                          <div key={pm.name} className="space-y-1.5">
-                            <div className="flex items-center justify-between text-sm">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: pm.color }} />
-                                <span className="font-medium">{pm.name}</span>
-                              </div>
-                              <span className="text-muted-foreground">
-                                {formatCurrency(pm.value)} ({percent.toFixed(0)}%)
-                              </span>
-                            </div>
-                            <div className="h-2 bg-muted rounded-full overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${percent}%` }}
-                                transition={{ duration: 0.5 }}
-                                className="h-full rounded-full"
-                                style={{ backgroundColor: pm.color }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-6">Sin datos</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Quick Stats Grid */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    Resumen rápido
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-xl bg-pink-50 dark:bg-pink-900/20">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Gift className="h-4 w-4 text-pink-500" />
-                        <span className="text-xs text-muted-foreground">Propinas</span>
-                      </div>
-                      <p className="font-bold text-pink-600 dark:text-pink-400">{formatCurrency(totals.tips)}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20">
-                      <div className="flex items-center gap-2 mb-1">
-                        <TrendingDown className="h-4 w-4 text-orange-500" />
-                        <span className="text-xs text-muted-foreground">Descuentos</span>
-                      </div>
-                      <p className="font-bold text-orange-600 dark:text-orange-400">-{formatCurrency(totals.discounts)}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Repeat className="h-4 w-4 text-cyan-500" />
-                        <span className="text-xs text-muted-foreground">Transacciones</span>
-                      </div>
-                      <p className="font-bold text-cyan-600 dark:text-cyan-400">{totals.transactions}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-violet-50 dark:bg-violet-900/20">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Activity className="h-4 w-4 text-violet-500" />
-                        <span className="text-xs text-muted-foreground">Media/día</span>
-                      </div>
-                      <p className="font-bold text-violet-600 dark:text-violet-400">
-                        {formatCurrency(revenueData.length > 0 ? totals.revenue / revenueData.length : 0)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+      {/* Citas nuevas hoy — destacado */}
+      <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-violet-500/5">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Citas nuevas hoy</p>
+                <p className="font-bold text-2xl leading-tight">{newToday.total}</p>
+              </div>
             </div>
-
-            {/* Revenue by Stylist - Pie Chart */}
-            {stylistStats.length > 0 && (
-              <Card className="overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Users className="h-4 w-4 text-violet-500" />
-                    Ingresos por estilista
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col md:flex-row items-center gap-4">
-                    {/* Pie Chart */}
-                    <div className="h-[200px] w-full md:w-1/2">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <defs>
-                            {stylistStats.map((s, i) => (
-                              <linearGradient key={s.id} id={`gradient-${s.id}`} x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0%" stopColor={s.color || COLORS[i % COLORS.length]} stopOpacity={1} />
-                                <stop offset="100%" stopColor={s.color || COLORS[i % COLORS.length]} stopOpacity={0.7} />
-                              </linearGradient>
-                            ))}
-                          </defs>
-                          <Pie
-                            data={stylistStats}
-                            dataKey="revenue"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={75}
-                            paddingAngle={3}
-                            strokeWidth={0}
-                          >
-                            {stylistStats.map((s, i) => (
-                              <Cell 
-                                key={s.id} 
-                                fill={`url(#gradient-${s.id})`}
-                                className="drop-shadow-sm"
-                              />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            content={({ active, payload }) =>
-                              active && payload?.length ? (
-                                <div className="bg-background/95 backdrop-blur border rounded-xl p-3 shadow-xl">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <div 
-                                      className="w-3 h-3 rounded-full" 
-                                      style={{ backgroundColor: payload[0].payload.color || COLORS[0] }} 
-                                    />
-                                    <p className="font-semibold">{payload[0].payload.name}</p>
-                                  </div>
-                                  <p className="text-lg font-bold">{formatCurrency(payload[0].value as number)}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {payload[0].payload.transactions} transacciones
-                                  </p>
-                                </div>
-                              ) : null
-                            }
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    
-                    {/* Legend with stats */}
-                    <div className="w-full md:w-1/2 space-y-2">
-                      {stylistStats.map((s, i) => {
-                        const totalRevenue = stylistStats.reduce((sum, st) => sum + st.revenue, 0);
-                        const percent = totalRevenue > 0 ? (s.revenue / totalRevenue) * 100 : 0;
-                        return (
-                          <motion.div
-                            key={s.id}
-                            initial={{ opacity: 0, x: 10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                            className="flex items-center justify-between p-2.5 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors"
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <div 
-                                className="w-4 h-4 rounded-full shadow-sm" 
-                                style={{ backgroundColor: s.color || COLORS[i % COLORS.length] }} 
-                              />
-                              <span className="text-sm font-medium">{s.name}</span>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-bold">{formatCurrency(s.revenue)}</p>
-                              <p className="text-[10px] text-muted-foreground">{percent.toFixed(0)}%</p>
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {newToday.previous > 0 && (
+              <Badge variant="outline" className={cn(
+                "text-[10px]",
+                newToday.total >= newToday.previous ? "text-green-600 border-green-200" : "text-red-600 border-red-200"
+              )}>
+                {newToday.total >= newToday.previous ? <ArrowUpRight className="h-3 w-3 mr-0.5" /> : <ArrowDownRight className="h-3 w-3 mr-0.5" />}
+                vs ayer ({newToday.previous})
+              </Badge>
             )}
+          </div>
+          {newToday.total > 0 ? (
+            <>
+              <div className="flex h-2 rounded-full overflow-hidden bg-muted">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.crm / newToday.total) * 100}%` }} transition={{ duration: 0.6 }} className="bg-cyan-500" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.web / newToday.total) * 100}%` }} transition={{ duration: 0.6, delay: 0.1 }} className="bg-orange-500" />
+              </div>
+              <div className="flex justify-between text-xs mt-2">
+                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-cyan-500" /> Admin (CRM) · <strong>{newToday.crm}</strong></span>
+                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-500" /> Web · <strong>{newToday.web}</strong></span>
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground">Aún no se han creado citas hoy.</p>
+          )}
+        </CardContent>
+      </Card>
 
-            {/* Peak Hours */}
-            {peakHours.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Horas pico
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[180px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={peakHours}>
-                        <XAxis dataKey="hour" fontSize={10} tickLine={false} />
-                        <YAxis fontSize={10} tickLine={false} axisLine={false} width={30} />
-                        <Tooltip
-                          content={({ active, payload }) =>
-                            active && payload?.length ? (
-                              <div className="bg-background/95 backdrop-blur border rounded-lg p-2 shadow-lg text-xs">
-                                <p className="font-semibold">{payload[0].payload.hour}</p>
-                                <p className="text-muted-foreground">{payload[0].value} reservas</p>
-                              </div>
-                            ) : null
-                          }
-                        />
-                        <Bar dataKey="bookings" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
+      {/* Reservas: cancelación + canal */}
+      {bookingStats.total > 0 && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Tasa de cancelación</span>
+              <span className={cn(
+                "font-semibold",
+                bookingStats.cancelled / bookingStats.total > 0.15 ? "text-red-500" : "text-emerald-600"
+              )}>
+                {((bookingStats.cancelled / bookingStats.total) * 100).toFixed(1)}%
+                <span className="text-xs text-muted-foreground font-normal ml-1">({bookingStats.cancelled}/{bookingStats.total})</span>
+              </span>
+            </div>
+            <div>
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <span>Online vs CRM</span>
+                <span>{bookingStats.channels.web} web · {bookingStats.channels.crm} crm</span>
+              </div>
+              <div className="flex h-2 rounded-full overflow-hidden bg-muted">
+                <div className="bg-cyan-500" style={{ width: `${(bookingStats.channels.crm / bookingStats.total) * 100}%` }} />
+                <div className="bg-orange-500" style={{ width: `${(bookingStats.channels.web / bookingStats.total) * 100}%` }} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-          <TabsContent value="stylists" className="mt-4 space-y-4">
-            {stylistStats.length > 0 ? (
-              <>
-                {/* Ranking */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Award className="h-4 w-4 text-amber-500" />
-                      Ranking por ingresos
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {stylistStats.map((s, i) => (
-                      <motion.div
-                        key={s.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="flex items-center justify-between p-3 rounded-xl bg-muted/50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={cn(
-                              "w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm",
-                              i === 0 && "ring-2 ring-amber-400 ring-offset-2"
-                            )}
-                            style={{ backgroundColor: s.color }}
-                          >
-                            {i + 1}
-                          </div>
-                          <div>
-                            <p className="font-medium">{s.name}</p>
-                            <p className="text-xs text-muted-foreground">{s.transactions} transacciones • {s.services} servicios</p>
-                          </div>
+      {/* Revenue Chart */}
+      {revenueData.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              Evolución de ingresos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueData}>
+                  <defs>
+                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                  <XAxis dataKey="date" tickFormatter={(d) => format(new Date(d), "d MMM", { locale: es })} fontSize={10} tickLine={false} />
+                  <YAxis tickFormatter={(v) => formatCompact(v)} fontSize={10} tickLine={false} axisLine={false} width={50} />
+                  <Tooltip content={({ active, payload, label }) =>
+                    active && payload?.length ? (
+                      <div className="bg-background/95 backdrop-blur border rounded-lg p-3 shadow-lg">
+                        <p className="text-xs text-muted-foreground mb-1">{format(new Date(label), "d MMMM yyyy", { locale: es })}</p>
+                        <p className="font-semibold">{formatCurrency(payload[0].value as number)}</p>
+                      </div>
+                    ) : null
+                  } />
+                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#revenueGradient)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Payment Methods & Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="h-4 w-4" /> Métodos de pago</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {paymentMethods.length > 0 ? (
+              <div className="space-y-3">
+                {paymentMethods.map((pm) => {
+                  const total = paymentMethods.reduce((sum, p) => sum + p.value, 0);
+                  const percent = total > 0 ? (pm.value / total) * 100 : 0;
+                  return (
+                    <div key={pm.name} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: pm.color }} />
+                          <span className="font-medium">{pm.name}</span>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold">{formatCurrency(s.revenue)}</p>
-                          {s.tips > 0 && (
-                            <p className="text-xs text-pink-500">+{formatCurrency(s.tips)} propinas</p>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                {/* Distribution Chart */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Distribución de ingresos</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[220px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={stylistStats}
-                            dataKey="revenue"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={50}
-                            outerRadius={80}
-                            paddingAngle={2}
-                          >
-                            {stylistStats.map((s, i) => (
-                              <Cell key={s.id} fill={s.color || COLORS[i % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                        </PieChart>
-                      </ResponsiveContainer>
+                        <span className="text-muted-foreground">{formatCurrency(pm.value)} ({percent.toFixed(0)}%)</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${percent}%` }} transition={{ duration: 0.5 }} className="h-full rounded-full" style={{ backgroundColor: pm.color }} />
+                      </div>
                     </div>
-                    <div className="flex flex-wrap justify-center gap-3 mt-2">
-                      {stylistStats.slice(0, 4).map((s) => (
-                        <div key={s.id} className="flex items-center gap-1.5 text-xs">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                          <span className="text-muted-foreground">{s.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </>
+                  );
+                })}
+              </div>
             ) : (
-              <EmptyState message="Sin datos de estilistas en este período" />
+              <p className="text-sm text-muted-foreground text-center py-6">Sin datos</p>
             )}
-          </TabsContent>
+          </CardContent>
+        </Card>
 
-          <TabsContent value="services" className="mt-4 space-y-4">
-            {topServices.length > 0 ? (
-              <>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Scissors className="h-4 w-4" />
-                      Top servicios
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[280px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={topServices} layout="vertical">
-                          <XAxis type="number" tickFormatter={(v) => formatCompact(v)} fontSize={10} />
-                          <YAxis type="category" dataKey="name" width={100} fontSize={11} tickLine={false} />
-                          <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                          <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {topServices.slice(0, 4).map((svc, i) => (
-                    <Card key={svc.name}>
-                      <CardContent className="p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div
-                            className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                            style={{ backgroundColor: COLORS[i % COLORS.length] }}
-                          >
-                            {i + 1}
-                          </div>
-                          <p className="text-sm font-medium truncate flex-1">{svc.name}</p>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{svc.count}x realizados</span>
-                          <span className="font-semibold">{formatCurrency(svc.revenue)}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <EmptyState message="Sin datos de servicios en este período" />
-            )}
-          </TabsContent>
-
-          <TabsContent value="clients" className="mt-4 space-y-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Resumen rápido</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-2">
-                    <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <p className="text-2xl font-bold">{clientMetrics.total}</p>
-                  <p className="text-xs text-muted-foreground">Clientes totales</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-2">
-                    <UserPlus className="h-6 w-6 text-green-600 dark:text-green-400" />
-                  </div>
-                  <p className="text-2xl font-bold">{clientMetrics.new}</p>
-                  <p className="text-xs text-muted-foreground">Nuevos este mes</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mx-auto mb-2">
-                    <Repeat className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-                  </div>
-                  <p className="text-2xl font-bold">{clientMetrics.returning}</p>
-                  <p className="text-xs text-muted-foreground">Recurrentes</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-2">
-                    <TrendingUp className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <p className="text-2xl font-bold">{clientMetrics.retentionRate.toFixed(0)}%</p>
-                  <p className="text-xs text-muted-foreground">Retención</p>
-                </CardContent>
-              </Card>
+              <div className="p-3 rounded-xl bg-pink-50 dark:bg-pink-900/20">
+                <div className="flex items-center gap-2 mb-1"><Gift className="h-4 w-4 text-pink-500" /><span className="text-xs text-muted-foreground">Propinas</span></div>
+                <p className="font-bold text-pink-600 dark:text-pink-400">{formatCurrency(totals.tips)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20">
+                <div className="flex items-center gap-2 mb-1"><TrendingDown className="h-4 w-4 text-orange-500" /><span className="text-xs text-muted-foreground">Descuentos</span></div>
+                <p className="font-bold text-orange-600 dark:text-orange-400">-{formatCurrency(totals.discounts)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20">
+                <div className="flex items-center gap-2 mb-1"><Repeat className="h-4 w-4 text-cyan-500" /><span className="text-xs text-muted-foreground">Transacciones</span></div>
+                <p className="font-bold text-cyan-600 dark:text-cyan-400">{totals.transactions}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-violet-50 dark:bg-violet-900/20">
+                <div className="flex items-center gap-2 mb-1"><Activity className="h-4 w-4 text-violet-500" /><span className="text-xs text-muted-foreground">Media/día</span></div>
+                <p className="font-bold text-violet-600 dark:text-violet-400">{formatCurrency(revenueData.length > 0 ? totals.revenue / revenueData.length : 0)}</p>
+              </div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* Booking Channels */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Origen de reservas</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-cyan-500" />
-                      <span>Panel Admin (CRM)</span>
+      {/* Equipo: ingresos por estilista (pie + ranking unificado) */}
+      {stylistStats.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2"><Users className="h-4 w-4 text-violet-500" /> Equipo · ingresos por estilista</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <div className="h-[200px] w-full md:w-1/2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <defs>
+                      {stylistStats.map((s, i) => (
+                        <linearGradient key={s.id} id={`gradient-${s.id}`} x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor={s.color || COLORS[i % COLORS.length]} stopOpacity={1} />
+                          <stop offset="100%" stopColor={s.color || COLORS[i % COLORS.length]} stopOpacity={0.7} />
+                        </linearGradient>
+                      ))}
+                    </defs>
+                    <Pie data={stylistStats} dataKey="revenue" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} strokeWidth={0}>
+                      {stylistStats.map((s, i) => (
+                        <Cell key={s.id} fill={`url(#gradient-${s.id})`} className="drop-shadow-sm" />
+                      ))}
+                    </Pie>
+                    <Tooltip content={({ active, payload }) =>
+                      active && payload?.length ? (
+                        <div className="bg-background/95 backdrop-blur border rounded-xl p-3 shadow-xl">
+                          <p className="font-semibold">{payload[0].payload.name}</p>
+                          <p className="text-lg font-bold">{formatCurrency(payload[0].value as number)}</p>
+                          <p className="text-xs text-muted-foreground">{payload[0].payload.transactions} transacciones</p>
+                        </div>
+                      ) : null
+                    } />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="w-full md:w-1/2 space-y-2">
+                {stylistStats.map((s, i) => {
+                  const totalRevenue = stylistStats.reduce((sum, st) => sum + st.revenue, 0);
+                  const percent = totalRevenue > 0 ? (s.revenue / totalRevenue) * 100 : 0;
+                  return (
+                    <div key={s.id} className="flex items-center justify-between p-2.5 rounded-xl bg-muted/40">
+                      <div className="flex items-center gap-2.5">
+                        <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs", i === 0 && "ring-2 ring-amber-400 ring-offset-1")} style={{ backgroundColor: s.color || COLORS[i % COLORS.length] }}>
+                          {i + 1}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium leading-tight">{s.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{s.transactions} tx · {s.services} servicios</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold">{formatCurrency(s.revenue)}</p>
+                        <p className="text-[10px] text-muted-foreground">{percent.toFixed(0)}%{s.tips > 0 && ` · +${formatCurrency(s.tips)} propinas`}</p>
+                      </div>
                     </div>
-                    <span className="font-medium">{bookingStats.channels.crm}</span>
-                  </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-cyan-500 rounded-full"
-                      style={{
-                        width: `${bookingStats.total > 0 ? (bookingStats.channels.crm / bookingStats.total) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-orange-500" />
-                      <span>Web / App</span>
+                  );
+                })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Top servicios */}
+      {topServices.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2"><Scissors className="h-4 w-4" /> Top servicios</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {topServices.map((svc, i) => {
+                const maxRev = topServices[0].revenue || 1;
+                const percent = (svc.revenue / maxRev) * 100;
+                return (
+                  <div key={svc.name} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }}>
+                          {i + 1}
+                        </div>
+                        <span className="font-medium truncate">{svc.name}</span>
+                      </div>
+                      <div className="text-right shrink-0 ml-2">
+                        <span className="font-semibold">{formatCurrency(svc.revenue)}</span>
+                        <span className="text-muted-foreground ml-1">· {svc.count}x</span>
+                      </div>
                     </div>
-                    <span className="font-medium">{bookingStats.channels.web}</span>
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${percent}%` }} transition={{ duration: 0.5, delay: i * 0.05 }} className="h-full rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    </div>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-orange-500 rounded-full"
-                      style={{
-                        width: `${bookingStats.total > 0 ? (bookingStats.channels.web / bookingStats.total) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </AnimatePresence>
-      </Tabs>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Clientes — KPIs en línea */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2"><UserPlus className="h-4 w-4" /> Clientes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <MiniKPI icon={Users} label="Totales" value={clientMetrics.total.toString()} color="text-blue-600" bg="bg-blue-50 dark:bg-blue-900/20" />
+            <MiniKPI icon={UserPlus} label="Nuevos este mes" value={clientMetrics.new.toString()} color="text-green-600" bg="bg-green-50 dark:bg-green-900/20" />
+            <MiniKPI icon={Repeat} label="Recurrentes" value={clientMetrics.returning.toString()} color="text-violet-600" bg="bg-violet-50 dark:bg-violet-900/20" />
+            <MiniKPI icon={TrendingUp} label="Retención" value={`${clientMetrics.retentionRate.toFixed(0)}%`} color="text-amber-600" bg="bg-amber-50 dark:bg-amber-900/20" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Horas pico + insight */}
+      {peakHours.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2"><Clock className="h-4 w-4" /> Horas pico</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {(insights.bestDay || insights.bestHour) && (
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-primary/10 to-violet-500/10 text-xs">
+                <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                <span>
+                  {insights.bestDay && <>Tu mejor día: <strong className="capitalize">{insights.bestDay}</strong></>}
+                  {insights.bestDay && insights.bestHour && " · "}
+                  {insights.bestHour && <>Hora estrella: <strong>{insights.bestHour}</strong></>}
+                </span>
+              </div>
+            )}
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={peakHours}>
+                  <XAxis dataKey="hour" fontSize={10} tickLine={false} />
+                  <YAxis fontSize={10} tickLine={false} axisLine={false} width={30} />
+                  <Tooltip content={({ active, payload }) =>
+                    active && payload?.length ? (
+                      <div className="bg-background/95 backdrop-blur border rounded-lg p-2 shadow-lg text-xs">
+                        <p className="font-semibold">{payload[0].payload.hour}</p>
+                        <p className="text-muted-foreground">{payload[0].value} reservas</p>
+                      </div>
+                    ) : null
+                  } />
+                  <Bar dataKey="bookings" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -1108,6 +926,16 @@ function MetricCard({
         <p className="text-xs text-muted-foreground">{title}</p>
       </CardContent>
     </Card>
+  );
+}
+
+function MiniKPI({ icon: Icon, label, value, color, bg }: { icon: React.ElementType; label: string; value: string; color: string; bg: string }) {
+  return (
+    <div className={cn("p-3 rounded-xl text-center", bg)}>
+      <Icon className={cn("h-5 w-5 mx-auto mb-1", color)} />
+      <p className="text-xl font-bold leading-tight">{value}</p>
+      <p className="text-[10px] text-muted-foreground">{label}</p>
+    </div>
   );
 }
 
