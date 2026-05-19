@@ -69,8 +69,10 @@ export const DateTimeSelection = ({
   const [customMinute, setCustomMinute] = useState<string>("");
   const [bookedRanges, setBookedRanges] = useState<TimeRange[]>([]);
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
+  const [slotToStylists, setSlotToStylists] = useState<Record<string, Array<{ slug: string; id: string; name: string; color?: string | null; avatar_url?: string | null }>>>({});
+  const [selectedSlotStylist, setSelectedSlotStylist] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [stylists, setStylists] = useState<Array<{ slug: string; id: string; name: string }>>([]);
+  const [stylists, setStylists] = useState<Array<{ slug: string; id: string; name: string; color?: string | null; avatar_url?: string | null }>>([]);
 
   // Waitlist state
   const [showWaitlistDialog, setShowWaitlistDialog] = useState(false);
