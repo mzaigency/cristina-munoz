@@ -267,42 +267,42 @@ export const DateTimeSelection = ({
 
     // In admin mode with custom time, skip availability checks
     if (isAdmin && (customHour || customMinute)) {
-      // For 'any' stylist, pick the first available
-      const defaultStylist = stylists.length > 0 ? stylists[0].slug : "cris";
+      const defaultStylist = selectedSlotStylist || (stylists.length > 0 ? stylists[0].slug : "cris");
       onNext(date, time, (stylist === "any" ? defaultStylist : stylist) as Stylist, true);
       return;
     }
 
-    // If stylist is 'any', determine which specific stylist is available
-    if (stylist === "any" && stylists.length > 0) {
+    if (stylist === "any") {
+      const available = slotToStylists[time] || [];
+      if (available.length === 1) {
+        onNext(date, time, available[0].slug as Stylist);
+        return;
+      }
+      if (selectedSlotStylist) {
+        onNext(date, time, selectedSlotStylist as Stylist);
+        return;
+      }
+      // Fallback: query availability for each stylist
       try {
         const dateStr = formatDateToISO(date);
         const selectedStartMinutes = timeStringToMinutes(time);
         const activeWindows = getActiveWindows(selectedStartMinutes, services);
 
-        // Check each stylist's availability
         const availabilityResults = await Promise.all(
           stylists.map(async (s) => {
             const { data, error } = await supabase.functions.invoke("check-availability", {
               body: { date: dateStr, stylist: s.slug, tenant_id: tenantId },
             });
-
             if (error) return { slug: s.slug, available: false };
-
             const ranges = parseBookedSlotsToRanges(data?.bookedSlots || []);
             const isAvailable = !activeWindows.some((window) =>
               ranges.some((booking) => hasOverlap(window.start, window.end, booking.start, booking.end)),
             );
-
             return { slug: s.slug, available: isAvailable };
           }),
         );
-
-        // Find first available stylist
         const availableStylist = availabilityResults.find((r) => r.available);
-        if (availableStylist) {
-          onNext(date, time, availableStylist.slug as Stylist);
-        }
+        if (availableStylist) onNext(date, time, availableStylist.slug as Stylist);
       } catch {
         return;
       }
