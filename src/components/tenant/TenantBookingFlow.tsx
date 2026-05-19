@@ -225,19 +225,18 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           <div ref={progressRef} className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto scroll-mt-4">
             <div className="flex justify-between items-center text-xs sm:text-sm text-muted-foreground px-1">
               <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
-              <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Profesional</span>
-              <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Fecha</span>
-              <span className={cn("transition-colors duration-300", step >= 4 && "text-primary font-medium")}>Confirmar</span>
+              <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Fecha y hora</span>
+              <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Confirmar</span>
             </div>
             <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
               <div 
                 className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out shadow-glow"
-                style={{ width: `${(step / 4) * 100}%` }}
+                style={{ width: `${(step / 3) * 100}%` }}
               />
             </div>
             <div className="text-center">
               <span className="text-xs text-muted-foreground">
-                Paso {step} de 4
+                Paso {step} de 3
               </span>
             </div>
           </div>
@@ -248,9 +247,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
               <CardHeader>
                 <CardTitle className="animate-fade-in">
                   {step === 1 && "Selecciona tus servicios"}
-                  {step === 2 && "Elige tu profesional"}
-                  {step === 3 && "Selecciona fecha y hora"}
-                  {step === 4 && "Confirma tu reserva"}
+                  {step === 2 && "Selecciona fecha y hora"}
+                  {step === 3 && "Confirma tu reserva"}
                 </CardTitle>
                 <CardDescription>
                   {step === 1 && (
@@ -266,9 +264,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       )}
                     </>
                   )}
-                  {step === 2 && "Elige quien te atenderá o deja que decidamos nosotros"}
-                  {step === 3 && `Duración total: ${totalDuration} minutos`}
-                  {step === 4 && "Últimos detalles para completar tu reserva"}
+                  {step === 2 && `Duración total: ${totalDuration} minutos`}
+                  {step === 3 && "Últimos detalles para completar tu reserva"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="overflow-hidden">
@@ -309,37 +306,21 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      <TenantStylistSelection
-                        tenantId={tenantId}
-                        selectedStylist={bookingData.stylist}
-                        onNext={handleStylistSelect}
-                        onBack={handleBack}
-                      />
-                    </motion.div>
-                  )}
-                  {step === 3 && (
-                    <motion.div
-                      key="step-3"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                    >
                       <TenantDateTimeSelection
                         tenantId={tenantId}
                         selectedDate={bookingData.date}
                         selectedTime={bookingData.time}
                         totalDuration={totalDuration}
                         services={bookingData.services}
-                        stylist={bookingData.stylist!}
+                        stylist="any"
                         onNext={handleDateTimeSelect}
                         onBack={handleBack}
                       />
                     </motion.div>
                   )}
-                  {step === 4 && !bookingConfirmed && (
+                  {step === 3 && !bookingConfirmed && (
                     <motion.div
-                      key="step-4"
+                      key="step-3"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
@@ -365,7 +346,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       />
                     </motion.div>
                   )}
-                  {step === 4 && bookingConfirmed && bookingData.date && (
+                  {step === 3 && bookingConfirmed && bookingData.date && (
                     <motion.div
                       key="step-success"
                       initial={{ opacity: 0, scale: 0.95 }}
