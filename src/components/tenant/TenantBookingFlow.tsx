@@ -32,7 +32,6 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [pendingServices, setPendingServices] = useState<{ services: Service[], packageId?: string } | null>(null);
-  const [stylistCount, setStylistCount] = useState<number | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
@@ -44,7 +43,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const { user } = useAuth();
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
-    stylist: null,
+    stylist: "any" as Stylist,
     date: null,
     time: null,
     name: "",
