@@ -167,18 +167,10 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     }
   };
 
-  const handleStylistSelect = (stylistSlug: string) => {
-    // Convert slug to Stylist type (the type expects specific values)
-    const stylist = stylistSlug as Stylist;
-    setBookingData({ ...bookingData, stylist });
-    setStep(3);
-    scrollToProgress();
-  };
-
   const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: string) => {
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist as Stylist });
-    setStep(4);
+    setStep(3);
     scrollToProgress();
   };
 
@@ -193,12 +185,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   };
 
   const handleBack = () => {
-    if (step === 3 && stylistCount !== null && stylistCount <= 1) {
-      // Skip step 2 if only 1 professional
-      setStep(1);
-    } else if (step > 1) {
-      setStep(step - 1);
-    }
+    if (step > 1) setStep(step - 1);
   };
 
   const handleRemoveService = (serviceId: string) => {
