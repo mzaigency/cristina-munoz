@@ -56,7 +56,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [servicesRes, packagesRes, stylistsRes] = await Promise.all([
+        const [servicesRes, packagesRes] = await Promise.all([
           supabase
             .from('services')
             .select('*')
@@ -66,11 +66,6 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           supabase
             .from('service_packages')
             .select('*')
-            .eq('tenant_id', tenantId)
-            .eq('is_active', true),
-          supabase
-            .from('tenant_stylists')
-            .select('id')
             .eq('tenant_id', tenantId)
             .eq('is_active', true),
         ]);
@@ -91,7 +86,6 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
         setServices(transformedServices);
         setPackages((packagesRes.data || []) as unknown as ServicePackage[]);
-        setStylistCount(stylistsRes.data?.length || 0);
       } catch (error) {
         console.error('Error loading services:', error);
         toast({
