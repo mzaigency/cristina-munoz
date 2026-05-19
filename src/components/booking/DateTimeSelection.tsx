@@ -548,24 +548,45 @@ export const DateTimeSelection = ({
                               {minutesToTimeString(hours.afternoonEnd)})
                             </p>
                             <div className="grid grid-cols-3 gap-2">
-                              {afternoonSlots.map((slot) => (
-                                <Button
-                                  key={slot}
-                                  variant={time === slot && !customHour && !customMinute ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => {
-                                    setTime(slot);
-                                    setCustomHour("");
-                                    setCustomMinute("");
-                                  }}
-                                  className={cn(
-                                    "transition-all duration-200 hover:shadow-md",
-                                    time === slot && !customHour && !customMinute && "shadow-glow",
-                                  )}
-                                >
-                                  {slot}
-                                </Button>
-                              ))}
+                              {afternoonSlots.map((slot) => {
+                                const available = stylist === "any" ? slotToStylists[slot] || [] : [];
+                                return (
+                                  <Button
+                                    key={slot}
+                                    variant={time === slot && !customHour && !customMinute ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => {
+                                      setTime(slot);
+                                      setCustomHour("");
+                                      setCustomMinute("");
+                                      setSelectedSlotStylist(
+                                        stylist === "any" && slotToStylists[slot]?.length === 1
+                                          ? slotToStylists[slot][0].slug
+                                          : null,
+                                      );
+                                    }}
+                                    className={cn(
+                                      "h-auto min-h-[2.5rem] transition-all duration-200 hover:shadow-md flex-col gap-0.5 py-1.5",
+                                      time === slot && !customHour && !customMinute && "shadow-glow",
+                                    )}
+                                  >
+                                    <span>{slot}</span>
+                                    {stylist === "any" && available.length > 0 && (
+                                      <span className="flex -space-x-1.5">
+                                        {available.slice(0, 3).map((s) =>
+                                          s.avatar_url ? (
+                                            <img key={s.slug} src={s.avatar_url} alt={s.name} className="h-4 w-4 rounded-full border border-background object-cover" />
+                                          ) : (
+                                            <span key={s.slug} className="flex h-4 w-4 items-center justify-center rounded-full border border-background text-[8px] text-white" style={{ backgroundColor: s.color || "hsl(var(--primary))" }}>
+                                              {s.name[0]}
+                                            </span>
+                                          ),
+                                        )}
+                                      </span>
+                                    )}
+                                  </Button>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
