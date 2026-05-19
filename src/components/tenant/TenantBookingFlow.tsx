@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
-import { TenantStylistSelection } from "./TenantStylistSelection";
 import { TenantDateTimeSelection } from "./TenantDateTimeSelection";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { BookingSummaryMobile } from "@/components/booking/BookingSummaryMobile";
