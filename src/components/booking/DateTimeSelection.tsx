@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { es } from "date-fns/locale";
@@ -8,7 +9,7 @@ import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stylist, Service, TimeRange } from "@/types/booking";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
-import { Loader2, Clock, Bell } from "lucide-react";
+import { Loader2, Clock, Bell, User } from "lucide-react";
 import {
   hasOverlap,
   getActiveWindows,
@@ -68,8 +69,10 @@ export const DateTimeSelection = ({
   const [customMinute, setCustomMinute] = useState<string>("");
   const [bookedRanges, setBookedRanges] = useState<TimeRange[]>([]);
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
+  const [slotToStylists, setSlotToStylists] = useState<Record<string, Array<{ slug: string; id: string; name: string; color?: string | null; avatar_url?: string | null }>>>({});
+  const [selectedSlotStylist, setSelectedSlotStylist] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [stylists, setStylists] = useState<Array<{ slug: string; id: string; name: string }>>([]);
+  const [stylists, setStylists] = useState<Array<{ slug: string; id: string; name: string; color?: string | null; avatar_url?: string | null }>>([]);
 
   // Waitlist state
   const [showWaitlistDialog, setShowWaitlistDialog] = useState(false);
@@ -94,11 +97,11 @@ export const DateTimeSelection = ({
     const fetchStylists = async () => {
       const { data } = await supabase
         .from("tenant_stylists")
-        .select("id, slug, name")
+        .select("id, slug, name, color, avatar_url")
         .eq("tenant_id", tenantId)
         .eq("is_active", true);
 
-      setStylists(data || []);
+      setStylists((data || []) as any);
     };
 
     fetchStylists();
@@ -196,17 +199,21 @@ export const DateTimeSelection = ({
             ),
           );
 
-          // Merge all available slots
-          const allSlotsSet = new Set<string>();
-          responses.forEach((response) => {
+          // Merge all available slots and track which stylists are available per slot
+          const slotsMap: Record<string, Array<{ slug: string; id: string; name: string; color?: string | null; avatar_url?: string | null }>> = {};
+          responses.forEach((response, idx) => {
             if (!response.error && response.data) {
               const slots = computeAvailableSlotsForStylist(date, response.data);
-              slots.forEach((slot) => allSlotsSet.add(slot));
+              slots.forEach((slot) => {
+                if (!slotsMap[slot]) slotsMap[slot] = [];
+                slotsMap[slot].push(stylists[idx]);
+              });
             }
           });
 
-          const mergedSlots = Array.from(allSlotsSet).sort();
+          const mergedSlots = Object.keys(slotsMap).sort();
           setFusedAvailableSlots(mergedSlots);
+          setSlotToStylists(slotsMap);
           setBookedRanges([]);
         } else {
           // Regular handling for specific stylist
@@ -260,42 +267,42 @@ export const DateTimeSelection = ({
 
     // In admin mode with custom time, skip availability checks
     if (isAdmin && (customHour || customMinute)) {
-      // For 'any' stylist, pick the first available
-      const defaultStylist = stylists.length > 0 ? stylists[0].slug : "cris";
+      const defaultStylist = selectedSlotStylist || (stylists.length > 0 ? stylists[0].slug : "cris");
       onNext(date, time, (stylist === "any" ? defaultStylist : stylist) as Stylist, true);
       return;
     }
 
-    // If stylist is 'any', determine which specific stylist is available
-    if (stylist === "any" && stylists.length > 0) {
+    if (stylist === "any") {
+      const available = slotToStylists[time] || [];
+      if (available.length === 1) {
+        onNext(date, time, available[0].slug as Stylist);
+        return;
+      }
+      if (selectedSlotStylist) {
+        onNext(date, time, selectedSlotStylist as Stylist);
+        return;
+      }
+      // Fallback: query availability for each stylist
       try {
         const dateStr = formatDateToISO(date);
         const selectedStartMinutes = timeStringToMinutes(time);
         const activeWindows = getActiveWindows(selectedStartMinutes, services);
 
-        // Check each stylist's availability
         const availabilityResults = await Promise.all(
           stylists.map(async (s) => {
             const { data, error } = await supabase.functions.invoke("check-availability", {
               body: { date: dateStr, stylist: s.slug, tenant_id: tenantId },
             });
-
             if (error) return { slug: s.slug, available: false };
-
             const ranges = parseBookedSlotsToRanges(data?.bookedSlots || []);
             const isAvailable = !activeWindows.some((window) =>
               ranges.some((booking) => hasOverlap(window.start, window.end, booking.start, booking.end)),
             );
-
             return { slug: s.slug, available: isAvailable };
           }),
         );
-
-        // Find first available stylist
         const availableStylist = availabilityResults.find((r) => r.available);
-        if (availableStylist) {
-          onNext(date, time, availableStylist.slug as Stylist);
-        }
+        if (availableStylist) onNext(date, time, availableStylist.slug as Stylist);
       } catch {
         return;
       }
@@ -480,24 +487,45 @@ export const DateTimeSelection = ({
                               {minutesToTimeString(hours.morningEnd)})
                             </p>
                             <div className="grid grid-cols-3 gap-2">
-                              {morningSlots.map((slot) => (
-                                <Button
-                                  key={slot}
-                                  variant={time === slot && !customHour && !customMinute ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => {
-                                    setTime(slot);
-                                    setCustomHour("");
-                                    setCustomMinute("");
-                                  }}
-                                  className={cn(
-                                    "transition-all duration-200 hover:shadow-md",
-                                    time === slot && !customHour && !customMinute && "shadow-glow",
-                                  )}
-                                >
-                                  {slot}
-                                </Button>
-                              ))}
+                              {morningSlots.map((slot) => {
+                                const available = stylist === "any" ? slotToStylists[slot] || [] : [];
+                                return (
+                                  <Button
+                                    key={slot}
+                                    variant={time === slot && !customHour && !customMinute ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => {
+                                      setTime(slot);
+                                      setCustomHour("");
+                                      setCustomMinute("");
+                                      setSelectedSlotStylist(
+                                        stylist === "any" && slotToStylists[slot]?.length === 1
+                                          ? slotToStylists[slot][0].slug
+                                          : null,
+                                      );
+                                    }}
+                                    className={cn(
+                                      "h-auto min-h-[2.5rem] transition-all duration-200 hover:shadow-md flex-col gap-0.5 py-1.5",
+                                      time === slot && !customHour && !customMinute && "shadow-glow",
+                                    )}
+                                  >
+                                    <span>{slot}</span>
+                                    {stylist === "any" && available.length > 0 && (
+                                      <span className="flex -space-x-1.5">
+                                        {available.slice(0, 3).map((s) =>
+                                          s.avatar_url ? (
+                                            <img key={s.slug} src={s.avatar_url} alt={s.name} className="h-4 w-4 rounded-full border border-background object-cover" />
+                                          ) : (
+                                            <span key={s.slug} className="flex h-4 w-4 items-center justify-center rounded-full border border-background text-[8px] text-white" style={{ backgroundColor: s.color || "hsl(var(--primary))" }}>
+                                              {s.name[0]}
+                                            </span>
+                                          ),
+                                        )}
+                                      </span>
+                                    )}
+                                  </Button>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -520,24 +548,45 @@ export const DateTimeSelection = ({
                               {minutesToTimeString(hours.afternoonEnd)})
                             </p>
                             <div className="grid grid-cols-3 gap-2">
-                              {afternoonSlots.map((slot) => (
-                                <Button
-                                  key={slot}
-                                  variant={time === slot && !customHour && !customMinute ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => {
-                                    setTime(slot);
-                                    setCustomHour("");
-                                    setCustomMinute("");
-                                  }}
-                                  className={cn(
-                                    "transition-all duration-200 hover:shadow-md",
-                                    time === slot && !customHour && !customMinute && "shadow-glow",
-                                  )}
-                                >
-                                  {slot}
-                                </Button>
-                              ))}
+                              {afternoonSlots.map((slot) => {
+                                const available = stylist === "any" ? slotToStylists[slot] || [] : [];
+                                return (
+                                  <Button
+                                    key={slot}
+                                    variant={time === slot && !customHour && !customMinute ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => {
+                                      setTime(slot);
+                                      setCustomHour("");
+                                      setCustomMinute("");
+                                      setSelectedSlotStylist(
+                                        stylist === "any" && slotToStylists[slot]?.length === 1
+                                          ? slotToStylists[slot][0].slug
+                                          : null,
+                                      );
+                                    }}
+                                    className={cn(
+                                      "h-auto min-h-[2.5rem] transition-all duration-200 hover:shadow-md flex-col gap-0.5 py-1.5",
+                                      time === slot && !customHour && !customMinute && "shadow-glow",
+                                    )}
+                                  >
+                                    <span>{slot}</span>
+                                    {stylist === "any" && available.length > 0 && (
+                                      <span className="flex -space-x-1.5">
+                                        {available.slice(0, 3).map((s) =>
+                                          s.avatar_url ? (
+                                            <img key={s.slug} src={s.avatar_url} alt={s.name} className="h-4 w-4 rounded-full border border-background object-cover" />
+                                          ) : (
+                                            <span key={s.slug} className="flex h-4 w-4 items-center justify-center rounded-full border border-background text-[8px] text-white" style={{ backgroundColor: s.color || "hsl(var(--primary))" }}>
+                                              {s.name[0]}
+                                            </span>
+                                          ),
+                                        )}
+                                      </span>
+                                    )}
+                                  </Button>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -548,6 +597,37 @@ export const DateTimeSelection = ({
               )}
             </>
           )}
+
+          {/* Stylist picker when multiple are available for selected slot */}
+          {stylist === "any" && time && !customHour && !customMinute && (slotToStylists[time]?.length || 0) > 1 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-medium text-foreground">¿Con quién prefieres?</p>
+              <div className="grid grid-cols-2 gap-2">
+                {slotToStylists[time].map((s) => (
+                  <Card
+                    key={s.slug}
+                    className={cn(
+                      "cursor-pointer border-2 p-3 flex items-center gap-3 transition-all touch-manipulation",
+                      selectedSlotStylist === s.slug
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50",
+                    )}
+                    onClick={() => setSelectedSlotStylist(s.slug)}
+                  >
+                    {s.avatar_url ? (
+                      <img src={s.avatar_url} alt={s.name} className="h-9 w-9 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full flex-shrink-0 text-white text-sm" style={{ backgroundColor: s.color || "hsl(var(--primary))" }}>
+                        <User className="h-4 w-4" />
+                      </span>
+                    )}
+                    <span className="text-sm font-medium text-foreground truncate">{s.name}</span>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           {date && time && (
             <p className="mt-4 text-xs text-muted-foreground">
               {(() => {
@@ -567,7 +647,11 @@ export const DateTimeSelection = ({
         </Button>
         <Button
           onClick={handleNext}
-          disabled={!date || !time}
+          disabled={
+            !date ||
+            !time ||
+            (stylist === "any" && !customHour && !customMinute && (slotToStylists[time]?.length || 0) > 1 && !selectedSlotStylist)
+          }
           data-guided-cta="true"
           className="transition-transform duration-200 hover:scale-105 disabled:scale-100"
         >

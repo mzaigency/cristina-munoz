@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
-import { TenantStylistSelection } from "./TenantStylistSelection";
 import { TenantDateTimeSelection } from "./TenantDateTimeSelection";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { BookingSummaryMobile } from "@/components/booking/BookingSummaryMobile";
@@ -33,7 +32,6 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [pendingServices, setPendingServices] = useState<{ services: Service[], packageId?: string } | null>(null);
-  const [stylistCount, setStylistCount] = useState<number | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
@@ -45,7 +43,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const { user } = useAuth();
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
-    stylist: null,
+    stylist: "any" as Stylist,
     date: null,
     time: null,
     name: "",
@@ -58,7 +56,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [servicesRes, packagesRes, stylistsRes] = await Promise.all([
+        const [servicesRes, packagesRes] = await Promise.all([
           supabase
             .from('services')
             .select('*')
@@ -68,11 +66,6 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           supabase
             .from('service_packages')
             .select('*')
-            .eq('tenant_id', tenantId)
-            .eq('is_active', true),
-          supabase
-            .from('tenant_stylists')
-            .select('id')
             .eq('tenant_id', tenantId)
             .eq('is_active', true),
         ]);
@@ -93,7 +86,6 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
         setServices(transformedServices);
         setPackages((packagesRes.data || []) as unknown as ServicePackage[]);
-        setStylistCount(stylistsRes.data?.length || 0);
       } catch (error) {
         console.error('Error loading services:', error);
         toast({
@@ -175,18 +167,10 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     }
   };
 
-  const handleStylistSelect = (stylistSlug: string) => {
-    // Convert slug to Stylist type (the type expects specific values)
-    const stylist = stylistSlug as Stylist;
-    setBookingData({ ...bookingData, stylist });
-    setStep(3);
-    scrollToProgress();
-  };
-
   const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: string) => {
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist as Stylist });
-    setStep(4);
+    setStep(3);
     scrollToProgress();
   };
 
@@ -201,12 +185,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   };
 
   const handleBack = () => {
-    if (step === 3 && stylistCount !== null && stylistCount <= 1) {
-      // Skip step 2 if only 1 professional
-      setStep(1);
-    } else if (step > 1) {
-      setStep(step - 1);
-    }
+    if (step > 1) setStep(step - 1);
   };
 
   const handleRemoveService = (serviceId: string) => {
@@ -219,7 +198,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
       <ClientCoachmark
         storageKey="booking-flow-intro"
         title="Reserva en 3 pasos"
-        description="Elige servicio, profesional y horario. Confirmas al final, sin compromiso."
+        description="Elige servicio, fecha y confirma. Sin compromiso."
         icon={CalendarCheck}
         delay={1600}
       />
@@ -246,19 +225,18 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           <div ref={progressRef} className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto scroll-mt-4">
             <div className="flex justify-between items-center text-xs sm:text-sm text-muted-foreground px-1">
               <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
-              <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Profesional</span>
-              <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Fecha</span>
-              <span className={cn("transition-colors duration-300", step >= 4 && "text-primary font-medium")}>Confirmar</span>
+              <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Fecha y hora</span>
+              <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Confirmar</span>
             </div>
             <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
               <div 
                 className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out shadow-glow"
-                style={{ width: `${(step / 4) * 100}%` }}
+                style={{ width: `${(step / 3) * 100}%` }}
               />
             </div>
             <div className="text-center">
               <span className="text-xs text-muted-foreground">
-                Paso {step} de 4
+                Paso {step} de 3
               </span>
             </div>
           </div>
@@ -269,9 +247,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
               <CardHeader>
                 <CardTitle className="animate-fade-in">
                   {step === 1 && "Selecciona tus servicios"}
-                  {step === 2 && "Elige tu profesional"}
-                  {step === 3 && "Selecciona fecha y hora"}
-                  {step === 4 && "Confirma tu reserva"}
+                  {step === 2 && "Selecciona fecha y hora"}
+                  {step === 3 && "Confirma tu reserva"}
                 </CardTitle>
                 <CardDescription>
                   {step === 1 && (
@@ -287,9 +264,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       )}
                     </>
                   )}
-                  {step === 2 && "Elige quien te atenderá o deja que decidamos nosotros"}
-                  {step === 3 && `Duración total: ${totalDuration} minutos`}
-                  {step === 4 && "Últimos detalles para completar tu reserva"}
+                  {step === 2 && `Duración total: ${totalDuration} minutos`}
+                  {step === 3 && "Últimos detalles para completar tu reserva"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="overflow-hidden">
@@ -330,37 +306,21 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      <TenantStylistSelection
-                        tenantId={tenantId}
-                        selectedStylist={bookingData.stylist}
-                        onNext={handleStylistSelect}
-                        onBack={handleBack}
-                      />
-                    </motion.div>
-                  )}
-                  {step === 3 && (
-                    <motion.div
-                      key="step-3"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                    >
                       <TenantDateTimeSelection
                         tenantId={tenantId}
                         selectedDate={bookingData.date}
                         selectedTime={bookingData.time}
                         totalDuration={totalDuration}
                         services={bookingData.services}
-                        stylist={bookingData.stylist!}
+                        stylist="any"
                         onNext={handleDateTimeSelect}
                         onBack={handleBack}
                       />
                     </motion.div>
                   )}
-                  {step === 4 && !bookingConfirmed && (
+                  {step === 3 && !bookingConfirmed && (
                     <motion.div
-                      key="step-4"
+                      key="step-3"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
@@ -386,7 +346,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       />
                     </motion.div>
                   )}
-                  {step === 4 && bookingConfirmed && bookingData.date && (
+                  {step === 3 && bookingConfirmed && bookingData.date && (
                     <motion.div
                       key="step-success"
                       initial={{ opacity: 0, scale: 0.95 }}

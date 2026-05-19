@@ -1,108 +1,55 @@
+# Eliminar el paso "Profesional" del ciclo de reserva
 
-# Pulido del módulo Informes (Admin → Negocio → Informes)
+## Objetivo
 
-Mantenemos los 4 subtabs (Stats · Feed · Objetivos · Reportes). Solo tocamos **Stats** y **Reportes**. Feed y Objetivos quedan como están.
+Pasar de un flujo de **4 pasos** (Servicios → Profesional → Fecha → Confirmar) a un flujo de **3 pasos** (Servicios → Fecha → Confirmar), tanto en cliente (`TenantBookingFlow`) como en admin (`AdminBookingFlow`).
 
----
+La lógica de mostrar avatares disponibles bajo cada hora y de pedir profesional cuando hay más de uno disponible para ese slot **ya existe** dentro de `TenantDateTimeSelection` (modo `stylist="any"`). Lo aprovechamos forzando `stylist = "any"` siempre, y replicamos esa misma UX en la versión admin si no la tiene.
 
-## 1. Stats — unificar y reforzar
+## Cambios
 
-**Archivo principal:** `src/components/admin/BusinessStats.tsx`
+### 1. Cliente — `src/components/tenant/TenantBookingFlow.tsx`
 
-### 1.1 Eliminar los 4 sub-sub-tabs internos
-Quitamos el `<Tabs>` interno (`overview / stylists / services / clients`, líneas ~527-545 y su contenido). Pasamos a **una sola vista vertical** organizada por bloques con jerarquía clara, todo filtrado por `tenantId` (ya lo está, pero auditamos cada query para garantizarlo).
+- Eliminar `step === 2` (TenantStylistSelection) y todo su render.
+- Inicializar `bookingData.stylist = "any"` por defecto.
+- Renumerar pasos: 1=Servicios, 2=Fecha/Hora, 3=Confirmar.
+- Tras `handleServicesSelect`, ir directamente al paso 2 (fecha).
+- Quitar import `TenantStylistSelection`, estado/efectos de `stylistCount` y la lógica de "skip step 2 if only 1 professional".
+- Actualizar la barra de progreso (3 etapas en lugar de 4) y los textos del header (`step === N`).
+- `handleBack` simplificado (resta 1).
+- Eliminar el coachmark de "3 pasos" o actualizar copy si procede.
 
-### 1.2 Estructura nueva (scroll único, mobile-first)
-Selector de período arriba (`7 días / Este mes / Trimestre`) → ya existe.
+### 2. Admin — `src/components/admin/AdminBookingFlow.tsx`
 
-Bloques en orden:
+- Mismas operaciones: eliminar `step === 2` con `AdminStylistSelection`, forzar `stylist = "any"`, renumerar a 3 pasos.
+- Asegurar que el componente de fecha/hora que usa muestra avatares y el selector cuando hay varios disponibles. Si actualmente usa otro componente sin esta lógica, **unificar reusando `TenantDateTimeSelection**` pasándole `stylist="any"` (es agnóstico al tipo de usuario).
+- Actualizar textos de progreso (`Servicios / Fecha / Confirmar`), `STEP_TITLES`, `STEP_DESCRIPTIONS` y helpers (`step === N`).
+- Mantener el resumen final mostrando el profesional ya resuelto desde `bookingData.stylist`.
 
-1. **KPIs principales (grid 2×2 en mobile, 4×1 en desktop)** — los actuales:
-   - Ingresos · Ticket medio · Reservas · Valoración
-   - Cada uno con `% vs período anterior`.
-2. **Citas nuevas hoy (NUEVO bloque destacado)** — card con desglose por canal:
-   - Total · Vía Admin (canal=`crm`) · Vía Web (canal=`web`/`whatsapp`/null)
-   - Mini bar comparativa visual.
-   - Esta misma métrica se replica en el Dashboard (ver §3).
-3. **Objetivo del mes** (si existe) — barra de progreso + proyección. Ya existe, se mantiene.
-4. **Evolución de ingresos** — AreaChart actual.
-5. **Métodos de pago + Resumen rápido** (propinas, descuentos, transacciones, media/día) — grid 2 columnas.
-6. **Equipo: Ingresos por estilista** — PieChart + leyenda con %. Es la vista que más valor aporta del antiguo tab "Equipo".
-7. **Top servicios** — lista compacta top 8 con ingresos + nº de veces realizado (BarChart horizontal o lista con barra de progreso).
-8. **Clientes** — 4 mini-KPIs en línea: Total · Nuevos este mes · Recurrentes · Retención %. Sin tab propio.
-9. **Horas pico** — BarChart por hora (se mantiene).
+### 3. Archivos a borrar (si quedan huérfanos)
 
-### 1.3 Métricas nuevas que tienen sentido añadir
-- **Tasa de cancelación** (cancelled / total bookings) → mini-KPI en la card de Reservas.
-- **% reservas online vs CRM** del período → ya tenemos los datos en `bookingStats.channels`, lo exponemos como barra dual debajo de la KPI de Reservas.
-- **Mejor día / mejor hora** del período → texto resumen sobre Horas Pico ("Tu mejor día: jueves · Hora estrella: 18:00").
+- `src/components/tenant/TenantStylistSelection.tsx`
+- `src/components/admin/AdminStylistSelection.tsx`
+- `src/components/booking/StylistSelection.tsx` (sólo si no lo usa nadie más; verificar con búsqueda antes de borrar).
 
-### 1.4 Auditoría tenant_id
-Recorremos cada `fetch*Stats()` en `BusinessStats.tsx` (líneas 145-411) y confirmamos `.eq("tenant_id", tenantId)` en todas las consultas a `transactions`, `bookings`, `monthly_goals`, `clients`, `reviews`, `tenant_stylists`. Ya están filtradas; lo dejamos explícito y añadimos comentario para futuras métricas.
+### 4. No tocar
 
----
-
-## 2. Reportes (PDF) — rediseño profundo con identidad GlowApp
-
-**Archivo:** `src/components/admin/PDFReportsGenerator.tsx`
-
-### 2.1 Problemas actuales
-- HTML básico color violeta plano `#8B5CF6` (no coincide con marca `#22408b` + `#99329a`).
-- No tiene logo, no respira identidad GlowApp.
-- Sin gráficos, solo tablas.
-- Solo 3 plantillas, ninguna realmente útil para imprimir o compartir con socio/asesoría.
-
-### 2.2 Rediseño visual
-- **Header** con logo GlowApp + nombre del salón + período + fecha generación.
-- **Paleta de marca:** gradiente `#22408b → #99329a` en headers de sección y barras.
-- Tipografía limpia (system-ui), jerarquía clara, mucho whitespace.
-- Tarjetas KPI grandes con iconos SVG inline.
-- **Mini-gráficos SVG inline** (no recharts, demasiado pesado para print): barras horizontales para top servicios y estilistas; sparkline simple para evolución diaria.
-- Footer con `glowapp.app` y nº de página.
-- Print-optimized: márgenes A4, page-break entre secciones, sin sombras.
-
-### 2.3 Plantillas reorganizadas (4 informes, no 3)
-1. **Resumen mensual ejecutivo** — un PDF "todo en uno" para el dueño/asesor: KPIs, evolución, métodos de pago, top servicios, top estilistas, comparativa mes anterior.
-2. **Productividad por estilista** — detalle por profesional: servicios, ventas, propinas, ticket medio, ranking, comisiones estimadas (si activas).
-3. **Servicios y catálogo** — top servicios, peor desempeño, servicios sin ventas, mix de categorías.
-4. **Informe para asesoría / fiscal (NUEVO)** — desglose por días con totales en efectivo, tarjeta, IVA estimado, propinas. Pensado para imprimir y entregar al gestor.
-
-### 2.4 Selector de período mejorado
-Además del selector mensual actual, añadimos: **Personalizado (rango de fechas)** y **Trimestre actual / anterior**.
-
----
-
-## 3. Dashboard — métrica "Citas nuevas hoy"
-
-**Archivo:** `src/components/admin/AdminDashboard.tsx` (interface `DashboardStats` línea 36)
-
-Actualmente `todayBookings` cuenta las citas **del día** (campo `Fecha`). Añadimos una **métrica distinta**: citas **creadas hoy** (`created_at` ≥ inicio del día), desglosadas por canal:
-
-- `newBookingsTodayTotal`
-- `newBookingsTodayCrm` (canal = `'crm'`)
-- `newBookingsTodayWeb` (canal in `('web','whatsapp')` o NULL)
-
-Se renderiza como una card destacada en el grid superior del dashboard, con el desglose 50/50 (Admin · Web) y un pequeño indicador de tendencia vs ayer.
-
----
+- `QuickBookingSheet` (calendario admin): la creación rápida desde una celda ya tiene profesional implícito por la columna, no aplica.
+- `RescheduleFlow`: comprobar si arrastra el paso de profesional; si lo tiene, fuera del scope salvo que lo pidas explícitamente.
+- Edge functions y schema: sin cambios.
 
 ## Detalles técnicos
 
-- **Stats:** todas las queries ya usan `.eq("tenant_id", tenantId)`. Auditamos línea por línea y añadimos test manual con dos tenants para verificar aislamiento.
-- **Canal web** sigue la convención del edge function `get-bookings-stats`: `canal IN ('web','whatsapp') OR canal IS NULL`.
-- **PDF:** seguimos usando `window.open` + `print()` (no añadimos dependencia pesada). El HTML generado pasa a ser un template modular con helpers (`renderKPI`, `renderBar`, `renderTable`).
-- **Mobile safety zones:** las cards del dashboard mantienen el padding actual y el `pb-safe` global.
-- **Sin cambios de BD ni de RLS.** Solo frontend.
+- `TenantDateTimeSelection` ya implementa con `stylist="any"`:
+  - `slotToStylists`: mapa `hora → profesionales disponibles`.
+  - Render de avatares debajo de la hora.
+  - Bloque "¿Con quién prefieres?" cuando hay >1 disponible.
+  - Auto-asignación si sólo hay 1.
+  - Devuelve `resolvedStylist` en `onNext`.
+- Mantener tipo `Stylist` aceptando `"any"` y cualquier slug dinámico (ya tipado como `string` en `bookingData.stylist` tras resolver).
 
-## Archivos a modificar
+## Flujo resultante
 
 ```text
-src/components/admin/BusinessStats.tsx        (refactor vista única + métricas nuevas)
-src/components/admin/PDFReportsGenerator.tsx  (rediseño completo + 4ª plantilla)
-src/components/admin/AdminDashboard.tsx       (nueva métrica "citas nuevas hoy" por canal)
+1. Servicios  →  2. Fecha y hora (con avatares y nombre + selección si >1)  →  3. Confirmar
 ```
-
-## Fuera de alcance
-- TenantFeedAnalytics (Feed) — sin cambios.
-- MonthlyGoals (Objetivos) — sin cambios.
-- Estructura de subtabs de ReportsSection — sin cambios.
