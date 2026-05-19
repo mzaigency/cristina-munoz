@@ -243,12 +243,6 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
     scrollToProgress();
   };
 
-  const handleStylistSelect = (stylist: Stylist) => {
-    setBookingData({ ...bookingData, stylist });
-    setStep(3);
-    scrollToProgress();
-  };
-
   const handleDateTimeSelect = (
     date: Date,
     time: string,
@@ -257,7 +251,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
   ) => {
     const finalStylist = resolvedStylist || bookingData.stylist;
     setBookingData({ ...bookingData, date, time, stylist: finalStylist, skipAvailabilityCheck });
-    setStep(4);
+    setStep(3);
     scrollToProgress();
   };
 
