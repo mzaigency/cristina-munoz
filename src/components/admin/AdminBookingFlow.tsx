@@ -80,7 +80,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
   const [bookingData, setBookingData] = useState<AdminBookingData>({
     services: [],
-    stylist: null,
+    stylist: "any" as Stylist,
     date: null,
     time: "",
     customerName: "",
