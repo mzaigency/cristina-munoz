@@ -594,9 +594,8 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
         <span className="text-base shrink-0" aria-hidden>👉</span>
         <p className="text-xs sm:text-sm text-foreground/90 leading-snug">
           {step === 1 && <>Elige uno o varios servicios y pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
-          {step === 2 && <>Elige la profesional o "Siguiente disponible" para asignar automáticamente.</>}
-          {step === 3 && <>Selecciona un día y luego una hora libre. Después pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
-          {step === 4 && <>Revisa los datos y pulsa <span className="font-semibold text-primary">Crear Cita</span> abajo.</>}
+          {step === 2 && <>Selecciona un día y luego una hora libre. Si hay varias profesionales disponibles, elige una. Después pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
+          {step === 3 && <>Revisa los datos y pulsa <span className="font-semibold text-primary">Crear Cita</span> abajo.</>}
         </p>
       </div>
     </div>
