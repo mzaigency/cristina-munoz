@@ -347,19 +347,18 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
         <div ref={progressRef} className="mb-6 space-y-3 max-w-3xl mx-auto w-full scroll-mt-4">
           <div className="flex justify-between items-center text-sm text-muted-foreground px-1">
             <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
-            <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Profesional</span>
-            <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Fecha</span>
-            <span className={cn("transition-colors duration-300", step >= 4 && "text-primary font-medium")}>Confirmar</span>
+            <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Fecha y hora</span>
+            <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Confirmar</span>
           </div>
           <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
             <div
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out shadow-glow"
-              style={{ width: `${(step / 4) * 100}%` }}
+              style={{ width: `${(step / 3) * 100}%` }}
             />
           </div>
           <div className="text-center">
             <span className="text-xs text-muted-foreground">
-              Paso {step} de 4 ({Math.round((step / 4) * 100)}% completado)
+              Paso {step} de 3 ({Math.round((step / 3) * 100)}% completado)
             </span>
           </div>
         </div>
@@ -373,18 +372,12 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
         {step === 2 && (
           <GuidedStep isActive>
-            <AdminStylistSelection tenantId={tenantId} selectedStylist={bookingData.stylist} onNext={handleStylistSelect} onBack={handleBack} />
-          </GuidedStep>
-        )}
-
-        {step === 3 && (
-          <GuidedStep isActive>
             <DateTimeSelection
               selectedDate={bookingData.date}
               selectedTime={bookingData.time}
               totalDuration={totalDuration}
               services={bookingData.services}
-              stylist={bookingData.stylist!}
+              stylist="any"
               tenantId={tenantId}
               onNext={handleDateTimeSelect}
               onBack={handleBack}
@@ -393,7 +386,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
           </GuidedStep>
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <GuidedStep isActive>
           <div className="space-y-6">
             <div className="space-y-4">
