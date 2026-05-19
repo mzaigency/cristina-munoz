@@ -97,11 +97,11 @@ export const DateTimeSelection = ({
     const fetchStylists = async () => {
       const { data } = await supabase
         .from("tenant_stylists")
-        .select("id, slug, name")
+        .select("id, slug, name, color, avatar_url")
         .eq("tenant_id", tenantId)
         .eq("is_active", true);
 
-      setStylists(data || []);
+      setStylists((data || []) as any);
     };
 
     fetchStylists();
