@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
-import { AdminStylistSelection } from "@/components/admin/AdminStylistSelection";
 import { DateTimeSelection } from "@/components/booking/DateTimeSelection";
 import { RecurrenceSelector, RecurrenceConfig } from "@/components/admin/RecurrenceSelector";
 import { Loader2, UserCircle, AtSign, Check } from "lucide-react";
@@ -18,14 +17,12 @@ import { X } from "lucide-react";
 
 const STEP_TITLES = [
   "Selecciona los servicios",
-  "Elige la profesional",
   "Selecciona fecha y hora",
   "Datos del cliente",
 ] as const;
 
 const STEP_DESCRIPTIONS = [
   "Puedes seleccionar varios servicios",
-  "Elige quién atenderá la cita",
   "Elige el día y la hora libre",
   "Últimos detalles para crear la cita",
 ] as const;
