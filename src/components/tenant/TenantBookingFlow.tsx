@@ -198,7 +198,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
       <ClientCoachmark
         storageKey="booking-flow-intro"
         title="Reserva en 3 pasos"
-        description="Elige servicio, profesional y horario. Confirmas al final, sin compromiso."
+        description="Elige servicio, fecha y confirma. Sin compromiso."
         icon={CalendarCheck}
         delay={1600}
       />
