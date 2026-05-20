@@ -186,13 +186,36 @@ serve(async (req) => {
 
     console.log(`Checking stylists: ${stylistsToCheck.map(s => s.slug).join(', ')}`);
 
+    // Fetch seasonal override (e.g. "all August: 8-15"). Overrides win over weekly hours.
+    const { data: overrideRows } = await supabase
+      .from('tenant_hours_overrides')
+      .select('is_closed, open_time, close_time, break_start, break_end')
+      .eq('tenant_id', tenantId)
+      .lte('date_from', date)
+      .gte('date_to', date)
+      .limit(1);
+    const override = overrideRows && overrideRows.length > 0 ? overrideRows[0] : null;
+
     // Get working hours and bookings for each stylist
     const bookedSlotsByStylists: Record<string, Array<{ Hora: string; total_duration: number }>> = {};
     const stylistWorkingRanges: Record<string, Array<{ start: number; end: number }>> = {};
 
     for (const s of stylistsToCheck) {
-      // Get working hours for this stylist
-      const hours = await getStylistHoursForDay(supabase, s.id, s.slug, tenantId, dayOfWeek);
+      // Get working hours: override > stylist-specific > tenant > defaults
+      let hours: StylistHours;
+      if (override) {
+        hours = {
+          stylist_id: s.id,
+          slug: s.slug,
+          is_working: !override.is_closed,
+          start_time: override.open_time,
+          end_time: override.close_time,
+          break_start: override.break_start,
+          break_end: override.break_end,
+        };
+      } else {
+        hours = await getStylistHoursForDay(supabase, s.id, s.slug, tenantId, dayOfWeek);
+      }
       stylistWorkingRanges[s.slug] = getWorkingRanges(hours);
 
       // If stylist is not working, block all slots
