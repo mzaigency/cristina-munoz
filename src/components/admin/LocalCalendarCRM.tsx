@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, addMonths } from "date-fns";
+import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, addMonths, eachDayOfInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
@@ -486,41 +486,54 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       setLoading(true);
       const stylistsToBlock = blockStylist === "all" ? stylists.map((s) => s.slug) : [blockStylist];
 
-      for (const stylist of stylistsToBlock) {
-        const bookingData = {
-          tenant_id: tenantId,
-          customer_name: "BLOQUEADO",
-          Telefono: "",
-          Fecha: format(blockStartDate, "yyyy-MM-dd"),
-          Hora: blockPeriod === "hours" ? blockStartTime : "00:00",
-          end_time: blockPeriod === "hours" ? blockEndTime : "23:59",
-          stylist: stylist,
-          services: [],
-          total_duration:
-            blockPeriod === "hours"
-              ? (parseInt(blockEndTime.split(":")[0]) - parseInt(blockStartTime.split(":")[0])) * 60
-              : 24 * 60,
-          status: "confirmed",
-          title:
-            blockPeriod === "hours"
-              ? `🔒 BLOQUEADO - ${stylist.toUpperCase()}`
-              : `🌴 VACACIONES - ${stylist.toUpperCase()}`,
-          notes: blockPeriod === "hours" ? "Periodo bloqueado - Horas específicas" : "Periodo bloqueado - Vacaciones",
-          color: "#EF4444",
-          canal: "crm",
-        };
+      // Para horas específicas: solo el día de inicio.
+      // Para día/semana/mes/rango: iterar todos los días del intervalo.
+      const datesToBlock =
+        blockPeriod === "hours"
+          ? [blockStartDate]
+          : eachDayOfInterval({ start: blockStartDate, end: finalEndDate });
 
-        const { error } = await supabase.from("bookings").insert(bookingData);
+      // Agrupar el bloqueo para poder cancelarlo entero después
+      const groupId = (crypto as any).randomUUID ? (crypto as any).randomUUID() : `${Date.now()}-${Math.random()}`;
 
-        if (error) throw error;
+      const rows: any[] = [];
+      for (const day of datesToBlock) {
+        for (const stylist of stylistsToBlock) {
+          rows.push({
+            tenant_id: tenantId,
+            customer_name: "BLOQUEADO",
+            Telefono: "",
+            Fecha: format(day, "yyyy-MM-dd"),
+            Hora: blockPeriod === "hours" ? blockStartTime : "00:00",
+            end_time: blockPeriod === "hours" ? blockEndTime : "23:59",
+            stylist: stylist,
+            services: [],
+            total_duration:
+              blockPeriod === "hours"
+                ? (parseInt(blockEndTime.split(":")[0]) - parseInt(blockStartTime.split(":")[0])) * 60
+                : 24 * 60,
+            status: "confirmed",
+            title:
+              blockPeriod === "hours"
+                ? `🔒 BLOQUEADO - ${stylist.toUpperCase()}`
+                : `🌴 VACACIONES - ${stylist.toUpperCase()}`,
+            notes: blockPeriod === "hours" ? "Periodo bloqueado - Horas específicas" : "Periodo bloqueado - Vacaciones",
+            color: "#EF4444",
+            canal: "crm",
+            recurrence_group_id: groupId,
+          });
+        }
       }
+
+      const { error } = await supabase.from("bookings").insert(rows);
+      if (error) throw error;
 
       toast({
         title: "Periodo bloqueado",
         description:
           blockPeriod === "hours"
             ? "Se han bloqueado las horas correctamente"
-            : "Se ha bloqueado el periodo de vacaciones correctamente",
+            : `Se han bloqueado ${datesToBlock.length} día${datesToBlock.length === 1 ? "" : "s"} correctamente`,
       });
 
       setIsBlockDialogOpen(false);
