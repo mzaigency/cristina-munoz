@@ -1856,6 +1856,51 @@ export type Database = {
           },
         ]
       }
+      tenant_hours_overrides: {
+        Row: {
+          break_end: string | null
+          break_start: string | null
+          close_time: string | null
+          created_at: string
+          date_from: string
+          date_to: string
+          id: string
+          is_closed: boolean
+          label: string | null
+          open_time: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          break_end?: string | null
+          break_start?: string | null
+          close_time?: string | null
+          created_at?: string
+          date_from: string
+          date_to: string
+          id?: string
+          is_closed?: boolean
+          label?: string | null
+          open_time?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          break_end?: string | null
+          break_start?: string | null
+          close_time?: string | null
+          created_at?: string
+          date_from?: string
+          date_to?: string
+          id?: string
+          is_closed?: boolean
+          label?: string | null
+          open_time?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tenant_integrations: {
         Row: {
           created_at: string | null

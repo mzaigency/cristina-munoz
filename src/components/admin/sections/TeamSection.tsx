@@ -4,6 +4,7 @@ import { Users, Clock, Percent, Lock } from "lucide-react";
 import { StylistsManager } from "../StylistsManager";
 import { CommissionsManager } from "../CommissionsManager";
 import { BusinessHoursManager } from "../BusinessHoursManager";
+import { SeasonalHoursManager } from "../SeasonalHoursManager";
 import { LockedFeature } from "../LockedFeature";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
 import { cn } from "@/lib/utils";
@@ -93,8 +94,9 @@ const TeamSection = ({ tenantId, subTab, onSubTabChange }: TeamSectionProps) => 
           <StylistsManager tenantId={tenantId} />
         </TabsContent>
 
-        <TabsContent value="hours" className="mt-4">
+        <TabsContent value="hours" className="mt-4 space-y-6">
           <BusinessHoursManager tenantId={tenantId} />
+          <SeasonalHoursManager tenantId={tenantId} />
         </TabsContent>
 
         <TabsContent value="commissions" className="mt-4">

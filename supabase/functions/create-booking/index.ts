@@ -283,8 +283,97 @@ serve(async (req) => {
 
     // Skip validations if admin explicitly requests it
     if (!bookingData.skipAvailabilityCheck) {
+      // ---- Validar horario del negocio (override de temporada gana sobre el semanal) ----
+      const endMinutesTotal = currentMinutes + bookingData.total_duration;
+
+      const timeToMin = (t?: string | null) => {
+        if (!t) return null;
+        const [h, m] = t.split(":").map(Number);
+        return h * 60 + (m || 0);
+      };
+
+      // Buscar override de temporada que aplique a esta fecha
+      const { data: overrides } = await supabase
+        .from("tenant_hours_overrides")
+        .select("is_closed, open_time, close_time, break_start, break_end")
+        .eq("tenant_id", tenantId)
+        .lte("date_from", bookingDate)
+        .gte("date_to", bookingDate)
+        .limit(1);
+
+      let openRanges: Array<{ start: number; end: number }> = [];
+      let hoursSource: "override" | "weekly" | "none" = "none";
+
+      if (overrides && overrides.length > 0) {
+        const ov = overrides[0];
+        hoursSource = "override";
+        if (ov.is_closed) {
+          openRanges = [];
+        } else {
+          const open = timeToMin(ov.open_time);
+          const close = timeToMin(ov.close_time);
+          const bStart = timeToMin(ov.break_start);
+          const bEnd = timeToMin(ov.break_end);
+          if (open != null && close != null) {
+            if (bStart != null && bEnd != null && bStart > open && bEnd < close) {
+              openRanges = [
+                { start: open, end: bStart },
+                { start: bEnd, end: close },
+              ];
+            } else {
+              openRanges = [{ start: open, end: close }];
+            }
+          }
+        }
+      } else {
+        const dow = new Date(bookingDate + "T12:00:00Z").getUTCDay();
+        const { data: weekly } = await supabase
+          .from("tenant_business_hours")
+          .select("is_open, open_time, close_time, break_start, break_end")
+          .eq("tenant_id", tenantId)
+          .eq("day_of_week", dow)
+          .maybeSingle();
+
+        if (weekly) {
+          hoursSource = "weekly";
+          if (!weekly.is_open) {
+            openRanges = [];
+          } else {
+            const open = timeToMin(weekly.open_time);
+            const close = timeToMin(weekly.close_time);
+            const bStart = timeToMin(weekly.break_start);
+            const bEnd = timeToMin(weekly.break_end);
+            if (open != null && close != null) {
+              if (bStart != null && bEnd != null && bStart > open && bEnd < close) {
+                openRanges = [
+                  { start: open, end: bStart },
+                  { start: bEnd, end: close },
+                ];
+              } else {
+                openRanges = [{ start: open, end: close }];
+              }
+            }
+          }
+        }
+      }
+
+      // Si hay horario configurado (override o semanal), validar que la reserva entera cabe
+      if (hoursSource !== "none") {
+        const fitsInRange = openRanges.some(
+          (r) => currentMinutes >= r.start && endMinutesTotal <= r.end,
+        );
+        if (!fitsInRange) {
+          return new Response(
+            JSON.stringify({
+              error: "El horario seleccionado está fuera del horario de atención",
+              details: { source: hoursSource },
+            }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+
       // Check if customer already has a booking at this date/time
-      // Only check if phone is provided (can't identify customer without it)
       if (normalizedPhone && normalizedPhone.length >= 9) {
         const { data: existingCustomerBooking } = await supabase
           .from("bookings")
@@ -312,8 +401,6 @@ serve(async (req) => {
       }
 
       // Check stylist availability in database
-      const endMinutesTotal = currentMinutes + bookingData.total_duration;
-
       const { data: stylistBookings } = await supabase
         .from("bookings")
         .select("id, Hora, end_time, customer_name, total_duration")
