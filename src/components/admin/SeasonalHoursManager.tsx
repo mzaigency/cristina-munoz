@@ -38,6 +38,12 @@ interface Override {
 
 interface Props {
   tenantId: string;
+  /** If set, manages overrides for a single stylist (vacations / special schedule) */
+  stylistId?: string;
+  /** Optional stylist display name (for copy) */
+  stylistName?: string;
+  /** Compact UI for embedding inside other dialogs */
+  compact?: boolean;
 }
 
 type Mode = "day" | "week" | "range";
@@ -136,7 +142,7 @@ const HoursBar = ({
   );
 };
 
-export function SeasonalHoursManager({ tenantId }: Props) {
+export function SeasonalHoursManager({ tenantId, stylistId, stylistName, compact }: Props) {
   const [items, setItems] = useState<Override[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -145,13 +151,17 @@ export function SeasonalHoursManager({ tenantId }: Props) {
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
 
+  const tableName = stylistId ? "stylist_hours_overrides" : "tenant_hours_overrides";
+
   const load = async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any)
-      .from("tenant_hours_overrides")
+    let query = (supabase as any)
+      .from(tableName)
       .select("*")
       .eq("tenant_id", tenantId)
       .order("date_from", { ascending: true });
+    if (stylistId) query = query.eq("stylist_id", stylistId);
+    const { data, error } = await query;
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else setItems((data as Override[]) || []);
     setLoading(false);
@@ -159,7 +169,8 @@ export function SeasonalHoursManager({ tenantId }: Props) {
 
   useEffect(() => {
     if (tenantId) load();
-  }, [tenantId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantId, stylistId]);
 
   const changeMode = (m: Mode) => {
     setMode(m);
@@ -256,15 +267,16 @@ export function SeasonalHoursManager({ tenantId }: Props) {
       break_start: !form.is_closed && form.has_break ? form.break_start : null,
       break_end: !form.is_closed && form.has_break ? form.break_end : null,
     };
-    const { error } = await (supabase as any).from("tenant_hours_overrides").insert(payload);
+    if (stylistId) payload.stylist_id = stylistId;
+    const { error } = await (supabase as any).from(tableName).insert(payload);
     setSaving(false);
     if (error) {
       toast({ title: "No se pudo guardar", description: error.message, variant: "destructive" });
       return;
     }
     toast({
-      title: "Horario aplicado ✨",
-      description: `Activo desde ya en ${dayCount} día${dayCount > 1 ? "s" : ""}. Tus clientes ya ven los huecos correctos.`,
+      title: stylistId ? "Aplicado al profesional ✨" : "Horario aplicado ✨",
+      description: `Activo desde ya en ${dayCount} día${dayCount > 1 ? "s" : ""}.`,
     });
     setForm(initialForm(mode));
     setShowForm(false);
@@ -272,12 +284,12 @@ export function SeasonalHoursManager({ tenantId }: Props) {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await (supabase as any).from("tenant_hours_overrides").delete().eq("id", id);
+    const { error } = await (supabase as any).from(tableName).delete().eq("id", id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Horario eliminado", description: "Vuelve a aplicarse el horario semanal." });
+    toast({ title: "Horario eliminado", description: stylistId ? "Vuelve a aplicarse el horario del profesional." : "Vuelve a aplicarse el horario semanal." });
     load();
   };
 
@@ -357,22 +369,26 @@ export function SeasonalHoursManager({ tenantId }: Props) {
   };
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader>
+    <Card className={cn("overflow-hidden", compact && "border-0 shadow-none bg-transparent")}>
+      <CardHeader className={cn(compact && "px-0 pt-0")}>
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
             <CalendarRange className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <CardTitle>Horarios especiales</CardTitle>
+            <CardTitle>
+              {stylistId ? "Vacaciones y horarios especiales" : "Horarios especiales"}
+            </CardTitle>
             <CardDescription className="mt-0.5">
-              Cambia o cierra un día, una semana o una temporada. Tiene prioridad sobre el horario semanal.
+              {stylistId
+                ? `Días libres o cambios puntuales${stylistName ? ` para ${stylistName}` : ""}. Tiene prioridad sobre su horario semanal.`
+                : "Cambia o cierra un día, una semana o una temporada. Tiene prioridad sobre el horario semanal."}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className={cn("space-y-6", compact && "px-0 pb-0")}>
         {/* Active highlight */}
         {active.length > 0 && (
           <div className="space-y-2">
