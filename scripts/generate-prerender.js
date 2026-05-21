@@ -354,17 +354,51 @@ async function main() {
     return;
   }
 
-  // 2. Tenant landing pages
+  // 2. Tenant landing pages — enriched with services / reviews / hours
   let tenantCount = 0;
   for (const tenant of tenants || []) {
-    if (!tenant.slug) continue;
-    const meta = buildTenantMeta(tenant);
-    const html = injectMeta(baseHtml, meta);
+    if (!tenant.slug || !tenant.id) continue;
+
+    const [servicesRes, reviewsRes, hoursRes] = await Promise.all([
+      supabase
+        .from("services")
+        .select("name, price")
+        .eq("tenant_id", tenant.id)
+        .order("sort_order", { ascending: true })
+        .limit(20),
+      supabase
+        .from("reviews")
+        .select("rating")
+        .eq("tenant_id", tenant.id)
+        .eq("approved", true)
+        .limit(500),
+      supabase
+        .from("tenant_business_hours")
+        .select("day_of_week, is_open, open_time, close_time")
+        .eq("tenant_id", tenant.id)
+        .order("day_of_week", { ascending: true }),
+    ]);
+
+    const services = servicesRes.data || [];
+    const hours = hoursRes.data || [];
+    const reviews = reviewsRes.data || [];
+    const reviewStats = reviews.length
+      ? {
+          avg: Math.round((reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length) * 10) / 10,
+          count: reviews.length,
+        }
+      : null;
+
+    const extras = { services, reviewStats, hours };
+    const meta = buildTenantMeta(tenant, extras);
+    const body = buildTenantBody(tenant, extras);
+    const html = injectMeta(baseHtml, meta, body);
     writePage(path.join(DIST, tenant.slug, "index.html"), html);
     tenantCount++;
     total++;
   }
-  console.log(`[prerender] ${tenantCount} tenant pages`);
+  console.log(`[prerender] ${tenantCount} tenant pages (enriched)`);
+
 
   // 3. Category x city pages
   const seen = new Set();
