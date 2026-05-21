@@ -165,7 +165,11 @@ function buildCategoryMeta(cat, citySlug = null) {
   return { title, description, image: `${SITE_URL}/og-image.png`, url, ldJson };
 }
 
-function buildTenantMeta(tenant) {
+const DAY_NAMES_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DAY_NAMES_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+function buildTenantMeta(tenant, extras = {}) {
+  const { services = [], reviewStats = null, hours = [] } = extras;
   const name = tenant.name || "Salón";
   const city = tenant.city || "";
   const btLabel = tenant.features?.business_type_label || "Salón de belleza";
@@ -182,6 +186,15 @@ function buildTenantMeta(tenant) {
     `${SITE_URL}/og-image.png`;
   const url = `${SITE_URL}/${tenant.slug}`;
 
+  const openingHoursSpec = hours
+    .filter((h) => h.is_open && h.open_time && h.close_time)
+    .map((h) => ({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: DAY_NAMES_EN[h.day_of_week],
+      opens: h.open_time,
+      closes: h.close_time,
+    }));
+
   const ldJson = {
     "@context": "https://schema.org",
     "@type": "BeautySalon",
@@ -192,15 +205,120 @@ function buildTenantMeta(tenant) {
     ...(city && {
       address: {
         "@type": "PostalAddress",
+        ...(tenant.address && { streetAddress: tenant.address }),
         addressLocality: city,
-        addressCountry: "ES",
+        ...(tenant.postal_code && { postalCode: tenant.postal_code }),
+        addressCountry: tenant.country || "ES",
       },
     }),
     ...(tenant.phone && { telephone: tenant.phone }),
-    ...(tenant.address && { streetAddress: tenant.address }),
+    ...(tenant.email && { email: tenant.email }),
+    ...(services.length > 0 && {
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "Servicios",
+        itemListElement: services.map((s) => ({
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: s.name },
+          ...(s.price != null && { price: s.price, priceCurrency: "EUR" }),
+        })),
+      },
+    }),
+    ...(reviewStats && reviewStats.count > 0 && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: reviewStats.avg,
+        reviewCount: reviewStats.count,
+        bestRating: 5,
+      },
+    }),
+    ...(openingHoursSpec.length > 0 && { openingHoursSpecification: openingHoursSpec }),
+    ...(tenant.google_maps_url && { hasMap: tenant.google_maps_url }),
+    sameAs: [tenant.instagram_url, tenant.facebook_url, tenant.tiktok_url].filter(Boolean),
   };
 
   return { title, description, image, url, ldJson };
+}
+
+function buildTenantBody(tenant, extras = {}) {
+  const { services = [], reviewStats = null, hours = [] } = extras;
+  const name = escapeHtml(tenant.name || "Salón");
+  const city = tenant.city || "";
+  const btLabel = tenant.features?.business_type_label || "Salón de belleza";
+  const headline = city
+    ? `${name} — ${escapeHtml(btLabel)} en ${escapeHtml(city)}`
+    : `${name} — ${escapeHtml(btLabel)}`;
+  const description = escapeHtml(
+    tenant.description ||
+      tenant.tagline ||
+      `${btLabel} profesional${city ? ` en ${city}` : ""}. Reserva tu cita online al instante.`,
+  );
+
+  const bt = tenant.features?.business_type;
+  const catSlug = bt ? BT_TO_CAT[bt]?.slug : null;
+  const breadcrumb = `
+    <nav aria-label="Migas de pan">
+      <ol>
+        <li><a href="/">GlowApp</a></li>
+        ${catSlug ? `<li><a href="/${catSlug}">${escapeHtml(btLabel)}</a></li>` : ""}
+        <li>${name}</li>
+      </ol>
+    </nav>`;
+
+  const servicesHtml = services.length
+    ? `<section><h2>Servicios de ${name}</h2><ul>${services
+        .slice(0, 20)
+        .map((s) => `<li>${escapeHtml(s.name)}${s.price != null ? ` — ${s.price} €` : ""}</li>`)
+        .join("")}</ul></section>`
+    : "";
+
+  const hoursHtml = hours.filter((h) => h.is_open).length
+    ? `<section><h2>Horario</h2><ul>${hours
+        .map((h) =>
+          h.is_open && h.open_time && h.close_time
+            ? `<li>${DAY_NAMES_ES[h.day_of_week]}: ${h.open_time} – ${h.close_time}</li>`
+            : `<li>${DAY_NAMES_ES[h.day_of_week]}: Cerrado</li>`,
+        )
+        .join("")}</ul></section>`
+    : "";
+
+  const contactHtml = `
+    <section>
+      <h2>Cómo reservar en ${name}</h2>
+      <p>Reserva tu cita online en ${name} en menos de 30 segundos. Elige servicio, profesional y horario disponible, y recibe la confirmación al instante.</p>
+      ${tenant.address ? `<p><strong>Dirección:</strong> ${escapeHtml(tenant.address)}${city ? `, ${escapeHtml(city)}` : ""}${tenant.postal_code ? ` (${escapeHtml(tenant.postal_code)})` : ""}</p>` : ""}
+      ${tenant.phone ? `<p><strong>Teléfono:</strong> <a href="tel:${escapeHtml(tenant.phone)}">${escapeHtml(tenant.phone)}</a></p>` : ""}
+      ${tenant.email ? `<p><strong>Email:</strong> <a href="mailto:${escapeHtml(tenant.email)}">${escapeHtml(tenant.email)}</a></p>` : ""}
+    </section>`;
+
+  const ratingHtml = reviewStats && reviewStats.count > 0
+    ? `<section><h2>Valoraciones de clientes</h2><p>${name} tiene una valoración media de <strong>${reviewStats.avg} / 5</strong> basada en ${reviewStats.count} opiniones verificadas.</p></section>`
+    : "";
+
+  const faqHtml = `
+    <section>
+      <h2>Preguntas frecuentes</h2>
+      <h3>¿Cómo reservo cita en ${name}?</h3>
+      <p>Selecciona el servicio que necesitas, elige fecha y hora, y confirma. Recibirás un recordatorio automático.</p>
+      <h3>¿Puedo cancelar o cambiar la cita?</h3>
+      <p>Sí, puedes gestionar tu cita desde tu perfil o el enlace del email de confirmación.</p>
+      <h3>¿Dónde está ${name}?</h3>
+      <p>${tenant.address ? `${escapeHtml(tenant.address)}, ` : ""}${city ? escapeHtml(city) : "Consulta la ubicación en la página de reserva"}.</p>
+    </section>`;
+
+  return `
+    <header>
+      ${breadcrumb}
+      <h1>${headline}</h1>
+      <p>${description}</p>
+      <p><a href="#reserva">Reservar cita online</a></p>
+    </header>
+    ${servicesHtml}
+    ${contactHtml}
+    ${hoursHtml}
+    ${ratingHtml}
+    ${faqHtml}
+  `.replace(/\s+/g, " ").trim();
 }
 
 async function main() {
