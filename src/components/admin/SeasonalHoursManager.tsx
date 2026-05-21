@@ -142,7 +142,7 @@ const HoursBar = ({
   );
 };
 
-export function SeasonalHoursManager({ tenantId }: Props) {
+export function SeasonalHoursManager({ tenantId, stylistId, stylistName, compact }: Props) {
   const [items, setItems] = useState<Override[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -151,13 +151,17 @@ export function SeasonalHoursManager({ tenantId }: Props) {
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
 
+  const tableName = stylistId ? "stylist_hours_overrides" : "tenant_hours_overrides";
+
   const load = async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any)
-      .from("tenant_hours_overrides")
+    let query = (supabase as any)
+      .from(tableName)
       .select("*")
       .eq("tenant_id", tenantId)
       .order("date_from", { ascending: true });
+    if (stylistId) query = query.eq("stylist_id", stylistId);
+    const { data, error } = await query;
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else setItems((data as Override[]) || []);
     setLoading(false);
@@ -165,7 +169,8 @@ export function SeasonalHoursManager({ tenantId }: Props) {
 
   useEffect(() => {
     if (tenantId) load();
-  }, [tenantId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantId, stylistId]);
 
   const changeMode = (m: Mode) => {
     setMode(m);
