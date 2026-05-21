@@ -547,7 +547,7 @@ export const TenantDateTimeSelection = ({
           ) : (
             (() => {
               const dayOfWeek = date.getDay();
-              const hours = getBusinessHoursForDay(dayOfWeek);
+              const hours = getBusinessHoursForDay(dayOfWeek, date);
               const hasAfternoon = hours.afternoonStart > 0 && hours.afternoonEnd > 0;
 
               // Split slots into morning and afternoon
