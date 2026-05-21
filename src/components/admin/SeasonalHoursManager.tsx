@@ -226,6 +226,24 @@ export function SeasonalHoursManager({ tenantId }: Props) {
       }
     }
 
+    // Detect overlap with existing overrides
+    const overlapping = items.filter(
+      (it) => it.date_from <= form.date_to && it.date_to >= form.date_from,
+    );
+    if (overlapping.length > 0) {
+      const first = overlapping[0];
+      const sameDay = first.date_from === first.date_to;
+      const range = sameDay
+        ? format(parseISO(first.date_from), "d 'de' MMM", { locale: es })
+        : `${format(parseISO(first.date_from), "d MMM", { locale: es })} → ${format(parseISO(first.date_to), "d MMM", { locale: es })}`;
+      toast({
+        title: "Se solapa con otro horario especial",
+        description: `Ya existe "${first.label || (first.is_closed ? "Cerrado" : `${formatHM(first.open_time)}–${formatHM(first.close_time)}`)}" (${range}). Elimínalo o cambia las fechas antes de guardar.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     const payload: any = {
       tenant_id: tenantId,
