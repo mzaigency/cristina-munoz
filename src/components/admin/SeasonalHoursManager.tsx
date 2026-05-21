@@ -369,22 +369,26 @@ export function SeasonalHoursManager({ tenantId, stylistId, stylistName, compact
   };
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader>
+    <Card className={cn("overflow-hidden", compact && "border-0 shadow-none bg-transparent")}>
+      <CardHeader className={cn(compact && "px-0 pt-0")}>
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
             <CalendarRange className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <CardTitle>Horarios especiales</CardTitle>
+            <CardTitle>
+              {stylistId ? "Vacaciones y horarios especiales" : "Horarios especiales"}
+            </CardTitle>
             <CardDescription className="mt-0.5">
-              Cambia o cierra un día, una semana o una temporada. Tiene prioridad sobre el horario semanal.
+              {stylistId
+                ? `Días libres o cambios puntuales${stylistName ? ` para ${stylistName}` : ""}. Tiene prioridad sobre su horario semanal.`
+                : "Cambia o cierra un día, una semana o una temporada. Tiene prioridad sobre el horario semanal."}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className={cn("space-y-6", compact && "px-0 pb-0")}>
         {/* Active highlight */}
         {active.length > 0 && (
           <div className="space-y-2">
