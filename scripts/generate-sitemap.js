@@ -123,11 +123,9 @@ ${entries
       `  </url>`,
     ]
       .filter(Boolean)
-      .join("
-"),
+      .join("\n"),
   )
-  .join("
-")}
+  .join("\n")}
 </urlset>`;
 
 const outputPath = path.join(__dirname, "..", "public", "sitemap.xml");
