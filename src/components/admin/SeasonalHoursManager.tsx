@@ -267,15 +267,16 @@ export function SeasonalHoursManager({ tenantId, stylistId, stylistName, compact
       break_start: !form.is_closed && form.has_break ? form.break_start : null,
       break_end: !form.is_closed && form.has_break ? form.break_end : null,
     };
-    const { error } = await (supabase as any).from("tenant_hours_overrides").insert(payload);
+    if (stylistId) payload.stylist_id = stylistId;
+    const { error } = await (supabase as any).from(tableName).insert(payload);
     setSaving(false);
     if (error) {
       toast({ title: "No se pudo guardar", description: error.message, variant: "destructive" });
       return;
     }
     toast({
-      title: "Horario aplicado ✨",
-      description: `Activo desde ya en ${dayCount} día${dayCount > 1 ? "s" : ""}. Tus clientes ya ven los huecos correctos.`,
+      title: stylistId ? "Aplicado al profesional ✨" : "Horario aplicado ✨",
+      description: `Activo desde ya en ${dayCount} día${dayCount > 1 ? "s" : ""}.`,
     });
     setForm(initialForm(mode));
     setShowForm(false);
@@ -283,12 +284,12 @@ export function SeasonalHoursManager({ tenantId, stylistId, stylistName, compact
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await (supabase as any).from("tenant_hours_overrides").delete().eq("id", id);
+    const { error } = await (supabase as any).from(tableName).delete().eq("id", id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Horario eliminado", description: "Vuelve a aplicarse el horario semanal." });
+    toast({ title: "Horario eliminado", description: stylistId ? "Vuelve a aplicarse el horario del profesional." : "Vuelve a aplicarse el horario semanal." });
     load();
   };
 
