@@ -137,7 +137,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const { toast } = useToast();
   
   // Get tenant business hours
-  const { businessHours, getBusinessHoursForDay, getClosedDays } = useTenantBusinessHours(tenantId);
+  const { businessHours, getBusinessHoursForDay, getClosedDays, getOverrideForDate } = useTenantBusinessHours(tenantId);
 
   // Lookup client when a booking is selected for editing
   useEffect(() => {
