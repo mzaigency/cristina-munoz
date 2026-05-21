@@ -311,6 +311,7 @@ export default function BusinessOnboarding() {
         title="Digitaliza tu Salón - GlowApp | Reservas Online en 5 Minutos"
         description="Crea tu web profesional y recibe reservas 24/7. 30 días gratis. Sin tarjeta. Más de 500 salones ya confían en GlowApp."
         canonicalUrl="/onboarding"
+        faq={OBJECTIONS.map((o) => ({ question: o.q, answer: o.a }))}
       />
 
       {/* Minimal header */}
