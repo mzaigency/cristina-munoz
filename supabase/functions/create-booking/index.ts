@@ -373,6 +373,65 @@ serve(async (req) => {
         }
       }
 
+      // ---- Validar override personal del estilista (vacaciones / horario especial) ----
+      // Buscar id del estilista por slug
+      const { data: stylistRow } = await supabase
+        .from("tenant_stylists")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .eq("slug", actualStylist)
+        .maybeSingle();
+
+      if (stylistRow?.id) {
+        const { data: sOverrides } = await supabase
+          .from("stylist_hours_overrides")
+          .select("is_closed, open_time, close_time, break_start, break_end, label")
+          .eq("stylist_id", stylistRow.id)
+          .lte("date_from", bookingDate)
+          .gte("date_to", bookingDate)
+          .limit(1);
+
+        if (sOverrides && sOverrides.length > 0) {
+          const sov = sOverrides[0];
+          if (sov.is_closed) {
+            return new Response(
+              JSON.stringify({
+                error: `${actualStylist} no trabaja ese día${sov.label ? ` (${sov.label})` : ""}`,
+                details: { reason: "stylist_closed" },
+              }),
+              { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+            );
+          }
+          const sOpen = timeToMin(sov.open_time);
+          const sClose = timeToMin(sov.close_time);
+          const sbStart = timeToMin(sov.break_start);
+          const sbEnd = timeToMin(sov.break_end);
+          let sRanges: Array<{ start: number; end: number }> = [];
+          if (sOpen != null && sClose != null) {
+            if (sbStart != null && sbEnd != null && sbStart > sOpen && sbEnd < sClose) {
+              sRanges = [
+                { start: sOpen, end: sbStart },
+                { start: sbEnd, end: sClose },
+              ];
+            } else {
+              sRanges = [{ start: sOpen, end: sClose }];
+            }
+            const fits = sRanges.some(
+              (r) => currentMinutes >= r.start && endMinutesTotal <= r.end,
+            );
+            if (!fits) {
+              return new Response(
+                JSON.stringify({
+                  error: `${actualStylist} tiene un horario especial ese día y la hora está fuera`,
+                  details: { reason: "stylist_override" },
+                }),
+                { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+              );
+            }
+          }
+        }
+      }
+
       // Check if customer already has a booking at this date/time
       if (normalizedPhone && normalizedPhone.length >= 9) {
         const { data: existingCustomerBooking } = await supabase
