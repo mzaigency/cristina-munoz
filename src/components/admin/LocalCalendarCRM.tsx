@@ -582,10 +582,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   const getScheduleForDay = (dayDate: Date) => {
     const dayOfWeek = dayDate.getDay();
-    const dayHours = getBusinessHoursForDay(dayOfWeek);
+    const dayHours = getBusinessHoursForDay(dayOfWeek, dayDate);
+    const override = getOverrideForDate(dayDate);
 
     if (dayHours.isClosed) {
-      return { hours: [], startHour: 0, endHour: 0, breakStartMinutes: null, breakEndMinutes: null, isClosed: true };
+      return { hours: [], startHour: 0, endHour: 0, breakStartMinutes: null, breakEndMinutes: null, isClosed: true, isSpecial: !!override };
     }
 
     // Calculate start and end hours from business hours
