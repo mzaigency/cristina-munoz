@@ -1145,11 +1145,15 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   key={dateKey}
                   value={dateKey}
                   className={cn(
-                    "flex-col items-center gap-0.5 data-[state=active]:bg-background px-1.5 md:px-4 py-1.5 md:py-2 min-w-[52px] md:min-w-[100px]",
+                    "flex-col items-center gap-0.5 data-[state=active]:bg-background px-1.5 md:px-4 py-1.5 md:py-2 min-w-[52px] md:min-w-[100px] relative",
                     isToday && "border-primary",
                     isClosed && "opacity-60",
+                    schedule.isSpecial && "ring-1 ring-amber-400/60 bg-amber-50/40 dark:bg-amber-500/5",
                   )}
                 >
+                  {schedule.isSpecial && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" aria-label="Horario especial" />
+                  )}
                   <div className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 w-full">
                     <span className="text-[10px] md:text-sm font-semibold capitalize">
                       {format(day, "EEE", { locale: es })}
@@ -1161,6 +1165,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                       </Badge>
                     )}
                     {(hasFullBlock || isClosed) && <Ban className="h-2.5 w-2.5 md:h-3 md:w-3 text-destructive" />}
+                    {schedule.isSpecial && !isClosed && <Sparkles className="h-2.5 w-2.5 md:h-3 md:w-3 text-amber-500" />}
                   </div>
                   <span className="text-[9px] md:text-xs text-muted-foreground">
                     {isClosed ? "Cerrado" : `${dayBookings.length} citas`}
