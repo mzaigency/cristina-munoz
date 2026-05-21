@@ -108,7 +108,7 @@ function injectMeta(baseHtml, { title, description, image, url, ldJson }, bodyCo
   if (bodyContent) {
     html = html.replace(
       /<div id="root">\s*<\/div>/,
-      `<div id="root"><div data-seo-prerender>${bodyContent}</div></div>`,
+      `<div id="root"><div data-seo-prerender style="position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;">${bodyContent}</div></div>`,
     );
   }
 
