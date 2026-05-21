@@ -465,7 +465,7 @@ export const DateTimeSelection = ({
                   {isAdmin && <p className="text-sm text-muted-foreground mb-2">O selecciona un horario disponible:</p>}
                   {(() => {
                     const dayOfWeek = date.getDay();
-                    const hours = getBusinessHoursForDay(dayOfWeek);
+                    const hours = getBusinessHoursForDay(dayOfWeek, date);
                     const hasAfternoon = hours.afternoonStart > 0 && hours.afternoonEnd > 0;
 
                     // Split slots into morning and afternoon
