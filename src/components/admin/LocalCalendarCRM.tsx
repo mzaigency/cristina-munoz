@@ -1190,6 +1190,17 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
               <TabsContent key={dateKey} value={dateKey} className="mt-3 md:mt-4">
                 <Card>
                   <CardContent className="p-2 md:p-6">
+                    {schedule.isSpecial && (
+                      <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-400/40 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-500/10 dark:to-amber-500/5 px-3 py-2">
+                        <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">Horario especial</p>
+                          <p className="text-[11px] text-amber-800/80 dark:text-amber-200/70 truncate">
+                            {schedule.isClosed ? "Cerrado por horario especial" : `Hoy: ${schedule.specialLabel}`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     {schedule.hours.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <p>Día cerrado</p>
