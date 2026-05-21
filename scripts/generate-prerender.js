@@ -101,8 +101,23 @@ function injectMeta(baseHtml, { title, description, image, url, ldJson }) {
   ].join("\n    ");
 
   // Replace existing <title> block with our full set of tags
-  return baseHtml.replace(/<title>[^<]*<\/title>/, tags);
+  let html = baseHtml.replace(/<title>[^<]*<\/title>/, tags);
+
+  // Inject visible content inside <div id="root"> for crawlers (React wipes it on hydration)
+  if (arguments[2]?.bodyContent) {
+    html = html.replace(
+      /<div id="root">\s*<\/div>/,
+      `<div id="root">${arguments[2].bodyContent}</div>`,
+    );
+  }
+
+  return html;
 }
+
+function injectMetaAndBody(baseHtml, meta, bodyContent) {
+  return injectMeta(baseHtml, meta, { bodyContent });
+}
+
 
 function normalizeCity(city) {
   return city
