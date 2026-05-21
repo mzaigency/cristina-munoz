@@ -625,7 +625,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       endHour: actualEndHour, 
       breakStartMinutes, 
       breakEndMinutes, 
-      isClosed: false 
+      isClosed: false,
+      isSpecial: !!override,
+      specialLabel: override ? `${dayHours.morningStart / 60 | 0}:${String(dayHours.morningStart % 60).padStart(2,'0')}–${Math.floor((dayHours.afternoonEnd || dayHours.morningEnd)/60)}:${String((dayHours.afternoonEnd || dayHours.morningEnd) % 60).padStart(2,'0')}` : null,
     };
   };
 
