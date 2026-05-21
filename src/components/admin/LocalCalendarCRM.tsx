@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, CheckCheck, GripVertical, Banknote, ShieldAlert, UserCircle } from "lucide-react";
+import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, CheckCheck, GripVertical, Banknote, ShieldAlert, UserCircle, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -137,7 +137,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const { toast } = useToast();
   
   // Get tenant business hours
-  const { businessHours, getBusinessHoursForDay, getClosedDays } = useTenantBusinessHours(tenantId);
+  const { businessHours, getBusinessHoursForDay, getClosedDays, getOverrideForDate } = useTenantBusinessHours(tenantId);
 
   // Lookup client when a booking is selected for editing
   useEffect(() => {
@@ -582,10 +582,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   const getScheduleForDay = (dayDate: Date) => {
     const dayOfWeek = dayDate.getDay();
-    const dayHours = getBusinessHoursForDay(dayOfWeek);
+    const dayHours = getBusinessHoursForDay(dayOfWeek, dayDate);
+    const override = getOverrideForDate(dayDate);
 
     if (dayHours.isClosed) {
-      return { hours: [], startHour: 0, endHour: 0, breakStartMinutes: null, breakEndMinutes: null, isClosed: true };
+      return { hours: [], startHour: 0, endHour: 0, breakStartMinutes: null, breakEndMinutes: null, isClosed: true, isSpecial: !!override };
     }
 
     // Calculate start and end hours from business hours
@@ -624,7 +625,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       endHour: actualEndHour, 
       breakStartMinutes, 
       breakEndMinutes, 
-      isClosed: false 
+      isClosed: false,
+      isSpecial: !!override,
+      specialLabel: override ? `${dayHours.morningStart / 60 | 0}:${String(dayHours.morningStart % 60).padStart(2,'0')}–${Math.floor((dayHours.afternoonEnd || dayHours.morningEnd)/60)}:${String((dayHours.afternoonEnd || dayHours.morningEnd) % 60).padStart(2,'0')}` : null,
     };
   };
 
@@ -1142,11 +1145,15 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   key={dateKey}
                   value={dateKey}
                   className={cn(
-                    "flex-col items-center gap-0.5 data-[state=active]:bg-background px-1.5 md:px-4 py-1.5 md:py-2 min-w-[52px] md:min-w-[100px]",
+                    "flex-col items-center gap-0.5 data-[state=active]:bg-background px-1.5 md:px-4 py-1.5 md:py-2 min-w-[52px] md:min-w-[100px] relative",
                     isToday && "border-primary",
                     isClosed && "opacity-60",
+                    schedule.isSpecial && "ring-1 ring-amber-400/60 bg-amber-50/40 dark:bg-amber-500/5",
                   )}
                 >
+                  {schedule.isSpecial && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" aria-label="Horario especial" />
+                  )}
                   <div className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 w-full">
                     <span className="text-[10px] md:text-sm font-semibold capitalize">
                       {format(day, "EEE", { locale: es })}
@@ -1158,6 +1165,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                       </Badge>
                     )}
                     {(hasFullBlock || isClosed) && <Ban className="h-2.5 w-2.5 md:h-3 md:w-3 text-destructive" />}
+                    {schedule.isSpecial && !isClosed && <Sparkles className="h-2.5 w-2.5 md:h-3 md:w-3 text-amber-500" />}
                   </div>
                   <span className="text-[9px] md:text-xs text-muted-foreground">
                     {isClosed ? "Cerrado" : `${dayBookings.length} citas`}
@@ -1182,6 +1190,17 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
               <TabsContent key={dateKey} value={dateKey} className="mt-3 md:mt-4">
                 <Card>
                   <CardContent className="p-2 md:p-6">
+                    {schedule.isSpecial && (
+                      <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-400/40 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-500/10 dark:to-amber-500/5 px-3 py-2">
+                        <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">Horario especial</p>
+                          <p className="text-[11px] text-amber-800/80 dark:text-amber-200/70 truncate">
+                            {schedule.isClosed ? "Cerrado por horario especial" : `Hoy: ${schedule.specialLabel}`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     {schedule.hours.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <p>Día cerrado</p>
