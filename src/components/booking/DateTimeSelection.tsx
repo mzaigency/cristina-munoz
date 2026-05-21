@@ -114,7 +114,7 @@ export const DateTimeSelection = ({
   ): string[] => {
     const ranges = parseBookedSlotsToRanges(bookedData?.bookedSlots || []);
     const dayOfWeek = selectedDate.getDay();
-    const hours = getBusinessHoursForDay(dayOfWeek);
+    const hours = getBusinessHoursForDay(dayOfWeek, selectedDate);
 
     if (hours.isClosed) return [];
 
@@ -122,7 +122,7 @@ export const DateTimeSelection = ({
     const currentMinutes = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : 0;
 
     // Generate base slots from tenant hours
-    const slotsSet = generateBaseSlots(dayOfWeek);
+    const slotsSet = generateBaseSlots(dayOfWeek, selectedDate);
 
     // Add flexible slots after existing bookings
     ranges.forEach((booking) => {
