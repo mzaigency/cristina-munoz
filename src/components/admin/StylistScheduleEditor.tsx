@@ -7,6 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Clock } from "lucide-react";
+import { SeasonalHoursManager } from "./SeasonalHoursManager";
+import { Separator } from "@/components/ui/separator";
 
 interface StylistSchedule {
   day_of_week: number;
