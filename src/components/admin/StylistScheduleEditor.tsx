@@ -276,9 +276,20 @@ export function StylistScheduleEditor({ open, onClose, stylistId, stylistName, t
                             className="h-9"
                             placeholder="--:--"
                           />
-                        </div>
-                      </div>
-                    )}
+            </div>
+
+            <Separator />
+
+            <div>
+              <SeasonalHoursManager
+                tenantId={tenantId}
+                stylistId={stylistId}
+                stylistName={stylistName}
+                compact
+              />
+            </div>
+          </div>
+        )}
                   </div>
                 );
               })}
