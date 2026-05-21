@@ -80,7 +80,7 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;");
 }
 
-function injectMeta(baseHtml, { title, description, image, url, ldJson }) {
+function injectMeta(baseHtml, { title, description, image, url, ldJson }, bodyContent = "") {
   const tags = [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
@@ -103,20 +103,18 @@ function injectMeta(baseHtml, { title, description, image, url, ldJson }) {
   // Replace existing <title> block with our full set of tags
   let html = baseHtml.replace(/<title>[^<]*<\/title>/, tags);
 
-  // Inject visible content inside <div id="root"> for crawlers (React wipes it on hydration)
-  if (arguments[2]?.bodyContent) {
+  // Inject visible SEO content inside <div id="root"> for crawlers.
+  // React wipes #root contents during hydration, so users never see this — only Googlebot does on initial fetch.
+  if (bodyContent) {
     html = html.replace(
       /<div id="root">\s*<\/div>/,
-      `<div id="root">${arguments[2].bodyContent}</div>`,
+      `<div id="root"><div data-seo-prerender>${bodyContent}</div></div>`,
     );
   }
 
   return html;
 }
 
-function injectMetaAndBody(baseHtml, meta, bodyContent) {
-  return injectMeta(baseHtml, meta, { bodyContent });
-}
 
 
 function normalizeCity(city) {
