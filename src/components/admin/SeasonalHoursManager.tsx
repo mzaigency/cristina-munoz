@@ -38,6 +38,12 @@ interface Override {
 
 interface Props {
   tenantId: string;
+  /** If set, manages overrides for a single stylist (vacations / special schedule) */
+  stylistId?: string;
+  /** Optional stylist display name (for copy) */
+  stylistName?: string;
+  /** Compact UI for embedding inside other dialogs */
+  compact?: boolean;
 }
 
 type Mode = "day" | "week" | "range";
