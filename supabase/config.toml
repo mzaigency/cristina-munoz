@@ -83,3 +83,6 @@ verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.submit-sitemap-gsc]
+verify_jwt = false
