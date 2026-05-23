@@ -469,11 +469,38 @@ serve(async (req) => {
         .eq("tenant_id", tenantId);
 
       if (stylistBookings && stylistBookings.length > 0) {
+        // Build active windows for the new booking (compound services have a
+        // pause/exposure gap where another appointment CAN overlap).
+        type Win = { start: number; end: number };
+        const activeWindows: Win[] = [];
+        let cursor = currentMinutes;
+        for (const s of bookingData.services as Array<any>) {
+          if (s.type === "Compuesto") {
+            const p1 = Number(s.duration_part1_active) || 0;
+            const pause = Number(s.duration_exposure_pause) || 0;
+            const p2 = Number(s.duration_part2_active) || 0;
+            if (p1 > 0) activeWindows.push({ start: cursor, end: cursor + p1 });
+            cursor += p1 + pause;
+            if (p2 > 0) activeWindows.push({ start: cursor, end: cursor + p2 });
+            cursor += p2;
+          } else {
+            const d = Number(s.duration) || Number(s.duration_part1_active) || 0;
+            if (d > 0) activeWindows.push({ start: cursor, end: cursor + d });
+            cursor += d;
+          }
+        }
+        // Fallback: if no windows could be derived, use full block (legacy behavior)
+        if (activeWindows.length === 0) {
+          activeWindows.push({ start: currentMinutes, end: endMinutesTotal });
+        }
+
         const hasConflict = stylistBookings.some((booking) => {
           const [bStartH, bStartM] = booking.Hora.split(":").map(Number);
           const bookingStart = bStartH * 60 + bStartM;
           const bookingEnd = bookingStart + (booking.total_duration || 60);
-          return currentMinutes < bookingEnd && endMinutesTotal > bookingStart;
+          return activeWindows.some(
+            (w) => w.start < bookingEnd && w.end > bookingStart,
+          );
         });
 
         if (hasConflict) {
@@ -486,6 +513,7 @@ serve(async (req) => {
           );
         }
       }
+
     }
 
     // Separate services by type
