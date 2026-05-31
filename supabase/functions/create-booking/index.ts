@@ -233,287 +233,292 @@ serve(async (req) => {
       customer_phone = bookingData.phone || "";
     }
 
-    // Determine actual stylist for "any" selection
-    let actualStylist = bookingData.stylist;
+    const normalizedPhone = normalizePhone(customer_phone);
+    const [startHours, startMinutes] = bookingTime.split(":").map(Number);
+    const currentMinutes = startHours * 60 + startMinutes;
+    const endMinutesTotal = currentMinutes + bookingData.total_duration;
 
-    if (bookingData.stylist === "any") {
-      // Check availability for each stylist in database
-      const { data: stylists } = await supabase
-        .from("tenant_stylists")
-        .select("slug")
+    // ----------- Helpers de validación (fuente única de verdad) -----------
+    type Range = { start: number; end: number };
+    const timeToMin = (t?: string | null): number | null => {
+      if (!t) return null;
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + (m || 0);
+    };
+
+    // Construir ventanas activas del nuevo booking (los compuestos tienen pausa
+    // durante la cual el estilista PUEDE atender a otro cliente).
+    const buildActiveWindows = (): Range[] => {
+      const windows: Range[] = [];
+      let cursor = currentMinutes;
+      for (const s of bookingData.services as Array<any>) {
+        if (s.type === "Compuesto") {
+          const p1 = Number(s.duration_part1_active) || 0;
+          const pause = Number(s.duration_exposure_pause) || 0;
+          const p2 = Number(s.duration_part2_active) || 0;
+          if (p1 > 0) windows.push({ start: cursor, end: cursor + p1 });
+          cursor += p1 + pause;
+          if (p2 > 0) windows.push({ start: cursor, end: cursor + p2 });
+          cursor += p2;
+        } else {
+          const d = Number((s as any).duration) || Number(s.duration_part1_active) || 0;
+          if (d > 0) windows.push({ start: cursor, end: cursor + d });
+          cursor += d;
+        }
+      }
+      if (windows.length === 0) windows.push({ start: currentMinutes, end: endMinutesTotal });
+      return windows;
+    };
+
+    const activeWindows = buildActiveWindows();
+
+    // Cada ventana activa debe caber dentro de algún rango abierto
+    const fitsInRanges = (openRanges: Range[]): boolean => {
+      if (openRanges.length === 0) return false;
+      return activeWindows.every((w) =>
+        openRanges.some((r) => w.start >= r.start && w.end <= r.end),
+      );
+    };
+
+    const computeRanges = (
+      open: number | null,
+      close: number | null,
+      bStart: number | null,
+      bEnd: number | null,
+    ): Range[] => {
+      if (open == null || close == null) return [];
+      if (bStart != null && bEnd != null && bStart > open && bEnd < close) {
+        return [
+          { start: open, end: bStart },
+          { start: bEnd, end: close },
+        ];
+      }
+      return [{ start: open, end: close }];
+    };
+
+    // ----------- Cargar horarios del negocio (override temporada > semanal) -----------
+    const { data: overrides } = await supabase
+      .from("tenant_hours_overrides")
+      .select("is_closed, open_time, close_time, break_start, break_end")
+      .eq("tenant_id", tenantId)
+      .lte("date_from", bookingDate)
+      .gte("date_to", bookingDate)
+      .limit(1);
+
+    let businessOpenRanges: Range[] = [];
+    let businessSource: "override" | "weekly" | "none" = "none";
+
+    if (overrides && overrides.length > 0) {
+      const ov = overrides[0];
+      businessSource = "override";
+      businessOpenRanges = ov.is_closed
+        ? []
+        : computeRanges(timeToMin(ov.open_time), timeToMin(ov.close_time), timeToMin(ov.break_start), timeToMin(ov.break_end));
+    } else {
+      const dow = new Date(bookingDate + "T12:00:00Z").getUTCDay();
+      const { data: weekly } = await supabase
+        .from("tenant_business_hours")
+        .select("is_open, open_time, close_time, break_start, break_end")
         .eq("tenant_id", tenantId)
-        .eq("is_active", true);
-
-      if (stylists && stylists.length > 0) {
-        const [startHours, startMinutes] = bookingTime.split(":").map(Number);
-        const startMinutesTotal = startHours * 60 + startMinutes;
-        const endMinutesTotal = startMinutesTotal + bookingData.total_duration;
-
-        for (const stylist of stylists) {
-          const { data: existingBookings } = await supabase
-            .from("bookings")
-            .select("Hora, end_time, total_duration")
-            .eq("Fecha", bookingDate)
-            .eq("stylist", stylist.slug)
-            .eq("status", "confirmed")
-            .eq("tenant_id", tenantId);
-
-          const hasConflict = existingBookings?.some((booking) => {
-            const [bStartH, bStartM] = booking.Hora.split(":").map(Number);
-            const bookingStart = bStartH * 60 + bStartM;
-            const bookingEnd = bookingStart + (booking.total_duration || 60);
-            return startMinutesTotal < bookingEnd && endMinutesTotal > bookingStart;
-          });
-
-          if (!hasConflict) {
-            actualStylist = stylist.slug;
-            break;
-          }
-        }
-
-        if (actualStylist === "any") {
-          throw new Error("No stylist available for the selected time");
-        }
+        .eq("day_of_week", dow)
+        .maybeSingle();
+      if (weekly) {
+        businessSource = "weekly";
+        businessOpenRanges = !weekly.is_open
+          ? []
+          : computeRanges(timeToMin(weekly.open_time), timeToMin(weekly.close_time), timeToMin(weekly.break_start), timeToMin(weekly.break_end));
       }
     }
 
-    const normalizedPhone = normalizePhone(customer_phone);
-    const [startHours, startMinutes] = bookingTime.split(":").map(Number);
-    let currentMinutes = startHours * 60 + startMinutes;
+    // Validar horario del negocio (no depende del estilista) — una sola vez
+    if (!bookingData.skipAvailabilityCheck && businessSource !== "none" && !fitsInRanges(businessOpenRanges)) {
+      return new Response(
+        JSON.stringify({
+          error: "El horario seleccionado está fuera del horario de atención",
+          details: { source: businessSource },
+        }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
-    // Skip validations if admin explicitly requests it
-    if (!bookingData.skipAvailabilityCheck) {
-      // ---- Validar horario del negocio (override de temporada gana sobre el semanal) ----
-      const endMinutesTotal = currentMinutes + bookingData.total_duration;
+    // ----------- Validador por estilista (reutilizado para "any" y para slug concreto) -----------
+    type StylistRow = { id: string; slug: string };
 
-      const timeToMin = (t?: string | null) => {
-        if (!t) return null;
-        const [h, m] = t.split(":").map(Number);
-        return h * 60 + (m || 0);
-      };
-
-      // Buscar override de temporada que aplique a esta fecha
-      const { data: overrides } = await supabase
-        .from("tenant_hours_overrides")
-        .select("is_closed, open_time, close_time, break_start, break_end")
-        .eq("tenant_id", tenantId)
+    const validateStylist = async (
+      stylist: StylistRow,
+    ): Promise<{ ok: true } | { ok: false; reason: string; label?: string }> => {
+      // 1) Override personal del estilista (vacaciones / horario especial)
+      const { data: sOverrides } = await supabase
+        .from("stylist_hours_overrides")
+        .select("is_closed, open_time, close_time, break_start, break_end, label")
+        .eq("stylist_id", stylist.id)
         .lte("date_from", bookingDate)
         .gte("date_to", bookingDate)
         .limit(1);
 
-      let openRanges: Array<{ start: number; end: number }> = [];
-      let hoursSource: "override" | "weekly" | "none" = "none";
-
-      if (overrides && overrides.length > 0) {
-        const ov = overrides[0];
-        hoursSource = "override";
-        if (ov.is_closed) {
-          openRanges = [];
-        } else {
-          const open = timeToMin(ov.open_time);
-          const close = timeToMin(ov.close_time);
-          const bStart = timeToMin(ov.break_start);
-          const bEnd = timeToMin(ov.break_end);
-          if (open != null && close != null) {
-            if (bStart != null && bEnd != null && bStart > open && bEnd < close) {
-              openRanges = [
-                { start: open, end: bStart },
-                { start: bEnd, end: close },
-              ];
-            } else {
-              openRanges = [{ start: open, end: close }];
-            }
-          }
+      if (sOverrides && sOverrides.length > 0) {
+        const sov = sOverrides[0];
+        if (sov.is_closed) {
+          return { ok: false, reason: "stylist_closed", label: sov.label || undefined };
+        }
+        const sRanges = computeRanges(
+          timeToMin(sov.open_time),
+          timeToMin(sov.close_time),
+          timeToMin(sov.break_start),
+          timeToMin(sov.break_end),
+        );
+        if (sRanges.length > 0 && !fitsInRanges(sRanges)) {
+          return { ok: false, reason: "stylist_override" };
         }
       } else {
+        // 2) Horario semanal específico del estilista (si existe)
         const dow = new Date(bookingDate + "T12:00:00Z").getUTCDay();
-        const { data: weekly } = await supabase
-          .from("tenant_business_hours")
-          .select("is_open, open_time, close_time, break_start, break_end")
-          .eq("tenant_id", tenantId)
+        const { data: sWeekly } = await supabase
+          .from("stylist_business_hours")
+          .select("is_working, start_time, end_time, break_start, break_end")
+          .eq("stylist_id", stylist.id)
           .eq("day_of_week", dow)
           .maybeSingle();
-
-        if (weekly) {
-          hoursSource = "weekly";
-          if (!weekly.is_open) {
-            openRanges = [];
-          } else {
-            const open = timeToMin(weekly.open_time);
-            const close = timeToMin(weekly.close_time);
-            const bStart = timeToMin(weekly.break_start);
-            const bEnd = timeToMin(weekly.break_end);
-            if (open != null && close != null) {
-              if (bStart != null && bEnd != null && bStart > open && bEnd < close) {
-                openRanges = [
-                  { start: open, end: bStart },
-                  { start: bEnd, end: close },
-                ];
-              } else {
-                openRanges = [{ start: open, end: close }];
-              }
-            }
+        if (sWeekly) {
+          if (!sWeekly.is_working) {
+            return { ok: false, reason: "stylist_not_working" };
           }
-        }
-      }
-
-      // Si hay horario configurado (override o semanal), validar que la reserva entera cabe
-      if (hoursSource !== "none") {
-        const fitsInRange = openRanges.some(
-          (r) => currentMinutes >= r.start && endMinutesTotal <= r.end,
-        );
-        if (!fitsInRange) {
-          return new Response(
-            JSON.stringify({
-              error: "El horario seleccionado está fuera del horario de atención",
-              details: { source: hoursSource },
-            }),
-            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          const sRanges = computeRanges(
+            timeToMin(sWeekly.start_time),
+            timeToMin(sWeekly.end_time),
+            timeToMin(sWeekly.break_start),
+            timeToMin(sWeekly.break_end),
           );
-        }
-      }
-
-      // ---- Validar override personal del estilista (vacaciones / horario especial) ----
-      // Buscar id del estilista por slug
-      const { data: stylistRow } = await supabase
-        .from("tenant_stylists")
-        .select("id")
-        .eq("tenant_id", tenantId)
-        .eq("slug", actualStylist)
-        .maybeSingle();
-
-      if (stylistRow?.id) {
-        const { data: sOverrides } = await supabase
-          .from("stylist_hours_overrides")
-          .select("is_closed, open_time, close_time, break_start, break_end, label")
-          .eq("stylist_id", stylistRow.id)
-          .lte("date_from", bookingDate)
-          .gte("date_to", bookingDate)
-          .limit(1);
-
-        if (sOverrides && sOverrides.length > 0) {
-          const sov = sOverrides[0];
-          if (sov.is_closed) {
-            return new Response(
-              JSON.stringify({
-                error: `${actualStylist} no trabaja ese día${sov.label ? ` (${sov.label})` : ""}`,
-                details: { reason: "stylist_closed" },
-              }),
-              { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-            );
-          }
-          const sOpen = timeToMin(sov.open_time);
-          const sClose = timeToMin(sov.close_time);
-          const sbStart = timeToMin(sov.break_start);
-          const sbEnd = timeToMin(sov.break_end);
-          let sRanges: Array<{ start: number; end: number }> = [];
-          if (sOpen != null && sClose != null) {
-            if (sbStart != null && sbEnd != null && sbStart > sOpen && sbEnd < sClose) {
-              sRanges = [
-                { start: sOpen, end: sbStart },
-                { start: sbEnd, end: sClose },
-              ];
-            } else {
-              sRanges = [{ start: sOpen, end: sClose }];
-            }
-            const fits = sRanges.some(
-              (r) => currentMinutes >= r.start && endMinutesTotal <= r.end,
-            );
-            if (!fits) {
-              return new Response(
-                JSON.stringify({
-                  error: `${actualStylist} tiene un horario especial ese día y la hora está fuera`,
-                  details: { reason: "stylist_override" },
-                }),
-                { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-              );
-            }
+          if (sRanges.length > 0 && !fitsInRanges(sRanges)) {
+            return { ok: false, reason: "stylist_weekly_outside" };
           }
         }
       }
 
-      // Check if customer already has a booking at this date/time
-      if (normalizedPhone && normalizedPhone.length >= 9) {
-        const { data: existingCustomerBooking } = await supabase
-          .from("bookings")
-          .select("id, customer_name, Hora, Telefono")
-          .eq("Fecha", bookingDate)
-          .eq("Hora", bookingTime)
-          .eq("status", "confirmed")
-          .eq("tenant_id", tenantId);
-
-        if (existingCustomerBooking && existingCustomerBooking.length > 0) {
-          const duplicateBooking = existingCustomerBooking.find(
-            (booking) => normalizePhone(booking.Telefono || "") === normalizedPhone,
-          );
-
-          if (duplicateBooking) {
-            return new Response(
-              JSON.stringify({
-                error: "Ya existe una reserva para este cliente en esta fecha y hora",
-                details: { existing_booking_id: duplicateBooking.id },
-              }),
-              { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-            );
-          }
-        }
-      }
-
-      // Check stylist availability in database
+      // 3) Conflicto con bookings existentes (usando active windows del nuevo)
       const { data: stylistBookings } = await supabase
         .from("bookings")
-        .select("id, Hora, end_time, customer_name, total_duration")
+        .select("id, Hora, total_duration")
         .eq("Fecha", bookingDate)
-        .eq("stylist", actualStylist)
+        .eq("stylist", stylist.slug)
         .eq("status", "confirmed")
         .eq("tenant_id", tenantId);
 
       if (stylistBookings && stylistBookings.length > 0) {
-        // Build active windows for the new booking (compound services have a
-        // pause/exposure gap where another appointment CAN overlap).
-        type Win = { start: number; end: number };
-        const activeWindows: Win[] = [];
-        let cursor = currentMinutes;
-        for (const s of bookingData.services as Array<any>) {
-          if (s.type === "Compuesto") {
-            const p1 = Number(s.duration_part1_active) || 0;
-            const pause = Number(s.duration_exposure_pause) || 0;
-            const p2 = Number(s.duration_part2_active) || 0;
-            if (p1 > 0) activeWindows.push({ start: cursor, end: cursor + p1 });
-            cursor += p1 + pause;
-            if (p2 > 0) activeWindows.push({ start: cursor, end: cursor + p2 });
-            cursor += p2;
-          } else {
-            const d = Number(s.duration) || Number(s.duration_part1_active) || 0;
-            if (d > 0) activeWindows.push({ start: cursor, end: cursor + d });
-            cursor += d;
+        const hasConflict = stylistBookings.some((b: any) => {
+          const [bStartH, bStartM] = b.Hora.split(":").map(Number);
+          const bookingStart = bStartH * 60 + bStartM;
+          const bookingEnd = bookingStart + (b.total_duration || 60);
+          return activeWindows.some((w) => w.start < bookingEnd && w.end > bookingStart);
+        });
+        if (hasConflict) return { ok: false, reason: "conflict" };
+      }
+
+      return { ok: true };
+    };
+
+    // ----------- Resolver estilista real -----------
+    let actualStylist = bookingData.stylist;
+    let resolvedStylistRow: StylistRow | null = null;
+
+    if (bookingData.stylist === "any") {
+      const { data: stylists } = await supabase
+        .from("tenant_stylists")
+        .select("id, slug")
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true);
+
+      if (!stylists || stylists.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "No hay estilistas disponibles en este negocio" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (bookingData.skipAvailabilityCheck) {
+        // En modo admin sin chequeo, simplemente coger el primero
+        resolvedStylistRow = stylists[0] as StylistRow;
+        actualStylist = stylists[0].slug;
+      } else {
+        for (const s of stylists as StylistRow[]) {
+          const result = await validateStylist(s);
+          if (result.ok) {
+            resolvedStylistRow = s;
+            actualStylist = s.slug;
+            break;
           }
         }
-        // Fallback: if no windows could be derived, use full block (legacy behavior)
-        if (activeWindows.length === 0) {
-          activeWindows.push({ start: currentMinutes, end: endMinutesTotal });
-        }
-
-        const hasConflict = stylistBookings.some((booking) => {
-          const [bStartH, bStartM] = booking.Hora.split(":").map(Number);
-          const bookingStart = bStartH * 60 + bStartM;
-          const bookingEnd = bookingStart + (booking.total_duration || 60);
-          return activeWindows.some(
-            (w) => w.start < bookingEnd && w.end > bookingStart,
-          );
-        });
-
-        if (hasConflict) {
+        if (!resolvedStylistRow) {
           return new Response(
             JSON.stringify({
-              error: `${actualStylist} ya tiene una cita en ese horario`,
-              details: { stylist: actualStylist },
+              error: "Ningún profesional está disponible para esa fecha y hora",
+              details: { reason: "no_stylist_available" },
             }),
             { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
       }
+    } else {
+      // Estilista concreto: cargar fila por slug
+      const { data: stylistRow } = await supabase
+        .from("tenant_stylists")
+        .select("id, slug")
+        .eq("tenant_id", tenantId)
+        .eq("slug", actualStylist)
+        .maybeSingle();
 
+      if (stylistRow) {
+        resolvedStylistRow = stylistRow as StylistRow;
+      }
+
+      if (!bookingData.skipAvailabilityCheck && resolvedStylistRow) {
+        const result = await validateStylist(resolvedStylistRow);
+        if (!result.ok) {
+          const msgByReason: Record<string, string> = {
+            stylist_closed: `${actualStylist} no trabaja ese día${result.label ? ` (${result.label})` : ""}`,
+            stylist_override: `${actualStylist} tiene un horario especial ese día y la hora está fuera`,
+            stylist_not_working: `${actualStylist} no trabaja ese día`,
+            stylist_weekly_outside: `${actualStylist} no atiende a esa hora`,
+            conflict: `${actualStylist} ya tiene una cita en ese horario`,
+          };
+          return new Response(
+            JSON.stringify({
+              error: msgByReason[result.reason] || "El estilista no está disponible",
+              details: { reason: result.reason, stylist: actualStylist },
+            }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+    }
+
+    // ----------- Dedupe: mismo cliente con solapamiento real ese día -----------
+    if (!bookingData.skipAvailabilityCheck && normalizedPhone && normalizedPhone.length >= 9) {
+      const { data: sameDayBookings } = await supabase
+        .from("bookings")
+        .select("id, Hora, total_duration, Telefono")
+        .eq("Fecha", bookingDate)
+        .eq("status", "confirmed")
+        .eq("tenant_id", tenantId);
+
+      if (sameDayBookings && sameDayBookings.length > 0) {
+        const duplicate = sameDayBookings.find((b: any) => {
+          if (normalizePhone(b.Telefono || "") !== normalizedPhone) return false;
+          const [bStartH, bStartM] = b.Hora.split(":").map(Number);
+          const bookingStart = bStartH * 60 + bStartM;
+          const bookingEnd = bookingStart + (b.total_duration || 60);
+          return activeWindows.some((w) => w.start < bookingEnd && w.end > bookingStart);
+        });
+        if (duplicate) {
+          return new Response(
+            JSON.stringify({
+              error: "Ya tienes una reserva que se solapa con ese horario",
+              details: { existing_booking_id: (duplicate as any).id },
+            }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
     }
 
     // Separate services by type
