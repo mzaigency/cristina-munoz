@@ -1,55 +1,78 @@
-# Eliminar el paso "Profesional" del ciclo de reserva
+## Diagnóstico
 
-## Objetivo
+He revisado el flujo completo `TenantBookingFlow` → `TenantDateTimeSelection` → `check-availability` → `create-booking`. **No es 100% consistente**. Detecto 4 inconsistencias entre el cálculo de huecos del frontend y la validación final del backend, principalmente con "Siguiente disponible" (any) y con servicios compuestos.
 
-Pasar de un flujo de **4 pasos** (Servicios → Profesional → Fecha → Confirmar) a un flujo de **3 pasos** (Servicios → Fecha → Confirmar), tanto en cliente (`TenantBookingFlow`) como en admin (`AdminBookingFlow`).
+---
 
-La lógica de mostrar avatares disponibles bajo cada hora y de pedir profesional cuando hay más de uno disponible para ese slot **ya existe** dentro de `TenantDateTimeSelection` (modo `stylist="any"`). Lo aprovechamos forzando `stylist = "any"` siempre, y replicamos esa misma UX en la versión admin si no la tiene.
+### 🔴 Inconsistencia 1 — Pre-selección de estilista con "any" en backend ignora horarios
 
-## Cambios
+`create-booking/index.ts` líneas 239–278 (rama `stylist === "any"`):
 
-### 1. Cliente — `src/components/tenant/TenantBookingFlow.tsx`
+- Solo consulta `bookings` confirmados para detectar conflictos.
+- **No comprueba** `stylist_business_hours` (horario semanal del estilista), ni `stylist_hours_overrides` (vacaciones / horario especial), ni el horario del negocio.
+- Usa `total_duration` como bloque sólido — **no aplica `getActiveWindows`** como sí hace la validación posterior de las líneas 471–515.
 
-- Eliminar `step === 2` (TenantStylistSelection) y todo su render.
-- Inicializar `bookingData.stylist = "any"` por defecto.
-- Renumerar pasos: 1=Servicios, 2=Fecha/Hora, 3=Confirmar.
-- Tras `handleServicesSelect`, ir directamente al paso 2 (fecha).
-- Quitar import `TenantStylistSelection`, estado/efectos de `stylistCount` y la lógica de "skip step 2 if only 1 professional".
-- Actualizar la barra de progreso (3 etapas en lugar de 4) y los textos del header (`step === N`).
-- `handleBack` simplificado (resta 1).
-- Eliminar el coachmark de "3 pasos" o actualizar copy si procede.
+**Consecuencia:** elige el primer estilista de la lista (siempre el mismo orden) y luego, en la validación de las líneas 376–433, puede devolver 409 *"no trabaja ese día"* aunque haya OTRO estilista que sí podía atender. El usuario ve "no disponible" para una franja que el front sí ofrecía.
 
-### 2. Admin — `src/components/admin/AdminBookingFlow.tsx`
+### 🔴 Inconsistencia 2 — Frontend y backend no usan la misma lógica para "any"
 
-- Mismas operaciones: eliminar `step === 2` con `AdminStylistSelection`, forzar `stylist = "any"`, renumerar a 3 pasos.
-- Asegurar que el componente de fecha/hora que usa muestra avatares y el selector cuando hay varios disponibles. Si actualmente usa otro componente sin esta lógica, **unificar reusando `TenantDateTimeSelection**` pasándole `stylist="any"` (es agnóstico al tipo de usuario).
-- Actualizar textos de progreso (`Servicios / Fecha / Confirmar`), `STEP_TITLES`, `STEP_DESCRIPTIONS` y helpers (`step === N`).
-- Mantener el resumen final mostrando el profesional ya resuelto desde `bookingData.stylist`.
+- **Frontend** (`TenantDateTimeSelection` líneas 255–280): fusiona slots de TODOS los estilistas y guarda `slotToStylists[slot] = [estilistas válidos]`. Cuando hay >1, deja al usuario elegir; cuando hay 1, asigna ese.
+- **Backend**: ignora qué estilista eligió el usuario en el front (no recibe `actualStylist` resuelto, recibe `"any"`) y vuelve a hacer pre-selección por orden de DB.
 
-### 3. Archivos a borrar (si quedan huérfanos)
+**Consecuencia:** si el usuario eligió a *Desi* en la UI cuando había 2 disponibles, el backend puede asignar a *Cris* (la primera de la lista) si también está libre. Reserva creada con estilista distinto al elegido.
 
-- `src/components/tenant/TenantStylistSelection.tsx`
-- `src/components/admin/AdminStylistSelection.tsx`
-- `src/components/booking/StylistSelection.tsx` (sólo si no lo usa nadie más; verificar con búsqueda antes de borrar).
+### 🟠 Inconsistencia 3 — Validación de duplicado por teléfono solo mira misma `Hora` exacta
 
-### 4. No tocar
+Líneas 436–460: filtra `eq("Hora", bookingTime)`. Si el mismo cliente reserva 16:00 y luego 16:30 con otro estilista (solapado), no lo detecta.
 
-- `QuickBookingSheet` (calendario admin): la creación rápida desde una celda ya tiene profesional implícito por la columna, no aplica.
-- `RescheduleFlow`: comprobar si arrastra el paso de profesional; si lo tiene, fuera del scope salvo que lo pidas explícitamente.
-- Edge functions y schema: sin cambios.
+### 🟠 Inconsistencia 4 — `StylistSelection` legacy hardcoded a "cris"/"desi"
+
+`src/components/booking/StylistSelection.tsx` solo lista 2 estilistas fijos. Se usa desde `src/components/booking/BookingFlow.tsx`, que parece flujo no-tenant. El flujo público real es `TenantBookingFlow` (correcto), pero conviene confirmar si `BookingFlow` está vivo o muerto, y borrarlo si no se monta en ninguna ruta.
+
+---
+
+## Plan de corrección
+
+### 1. Backend `create-booking` — pre-selección "any" coherente con la validación final
+
+Reemplazar el bucle líneas 239–278 por una función que, para cada estilista activo del tenant, ejecute **las mismas comprobaciones** que el bloque 285–515:
+
+```text
+para cada estilista activo:
+  1. comprobar horario del negocio (override temporada > weekly)
+  2. comprobar stylist_hours_overrides (vacaciones/especial)
+  3. comprobar stylist_business_hours (semanal del estilista)
+  4. comprobar conflicto con bookings usando getActiveWindows
+si ninguno encaja → 409 con mensaje claro
+```
+
+Extraer estas comprobaciones a 3 helpers locales (`fitsBusinessHours`, `fitsStylistHours`, `hasBookingConflict`) y reutilizarlos también en la validación específica posterior — así el backend tiene UNA sola fuente de verdad.
+
+### 2. Pasar el estilista resuelto desde el frontend al backend
+
+En `TenantDateTimeSelection.handleNext` (línea 388) ya se calcula `available[0].slug` o `selectedSlotStylist`. Ese valor se propaga por `onNext(date, time, resolvedStylist)`. Verificar que `TenantBookingFlow` lo envía como `stylist` a `create-booking` (sustituyendo `"any"` por el slug concreto). Si ya lo hace, la rama `"any"` del backend solo se ejecuta para llamadas no-web (CRM/n8n) y aun así debe ser correcta (fix #1).
+
+### 3. Reforzar deduplicación por teléfono
+
+Cambiar la query de las líneas 436–460 para buscar bookings del mismo teléfono normalizado **del mismo día** y comprobar solapamiento por rango, no por igualdad de `Hora`.
+
+### 4. Limpiar `BookingFlow` / `StylistSelection` legacy
+
+- Si `BookingFlow` no se monta en `App.tsx`, borrar `src/components/booking/BookingFlow.tsx` y `StylistSelection.tsx`.
+- Si sigue vivo, refactorizarlo para que lea estilistas reales de `tenant_stylists` (igual que `TenantDateTimeSelection`).
+
+### 5. Test de regresión rápido tras los cambios
+
+Llamar `create-booking` con `supabase--curl_edge_functions` para 3 casos:
+- (a) "any" un día que Cris cierra → debe asignar Desi sin 409.
+- (b) "any" con compuesto cuando un estilista tiene cita en la pausa → debe asignar al otro.
+- (c) Estilista con `stylist_hours_overrides` cerrado → debe rechazar para ese estilista y proponer otro (o 409 limpio).
+
+---
 
 ## Detalles técnicos
 
-- `TenantDateTimeSelection` ya implementa con `stylist="any"`:
-  - `slotToStylists`: mapa `hora → profesionales disponibles`.
-  - Render de avatares debajo de la hora.
-  - Bloque "¿Con quién prefieres?" cuando hay >1 disponible.
-  - Auto-asignación si sólo hay 1.
-  - Devuelve `resolvedStylist` en `onNext`.
-- Mantener tipo `Stylist` aceptando `"any"` y cualquier slug dinámico (ya tipado como `string` en `bookingData.stylist` tras resolver).
-
-## Flujo resultante
-
-```text
-1. Servicios  →  2. Fecha y hora (con avatares y nombre + selección si >1)  →  3. Confirmar
-```
+- Archivos a tocar: `supabase/functions/create-booking/index.ts` (refactor pre-selección + dedupe), `src/components/tenant/TenantBookingFlow.tsx` (asegurar envío del slug resuelto), opcionalmente borrar `src/components/booking/BookingFlow.tsx` + `StylistSelection.tsx`.
+- Sin migraciones de DB.
+- Sin cambios visuales en el flujo cliente.
+- El componente `check-availability` ya está bien (combina overrides correctamente), no se toca.
