@@ -136,7 +136,22 @@ export function usePushNotifications() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_OUT") {
+        // Detach the FCM token from the user that just logged out so the next
+        // user on this browser does not keep receiving their push notifications.
+        try {
+          await supabase.from("push_tokens").delete().eq("token", token);
+        } catch (err) {
+          console.error("Error removing push token on sign out:", err);
+        }
+        try {
+          localStorage.removeItem(FCM_TOKEN_CACHE_KEY);
+        } catch {
+          /* noop */
+        }
+        return;
+      }
       if (session?.user?.id) {
         await saveToken(token);
       }
