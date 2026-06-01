@@ -1,78 +1,57 @@
-## Diagnóstico
+## Diagnóstico del bug de notificaciones
 
-He revisado el flujo completo `TenantBookingFlow` → `TenantDateTimeSelection` → `check-availability` → `create-booking`. **No es 100% consistente**. Detecto 4 inconsistencias entre el cálculo de huecos del frontend y la validación final del backend, principalmente con "Siguiente disponible" (any) y con servicios compuestos.
+Montserrat (dueña de "Montserrat Faig") no comparte permisos con el salón de Cristina — no es admin ni estilista allí. El problema está en **cómo se registran los tokens FCM de push**:
 
----
+- `src/hooks/usePushNotifications.ts` hace `upsert` en `push_tokens` con `onConflict: "user_id,token"`. Eso solo evita duplicados por par (usuario+token), pero **nunca limpia el token cuando otro usuario lo reclama** en el mismo navegador.
+- El token FCM es único por navegador/dispositivo. Si Cristina inició sesión una vez en ese dispositivo (o Montserrat probó la cuenta), su `push_tokens` se quedó vinculado al `user_id` de Cristina. Cuando Cristina recibe una notificación, FCM la entrega al mismo navegador → aparece en el teléfono de Montserrat.
+- No hay limpieza de token al hacer logout.
 
-### 🔴 Inconsistencia 1 — Pre-selección de estilista con "any" en backend ignora horarios
+### Fix de notificaciones
 
-`create-booking/index.ts` líneas 239–278 (rama `stylist === "any"`):
+1. **`src/hooks/usePushNotifications.ts`**
+   - En `saveToken`: antes del `upsert`, borrar cualquier fila con el **mismo token y distinto `user_id`** (`delete().eq("token", fcmToken).neq("user_id", user.id)`). Así el token siempre apunta solo al usuario actualmente logueado en ese navegador.
+   - Suscribirse al evento `SIGNED_OUT` de `supabase.auth.onAuthStateChange`: cuando dispara, borrar el `push_tokens` del token actual (`delete().eq("token", token)`) y limpiar `localStorage[FCM_TOKEN_CACHE_KEY]`.
+2. **Migración de limpieza** (`supabase--migration`)
+   - Deduplicar `push_tokens` existentes: para cada `token`, conservar solo la fila con `updated_at` más reciente. Esto resuelve el caso de Montserrat sin esperar a que el frontend se ejecute.
 
-- Solo consulta `bookings` confirmados para detectar conflictos.
-- **No comprueba** `stylist_business_hours` (horario semanal del estilista), ni `stylist_hours_overrides` (vacaciones / horario especial), ni el horario del negocio.
-- Usa `total_duration` como bloque sólido — **no aplica `getActiveWindows`** como sí hace la validación posterior de las líneas 471–515.
+No se tocan las edge functions ni los triggers — siguen enviando al `user_id` correcto; solo deja de haber tokens "fantasma" apuntando a usuarios antiguos.
 
-**Consecuencia:** elige el primer estilista de la lista (siempre el mismo orden) y luego, en la validación de las líneas 376–433, puede devolver 409 *"no trabaja ese día"* aunque haya OTRO estilista que sí podía atender. El usuario ve "no disponible" para una franja que el front sí ofrecía.
+## Nueva sub-pestaña "Actividad" en Inicio
 
-### 🔴 Inconsistencia 2 — Frontend y backend no usan la misma lógica para "any"
+Añadir un feed cronológico que combine los últimos eventos del tenant (reservas, reseñas, mensajes, pedidos, nuevos clientes).
 
-- **Frontend** (`TenantDateTimeSelection` líneas 255–280): fusiona slots de TODOS los estilistas y guarda `slotToStylists[slot] = [estilistas válidos]`. Cuando hay >1, deja al usuario elegir; cuando hay 1, asigna ese.
-- **Backend**: ignora qué estilista eligió el usuario en el front (no recibe `actualStylist` resuelto, recibe `"any"`) y vuelve a hacer pre-selección por orden de DB.
+### Cambios
 
-**Consecuencia:** si el usuario eligió a *Desi* en la UI cuando había 2 disponibles, el backend puede asignar a *Cris* (la primera de la lista) si también está libre. Reserva creada con estilista distinto al elegido.
+1. **`src/components/admin/layout/AdminSubNav.tsx`**
+   - Añadir entrada en `ADMIN_SUB_NAV.inicio`:
+     ```ts
+     { value: "actividad", label: "Actividad", icon: Activity }
+     ```
+     justo después de `resumen`.
 
-### 🟠 Inconsistencia 3 — Validación de duplicado por teléfono solo mira misma `Hora` exacta
+2. **`src/components/admin/sections/ActivitySection.tsx`** (nuevo)
+   - Hook propio `useTenantActivity(tenantId)` que carga en paralelo y filtrando por `tenant_id`:
+     - `bookings` (últimas 20 creadas/modificadas, con cliente, servicio, fecha)
+     - `reviews` (últimas 10, con rating y autor)
+     - `direct_messages` vía `conversations` (últimos mensajes entrantes)
+     - `product_orders` (últimos 10)
+     - `clients` nuevos (últimos 7 días)
+   - Une todo en un array `{ type, icon, title, subtitle, time, action_url }`, ordenado por `created_at` desc, limitado a 40.
+   - Suscripción Realtime con filtro `tenant_id=eq.${tenantId}` para las 4 tablas — refresca el feed automáticamente.
+   - UI mobile-first liquid glass (siguiendo memoria de estilo): lista vertical con iconos coloreados por tipo, timestamps relativos (`date-fns/formatDistanceToNow` ya usado en el proyecto), tap → navega a la sección correspondiente (`/admin/{slug}/inicio/agenda`, `/clientes/mensajes`, etc.).
+   - Filtros chip-style arriba: "Todo / Reservas / Reseñas / Mensajes / Pedidos".
+   - Empty state si no hay actividad reciente.
+   - Respeta safe-areas y el bottom-nav (padding inferior 72px).
 
-Líneas 436–460: filtra `eq("Hora", bookingTime)`. Si el mismo cliente reserva 16:00 y luego 16:30 con otro estilista (solapado), no lo detecta.
+3. **`src/components/admin/sections/InicioSection.tsx`**
+   - Añadir rama `if (tab === "actividad") return <ActivitySection tenantId={tenantId} onNavigate={onNavigate} />`.
+   - Actualizar el JSDoc del `subTab`.
 
-### 🟠 Inconsistencia 4 — `StylistSelection` legacy hardcoded a "cris"/"desi"
+### Lo que NO hace
+- No crea tablas nuevas — toda la data existe ya y RLS filtra por `tenant_id` automáticamente.
+- No toca el panel Dashboard actual ("Resumen") ni el sistema de badges.
+- No cambia las edge functions de envío de push.
 
-`src/components/booking/StylistSelection.tsx` solo lista 2 estilistas fijos. Se usa desde `src/components/booking/BookingFlow.tsx`, que parece flujo no-tenant. El flujo público real es `TenantBookingFlow` (correcto), pero conviene confirmar si `BookingFlow` está vivo o muerto, y borrarlo si no se monta en ninguna ruta.
-
----
-
-## Plan de corrección
-
-### 1. Backend `create-booking` — pre-selección "any" coherente con la validación final
-
-Reemplazar el bucle líneas 239–278 por una función que, para cada estilista activo del tenant, ejecute **las mismas comprobaciones** que el bloque 285–515:
-
-```text
-para cada estilista activo:
-  1. comprobar horario del negocio (override temporada > weekly)
-  2. comprobar stylist_hours_overrides (vacaciones/especial)
-  3. comprobar stylist_business_hours (semanal del estilista)
-  4. comprobar conflicto con bookings usando getActiveWindows
-si ninguno encaja → 409 con mensaje claro
-```
-
-Extraer estas comprobaciones a 3 helpers locales (`fitsBusinessHours`, `fitsStylistHours`, `hasBookingConflict`) y reutilizarlos también en la validación específica posterior — así el backend tiene UNA sola fuente de verdad.
-
-### 2. Pasar el estilista resuelto desde el frontend al backend
-
-En `TenantDateTimeSelection.handleNext` (línea 388) ya se calcula `available[0].slug` o `selectedSlotStylist`. Ese valor se propaga por `onNext(date, time, resolvedStylist)`. Verificar que `TenantBookingFlow` lo envía como `stylist` a `create-booking` (sustituyendo `"any"` por el slug concreto). Si ya lo hace, la rama `"any"` del backend solo se ejecuta para llamadas no-web (CRM/n8n) y aun así debe ser correcta (fix #1).
-
-### 3. Reforzar deduplicación por teléfono
-
-Cambiar la query de las líneas 436–460 para buscar bookings del mismo teléfono normalizado **del mismo día** y comprobar solapamiento por rango, no por igualdad de `Hora`.
-
-### 4. Limpiar `BookingFlow` / `StylistSelection` legacy
-
-- Si `BookingFlow` no se monta en `App.tsx`, borrar `src/components/booking/BookingFlow.tsx` y `StylistSelection.tsx`.
-- Si sigue vivo, refactorizarlo para que lea estilistas reales de `tenant_stylists` (igual que `TenantDateTimeSelection`).
-
-### 5. Test de regresión rápido tras los cambios
-
-Llamar `create-booking` con `supabase--curl_edge_functions` para 3 casos:
-- (a) "any" un día que Cris cierra → debe asignar Desi sin 409.
-- (b) "any" con compuesto cuando un estilista tiene cita en la pausa → debe asignar al otro.
-- (c) Estilista con `stylist_hours_overrides` cerrado → debe rechazar para ese estilista y proponer otro (o 409 limpio).
-
----
-
-## Detalles técnicos
-
-- Archivos a tocar: `supabase/functions/create-booking/index.ts` (refactor pre-selección + dedupe), `src/components/tenant/TenantBookingFlow.tsx` (asegurar envío del slug resuelto), opcionalmente borrar `src/components/booking/BookingFlow.tsx` + `StylistSelection.tsx`.
-- Sin migraciones de DB.
-- Sin cambios visuales en el flujo cliente.
-- El componente `check-availability` ya está bien (combina overrides correctamente), no se toca.
+## Verificación
+- Probar que tras login en un navegador donde había otra cuenta, la fila vieja del token desaparece (`select * from push_tokens where token = ...`).
+- Probar Activity con realtime: crear una reserva manualmente y ver que aparece en el feed en segundos.
