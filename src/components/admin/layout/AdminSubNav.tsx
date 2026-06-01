@@ -17,6 +17,7 @@ import {
   Users,
   BarChart3,
   Settings,
+  Activity,
   Lock,
   type LucideIcon,
 } from "lucide-react";
