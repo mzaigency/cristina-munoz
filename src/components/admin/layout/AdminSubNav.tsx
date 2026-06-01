@@ -17,6 +17,7 @@ import {
   Users,
   BarChart3,
   Settings,
+  Activity,
   Lock,
   type LucideIcon,
 } from "lucide-react";
@@ -39,6 +40,7 @@ export interface AdminSubTabDef {
 export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
   inicio: [
     { value: "resumen", label: "Resumen", icon: LayoutDashboard },
+    { value: "actividad", label: "Actividad", icon: Activity },
     { value: "agenda", label: "Agenda", icon: Calendar },
     { value: "caja", label: "Caja", icon: Wallet, requiredFeature: "cash_register" },
     { value: "espera", label: "Espera", icon: Clock, badgeKey: "waitlist" },

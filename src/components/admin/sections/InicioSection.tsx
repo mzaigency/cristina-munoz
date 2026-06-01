@@ -1,31 +1,20 @@
 import { useMemo } from "react";
 import AgendaSection from "./AgendaSection";
+import ActivitySection from "./ActivitySection";
 import { AdminDashboard } from "../AdminDashboard";
 
 interface InicioSectionProps {
   tenantId: string;
   tenantSlug: string;
-  /** Sub-tab from URL: "resumen" | "agenda" | "caja" | "espera" | "pedidos" */
+  /** Sub-tab from URL: "resumen" | "actividad" | "agenda" | "caja" | "espera" | "pedidos" */
   subTab?: string;
   onNavigate: (path: string) => void;
   onSelectClient?: (clientId: string) => void;
 }
 
-/**
- * Composite "Inicio" section. Combines the Dashboard ("resumen") with
- * the Agenda's existing sub-tabs (calendar/cash/waitlist/orders), exposed as
- * URL-driven sub-tabs in the AdminLayout sub-nav.
- *
- * URL slug → AgendaSection internal id mapping:
- *   agenda  → calendar
- *   caja    → cash
- *   espera  → waitlist
- *   pedidos → orders
- */
 const InicioSection = ({ tenantId, tenantSlug, subTab, onNavigate, onSelectClient }: InicioSectionProps) => {
   const tab = subTab || "resumen";
 
-  // Map URL slug to AgendaSection internal id
   const agendaInternalTab = useMemo(() => {
     switch (tab) {
       case "agenda":
@@ -64,6 +53,10 @@ const InicioSection = ({ tenantId, tenantSlug, subTab, onNavigate, onSelectClien
         }}
       />
     );
+  }
+
+  if (tab === "actividad") {
+    return <ActivitySection tenantId={tenantId} tenantSlug={tenantSlug} onNavigate={onNavigate} />;
   }
 
   return (
