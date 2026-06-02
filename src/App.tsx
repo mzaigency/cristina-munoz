@@ -161,6 +161,7 @@ const App = () => (
                       <Routes>
                         {/* Rutas fijas - tienen prioridad */}
                         <Route path="/" element={<Index />} />
+                        <Route path="/index" element={<Index />} />
                         <Route path="/auth" element={<Auth />} />
                         <Route path="/admin" element={<Admin />} />
                         <Route path="/admin/:adminSlug" element={<TenantAdmin />} />
@@ -196,6 +197,8 @@ const App = () => (
                         <Route path="/salones-belleza/:city" element={<DirectoryLanding />} />
                         <Route path="/fisioterapia" element={<DirectoryLanding />} />
                         <Route path="/fisioterapia/:city" element={<DirectoryLanding />} />
+
+                        <Route path="/404" element={<NotFound />} />
 
                         {/* Catch-all para salones - DEBE IR AL FINAL */}
                         <Route path="/:slug" element={<TenantLanding />} />
