@@ -16,9 +16,6 @@ import { DiscoverSections } from "@/components/feed/sections/DiscoverSections";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCurrentUserTenant } from "@/hooks/useCurrentUserTenant";
-import { WelcomeCarousel, useWelcomeOnboarding } from "@/components/onboarding/WelcomeCarousel";
-import { ClientCoachmark } from "@/components/coachmark/ClientCoachmark";
-import { Compass } from "lucide-react";
 import { useGeolocation, CITY_COORDINATES } from "@/hooks/useGeolocation";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useTodayAvailability } from "@/hooks/useTodayAvailability";
@@ -64,7 +61,6 @@ const Index = () => {
   const { favorites, isAuthenticated } = useFavorites();
   const { followingCount } = useFollows();
   const { tenant: userTenant, loading: tenantLoading } = useCurrentUserTenant();
-  const { showWelcome, handleComplete: handleOnboardingComplete } = useWelcomeOnboarding();
   const queryClient = useQueryClient();
   const { hasLocation, requestLocation, calculateDistance, formatDistance, loading: geoLoading } = useGeolocation();
   const haptic = useHaptic();
@@ -267,19 +263,6 @@ const Index = () => {
 
   return (
     <>
-      {/* Welcome Onboarding for new users */}
-      {showWelcome && <WelcomeCarousel onComplete={handleOnboardingComplete} />}
-
-      {/* Contextual coachmark — shown once, after WelcomeCarousel is dismissed */}
-      <ClientCoachmark
-        storageKey="feed-intro"
-        title="Encuentra tu salón ideal"
-        description="Filtra por categoría, distancia o disponibilidad. Toca el corazón para guardar tus favoritos."
-        icon={Compass}
-        enabled={!showWelcome}
-        delay={1400}
-      />
-
       <AppLayout>
       <SEO
         title="GlowApp | Reserva Cita en Salones de Belleza Cerca de Ti"
