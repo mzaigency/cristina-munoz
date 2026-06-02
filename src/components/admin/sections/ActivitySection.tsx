@@ -103,7 +103,7 @@ const ActivitySection = ({ tenantId, tenantSlug, onNavigate }: ActivitySectionPr
       try {
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-        const [bookingsR, reviewsR, ordersR, clientsR, conversationsR] = await Promise.all([
+        const [bookingsR, reviewsR, ordersR, clientsR, conversationsR, servicesR] = await Promise.all([
           supabase
             .from("bookings")
             .select("id, customer_name, services, Fecha, Hora, created_at, status, tenant_id")
@@ -135,13 +135,22 @@ const ActivitySection = ({ tenantId, tenantSlug, onNavigate }: ActivitySectionPr
             .eq("tenant_id", currentTenantId)
             .order("last_message_at", { ascending: false })
             .limit(10),
+          supabase
+            .from("services")
+            .select("id")
+            .eq("tenant_id", currentTenantId),
         ]);
 
         // Bail out if tenant changed mid-flight (stale response from previous salon)
         if (signal?.aborted || currentTenantId !== tenantId) return;
 
         // Defensive: drop anything that doesn't match the current tenant id.
-        const bookings = (bookingsR.data || []).filter((b) => b.tenant_id === currentTenantId);
+        const validServiceIds = new Set((servicesR.data || []).map((s) => s.id));
+        const bookings = (bookingsR.data || []).filter((b) => {
+          if (b.tenant_id !== currentTenantId) return false;
+          if (!Array.isArray(b.services)) return true;
+          return (b.services as Array<{ id?: string }>).every((s) => !s?.id || validServiceIds.has(s.id));
+        });
         const reviews = (reviewsR.data || []).filter((r) => r.tenant_id === currentTenantId);
         const orders = (ordersR.data || []).filter((o) => o.tenant_id === currentTenantId);
         const clients = (clientsR.data || []).filter((c) => c.tenant_id === currentTenantId);
