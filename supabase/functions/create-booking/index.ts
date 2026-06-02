@@ -205,6 +205,34 @@ serve(async (req) => {
       }
     }
 
+    // Services are reloaded from the current tenant instead of trusting the client payload.
+    // This prevents creating bookings in one salon with service ids from another salon.
+    const requestedServiceIds = [...new Set(bookingData.services.map((s) => s.id))];
+    const { data: tenantServices, error: servicesError } = await supabase
+      .from("services")
+      .select("id, name, type, duration_part1_active, duration_exposure_pause, duration_part2_active, price")
+      .eq("tenant_id", tenantId)
+      .in("id", requestedServiceIds);
+
+    if (servicesError) {
+      console.error("Error validating tenant services:", servicesError);
+      throw new Error("No se pudieron validar los servicios del negocio");
+    }
+
+    const tenantServicesById = new Map((tenantServices || []).map((s: any) => [s.id, s]));
+    if (tenantServicesById.size !== requestedServiceIds.length) {
+      return new Response(
+        JSON.stringify({ error: "Algún servicio seleccionado no pertenece a este negocio" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    bookingData.services = bookingData.services.map((s) => tenantServicesById.get(s.id) as any);
+    bookingData.total_duration = bookingData.services.reduce(
+      (sum, s) => sum + s.duration_part1_active + s.duration_exposure_pause + s.duration_part2_active,
+      0,
+    );
+
     // Get customer data - either from user profile or from direct input
     let customer_name: string;
     let customer_email: string | null = null;
