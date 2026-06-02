@@ -18,7 +18,6 @@ import {
   Briefcase,
 } from "lucide-react";
 import { AdminHelpMenu } from "@/components/admin/layout/AdminHelpMenu";
-import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -537,11 +536,11 @@ export default function TenantAdmin() {
       {/* Header */}
       <header
         className="sticky top-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/40 shadow-sm"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
+        style={{ paddingTop: "max(env(safe-area-inset-top) - 10px, 4px)" }}
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-4">
           {isMobile ? (
-            <div className="flex items-center justify-between py-2.5">
+            <div className="flex items-center justify-between py-1.5">
               <Button onClick={() => setSidebarOpen(true)} variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Abrir menú">
                 <Menu className="h-5 w-5" />
               </Button>
@@ -629,15 +628,13 @@ export default function TenantAdmin() {
         );
 
         return isMobile ? (
-          <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
-            <main
-              className="mx-auto max-w-7xl px-3 py-3"
-              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
-              {...swipeHandlers}
-            >
-              {animatedContent}
-            </main>
-          </PullToRefresh>
+          <main
+            className="mx-auto max-w-7xl px-3 py-3 flex-1 min-h-0"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
+            {...swipeHandlers}
+          >
+            {animatedContent}
+          </main>
         ) : (
           <main className="mx-auto max-w-7xl px-4 py-6 safe-area-bottom">{animatedContent}</main>
         );
