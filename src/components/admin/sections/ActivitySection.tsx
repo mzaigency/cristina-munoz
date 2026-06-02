@@ -89,133 +89,159 @@ const ActivitySection = ({ tenantId, tenantSlug, onNavigate }: ActivitySectionPr
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<ActivityType | "all">("all");
 
-  const fetchActivity = useCallback(async () => {
-    try {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  // Reset state immediately when tenant changes to avoid showing stale data
+  // from a previously visited salon.
+  useEffect(() => {
+    setItems([]);
+    setLoading(true);
+  }, [tenantId]);
 
-      const [bookingsR, reviewsR, ordersR, clientsR, conversationsR] = await Promise.all([
-        supabase
-          .from("bookings")
-          .select("id, customer_name, services, Fecha, Hora, created_at, status")
-          .eq("tenant_id", tenantId)
-          .order("created_at", { ascending: false })
-          .limit(20),
-        supabase
-          .from("reviews")
-          .select("id, rating, comment, created_at, user_id")
-          .eq("tenant_id", tenantId)
-          .order("created_at", { ascending: false })
-          .limit(10),
-        supabase
-          .from("product_orders")
-          .select("id, customer_name, total, created_at, status")
-          .eq("tenant_id", tenantId)
-          .order("created_at", { ascending: false })
-          .limit(10),
-        supabase
-          .from("clients")
-          .select("id, name, created_at")
-          .eq("tenant_id", tenantId)
-          .gte("created_at", sevenDaysAgo)
-          .order("created_at", { ascending: false })
-          .limit(10),
-        supabase
-          .from("conversations")
-          .select("id, user_id, last_message_at, unread_count_salon")
-          .eq("tenant_id", tenantId)
-          .order("last_message_at", { ascending: false })
-          .limit(10),
-      ]);
+  const fetchActivity = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!tenantId) return;
+      const currentTenantId = tenantId;
+      try {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Resolve reviewer names for reviews + conversation users (best effort).
-      const userIds = new Set<string>();
-      (reviewsR.data || []).forEach((r) => r.user_id && userIds.add(r.user_id));
-      (conversationsR.data || []).forEach((c) => c.user_id && userIds.add(c.user_id));
-      const profilesMap = new Map<string, string>();
-      if (userIds.size > 0) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id, full_name")
-          .in("id", [...userIds]);
-        (profs || []).forEach((p) => profilesMap.set(p.id, p.full_name || "Cliente"));
-      }
+        const [bookingsR, reviewsR, ordersR, clientsR, conversationsR] = await Promise.all([
+          supabase
+            .from("bookings")
+            .select("id, customer_name, services, Fecha, Hora, created_at, status, tenant_id")
+            .eq("tenant_id", currentTenantId)
+            .order("created_at", { ascending: false })
+            .limit(20),
+          supabase
+            .from("reviews")
+            .select("id, rating, comment, created_at, user_id, tenant_id")
+            .eq("tenant_id", currentTenantId)
+            .order("created_at", { ascending: false })
+            .limit(10),
+          supabase
+            .from("product_orders")
+            .select("id, customer_name, total, created_at, status, tenant_id")
+            .eq("tenant_id", currentTenantId)
+            .order("created_at", { ascending: false })
+            .limit(10),
+          supabase
+            .from("clients")
+            .select("id, name, created_at, tenant_id")
+            .eq("tenant_id", currentTenantId)
+            .gte("created_at", sevenDaysAgo)
+            .order("created_at", { ascending: false })
+            .limit(10),
+          supabase
+            .from("conversations")
+            .select("id, user_id, last_message_at, unread_count_salon, tenant_id")
+            .eq("tenant_id", currentTenantId)
+            .order("last_message_at", { ascending: false })
+            .limit(10),
+        ]);
 
-      const merged: ActivityItem[] = [];
+        // Bail out if tenant changed mid-flight (stale response from previous salon)
+        if (signal?.aborted || currentTenantId !== tenantId) return;
 
-      (bookingsR.data || []).forEach((b) => {
-        const services = Array.isArray(b.services)
-          ? (b.services as Array<{ name?: string }>).map((s) => s?.name).filter(Boolean).join(", ")
-          : "";
-        merged.push({
-          id: `b-${b.id}`,
-          type: "booking",
-          title:
-            b.status === "cancelled"
-              ? `Reserva cancelada · ${b.customer_name}`
-              : `Nueva reserva · ${b.customer_name}`,
-          subtitle: `${services || "Servicio"} · ${b.Fecha} ${String(b.Hora).slice(0, 5)}`,
-          createdAt: b.created_at as string,
-          actionPath: `/admin/${tenantSlug}/inicio/agenda`,
-        });
-      });
+        // Defensive: drop anything that doesn't match the current tenant id.
+        const bookings = (bookingsR.data || []).filter((b) => b.tenant_id === currentTenantId);
+        const reviews = (reviewsR.data || []).filter((r) => r.tenant_id === currentTenantId);
+        const orders = (ordersR.data || []).filter((o) => o.tenant_id === currentTenantId);
+        const clients = (clientsR.data || []).filter((c) => c.tenant_id === currentTenantId);
+        const conversations = (conversationsR.data || []).filter((c) => c.tenant_id === currentTenantId);
 
-      (reviewsR.data || []).forEach((r) => {
-        merged.push({
-          id: `r-${r.id}`,
-          type: "review",
-          title: `${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)} · ${profilesMap.get(r.user_id) || "Cliente"}`,
-          subtitle: r.comment?.slice(0, 80) || "Nueva valoración",
-          createdAt: r.created_at as string,
-          actionPath: `/admin/${tenantSlug}/clientes/resenas`,
-        });
-      });
+        // Resolve reviewer names for reviews + conversation users (best effort).
+        const userIds = new Set<string>();
+        reviews.forEach((r) => r.user_id && userIds.add(r.user_id));
+        conversations.forEach((c) => c.user_id && userIds.add(c.user_id));
+        const profilesMap = new Map<string, string>();
+        if (userIds.size > 0) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", [...userIds]);
+          if (signal?.aborted || currentTenantId !== tenantId) return;
+          (profs || []).forEach((p) => profilesMap.set(p.id, p.full_name || "Cliente"));
+        }
 
-      (ordersR.data || []).forEach((o) => {
-        merged.push({
-          id: `o-${o.id}`,
-          type: "order",
-          title: `Pedido · ${o.customer_name}`,
-          subtitle: `${Number(o.total).toFixed(2)} € · ${o.status}`,
-          createdAt: o.created_at as string,
-          actionPath: `/admin/${tenantSlug}/inicio/pedidos`,
-        });
-      });
+        const merged: ActivityItem[] = [];
 
-      (clientsR.data || []).forEach((c) => {
-        merged.push({
-          id: `c-${c.id}`,
-          type: "client",
-          title: `Cliente nuevo · ${c.name}`,
-          subtitle: "Se ha registrado en tu salón",
-          createdAt: c.created_at as string,
-          actionPath: `/admin/${tenantSlug}/clientes/directorio`,
-        });
-      });
-
-      (conversationsR.data || [])
-        .filter((c) => c.unread_count_salon > 0)
-        .forEach((c) => {
+        bookings.forEach((b) => {
+          const services = Array.isArray(b.services)
+            ? (b.services as Array<{ name?: string }>).map((s) => s?.name).filter(Boolean).join(", ")
+            : "";
           merged.push({
-            id: `m-${c.id}`,
-            type: "message",
-            title: `Mensaje de ${profilesMap.get(c.user_id) || "Cliente"}`,
-            subtitle: `${c.unread_count_salon} sin leer`,
-            createdAt: c.last_message_at as string,
-            actionPath: `/admin/${tenantSlug}/clientes/mensajes`,
+            id: `b-${b.id}`,
+            type: "booking",
+            title:
+              b.status === "cancelled"
+                ? `Reserva cancelada · ${b.customer_name}`
+                : `Nueva reserva · ${b.customer_name}`,
+            subtitle: `${services || "Servicio"} · ${b.Fecha} ${String(b.Hora).slice(0, 5)}`,
+            createdAt: b.created_at as string,
+            actionPath: `/admin/${tenantSlug}/inicio/agenda`,
           });
         });
 
-      merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setItems(merged.slice(0, 50));
-    } catch (err) {
-      console.error("Error loading activity:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [tenantId, tenantSlug]);
+        reviews.forEach((r) => {
+          merged.push({
+            id: `r-${r.id}`,
+            type: "review",
+            title: `${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)} · ${profilesMap.get(r.user_id) || "Cliente"}`,
+            subtitle: r.comment?.slice(0, 80) || "Nueva valoración",
+            createdAt: r.created_at as string,
+            actionPath: `/admin/${tenantSlug}/clientes/resenas`,
+          });
+        });
+
+        orders.forEach((o) => {
+          merged.push({
+            id: `o-${o.id}`,
+            type: "order",
+            title: `Pedido · ${o.customer_name}`,
+            subtitle: `${Number(o.total).toFixed(2)} € · ${o.status}`,
+            createdAt: o.created_at as string,
+            actionPath: `/admin/${tenantSlug}/inicio/pedidos`,
+          });
+        });
+
+        clients.forEach((c) => {
+          merged.push({
+            id: `c-${c.id}`,
+            type: "client",
+            title: `Cliente nuevo · ${c.name}`,
+            subtitle: "Se ha registrado en tu salón",
+            createdAt: c.created_at as string,
+            actionPath: `/admin/${tenantSlug}/clientes/directorio`,
+          });
+        });
+
+        conversations
+          .filter((c) => c.unread_count_salon > 0)
+          .forEach((c) => {
+            merged.push({
+              id: `m-${c.id}`,
+              type: "message",
+              title: `Mensaje de ${profilesMap.get(c.user_id) || "Cliente"}`,
+              subtitle: `${c.unread_count_salon} sin leer`,
+              createdAt: c.last_message_at as string,
+              actionPath: `/admin/${tenantSlug}/clientes/mensajes`,
+            });
+          });
+
+        merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        if (signal?.aborted || currentTenantId !== tenantId) return;
+        setItems(merged.slice(0, 50));
+      } catch (err) {
+        console.error("Error loading activity:", err);
+      } finally {
+        if (!signal?.aborted && currentTenantId === tenantId) setLoading(false);
+      }
+    },
+    [tenantId, tenantSlug],
+  );
 
   useEffect(() => {
-    fetchActivity();
+    const controller = new AbortController();
+    fetchActivity(controller.signal);
+    return () => controller.abort();
   }, [fetchActivity]);
 
   // Realtime: refetch on any change for this tenant
