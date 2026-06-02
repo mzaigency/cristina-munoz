@@ -215,29 +215,42 @@ export default function TenantAdmin() {
     }
 
     const fetchTenant = async () => {
-      setTenantLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
+      try {
+        setTenantLoading(true);
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) {
+          navigate("/auth");
+          return;
+        }
+        setUserEmail(session.user.email || "");
+
+        const { data: tenantData, error: tenantError } = await supabase
+          .from("tenants")
+          .select("*")
+          .eq("slug", slug)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (tenantError) throw tenantError;
+
+        if (!tenantData) {
+          toast({ title: "Error", description: "No se encontró el salón", variant: "destructive" });
+          navigate("/");
+          return;
+        }
+
+        setTenant(tenantData);
+      } catch (error) {
+        console.error("Error loading tenant admin:", error);
+        toast({
+          title: "No se pudo cargar el salón",
+          description: "Parece un problema de conexión. Recarga esta pantalla en unos segundos.",
+          variant: "destructive",
+        });
+      } finally {
+        setTenantLoading(false);
       }
-      setUserEmail(session.user.email || "");
-
-      const { data: tenantData, error: tenantError } = await supabase
-        .from("tenants")
-        .select("*")
-        .eq("slug", slug)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (tenantError || !tenantData) {
-        toast({ title: "Error", description: "No se encontró el salón", variant: "destructive" });
-        navigate("/");
-        return;
-      }
-
-      setTenant(tenantData);
-      setTenantLoading(false);
     };
 
     fetchTenant();
