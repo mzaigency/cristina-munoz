@@ -219,7 +219,10 @@ serve(async (req) => {
       throw new Error("No se pudieron validar los servicios del negocio");
     }
 
-    const tenantServicesById = new Map((tenantServices || []).map((s: any) => [s.id, s]));
+    type TenantService = BookingRequest["services"][number] & { price?: number | null };
+    const tenantServicesById = new Map<string, TenantService>(
+      (tenantServices || []).map((s) => [s.id, s as TenantService]),
+    );
     if (tenantServicesById.size !== requestedServiceIds.length) {
       return new Response(
         JSON.stringify({ error: "Algún servicio seleccionado no pertenece a este negocio" }),
@@ -227,7 +230,7 @@ serve(async (req) => {
       );
     }
 
-    bookingData.services = bookingData.services.map((s) => tenantServicesById.get(s.id) as any);
+    bookingData.services = bookingData.services.map((s) => tenantServicesById.get(s.id)!);
     bookingData.total_duration = bookingData.services.reduce(
       (sum, s) => sum + s.duration_part1_active + s.duration_exposure_pause + s.duration_part2_active,
       0,
