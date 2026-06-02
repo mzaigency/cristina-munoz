@@ -78,12 +78,9 @@
     @apply border-border;
   }
 
-  html {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
+  /* Safe areas are handled per-component on fixed/sticky headers
+     (viewport-fit=cover in <meta viewport>). Applying them globally
+     on <html> doubles the padding under the notch. */
 
   body {
     @apply bg-background text-foreground font-sans antialiased overflow-x-hidden;
