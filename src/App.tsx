@@ -19,29 +19,49 @@ const DeepLinkHandler = lazy(() =>
   import("@/components/DeepLinkHandler").then((m) => ({ default: m.DeepLinkHandler })),
 );
 
-// Lazy loaded pages
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Admin = lazy(() => import("./pages/Admin"));
-const SuperAdmin = lazy(() => import("./pages/SuperAdmin"));
-const TenantAdmin = lazy(() => import("./pages/TenantAdmin"));
-const MyBookings = lazy(() => import("./pages/MyBookings"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Review = lazy(() => import("./pages/Review"));
-const TenantLanding = lazy(() => import("./pages/TenantLanding"));
-const Messages = lazy(() => import("./pages/Messages"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const BusinessOnboarding = lazy(() => import("./pages/BusinessOnboarding"));
-const OnboardingSetup = lazy(() => import("./pages/OnboardingSetup"));
-const DirectoryLanding = lazy(() => import("./pages/DirectoryLanding"));
+const isModuleLoadError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  return /importing a module script failed|failed to fetch dynamically imported module|loading chunk/i.test(message);
+};
 
-const ForBusiness = lazy(() => import("./pages/ForBusiness"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
-const NotificationSettingsPage = lazy(() => import("./pages/NotificationSettings"));
+const lazyWithReload = (factory: () => Promise<any>) =>
+  lazy(() =>
+    factory().catch((error) => {
+      if (isModuleLoadError(error)) {
+        const reloadKey = "glowapp_chunk_reload_attempted";
+        if (sessionStorage.getItem(reloadKey) !== "1") {
+          sessionStorage.setItem(reloadKey, "1");
+          window.location.reload();
+          return new Promise(() => {});
+        }
+      }
+      throw error;
+    }),
+  );
+
+// Lazy loaded pages
+const Index = lazyWithReload(() => import("./pages/Index"));
+const Auth = lazyWithReload(() => import("./pages/Auth"));
+const Admin = lazyWithReload(() => import("./pages/Admin"));
+const SuperAdmin = lazyWithReload(() => import("./pages/SuperAdmin"));
+const TenantAdmin = lazyWithReload(() => import("./pages/TenantAdmin"));
+const MyBookings = lazyWithReload(() => import("./pages/MyBookings"));
+const Profile = lazyWithReload(() => import("./pages/Profile"));
+const Review = lazyWithReload(() => import("./pages/Review"));
+const TenantLanding = lazyWithReload(() => import("./pages/TenantLanding"));
+const Messages = lazyWithReload(() => import("./pages/Messages"));
+const PrivacyPolicy = lazyWithReload(() => import("./pages/PrivacyPolicy"));
+const TermsOfUse = lazyWithReload(() => import("./pages/TermsOfUse"));
+const NotFound = lazyWithReload(() => import("./pages/NotFound"));
+const BusinessOnboarding = lazyWithReload(() => import("./pages/BusinessOnboarding"));
+const OnboardingSetup = lazyWithReload(() => import("./pages/OnboardingSetup"));
+const DirectoryLanding = lazyWithReload(() => import("./pages/DirectoryLanding"));
+
+const ForBusiness = lazyWithReload(() => import("./pages/ForBusiness"));
+const ForgotPassword = lazyWithReload(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazyWithReload(() => import("./pages/ResetPassword"));
+const VerifyEmail = lazyWithReload(() => import("./pages/VerifyEmail"));
+const NotificationSettingsPage = lazyWithReload(() => import("./pages/NotificationSettings"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
