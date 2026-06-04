@@ -94,6 +94,7 @@ export const QuickBookingSheet = ({
   const [showClientResults, setShowClientResults] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
+  const [conflictPrompt, setConflictPrompt] = useState<{ message: string } | null>(null);
 
   // Reset when sheet opens with new context
   useEffect(() => {
