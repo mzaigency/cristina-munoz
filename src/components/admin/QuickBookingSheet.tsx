@@ -210,8 +210,7 @@ export const QuickBookingSheet = ({
   const canSubmit =
     !!clientQuery.trim() && selectedServices.length > 0 && !!time && !!stylistSlug && !submitting;
 
-  const handleCreate = async () => {
-    if (!canSubmit) return;
+  const submitBooking = async (force: boolean) => {
     setSubmitting(true);
     try {
       const payload = {
@@ -230,7 +229,7 @@ export const QuickBookingSheet = ({
         time,
         stylist: stylistSlug,
         total_duration: totalDuration,
-        skipAvailabilityCheck: true,
+        skipAvailabilityCheck: force,
         tenant_id: tenantId,
         canal: "crm" as const,
         recurrence: null,
@@ -245,14 +244,24 @@ export const QuickBookingSheet = ({
         title: "¡Cita creada!",
         description: `${payload.customer_name} · ${format(date, "EEE d MMM", { locale: es })} · ${time}`,
       });
+      setConflictPrompt(null);
       onCreated();
       onOpenChange(false);
     } catch (e: any) {
       let description = e?.message || "No se pudo crear la cita";
+      let reason: string | undefined;
       try {
         const body = await e?.context?.json?.();
         if (body?.error) description = body.error;
+        reason = body?.details?.reason;
       } catch {}
+
+      // If conflict and we didn't force, ask the admin whether to overlap on purpose
+      if (!force && (reason === "conflict" || reason === "no_stylist_available" || /solap|ya tiene una cita/i.test(description))) {
+        setConflictPrompt({ message: description });
+        return;
+      }
+
       toast({
         title: "Error",
         description,
@@ -261,6 +270,11 @@ export const QuickBookingSheet = ({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCreate = async () => {
+    if (!canSubmit) return;
+    await submitBooking(false);
   };
 
   return (
