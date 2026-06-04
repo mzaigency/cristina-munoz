@@ -582,6 +582,30 @@ export const QuickBookingSheet = ({
           </div>
         </div>
       </SheetContent>
+
+      <AlertDialog open={!!conflictPrompt} onOpenChange={(o) => !o && setConflictPrompt(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hora ocupada</AlertDialogTitle>
+            <AlertDialogDescription>
+              {conflictPrompt?.message || "Esa hora se solapa con otra cita."} ¿Quieres crearla de
+              todos modos? Quedará solapada en la agenda.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={submitting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={submitting}
+              onClick={(e) => {
+                e.preventDefault();
+                submitBooking(true);
+              }}
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear igualmente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 };
