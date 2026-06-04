@@ -93,7 +93,7 @@ serve(async (req) => {
       );
     }
 
-    const subscription = subscriptions.data[0];
+    const subscription = subscriptions.data[0] as any;
     const isActive = ["active", "trialing"].includes(subscription.status);
     const priceId = subscription.items.data[0]?.price?.id;
     const interval = subscription.items.data[0]?.price?.recurring?.interval;
@@ -106,7 +106,15 @@ serve(async (req) => {
       plan = "annual";
     }
 
-    const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+    // Stripe API 2025-08-27.basil moved current_period_end onto each item.
+    // Fall back to the item if the subscription root no longer carries it.
+    const periodEndUnix: number | null =
+      typeof subscription.current_period_end === "number"
+        ? subscription.current_period_end
+        : (typeof subscription.items?.data?.[0]?.current_period_end === "number"
+            ? subscription.items.data[0].current_period_end
+            : null);
+    const subscriptionEnd = periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null;
     const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null;
 
     logStep("Subscription found", {
