@@ -1395,6 +1395,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                       const isCompact = pos.height < 64;
                                       const startHHMM = booking.Hora.slice(0, 5);
                                       const endHHMM = booking.end_time?.slice(0, 5) || "";
+                                      const timeRange = endHHMM ? `${startHHMM}–${endHHMM}` : startHHMM;
 
                                       return (
                                         <div
@@ -1405,7 +1406,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                           onDragEnd={handleDragEnd}
                                           className={cn(
                                             "absolute overflow-hidden transition-all duration-200 group/card",
-                                            "rounded-[10px] backdrop-blur-sm",
+                                            "rounded-lg",
                                             !isBlocked && "cursor-grab active:cursor-grabbing hover:shadow-md hover:z-30",
                                             isCompleted && "opacity-50",
                                             isHighlighted && "ring-2 ring-primary ring-offset-1 animate-pulse",
@@ -1420,9 +1421,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                             zIndex: layout.zIndex,
                                             background: isBlocked
                                               ? "hsl(0 70% 50% / 0.08)"
-                                              : `linear-gradient(135deg, ${bookingColor}1f, ${bookingColor}0a)`,
+                                              : `${bookingColor}10`,
                                             borderLeft: `3px solid ${bookingColor}`,
-                                            boxShadow: `0 1px 2px ${bookingColor}1a, inset 0 1px 0 hsl(0 0% 100% / 0.4)`,
                                           }}
                                           onClick={(e) => {
                                             if (!isBlocked && !isResizing) {
@@ -1442,34 +1442,28 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                             }
                                           }}
                                         >
-                                          {/* Time chip (always visible, top-right) */}
-                                          {!isBlocked && (
-                                            <div
-                                              className="absolute top-0.5 right-1 px-1.5 py-0 rounded-full text-[9px] font-semibold tabular-nums leading-tight pointer-events-none"
-                                              style={{
-                                                color: bookingColor,
-                                                background: `${bookingColor}1a`,
-                                              }}
-                                            >
-                                              {startHHMM}
-                                            </div>
-                                          )}
-
-                                          {/* Content */}
+                                          {/* Content - iOS Calendar inspired, ultra minimal */}
                                           <div
                                             className={cn(
                                               "h-full flex flex-col px-2",
-                                              isUltraCompact ? "justify-center py-0" : "justify-start pt-1",
+                                              isUltraCompact ? "justify-center py-0" : "py-1",
                                             )}
                                           >
                                             {isUltraCompact ? (
-                                              <div className="flex items-center gap-1 min-w-0 pr-12">
-                                                {isCompleted && <Check className="h-2.5 w-2.5 text-green-500 shrink-0" />}
+                                              // Single line: time · name · service
+                                              <div className="flex items-baseline gap-1.5 min-w-0">
+                                                <span
+                                                  className="text-[10px] font-semibold tabular-nums shrink-0 leading-none"
+                                                  style={{ color: bookingColor }}
+                                                >
+                                                  {startHHMM}
+                                                </span>
+                                                {isCompleted && <Check className="h-2.5 w-2.5 text-green-500 shrink-0 self-center" />}
                                                 {booking.reminder_sent === "confirmado" && (
-                                                  <CheckCheck className="h-2.5 w-2.5 text-green-500 shrink-0" />
+                                                  <CheckCheck className="h-2.5 w-2.5 text-green-500 shrink-0 self-center" />
                                                 )}
                                                 {booking.skip_availability_check && (
-                                                  <ShieldAlert className="h-2.5 w-2.5 text-amber-500 shrink-0" />
+                                                  <ShieldAlert className="h-2.5 w-2.5 text-amber-500 shrink-0 self-center" />
                                                 )}
                                                 <span className="font-semibold text-[10.5px] truncate text-foreground leading-none">
                                                   {booking.customer_name}
@@ -1479,8 +1473,15 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                                 </span>
                                               </div>
                                             ) : isCompact ? (
-                                              <div className="min-w-0 pr-12 space-y-0.5">
+                                              // Two lines: time range on top, name + service below
+                                              <div className="min-w-0 space-y-0.5">
                                                 <div className="flex items-center gap-1">
+                                                  <span
+                                                    className="text-[10px] font-semibold tabular-nums leading-none"
+                                                    style={{ color: bookingColor }}
+                                                  >
+                                                    {timeRange}
+                                                  </span>
                                                   {isCompleted && <Check className="h-3 w-3 text-green-500 shrink-0" />}
                                                   {booking.reminder_sent === "confirmado" && (
                                                     <CheckCheck className="h-3 w-3 text-green-500 shrink-0" />
@@ -1488,22 +1489,33 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                                   {booking.skip_availability_check && (
                                                     <ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" />
                                                   )}
-                                                  <p className="font-semibold text-[11.5px] truncate text-foreground leading-tight">
-                                                    {booking.customer_name}
-                                                  </p>
                                                 </div>
-                                                <p className="text-[10.5px] truncate text-muted-foreground leading-tight">
-                                                  {isBlocked ? booking.title : firstService}
-                                                  {servicesList.length > 1 && (
-                                                    <span className="opacity-60"> +{servicesList.length - 1}</span>
-                                                  )}
+                                                <p className="font-semibold text-[11.5px] truncate text-foreground leading-tight">
+                                                  {booking.customer_name}
+                                                  <span className="font-normal text-muted-foreground">
+                                                    {" · "}
+                                                    {isBlocked ? booking.title : firstService}
+                                                    {servicesList.length > 1 && (
+                                                      <span className="opacity-60"> +{servicesList.length - 1}</span>
+                                                    )}
+                                                  </span>
                                                 </p>
                                               </div>
                                             ) : (
-                                              <div className="min-w-0 pr-12 space-y-0.5">
+                                              // Full: time range top, name, service, duration
+                                              <div className="min-w-0 space-y-0.5">
                                                 <div className="flex items-center gap-1">
+                                                  <span
+                                                    className="text-[10.5px] font-semibold tabular-nums leading-none"
+                                                    style={{ color: bookingColor }}
+                                                  >
+                                                    {timeRange}
+                                                  </span>
+                                                  <span className="text-[10px] text-muted-foreground/70 tabular-nums leading-none">
+                                                    · {booking.total_duration}min
+                                                  </span>
                                                   {isCompleted && (
-                                                    <Check className="h-3 w-3 text-green-500 shrink-0" />
+                                                    <Check className="h-3 w-3 text-green-500 shrink-0 ml-auto" />
                                                   )}
                                                   {booking.reminder_sent === "confirmado" && (
                                                     <CheckCheck className="h-3 w-3 text-green-500 shrink-0" />
@@ -1511,18 +1523,15 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                                   {booking.skip_availability_check && (
                                                     <ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" />
                                                   )}
-                                                  <p className="font-semibold text-[12px] truncate text-foreground leading-tight">
-                                                    {booking.customer_name}
-                                                  </p>
                                                 </div>
-                                                <p className="text-[11px] truncate text-muted-foreground">
+                                                <p className="font-semibold text-[12px] truncate text-foreground leading-tight">
+                                                  {booking.customer_name}
+                                                </p>
+                                                <p className="text-[11px] truncate text-muted-foreground leading-tight">
                                                   {isBlocked ? booking.title : firstService}
                                                   {servicesList.length > 1 && (
                                                     <span className="opacity-60"> +{servicesList.length - 1}</span>
                                                   )}
-                                                </p>
-                                                <p className="text-[10px] text-muted-foreground/70 tabular-nums">
-                                                  {startHHMM}{endHHMM ? `–${endHHMM}` : ""} · {booking.total_duration}min
                                                 </p>
                                               </div>
                                             )}
