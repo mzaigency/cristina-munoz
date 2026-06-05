@@ -642,7 +642,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     const durationMinutes = endMinutesFromStart - startMinutesFromStart;
 
     const top = startMinutesFromStart * PIXELS_PER_MINUTE;
-    const height = Math.max(durationMinutes * PIXELS_PER_MINUTE, 40);
+    // Min visual height for legibility, but DO NOT use this for overlap detection
+    const height = Math.max(durationMinutes * PIXELS_PER_MINUTE, 32);
+    // visualEndMinutes kept for backwards compat but should not drive overlap grouping
     const visualEndMinutes = startMinutesFromStart + (height / PIXELS_PER_MINUTE);
 
     return { top, height, startMinutes: startMinutesFromStart, endMinutes: endMinutesFromStart, visualEndMinutes };
