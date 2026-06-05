@@ -663,7 +663,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       return aPos.startMinutes - bPos.startMinutes;
     });
 
-    // Find overlapping groups
+    // Find overlapping groups using REAL end times (not visual minHeight),
+    // so a short 30min card doesn't falsely "overlap" with the next one
     const groups: LocalBooking[][] = [];
     let currentGroup: LocalBooking[] = [];
     let groupEnd = 0;
@@ -673,11 +674,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
       if (currentGroup.length === 0 || pos.startMinutes < groupEnd) {
         currentGroup.push(booking);
-        groupEnd = Math.max(groupEnd, pos.visualEndMinutes);
+        groupEnd = Math.max(groupEnd, pos.endMinutes);
       } else {
         if (currentGroup.length > 0) groups.push([...currentGroup]);
         currentGroup = [booking];
-        groupEnd = pos.visualEndMinutes;
+        groupEnd = pos.endMinutes;
       }
     });
     if (currentGroup.length > 0) groups.push(currentGroup);
@@ -694,7 +695,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           const lastInColumn = columns[i][columns[i].length - 1];
           const lastPos = calculateBookingPosition(lastInColumn, dayDate);
 
-          if (pos.startMinutes >= lastPos.visualEndMinutes) {
+          // Compare with REAL end, not visual end
+          if (pos.startMinutes >= lastPos.endMinutes) {
             columns[i].push(booking);
             placed = true;
             break;
@@ -708,7 +710,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
       const totalColumns = columns.length;
       columns.forEach((column, colIndex) => {
-        column.forEach((booking, idx) => {
+        column.forEach((booking) => {
           layout[booking.id] = {
             left: `${(colIndex / totalColumns) * 100}%`,
             width: `${(1 / totalColumns) * 100 - 1}%`,
