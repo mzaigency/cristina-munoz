@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, CheckCheck, GripVertical, Banknote, ShieldAlert, UserCircle, Sparkles } from "lucide-react";
+import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, CheckCheck, GripVertical, Banknote, ShieldAlert, UserCircle, Sparkles, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -918,204 +918,39 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     return (h > nowHour || (h === nowHour && m > nowMinutes)) && !b.notes?.includes("[✓ COMPLETADA]");
   });
 
+
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="ag-root">
+
+      {/* ── TOP BAR ─────────────────────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 18, flexWrap: "wrap", marginBottom: 18 }}>
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-foreground">Gestión de Citas</h2>
-          <p className="text-xs md:text-sm text-muted-foreground">Sistema local</p>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button
+          <button
+            className="ag-ia-btn"
             onClick={() => setIsCreateDialogOpen(true)}
-            className={cn("flex-1", todayBookings.length === 0 && "guided-halo")}
-            size="sm"
+          >
+            <Sparkles style={{ width: 14, height: 14, color: "#4361ee" }} />
+            Importar citas desde foto con IA
+          </button>
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <button className="ag-btn ag-btn-ghost" onClick={() => setIsBlockDialogOpen(true)}>
+            <Ban style={{ width: 16, height: 16 }} />
+            <span className="ag-btn-tx">Bloquear</span>
+          </button>
+          <button
+            className="ag-btn ag-btn-primary"
+            onClick={() => setIsCreateDialogOpen(true)}
             data-tour-step="new-appointment"
-            data-guided-cta={todayBookings.length === 0 ? "true" : undefined}
           >
-            <Plus className="h-4 w-4 mr-1 md:mr-2" />
-            <span className="hidden sm:inline">Nueva </span>Cita
-          </Button>
-          <Button variant="secondary" onClick={() => setIsBlockDialogOpen(true)} className="flex-1" size="sm">
-            <Ban className="h-4 w-4 mr-1 md:mr-2" />
-            <span className="hidden sm:inline">Bloquear</span>
-          </Button>
-        </div>
-      </div>
-
-      {todayBookings.length === 0 && (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 flex items-center gap-2 text-sm">
-          <span className="text-base" aria-hidden>👉</span>
-          <span className="text-foreground/90">
-            Para empezar, pulsa <span className="font-semibold text-primary">Nueva Cita</span> arriba a la derecha.
-          </span>
-        </div>
-      )}
-
-      {/* Today's quick summary */}
-      {isSameDay(weekDays.find(d => isSameDay(d, new Date())) || new Date(), new Date()) && todayBookings.length > 0 && (
-        <Card className="p-3 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <CalendarIcon className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">Hoy: {todayBookings.length} citas</p>
-                <p className="text-xs text-muted-foreground">
-                  {completedToday} completadas • {pendingToday} pendientes
-                </p>
-              </div>
-            </div>
-            {nextBooking && (
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">Próxima cita</p>
-                <p className="font-semibold text-sm text-primary">{nextBooking.Hora.slice(0, 5)}</p>
-                <p className="text-[10px] text-muted-foreground truncate max-w-[100px]">{nextBooking.customer_name}</p>
-              </div>
-            )}
-          </div>
-        </Card>
-      )}
-
-      {/* Stylist quick filter */}
-      {stylists.length > 1 && (
-        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-          <Button
-            variant={selectedStylistFilter === "all" ? "default" : "outline"}
-            size="sm"
-            className="h-8 text-xs shrink-0"
-            onClick={() => setSelectedStylistFilter("all")}
-          >
-            Todos
-          </Button>
-          {stylists.map(stylist => (
-            <Button
-              key={stylist.slug}
-              variant={selectedStylistFilter === stylist.slug ? "default" : "outline"}
-              size="sm"
-              className="h-8 text-xs shrink-0"
-              style={selectedStylistFilter === stylist.slug ? { backgroundColor: stylist.color } : { borderColor: stylist.color, color: stylist.color }}
-              onClick={() => setSelectedStylistFilter(stylist.slug)}
-            >
-              {stylist.name}
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {/* Search Section */}
-      <Card className="p-3 md:p-4">
-        <div className="flex flex-col gap-2 md:gap-3">
-          <Label className="text-xs md:text-sm font-medium flex items-center gap-2">
-            <Search className="h-3.5 w-3.5 md:h-4 md:w-4" />
-            Buscar cita
-          </Label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Input
-                placeholder="Nombre o teléfono..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="pr-8 text-sm h-9"
-              />
-              {searchQuery && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-            <Button onClick={handleSearch} disabled={isSearching} size="sm" className="h-9 px-3">
-              {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            </Button>
-          </div>
-
-          {showSearchResults && searchResults.length > 0 && (
-            <div className="mt-2 border rounded-md divide-y max-h-60 md:max-h-80 overflow-y-auto">
-              {searchResults.map((result) => {
-                const servicesList = Array.isArray(result.services)
-                  ? result.services.map((s: any) => s.name || s).filter(Boolean)
-                  : [];
-
-                return (
-                  <button
-                    key={result.id}
-                    onClick={() => handleSelectSearchResult(result)}
-                    className="w-full text-left p-2.5 md:p-3 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-3 mb-1.5 md:mb-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{result.customer_name}</p>
-                        <p className="text-xs text-muted-foreground">{result.Telefono}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-xs md:text-sm font-medium">
-                          {format(parseISO(result.Fecha), "d MMM", { locale: es })}
-                        </p>
-                        <p className="text-[10px] md:text-xs text-muted-foreground">{result.Hora.slice(0, 5)}</p>
-                      </div>
-                    </div>
-                    {servicesList.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {servicesList.slice(0, 2).map((serviceName: string, idx: number) => (
-                          <Badge key={idx} variant="secondary" className="text-[10px] md:text-xs">
-                            {serviceName}
-                          </Badge>
-                        ))}
-                        {servicesList.length > 2 && (
-                          <Badge variant="secondary" className="text-[10px] md:text-xs">
-                            +{servicesList.length - 2}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Navigation */}
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-1.5 md:gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setWeekStart(addDays(weekStart, -7))}
-            disabled={loading}
-            size="sm"
-            className="flex-1 h-9"
-          >
-            ←
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-            disabled={loading}
-            size="sm"
-            className="flex-1 h-9 border-primary"
-          >
-            Hoy
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setWeekStart(addDays(weekStart, 7))}
-            disabled={loading}
-            size="sm"
-            className="flex-1 h-9"
-          >
-            →
-          </Button>
+            <Plus style={{ width: 17, height: 17 }} />
+            <span className="ag-btn-tx">Nueva cita</span>
+          </button>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 px-2.5">
-                <CalendarIcon className="h-4 w-4" />
-              </Button>
+              <button className="ag-btn ag-btn-ghost" style={{ padding: "10px 13px" }}>
+                <CalendarIcon style={{ width: 16, height: 16 }} />
+              </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
               <Calendar mode="single" selected={weekStart} onSelect={handleJumpToDate} initialFocus weekStartsOn={1} />
@@ -1124,521 +959,638 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         </div>
       </div>
 
-      {/* Calendar View */}
-      {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      {/* ── HERO DAY ─────────────────────────────────────────── */}
+      {(() => {
+        const activeKey = activeTab || format(weekDays.find(d => isSameDay(d, new Date())) || weekDays[0], "yyyy-MM-dd");
+        const heroDay = weekDays.find(d => format(d, "yyyy-MM-dd") === activeKey) || weekDays[0];
+        const heroDayBookings = groupedBookings[activeKey] || [];
+        const heroSchedule = getScheduleForDay(heroDay);
+        const heroCompleted = heroDayBookings.filter(b => b.notes?.includes("[✓ COMPLETADA]")).length;
+        const heroPending = heroDayBookings.filter(b => !b.notes?.includes("[✓ COMPLETADA]") && !b.title?.includes("BLOQUEO") && !b.title?.includes("VACACIONES")).length;
+        const heroTotal = heroCompleted + heroPending;
+        const workMin = Math.max(1, stylists.length) * 660;
+        const bookedMin = heroDayBookings.reduce((s, b) => s + (b.total_duration || 30), 0);
+        const occPct = Math.min(1, bookedMin / workMin);
+        const heroNext = heroDayBookings.find(b => {
+          const [h, m] = b.Hora.split(":").map(Number);
+          return (h > nowHour || (h === nowHour && m > nowMinutes)) && !b.notes?.includes("[✓ COMPLETADA]");
+        });
+        const R = 41, SW = 10, SIZE = 92;
+        const circ = 2 * Math.PI * R;
+        const offset = circ * (1 - occPct);
+        return (
+          <div className="gh">
+            <div className="gh-glow" style={{ background: "radial-gradient(120% 140% at 88% -10%, color-mix(in oklab, #4361ee, transparent 78%), transparent 60%)" }} />
+            <div className="gh-date">
+              <span className="gh-weekday">{format(heroDay, "EEEE", { locale: es }).toUpperCase()}</span>
+              <span className="gh-num">{format(heroDay, "d")}</span>
+              <span className="gh-month">{format(heroDay, "MMMM yyyy", { locale: es })}</span>
+            </div>
+            {heroSchedule.isClosed ? (
+              <div className="gh-closed">
+                <Lock style={{ width: 20, height: 20 }} /> Salón cerrado
+              </div>
+            ) : (
+              <>
+                <div className="gh-ringwrap">
+                  <div style={{ position: "relative", width: SIZE, height: SIZE, flexShrink: 0 }}>
+                    <svg width={SIZE} height={SIZE}>
+                      <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none" stroke="oklch(0.93 0.01 265)" strokeWidth={SW} />
+                      <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none" stroke="#4361ee" strokeWidth={SW}
+                        strokeLinecap="round"
+                        strokeDasharray={circ}
+                        strokeDashoffset={offset}
+                        transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
+                        style={{ transition: "stroke-dashoffset .6s cubic-bezier(.3,.9,.3,1)" }}
+                      />
+                    </svg>
+                    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                      <span className="gh-ring-num">{heroTotal}</span>
+                      <span className="gh-ring-lbl">citas</span>
+                    </div>
+                  </div>
+                  <div className="gh-occ">
+                    <span className="gh-occ-pct" style={{ color: "#4361ee" }}>{Math.round(occPct * 100)}%</span>
+                    <span className="gh-occ-lbl">ocupación</span>
+                  </div>
+                </div>
+                <div className="gh-stats">
+                  <div className="gh-stat">
+                    <span className="gh-stat-num">{heroCompleted}</span>
+                    <span className="gh-stat-lbl"><span className="gh-stat-dot gh-dot-done" />completadas</span>
+                  </div>
+                  <div className="gh-stat">
+                    <span className="gh-stat-num">{heroPending}</span>
+                    <span className="gh-stat-lbl"><span className="gh-stat-dot" style={{ background: "#4361ee" }} />pendientes</span>
+                  </div>
+                </div>
+                <div className="gh-next">
+                  <span className="gh-next-lbl">Próxima cita</span>
+                  {heroNext ? (
+                    <>
+                      <span className="gh-next-time" style={{ color: "#4361ee" }}>{heroNext.Hora.slice(0, 5)}</span>
+                      <span className="gh-next-client">{heroNext.customer_name}</span>
+                      <span className="gh-next-svc">
+                        {Array.isArray(heroNext.services) ? (heroNext.services.map((s: any) => s.name || s).filter(Boolean)[0] || "Cita") : "Cita"}
+                      </span>
+                    </>
+                  ) : (
+                    <span style={{ color: "oklch(0.62 0.015 265)", fontWeight: 600 }}>Sin más citas hoy</span>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── WEEK SELECTOR ─────────────────────────────────────── */}
+      <div className="wk">
+        <div className="wk-top">
+          <span className="wk-month">{format(weekStart, "MMMM yyyy", { locale: es })}</span>
+          <button
+            className="wk-today"
+            style={{ color: "#4361ee" }}
+            onClick={() => {
+              setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+              setActiveTab(format(new Date(), "yyyy-MM-dd"));
+            }}
+          >
+            <span className="wk-today-dot" style={{ background: "#4361ee" }} />
+            Volver a hoy
+          </button>
         </div>
-      ) : (
-        <Tabs
-          value={activeTab || format(weekDays.find((day) => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")}
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto gap-0.5 md:gap-1 bg-muted/50 p-0.5 md:p-1">
+        <div className="wk-row">
+          <button className="wk-arrow" onClick={() => setWeekStart(addDays(weekStart, -7))} disabled={loading}>
+            <ChevronLeft style={{ width: 20, height: 20 }} />
+          </button>
+          <div className="wk-days">
             {weekDays.map((day) => {
               const dateKey = format(day, "yyyy-MM-dd");
-              const dayBookings = groupedBookings[dateKey] || [];
+              const dayBkgs = groupedBookings[dateKey] || [];
+              const resolvedActiveKey = activeTab || format(weekDays.find(d => isSameDay(d, new Date())) || weekDays[0], "yyyy-MM-dd");
+              const isOn = resolvedActiveKey === dateKey;
               const isToday = isSameDay(day, new Date());
-              const hasFullBlock = dayBookings.some((b) => b.title?.includes("🌴 VACACIONES"));
               const schedule = getScheduleForDay(day);
               const isClosed = schedule.isClosed;
-
+              const maxCount = Math.max(...weekDays.map(d => (groupedBookings[format(d, "yyyy-MM-dd")] || []).length), 1);
+              const pct = dayBkgs.length / maxCount;
               return (
-                <TabsTrigger
+                <button
                   key={dateKey}
-                  value={dateKey}
-                  className={cn(
-                    "flex-col items-center gap-0.5 data-[state=active]:bg-background px-1.5 md:px-4 py-1.5 md:py-2 min-w-[52px] md:min-w-[100px] relative",
-                    isToday && "border-primary",
-                    isClosed && "opacity-60",
-                    schedule.isSpecial && "ring-1 ring-amber-400/60 bg-amber-50/40 dark:bg-amber-500/5",
-                  )}
+                  className={`wk-day${isOn ? " wk-on" : ""}${isClosed ? " wk-closed" : ""}`}
+                  onClick={() => !isClosed && setActiveTab(dateKey)}
+                  disabled={isClosed || loading}
+                  style={isOn ? { background: "linear-gradient(160deg, #4361ee, #2b3fd4)", color: "#fff", borderColor: "transparent", boxShadow: "0 12px 28px -10px rgba(67,97,238,.45)", transform: "translateY(-2px)" } : undefined}
                 >
-                  {schedule.isSpecial && (
-                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" aria-label="Horario especial" />
-                  )}
-                  <div className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 w-full">
-                    <span className="text-[10px] md:text-sm font-semibold capitalize">
-                      {format(day, "EEE", { locale: es })}
+                  <span className="wk-name">{format(day, "EEE", { locale: es }).toUpperCase()}</span>
+                  <span className="wk-num">{format(day, "d")}</span>
+                  {isToday && !isOn && <span className="wk-today-pip" style={{ background: "#4361ee" }} />}
+                  {isClosed ? (
+                    <span className="wk-closed-tag"><Ban style={{ width: 11, height: 11 }} /></span>
+                  ) : (
+                    <span className="wk-foot">
+                      <span className="wk-bar">
+                        <span className="wk-bar-fill" style={{ width: `${20 + pct * 80}%`, background: isOn ? "rgba(255,255,255,.9)" : "#4361ee" }} />
+                      </span>
+                      <span className="wk-count">{dayBkgs.length}</span>
                     </span>
-                    <span className="text-sm md:text-base font-bold">{format(day, "d")}</span>
-                    {isToday && (
-                      <Badge variant="default" className="text-[8px] md:text-xs h-3 px-1 md:h-5 md:px-2 hidden md:flex">
-                        Hoy
-                      </Badge>
-                    )}
-                    {(hasFullBlock || isClosed) && <Ban className="h-2.5 w-2.5 md:h-3 md:w-3 text-destructive" />}
-                    {schedule.isSpecial && !isClosed && <Sparkles className="h-2.5 w-2.5 md:h-3 md:w-3 text-amber-500" />}
-                  </div>
-                  <span className="text-[9px] md:text-xs text-muted-foreground">
-                    {isClosed ? "Cerrado" : `${dayBookings.length} citas`}
-                  </span>
-                </TabsTrigger>
+                  )}
+                </button>
               );
             })}
-          </TabsList>
+          </div>
+          <button className="wk-arrow" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading}>
+            <ChevronRight style={{ width: 20, height: 20 }} />
+          </button>
+        </div>
+      </div>
 
-          {weekDays.map((day) => {
-            const dateKey = format(day, "yyyy-MM-dd");
-            const dayBookings = groupedBookings[dateKey] || [];
-            const schedule = getScheduleForDay(day);
-
-            // Group by stylist
-            const bookingsByStylist: Record<string, LocalBooking[]> = {};
-            stylists.forEach((s) => {
-              bookingsByStylist[s.slug] = dayBookings.filter((b) => b.stylist === s.slug);
-            });
-
+      {/* ── PROFESSIONAL TABS ─────────────────────────────────── */}
+      {stylists.length > 1 && (
+        <div className="ag-proftabs">
+          {(() => {
+            const activeKey = activeTab || format(weekDays.find(d => isSameDay(d, new Date())) || weekDays[0], "yyyy-MM-dd");
+            const allCount = (groupedBookings[activeKey] || []).length;
+            const isAllOn = selectedStylistFilter === "all";
             return (
-              <TabsContent key={dateKey} value={dateKey} className="mt-3 md:mt-4">
-                <Card>
-                  <CardContent className="p-2 md:p-6">
-                    {schedule.isSpecial && (
-                      <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-400/40 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-500/10 dark:to-amber-500/5 px-3 py-2">
-                        <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">Horario especial</p>
-                          <p className="text-[11px] text-amber-800/80 dark:text-amber-200/70 truncate">
-                            {schedule.isClosed ? "Cerrado por horario especial" : `Hoy: ${schedule.specialLabel}`}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {schedule.hours.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <p>Día cerrado</p>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto -mx-2 px-2 md:mx-0 md:px-0">
-                        {/* Header */}
-                        <div className="flex gap-2 md:gap-4 pb-2 md:pb-3 border-b border-border/40 min-w-max">
-                          <div className="w-10 md:w-16 shrink-0 text-[9px] md:text-xs font-semibold text-muted-foreground">
-                            HORA
-                          </div>
-
-                          <div className="flex-1 flex gap-2 md:gap-4">
-                            {stylists
-                              .filter(s => selectedStylistFilter === "all" || s.slug === selectedStylistFilter)
-                              .map((stylist) => (
-                              <div
-                                key={stylist.slug}
-                                className="flex-1 min-w-[100px] md:min-w-[180px] text-center font-semibold text-xs md:text-sm py-1.5 md:py-2 rounded-lg shadow-sm"
-                                style={{
-                                  backgroundColor: `${stylist.color}15`,
-                                  color: stylist.color,
-                                  borderBottom: `2px solid ${stylist.color}`,
-                                }}
-                              >
-                                {stylist.name}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Timeline */}
-                        <div className="flex gap-2 md:gap-4 pt-2 md:pt-3 min-w-max">
-                          {/* Time column */}
-                          <div className="w-10 md:w-16 shrink-0">
-                            {schedule.hours.map((hour) => (
-                              <div
-                                key={hour}
-                                className="h-[120px] text-[10px] md:text-sm text-muted-foreground border-b border-border/30 flex items-start pt-1"
-                              >
-                                <span className="font-medium">{String(hour).padStart(2, "0")}:00</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Stylists columns */}
-                          <div className="flex-1 flex gap-2 md:gap-4">
-                            {stylists
-                              .filter(s => selectedStylistFilter === "all" || s.slug === selectedStylistFilter)
-                              .map((stylist) => (
-                              <div key={stylist.slug} className="flex-1 min-w-[100px] md:min-w-[180px]">
-                                 <div
-                                   className="relative rounded-lg overflow-hidden group/col"
-                                   style={{ backgroundColor: "hsl(var(--muted) / 0.3)" }}
-                                   onDragOver={(e) => handleDragOverColumn(e, stylist.slug, schedule.startHour)}
-                                   onDragLeave={handleDragLeave}
-                                   onDrop={(e) => handleDropOnColumn(e, stylist.slug, schedule.startHour, dateKey)}
-                                 >
-                                   {/* Hour grid with clickable 30-min blocks (:00 and :30) */}
-                                   {schedule.hours.map((hour) => {
-                                     const openQuick = (mm: 0 | 30) => {
-                                       if (hour >= schedule.endHour) return;
-                                       const timeStr = `${String(hour).padStart(2, "0")}:${mm === 0 ? "00" : "30"}`;
-                                       setQuickBooking({ date: day, time: timeStr, stylistSlug: stylist.slug });
-                                     };
-                                     return (
-                                       <div key={hour} className="h-[120px] border-b border-border/20 relative">
-                                         {/* :00 block */}
-                                         <div
-                                           role="button"
-                                           tabIndex={-1}
-                                           className="absolute inset-x-0 top-0 h-[60px] cursor-pointer transition-colors hover:bg-foreground/[0.04]"
-                                           onClick={(e) => {
-                                             const target = e.target as HTMLElement;
-                                             if (target.closest("[data-booking-id]")) return;
-                                             openQuick(0);
-                                           }}
-                                         />
-                                         {/* :30 block */}
-                                         <div
-                                           role="button"
-                                           tabIndex={-1}
-                                           className="absolute inset-x-0 top-[60px] h-[60px] cursor-pointer transition-colors hover:bg-foreground/[0.04] border-t border-dashed border-border/15"
-                                           onClick={(e) => {
-                                             const target = e.target as HTMLElement;
-                                             if (target.closest("[data-booking-id]")) return;
-                                             openQuick(30);
-                                           }}
-                                         />
-                                       </div>
-                                     );
-                                   })}
-                                  
-                                  {/* Break zone - positioned exactly based on minutes */}
-                                  {schedule.breakStartMinutes !== null && schedule.breakEndMinutes !== null && (() => {
-                                    const breakTopMinutes = schedule.breakStartMinutes - (schedule.startHour * 60);
-                                    const breakDurationMinutes = schedule.breakEndMinutes - schedule.breakStartMinutes;
-                                    const top = breakTopMinutes * PIXELS_PER_MINUTE;
-                                    const height = breakDurationMinutes * PIXELS_PER_MINUTE;
-                                    
-                                    return (
-                                      <div 
-                                        className="absolute inset-x-0 bg-amber-500/10 pointer-events-none z-0 flex items-center justify-center"
-                                        style={{ top: `${top}px`, height: `${height}px` }}
-                                      >
-                                        <span className="text-[10px] text-amber-600/60 bg-amber-100/50 px-2 py-0.5 rounded">
-                                          Descanso
-                                        </span>
-                                      </div>
-                                    );
-                                  })()}
-
-                                  {/* Drop indicator - shows exact time where booking will land */}
-                                  {dragOverStylist === stylist.slug &&
-                                    dragOverTime &&
-                                    (() => {
-                                      const [h, m] = dragOverTime.split(":").map(Number);
-                                      const minutesFromStart = (h - schedule.startHour) * 60 + m;
-                                      const topPosition = minutesFromStart * PIXELS_PER_MINUTE;
-                                      const height = (draggedBooking?.total_duration || 30) * PIXELS_PER_MINUTE;
-
-                                      return (
-                                        <div
-                                          className="absolute left-1 right-1 rounded-lg bg-primary/20 border-2 border-dashed border-primary/60 pointer-events-none z-40 flex items-center justify-center"
-                                          style={{ top: Math.max(0, topPosition), height }}
-                                        >
-                                          <span className="text-xs font-semibold text-primary bg-background/80 px-2 py-0.5 rounded">
-                                            {dragOverTime}
-                                          </span>
-                                        </div>
-                                      );
-                                    })()}
-
-                                  {/* Current time indicator - only show on today */}
-                                  {isSameDay(day, new Date()) &&
-                                    (() => {
-                                      const now = currentTime;
-                                      const currentHour = now.getHours();
-                                      const currentMinute = now.getMinutes();
-
-                                      // Check if current time is within schedule
-                                      if (currentHour >= schedule.startHour && currentHour < schedule.endHour) {
-                                        const minutesFromStart =
-                                          (currentHour - schedule.startHour) * 60 + currentMinute;
-                                        const topPosition = minutesFromStart * PIXELS_PER_MINUTE;
-
-                                        return (
-                                          <div
-                                            className="absolute left-0 right-0 z-50 pointer-events-none flex items-center"
-                                            style={{ top: topPosition }}
-                                          >
-                                            <div className="w-2.5 h-2.5 rounded-full bg-red-500 -ml-1 shadow-sm" />
-                                            <div className="flex-1 h-0.5 bg-red-500 shadow-sm" />
-                                          </div>
-                                        );
-                                      }
-                                      return null;
-                                    })()}
-
-                                  {/* Render bookings - iOS style with overlap handling */}
-                                  {(() => {
-                                    const stylistBookings = bookingsByStylist[stylist.slug] || [];
-                                    const overlapLayout = calculateOverlapLayout(stylistBookings, day);
-
-                                    return stylistBookings.map((booking) => {
-                                      const pos = calculateBookingPosition(booking, day);
-                                      const isCompleted = booking.notes?.includes("[✓ COMPLETADA]");
-                                      const isBlocked =
-                                        booking.title?.includes("🔒 BLOQUEADO") ||
-                                        booking.title?.includes("🌴 VACACIONES");
-                                      const isHighlighted = highlightedBookingId === booking.id;
-                                      const isDragging = draggedBooking?.id === booking.id;
-                                      const isResizing = resizingBooking?.id === booking.id;
-                                      const layout = overlapLayout[booking.id] || {
-                                        left: "0%",
-                                        width: "100%",
-                                        zIndex: 1,
-                                      };
-
-                                      // Get services - compact display
-                                      const servicesList = Array.isArray(booking.services)
-                                        ? booking.services.map((s: any) => s.name || s).filter(Boolean)
-                                        : [];
-                                      const firstService = servicesList[0] || "Sin servicio";
-
-                                      const bookingColor = isBlocked ? "#EF4444" : getStylistColor(booking.stylist);
-                                      const isUltraCompact = pos.height < 38;
-                                      const isCompact = pos.height < 64;
-                                      const startHHMM = booking.Hora.slice(0, 5);
-                                      const endHHMM = booking.end_time?.slice(0, 5) || "";
-                                      const timeRange = endHHMM ? `${startHHMM}–${endHHMM}` : startHHMM;
-
-                                      return (
-                                        <div
-                                          key={booking.id}
-                                          data-booking-id={booking.id}
-                                          draggable={!isBlocked && !isResizing}
-                                          onDragStart={(e) => handleDragStart(e, booking)}
-                                          onDragEnd={handleDragEnd}
-                                          className={cn(
-                                            "absolute overflow-hidden transition-all duration-200 group/card",
-                                            "rounded-lg",
-                                            !isBlocked && "cursor-grab active:cursor-grabbing hover:shadow-md hover:z-30",
-                                            isCompleted && "opacity-50",
-                                            isHighlighted && "ring-2 ring-primary ring-offset-1 animate-pulse",
-                                            isDragging && "opacity-40 scale-95",
-                                            isResizing && "z-40 ring-2 ring-primary",
-                                          )}
-                                          style={{
-                                            top: pos.top,
-                                            height: pos.height,
-                                            left: `calc(${layout.left} + 2px)`,
-                                            width: `calc(${layout.width} - 4px)`,
-                                            zIndex: layout.zIndex,
-                                            background: isBlocked
-                                              ? "hsl(0 70% 50% / 0.08)"
-                                              : `${bookingColor}10`,
-                                            borderLeft: `3px solid ${bookingColor}`,
-                                          }}
-                                          onClick={(e) => {
-                                            if (!isBlocked && !isResizing) {
-                                              if (isMobile) {
-                                                e.stopPropagation();
-                                                if (activeBookingActions === booking.id) {
-                                                  setActiveBookingActions(null);
-                                                  setSelectedBooking(booking);
-                                                  setIsEditDialogOpen(true);
-                                                } else {
-                                                  setActiveBookingActions(booking.id);
-                                                }
-                                              } else {
-                                                setSelectedBooking(booking);
-                                                setIsEditDialogOpen(true);
-                                              }
-                                            }
-                                          }}
-                                        >
-                                          {/* Content - iOS Calendar inspired, ultra minimal */}
-                                          <div
-                                            className={cn(
-                                              "h-full flex flex-col px-2",
-                                              isUltraCompact ? "justify-center py-0" : "py-1",
-                                            )}
-                                          >
-                                            {isUltraCompact ? (
-                                              // Single line: time · name · service
-                                              <div className="flex items-baseline gap-1.5 min-w-0">
-                                                <span
-                                                  className="text-[10px] font-semibold tabular-nums shrink-0 leading-none"
-                                                  style={{ color: bookingColor }}
-                                                >
-                                                  {startHHMM}
-                                                </span>
-                                                {isCompleted && <Check className="h-2.5 w-2.5 text-green-500 shrink-0 self-center" />}
-                                                {booking.reminder_sent === "confirmado" && (
-                                                  <CheckCheck className="h-2.5 w-2.5 text-green-500 shrink-0 self-center" />
-                                                )}
-                                                {booking.skip_availability_check && (
-                                                  <ShieldAlert className="h-2.5 w-2.5 text-amber-500 shrink-0 self-center" />
-                                                )}
-                                                <span className="font-semibold text-[10.5px] truncate text-foreground leading-none">
-                                                  {booking.customer_name}
-                                                </span>
-                                                <span className="text-[10px] truncate text-muted-foreground leading-none">
-                                                  · {firstService}
-                                                </span>
-                                              </div>
-                                            ) : isCompact ? (
-                                              // Two lines: time range on top, name + service below
-                                              <div className="min-w-0 space-y-0.5">
-                                                <div className="flex items-center gap-1">
-                                                  <span
-                                                    className="text-[10px] font-semibold tabular-nums leading-none"
-                                                    style={{ color: bookingColor }}
-                                                  >
-                                                    {timeRange}
-                                                  </span>
-                                                  {isCompleted && <Check className="h-3 w-3 text-green-500 shrink-0" />}
-                                                  {booking.reminder_sent === "confirmado" && (
-                                                    <CheckCheck className="h-3 w-3 text-green-500 shrink-0" />
-                                                  )}
-                                                  {booking.skip_availability_check && (
-                                                    <ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" />
-                                                  )}
-                                                </div>
-                                                <p className="font-semibold text-[11.5px] truncate text-foreground leading-tight">
-                                                  {booking.customer_name}
-                                                  <span className="font-normal text-muted-foreground">
-                                                    {" · "}
-                                                    {isBlocked ? booking.title : firstService}
-                                                    {servicesList.length > 1 && (
-                                                      <span className="opacity-60"> +{servicesList.length - 1}</span>
-                                                    )}
-                                                  </span>
-                                                </p>
-                                              </div>
-                                            ) : (
-                                              // Full: time range top, name, service, duration
-                                              <div className="min-w-0 space-y-0.5">
-                                                <div className="flex items-center gap-1">
-                                                  <span
-                                                    className="text-[10.5px] font-semibold tabular-nums leading-none"
-                                                    style={{ color: bookingColor }}
-                                                  >
-                                                    {timeRange}
-                                                  </span>
-                                                  <span className="text-[10px] text-muted-foreground/70 tabular-nums leading-none">
-                                                    · {booking.total_duration}min
-                                                  </span>
-                                                  {isCompleted && (
-                                                    <Check className="h-3 w-3 text-green-500 shrink-0 ml-auto" />
-                                                  )}
-                                                  {booking.reminder_sent === "confirmado" && (
-                                                    <CheckCheck className="h-3 w-3 text-green-500 shrink-0" />
-                                                  )}
-                                                  {booking.skip_availability_check && (
-                                                    <ShieldAlert className="h-3 w-3 text-amber-500 shrink-0" />
-                                                  )}
-                                                </div>
-                                                <p className="font-semibold text-[12px] truncate text-foreground leading-tight">
-                                                  {booking.customer_name}
-                                                </p>
-                                                <p className="text-[11px] truncate text-muted-foreground leading-tight">
-                                                  {isBlocked ? booking.title : firstService}
-                                                  {servicesList.length > 1 && (
-                                                    <span className="opacity-60"> +{servicesList.length - 1}</span>
-                                                  )}
-                                                </p>
-                                              </div>
-                                            )}
-                                          </div>
-
-                                          {/* Unblock button (only for blocked periods) */}
-                                          {isBlocked && (
-                                            <div className="absolute top-0.5 right-0.5 z-20">
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  handleDeleteBooking(booking);
-                                                }}
-                                                className="p-1 rounded-md bg-white/20 text-white hover:bg-white hover:text-red-600 transition-all backdrop-blur-sm"
-                                                title="Desbloquear"
-                                              >
-                                                <Trash2 className="h-3 w-3" />
-                                              </button>
-                                            </div>
-                                          )}
-
-                                          {/* Action buttons */}
-                                          {!isBlocked && (!isMobile || activeBookingActions === booking.id) && (
-                                            <div className={cn(
-                                              "absolute top-0.5 right-0.5 flex items-center gap-0.5 z-20 transition-opacity",
-                                              isMobile ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"
-                                            )}>
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  handleMarkCompleted(booking);
-                                                  if (isMobile) setActiveBookingActions(null);
-                                                }}
-                                                className={cn(
-                                                  "p-1 rounded-md transition-all",
-                                                  isCompleted
-                                                    ? "bg-green-500 text-white"
-                                                    : "bg-foreground/8 text-foreground/60 hover:bg-green-500 hover:text-white"
-                                                )}
-                                                title={isCompleted ? "Desmarcar" : "Completar"}
-                                              >
-                                                <Check className="h-3 w-3" />
-                                              </button>
-
-                                              {!isCompleted && onNavigateToCash && (
-                                                <button
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    sessionStorage.setItem('pendingChargeBooking', JSON.stringify({
-                                                      id: booking.id,
-                                                      customer_name: booking.customer_name,
-                                                      stylist: booking.stylist,
-                                                      services: booking.services,
-                                                      fecha: booking.Fecha,
-                                                      hora: booking.Hora
-                                                    }));
-                                                    if (isMobile) setActiveBookingActions(null);
-                                                    onNavigateToCash();
-                                                  }}
-                                                  className="p-1 rounded-md bg-foreground/8 text-foreground/60 hover:bg-emerald-500 hover:text-white transition-all"
-                                                  title="Cobrar"
-                                                >
-                                                  <Banknote className="h-3 w-3" />
-                                                </button>
-                                              )}
-
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  if (isMobile) setActiveBookingActions(null);
-                                                  handleDeleteBooking(booking);
-                                                }}
-                                                className="p-1 rounded-md bg-foreground/8 text-foreground/60 hover:bg-red-500 hover:text-white transition-all"
-                                                title="Eliminar"
-                                              >
-                                                <Trash2 className="h-3 w-3" />
-                                              </button>
-                                            </div>
-                                          )}
-
-                                          {/* Resize handle */}
-                                          {!isBlocked && (
-                                            <div
-                                              className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity z-10"
-                                              onMouseDown={(e) => handleResizeStart(e, booking)}
-                                            >
-                                              <div className="w-8 h-0.5 rounded-full bg-foreground/20" />
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    });
-                                  })()}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+              <button
+                className={`ag-proftab${isAllOn ? " ag-proftab-on" : ""}`}
+                onClick={() => setSelectedStylistFilter("all")}
+                style={isAllOn ? { borderColor: "#4361ee", background: "#4361ee15", color: "#4361ee" } : undefined}
+              >
+                <span className="ag-proftab-dot" style={{ background: "#4361ee" }} />
+                Todos
+                <span className="ag-proftab-count" style={isAllOn ? { color: "#4361ee" } : undefined}>{allCount}</span>
+              </button>
+            );
+          })()}
+          {stylists.map(stylist => {
+            const activeKey = activeTab || format(weekDays.find(d => isSameDay(d, new Date())) || weekDays[0], "yyyy-MM-dd");
+            const count = (groupedBookings[activeKey] || []).filter(b => b.stylist === stylist.slug).length;
+            const isOn = selectedStylistFilter === stylist.slug;
+            return (
+              <button
+                key={stylist.slug}
+                className={`ag-proftab${isOn ? " ag-proftab-on" : ""}`}
+                onClick={() => setSelectedStylistFilter(stylist.slug)}
+                style={isOn ? { borderColor: stylist.color, background: `${stylist.color}15`, color: stylist.color } : undefined}
+              >
+                <span className="ag-proftab-dot" style={{ background: stylist.color }} />
+                {stylist.name}
+                <span className="ag-proftab-count" style={isOn ? { color: stylist.color } : undefined}>{count}</span>
+              </button>
             );
           })}
-        </Tabs>
+        </div>
       )}
+
+      {/* ── SEARCH ───────────────────────────────────────────── */}
+      <div className="ag-search">
+        <span className="ag-search-ic"><Search style={{ width: 17, height: 17 }} /></span>
+        <input
+          className="ag-search-in"
+          placeholder="Buscar por nombre o teléfono…"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSearch()}
+        />
+        {isSearching && <Loader2 style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", width: 16, height: 16 }} className="animate-spin" />}
+        {searchQuery && !isSearching && (
+          <button className="ag-search-clear" onClick={clearSearch}><X style={{ width: 14, height: 14 }} /></button>
+        )}
+      </div>
+
+      {showSearchResults && searchResults.length > 0 && (
+        <div style={{ border: "1px solid oklch(0.925 0.007 265)", borderRadius: 14, overflow: "hidden", maxHeight: 280, overflowY: "auto", background: "#fff", boxShadow: "0 10px 30px -16px rgba(20,22,40,.18)" }}>
+          {searchResults.map(result => {
+            const svcs = Array.isArray(result.services) ? result.services.map((s: any) => s.name || s).filter(Boolean) : [];
+            return (
+              <button key={result.id} onClick={() => handleSelectSearchResult(result)}
+                style={{ width: "100%", textAlign: "left", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, borderBottom: "1px solid oklch(0.955 0.004 265)" }}
+                className="hover:bg-gray-50 transition-colors"
+              >
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{result.customer_name}</p>
+                  <p style={{ fontSize: 12, color: "oklch(0.62 0.015 265)" }}>{svcs[0]} · {result.Telefono}</p>
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <p style={{ fontSize: 15, fontWeight: 800, color: "#4361ee" }}>{result.Hora.slice(0, 5)}</p>
+                  <p style={{ fontSize: 12, color: "oklch(0.62 0.015 265)" }}>{format(parseISO(result.Fecha), "d MMM", { locale: es })}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── CALENDAR GRID ─────────────────────────────────────── */}
+      {loading ? (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "80px 0" }}>
+          <Loader2 style={{ width: 32, height: 32, color: "#4361ee" }} className="animate-spin" />
+        </div>
+      ) : (() => {
+        const activeKey = activeTab || format(weekDays.find(d => isSameDay(d, new Date())) || weekDays[0], "yyyy-MM-dd");
+        const activeDay = weekDays.find(d => format(d, "yyyy-MM-dd") === activeKey) || weekDays[0];
+        const schedule = getScheduleForDay(activeDay);
+        const isToday = isSameDay(activeDay, new Date());
+        const dayBkgs = groupedBookings[activeKey] || [];
+        const filteredStylists = stylists.filter(s => selectedStylistFilter === "all" || s.slug === selectedStylistFilter);
+
+        if (schedule.isClosed) {
+          return (
+            <div className="ag-empty">
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🔒</div>
+              <p style={{ fontWeight: 800, fontSize: 18, marginBottom: 6 }}>Salón cerrado</p>
+              <p style={{ color: "oklch(0.62 0.015 265)", fontSize: 14 }}>{format(activeDay, "EEEE d MMMM", { locale: es })}</p>
+            </div>
+          );
+        }
+
+        if (filteredStylists.length === 0) {
+          return (
+            <div className="ag-empty">
+              <p style={{ fontWeight: 700, fontSize: 15 }}>Sin estilistas activos</p>
+            </div>
+          );
+        }
+
+        const PPM = PIXELS_PER_MINUTE;
+        const TOP_PAD = 12;
+        const GUTTER = 58;
+        const totalH = (schedule.endHour - schedule.startHour) * 60 * PPM + TOP_PAD * 2;
+
+        const nowH = currentTime.getHours();
+        const nowM = currentTime.getMinutes();
+        const nowTopPx = (isToday && nowH >= schedule.startHour && nowH < schedule.endHour)
+          ? (nowH - schedule.startHour) * 60 * PPM + nowM * PPM + TOP_PAD
+          : null;
+
+        const breakTopPx = schedule.breakStartMinutes !== null
+          ? (schedule.breakStartMinutes - schedule.startHour * 60) * PPM + TOP_PAD
+          : null;
+        const breakH = (schedule.breakStartMinutes !== null && schedule.breakEndMinutes !== null)
+          ? (schedule.breakEndMinutes - schedule.breakStartMinutes) * PPM
+          : 0;
+
+        const bookingsByStylist: Record<string, LocalBooking[]> = {};
+        filteredStylists.forEach(s => {
+          bookingsByStylist[s.slug] = dayBkgs.filter(b => b.stylist === s.slug);
+        });
+
+        if (schedule.isSpecial) {
+          // Show special hours banner inline
+        }
+
+        return (
+          <>
+            {schedule.isSpecial && (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, borderRadius: 14, border: "1px solid rgba(245,158,11,.35)", background: "linear-gradient(to right, #fffbeb, #fef3c7)", padding: "10px 14px", marginBottom: 12 }}>
+                <Sparkles style={{ width: 16, height: 16, color: "#d97706", flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#92400e" }}>Horario especial</p>
+                  <p style={{ fontSize: 11, color: "#b45309" }}>{schedule.isClosed ? "Cerrado por horario especial" : schedule.specialLabel}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="ag-gridcard">
+              <div className="ag-scroller" style={{ maxHeight: "66vh" }}>
+                <div className="ag-grid" style={{ minWidth: "100%" }}>
+
+                  {/* ── Sticky column headers ── */}
+                  <div className="ag-head" style={{
+                    display: "grid",
+                    gridTemplateColumns: `${GUTTER}px repeat(${filteredStylists.length}, minmax(160px, 1fr))`,
+                  }}>
+                    <div className="ag-corner">HORA</div>
+                    {filteredStylists.map(stylist => {
+                      const sBkgs = bookingsByStylist[stylist.slug] || [];
+                      const bookedMin2 = sBkgs.reduce((s, b) => s + (b.total_duration || 30), 0);
+                      const workMin2 = Math.max(1, (schedule.endHour - schedule.startHour) * 60);
+                      const util = Math.min(1, bookedMin2 / workMin2);
+                      return (
+                        <div key={stylist.slug} className="ag-colhead" style={{ background: `${stylist.color}12` }}>
+                          <span className="ag-colhead-accent" style={{ background: stylist.color }} />
+                          <span className="ag-colhead-av" style={{ background: `linear-gradient(140deg, ${stylist.color}, ${stylist.color}bb)` }}>
+                            {stylist.name.charAt(0).toUpperCase()}
+                          </span>
+                          <span className="ag-colhead-main">
+                            <span className="ag-colhead-name" style={{ color: stylist.color }}>{stylist.name}</span>
+                            <span className="ag-colhead-bar">
+                              <span className="ag-colhead-fill" style={{ width: `${util * 100}%`, background: stylist.color }} />
+                            </span>
+                          </span>
+                          <span className="ag-colhead-count" style={{ color: stylist.color, background: `${stylist.color}18` }}>
+                            {sBkgs.length}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* ── Body ── */}
+                  <div className="ag-bodyrow" style={{
+                    display: "grid",
+                    gridTemplateColumns: `${GUTTER}px 1fr`,
+                  }}>
+                    {/* Hour gutter */}
+                    <div className="ag-gutter" style={{ height: totalH, position: "sticky", left: 0, zIndex: 3, background: "#fff", borderRight: "1px solid oklch(0.925 0.007 265)" }}>
+                      {Array.from({ length: schedule.endHour - schedule.startHour + 1 }, (_, i) => {
+                        const h = schedule.startHour + i;
+                        return (
+                          <div key={h} className="ag-hour" style={{ top: i * 60 * PPM + TOP_PAD }}>
+                            {String(h).padStart(2, "0")}:00
+                          </div>
+                        );
+                      })}
+                      {nowTopPx !== null && (
+                        <div className="ag-now-bubble" style={{ top: nowTopPx }}>
+                          {String(nowH).padStart(2, "0")}:{String(nowM).padStart(2, "0")}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Stylist columns area */}
+                    <div style={{ position: "relative", display: "flex", height: totalH }}>
+                      {filteredStylists.map((stylist, colIdx) => {
+                        const sBkgs = bookingsByStylist[stylist.slug] || [];
+                        const overlapLayout = calculateOverlapLayout(sBkgs, activeDay);
+                        const isLast = colIdx === filteredStylists.length - 1;
+
+                        return (
+                          <div
+                            key={stylist.slug}
+                            className={`ag-col${isLast ? " ag-col-last" : ""}`}
+                            style={{ flex: "1 1 0", minWidth: 160, height: totalH, position: "relative" }}
+                            onDragOver={e => handleDragOverColumn(e, stylist.slug, schedule.startHour)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={e => handleDropOnColumn(e, stylist.slug, schedule.startHour, activeKey)}
+                          >
+                            {/* Half-hour lines */}
+                            {Array.from({ length: (schedule.endHour - schedule.startHour) * 2 + 1 }, (_, i) => {
+                              const isHour = i % 2 === 0;
+                              return (
+                                <div key={i} style={{
+                                  position: "absolute", left: 0, right: 0,
+                                  top: i * 30 * PPM + TOP_PAD,
+                                  borderTop: `1px solid ${isHour ? "oklch(0.925 0.007 265)" : "oklch(0.955 0.004 265)"}`,
+                                  pointerEvents: "none",
+                                }} />
+                              );
+                            })}
+
+                            {/* Clickable time slots */}
+                            {schedule.hours.map(hour => {
+                              const openQuick = (mm: 0 | 30) => {
+                                if (hour >= schedule.endHour) return;
+                                const timeStr = `${String(hour).padStart(2, "0")}:${mm === 0 ? "00" : "30"}`;
+                                setQuickBooking({ date: activeDay, time: timeStr, stylistSlug: stylist.slug });
+                              };
+                              const slotTop = (hour - schedule.startHour) * 60 * PPM + TOP_PAD;
+                              return (
+                                <div key={hour} style={{ position: "absolute", left: 0, right: 0, top: slotTop, height: 60 * PPM }}>
+                                  <div style={{ position: "absolute", inset: "0 0 50% 0", cursor: "pointer" }}
+                                    onClick={e => { if (!(e.target as HTMLElement).closest("[data-booking-id]")) openQuick(0); }} />
+                                  <div style={{ position: "absolute", inset: "50% 0 0 0", cursor: "pointer", borderTop: "1px dashed oklch(0.955 0.004 265)" }}
+                                    onClick={e => { if (!(e.target as HTMLElement).closest("[data-booking-id]")) openQuick(30); }} />
+                                </div>
+                              );
+                            })}
+
+                            {/* Break zone */}
+                            {breakTopPx !== null && (
+                              <div style={{
+                                position: "absolute", left: 0, right: 0,
+                                top: breakTopPx, height: breakH,
+                                background: "repeating-linear-gradient(135deg, oklch(0.965 0.03 72) 0 11px, oklch(0.945 0.045 72) 11px 22px)",
+                                pointerEvents: "none", zIndex: 0,
+                              }} />
+                            )}
+
+                            {/* Drag drop indicator */}
+                            {dragOverStylist === stylist.slug && dragOverTime && (() => {
+                              const [dh, dm] = dragOverTime.split(":").map(Number);
+                              const minFromStart = (dh - schedule.startHour) * 60 + dm;
+                              const topDrag = minFromStart * PPM + TOP_PAD;
+                              const hDrag = (draggedBooking?.total_duration || 30) * PPM;
+                              return (
+                                <div style={{
+                                  position: "absolute", left: 2, right: 2,
+                                  top: Math.max(0, topDrag), height: hDrag,
+                                  borderRadius: 10, background: "#4361ee20",
+                                  border: "2px dashed #4361ee80",
+                                  pointerEvents: "none", zIndex: 40,
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                }}>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: "#4361ee", background: "white", padding: "2px 8px", borderRadius: 6 }}>{dragOverTime}</span>
+                                </div>
+                              );
+                            })()}
+
+                            {/* Appointment cards */}
+                            {sBkgs.map(booking => {
+                              const pos = calculateBookingPosition(booking, activeDay);
+                              const layout = overlapLayout[booking.id] || { left: "0%", width: "100%", zIndex: 1 };
+                              const isCompleted = booking.notes?.includes("[✓ COMPLETADA]");
+                              const isBlocked = booking.title?.includes("🔒 BLOQUEADO") || booking.title?.includes("🌴 VACACIONES");
+                              const isHighlighted = highlightedBookingId === booking.id;
+                              const isDragging = draggedBooking?.id === booking.id;
+                              const isResizing2 = resizingBooking?.id === booking.id;
+                              const bColor = isBlocked ? "#EF4444" : getStylistColor(booking.stylist);
+                              const svcs2 = Array.isArray(booking.services) ? booking.services.map((s: any) => s.name || s).filter(Boolean) : [];
+                              const firstSvc = svcs2[0] || "";
+                              const startT = booking.Hora.slice(0, 5);
+                              const endT = booking.end_time?.slice(0, 5) || "";
+                              const bH = pos.height;
+                              const isOneLine = bH < 46;
+                              const isFull = bH >= 64;
+
+                              return (
+                                <div
+                                  key={booking.id}
+                                  data-booking-id={booking.id}
+                                  draggable={!isBlocked && !isResizing2}
+                                  onDragStart={e => handleDragStart(e, booking)}
+                                  onDragEnd={handleDragEnd}
+                                  className="group/card"
+                                  style={{
+                                    position: "absolute",
+                                    top: pos.top + TOP_PAD,
+                                    height: bH - 3,
+                                    left: `calc(${layout.left} + 2px)`,
+                                    width: `calc(${layout.width} - 4px)`,
+                                    zIndex: isHighlighted ? 20 : layout.zIndex,
+                                    borderRadius: 13,
+                                    border: `1px solid ${isCompleted ? "transparent" : `${bColor}40`}`,
+                                    background: isCompleted
+                                      ? "oklch(0.975 0.004 260)"
+                                      : isBlocked
+                                        ? "#EF444410"
+                                        : `linear-gradient(160deg, ${bColor}25, ${bColor}15)`,
+                                    overflow: "hidden",
+                                    cursor: isBlocked ? "default" : "grab",
+                                    opacity: isDragging ? 0.4 : isCompleted ? 0.72 : 1,
+                                    boxShadow: isHighlighted
+                                      ? `0 0 0 2px #4361ee, 0 4px 12px -4px ${bColor}60`
+                                      : `0 1px 2px rgba(20,22,40,.05)`,
+                                    transition: "transform .13s, box-shadow .13s",
+                                    outline: isResizing2 ? `2px solid #4361ee` : undefined,
+                                  }}
+                                  onClick={e => {
+                                    if (!isBlocked && !isResizing2) {
+                                      if (isMobile) {
+                                        e.stopPropagation();
+                                        if (activeBookingActions === booking.id) {
+                                          setActiveBookingActions(null);
+                                          setSelectedBooking(booking);
+                                          setIsEditDialogOpen(true);
+                                        } else {
+                                          setActiveBookingActions(booking.id);
+                                        }
+                                      } else {
+                                        setSelectedBooking(booking);
+                                        setIsEditDialogOpen(true);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  {/* Left color bar */}
+                                  <div style={{
+                                    position: "absolute", left: 0, top: 0, bottom: 0, width: 5,
+                                    background: `linear-gradient(180deg, ${bColor}, ${bColor}cc)`,
+                                    borderRadius: "0 4px 4px 0",
+                                  }} />
+
+                                  {/* Content */}
+                                  <div style={{
+                                    paddingLeft: 14, paddingRight: 10,
+                                    height: "100%",
+                                    display: "flex", flexDirection: "column", gap: 2,
+                                    ...(isOneLine
+                                      ? { justifyContent: "center" }
+                                      : { paddingTop: 6, paddingBottom: 6 }),
+                                  }}>
+                                    {isOneLine ? (
+                                      <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+                                        <span style={{ fontSize: 11, fontWeight: 800, color: isCompleted ? "oklch(0.62 0.015 265)" : bColor, flexShrink: 0 }}>{startT}</span>
+                                        {isCompleted && <Check style={{ width: 10, height: 10, color: "oklch(0.62 0.15 150)", flexShrink: 0 }} />}
+                                        <span style={{ fontSize: 12.5, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, textDecoration: isCompleted ? "line-through" : "none" }}>
+                                          {booking.customer_name}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <span style={{ fontSize: 11, fontWeight: 800, color: isCompleted ? "oklch(0.62 0.015 265)" : bColor, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                          {startT}<span style={{ opacity: .55 }}>–</span>{endT}
+                                          {isFull && <span style={{ color: "oklch(0.62 0.015 265)", fontWeight: 700 }}> · {booking.total_duration}min</span>}
+                                        </span>
+                                        <span style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textDecoration: isCompleted ? "line-through" : "none" }}>
+                                          {isCompleted && <span style={{ color: "oklch(0.62 0.15 150)", marginRight: 4 }}>✓</span>}
+                                          {booking.customer_name}
+                                        </span>
+                                        {isFull && (
+                                          <span style={{ fontSize: 12, fontWeight: 600, color: "oklch(0.45 0.02 265)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                            {isBlocked ? booking.title : firstSvc}
+                                            {svcs2.length > 1 && <span style={{ opacity: .6 }}> +{svcs2.length - 1}</span>}
+                                          </span>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+
+                                  {/* Action buttons (hover on desktop, tap on mobile) */}
+                                  {!isBlocked && (!isMobile || activeBookingActions === booking.id) && (
+                                    <div className={cn(
+                                      "absolute top-0.5 right-0.5 flex items-center gap-0.5 z-20 transition-opacity",
+                                      isMobile ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"
+                                    )}>
+                                      <button
+                                        onClick={e => { e.stopPropagation(); handleMarkCompleted(booking); if (isMobile) setActiveBookingActions(null); }}
+                                        className={cn("p-1 rounded-md transition-all", isCompleted ? "bg-green-500 text-white" : "bg-foreground/10 text-foreground/60 hover:bg-green-500 hover:text-white")}
+                                        title={isCompleted ? "Desmarcar" : "Completar"}
+                                      ><Check style={{ width: 12, height: 12 }} /></button>
+                                      {!isCompleted && onNavigateToCash && (
+                                        <button
+                                          onClick={e => {
+                                            e.stopPropagation();
+                                            sessionStorage.setItem("pendingChargeBooking", JSON.stringify({ id: booking.id, customer_name: booking.customer_name, stylist: booking.stylist, services: booking.services, fecha: booking.Fecha, hora: booking.Hora }));
+                                            if (isMobile) setActiveBookingActions(null);
+                                            onNavigateToCash();
+                                          }}
+                                          className="p-1 rounded-md bg-foreground/10 text-foreground/60 hover:bg-emerald-500 hover:text-white transition-all"
+                                          title="Cobrar"
+                                        ><Banknote style={{ width: 12, height: 12 }} /></button>
+                                      )}
+                                      <button
+                                        onClick={e => { e.stopPropagation(); if (isMobile) setActiveBookingActions(null); handleDeleteBooking(booking); }}
+                                        className="p-1 rounded-md bg-foreground/10 text-foreground/60 hover:bg-red-500 hover:text-white transition-all"
+                                        title="Eliminar"
+                                      ><Trash2 style={{ width: 12, height: 12 }} /></button>
+                                    </div>
+                                  )}
+
+                                  {/* Unblock button */}
+                                  {isBlocked && (
+                                    <div className="absolute top-0.5 right-0.5 z-20">
+                                      <button
+                                        onClick={e => { e.stopPropagation(); handleDeleteBooking(booking); }}
+                                        className="p-1 rounded-md bg-white/20 text-white hover:bg-white hover:text-red-600 transition-all"
+                                        title="Desbloquear"
+                                      ><Trash2 style={{ width: 12, height: 12 }} /></button>
+                                    </div>
+                                  )}
+
+                                  {/* Resize handle */}
+                                  {!isBlocked && (
+                                    <div
+                                      className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity z-10"
+                                      onMouseDown={e => handleResizeStart(e, booking)}
+                                    >
+                                      <div className="w-8 h-0.5 rounded-full bg-foreground/20" />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+
+                      {/* Break label centered across all columns */}
+                      {breakTopPx !== null && breakH > 0 && (
+                        <div style={{
+                          position: "absolute", left: 0, right: 0,
+                          top: breakTopPx + breakH / 2,
+                          display: "flex", justifyContent: "center",
+                          transform: "translateY(-50%)",
+                          pointerEvents: "none", zIndex: 2,
+                        }}>
+                          <span className="ag-break-pill">Descanso</span>
+                        </div>
+                      )}
+
+                      {/* Current time red line */}
+                      {nowTopPx !== null && (
+                        <div style={{
+                          position: "absolute", left: 0, right: 0,
+                          top: nowTopPx,
+                          borderTop: "2px solid #ef4444",
+                          zIndex: 5, pointerEvents: "none",
+                          boxShadow: "0 0 14px 1px rgba(239,68,68,.45)",
+                        }}>
+                          <span style={{ position: "absolute", left: -4, top: -4, width: 9, height: 9, borderRadius: "50%", background: "#ef4444", display: "block", boxShadow: "0 0 0 4px rgba(239,68,68,.25)" }} />
+                          <span style={{ position: "absolute", left: 8, top: -9, background: "#ef4444", color: "#fff", fontSize: 9, fontWeight: 800, letterSpacing: ".08em", borderRadius: 5, padding: "2px 6px" }}>AHORA</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      })()}
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
