@@ -6,7 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Loader2,
   Home,
-  Scissors,
+  Calendar,
+  Wallet,
   Users,
   Menu,
   ShoppingBag,
