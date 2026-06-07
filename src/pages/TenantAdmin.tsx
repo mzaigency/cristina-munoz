@@ -535,7 +535,7 @@ export default function TenantAdmin() {
       <AdminCommandPalette
         tenantSlug={slug || ""}
         onNavigate={(path) => navigate(path)}
-        onNewBooking={() => goToSection("inicio", "agenda")}
+        onNewBooking={() => goToSection("agenda", "dia")}
         onViewWeb={() => navigate(`/${slug}`)}
         onSignOut={handleSignOut}
       />
@@ -662,7 +662,7 @@ export default function TenantAdmin() {
           </span>
           <button
             className="gp-new-cita-btn"
-            onClick={() => goToSection("inicio", "agenda")}
+            onClick={() => goToSection("agenda", "dia")}
           >
             <Sparkles className="h-4 w-4" />
             <span className="gp-hide-sm">Nueva cita</span>
