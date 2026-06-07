@@ -216,19 +216,24 @@ export default function TenantAdmin() {
   );
 
   const navItems: NavItem[] = useMemo(() => {
-    const clientsBadge = notificationCounts.messages + notificationCounts.reviews;
+    const clientsBadge = notificationCounts.messages;
+    const agendaBadge = waitlistCount;
+    const cajaBadge = unseenOrders;
+    const marketingBadge = notificationCounts.reviews;
     const allItems: NavItem[] = [
       { value: "inicio", label: "Inicio", icon: <Home className="h-4 w-4" />, badge: notificationCounts.agenda },
+      { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: agendaBadge },
+      { value: "caja", label: "Caja", icon: <Wallet className="h-4 w-4" />, badge: cajaBadge },
       { value: "clientes", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: clientsBadge },
       { value: "catalogo", label: "Catálogo", icon: <ShoppingBag className="h-4 w-4" /> },
-      { value: "marketing", label: "Marketing", icon: <Megaphone className="h-4 w-4" /> },
+      { value: "marketing", label: "Marketing", icon: <Megaphone className="h-4 w-4" />, badge: marketingBadge },
       { value: "negocio", label: "Negocio", icon: <Briefcase className="h-4 w-4" /> },
     ];
     if (isStylist && !isAdmin) {
       return allItems.filter((item) => !["marketing", "negocio"].includes(item.value));
     }
     return allItems;
-  }, [notificationCounts, isAdmin, isStylist]);
+  }, [notificationCounts, isAdmin, isStylist, waitlistCount, unseenOrders]);
 
   const tabOrder = navItems.map((item) => item.value);
 
