@@ -253,15 +253,24 @@ export default function TenantAdmin() {
     enabled: isMobile,
   });
 
-  // Normalize URL: if user lands on /admin/:slug without section, push to /inicio
+  // Normalize URL: default to /inicio, redirect legacy combos, validate section.
   useEffect(() => {
     if (!slug) return;
     if (!sectionParam) {
       navigate(`/admin/${slug}/inicio`, { replace: true });
-    } else if (!VALID_SECTIONS.includes(sectionParam as SectionValue)) {
+      return;
+    }
+    // Transparent redirect for legacy URL combos (old links / bookmarks)
+    const legacyKey = `${sectionParam}/${subTabParam || ""}`.replace(/\/$/, "");
+    const legacy = LEGACY_URL_REDIRECTS[legacyKey];
+    if (legacy) {
+      navigate(`/admin/${slug}/${legacy.section}/${legacy.subTab}`, { replace: true });
+      return;
+    }
+    if (!VALID_SECTIONS.includes(sectionParam as SectionValue)) {
       navigate(`/admin/${slug}/inicio`, { replace: true });
     }
-  }, [slug, sectionParam, navigate]);
+  }, [slug, sectionParam, subTabParam, navigate]);
 
   useEffect(() => {
     if (!slug) {
