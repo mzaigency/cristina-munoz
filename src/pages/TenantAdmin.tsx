@@ -386,6 +386,27 @@ export default function TenantAdmin() {
             onSelectClient={() => goToSection("clientes", "directorio")}
           />
         );
+      case "agenda":
+        return (
+          <AgendaSection
+            key={refreshKey}
+            tenantId={tenant.id}
+            subTab={activeSubTab}
+            onSubTabChange={(t) => goToSection("agenda", t)}
+            onSelectClient={() => goToSection("clientes", "directorio")}
+            hideTabs
+          />
+        );
+      case "caja":
+        return (
+          <CajaSection
+            key={refreshKey}
+            tenantId={tenant.id}
+            subTab={activeSubTab}
+            onSubTabChange={(t) => goToSection("caja", t)}
+            hideTabs
+          />
+        );
       case "clientes":
         return (
           <ClientsSection
