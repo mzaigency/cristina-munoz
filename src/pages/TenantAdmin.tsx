@@ -38,6 +38,8 @@ import {
   MarketingSection,
   InicioSection,
   NegocioSection,
+  AgendaSection,
+  CajaSection,
 } from "@/components/admin/sections";
 
 interface Tenant {
@@ -48,7 +50,14 @@ interface Tenant {
   primary_color: string | null;
 }
 
-type SectionValue = "inicio" | "clientes" | "catalogo" | "marketing" | "negocio";
+type SectionValue =
+  | "inicio"
+  | "agenda"
+  | "caja"
+  | "clientes"
+  | "catalogo"
+  | "marketing"
+  | "negocio";
 
 interface NavItem {
   value: SectionValue;
@@ -57,36 +66,80 @@ interface NavItem {
   badge?: number;
 }
 
-const VALID_SECTIONS: SectionValue[] = ["inicio", "clientes", "catalogo", "marketing", "negocio"];
+const VALID_SECTIONS: SectionValue[] = [
+  "inicio",
+  "agenda",
+  "caja",
+  "clientes",
+  "catalogo",
+  "marketing",
+  "negocio",
+];
 
-// Map legacy dashboard/tour navigation keys → new (section, subTab) URL slugs
+// Map legacy dashboard/tour navigation keys → new (section, subTab) URL slugs.
+// Covers both old code-string keys AND old URL paths (inicio/agenda, clientes/resenas, etc.)
 const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }> = {
+  // Inicio (legacy)
   dashboard: { section: "inicio", subTab: "resumen" },
-  calendar: { section: "inicio", subTab: "agenda" },
-  agenda: { section: "inicio", subTab: "agenda" },
-  cash: { section: "inicio", subTab: "caja" },
-  waitlist: { section: "inicio", subTab: "espera" },
-  orders: { section: "inicio", subTab: "pedidos" },
+  resumen: { section: "inicio", subTab: "resumen" },
+  actividad: { section: "inicio", subTab: "actividad" },
+  // Agenda (now top-level)
+  calendar: { section: "agenda", subTab: "dia" },
+  agenda: { section: "agenda", subTab: "dia" },
+  dia: { section: "agenda", subTab: "dia" },
+  semana: { section: "agenda", subTab: "semana" },
+  waitlist: { section: "agenda", subTab: "espera" },
+  espera: { section: "agenda", subTab: "espera" },
+  // Caja (now top-level)
+  cash: { section: "caja", subTab: "cobros" },
+  caja: { section: "caja", subTab: "cobros" },
+  cobros: { section: "caja", subTab: "cobros" },
+  orders: { section: "caja", subTab: "pedidos" },
+  pedidos: { section: "caja", subTab: "pedidos" },
+  cierre: { section: "caja", subTab: "cierre" },
+  // Clientes
   clients: { section: "clientes", subTab: "directorio" },
   directory: { section: "clientes", subTab: "directorio" },
+  directorio: { section: "clientes", subTab: "directorio" },
   messages: { section: "clientes", subTab: "mensajes" },
-  reviews: { section: "clientes", subTab: "resenas" },
+  mensajes: { section: "clientes", subTab: "mensajes" },
+  // Reseñas now in Marketing
+  reviews: { section: "marketing", subTab: "resenas" },
+  resenas: { section: "marketing", subTab: "resenas" },
+  // Catálogo
   services: { section: "catalogo", subTab: "services" },
   products: { section: "catalogo", subTab: "products" },
   packages: { section: "catalogo", subTab: "packages" },
-  promos: { section: "catalogo", subTab: "promos" },
   catalog: { section: "catalogo" },
+  // Promos now in Marketing
+  promos: { section: "marketing", subTab: "promos" },
+  // Marketing
   marketing: { section: "marketing" },
   posts: { section: "marketing", subTab: "posts" },
   qr: { section: "marketing", subTab: "qr" },
   whatsapp: { section: "marketing", subTab: "posts" },
+  // Negocio
   team: { section: "negocio", subTab: "equipo" },
+  equipo: { section: "negocio", subTab: "equipo" },
   stylists: { section: "negocio", subTab: "equipo" },
   hours: { section: "negocio", subTab: "equipo" },
   reports: { section: "negocio", subTab: "informes" },
+  informes: { section: "negocio", subTab: "informes" },
   stats: { section: "negocio", subTab: "informes" },
   goals: { section: "negocio", subTab: "informes" },
   settings: { section: "negocio", subTab: "ajustes" },
+  ajustes: { section: "negocio", subTab: "ajustes" },
+};
+
+// Legacy URL combos that must be transparently redirected to their new home.
+// Triggered from the URL normalization effect.
+const LEGACY_URL_REDIRECTS: Record<string, { section: SectionValue; subTab: string }> = {
+  "inicio/agenda": { section: "agenda", subTab: "dia" },
+  "inicio/caja": { section: "caja", subTab: "cobros" },
+  "inicio/espera": { section: "agenda", subTab: "espera" },
+  "inicio/pedidos": { section: "caja", subTab: "pedidos" },
+  "clientes/resenas": { section: "marketing", subTab: "resenas" },
+  "catalogo/promos": { section: "marketing", subTab: "promos" },
 };
 
 export default function TenantAdmin() {
