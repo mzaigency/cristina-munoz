@@ -6,7 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Loader2,
   Home,
-  Scissors,
+  Calendar,
+  Wallet,
   Users,
   Menu,
   ShoppingBag,
@@ -37,6 +38,8 @@ import {
   MarketingSection,
   InicioSection,
   NegocioSection,
+  AgendaSection,
+  CajaSection,
 } from "@/components/admin/sections";
 
 interface Tenant {
@@ -47,7 +50,14 @@ interface Tenant {
   primary_color: string | null;
 }
 
-type SectionValue = "inicio" | "clientes" | "catalogo" | "marketing" | "negocio";
+type SectionValue =
+  | "inicio"
+  | "agenda"
+  | "caja"
+  | "clientes"
+  | "catalogo"
+  | "marketing"
+  | "negocio";
 
 interface NavItem {
   value: SectionValue;
@@ -56,36 +66,80 @@ interface NavItem {
   badge?: number;
 }
 
-const VALID_SECTIONS: SectionValue[] = ["inicio", "clientes", "catalogo", "marketing", "negocio"];
+const VALID_SECTIONS: SectionValue[] = [
+  "inicio",
+  "agenda",
+  "caja",
+  "clientes",
+  "catalogo",
+  "marketing",
+  "negocio",
+];
 
-// Map legacy dashboard/tour navigation keys → new (section, subTab) URL slugs
+// Map legacy dashboard/tour navigation keys → new (section, subTab) URL slugs.
+// Covers both old code-string keys AND old URL paths (inicio/agenda, clientes/resenas, etc.)
 const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }> = {
+  // Inicio (legacy)
   dashboard: { section: "inicio", subTab: "resumen" },
-  calendar: { section: "inicio", subTab: "agenda" },
-  agenda: { section: "inicio", subTab: "agenda" },
-  cash: { section: "inicio", subTab: "caja" },
-  waitlist: { section: "inicio", subTab: "espera" },
-  orders: { section: "inicio", subTab: "pedidos" },
+  resumen: { section: "inicio", subTab: "resumen" },
+  actividad: { section: "inicio", subTab: "actividad" },
+  // Agenda (now top-level)
+  calendar: { section: "agenda", subTab: "dia" },
+  agenda: { section: "agenda", subTab: "dia" },
+  dia: { section: "agenda", subTab: "dia" },
+  semana: { section: "agenda", subTab: "semana" },
+  waitlist: { section: "agenda", subTab: "espera" },
+  espera: { section: "agenda", subTab: "espera" },
+  // Caja (now top-level)
+  cash: { section: "caja", subTab: "cobros" },
+  caja: { section: "caja", subTab: "cobros" },
+  cobros: { section: "caja", subTab: "cobros" },
+  orders: { section: "caja", subTab: "pedidos" },
+  pedidos: { section: "caja", subTab: "pedidos" },
+  cierre: { section: "caja", subTab: "cierre" },
+  // Clientes
   clients: { section: "clientes", subTab: "directorio" },
   directory: { section: "clientes", subTab: "directorio" },
+  directorio: { section: "clientes", subTab: "directorio" },
   messages: { section: "clientes", subTab: "mensajes" },
-  reviews: { section: "clientes", subTab: "resenas" },
+  mensajes: { section: "clientes", subTab: "mensajes" },
+  // Reseñas now in Marketing
+  reviews: { section: "marketing", subTab: "resenas" },
+  resenas: { section: "marketing", subTab: "resenas" },
+  // Catálogo
   services: { section: "catalogo", subTab: "services" },
   products: { section: "catalogo", subTab: "products" },
   packages: { section: "catalogo", subTab: "packages" },
-  promos: { section: "catalogo", subTab: "promos" },
   catalog: { section: "catalogo" },
+  // Promos now in Marketing
+  promos: { section: "marketing", subTab: "promos" },
+  // Marketing
   marketing: { section: "marketing" },
   posts: { section: "marketing", subTab: "posts" },
   qr: { section: "marketing", subTab: "qr" },
   whatsapp: { section: "marketing", subTab: "posts" },
+  // Negocio
   team: { section: "negocio", subTab: "equipo" },
+  equipo: { section: "negocio", subTab: "equipo" },
   stylists: { section: "negocio", subTab: "equipo" },
   hours: { section: "negocio", subTab: "equipo" },
   reports: { section: "negocio", subTab: "informes" },
+  informes: { section: "negocio", subTab: "informes" },
   stats: { section: "negocio", subTab: "informes" },
   goals: { section: "negocio", subTab: "informes" },
   settings: { section: "negocio", subTab: "ajustes" },
+  ajustes: { section: "negocio", subTab: "ajustes" },
+};
+
+// Legacy URL combos that must be transparently redirected to their new home.
+// Triggered from the URL normalization effect.
+const LEGACY_URL_REDIRECTS: Record<string, { section: SectionValue; subTab: string }> = {
+  "inicio/agenda": { section: "agenda", subTab: "dia" },
+  "inicio/caja": { section: "caja", subTab: "cobros" },
+  "inicio/espera": { section: "agenda", subTab: "espera" },
+  "inicio/pedidos": { section: "caja", subTab: "pedidos" },
+  "clientes/resenas": { section: "marketing", subTab: "resenas" },
+  "catalogo/promos": { section: "marketing", subTab: "promos" },
 };
 
 export default function TenantAdmin() {
@@ -162,19 +216,24 @@ export default function TenantAdmin() {
   );
 
   const navItems: NavItem[] = useMemo(() => {
-    const clientsBadge = notificationCounts.messages + notificationCounts.reviews;
+    const clientsBadge = notificationCounts.messages;
+    const agendaBadge = waitlistCount;
+    const cajaBadge = unseenOrders;
+    const marketingBadge = notificationCounts.reviews;
     const allItems: NavItem[] = [
       { value: "inicio", label: "Inicio", icon: <Home className="h-4 w-4" />, badge: notificationCounts.agenda },
+      { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: agendaBadge },
+      { value: "caja", label: "Caja", icon: <Wallet className="h-4 w-4" />, badge: cajaBadge },
       { value: "clientes", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: clientsBadge },
       { value: "catalogo", label: "Catálogo", icon: <ShoppingBag className="h-4 w-4" /> },
-      { value: "marketing", label: "Marketing", icon: <Megaphone className="h-4 w-4" /> },
+      { value: "marketing", label: "Marketing", icon: <Megaphone className="h-4 w-4" />, badge: marketingBadge },
       { value: "negocio", label: "Negocio", icon: <Briefcase className="h-4 w-4" /> },
     ];
     if (isStylist && !isAdmin) {
       return allItems.filter((item) => !["marketing", "negocio"].includes(item.value));
     }
     return allItems;
-  }, [notificationCounts, isAdmin, isStylist]);
+  }, [notificationCounts, isAdmin, isStylist, waitlistCount, unseenOrders]);
 
   const tabOrder = navItems.map((item) => item.value);
 
@@ -194,15 +253,24 @@ export default function TenantAdmin() {
     enabled: isMobile,
   });
 
-  // Normalize URL: if user lands on /admin/:slug without section, push to /inicio
+  // Normalize URL: default to /inicio, redirect legacy combos, validate section.
   useEffect(() => {
     if (!slug) return;
     if (!sectionParam) {
       navigate(`/admin/${slug}/inicio`, { replace: true });
-    } else if (!VALID_SECTIONS.includes(sectionParam as SectionValue)) {
+      return;
+    }
+    // Transparent redirect for legacy URL combos (old links / bookmarks)
+    const legacyKey = `${sectionParam}/${subTabParam || ""}`.replace(/\/$/, "");
+    const legacy = LEGACY_URL_REDIRECTS[legacyKey];
+    if (legacy) {
+      navigate(`/admin/${slug}/${legacy.section}/${legacy.subTab}`, { replace: true });
+      return;
+    }
+    if (!VALID_SECTIONS.includes(sectionParam as SectionValue)) {
       navigate(`/admin/${slug}/inicio`, { replace: true });
     }
-  }, [slug, sectionParam, navigate]);
+  }, [slug, sectionParam, subTabParam, navigate]);
 
   useEffect(() => {
     if (!slug) {
@@ -263,7 +331,7 @@ export default function TenantAdmin() {
   useEffect(() => {
     if (!tenant?.id) return;
     if (activeSection === "clientes") markSectionViewed("clients");
-    else if (activeSection === "inicio") markSectionViewed("agenda");
+    else if (activeSection === "agenda" || activeSection === "inicio") markSectionViewed("agenda");
     else markSectionViewed(activeSection as any);
   }, [activeSection, tenant?.id]);
 
@@ -316,6 +384,27 @@ export default function TenantAdmin() {
               else handleNavigate(path);
             }}
             onSelectClient={() => goToSection("clientes", "directorio")}
+          />
+        );
+      case "agenda":
+        return (
+          <AgendaSection
+            key={refreshKey}
+            tenantId={tenant.id}
+            subTab={activeSubTab}
+            onSubTabChange={(t) => goToSection("agenda", t)}
+            onSelectClient={() => goToSection("clientes", "directorio")}
+            hideTabs
+          />
+        );
+      case "caja":
+        return (
+          <CajaSection
+            key={refreshKey}
+            tenantId={tenant.id}
+            subTab={activeSubTab}
+            onSubTabChange={(t) => goToSection("caja", t)}
+            hideTabs
           />
         );
       case "clientes":
@@ -446,7 +535,7 @@ export default function TenantAdmin() {
       <AdminCommandPalette
         tenantSlug={slug || ""}
         onNavigate={(path) => navigate(path)}
-        onNewBooking={() => goToSection("inicio", "agenda")}
+        onNewBooking={() => goToSection("agenda", "dia")}
         onViewWeb={() => navigate(`/${slug}`)}
         onSignOut={handleSignOut}
       />
@@ -573,7 +662,7 @@ export default function TenantAdmin() {
           </span>
           <button
             className="gp-new-cita-btn"
-            onClick={() => goToSection("inicio", "agenda")}
+            onClick={() => goToSection("agenda", "dia")}
           >
             <Sparkles className="h-4 w-4" />
             <span className="gp-hide-sm">Nueva cita</span>

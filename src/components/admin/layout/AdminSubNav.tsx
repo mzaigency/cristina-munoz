@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Calendar,
+  CalendarDays,
   Wallet,
   Clock,
   ShoppingCart,
@@ -17,6 +18,8 @@ import {
   BarChart3,
   Settings,
   Activity,
+  Receipt,
+  ClipboardList,
   Lock,
   type LucideIcon,
 } from "lucide-react";
@@ -25,7 +28,15 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { NotifBadge } from "./NotifBadge";
 import { usePlanLimits, type PlanFeature } from "@/hooks/usePlanLimits";
 
-export type AdminSection = "inicio" | "clientes" | "catalogo" | "marketing" | "negocio";
+export type AdminSection =
+  | "inicio"
+  | "agenda"
+  | "caja"
+  | "clientes"
+  | "catalogo"
+  | "marketing"
+  | "negocio";
+
 export type BadgeKey = "waitlist" | "orders" | "messages" | "reviews";
 
 export interface AdminSubTabDef {
@@ -40,24 +51,30 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
   inicio: [
     { value: "resumen", label: "Resumen", icon: LayoutDashboard },
     { value: "actividad", label: "Actividad", icon: Activity },
-    { value: "agenda", label: "Agenda", icon: Calendar },
-    { value: "caja", label: "Caja", icon: Wallet, requiredFeature: "cash_register" },
+  ],
+  agenda: [
+    { value: "dia", label: "Día", icon: Calendar },
+    { value: "semana", label: "Semana", icon: CalendarDays },
     { value: "espera", label: "Espera", icon: Clock, badgeKey: "waitlist" },
+  ],
+  caja: [
+    { value: "cobros", label: "Cobros", icon: Wallet, requiredFeature: "cash_register" },
     { value: "pedidos", label: "Pedidos", icon: ShoppingCart, badgeKey: "orders" },
+    { value: "cierre", label: "Cierre", icon: Receipt, requiredFeature: "cash_register" },
   ],
   clientes: [
     { value: "directorio", label: "Directorio", icon: UserCircle },
     { value: "mensajes", label: "Mensajes", icon: MessageCircle, badgeKey: "messages" },
-    { value: "resenas", label: "Reseñas", icon: Star, badgeKey: "reviews" },
   ],
   catalogo: [
     { value: "services", label: "Servicios", icon: Scissors },
     { value: "products", label: "Productos", icon: ShoppingBag },
     { value: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages" },
-    { value: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions" },
   ],
   marketing: [
     { value: "posts", label: "Posts", icon: ImagePlus },
+    { value: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions" },
+    { value: "resenas", label: "Reseñas", icon: Star, badgeKey: "reviews" },
     { value: "qr", label: "Tarjetas QR", icon: QrCode },
   ],
   negocio: [

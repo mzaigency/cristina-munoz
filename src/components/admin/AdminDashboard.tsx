@@ -312,8 +312,8 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
   }
 
   const navOrders = () => {
-    sessionStorage.setItem("openAgendaSubTab", "orders");
-    onNavigate("agenda");
+    // Pedidos moved from Agenda → Caja in the 7-section IA.
+    onNavigate("pedidos");
   };
 
   return (
