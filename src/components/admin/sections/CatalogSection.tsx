@@ -2,11 +2,10 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Scissors, ShoppingBag, Package, Percent, Lock, Sparkles } from "lucide-react";
+import { Scissors, ShoppingBag, Package, Lock, Sparkles } from "lucide-react";
 import { ServicesManager } from "../ServicesManager";
 import { ProductsManager } from "../ProductsManager";
 import { ServicePackagesManager } from "../ServicePackagesManager";
-import { PromotionsManager } from "../PromotionsManager";
 import { LockedFeature } from "../LockedFeature";
 import { AgendaImporter } from "../import/AgendaImporter";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
@@ -19,7 +18,7 @@ interface CatalogSectionProps {
   hideTabs?: boolean;
 }
 
-type CatalogTab = "services" | "products" | "packages" | "promos";
+type CatalogTab = "services" | "products" | "packages";
 
 interface TabConfig {
   id: CatalogTab;
@@ -29,6 +28,10 @@ interface TabConfig {
   requiredPlan?: string;
 }
 
+/**
+ * Catálogo section. Promociones moved to Marketing › Promos in the new IA;
+ * legacy URLs are transparently redirected by TenantAdmin.
+ */
 const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogSectionProps) => {
   const [internalTab, setInternalTab] = useState<CatalogTab>("services");
   const activeTab: CatalogTab = (subTab as CatalogTab) || internalTab;
@@ -41,7 +44,7 @@ const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogS
   useEffect(() => {
     if (subTab) return;
     const legacy = sessionStorage.getItem("openCatalogSubTab");
-    if (legacy && ["services", "products", "packages", "promos"].includes(legacy)) {
+    if (legacy && ["services", "products", "packages"].includes(legacy)) {
       setInternalTab(legacy as CatalogTab);
       sessionStorage.removeItem("openCatalogSubTab");
     }
@@ -51,7 +54,6 @@ const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogS
     { id: "services", label: "Servicios", icon: Scissors },
     { id: "products", label: "Productos", icon: ShoppingBag },
     { id: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages", requiredPlan: "pro" },
-    { id: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions", requiredPlan: "pro" },
   ];
 
   const isTabLocked = (tab: TabConfig): boolean => {
@@ -126,17 +128,10 @@ const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogS
             <ServicePackagesManager tenantId={tenantId} />
           )}
         </TabsContent>
-
-        <TabsContent value="promos" className="mt-4">
-          {isTabLocked(tabs[3]) ? (
-            <LockedFeature featureName="Promociones" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
-          ) : (
-            <PromotionsManager tenantId={tenantId} />
-          )}
-        </TabsContent>
       </Tabs>
     </div>
   );
 };
 
 export default CatalogSection;
+
