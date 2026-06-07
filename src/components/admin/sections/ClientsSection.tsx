@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCircle, Star, MessageCircle } from "lucide-react";
+import { UserCircle, MessageCircle } from "lucide-react";
 import { ClientsCRM } from "../ClientsCRM";
-import { ReviewsManager } from "../ReviewsManager";
 import { MessagesManager } from "../MessagesManager";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -15,25 +14,27 @@ interface ClientsSectionProps {
   hideTabs?: boolean;
 }
 
-type ClientsTab = "directory" | "reviews" | "messages";
+type ClientsTab = "directory" | "messages";
 
+/**
+ * Clientes section. Reviews moved to Marketing › Reseñas in the new IA;
+ * legacy URLs are transparently redirected by TenantAdmin.
+ */
 const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange, hideTabs }: ClientsSectionProps) => {
   const [internalTab, setInternalTab] = useState<ClientsTab>("directory");
-  // Map URL slugs (directorio/mensajes/resenas) to internal ids
-  const slugToId: Record<string, ClientsTab> = { directorio: "directory", mensajes: "messages", resenas: "reviews" };
-  const idToSlug: Record<ClientsTab, string> = { directory: "directorio", messages: "mensajes", reviews: "resenas" };
+  const slugToId: Record<string, ClientsTab> = { directorio: "directory", mensajes: "messages" };
+  const idToSlug: Record<ClientsTab, string> = { directory: "directorio", messages: "mensajes" };
   const activeTab: ClientsTab = (subTab && slugToId[subTab]) || internalTab;
   const setActiveTab = (t: ClientsTab) => {
     if (onSubTabChange) onSubTabChange(idToSlug[t]);
     else setInternalTab(t);
   };
   const [unreadMessages, setUnreadMessages] = useState(0);
-  const [pendingReviews, setPendingReviews] = useState(0);
 
   useEffect(() => {
     if (subTab) return;
     const legacy = sessionStorage.getItem("openClientsSubTab");
-    if (legacy && ["directory", "reviews", "messages"].includes(legacy)) {
+    if (legacy && ["directory", "messages"].includes(legacy)) {
       setInternalTab(legacy as ClientsTab);
       sessionStorage.removeItem("openClientsSubTab");
     }
@@ -41,30 +42,17 @@ const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange, hid
 
   useEffect(() => {
     const fetchBadges = async () => {
-      const [msgResult, reviewResult] = await Promise.all([
-        supabase
-          .from("conversations")
-          .select("unread_count_salon")
-          .eq("tenant_id", tenantId),
-        supabase
-          .from("reviews")
-          .select("id", { count: "exact", head: true })
-          .eq("tenant_id", tenantId)
-          .eq("approved", false),
-      ]);
-
-      setUnreadMessages(
-        (msgResult.data || []).reduce((sum, c) => sum + (c.unread_count_salon || 0), 0)
-      );
-      setPendingReviews(reviewResult.count || 0);
+      const { data } = await supabase
+        .from("conversations")
+        .select("unread_count_salon")
+        .eq("tenant_id", tenantId);
+      setUnreadMessages((data || []).reduce((sum, c) => sum + (c.unread_count_salon || 0), 0));
     };
-
     fetchBadges();
   }, [tenantId]);
 
   const tabs = [
     { id: "directory" as ClientsTab, label: "Directorio", icon: UserCircle, badge: 0 },
-    { id: "reviews" as ClientsTab, label: "Reseñas", icon: Star, badge: pendingReviews },
     { id: "messages" as ClientsTab, label: "Mensajes", icon: MessageCircle, badge: unreadMessages },
   ];
 
@@ -96,10 +84,6 @@ const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange, hid
 
         <TabsContent value="directory" className="mt-4">
           <ClientsCRM tenantId={tenantId} initialClientId={initialClientId} />
-        </TabsContent>
-
-        <TabsContent value="reviews" className="mt-4">
-          <ReviewsManager tenantId={tenantId} />
         </TabsContent>
 
         <TabsContent value="messages" className="mt-4">
