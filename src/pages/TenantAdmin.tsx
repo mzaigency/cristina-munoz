@@ -331,7 +331,7 @@ export default function TenantAdmin() {
   useEffect(() => {
     if (!tenant?.id) return;
     if (activeSection === "clientes") markSectionViewed("clients");
-    else if (activeSection === "inicio") markSectionViewed("agenda");
+    else if (activeSection === "agenda" || activeSection === "inicio") markSectionViewed("agenda");
     else markSectionViewed(activeSection as any);
   }, [activeSection, tenant?.id]);
 
