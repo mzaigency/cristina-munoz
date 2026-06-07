@@ -4,10 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-  LogOut,
   Loader2,
   Home,
-  ExternalLink,
   Scissors,
   Users,
   Menu,
@@ -16,12 +14,11 @@ import {
   UserCircle,
   Sparkles,
   Briefcase,
+  ChevronDown,
 } from "lucide-react";
 import { AdminHelpMenu } from "@/components/admin/layout/AdminHelpMenu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
@@ -30,10 +27,9 @@ import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpire
 import { NotifBadge } from "@/components/admin/layout/NotifBadge";
 import { AdminAccountMenu } from "@/components/admin/layout/AdminAccountMenu";
 import { AdminCommandPalette } from "@/components/admin/layout/AdminCommandPalette";
-import { AdminSubNav, getDefaultSubTab, type AdminSection } from "@/components/admin/layout/AdminSubNav";
+import { AdminSubNav, ADMIN_SUB_NAV, getDefaultSubTab, type AdminSection } from "@/components/admin/layout/AdminSubNav";
 import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { motion, AnimatePresence } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 
 import {
   ClientsSection,
@@ -98,6 +94,7 @@ export default function TenantAdmin() {
   const [tenantLoading, setTenantLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const navigate = useNavigate();
   const { adminSlug: slug, section: sectionParam, subTab: subTabParam } =
@@ -435,8 +432,17 @@ export default function TenantAdmin() {
     );
   }
 
+  const activeSectionLabel = navItems.find((i) => i.value === activeSection)?.label || "Inicio";
+  const activeSubLabel =
+    ADMIN_SUB_NAV[activeSection as AdminSection]?.find((s) => s.value === activeSubTab)?.label
+    || activeSectionLabel;
+
+  const primaryNav = navItems.slice(0, 4);
+  const extraNav = navItems.slice(4);
+  const extraActive = extraNav.some((n) => n.value === activeSection);
+
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="gp-shell">
       <AdminCommandPalette
         tenantSlug={slug || ""}
         onNavigate={(path) => navigate(path)}
@@ -444,176 +450,153 @@ export default function TenantAdmin() {
         onViewWeb={() => navigate(`/${slug}`)}
         onSignOut={handleSignOut}
       />
-      {/* Liquid Glass ambient background */}
-      <div className="fixed inset-0 -z-10 bg-background">
-        <div className="absolute inset-0 opacity-40 dark:opacity-20">
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/15 blur-[100px] animate-[float_20s_ease-in-out_infinite]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] rounded-full bg-secondary/20 blur-[100px] animate-[float_25s_ease-in-out_infinite_reverse]" />
-          <div className="absolute top-[40%] left-[50%] w-[35%] h-[35%] rounded-full bg-accent/15 blur-[80px] animate-[float_18s_ease-in-out_infinite_2s]" />
+
+      {/* ── Desktop Sidebar ── */}
+      <aside className="gp-side">
+        <div className="gp-brand">
+          {tenant.logo_url ? (
+            <img
+              src={tenant.logo_url}
+              alt={tenant.name}
+              className="gp-logo"
+              style={{ objectFit: "cover", padding: 0 }}
+            />
+          ) : (
+            <span className="gp-logo">G</span>
+          )}
+          <span className="gp-brand-tx">
+            <span className="gp-brand-name">{tenant.name}</span>
+            <span className="gp-brand-sub">Panel de administración</span>
+          </span>
         </div>
-      </div>
 
-      {/* Mobile Sidebar */}
-      {isMobile && (
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="w-[280px] p-0 flex flex-col [&>button]:hidden">
-            <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>
-              {tenant.logo_url ? (
-                <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20 shrink-0" />
-              ) : (
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Scissors className="h-5 w-5 text-primary" />
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <h2 className="text-sm font-bold text-foreground truncate">{tenant.name}</h2>
-                  {subscriptionPlan && (
-                    <Badge
-                      variant="secondary"
-                      className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wide bg-gradient-to-r from-primary/15 to-purple-500/15 text-primary border-0 shrink-0"
-                    >
-                      {subscriptionPlan}
-                    </Badge>
+        <nav className="gp-nav">
+          {navItems.map((item) => {
+            const isActive = activeSection === item.value;
+            const subs = ADMIN_SUB_NAV[item.value as AdminSection] || [];
+            const badgeCount = typeof item.badge === "number" ? item.badge : 0;
+            return (
+              <div key={item.value}>
+                <button
+                  className={`gp-navitem${isActive ? " on" : ""}`}
+                  onClick={() => handleTabClick(item.value)}
+                  data-tour-step={`nav-${item.value}`}
+                >
+                  <span className="gp-navitem-ic">{item.icon}</span>
+                  {item.label}
+                  {badgeCount > 0 && !isActive && (
+                    <span className="gp-navitem-badge">{badgeCount}</span>
                   )}
-                </div>
-                <p className="text-[11px] text-muted-foreground truncate">{userEmail}</p>
-              </div>
-            </div>
-
-            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-              {navItems.map((item) => {
-                const isActive = activeSection === item.value;
-                const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-                const showBadge = badgeCount > 0 && !isActive;
-
-                return (
-                  <button
-                    key={item.value}
-                    onClick={() => handleTabClick(item.value)}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    )}
-                  >
-                    {item.icon}
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {showBadge && <NotifBadge count={badgeCount} position="inline" />}
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div className="border-t px-3 py-4 space-y-1" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}>
-              <button
-                onClick={() => { setSidebarOpen(false); navigate(`/${slug}`); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
-              >
-                <ExternalLink className="h-4 w-4" />
-                <span>Ver web</span>
-              </button>
-              <button
-                onClick={() => { setSidebarOpen(false); navigate("/"); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
-              >
-                <Home className="h-4 w-4" />
-                <span>Inicio</span>
-              </button>
-              <button
-                onClick={() => { setSidebarOpen(false); handleSignOut(); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Cerrar sesión</span>
-              </button>
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
-
-      {/* Header */}
-      <header
-        className="sticky top-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/40 shadow-sm"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
-      >
-        <div className="mx-auto max-w-7xl px-3 sm:px-4">
-          {isMobile ? (
-            <div className="flex items-center justify-between py-1.5">
-              <Button onClick={() => setSidebarOpen(true)} variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Abrir menú">
-                <Menu className="h-5 w-5" />
-              </Button>
-
-              <div className="flex items-center gap-2 min-w-0 flex-1 justify-center">
-                {tenant.logo_url ? (
-                  <img src={tenant.logo_url} alt={tenant.name} className="h-8 w-8 rounded-lg object-cover ring-2 ring-primary/20 shrink-0" />
-                ) : (
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Scissors className="h-4 w-4 text-primary" />
+                  {subs.length > 1 && (
+                    <ChevronDown
+                      className="h-3.5 w-3.5"
+                      style={{
+                        marginLeft: "auto", flexShrink: 0, transition: "transform .2s",
+                        transform: isActive ? "rotate(0deg)" : "rotate(-90deg)",
+                      }}
+                    />
+                  )}
+                </button>
+                {isActive && subs.length > 1 && (
+                  <div className="gp-side-subnav">
+                    {subs.map((sub) => {
+                      const subBadge = sub.badgeKey
+                        ? subNavCounts[sub.badgeKey as keyof typeof subNavCounts] || 0
+                        : 0;
+                      return (
+                        <button
+                          key={sub.value}
+                          className={`gp-subitem${activeSubTab === sub.value ? " on" : ""}`}
+                          onClick={() => goToSection(item.value as SectionValue, sub.value)}
+                        >
+                          <span className="gp-subdot" />
+                          {sub.label}
+                          {subBadge > 0 && (
+                            <span className="gp-subitem-badge">{subBadge}</span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
-                <h1 className="text-sm font-bold text-foreground truncate">{tenant.name}</h1>
               </div>
+            );
+          })}
+        </nav>
 
-              <div className="flex items-center gap-1 shrink-0">
-                <AdminHelpMenu onTourTabChange={handleNavigate} />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between py-3 border-b border-border/50">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {tenant.logo_url ? (
-                    <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20 shrink-0" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <Scissors className="h-5 w-5 text-primary" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-base md:text-lg font-bold text-foreground truncate">{tenant.name}</h1>
-                    <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  <AdminHelpMenu onTourTabChange={handleNavigate} />
-                  <div className="w-px h-6 bg-border/60 mx-1" aria-hidden />
-                  <AdminAccountMenu
-                    tenantName={tenant.name}
-                    tenantSlug={tenant.slug}
-                    logoUrl={tenant.logo_url}
-                    userEmail={userEmail}
-                    plan={subscriptionPlan}
-                    onViewWeb={() => navigate(`/${slug}`)}
-                    onGoHome={() => navigate("/")}
-                    onSignOut={handleSignOut}
-                  />
-                </div>
-              </div>
-
-              <nav className="flex items-center py-2" role="tablist">
-                <ScrollArea className="w-full">
-                  <div className="flex items-center gap-2 pb-2">{navItems.map((item) => renderNavButton(item))}</div>
-                  <ScrollBar orientation="horizontal" className="h-1.5" />
-                </ScrollArea>
-              </nav>
-            </>
-          )}
+        <div className="gp-side-foot">
+          <div className="gp-user-row">
+            <span className="gp-ava">
+              {userEmail ? userEmail.slice(0, 2).toUpperCase() : "AD"}
+            </span>
+            <span className="gp-user-tx">
+              <span className="gp-user-name">{userEmail}</span>
+              <span className="gp-user-role">Plan {subscriptionPlan || "Starter"}</span>
+            </span>
+            <AdminAccountMenu
+              tenantName={tenant.name}
+              tenantSlug={tenant.slug}
+              logoUrl={tenant.logo_url}
+              userEmail={userEmail}
+              plan={subscriptionPlan}
+              onViewWeb={() => navigate(`/${slug}`)}
+              onGoHome={() => navigate("/")}
+              onSignOut={handleSignOut}
+            />
+          </div>
         </div>
-        <AdminSubNav
-          tenantId={tenant.id}
-          section={activeSection as AdminSection}
-          activeSubTab={activeSubTab}
-          counts={subNavCounts}
-          onSelect={(t) => goToSection(activeSection, t)}
-        />
-      </header>
+      </aside>
 
-      {/* Content */}
-      {(() => {
-        const animatedContent = (
+      {/* ── Main Column ── */}
+      <div className="gp-main-wrap">
+
+        {/* Topbar */}
+        <header className="gp-topbar" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+          <div className="gp-top-titlewrap">
+            <span className="gp-top-crumb">{activeSectionLabel}</span>
+            <span className="gp-top-title">{activeSubLabel}</span>
+          </div>
+          <div className="gp-top-spacer" />
+          <AdminHelpMenu onTourTabChange={handleNavigate} />
+          {/* Account menu: visible on mobile where sidebar is hidden */}
+          <span className="gp-topbar-account-mobile">
+            <AdminAccountMenu
+              tenantName={tenant.name}
+              tenantSlug={tenant.slug}
+              logoUrl={tenant.logo_url}
+              userEmail={userEmail}
+              plan={subscriptionPlan}
+              onViewWeb={() => navigate(`/${slug}`)}
+              onGoHome={() => navigate("/")}
+              onSignOut={handleSignOut}
+            />
+          </span>
+          <button
+            className="gp-new-cita-btn"
+            onClick={() => goToSection("inicio", "agenda")}
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="gp-hide-sm">Nueva cita</span>
+          </button>
+        </header>
+
+        {/* Sub-nav: desktop sees sidebar sub-items; mobile sees this row */}
+        <div className="gp-subnav-bar">
+          <AdminSubNav
+            tenantId={tenant.id}
+            section={activeSection as AdminSection}
+            activeSubTab={activeSubTab}
+            counts={subNavCounts}
+            onSelect={(t) => goToSection(activeSection, t)}
+          />
+        </div>
+
+        {/* Content */}
+        <main
+          className="gp-content"
+          style={isMobile ? { paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" } : undefined}
+          {...swipeHandlers}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}
@@ -625,20 +608,53 @@ export default function TenantAdmin() {
               {renderContent()}
             </motion.div>
           </AnimatePresence>
-        );
+        </main>
+      </div>
 
-        return isMobile ? (
-          <main
-            className="mx-auto max-w-7xl px-3 py-3 flex-1 min-h-0"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
-            {...swipeHandlers}
+      {/* ── Mobile Bottom Nav ── */}
+      <nav className="gp-bottom">
+        {primaryNav.map((item) => (
+          <button
+            key={item.value}
+            className={`gp-bottom-item${activeSection === item.value ? " on" : ""}`}
+            onClick={() => handleTabClick(item.value)}
           >
-            {animatedContent}
-          </main>
-        ) : (
-          <main className="mx-auto max-w-7xl px-4 py-6 safe-area-bottom">{animatedContent}</main>
-        );
-      })()}
+            <span className="gp-bottom-ic">{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
+        {extraNav.length > 0 && (
+          <button
+            className={`gp-bottom-item${extraActive ? " on" : ""}`}
+            onClick={() => setMoreOpen(true)}
+          >
+            <span className="gp-bottom-ic"><Menu className="h-5 w-5" /></span>
+            Más
+          </button>
+        )}
+      </nav>
+
+      {/* More bottom sheet */}
+      {moreOpen && (
+        <div className="gp-more-wrap" onClick={() => setMoreOpen(false)}>
+          <div className="gp-more" onClick={(e) => e.stopPropagation()}>
+            <div className="gp-more-grip" />
+            <h4 className="gp-more-title">Más secciones</h4>
+            <div className="gp-more-grid">
+              {extraNav.map((item) => (
+                <button
+                  key={item.value}
+                  className={`gp-more-item${activeSection === item.value ? " on" : ""}`}
+                  onClick={() => { handleTabClick(item.value); setMoreOpen(false); }}
+                >
+                  <span className="gp-more-ic">{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
