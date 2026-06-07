@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Calendar,
@@ -94,11 +93,12 @@ export function AdminSubNav({
     <nav
       role="tablist"
       aria-label={`Sub-navegación ${section}`}
-      className="border-b border-border/40 bg-background/60 backdrop-blur-xl"
+      className="border-b"
+      style={{ background: "color-mix(in oklab, var(--gp-bg), white 30%)", backdropFilter: "blur(12px)", borderColor: "var(--gp-line)" }}
     >
-      <div className="mx-auto max-w-7xl px-2 sm:px-4">
+      <div className="mx-auto max-w-7xl px-3 min-[920px]:px-[26px]">
         <ScrollArea className="w-full">
-          <div className="flex items-center gap-1 py-1.5">
+          <div className="flex items-center gap-1 py-2.5">
             {items.map((item) => {
               const isActive = current === item.value;
               const locked = item.requiredFeature ? !hasFeature(item.requiredFeature) : false;
@@ -115,30 +115,15 @@ export function AdminSubNav({
                     if (locked) return;
                     onSelect(item.value);
                   }}
-                  className={cn(
-                    "relative flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-lg",
-                    "text-xs sm:text-sm font-medium transition-all",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    isActive
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                    locked && "opacity-60 cursor-not-allowed",
-                  )}
+                  className={cn("gp-subtab", isActive && "gp-on", locked && "opacity-60 cursor-not-allowed")}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="whitespace-nowrap">{item.label}</span>
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                  <span>{item.label}</span>
                   {locked && (
-                    <span className="text-[10px] font-semibold text-amber-600 ml-0.5">Pro</span>
+                    <span className="text-[10px] font-semibold text-amber-600">Pro</span>
                   )}
                   {badge > 0 && !isActive && (
-                    <NotifBadge count={badge} position="inline" className="ml-0.5 h-4 min-w-[16px] text-[10px] ring-0 shadow-none" />
-                  )}
-                  {isActive && (
-                    <motion.span
-                      layoutId="admin-subnav-underline"
-                      className="absolute left-2 right-2 -bottom-[7px] h-[2px] rounded-full bg-primary"
-                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                    />
+                    <span className="gp-subtab-count">{badge}</span>
                   )}
                 </button>
               );

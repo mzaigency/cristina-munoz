@@ -12,6 +12,35 @@
     --background: 0 0% 100%;
     --foreground: 230 25% 10%;
 
+    /* ── GlowApp Admin Design Tokens (gp-*) ───────────────────── */
+    --gp-accent: #4361ee;
+    --gp-accent-ink: #2b3fd4;
+    --gp-accent-soft: color-mix(in oklab, #4361ee, white 88%);
+    --gp-accent-softer: color-mix(in oklab, #4361ee, white 94%);
+    --gp-bg: oklch(0.98 0.006 265);
+    --gp-card: #ffffff;
+    --gp-card-2: oklch(0.985 0.004 265);
+    --gp-ink: oklch(0.24 0.02 265);
+    --gp-ink2: oklch(0.45 0.02 265);
+    --gp-muted-color: oklch(0.62 0.015 265);
+    --gp-line: oklch(0.925 0.007 265);
+    --gp-line2: oklch(0.955 0.004 265);
+    --gp-chip: oklch(0.968 0.006 265);
+    --gp-ok: oklch(0.62 0.15 150);
+    --gp-ok-soft: oklch(0.95 0.04 150);
+    --gp-warn: oklch(0.72 0.15 65);
+    --gp-warn-soft: oklch(0.96 0.05 75);
+    --gp-danger: oklch(0.62 0.2 25);
+    --gp-danger-soft: oklch(0.96 0.04 25);
+    --gp-info: oklch(0.62 0.13 230);
+    --gp-info-soft: oklch(0.95 0.04 230);
+    --gp-shadow-xs: 0 1px 2px rgba(20,22,40,.05);
+    --gp-shadow: 0 1px 2px rgba(20,22,40,.04), 0 10px 30px -16px rgba(20,22,40,.18);
+    --gp-shadow-lg: 0 18px 50px -16px rgba(20,22,40,.34);
+    --gp-topbar-h: 64px;
+    --gp-sidebar-w: 252px;
+    --gp-ease: cubic-bezier(.3,.9,.3,1);
+
     --card: 0 0% 100%;
     --card-foreground: 230 25% 10%;
 
@@ -1035,3 +1064,73 @@
     }
   }
 }
+
+/* ================================================================
+   GlowApp Admin — Component Classes (gp-*)
+   Mirrors admin.css from Claude Design prototype
+   ================================================================ */
+.gp-navitem {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  border: none; background: none; color: var(--gp-ink2); text-align: left;
+  padding: 9px 12px; border-radius: 11px; font-size: 14px; font-weight: 600;
+  transition: .15s var(--gp-ease); cursor: pointer; position: relative;
+}
+.gp-navitem:hover { background: var(--gp-chip); color: var(--gp-ink); }
+.gp-navitem.gp-on { background: var(--gp-accent-soft); color: var(--gp-accent-ink); font-weight: 700; }
+.gp-navitem-ic { display: flex; flex: none; color: var(--gp-muted-color); transition: .15s; }
+.gp-navitem.gp-on .gp-navitem-ic { color: var(--gp-accent); }
+
+.gp-subitem {
+  display: flex; align-items: center; gap: 9px; border: none; background: none;
+  color: var(--gp-muted-color); text-align: left; padding: 7px 10px;
+  border-radius: 9px; font-size: 13px; font-weight: 600; transition: .14s; cursor: pointer; width: 100%;
+}
+.gp-subitem:hover { background: var(--gp-chip); color: var(--gp-ink); }
+.gp-subitem.gp-on { color: var(--gp-accent-ink); font-weight: 700; }
+.gp-subitem.gp-on .gp-subdot { background: var(--gp-accent); transform: scale(1.4); }
+.gp-subdot { width: 5px; height: 5px; border-radius: 50%; background: var(--gp-line); flex: none; transition: .15s; }
+.gp-subitem-badge { margin-left: auto; font-size: 10.5px; font-weight: 800; color: var(--gp-danger); }
+
+.gp-subtab {
+  border: 1px solid var(--gp-line); background: var(--gp-card); color: var(--gp-ink2);
+  font-size: 13px; font-weight: 700; padding: 8px 15px; border-radius: 99px;
+  white-space: nowrap; transition: .15s; display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+}
+.gp-subtab:hover { background: var(--gp-chip); }
+.gp-subtab.gp-on {
+  background: var(--gp-accent); border-color: transparent; color: #fff;
+  box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--gp-accent), transparent 40%);
+}
+.gp-subtab-count { font-size: 11px; font-weight: 800; background: color-mix(in oklab, currentColor, transparent 85%); padding: 1px 6px; border-radius: 99px; }
+
+.gp-bottom-item {
+  display: flex; flex: 1; flex-direction: column; align-items: center; gap: 3px;
+  border: none; background: none; color: var(--gp-muted-color); font-size: 10.5px; font-weight: 700;
+  padding: 4px 6px; border-radius: 12px; min-width: 0; transition: .15s; cursor: pointer;
+}
+.gp-bottom-item.gp-on { color: var(--gp-accent); }
+.gp-bottom-item.gp-on .gp-bottom-ic { background: var(--gp-accent-soft); }
+.gp-bottom-ic { display: flex; align-items: center; justify-content: center; width: 46px; height: 30px; border-radius: 10px; transition: .15s; }
+
+.gp-more-wrap { position: fixed; inset: 0; z-index: 50; background: rgba(15,17,33,.45); display: flex; align-items: flex-end; backdrop-filter: blur(3px); }
+.gp-more { width: 100%; background: var(--gp-card); border-radius: 22px 22px 0 0; padding: 12px 18px calc(22px + env(safe-area-inset-bottom)); box-shadow: var(--gp-shadow-lg); }
+@media (prefers-reduced-motion: no-preference) { .gp-more { animation: gpMoreUp .26s var(--gp-ease); } }
+@keyframes gpMoreUp { from { transform: translateY(60px); } to { transform: none; } }
+.gp-more-grip { width: 42px; height: 5px; border-radius: 99px; background: var(--gp-line); margin: 0 auto 14px; }
+.gp-more-title { margin: 0 0 14px; font-size: 13px; font-weight: 800; color: var(--gp-muted-color); text-transform: uppercase; letter-spacing: .06em; }
+.gp-more-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.gp-more-item {
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+  border: 1px solid var(--gp-line); background: var(--gp-card); color: var(--gp-ink);
+  border-radius: 16px; padding: 18px 10px; font-size: 13px; font-weight: 700; transition: .15s; cursor: pointer;
+}
+.gp-more-item.gp-on { border-color: transparent; background: var(--gp-accent-soft); color: var(--gp-accent-ink); }
+.gp-more-ic { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 13px; background: var(--gp-chip); color: var(--gp-ink2); }
+.gp-more-item.gp-on .gp-more-ic { background: var(--gp-accent); color: #fff; }
+
+/* fade-in — resting state always opacity:1, only animate transform */
+.gp-fade { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .gp-fade { animation: gpFadeUp .32s var(--gp-ease); }
+}
+@keyframes gpFadeUp { from { transform: translateY(8px); } to { transform: none; } }

@@ -1,27 +1,26 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-  LogOut,
   Loader2,
   Home,
   ExternalLink,
   Scissors,
-  Users,
   Menu,
   ShoppingBag,
   Megaphone,
   UserCircle,
-  Sparkles,
   Briefcase,
+  Plus,
+  Search,
+  ChevronDown,
+  MoreHorizontal,
 } from "lucide-react";
 import { AdminHelpMenu } from "@/components/admin/layout/AdminHelpMenu";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
@@ -31,10 +30,9 @@ import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpire
 import { NotifBadge } from "@/components/admin/layout/NotifBadge";
 import { AdminAccountMenu } from "@/components/admin/layout/AdminAccountMenu";
 import { AdminCommandPalette } from "@/components/admin/layout/AdminCommandPalette";
-import { AdminSubNav, getDefaultSubTab, type AdminSection } from "@/components/admin/layout/AdminSubNav";
+import { AdminSubNav, getDefaultSubTab, ADMIN_SUB_NAV, type AdminSection } from "@/components/admin/layout/AdminSubNav";
 import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { motion, AnimatePresence } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
 
 import {
   ClientsSection,
@@ -63,7 +61,6 @@ interface NavItem {
 
 const VALID_SECTIONS: SectionValue[] = ["inicio", "clientes", "catalogo", "marketing", "negocio"];
 
-// Map legacy dashboard/tour navigation keys → new (section, subTab) URL slugs
 const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }> = {
   dashboard: { section: "inicio", subTab: "resumen" },
   calendar: { section: "inicio", subTab: "agenda" },
@@ -93,12 +90,16 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   settings: { section: "negocio", subTab: "ajustes" },
 };
 
+// Primary sections shown directly in mobile bottom nav (4 + "Más")
+const PRIMARY_SECTIONS: SectionValue[] = ["inicio", "clientes", "catalogo", "marketing"];
+
 export default function TenantAdmin() {
   const [userEmail, setUserEmail] = useState("");
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [tenantLoading, setTenantLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   const navigate = useNavigate();
   const { adminSlug: slug, section: sectionParam, subTab: subTabParam } =
@@ -145,7 +146,6 @@ export default function TenantAdmin() {
     };
   }, [tenant?.id]);
 
-  // Resolve active section from URL (default = inicio)
   const activeSection: SectionValue = useMemo(() => {
     if (sectionParam && VALID_SECTIONS.includes(sectionParam as SectionValue)) {
       return sectionParam as SectionValue;
@@ -198,7 +198,6 @@ export default function TenantAdmin() {
     enabled: isMobile,
   });
 
-  // Normalize URL: if user lands on /admin/:slug without section, push to /inicio
   useEffect(() => {
     if (!slug) return;
     if (!sectionParam) {
@@ -250,7 +249,6 @@ export default function TenantAdmin() {
     }
   }, [tenantLoading, accessLoading, hasAccess, tenant]);
 
-  // Mark section as viewed when navigating
   useEffect(() => {
     if (!tenant?.id) return;
     if (activeSection === "clientes") markSectionViewed("clients");
@@ -270,7 +268,6 @@ export default function TenantAdmin() {
     toast({ title: "Actualizado", description: "Datos actualizados correctamente" });
   }, [tenant?.id, refetchNotifications]);
 
-  // Legacy navigate adapter used by AdminDashboard/InteractiveTour
   const handleNavigate = useCallback(
     (tab: string, subTab?: string) => {
       const mapped = LEGACY_NAV_MAP[tab];
@@ -283,7 +280,6 @@ export default function TenantAdmin() {
     [goToSection],
   );
 
-  // Absolute-path navigate used by composite sections (InicioSection)
   const handlePathNavigate = useCallback(
     (path: string) => {
       navigate(path);
@@ -359,54 +355,12 @@ export default function TenantAdmin() {
     if (isMobile) setSidebarOpen(false);
   };
 
-  const renderNavButton = (item: NavItem) => {
-    const isActive = activeSection === item.value;
-    const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-    const showBadge = badgeCount > 0 && !isActive;
-
-    return (
-      <button
-        key={item.value}
-        onClick={() => handleTabClick(item.value)}
-        role="tab"
-        aria-selected={isActive}
-        aria-label={`${item.label}${showBadge ? `, ${badgeCount} pendientes` : ""}`}
-        data-tour-step={`nav-${item.value}`}
-        className={cn(
-          "relative flex flex-col items-center justify-center gap-1 transition-all duration-200 shrink-0",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          isMobile
-            ? [
-                "px-2 py-1.5 rounded-xl min-w-[48px] h-[56px]",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-lg scale-105"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              ]
-            : [
-                "px-4 py-2.5 rounded-xl min-w-[80px] h-[60px]",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-lg"
-                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-              ],
-        )}
-      >
-        <div className="relative">
-          {item.icon}
-          {showBadge && <NotifBadge count={badgeCount} dot />}
-        </div>
-        <span className={cn("font-medium leading-none whitespace-nowrap", isMobile ? "text-[10px]" : "text-xs")}>
-          {item.label}
-        </span>
-      </button>
-    );
-  };
-
   const loading = tenantLoading || accessLoading;
 
   if (loading || subscriptionLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "var(--gp-bg)" }}>
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "var(--gp-accent)" }} />
       </div>
     );
   }
@@ -423,8 +377,32 @@ export default function TenantAdmin() {
     );
   }
 
+  // Derive topbar breadcrumb labels
+  const sectionLabel = navItems.find((n) => n.value === activeSection)?.label ?? "";
+  const subTabLabel =
+    ADMIN_SUB_NAV[activeSection as AdminSection]?.find((s) => s.value === activeSubTab)?.label ?? sectionLabel;
+
+  // Split nav into primary (bottom bar) and secondary ("Más")
+  const primaryNavItems = navItems.filter((n) => PRIMARY_SECTIONS.includes(n.value));
+  const restNavItems = navItems.filter((n) => !PRIMARY_SECTIONS.includes(n.value));
+  const restIsActive = restNavItems.some((n) => n.value === activeSection);
+
+  const animatedContent = (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={activeSection}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4 }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
+      >
+        {renderContent()}
+      </motion.div>
+    </AnimatePresence>
+  );
+
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen" style={{ background: "var(--gp-bg)" }}>
       <AdminCommandPalette
         tenantSlug={slug || ""}
         onNavigate={(path) => navigate(path)}
@@ -432,203 +410,366 @@ export default function TenantAdmin() {
         onViewWeb={() => navigate(`/${slug}`)}
         onSignOut={handleSignOut}
       />
-      {/* Liquid Glass ambient background */}
-      <div className="fixed inset-0 -z-10 bg-background">
-        <div className="absolute inset-0 opacity-40 dark:opacity-20">
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/15 blur-[100px] animate-[float_20s_ease-in-out_infinite]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] rounded-full bg-secondary/20 blur-[100px] animate-[float_25s_ease-in-out_infinite_reverse]" />
-          <div className="absolute top-[40%] left-[50%] w-[35%] h-[35%] rounded-full bg-accent/15 blur-[80px] animate-[float_18s_ease-in-out_infinite_2s]" />
-        </div>
-      </div>
 
-      {/* Mobile Sidebar */}
-      {isMobile && (
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="w-[280px] p-0 flex flex-col [&>button]:hidden">
-            <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>
-              {tenant.logo_url ? (
-                <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20 shrink-0" />
-              ) : (
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Scissors className="h-5 w-5 text-primary" />
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <h2 className="text-sm font-bold text-foreground truncate">{tenant.name}</h2>
-                  {subscriptionPlan && (
-                    <Badge
-                      variant="secondary"
-                      className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wide bg-gradient-to-r from-primary/15 to-purple-500/15 text-primary border-0 shrink-0"
-                    >
-                      {subscriptionPlan}
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground truncate">{userEmail}</p>
+      {/* ── Mobile sheet sidebar ────────────────────────────────── */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side="left" className="w-[280px] p-0 flex flex-col [&>button]:hidden"
+                      style={{ background: "var(--gp-card)", borderColor: "var(--gp-line)" }}>
+          <div className="flex items-center gap-[11px] px-[18px] pt-[18px] pb-[14px] border-b"
+               style={{ borderColor: "var(--gp-line)", paddingTop: "calc(env(safe-area-inset-top) + 18px)" }}>
+            {tenant.logo_url ? (
+              <img src={tenant.logo_url} alt={tenant.name} className="w-[38px] h-[38px] rounded-[12px] object-cover flex-none" />
+            ) : (
+              <div className="w-[38px] h-[38px] rounded-[12px] flex-none flex items-center justify-center text-white font-black text-[19px]"
+                   style={{ background: "linear-gradient(150deg, var(--gp-accent), #7b2ff7)", boxShadow: "0 6px 16px -6px rgba(67,97,238,.65)" }}>
+                {tenant.name.charAt(0).toUpperCase()}
               </div>
+            )}
+            <div className="flex flex-col min-w-0 leading-[1.1]">
+              <span className="font-black text-[16px] tracking-[-0.02em] truncate" style={{ color: "var(--gp-ink)" }}>{tenant.name}</span>
+              <span className="text-[11.5px] font-semibold truncate capitalize" style={{ color: "var(--gp-muted-color)" }}>
+                {subscriptionPlan ? `Plan ${subscriptionPlan}` : "GlowApp"}
+              </span>
             </div>
+          </div>
 
-            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-              {navItems.map((item) => {
-                const isActive = activeSection === item.value;
-                const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-                const showBadge = badgeCount > 0 && !isActive;
+          <nav className="flex-1 overflow-y-auto px-3 py-1.5 flex flex-col gap-0.5">
+            {navItems.map((item) => {
+              const isActive = activeSection === item.value;
+              const badgeCount = typeof item.badge === "number" ? item.badge : 0;
+              const showBadge = badgeCount > 0 && !isActive;
+              return (
+                <button
+                  key={item.value}
+                  onClick={() => handleTabClick(item.value)}
+                  className={cn("gp-navitem", isActive && "gp-on")}
+                >
+                  <span className="gp-navitem-ic">{item.icon}</span>
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {showBadge && (
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full text-white text-[11px] font-black flex items-center justify-center"
+                          style={{ background: "var(--gp-accent)" }}>
+                      {badgeCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
 
-                return (
-                  <button
-                    key={item.value}
-                    onClick={() => handleTabClick(item.value)}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    )}
-                  >
-                    {item.icon}
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {showBadge && <NotifBadge count={badgeCount} position="inline" />}
-                  </button>
-                );
-              })}
-            </nav>
+          <div className="border-t px-3 py-4 space-y-1" style={{ borderColor: "var(--gp-line)", paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}>
+            <button
+              onClick={() => { setSidebarOpen(false); navigate(`/${slug}`); }}
+              className="gp-navitem"
+            >
+              <span className="gp-navitem-ic"><ExternalLink className="h-4 w-4" /></span>
+              Ver web
+            </button>
+            <button
+              onClick={() => { setSidebarOpen(false); handleSignOut(); }}
+              className="gp-navitem"
+              style={{ color: "var(--gp-danger)" }}
+            >
+              <span className="gp-navitem-ic" style={{ color: "var(--gp-danger)" }}><Scissors className="h-4 w-4" /></span>
+              Cerrar sesión
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-            <div className="border-t px-3 py-4 space-y-1" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}>
-              <button
-                onClick={() => { setSidebarOpen(false); navigate(`/${slug}`); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
-              >
-                <ExternalLink className="h-4 w-4" />
-                <span>Ver web</span>
-              </button>
-              <button
-                onClick={() => { setSidebarOpen(false); navigate("/"); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
-              >
-                <Home className="h-4 w-4" />
-                <span>Inicio</span>
-              </button>
-              <button
-                onClick={() => { setSidebarOpen(false); handleSignOut(); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Cerrar sesión</span>
-              </button>
+      {/* ── "Más" bottom sheet (mobile) ─────────────────────────── */}
+      {moreMenuOpen && (
+        <div className="gp-more-wrap" onClick={() => setMoreMenuOpen(false)}>
+          <div className="gp-more" onClick={(e) => e.stopPropagation()}>
+            <div className="gp-more-grip" />
+            <p className="gp-more-title">Más secciones</p>
+            <div className="gp-more-grid">
+              {restNavItems.map((item) => (
+                <button
+                  key={item.value}
+                  className={cn("gp-more-item", activeSection === item.value && "gp-on")}
+                  onClick={() => { handleTabClick(item.value); setMoreMenuOpen(false); }}
+                >
+                  <span className="gp-more-ic">{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
             </div>
-          </SheetContent>
-        </Sheet>
+          </div>
+        </div>
       )}
 
-      {/* Header */}
-      <header
-        className="sticky top-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/40 shadow-sm"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
-      >
-        <div className="mx-auto max-w-7xl px-3 sm:px-4">
-          {isMobile ? (
-            <div className="flex items-center justify-between py-2.5">
-              <Button onClick={() => setSidebarOpen(true)} variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Abrir menú">
-                <Menu className="h-5 w-5" />
-              </Button>
+      {/* ── App shell ───────────────────────────────────────────── */}
+      <div className="flex min-h-screen">
 
-              <div className="flex items-center gap-2 min-w-0 flex-1 justify-center">
-                {tenant.logo_url ? (
-                  <img src={tenant.logo_url} alt={tenant.name} className="h-8 w-8 rounded-lg object-cover ring-2 ring-primary/20 shrink-0" />
-                ) : (
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Scissors className="h-4 w-4 text-primary" />
-                  </div>
-                )}
-                <h1 className="text-sm font-bold text-foreground truncate">{tenant.name}</h1>
+        {/* ── Desktop sidebar ──────────────────────────── */}
+        <aside
+          className="hidden min-[920px]:flex w-[252px] flex-none sticky top-0 h-screen flex-col z-30 border-r"
+          style={{ background: "var(--gp-card)", borderColor: "var(--gp-line)" }}
+        >
+          {/* Brand */}
+          <div className="flex items-center gap-[11px] px-[18px] pt-[18px] pb-[14px]">
+            {tenant.logo_url ? (
+              <img src={tenant.logo_url} alt={tenant.name} className="w-[38px] h-[38px] rounded-[12px] object-cover flex-none" />
+            ) : (
+              <div className="w-[38px] h-[38px] rounded-[12px] flex-none flex items-center justify-center text-white font-black text-[19px]"
+                   style={{ background: "linear-gradient(150deg, var(--gp-accent), #7b2ff7)", boxShadow: "0 6px 16px -6px rgba(67,97,238,.65)" }}>
+                {tenant.name.charAt(0).toUpperCase()}
               </div>
-
-              <div className="flex items-center gap-1 shrink-0">
-                <AdminHelpMenu onTourTabChange={handleNavigate} />
-              </div>
+            )}
+            <div className="flex flex-col min-w-0 leading-[1.1]">
+              <span className="font-black text-[16px] tracking-[-0.02em] truncate" style={{ color: "var(--gp-ink)" }}>{tenant.name}</span>
+              <span className="text-[11.5px] font-semibold truncate" style={{ color: "var(--gp-muted-color)" }}>
+                {subscriptionPlan ? `Plan ${subscriptionPlan}` : "GlowApp"}
+              </span>
             </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between py-3 border-b border-border/50">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {tenant.logo_url ? (
-                    <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-10 rounded-xl object-cover ring-2 ring-primary/20 shrink-0" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <Scissors className="h-5 w-5 text-primary" />
+          </div>
+
+          {/* Nav */}
+          <nav className="flex-1 overflow-y-auto px-3 py-1.5 flex flex-col gap-0.5">
+            {navItems.map((item) => {
+              const isActive = activeSection === item.value;
+              const badgeCount = typeof item.badge === "number" ? item.badge : 0;
+              const showBadge = badgeCount > 0 && !isActive;
+              const subItems = ADMIN_SUB_NAV[item.value as AdminSection] || [];
+              const hasSubItems = subItems.length > 1;
+
+              return (
+                <div key={item.value}>
+                  <button
+                    onClick={() => handleTabClick(item.value)}
+                    data-tour-step={`nav-${item.value}`}
+                    aria-selected={isActive}
+                    className={cn("gp-navitem", isActive && "gp-on")}
+                  >
+                    <span className="gp-navitem-ic">{item.icon}</span>
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {showBadge && (
+                      <span className="min-w-[20px] h-5 px-1.5 rounded-full text-white text-[11px] font-black flex items-center justify-center"
+                            style={{ background: "var(--gp-accent)" }}>
+                        {badgeCount}
+                      </span>
+                    )}
+                    {hasSubItems && (
+                      <ChevronDown
+                        className="h-4 w-4 flex-none transition-transform duration-200"
+                        style={{
+                          color: "var(--gp-muted-color)",
+                          transform: isActive ? "rotate(0deg)" : "rotate(-90deg)",
+                        }}
+                      />
+                    )}
+                  </button>
+
+                  {/* Sub-nav */}
+                  {isActive && hasSubItems && (
+                    <div className="ml-4 pl-3 border-l flex flex-col gap-px mt-0.5 mb-1 gp-fade"
+                         style={{ borderColor: "var(--gp-line)" }}>
+                      {subItems.map((sub) => {
+                        const isSubActive = activeSubTab === sub.value;
+                        const subBadge = sub.badgeKey ? subNavCounts[sub.badgeKey as keyof typeof subNavCounts] || 0 : 0;
+                        return (
+                          <button
+                            key={sub.value}
+                            onClick={() => goToSection(activeSection, sub.value)}
+                            className={cn("gp-subitem", isSubActive && "gp-on")}
+                          >
+                            <span className="gp-subdot" />
+                            {sub.label}
+                            {subBadge > 0 && (
+                              <span className="gp-subitem-badge">{subBadge}</span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-base md:text-lg font-bold text-foreground truncate">{tenant.name}</h1>
-                    <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
-                  </div>
                 </div>
+              );
+            })}
+          </nav>
 
-                <div className="flex items-center gap-1 shrink-0">
-                  <AdminHelpMenu onTourTabChange={handleNavigate} />
-                  <div className="w-px h-6 bg-border/60 mx-1" aria-hidden />
-                  <AdminAccountMenu
-                    tenantName={tenant.name}
-                    tenantSlug={tenant.slug}
-                    logoUrl={tenant.logo_url}
-                    userEmail={userEmail}
-                    plan={subscriptionPlan}
-                    onViewWeb={() => navigate(`/${slug}`)}
-                    onGoHome={() => navigate("/")}
-                    onSignOut={handleSignOut}
-                  />
-                </div>
-              </div>
+          {/* Footer */}
+          <div className="p-3 border-t" style={{ borderColor: "var(--gp-line)" }}>
+            <AdminAccountMenu
+              tenantName={tenant.name}
+              tenantSlug={tenant.slug}
+              logoUrl={tenant.logo_url}
+              userEmail={userEmail}
+              plan={subscriptionPlan}
+              onViewWeb={() => navigate(`/${slug}`)}
+              onGoHome={() => navigate("/")}
+              onSignOut={handleSignOut}
+            />
+          </div>
+        </aside>
 
-              <nav className="flex items-center py-2" role="tablist">
-                <ScrollArea className="w-full">
-                  <div className="flex items-center gap-2 pb-2">{navItems.map((item) => renderNavButton(item))}</div>
-                  <ScrollBar orientation="horizontal" className="h-1.5" />
-                </ScrollArea>
-              </nav>
-            </>
-          )}
-        </div>
-        <AdminSubNav
-          tenantId={tenant.id}
-          section={activeSection as AdminSection}
-          activeSubTab={activeSubTab}
-          counts={subNavCounts}
-          onSelect={(t) => goToSection(activeSection, t)}
-        />
-      </header>
+        {/* ── Main area ────────────────────────────────── */}
+        <div className="flex-1 min-w-0 flex flex-col">
 
-      {/* Content */}
-      {(() => {
-        const animatedContent = (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSection}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
+          {/* ── Topbar ──────────────────────────── */}
+          <header
+            className="flex-none sticky top-0 z-20 flex items-center gap-3.5 border-b"
+            style={{
+              height: "var(--gp-topbar-h)",
+              padding: "0 26px",
+              background: "color-mix(in oklab, var(--gp-bg), white 30%)",
+              backdropFilter: "blur(12px)",
+              borderColor: "var(--gp-line)",
+              paddingTop: "env(safe-area-inset-top)",
+            }}
+          >
+            {/* Hamburger — mobile only */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="min-[920px]:hidden flex items-center justify-center rounded-[11px] border transition-all flex-none"
+              style={{ width: 40, height: 40, background: "var(--gp-card)", borderColor: "var(--gp-line)", color: "var(--gp-ink2)" }}
+              aria-label="Abrir menú"
             >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
-        );
+              <Menu className="h-5 w-5" />
+            </button>
 
-        return isMobile ? (
-          <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
+            {/* Breadcrumb + title */}
+            <div className="flex flex-col leading-[1.1]">
+              <span className="text-[11.5px] font-bold tracking-[0.02em] uppercase" style={{ color: "var(--gp-muted-color)" }}>
+                {sectionLabel}
+              </span>
+              <span className="text-[19px] font-black tracking-[-0.02em]" style={{ color: "var(--gp-ink)" }}>
+                {subTabLabel}
+              </span>
+            </div>
+
+            <div className="flex-1" />
+
+            {/* Search — desktop only */}
+            <div
+              className="hidden min-[920px]:flex items-center gap-[9px] rounded-[11px] px-[13px] py-[9px] w-[280px] border transition-all"
+              style={{ background: "var(--gp-card)", borderColor: "var(--gp-line)" }}
+              onFocusCapture={(e) => {
+                e.currentTarget.style.borderColor = "var(--gp-accent)";
+                e.currentTarget.style.boxShadow = "0 0 0 4px var(--gp-accent-softer)";
+              }}
+              onBlurCapture={(e) => {
+                e.currentTarget.style.borderColor = "var(--gp-line)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              <Search className="h-4 w-4 flex-none" style={{ color: "var(--gp-muted-color)" }} />
+              <input
+                className="border-none bg-transparent outline-none w-full text-[13.5px] font-medium"
+                style={{ color: "var(--gp-ink)" }}
+                placeholder="Buscar clientes, citas, productos…"
+              />
+            </div>
+
+            {/* Help */}
+            <AdminHelpMenu onTourTabChange={handleNavigate} />
+
+            {/* Account menu — mobile topbar / desktop is in sidebar footer */}
+            <div className="min-[920px]:hidden">
+              <AdminAccountMenu
+                tenantName={tenant.name}
+                tenantSlug={tenant.slug}
+                logoUrl={tenant.logo_url}
+                userEmail={userEmail}
+                plan={subscriptionPlan}
+                onViewWeb={() => navigate(`/${slug}`)}
+                onGoHome={() => navigate("/")}
+                onSignOut={handleSignOut}
+              />
+            </div>
+
+            {/* Nueva cita */}
+            <button
+              onClick={() => goToSection("inicio", "agenda")}
+              className="flex items-center gap-2 rounded-[11px] px-4 py-2.5 text-[13.5px] font-bold text-white transition-all hover:brightness-110 hover:-translate-y-px active:translate-y-0"
+              style={{
+                marginLeft: 2,
+                background: "linear-gradient(150deg, var(--gp-accent), color-mix(in oklab, var(--gp-accent), #000 15%))",
+                boxShadow: "0 8px 18px -8px color-mix(in oklab, var(--gp-accent), transparent 35%)",
+              }}
+            >
+              <Plus className="h-4 w-4 flex-none" />
+              <span className="hidden sm:inline">Nueva cita</span>
+            </button>
+          </header>
+
+          {/* ── SubNav ──────────────────────────── */}
+          <AdminSubNav
+            tenantId={tenant.id}
+            section={activeSection as AdminSection}
+            activeSubTab={activeSubTab}
+            counts={subNavCounts}
+            onSelect={(t) => goToSection(activeSection, t)}
+          />
+
+          {/* ── Content ─────────────────────────── */}
+          {isMobile ? (
+            <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
+              <main
+                className="mx-auto max-w-7xl px-3 py-3"
+                style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
+                {...swipeHandlers}
+              >
+                {animatedContent}
+              </main>
+            </PullToRefresh>
+          ) : (
             <main
-              className="mx-auto max-w-7xl px-3 py-3"
-              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
-              {...swipeHandlers}
+              className="flex-1 mx-auto max-w-[1280px] w-full"
+              style={{ padding: "26px" }}
             >
               {animatedContent}
             </main>
-          </PullToRefresh>
-        ) : (
-          <main className="mx-auto max-w-7xl px-4 py-6 safe-area-bottom">{animatedContent}</main>
-        );
-      })()}
+          )}
+
+          {/* ── Mobile bottom nav ───────────────── */}
+          <nav
+            className="min-[920px]:hidden fixed bottom-0 left-0 right-0 z-40 flex justify-around border-t"
+            style={{
+              background: "var(--gp-card)",
+              borderColor: "var(--gp-line)",
+              padding: "8px 6px",
+              paddingBottom: "calc(8px + env(safe-area-inset-bottom))",
+              boxShadow: "0 -8px 24px -16px rgba(20,22,40,.25)",
+            }}
+          >
+            {primaryNavItems.map((item) => {
+              const isActive = activeSection === item.value;
+              const badgeCount = typeof item.badge === "number" ? item.badge : 0;
+              const showBadge = badgeCount > 0 && !isActive;
+              return (
+                <button
+                  key={item.value}
+                  onClick={() => handleTabClick(item.value)}
+                  className={cn("gp-bottom-item", isActive && "gp-on")}
+                  aria-label={item.label}
+                  data-tour-step={`nav-${item.value}`}
+                >
+                  <span className="gp-bottom-ic relative">
+                    {item.icon}
+                    {showBadge && <NotifBadge count={badgeCount} dot />}
+                  </span>
+                  {item.label}
+                </button>
+              );
+            })}
+            {/* "Más" button */}
+            {restNavItems.length > 0 && (
+              <button
+                onClick={() => setMoreMenuOpen(true)}
+                className={cn("gp-bottom-item", restIsActive && "gp-on")}
+                aria-label="Más secciones"
+              >
+                <span className="gp-bottom-ic">
+                  <MoreHorizontal className="h-5 w-5" />
+                </span>
+                Más
+              </button>
+            )}
+          </nav>
+        </div>
+      </div>
     </div>
   );
 }
