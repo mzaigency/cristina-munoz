@@ -64,17 +64,32 @@ const PLAN_CONFIG: Record<string, { max_stylists: number; max_services: number; 
   },
 };
 
-// Price ID to plan slug mapping - update these with your actual Stripe price IDs
+// REAL Stripe Price IDs (kept in sync with create-business-checkout & upgrade-subscription)
 const PRICE_TO_PLAN: Record<string, string> = {
-  // Monthly prices
-  "price_starter_monthly": "starter",
-  "price_pro_monthly": "pro",
-  "price_business_monthly": "business",
-  // Annual prices
-  "price_starter_annual": "starter",
-  "price_pro_annual": "pro",
-  "price_business_annual": "business",
+  // starter
+  "price_1SqgCKRte0Pe7Hk3Zo6Fj68s": "starter", // monthly
+  "price_1SqgCaRte0Pe7Hk3SEcCaPqa": "starter", // annual
+  // pro
+  "price_1THkYQRte0Pe7Hk3ilAOSf8h": "pro",     // monthly
+  "price_1SqgDfRte0Pe7Hk33GzDcpQv": "pro",     // annual
+  "price_1TTi3RRte0Pe7Hk3J0ZYSWmg": "pro",     // legacy monthly (Montserrat etc.)
+  // business
+  "price_1SqgDiRte0Pe7Hk3pDqSXmuS": "business", // monthly
+  "price_1SqgDjRte0Pe7Hk3SVdRX7PI": "business", // annual
 };
+
+/**
+ * Extract the current_period_end from a subscription.
+ * Stripe API 2025-08-27.basil moved this field from the subscription root
+ * to each subscription item.
+ */
+function getSubscriptionPeriodEnd(subscription: Stripe.Subscription): number | null {
+  const anySub = subscription as any;
+  if (typeof anySub.current_period_end === "number") return anySub.current_period_end;
+  const item = subscription.items?.data?.[0] as any;
+  if (item && typeof item.current_period_end === "number") return item.current_period_end;
+  return null;
+}
 
 async function deactivateExcessResources(
   supabase: any,
@@ -83,25 +98,16 @@ async function deactivateExcessResources(
   newLimit: number
 ): Promise<number> {
   const tableName = resourceType === "stylists" ? "tenant_stylists" : "services";
-  
-  // Count current active resources
   const { count } = await supabase
     .from(tableName)
     .select("*", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
     .eq("is_active", true);
-  
+
   const currentCount = count || 0;
-  
-  if (currentCount <= newLimit) {
-    logStep(`No deactivation needed for ${resourceType}`, { currentCount, newLimit });
-    return 0;
-  }
-  
+  if (currentCount <= newLimit) return 0;
+
   const excess = currentCount - newLimit;
-  logStep(`Deactivating excess ${resourceType}`, { currentCount, newLimit, excess });
-  
-  // Get the most recently created resources to deactivate
   const { data: resourcesToDeactivate } = await supabase
     .from(tableName)
     .select("id")
@@ -109,16 +115,14 @@ async function deactivateExcessResources(
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(excess);
-  
+
   if (resourcesToDeactivate?.length) {
     await supabase
       .from(tableName)
       .update({ is_active: false })
       .in("id", resourcesToDeactivate.map((r: any) => r.id));
-    
     logStep(`Deactivated ${resourcesToDeactivate.length} ${resourceType}`);
   }
-  
   return resourcesToDeactivate?.length || 0;
 }
 
@@ -137,9 +141,181 @@ async function createNotification(
       title,
       message,
     });
-    logStep("Notification created");
   } catch (error) {
     logStep("Failed to create notification", { error });
+  }
+}
+
+/** Resolve tenantId + ownerUserId from subscription metadata OR from customer email fallback. */
+async function resolveTenantContext(
+  supabase: any,
+  stripe: Stripe,
+  subscription: Stripe.Subscription
+): Promise<{ tenantId: string | null; userId: string | null }> {
+  // 1. tenant_id directly in metadata
+  const metaTenantId = subscription.metadata?.tenant_id;
+  if (metaTenantId) {
+    const { data: ta } = await supabase
+      .from("tenant_admins")
+      .select("user_id")
+      .eq("tenant_id", metaTenantId)
+      .eq("is_owner", true)
+      .maybeSingle();
+    return { tenantId: metaTenantId, userId: ta?.user_id ?? null };
+  }
+
+  // 2. business_slug in metadata
+  const metaSlug = subscription.metadata?.business_slug;
+  if (metaSlug) {
+    const { data: t } = await supabase
+      .from("tenants")
+      .select("id")
+      .eq("slug", metaSlug)
+      .maybeSingle();
+    if (t?.id) {
+      const { data: ta } = await supabase
+        .from("tenant_admins")
+        .select("user_id")
+        .eq("tenant_id", t.id)
+        .eq("is_owner", true)
+        .maybeSingle();
+      return { tenantId: t.id, userId: ta?.user_id ?? null };
+    }
+  }
+
+  // 3. Look up by customer email → profile → tenant_admin
+  try {
+    const customer = await stripe.customers.retrieve(subscription.customer as string);
+    if ((customer as any).deleted) return { tenantId: null, userId: null };
+    const email = (customer as Stripe.Customer).email;
+    if (!email) return { tenantId: null, userId: null };
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .ilike("email", email)
+      .maybeSingle();
+    if (!profile) return { tenantId: null, userId: null };
+
+    const { data: ta } = await supabase
+      .from("tenant_admins")
+      .select("tenant_id, user_id")
+      .eq("user_id", profile.id)
+      .eq("is_owner", true)
+      .maybeSingle();
+    if (!ta) return { tenantId: null, userId: profile.id };
+    return { tenantId: ta.tenant_id, userId: ta.user_id };
+  } catch (e) {
+    logStep("resolveTenantContext error", { error: String(e) });
+    return { tenantId: null, userId: null };
+  }
+}
+
+async function processSubscriptionChange(
+  supabase: any,
+  stripe: Stripe,
+  subscription: Stripe.Subscription,
+  tenantId: string,
+  userId?: string | null
+) {
+  logStep("processSubscriptionChange", {
+    tenantId,
+    status: subscription.status,
+    subId: subscription.id,
+  });
+
+  // ===== Cancellation / unpaid → downgrade to starter =====
+  if (subscription.status === "canceled" || subscription.status === "unpaid") {
+    const starterConfig = PLAN_CONFIG["starter"];
+    const deactivatedStylists = await deactivateExcessResources(supabase, tenantId, "stylists", starterConfig.max_stylists);
+    const deactivatedServices = await deactivateExcessResources(supabase, tenantId, "services", starterConfig.max_services);
+
+    await supabase
+      .from("tenants")
+      .update({
+        subscription_plan: "starter",
+        max_stylists: starterConfig.max_stylists,
+        max_services: starterConfig.max_services,
+        features: starterConfig.features,
+        subscription_expires_at: null,
+        stripe_subscription_id: null,
+      })
+      .eq("id", tenantId);
+
+    if (userId) {
+      await createNotification(
+        supabase,
+        tenantId,
+        userId,
+        "Suscripción cancelada",
+        `Tu suscripción se ha cancelado. Has vuelto al plan gratuito. Se han desactivado ${deactivatedStylists} profesional(es) y ${deactivatedServices} servicio(s) para ajustarse a los nuevos límites.`
+      );
+    }
+    return;
+  }
+
+  // ===== Active / trialing / past_due / incomplete → sync plan + period =====
+  const priceId = subscription.items.data[0]?.price?.id;
+  if (!priceId) {
+    logStep("No price ID in subscription items");
+    return;
+  }
+
+  let newPlanSlug = subscription.metadata?.plan_slug || PRICE_TO_PLAN[priceId];
+  if (!newPlanSlug) {
+    try {
+      const price = await stripe.prices.retrieve(priceId);
+      newPlanSlug = (price.metadata as any)?.plan_slug;
+    } catch (e) {
+      logStep("Could not retrieve price", { priceId, error: String(e) });
+    }
+  }
+  if (!newPlanSlug || !PLAN_CONFIG[newPlanSlug]) {
+    logStep("Unknown plan, aborting", { priceId, newPlanSlug });
+    return;
+  }
+
+  const planConfig = PLAN_CONFIG[newPlanSlug];
+
+  // Deactivate excess resources if downgrading
+  const deactivatedStylists = await deactivateExcessResources(supabase, tenantId, "stylists", planConfig.max_stylists);
+  const deactivatedServices = await deactivateExcessResources(supabase, tenantId, "services", planConfig.max_services);
+
+  // Period end → robust extraction
+  const periodEnd = getSubscriptionPeriodEnd(subscription);
+  const expiresAt = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
+
+  const updatePayload: Record<string, unknown> = {
+    subscription_plan: newPlanSlug,
+    max_stylists: planConfig.max_stylists,
+    max_services: planConfig.max_services,
+    features: planConfig.features,
+    stripe_customer_id: subscription.customer as string,
+    stripe_subscription_id: subscription.id,
+    is_active: true,
+  };
+  if (expiresAt) updatePayload.subscription_expires_at = expiresAt;
+
+  const { error: updErr } = await supabase
+    .from("tenants")
+    .update(updatePayload)
+    .eq("id", tenantId);
+
+  if (updErr) {
+    logStep("Tenant update failed", { error: updErr.message });
+    return;
+  }
+
+  logStep("Tenant synced", { tenantId, newPlanSlug, expiresAt, status: subscription.status });
+
+  if (userId && (deactivatedStylists > 0 || deactivatedServices > 0)) {
+    await createNotification(
+      supabase,
+      tenantId,
+      userId,
+      "Plan actualizado",
+      `Tu plan ha cambiado a ${newPlanSlug}. Se han desactivado ${deactivatedStylists} profesional(es) y ${deactivatedServices} servicio(s) para ajustarse a los nuevos límites.`
+    );
   }
 }
 
@@ -150,169 +326,160 @@ serve(async (req) => {
 
   try {
     logStep("Webhook received");
-    
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    
-    if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY is not set");
-    }
-    
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
-    
+
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
-    
+
     let event: Stripe.Event;
-    
-    // Verify webhook signature if secret is configured
     if (webhookSecret && signature) {
       try {
-        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-        logStep("Webhook signature verified");
+        event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
       } catch (err) {
-        logStep("Webhook signature verification failed", { error: err });
+        logStep("Signature verification failed", { error: String(err) });
         return new Response(JSON.stringify({ error: "Invalid signature" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     } else {
-      // Parse event without verification (for testing)
       event = JSON.parse(body);
-      logStep("Processing event without signature verification");
+      logStep("Processing event WITHOUT signature verification (dev mode)");
     }
-    
+
     logStep("Event type", { type: event.type });
-    
+
     switch (event.type) {
+      // ----- Subscription lifecycle (created, trial→active, plan change, renewal, cancel) -----
+      case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
-        const tenantId = subscription.metadata?.tenant_id;
-        const customerId = subscription.customer as string;
-        
-        logStep("Processing subscription change", { 
-          subscriptionId: subscription.id, 
-          tenantId,
-          status: subscription.status 
-        });
-        
-        if (!tenantId) {
-          logStep("No tenant_id in metadata, trying to find by customer");
-          
-          // Try to find tenant by looking up the user via Stripe customer email
-          const customer = await stripe.customers.retrieve(customerId);
-          if (customer.deleted) {
-            logStep("Customer was deleted");
-            break;
-          }
-          
-          const email = (customer as Stripe.Customer).email;
-          if (!email) {
-            logStep("No email found for customer");
-            break;
-          }
-          
-          // Find user by email
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("email", email)
-            .single();
-          
-          if (!profile) {
-            logStep("No profile found for email", { email });
-            break;
-          }
-          
-          // Find tenant admin relationship
-          const { data: tenantAdmin } = await supabase
-            .from("tenant_admins")
-            .select("tenant_id")
-            .eq("user_id", profile.id)
-            .eq("is_owner", true)
-            .single();
-          
-          if (!tenantAdmin) {
-            logStep("No tenant found for user", { userId: profile.id });
-            break;
-          }
-          
-          // Process with found tenant
-          await processSubscriptionChange(supabase, stripe, subscription, tenantAdmin.tenant_id, profile.id);
+        const ctx = await resolveTenantContext(supabase, stripe, subscription);
+        if (!ctx.tenantId) {
+          logStep("Could not resolve tenant for subscription", { subId: subscription.id });
           break;
         }
-        
-        // Find the owner of the tenant for notifications
-        const { data: tenantAdmin } = await supabase
-          .from("tenant_admins")
-          .select("user_id")
-          .eq("tenant_id", tenantId)
-          .eq("is_owner", true)
-          .single();
-        
-        await processSubscriptionChange(supabase, stripe, subscription, tenantId, tenantAdmin?.user_id);
+        await processSubscriptionChange(supabase, stripe, subscription, ctx.tenantId, ctx.userId);
         break;
       }
-      
+
+      // ----- Checkout completed: first-time seed of customer_id + subscription_id -----
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        logStep("Checkout session completed", { sessionId: session.id });
+        logStep("Checkout completed", { sessionId: session.id });
 
         const businessSlug = session.metadata?.business_slug;
+        const tenantIdMeta = session.metadata?.tenant_id;
         const planSlug = session.metadata?.plan_slug;
         const customerId = session.customer as string | null;
         const subscriptionId = session.subscription as string | null;
 
-        if (businessSlug && planSlug && PLAN_CONFIG[planSlug]) {
+        if (!subscriptionId) {
+          logStep("Checkout has no subscription, skipping");
+          break;
+        }
+
+        // Re-fetch subscription so we have items + period_end
+        let sub: Stripe.Subscription | null = null;
+        try {
+          sub = await stripe.subscriptions.retrieve(subscriptionId);
+        } catch (e) {
+          logStep("Could not retrieve subscription", { error: String(e) });
+        }
+
+        // Find tenant by id → slug → fallback via subscription
+        let tenantId: string | null = tenantIdMeta || null;
+        if (!tenantId && businessSlug) {
+          const { data: t } = await supabase
+            .from("tenants").select("id").eq("slug", businessSlug).maybeSingle();
+          tenantId = t?.id ?? null;
+        }
+        if (!tenantId && sub) {
+          const ctx = await resolveTenantContext(supabase, stripe, sub);
+          tenantId = ctx.tenantId;
+        }
+
+        if (!tenantId) {
+          logStep("Tenant not found yet (likely created later in onboarding)", { businessSlug });
+          break;
+        }
+
+        if (sub) {
+          await processSubscriptionChange(supabase, stripe, sub, tenantId, session.metadata?.user_id ?? null);
+        } else if (planSlug && PLAN_CONFIG[planSlug]) {
+          // Minimal fallback if subscription retrieval failed
           const config = PLAN_CONFIG[planSlug];
-          let expiresAt: string | null = null;
-          if (subscriptionId) {
-            try {
-              const sub = await stripe.subscriptions.retrieve(subscriptionId);
-              if (sub.current_period_end) {
-                expiresAt = new Date(sub.current_period_end * 1000).toISOString();
-              }
-            } catch (e) {
-              logStep("Could not fetch subscription for expires_at", { error: String(e) });
-            }
-          }
-
-          const updatePayload: Record<string, unknown> = {
-            subscription_plan: planSlug,
-            max_stylists: config.max_stylists,
-            max_services: config.max_services,
-            features: config.features,
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscriptionId,
-          };
-          if (expiresAt) updatePayload.subscription_expires_at = expiresAt;
-
-          const { error: updErr } = await supabase
+          await supabase
             .from("tenants")
-            .update(updatePayload)
-            .eq("slug", businessSlug);
-
-          if (updErr) {
-            logStep("Failed to sync tenant from checkout.session.completed", { error: updErr.message });
-          } else {
-            logStep("Tenant synced from checkout.session.completed", { businessSlug, planSlug });
-          }
+            .update({
+              subscription_plan: planSlug,
+              max_stylists: config.max_stylists,
+              max_services: config.max_services,
+              features: config.features,
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscriptionId,
+              is_active: true,
+            })
+            .eq("id", tenantId);
         }
         break;
       }
-      
+
+      // ----- Renewal payment succeeded: safety net to extend period -----
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = (invoice as any).subscription as string | null;
+        if (!subscriptionId) break;
+        try {
+          const sub = await stripe.subscriptions.retrieve(subscriptionId);
+          const ctx = await resolveTenantContext(supabase, stripe, sub);
+          if (ctx.tenantId) {
+            await processSubscriptionChange(supabase, stripe, sub, ctx.tenantId, ctx.userId);
+          }
+        } catch (e) {
+          logStep("invoice.payment_succeeded handler error", { error: String(e) });
+        }
+        break;
+      }
+
+      // ----- Renewal payment failed: notify owner, keep access until period_end -----
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = (invoice as any).subscription as string | null;
+        if (!subscriptionId) break;
+        try {
+          const sub = await stripe.subscriptions.retrieve(subscriptionId);
+          const ctx = await resolveTenantContext(supabase, stripe, sub);
+          if (ctx.tenantId && ctx.userId) {
+            await createNotification(
+              supabase,
+              ctx.tenantId,
+              ctx.userId,
+              "Pago fallido",
+              "No hemos podido cobrar tu suscripción. Por favor, actualiza tu método de pago para no perder acceso."
+            );
+          }
+        } catch (e) {
+          logStep("invoice.payment_failed handler error", { error: String(e) });
+        }
+        break;
+      }
+
       default:
-        logStep("Unhandled event type", { type: event.type });
+        logStep("Unhandled event", { type: event.type });
     }
-    
+
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
@@ -326,107 +493,3 @@ serve(async (req) => {
     });
   }
 });
-
-async function processSubscriptionChange(
-  supabase: any,
-  stripe: Stripe,
-  subscription: Stripe.Subscription,
-  tenantId: string,
-  userId?: string
-) {
-  logStep("Processing subscription change for tenant", { tenantId });
-  
-  // Handle subscription deleted/cancelled
-  if (subscription.status === "canceled" || subscription.status === "unpaid") {
-    logStep("Subscription cancelled or unpaid, downgrading to starter");
-    
-    const starterConfig = PLAN_CONFIG["starter"];
-    
-    // Deactivate excess resources
-    const deactivatedStylists = await deactivateExcessResources(supabase, tenantId, "stylists", starterConfig.max_stylists);
-    const deactivatedServices = await deactivateExcessResources(supabase, tenantId, "services", starterConfig.max_services);
-    
-    // Update tenant
-    await supabase
-      .from("tenants")
-      .update({
-        subscription_plan: "starter",
-        max_stylists: starterConfig.max_stylists,
-        max_services: starterConfig.max_services,
-        features: starterConfig.features,
-        subscription_expires_at: null,
-      })
-      .eq("id", tenantId);
-    
-    // Notify user
-    if (userId && (deactivatedStylists > 0 || deactivatedServices > 0)) {
-      await createNotification(
-        supabase,
-        tenantId,
-        userId,
-        "Plan actualizado",
-        `Tu suscripción ha cambiado. Se han desactivado ${deactivatedStylists} profesional(es) y ${deactivatedServices} servicio(s) para ajustarse a los límites del plan gratuito.`
-      );
-    }
-    
-    return;
-  }
-  
-  // Get the price ID from subscription
-  const priceId = subscription.items.data[0]?.price?.id;
-  if (!priceId) {
-    logStep("No price ID found in subscription");
-    return;
-  }
-  
-  // Determine the plan from price ID or metadata
-  let newPlanSlug = subscription.metadata?.plan_slug || PRICE_TO_PLAN[priceId];
-  
-  if (!newPlanSlug) {
-    // Try to get plan from price metadata
-    const price = await stripe.prices.retrieve(priceId);
-    newPlanSlug = price.metadata?.plan_slug;
-  }
-  
-  if (!newPlanSlug || !PLAN_CONFIG[newPlanSlug]) {
-    logStep("Unknown plan", { priceId, newPlanSlug });
-    return;
-  }
-  
-  const planConfig = PLAN_CONFIG[newPlanSlug];
-  logStep("Applying plan config", { newPlanSlug, planConfig });
-  
-  // Deactivate excess resources if downgrading
-  const deactivatedStylists = await deactivateExcessResources(supabase, tenantId, "stylists", planConfig.max_stylists);
-  const deactivatedServices = await deactivateExcessResources(supabase, tenantId, "services", planConfig.max_services);
-  
-  // Calculate subscription expiration
-  const expiresAt = subscription.current_period_end 
-    ? new Date(subscription.current_period_end * 1000).toISOString()
-    : null;
-  
-  // Update tenant
-  await supabase
-    .from("tenants")
-    .update({
-      subscription_plan: newPlanSlug,
-      max_stylists: planConfig.max_stylists,
-      max_services: planConfig.max_services,
-      features: planConfig.features,
-      subscription_expires_at: expiresAt,
-    })
-    .eq("id", tenantId);
-  
-  logStep("Tenant updated successfully");
-  
-  // Notify user about deactivations
-  if (userId && (deactivatedStylists > 0 || deactivatedServices > 0)) {
-    await createNotification(
-      supabase,
-      tenantId,
-      userId,
-      "Plan actualizado",
-      `Tu plan ha cambiado a ${newPlanSlug}. Se han desactivado ${deactivatedStylists} profesional(es) y ${deactivatedServices} servicio(s) para ajustarse a los nuevos límites.`
-    );
-  }
-}

@@ -1,10 +1,11 @@
 // Dynamic sitemap generator
-// Runs at `npm run build` (build:sitemap step)
+// Runs at `npm run build:sitemap` (before vite build)
 // Fetches active tenants from Supabase and generates entries for:
 //   - Static public pages
 //   - Directory category roots (e.g. /peluquerias)
 //   - Directory category x city (only when tenants exist there)
 //   - Each tenant landing (/{slug})
+import "dotenv/config";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -37,12 +38,14 @@ const normalizeForUrl = (str) =>
   str
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/\s+/g, "-");
 
+const today = new Date().toISOString().split("T")[0];
+
 const staticPages = [
-  { url: "/", priority: "1.0", changefreq: "daily" },
-  { url: "/negocios", priority: "0.9", changefreq: "weekly" },
+  { url: "/", priority: "1.0", changefreq: "daily", lastmod: today },
+  { url: "/negocios", priority: "0.9", changefreq: "weekly", lastmod: today },
   { url: "/auth", priority: "0.5", changefreq: "monthly" },
   { url: "/privacidad", priority: "0.3", changefreq: "yearly" },
   { url: "/terminos", priority: "0.3", changefreq: "yearly" },
@@ -51,9 +54,9 @@ const staticPages = [
 async function buildEntries() {
   const entries = [...staticPages];
 
-  // Always include category roots (5 entries — minor footprint, big intent coverage)
+  // Always include category roots
   for (const cat of CATEGORY_SLUGS) {
-    entries.push({ url: `/${cat}`, priority: "0.8", changefreq: "weekly" });
+    entries.push({ url: "/" + cat, priority: "0.8", changefreq: "weekly", lastmod: today });
   }
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -74,9 +77,10 @@ async function buildEntries() {
   for (const t of tenants || []) {
     if (!t.slug) continue;
     entries.push({
-      url: `/${t.slug}`,
+      url: "/" + t.slug,
       priority: "0.9",
       changefreq: "weekly",
+      lastmod: today,
     });
   }
 
@@ -90,13 +94,14 @@ async function buildEntries() {
     );
     if (!catSlug) continue;
     const citySlug = normalizeForUrl(t.city);
-    const key = `${catSlug}/${citySlug}`;
+    const key = catSlug + "/" + citySlug;
     if (seen.has(key)) continue;
     seen.add(key);
     entries.push({
-      url: `/${catSlug}/${citySlug}`,
+      url: "/" + catSlug + "/" + citySlug,
       priority: "0.7",
       changefreq: "weekly",
+      lastmod: today,
     });
   }
 

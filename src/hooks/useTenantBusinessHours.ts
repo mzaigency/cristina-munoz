@@ -18,6 +18,16 @@ interface TenantBusinessHoursRecord {
   break_end: string | null;
 }
 
+interface TenantHoursOverrideRecord {
+  date_from: string;
+  date_to: string;
+  is_closed: boolean | null;
+  open_time: string | null;
+  close_time: string | null;
+  break_start: string | null;
+  break_end: string | null;
+}
+
 const SLOT_INTERVAL = 30;
 
 function timeToMinutes(time: string | null): number {
@@ -26,8 +36,14 @@ function timeToMinutes(time: string | null): number {
   return hours * 60 + (minutes || 0);
 }
 
-function parseBusinessHours(record: TenantBusinessHoursRecord): TenantBusinessHours {
-  if (!record.is_open) {
+function buildHoursFromRange(
+  isOpen: boolean,
+  openTime: string | null,
+  closeTime: string | null,
+  breakStart: string | null,
+  breakEnd: string | null,
+): TenantBusinessHours {
+  if (!isOpen) {
     return {
       morningStart: 0,
       morningEnd: 0,
@@ -37,30 +53,53 @@ function parseBusinessHours(record: TenantBusinessHoursRecord): TenantBusinessHo
     };
   }
 
-  const openTime = timeToMinutes(record.open_time);
-  const closeTime = timeToMinutes(record.close_time);
-  const breakStart = record.break_start ? timeToMinutes(record.break_start) : null;
-  const breakEnd = record.break_end ? timeToMinutes(record.break_end) : null;
+  const open = timeToMinutes(openTime);
+  const close = timeToMinutes(closeTime);
+  const bStart = breakStart ? timeToMinutes(breakStart) : null;
+  const bEnd = breakEnd ? timeToMinutes(breakEnd) : null;
 
-  // If there's a break, split into morning and afternoon
-  if (breakStart !== null && breakEnd !== null && breakStart > 0 && breakEnd > 0) {
+  if (bStart !== null && bEnd !== null && bStart > 0 && bEnd > 0) {
     return {
-      morningStart: openTime,
-      morningEnd: breakStart,
-      afternoonStart: breakEnd,
-      afternoonEnd: closeTime,
+      morningStart: open,
+      morningEnd: bStart,
+      afternoonStart: bEnd,
+      afternoonEnd: close,
       isClosed: false,
     };
   }
 
-  // No break - treat as all morning hours
+  // No break - treat as continuous morning hours
   return {
-    morningStart: openTime,
-    morningEnd: closeTime,
+    morningStart: open,
+    morningEnd: close,
     afternoonStart: 0,
     afternoonEnd: 0,
     isClosed: false,
   };
+}
+
+function parseBusinessHours(record: TenantBusinessHoursRecord): TenantBusinessHours {
+  return buildHoursFromRange(
+    !!record.is_open,
+    record.open_time,
+    record.close_time,
+    record.break_start,
+    record.break_end,
+  );
+}
+
+function parseOverride(record: TenantHoursOverrideRecord): TenantBusinessHours {
+  return buildHoursFromRange(
+    !record.is_closed,
+    record.open_time,
+    record.close_time,
+    record.break_start,
+    record.break_end,
+  );
+}
+
+function formatDateToISO(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 // Default business hours for when no tenant hours are configured
@@ -76,6 +115,7 @@ const DEFAULT_HOURS: Record<number, TenantBusinessHours> = {
 
 export function useTenantBusinessHours(tenantId: string) {
   const [businessHours, setBusinessHours] = useState<Record<number, TenantBusinessHours> | null>(null);
+  const [overrides, setOverrides] = useState<Array<TenantHoursOverrideRecord>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -86,32 +126,34 @@ export function useTenantBusinessHours(tenantId: string) {
       }
 
       try {
-        const { data, error } = await supabase
-          .from("tenant_business_hours")
-          .select("day_of_week, is_open, open_time, close_time, break_start, break_end")
-          .eq("tenant_id", tenantId);
+        const today = formatDateToISO(new Date());
+        const [hoursRes, overridesRes] = await Promise.all([
+          supabase
+            .from("tenant_business_hours")
+            .select("day_of_week, is_open, open_time, close_time, break_start, break_end")
+            .eq("tenant_id", tenantId),
+          supabase
+            .from("tenant_hours_overrides")
+            .select("date_from, date_to, is_closed, open_time, close_time, break_start, break_end")
+            .eq("tenant_id", tenantId)
+            .gte("date_to", today),
+        ]);
 
-        if (error) {
-          console.error("Error fetching business hours:", error);
+        if (hoursRes.error) {
+          console.error("Error fetching business hours:", hoursRes.error);
           setBusinessHours(DEFAULT_HOURS);
-          setLoading(false);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          // Start with defaults for all days
+        } else if (hoursRes.data && hoursRes.data.length > 0) {
           const hoursMap: Record<number, TenantBusinessHours> = { ...DEFAULT_HOURS };
-          
-          // Override with tenant-specific hours
-          data.forEach((record) => {
-            const parsed = parseBusinessHours(record as TenantBusinessHoursRecord);
-            hoursMap[record.day_of_week] = parsed;
+          hoursRes.data.forEach((record) => {
+            hoursMap[record.day_of_week] = parseBusinessHours(record as TenantBusinessHoursRecord);
           });
-
           setBusinessHours(hoursMap);
         } else {
-          // No tenant hours configured, use defaults
           setBusinessHours(DEFAULT_HOURS);
+        }
+
+        if (!overridesRes.error && overridesRes.data) {
+          setOverrides(overridesRes.data as TenantHoursOverrideRecord[]);
         }
       } catch (error) {
         console.error("Error fetching business hours:", error);
@@ -124,24 +166,36 @@ export function useTenantBusinessHours(tenantId: string) {
     fetchBusinessHours();
   }, [tenantId]);
 
-  // Get effective hours (use loaded hours or defaults)
   const effectiveHours = businessHours || DEFAULT_HOURS;
 
-  // Generate available slots for a given day
-  const generateBaseSlots = (dayOfWeek: number): Set<number> => {
-    const hours = effectiveHours[dayOfWeek] || DEFAULT_HOURS[dayOfWeek];
+  // Find override that applies to a given date (if any)
+  const getOverrideForDate = (date: Date): TenantBusinessHours | null => {
+    const iso = formatDateToISO(date);
+    const match = overrides.find((o) => o.date_from <= iso && o.date_to >= iso);
+    return match ? parseOverride(match) : null;
+  };
+
+  // Date-aware: if a date is given, apply seasonal override first
+  const getBusinessHoursForDay = (dayOfWeek: number, date?: Date): TenantBusinessHours => {
+    if (date) {
+      const override = getOverrideForDate(date);
+      if (override) return override;
+    }
+    return effectiveHours[dayOfWeek] || DEFAULT_HOURS[dayOfWeek];
+  };
+
+  const generateBaseSlots = (dayOfWeek: number, date?: Date): Set<number> => {
+    const hours = getBusinessHoursForDay(dayOfWeek, date);
     const slotsSet = new Set<number>();
 
     if (hours.isClosed) return slotsSet;
 
-    // Morning slots
     if (hours.morningEnd > 0) {
       for (let minutes = hours.morningStart; minutes < hours.morningEnd; minutes += SLOT_INTERVAL) {
         slotsSet.add(minutes);
       }
     }
 
-    // Afternoon slots
     if (hours.afternoonEnd > 0) {
       for (let minutes = hours.afternoonStart; minutes < hours.afternoonEnd; minutes += SLOT_INTERVAL) {
         slotsSet.add(minutes);
@@ -151,11 +205,6 @@ export function useTenantBusinessHours(tenantId: string) {
     return slotsSet;
   };
 
-  const getBusinessHoursForDay = (dayOfWeek: number): TenantBusinessHours => {
-    return effectiveHours[dayOfWeek] || DEFAULT_HOURS[dayOfWeek];
-  };
-
-  // Get closed days for calendar
   const getClosedDays = (): number[] => {
     return Object.entries(effectiveHours)
       .filter(([_, hours]) => hours.isClosed)
@@ -168,5 +217,6 @@ export function useTenantBusinessHours(tenantId: string) {
     generateBaseSlots,
     getBusinessHoursForDay,
     getClosedDays,
+    getOverrideForDate,
   };
 }

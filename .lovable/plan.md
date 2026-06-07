@@ -1,55 +1,57 @@
-# Eliminar el paso "Profesional" del ciclo de reserva
+## Diagnóstico del bug de notificaciones
 
-## Objetivo
+Montserrat (dueña de "Montserrat Faig") no comparte permisos con el salón de Cristina — no es admin ni estilista allí. El problema está en **cómo se registran los tokens FCM de push**:
 
-Pasar de un flujo de **4 pasos** (Servicios → Profesional → Fecha → Confirmar) a un flujo de **3 pasos** (Servicios → Fecha → Confirmar), tanto en cliente (`TenantBookingFlow`) como en admin (`AdminBookingFlow`).
+- `src/hooks/usePushNotifications.ts` hace `upsert` en `push_tokens` con `onConflict: "user_id,token"`. Eso solo evita duplicados por par (usuario+token), pero **nunca limpia el token cuando otro usuario lo reclama** en el mismo navegador.
+- El token FCM es único por navegador/dispositivo. Si Cristina inició sesión una vez en ese dispositivo (o Montserrat probó la cuenta), su `push_tokens` se quedó vinculado al `user_id` de Cristina. Cuando Cristina recibe una notificación, FCM la entrega al mismo navegador → aparece en el teléfono de Montserrat.
+- No hay limpieza de token al hacer logout.
 
-La lógica de mostrar avatares disponibles bajo cada hora y de pedir profesional cuando hay más de uno disponible para ese slot **ya existe** dentro de `TenantDateTimeSelection` (modo `stylist="any"`). Lo aprovechamos forzando `stylist = "any"` siempre, y replicamos esa misma UX en la versión admin si no la tiene.
+### Fix de notificaciones
 
-## Cambios
+1. **`src/hooks/usePushNotifications.ts`**
+   - En `saveToken`: antes del `upsert`, borrar cualquier fila con el **mismo token y distinto `user_id`** (`delete().eq("token", fcmToken).neq("user_id", user.id)`). Así el token siempre apunta solo al usuario actualmente logueado en ese navegador.
+   - Suscribirse al evento `SIGNED_OUT` de `supabase.auth.onAuthStateChange`: cuando dispara, borrar el `push_tokens` del token actual (`delete().eq("token", token)`) y limpiar `localStorage[FCM_TOKEN_CACHE_KEY]`.
+2. **Migración de limpieza** (`supabase--migration`)
+   - Deduplicar `push_tokens` existentes: para cada `token`, conservar solo la fila con `updated_at` más reciente. Esto resuelve el caso de Montserrat sin esperar a que el frontend se ejecute.
 
-### 1. Cliente — `src/components/tenant/TenantBookingFlow.tsx`
+No se tocan las edge functions ni los triggers — siguen enviando al `user_id` correcto; solo deja de haber tokens "fantasma" apuntando a usuarios antiguos.
 
-- Eliminar `step === 2` (TenantStylistSelection) y todo su render.
-- Inicializar `bookingData.stylist = "any"` por defecto.
-- Renumerar pasos: 1=Servicios, 2=Fecha/Hora, 3=Confirmar.
-- Tras `handleServicesSelect`, ir directamente al paso 2 (fecha).
-- Quitar import `TenantStylistSelection`, estado/efectos de `stylistCount` y la lógica de "skip step 2 if only 1 professional".
-- Actualizar la barra de progreso (3 etapas en lugar de 4) y los textos del header (`step === N`).
-- `handleBack` simplificado (resta 1).
-- Eliminar el coachmark de "3 pasos" o actualizar copy si procede.
+## Nueva sub-pestaña "Actividad" en Inicio
 
-### 2. Admin — `src/components/admin/AdminBookingFlow.tsx`
+Añadir un feed cronológico que combine los últimos eventos del tenant (reservas, reseñas, mensajes, pedidos, nuevos clientes).
 
-- Mismas operaciones: eliminar `step === 2` con `AdminStylistSelection`, forzar `stylist = "any"`, renumerar a 3 pasos.
-- Asegurar que el componente de fecha/hora que usa muestra avatares y el selector cuando hay varios disponibles. Si actualmente usa otro componente sin esta lógica, **unificar reusando `TenantDateTimeSelection**` pasándole `stylist="any"` (es agnóstico al tipo de usuario).
-- Actualizar textos de progreso (`Servicios / Fecha / Confirmar`), `STEP_TITLES`, `STEP_DESCRIPTIONS` y helpers (`step === N`).
-- Mantener el resumen final mostrando el profesional ya resuelto desde `bookingData.stylist`.
+### Cambios
 
-### 3. Archivos a borrar (si quedan huérfanos)
+1. **`src/components/admin/layout/AdminSubNav.tsx`**
+   - Añadir entrada en `ADMIN_SUB_NAV.inicio`:
+     ```ts
+     { value: "actividad", label: "Actividad", icon: Activity }
+     ```
+     justo después de `resumen`.
 
-- `src/components/tenant/TenantStylistSelection.tsx`
-- `src/components/admin/AdminStylistSelection.tsx`
-- `src/components/booking/StylistSelection.tsx` (sólo si no lo usa nadie más; verificar con búsqueda antes de borrar).
+2. **`src/components/admin/sections/ActivitySection.tsx`** (nuevo)
+   - Hook propio `useTenantActivity(tenantId)` que carga en paralelo y filtrando por `tenant_id`:
+     - `bookings` (últimas 20 creadas/modificadas, con cliente, servicio, fecha)
+     - `reviews` (últimas 10, con rating y autor)
+     - `direct_messages` vía `conversations` (últimos mensajes entrantes)
+     - `product_orders` (últimos 10)
+     - `clients` nuevos (últimos 7 días)
+   - Une todo en un array `{ type, icon, title, subtitle, time, action_url }`, ordenado por `created_at` desc, limitado a 40.
+   - Suscripción Realtime con filtro `tenant_id=eq.${tenantId}` para las 4 tablas — refresca el feed automáticamente.
+   - UI mobile-first liquid glass (siguiendo memoria de estilo): lista vertical con iconos coloreados por tipo, timestamps relativos (`date-fns/formatDistanceToNow` ya usado en el proyecto), tap → navega a la sección correspondiente (`/admin/{slug}/inicio/agenda`, `/clientes/mensajes`, etc.).
+   - Filtros chip-style arriba: "Todo / Reservas / Reseñas / Mensajes / Pedidos".
+   - Empty state si no hay actividad reciente.
+   - Respeta safe-areas y el bottom-nav (padding inferior 72px).
 
-### 4. No tocar
+3. **`src/components/admin/sections/InicioSection.tsx`**
+   - Añadir rama `if (tab === "actividad") return <ActivitySection tenantId={tenantId} onNavigate={onNavigate} />`.
+   - Actualizar el JSDoc del `subTab`.
 
-- `QuickBookingSheet` (calendario admin): la creación rápida desde una celda ya tiene profesional implícito por la columna, no aplica.
-- `RescheduleFlow`: comprobar si arrastra el paso de profesional; si lo tiene, fuera del scope salvo que lo pidas explícitamente.
-- Edge functions y schema: sin cambios.
+### Lo que NO hace
+- No crea tablas nuevas — toda la data existe ya y RLS filtra por `tenant_id` automáticamente.
+- No toca el panel Dashboard actual ("Resumen") ni el sistema de badges.
+- No cambia las edge functions de envío de push.
 
-## Detalles técnicos
-
-- `TenantDateTimeSelection` ya implementa con `stylist="any"`:
-  - `slotToStylists`: mapa `hora → profesionales disponibles`.
-  - Render de avatares debajo de la hora.
-  - Bloque "¿Con quién prefieres?" cuando hay >1 disponible.
-  - Auto-asignación si sólo hay 1.
-  - Devuelve `resolvedStylist` en `onNext`.
-- Mantener tipo `Stylist` aceptando `"any"` y cualquier slug dinámico (ya tipado como `string` en `bookingData.stylist` tras resolver).
-
-## Flujo resultante
-
-```text
-1. Servicios  →  2. Fecha y hora (con avatares y nombre + selección si >1)  →  3. Confirmar
-```
+## Verificación
+- Probar que tras login en un navegador donde había otra cuenta, la fila vieja del token desaparece (`select * from push_tokens where token = ...`).
+- Probar Activity con realtime: crear una reserva manualmente y ver que aparece en el feed en segundos.

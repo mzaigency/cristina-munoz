@@ -177,7 +177,7 @@ export const TenantDateTimeSelection = ({
   ): string[] => {
     const ranges = parseBookedSlotsToRanges(bookedData?.bookedSlots || []);
     const dayOfWeek = selectedDate.getDay();
-    const hours = getBusinessHoursForDay(dayOfWeek);
+    const hours = getBusinessHoursForDay(dayOfWeek, selectedDate);
 
     if (hours.isClosed) return [];
 
@@ -185,7 +185,7 @@ export const TenantDateTimeSelection = ({
     const currentMinutes = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : 0;
 
     // Generate base slots
-    const slotsSet = generateBaseSlots(dayOfWeek);
+    const slotsSet = generateBaseSlots(dayOfWeek, selectedDate);
 
     // Add flexible slots after existing bookings
     ranges.forEach((booking) => {
@@ -309,7 +309,7 @@ export const TenantDateTimeSelection = ({
     if (!selectedDate) return [];
 
     const dayOfWeek = selectedDate.getDay();
-    const hours = getBusinessHoursForDay(dayOfWeek);
+    const hours = getBusinessHoursForDay(dayOfWeek, selectedDate);
 
     if (hours.isClosed) return [];
 
@@ -317,7 +317,7 @@ export const TenantDateTimeSelection = ({
     const currentMinutes = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : 0;
 
     // Generate base slots
-    const slotsSet = generateBaseSlots(dayOfWeek);
+    const slotsSet = generateBaseSlots(dayOfWeek, selectedDate);
 
     // Add flexible slots after bookings
     bookedRanges.forEach((booking) => {
@@ -547,7 +547,7 @@ export const TenantDateTimeSelection = ({
           ) : (
             (() => {
               const dayOfWeek = date.getDay();
-              const hours = getBusinessHoursForDay(dayOfWeek);
+              const hours = getBusinessHoursForDay(dayOfWeek, date);
               const hasAfternoon = hours.afternoonStart > 0 && hours.afternoonEnd > 0;
 
               // Split slots into morning and afternoon

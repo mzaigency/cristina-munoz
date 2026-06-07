@@ -1,27 +1,24 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2,
   Home,
-  ExternalLink,
   Scissors,
+  Users,
   Menu,
   ShoppingBag,
   Megaphone,
   UserCircle,
+  Sparkles,
   Briefcase,
-  Plus,
-  Search,
   ChevronDown,
-  MoreHorizontal,
 } from "lucide-react";
 import { AdminHelpMenu } from "@/components/admin/layout/AdminHelpMenu";
-import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
@@ -30,7 +27,7 @@ import { SubscriptionExpiredScreen } from "@/components/admin/SubscriptionExpire
 import { NotifBadge } from "@/components/admin/layout/NotifBadge";
 import { AdminAccountMenu } from "@/components/admin/layout/AdminAccountMenu";
 import { AdminCommandPalette } from "@/components/admin/layout/AdminCommandPalette";
-import { AdminSubNav, getDefaultSubTab, ADMIN_SUB_NAV, type AdminSection } from "@/components/admin/layout/AdminSubNav";
+import { AdminSubNav, ADMIN_SUB_NAV, getDefaultSubTab, type AdminSection } from "@/components/admin/layout/AdminSubNav";
 import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -61,6 +58,7 @@ interface NavItem {
 
 const VALID_SECTIONS: SectionValue[] = ["inicio", "clientes", "catalogo", "marketing", "negocio"];
 
+// Map legacy dashboard/tour navigation keys → new (section, subTab) URL slugs
 const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }> = {
   dashboard: { section: "inicio", subTab: "resumen" },
   calendar: { section: "inicio", subTab: "agenda" },
@@ -90,16 +88,13 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   settings: { section: "negocio", subTab: "ajustes" },
 };
 
-// Primary sections shown directly in mobile bottom nav (4 + "Más")
-const PRIMARY_SECTIONS: SectionValue[] = ["inicio", "clientes", "catalogo", "marketing"];
-
 export default function TenantAdmin() {
   const [userEmail, setUserEmail] = useState("");
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [tenantLoading, setTenantLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const navigate = useNavigate();
   const { adminSlug: slug, section: sectionParam, subTab: subTabParam } =
@@ -146,6 +141,7 @@ export default function TenantAdmin() {
     };
   }, [tenant?.id]);
 
+  // Resolve active section from URL (default = inicio)
   const activeSection: SectionValue = useMemo(() => {
     if (sectionParam && VALID_SECTIONS.includes(sectionParam as SectionValue)) {
       return sectionParam as SectionValue;
@@ -198,6 +194,7 @@ export default function TenantAdmin() {
     enabled: isMobile,
   });
 
+  // Normalize URL: if user lands on /admin/:slug without section, push to /inicio
   useEffect(() => {
     if (!slug) return;
     if (!sectionParam) {
@@ -214,29 +211,42 @@ export default function TenantAdmin() {
     }
 
     const fetchTenant = async () => {
-      setTenantLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
+      try {
+        setTenantLoading(true);
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) {
+          navigate("/auth");
+          return;
+        }
+        setUserEmail(session.user.email || "");
+
+        const { data: tenantData, error: tenantError } = await supabase
+          .from("tenants")
+          .select("*")
+          .eq("slug", slug)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (tenantError) throw tenantError;
+
+        if (!tenantData) {
+          toast({ title: "Error", description: "No se encontró el salón", variant: "destructive" });
+          navigate("/");
+          return;
+        }
+
+        setTenant(tenantData);
+      } catch (error) {
+        console.error("Error loading tenant admin:", error);
+        toast({
+          title: "No se pudo cargar el salón",
+          description: "Parece un problema de conexión. Recarga esta pantalla en unos segundos.",
+          variant: "destructive",
+        });
+      } finally {
+        setTenantLoading(false);
       }
-      setUserEmail(session.user.email || "");
-
-      const { data: tenantData, error: tenantError } = await supabase
-        .from("tenants")
-        .select("*")
-        .eq("slug", slug)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (tenantError || !tenantData) {
-        toast({ title: "Error", description: "No se encontró el salón", variant: "destructive" });
-        navigate("/");
-        return;
-      }
-
-      setTenant(tenantData);
-      setTenantLoading(false);
     };
 
     fetchTenant();
@@ -249,6 +259,7 @@ export default function TenantAdmin() {
     }
   }, [tenantLoading, accessLoading, hasAccess, tenant]);
 
+  // Mark section as viewed when navigating
   useEffect(() => {
     if (!tenant?.id) return;
     if (activeSection === "clientes") markSectionViewed("clients");
@@ -268,6 +279,7 @@ export default function TenantAdmin() {
     toast({ title: "Actualizado", description: "Datos actualizados correctamente" });
   }, [tenant?.id, refetchNotifications]);
 
+  // Legacy navigate adapter used by AdminDashboard/InteractiveTour
   const handleNavigate = useCallback(
     (tab: string, subTab?: string) => {
       const mapped = LEGACY_NAV_MAP[tab];
@@ -280,6 +292,7 @@ export default function TenantAdmin() {
     [goToSection],
   );
 
+  // Absolute-path navigate used by composite sections (InicioSection)
   const handlePathNavigate = useCallback(
     (path: string) => {
       navigate(path);
@@ -355,12 +368,54 @@ export default function TenantAdmin() {
     if (isMobile) setSidebarOpen(false);
   };
 
+  const renderNavButton = (item: NavItem) => {
+    const isActive = activeSection === item.value;
+    const badgeCount = typeof item.badge === "number" ? item.badge : 0;
+    const showBadge = badgeCount > 0 && !isActive;
+
+    return (
+      <button
+        key={item.value}
+        onClick={() => handleTabClick(item.value)}
+        role="tab"
+        aria-selected={isActive}
+        aria-label={`${item.label}${showBadge ? `, ${badgeCount} pendientes` : ""}`}
+        data-tour-step={`nav-${item.value}`}
+        className={cn(
+          "relative flex flex-col items-center justify-center gap-1 transition-all duration-200 shrink-0",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          isMobile
+            ? [
+                "px-2 py-1.5 rounded-xl min-w-[48px] h-[56px]",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-lg scale-105"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              ]
+            : [
+                "px-4 py-2.5 rounded-xl min-w-[80px] h-[60px]",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-lg"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+              ],
+        )}
+      >
+        <div className="relative">
+          {item.icon}
+          {showBadge && <NotifBadge count={badgeCount} dot />}
+        </div>
+        <span className={cn("font-medium leading-none whitespace-nowrap", isMobile ? "text-[10px]" : "text-xs")}>
+          {item.label}
+        </span>
+      </button>
+    );
+  };
+
   const loading = tenantLoading || accessLoading;
 
   if (loading || subscriptionLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center" style={{ background: "var(--gp-bg)" }}>
-        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "var(--gp-accent)" }} />
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -377,32 +432,17 @@ export default function TenantAdmin() {
     );
   }
 
-  // Derive topbar breadcrumb labels
-  const sectionLabel = navItems.find((n) => n.value === activeSection)?.label ?? "";
-  const subTabLabel =
-    ADMIN_SUB_NAV[activeSection as AdminSection]?.find((s) => s.value === activeSubTab)?.label ?? sectionLabel;
+  const activeSectionLabel = navItems.find((i) => i.value === activeSection)?.label || "Inicio";
+  const activeSubLabel =
+    ADMIN_SUB_NAV[activeSection as AdminSection]?.find((s) => s.value === activeSubTab)?.label
+    || activeSectionLabel;
 
-  // Split nav into primary (bottom bar) and secondary ("Más")
-  const primaryNavItems = navItems.filter((n) => PRIMARY_SECTIONS.includes(n.value));
-  const restNavItems = navItems.filter((n) => !PRIMARY_SECTIONS.includes(n.value));
-  const restIsActive = restNavItems.some((n) => n.value === activeSection);
-
-  const animatedContent = (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={activeSection}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -4 }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
-      >
-        {renderContent()}
-      </motion.div>
-    </AnimatePresence>
-  );
+  const primaryNav = navItems.slice(0, 4);
+  const extraNav = navItems.slice(4);
+  const extraActive = extraNav.some((n) => n.value === activeSection);
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--gp-bg)" }}>
+    <div className="gp-shell">
       <AdminCommandPalette
         tenantSlug={slug || ""}
         onNavigate={(path) => navigate(path)}
@@ -411,186 +451,88 @@ export default function TenantAdmin() {
         onSignOut={handleSignOut}
       />
 
-      {/* ── Mobile sheet sidebar ────────────────────────────────── */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="w-[280px] p-0 flex flex-col [&>button]:hidden"
-                      style={{ background: "var(--gp-card)", borderColor: "var(--gp-line)" }}>
-          <div className="flex items-center gap-[11px] px-[18px] pt-[18px] pb-[14px] border-b"
-               style={{ borderColor: "var(--gp-line)", paddingTop: "calc(env(safe-area-inset-top) + 18px)" }}>
-            {tenant.logo_url ? (
-              <img src={tenant.logo_url} alt={tenant.name} className="w-[38px] h-[38px] rounded-[12px] object-cover flex-none" />
-            ) : (
-              <div className="w-[38px] h-[38px] rounded-[12px] flex-none flex items-center justify-center text-white font-black text-[19px]"
-                   style={{ background: "linear-gradient(150deg, var(--gp-accent), #7b2ff7)", boxShadow: "0 6px 16px -6px rgba(67,97,238,.65)" }}>
-                {tenant.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className="flex flex-col min-w-0 leading-[1.1]">
-              <span className="font-black text-[16px] tracking-[-0.02em] truncate" style={{ color: "var(--gp-ink)" }}>{tenant.name}</span>
-              <span className="text-[11.5px] font-semibold truncate capitalize" style={{ color: "var(--gp-muted-color)" }}>
-                {subscriptionPlan ? `Plan ${subscriptionPlan}` : "GlowApp"}
-              </span>
-            </div>
-          </div>
+      {/* ── Desktop Sidebar ── */}
+      <aside className="gp-side">
+        <div className="gp-brand">
+          {tenant.logo_url ? (
+            <img
+              src={tenant.logo_url}
+              alt={tenant.name}
+              className="gp-logo"
+              style={{ objectFit: "cover", padding: 0 }}
+            />
+          ) : (
+            <span className="gp-logo">G</span>
+          )}
+          <span className="gp-brand-tx">
+            <span className="gp-brand-name">{tenant.name}</span>
+            <span className="gp-brand-sub">Panel de administración</span>
+          </span>
+        </div>
 
-          <nav className="flex-1 overflow-y-auto px-3 py-1.5 flex flex-col gap-0.5">
-            {navItems.map((item) => {
-              const isActive = activeSection === item.value;
-              const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-              const showBadge = badgeCount > 0 && !isActive;
-              return (
+        <nav className="gp-nav">
+          {navItems.map((item) => {
+            const isActive = activeSection === item.value;
+            const subs = ADMIN_SUB_NAV[item.value as AdminSection] || [];
+            const badgeCount = typeof item.badge === "number" ? item.badge : 0;
+            return (
+              <div key={item.value}>
                 <button
-                  key={item.value}
+                  className={`gp-navitem${isActive ? " on" : ""}`}
                   onClick={() => handleTabClick(item.value)}
-                  className={cn("gp-navitem", isActive && "gp-on")}
+                  data-tour-step={`nav-${item.value}`}
                 >
                   <span className="gp-navitem-ic">{item.icon}</span>
-                  <span className="flex-1 text-left">{item.label}</span>
-                  {showBadge && (
-                    <span className="min-w-[20px] h-5 px-1.5 rounded-full text-white text-[11px] font-black flex items-center justify-center"
-                          style={{ background: "var(--gp-accent)" }}>
-                      {badgeCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="border-t px-3 py-4 space-y-1" style={{ borderColor: "var(--gp-line)", paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}>
-            <button
-              onClick={() => { setSidebarOpen(false); navigate(`/${slug}`); }}
-              className="gp-navitem"
-            >
-              <span className="gp-navitem-ic"><ExternalLink className="h-4 w-4" /></span>
-              Ver web
-            </button>
-            <button
-              onClick={() => { setSidebarOpen(false); handleSignOut(); }}
-              className="gp-navitem"
-              style={{ color: "var(--gp-danger)" }}
-            >
-              <span className="gp-navitem-ic" style={{ color: "var(--gp-danger)" }}><Scissors className="h-4 w-4" /></span>
-              Cerrar sesión
-            </button>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* ── "Más" bottom sheet (mobile) ─────────────────────────── */}
-      {moreMenuOpen && (
-        <div className="gp-more-wrap" onClick={() => setMoreMenuOpen(false)}>
-          <div className="gp-more" onClick={(e) => e.stopPropagation()}>
-            <div className="gp-more-grip" />
-            <p className="gp-more-title">Más secciones</p>
-            <div className="gp-more-grid">
-              {restNavItems.map((item) => (
-                <button
-                  key={item.value}
-                  className={cn("gp-more-item", activeSection === item.value && "gp-on")}
-                  onClick={() => { handleTabClick(item.value); setMoreMenuOpen(false); }}
-                >
-                  <span className="gp-more-ic">{item.icon}</span>
                   {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── App shell ───────────────────────────────────────────── */}
-      <div className="flex min-h-screen">
-
-        {/* ── Desktop sidebar ──────────────────────────── */}
-        <aside
-          className="hidden min-[920px]:flex w-[252px] flex-none sticky top-0 h-screen flex-col z-30 border-r"
-          style={{ background: "var(--gp-card)", borderColor: "var(--gp-line)" }}
-        >
-          {/* Brand */}
-          <div className="flex items-center gap-[11px] px-[18px] pt-[18px] pb-[14px]">
-            {tenant.logo_url ? (
-              <img src={tenant.logo_url} alt={tenant.name} className="w-[38px] h-[38px] rounded-[12px] object-cover flex-none" />
-            ) : (
-              <div className="w-[38px] h-[38px] rounded-[12px] flex-none flex items-center justify-center text-white font-black text-[19px]"
-                   style={{ background: "linear-gradient(150deg, var(--gp-accent), #7b2ff7)", boxShadow: "0 6px 16px -6px rgba(67,97,238,.65)" }}>
-                {tenant.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className="flex flex-col min-w-0 leading-[1.1]">
-              <span className="font-black text-[16px] tracking-[-0.02em] truncate" style={{ color: "var(--gp-ink)" }}>{tenant.name}</span>
-              <span className="text-[11.5px] font-semibold truncate" style={{ color: "var(--gp-muted-color)" }}>
-                {subscriptionPlan ? `Plan ${subscriptionPlan}` : "GlowApp"}
-              </span>
-            </div>
-          </div>
-
-          {/* Nav */}
-          <nav className="flex-1 overflow-y-auto px-3 py-1.5 flex flex-col gap-0.5">
-            {navItems.map((item) => {
-              const isActive = activeSection === item.value;
-              const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-              const showBadge = badgeCount > 0 && !isActive;
-              const subItems = ADMIN_SUB_NAV[item.value as AdminSection] || [];
-              const hasSubItems = subItems.length > 1;
-
-              return (
-                <div key={item.value}>
-                  <button
-                    onClick={() => handleTabClick(item.value)}
-                    data-tour-step={`nav-${item.value}`}
-                    aria-selected={isActive}
-                    className={cn("gp-navitem", isActive && "gp-on")}
-                  >
-                    <span className="gp-navitem-ic">{item.icon}</span>
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {showBadge && (
-                      <span className="min-w-[20px] h-5 px-1.5 rounded-full text-white text-[11px] font-black flex items-center justify-center"
-                            style={{ background: "var(--gp-accent)" }}>
-                        {badgeCount}
-                      </span>
-                    )}
-                    {hasSubItems && (
-                      <ChevronDown
-                        className="h-4 w-4 flex-none transition-transform duration-200"
-                        style={{
-                          color: "var(--gp-muted-color)",
-                          transform: isActive ? "rotate(0deg)" : "rotate(-90deg)",
-                        }}
-                      />
-                    )}
-                  </button>
-
-                  {/* Sub-nav */}
-                  {isActive && hasSubItems && (
-                    <div className="ml-4 pl-3 border-l flex flex-col gap-px mt-0.5 mb-1 gp-fade"
-                         style={{ borderColor: "var(--gp-line)" }}>
-                      {subItems.map((sub) => {
-                        const isSubActive = activeSubTab === sub.value;
-                        const subBadge = sub.badgeKey ? subNavCounts[sub.badgeKey as keyof typeof subNavCounts] || 0 : 0;
-                        return (
-                          <button
-                            key={sub.value}
-                            onClick={() => goToSection(activeSection, sub.value)}
-                            className={cn("gp-subitem", isSubActive && "gp-on")}
-                          >
-                            <span className="gp-subdot" />
-                            {sub.label}
-                            {subBadge > 0 && (
-                              <span className="gp-subitem-badge">{subBadge}</span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
+                  {badgeCount > 0 && !isActive && (
+                    <span className="gp-navitem-badge">{badgeCount}</span>
                   )}
-                </div>
-              );
-            })}
-          </nav>
+                  {subs.length > 1 && (
+                    <ChevronDown
+                      className="h-3.5 w-3.5"
+                      style={{
+                        marginLeft: "auto", flexShrink: 0, transition: "transform .2s",
+                        transform: isActive ? "rotate(0deg)" : "rotate(-90deg)",
+                      }}
+                    />
+                  )}
+                </button>
+                {isActive && subs.length > 1 && (
+                  <div className="gp-side-subnav">
+                    {subs.map((sub) => {
+                      const subBadge = sub.badgeKey
+                        ? subNavCounts[sub.badgeKey as keyof typeof subNavCounts] || 0
+                        : 0;
+                      return (
+                        <button
+                          key={sub.value}
+                          className={`gp-subitem${activeSubTab === sub.value ? " on" : ""}`}
+                          onClick={() => goToSection(item.value as SectionValue, sub.value)}
+                        >
+                          <span className="gp-subdot" />
+                          {sub.label}
+                          {subBadge > 0 && (
+                            <span className="gp-subitem-badge">{subBadge}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
 
-          {/* Footer */}
-          <div className="p-3 border-t" style={{ borderColor: "var(--gp-line)" }}>
+        <div className="gp-side-foot">
+          <div className="gp-user-row">
+            <span className="gp-ava">
+              {userEmail ? userEmail.slice(0, 2).toUpperCase() : "AD"}
+            </span>
+            <span className="gp-user-tx">
+              <span className="gp-user-name">{userEmail}</span>
+              <span className="gp-user-role">Plan {subscriptionPlan || "Starter"}</span>
+            </span>
             <AdminAccountMenu
               tenantName={tenant.name}
               tenantSlug={tenant.slug}
@@ -602,99 +544,44 @@ export default function TenantAdmin() {
               onSignOut={handleSignOut}
             />
           </div>
-        </aside>
+        </div>
+      </aside>
 
-        {/* ── Main area ────────────────────────────────── */}
-        <div className="flex-1 min-w-0 flex flex-col">
+      {/* ── Main Column ── */}
+      <div className="gp-main-wrap">
 
-          {/* ── Topbar ──────────────────────────── */}
-          <header
-            className="flex-none sticky top-0 z-20 flex items-center gap-3.5 border-b"
-            style={{
-              height: "var(--gp-topbar-h)",
-              padding: "0 26px",
-              background: "color-mix(in oklab, var(--gp-bg), white 30%)",
-              backdropFilter: "blur(12px)",
-              borderColor: "var(--gp-line)",
-              paddingTop: "env(safe-area-inset-top)",
-            }}
+        {/* Topbar */}
+        <header className="gp-topbar" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+          <div className="gp-top-titlewrap">
+            <span className="gp-top-crumb">{activeSectionLabel}</span>
+            <span className="gp-top-title">{activeSubLabel}</span>
+          </div>
+          <div className="gp-top-spacer" />
+          <AdminHelpMenu onTourTabChange={handleNavigate} />
+          {/* Account menu: visible on mobile where sidebar is hidden */}
+          <span className="gp-topbar-account-mobile">
+            <AdminAccountMenu
+              tenantName={tenant.name}
+              tenantSlug={tenant.slug}
+              logoUrl={tenant.logo_url}
+              userEmail={userEmail}
+              plan={subscriptionPlan}
+              onViewWeb={() => navigate(`/${slug}`)}
+              onGoHome={() => navigate("/")}
+              onSignOut={handleSignOut}
+            />
+          </span>
+          <button
+            className="gp-new-cita-btn"
+            onClick={() => goToSection("inicio", "agenda")}
           >
-            {/* Hamburger — mobile only */}
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="min-[920px]:hidden flex items-center justify-center rounded-[11px] border transition-all flex-none"
-              style={{ width: 40, height: 40, background: "var(--gp-card)", borderColor: "var(--gp-line)", color: "var(--gp-ink2)" }}
-              aria-label="Abrir menú"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+            <Sparkles className="h-4 w-4" />
+            <span className="gp-hide-sm">Nueva cita</span>
+          </button>
+        </header>
 
-            {/* Breadcrumb + title */}
-            <div className="flex flex-col leading-[1.1]">
-              <span className="text-[11.5px] font-bold tracking-[0.02em] uppercase" style={{ color: "var(--gp-muted-color)" }}>
-                {sectionLabel}
-              </span>
-              <span className="text-[19px] font-black tracking-[-0.02em]" style={{ color: "var(--gp-ink)" }}>
-                {subTabLabel}
-              </span>
-            </div>
-
-            <div className="flex-1" />
-
-            {/* Search — desktop only */}
-            <div
-              className="hidden min-[920px]:flex items-center gap-[9px] rounded-[11px] px-[13px] py-[9px] w-[280px] border transition-all"
-              style={{ background: "var(--gp-card)", borderColor: "var(--gp-line)" }}
-              onFocusCapture={(e) => {
-                e.currentTarget.style.borderColor = "var(--gp-accent)";
-                e.currentTarget.style.boxShadow = "0 0 0 4px var(--gp-accent-softer)";
-              }}
-              onBlurCapture={(e) => {
-                e.currentTarget.style.borderColor = "var(--gp-line)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              <Search className="h-4 w-4 flex-none" style={{ color: "var(--gp-muted-color)" }} />
-              <input
-                className="border-none bg-transparent outline-none w-full text-[13.5px] font-medium"
-                style={{ color: "var(--gp-ink)" }}
-                placeholder="Buscar clientes, citas, productos…"
-              />
-            </div>
-
-            {/* Help */}
-            <AdminHelpMenu onTourTabChange={handleNavigate} />
-
-            {/* Account menu — mobile topbar / desktop is in sidebar footer */}
-            <div className="min-[920px]:hidden">
-              <AdminAccountMenu
-                tenantName={tenant.name}
-                tenantSlug={tenant.slug}
-                logoUrl={tenant.logo_url}
-                userEmail={userEmail}
-                plan={subscriptionPlan}
-                onViewWeb={() => navigate(`/${slug}`)}
-                onGoHome={() => navigate("/")}
-                onSignOut={handleSignOut}
-              />
-            </div>
-
-            {/* Nueva cita */}
-            <button
-              onClick={() => goToSection("inicio", "agenda")}
-              className="flex items-center gap-2 rounded-[11px] px-4 py-2.5 text-[13.5px] font-bold text-white transition-all hover:brightness-110 hover:-translate-y-px active:translate-y-0"
-              style={{
-                marginLeft: 2,
-                background: "linear-gradient(150deg, var(--gp-accent), color-mix(in oklab, var(--gp-accent), #000 15%))",
-                boxShadow: "0 8px 18px -8px color-mix(in oklab, var(--gp-accent), transparent 35%)",
-              }}
-            >
-              <Plus className="h-4 w-4 flex-none" />
-              <span className="hidden sm:inline">Nueva cita</span>
-            </button>
-          </header>
-
-          {/* ── SubNav ──────────────────────────── */}
+        {/* Sub-nav: desktop sees sidebar sub-items; mobile sees this row */}
+        <div className="gp-subnav-bar">
           <AdminSubNav
             tenantId={tenant.id}
             section={activeSection as AdminSection}
@@ -702,74 +589,72 @@ export default function TenantAdmin() {
             counts={subNavCounts}
             onSelect={(t) => goToSection(activeSection, t)}
           />
+        </div>
 
-          {/* ── Content ─────────────────────────── */}
-          {isMobile ? (
-            <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
-              <main
-                className="mx-auto max-w-7xl px-3 py-3"
-                style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" }}
-                {...swipeHandlers}
-              >
-                {animatedContent}
-              </main>
-            </PullToRefresh>
-          ) : (
-            <main
-              className="flex-1 mx-auto max-w-[1280px] w-full"
-              style={{ padding: "26px" }}
+        {/* Content */}
+        <main
+          className="gp-content"
+          style={isMobile ? { paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" } : undefined}
+          {...swipeHandlers}
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
-              {animatedContent}
-            </main>
-          )}
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
 
-          {/* ── Mobile bottom nav ───────────────── */}
-          <nav
-            className="min-[920px]:hidden fixed bottom-0 left-0 right-0 z-40 flex justify-around border-t"
-            style={{
-              background: "var(--gp-card)",
-              borderColor: "var(--gp-line)",
-              padding: "8px 6px",
-              paddingBottom: "calc(8px + env(safe-area-inset-bottom))",
-              boxShadow: "0 -8px 24px -16px rgba(20,22,40,.25)",
-            }}
+      {/* ── Mobile Bottom Nav ── */}
+      <nav className="gp-bottom">
+        {primaryNav.map((item) => (
+          <button
+            key={item.value}
+            className={`gp-bottom-item${activeSection === item.value ? " on" : ""}`}
+            onClick={() => handleTabClick(item.value)}
           >
-            {primaryNavItems.map((item) => {
-              const isActive = activeSection === item.value;
-              const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-              const showBadge = badgeCount > 0 && !isActive;
-              return (
+            <span className="gp-bottom-ic">{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
+        {extraNav.length > 0 && (
+          <button
+            className={`gp-bottom-item${extraActive ? " on" : ""}`}
+            onClick={() => setMoreOpen(true)}
+          >
+            <span className="gp-bottom-ic"><Menu className="h-5 w-5" /></span>
+            Más
+          </button>
+        )}
+      </nav>
+
+      {/* More bottom sheet */}
+      {moreOpen && (
+        <div className="gp-more-wrap" onClick={() => setMoreOpen(false)}>
+          <div className="gp-more" onClick={(e) => e.stopPropagation()}>
+            <div className="gp-more-grip" />
+            <h4 className="gp-more-title">Más secciones</h4>
+            <div className="gp-more-grid">
+              {extraNav.map((item) => (
                 <button
                   key={item.value}
-                  onClick={() => handleTabClick(item.value)}
-                  className={cn("gp-bottom-item", isActive && "gp-on")}
-                  aria-label={item.label}
-                  data-tour-step={`nav-${item.value}`}
+                  className={`gp-more-item${activeSection === item.value ? " on" : ""}`}
+                  onClick={() => { handleTabClick(item.value); setMoreOpen(false); }}
                 >
-                  <span className="gp-bottom-ic relative">
-                    {item.icon}
-                    {showBadge && <NotifBadge count={badgeCount} dot />}
-                  </span>
+                  <span className="gp-more-ic">{item.icon}</span>
                   {item.label}
                 </button>
-              );
-            })}
-            {/* "Más" button */}
-            {restNavItems.length > 0 && (
-              <button
-                onClick={() => setMoreMenuOpen(true)}
-                className={cn("gp-bottom-item", restIsActive && "gp-on")}
-                aria-label="Más secciones"
-              >
-                <span className="gp-bottom-ic">
-                  <MoreHorizontal className="h-5 w-5" />
-                </span>
-                Más
-              </button>
-            )}
-          </nav>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

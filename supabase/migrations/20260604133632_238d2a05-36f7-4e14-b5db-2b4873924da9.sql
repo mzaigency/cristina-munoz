@@ -1,0 +1,1 @@
+UPDATE public.tenants SET subscription_expires_at = to_timestamp(1783164833), is_active = true, stripe_customer_id = 'cus_UScTOPI5rAbTAl', stripe_subscription_id = 'sub_1TThFHRte0Pe7Hk3w9FDkN49', subscription_plan = 'pro' WHERE id = 'bae16037-cad9-43c1-a824-d3bdd9099c9f';

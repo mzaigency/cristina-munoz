@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -94,6 +104,7 @@ export const QuickBookingSheet = ({
   const [showClientResults, setShowClientResults] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
+  const [conflictPrompt, setConflictPrompt] = useState<{ message: string } | null>(null);
 
   // Reset when sheet opens with new context
   useEffect(() => {
@@ -209,8 +220,7 @@ export const QuickBookingSheet = ({
   const canSubmit =
     !!clientQuery.trim() && selectedServices.length > 0 && !!time && !!stylistSlug && !submitting;
 
-  const handleCreate = async () => {
-    if (!canSubmit) return;
+  const submitBooking = async (force: boolean) => {
     setSubmitting(true);
     try {
       const payload = {
@@ -229,7 +239,7 @@ export const QuickBookingSheet = ({
         time,
         stylist: stylistSlug,
         total_duration: totalDuration,
-        skipAvailabilityCheck: true,
+        skipAvailabilityCheck: force,
         tenant_id: tenantId,
         canal: "crm" as const,
         recurrence: null,
@@ -244,14 +254,24 @@ export const QuickBookingSheet = ({
         title: "¡Cita creada!",
         description: `${payload.customer_name} · ${format(date, "EEE d MMM", { locale: es })} · ${time}`,
       });
+      setConflictPrompt(null);
       onCreated();
       onOpenChange(false);
     } catch (e: any) {
       let description = e?.message || "No se pudo crear la cita";
+      let reason: string | undefined;
       try {
         const body = await e?.context?.json?.();
         if (body?.error) description = body.error;
+        reason = body?.details?.reason;
       } catch {}
+
+      // If conflict and we didn't force, ask the admin whether to overlap on purpose
+      if (!force && (reason === "conflict" || reason === "no_stylist_available" || /solap|ya tiene una cita/i.test(description))) {
+        setConflictPrompt({ message: description });
+        return;
+      }
+
       toast({
         title: "Error",
         description,
@@ -260,6 +280,11 @@ export const QuickBookingSheet = ({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCreate = async () => {
+    if (!canSubmit) return;
+    await submitBooking(false);
   };
 
   return (
@@ -567,6 +592,30 @@ export const QuickBookingSheet = ({
           </div>
         </div>
       </SheetContent>
+
+      <AlertDialog open={!!conflictPrompt} onOpenChange={(o) => !o && setConflictPrompt(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hora ocupada</AlertDialogTitle>
+            <AlertDialogDescription>
+              {conflictPrompt?.message || "Esa hora se solapa con otra cita."} ¿Quieres crearla de
+              todos modos? Quedará solapada en la agenda.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={submitting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={submitting}
+              onClick={(e) => {
+                e.preventDefault();
+                submitBooking(true);
+              }}
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear igualmente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 };
