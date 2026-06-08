@@ -1,17 +1,13 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Wallet, ShoppingCart, Receipt, Lock } from "lucide-react";
 import { CashRegisterManager } from "../CashRegisterManager";
 import { ProductOrdersManager } from "../ProductOrdersManager";
 import { LockedFeature } from "../LockedFeature";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { useUnseenOrders } from "@/hooks/useUnseenOrders";
-import { cn } from "@/lib/utils";
 
 interface CajaSectionProps {
   tenantId: string;
-  /** Controlled sub-tab from URL: cobros | pedidos | cierre */
   subTab?: string;
   onSubTabChange?: (subTab: string) => void;
   hideTabs?: boolean;
@@ -19,14 +15,6 @@ interface CajaSectionProps {
 
 type CajaTab = "cobros" | "pedidos" | "cierre";
 
-/**
- * Top-level "Caja" section. Groups all money-of-the-day flows:
- *  - Cobros  → CashRegisterManager (POS / cobros)
- *  - Pedidos → ProductOrdersManager (shop orders)
- *  - Cierre  → Daily closing UI (placeholder — uses existing cash_register data)
- *
- * Functionality unchanged from previous Inicio › Caja / Pedidos tabs.
- */
 const CajaSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CajaSectionProps) => {
   const [internalTab, setInternalTab] = useState<CajaTab>("cobros");
   const activeTab: CajaTab = (subTab as CajaTab) || internalTab;
@@ -39,7 +27,6 @@ const CajaSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CajaSection
   const unseenOrders = useUnseenOrders(tenantId);
   const cashLocked = !hasFeature("cash_register");
 
-  // Legacy sessionStorage compat (one-time hand-off from old links)
   useEffect(() => {
     if (subTab) return;
     const pending = sessionStorage.getItem("pendingChargeBooking");
@@ -50,9 +37,9 @@ const CajaSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CajaSection
     }
   }, [hasFeature, subTab]);
 
-  const handleTabChange = (value: string) => {
-    if ((value === "cobros" || value === "cierre") && cashLocked) return;
-    setActiveTab(value as CajaTab);
+  const handleTabChange = (t: CajaTab) => {
+    if ((t === "cobros" || t === "cierre") && cashLocked) return;
+    setActiveTab(t);
   };
 
   const tabs = [
@@ -62,74 +49,50 @@ const CajaSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CajaSection
   ];
 
   return (
-    <div className="space-y-4">
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        {!hideTabs && (
-          <TabsList className="w-full flex gp-tabs">
-            {tabs.map((tab) => (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                disabled={tab.locked}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm relative",
-                  tab.locked && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                {tab.locked ? <Lock className="h-4 w-4" /> : <tab.icon className="h-4 w-4" />}
-                <span>{tab.label}</span>
-                {tab.badge > 0 && activeTab !== tab.id && (
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center text-xs px-1.5">
-                    {tab.badge > 99 ? "99+" : tab.badge}
-                  </Badge>
-                )}
-                {tab.locked && (
-                  <span className="text-[10px] text-amber-600 ml-0.5">Pro</span>
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        )}
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {!hideTabs && (
+        <div className="gp-subtabs">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`gp-subtab${activeTab === tab.id ? " on" : ""}${tab.locked ? "" : ""}`}
+              onClick={() => handleTabChange(tab.id)}
+              style={tab.locked ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+            >
+              {tab.locked ? <Lock style={{ width: 11, height: 11 }} /> : <tab.icon style={{ width: 12, height: 12 }} />}
+              {tab.label}
+              {tab.locked && <span style={{ fontSize: 9, fontWeight: 800, color: "var(--gp-warn)", background: "var(--gp-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>Pro</span>}
+              {tab.badge > 0 && <span className="gp-subtab-count">{tab.badge > 99 ? "99+" : tab.badge}</span>}
+            </button>
+          ))}
+        </div>
+      )}
 
-        <TabsContent value="cobros" className="mt-4">
-          {cashLocked ? (
-            <LockedFeature
-              featureName="Caja Registradora"
-              currentPlan={planSlug}
-              requiredPlan="pro"
-              tenantId={tenantId}
-              variant="inline"
-            />
-          ) : (
-            <CashRegisterManager tenantId={tenantId} />
-          )}
-        </TabsContent>
+      {activeTab === "cobros" && (
+        cashLocked ? (
+          <LockedFeature featureName="Caja Registradora" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
+        ) : (
+          <CashRegisterManager tenantId={tenantId} />
+        )
+      )}
 
-        <TabsContent value="pedidos" className="mt-4">
-          <ProductOrdersManager tenantId={tenantId} />
-        </TabsContent>
+      {activeTab === "pedidos" && (
+        <ProductOrdersManager tenantId={tenantId} />
+      )}
 
-        <TabsContent value="cierre" className="mt-4">
-          {cashLocked ? (
-            <LockedFeature
-              featureName="Cierre de caja"
-              currentPlan={planSlug}
-              requiredPlan="pro"
-              tenantId={tenantId}
-              variant="inline"
-            />
-          ) : (
+      {activeTab === "cierre" && (
+        cashLocked ? (
+          <LockedFeature featureName="Cierre de caja" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
+        ) : (
+          <div className="gp-card">
             <div className="gp-empty">
-              <span className="gp-empty-ic"><Receipt className="h-5 w-5" /></span>
-              <h3 className="text-base font-extrabold mb-1" style={{ color: "var(--gp-ink)" }}>Cierre del día</h3>
-              <p className="text-sm max-w-md mx-auto" style={{ color: "var(--gp-muted-c)" }}>
-                Próximamente: arqueo automático con resumen por método de pago, descuadres y exportación a PDF.
-                Mientras tanto, revisa el detalle en <strong>Cobros</strong>.
-              </p>
+              <div className="gp-empty-ic"><Receipt style={{ width: 24, height: 24 }} /></div>
+              <h4>Cierre del día</h4>
+              <p>Próximamente: arqueo automático con resumen por método de pago, descuadres y exportación a PDF. Mientras tanto, revisa el detalle en <strong>Cobros</strong>.</p>
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          </div>
+        )
+      )}
     </div>
   );
 };
