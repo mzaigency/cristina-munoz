@@ -147,7 +147,6 @@ export default function TenantAdmin() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [tenantLoading, setTenantLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -454,49 +453,6 @@ export default function TenantAdmin() {
 
   const handleTabClick = (section: SectionValue) => {
     goToSection(section);
-    if (isMobile) setSidebarOpen(false);
-  };
-
-  const renderNavButton = (item: NavItem) => {
-    const isActive = activeSection === item.value;
-    const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-    const showBadge = badgeCount > 0 && !isActive;
-
-    return (
-      <button
-        key={item.value}
-        onClick={() => handleTabClick(item.value)}
-        role="tab"
-        aria-selected={isActive}
-        aria-label={`${item.label}${showBadge ? `, ${badgeCount} pendientes` : ""}`}
-        data-tour-step={`nav-${item.value}`}
-        className={cn(
-          "relative flex flex-col items-center justify-center gap-1 transition-all duration-200 shrink-0",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          isMobile
-            ? [
-                "px-2 py-1.5 rounded-xl min-w-[48px] h-[56px]",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-lg scale-105"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              ]
-            : [
-                "px-4 py-2.5 rounded-xl min-w-[80px] h-[60px]",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-lg"
-                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-              ],
-        )}
-      >
-        <div className="relative">
-          {item.icon}
-          {showBadge && <NotifBadge count={badgeCount} dot />}
-        </div>
-        <span className={cn("font-medium leading-none whitespace-nowrap", isMobile ? "text-[10px]" : "text-xs")}>
-          {item.label}
-        </span>
-      </button>
-    );
   };
 
   const loading = tenantLoading || accessLoading;
@@ -702,16 +658,23 @@ export default function TenantAdmin() {
 
       {/* ── Mobile Bottom Nav ── */}
       <nav className="gp-bottom">
-        {primaryNav.map((item) => (
-          <button
-            key={item.value}
-            className={`gp-bottom-item${activeSection === item.value ? " on" : ""}`}
-            onClick={() => handleTabClick(item.value)}
-          >
-            <span className="gp-bottom-ic">{item.icon}</span>
-            {item.label}
-          </button>
-        ))}
+        {primaryNav.map((item) => {
+          const badgeCount = typeof item.badge === "number" ? item.badge : 0;
+          const showBadge = badgeCount > 0 && activeSection !== item.value;
+          return (
+            <button
+              key={item.value}
+              className={`gp-bottom-item${activeSection === item.value ? " on" : ""}`}
+              onClick={() => handleTabClick(item.value)}
+            >
+              <span className="gp-bottom-ic" style={{ position: "relative" }}>
+                {item.icon}
+                {showBadge && <NotifBadge count={badgeCount} dot />}
+              </span>
+              {item.label}
+            </button>
+          );
+        })}
         {extraNav.length > 0 && (
           <button
             className={`gp-bottom-item${extraActive ? " on" : ""}`}

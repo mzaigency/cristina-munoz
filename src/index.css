@@ -1410,7 +1410,6 @@
 }
 @media (min-width: 921px) {
   .gp-topbar-account-mobile { display: none !important; }
-  .gp-hide-sm { display: none !important; }
 }
 
 /* ── More bottom sheet (mobile) ── */
