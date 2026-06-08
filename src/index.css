@@ -1238,6 +1238,28 @@
   border-radius: 999px; padding: 5px 16px;
 }
 
+/* ── Booking detail sheet ── */
+.ag-detail-wrap {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(15,17,33,.45); backdrop-filter: blur(4px);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.ag-detail-sheet {
+  width: 100%; max-width: 480px; background: var(--ag-card, #fff);
+  border-radius: 24px 24px 0 0;
+  padding: 16px 18px calc(18px + env(safe-area-inset-bottom));
+  box-shadow: 0 -16px 48px -8px rgba(20,22,40,.3);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ag-detail-sheet { animation: agSlideUp .26s cubic-bezier(.3,.9,.3,1); }
+}
+@keyframes agSlideUp { from { transform: translateY(36px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ag-detail-grip {
+  width: 36px; height: 4px; border-radius: 99px;
+  background: var(--ag-line, oklch(0.925 0.007 265));
+  margin: 0 auto 16px;
+}
+
 /* ── Empty state ── */
 .ag-empty {
   background: var(--ag-card); border: 1px solid var(--ag-line); border-radius: 20px;

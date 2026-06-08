@@ -57,6 +57,7 @@ interface LocalBooking {
   recurrence_pattern: any | null;
   skip_availability_check: boolean;
   reminder_sent: string | null;
+  canal: string | null;
 }
 
 interface LocalCalendarCRMProps {
@@ -121,6 +122,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   // Mobile action buttons state
   const [activeBookingActions, setActiveBookingActions] = useState<string | null>(null);
+
+  // Booking detail sheet
+  const [detailBooking, setDetailBooking] = useState<LocalBooking | null>(null);
   const isMobile = useIsMobile();
 
   // Quick booking sheet (click on empty slot)
@@ -138,6 +142,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   
   // Get tenant business hours
   const { businessHours, getBusinessHoursForDay, getClosedDays, getOverrideForDate } = useTenantBusinessHours(tenantId);
+
+  const isBlockedBooking = (b: LocalBooking) =>
+    b.title === "Bloqueado" || b.customer_name === "Bloqueado" || b.customer_name === "BLOQUEADO" ||
+    !!b.title?.includes("BLOQUEADO") || !!b.title?.includes("VACACIONES");
+
+  const isFullDayBlocked = (b: LocalBooking) =>
+    isBlockedBooking(b) && b.Hora === "00:00" && (b.end_time === "23:59" || b.end_time === "24:00");
 
   // Lookup client when a booking is selected for editing
   useEffect(() => {
@@ -1071,7 +1082,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
               const schedule = getScheduleForDay(day);
               const isClosed = schedule.isClosed;
               const maxCount = Math.max(...weekDays.map(d => (groupedBookings[format(d, "yyyy-MM-dd")] || []).length), 1);
-              const pct = dayBkgs.length / maxCount;
+              const realBkgs = dayBkgs.filter(b => !isFullDayBlocked(b));
+              const pct = realBkgs.length / maxCount;
+              const hasFullDayBlock = dayBkgs.some(b => isFullDayBlocked(b));
               return (
                 <button
                   key={dateKey}
@@ -1090,7 +1103,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                       <span className="wk-bar">
                         <span className="wk-bar-fill" style={{ width: `${20 + pct * 80}%`, background: isOn ? "rgba(255,255,255,.9)" : "#4361ee" }} />
                       </span>
-                      <span className="wk-count">{dayBkgs.length}</span>
+                      <span className="wk-count" style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                        {hasFullDayBlock && <Lock style={{ width: 9, height: 9, flexShrink: 0 }} />}
+                        {realBkgs.length}
+                      </span>
                     </span>
                   )}
                 </button>
@@ -1385,13 +1401,33 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                               );
                             })()}
 
+                            {/* Full-day blocked banner */}
+                            {sBkgs.some(b => isFullDayBlocked(b)) && (
+                              <div style={{
+                                position: "absolute", top: TOP_PAD, left: 2, right: 2, zIndex: 3,
+                                borderRadius: 9, border: "1.5px dashed oklch(0.78 0.01 265)",
+                                background: "oklch(0.97 0.003 265)",
+                                padding: "5px 8px 5px 10px",
+                                display: "flex", alignItems: "center", gap: 7,
+                              }}>
+                                <Lock style={{ width: 11, height: 11, color: "oklch(0.55 0.01 265)", flexShrink: 0 }} />
+                                <span style={{ fontSize: 12, fontWeight: 700, color: "oklch(0.50 0.012 265)", flex: 1 }}>Bloqueado</span>
+                                <button
+                                  onClick={e => { e.stopPropagation(); const fb = sBkgs.find(b => isFullDayBlocked(b)); if (fb) handleDeleteBooking(fb); }}
+                                  className="p-1 rounded-md bg-gray-200 text-gray-500 hover:bg-red-100 hover:text-red-600 transition-all"
+                                  title="Desbloquear"
+                                ><Trash2 style={{ width: 11, height: 11 }} /></button>
+                              </div>
+                            )}
+
                             {/* Appointment cards */}
                             {sBkgs.map(booking => {
                               const pos = calculateBookingPosition(booking, activeDay);
                               const layout = overlapLayout[booking.id] || { left: "0%", width: "100%", zIndex: 1 };
                               const isCompleted = booking.notes?.includes("[✓ COMPLETADA]");
-                              const isBlocked = booking.title === "Bloqueado" || booking.customer_name === "Bloqueado" || booking.customer_name === "BLOQUEADO" || booking.title?.includes("BLOQUEADO") || booking.title?.includes("VACACIONES");
-                              const isFullDay = isBlocked && booking.Hora === "00:00" && (booking.end_time === "23:59" || booking.end_time === "24:00");
+                              const isBlocked = isBlockedBooking(booking);
+                              const isFullDay = isFullDayBlocked(booking);
+                              if (isFullDay) return null;
                               const isHighlighted = highlightedBookingId === booking.id;
                               const isDragging = draggedBooking?.id === booking.id;
                               const isResizing2 = resizingBooking?.id === booking.id;
@@ -1439,19 +1475,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                   }}
                                   onClick={e => {
                                     if (!isBlocked && !isResizing2) {
-                                      if (isMobile) {
-                                        e.stopPropagation();
-                                        if (activeBookingActions === booking.id) {
-                                          setActiveBookingActions(null);
-                                          setSelectedBooking(booking);
-                                          setIsEditDialogOpen(true);
-                                        } else {
-                                          setActiveBookingActions(booking.id);
-                                        }
-                                      } else {
-                                        setSelectedBooking(booking);
-                                        setIsEditDialogOpen(true);
-                                      }
+                                      e.stopPropagation();
+                                      setDetailBooking(booking);
+                                      if (isMobile) setActiveBookingActions(null);
                                     }
                                   }}
                                 >
@@ -1557,6 +1583,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                         className="p-1 rounded-md bg-gray-200 text-gray-500 hover:bg-red-100 hover:text-red-600 transition-all"
                                         title="Desbloquear"
                                       ><Trash2 style={{ width: 12, height: 12 }} /></button>
+                                    </div>
+                                  )}
+
+                                  {/* Skip availability indicator */}
+                                  {!isBlocked && booking.skip_availability_check && (
+                                    <div style={{ position: "absolute", bottom: 3, left: 7, zIndex: 5, pointerEvents: "none" }}>
+                                      <ShieldAlert style={{ width: 10, height: 10, color: "oklch(0.60 0.15 65)" }} />
                                     </div>
                                   )}
 
@@ -1906,6 +1939,133 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Booking detail sheet */}
+      {detailBooking && (
+        <div className="ag-detail-wrap" onClick={() => setDetailBooking(null)}>
+          <div className="ag-detail-sheet" onClick={e => e.stopPropagation()}>
+            <div className="ag-detail-grip" />
+
+            {/* Time + date */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-.03em", color: "var(--ag-ink)" }}>
+                  {detailBooking.Hora?.slice(0, 5)}
+                </span>
+                {detailBooking.end_time && (
+                  <span style={{ fontSize: 15, fontWeight: 600, color: "var(--ag-muted)" }}>
+                    — {detailBooking.end_time.slice(0, 5)}
+                  </span>
+                )}
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ag-muted)", textTransform: "capitalize" }}>
+                  {format(parseISO(detailBooking.Fecha), "EEE d MMM", { locale: es })}
+                </span>
+              </div>
+              {detailBooking.total_duration > 0 && (
+                <span style={{ fontSize: 12, color: "var(--ag-muted)", fontWeight: 600 }}>{detailBooking.total_duration} min</span>
+              )}
+            </div>
+
+            {/* Client */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, padding: "10px 12px", background: "var(--ag-chip)", borderRadius: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 11, background: `${getStylistColor(detailBooking.stylist) || "var(--ag-accent)"}22`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <UserCircle style={{ width: 20, height: 20, color: getStylistColor(detailBooking.stylist) || "var(--ag-accent)" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{detailBooking.customer_name}</div>
+                {detailBooking.Telefono && (
+                  <a
+                    href={`tel:${detailBooking.Telefono}`}
+                    style={{ fontSize: 13, fontWeight: 600, color: "var(--ag-accent)", textDecoration: "none" }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {detailBooking.Telefono}
+                  </a>
+                )}
+              </div>
+              {detailBooking.Telefono && (
+                <a
+                  href={`tel:${detailBooking.Telefono}`}
+                  style={{ width: 36, height: 36, borderRadius: 10, background: "var(--ag-accent)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", flexShrink: 0 }}
+                  title="Llamar"
+                  onClick={e => e.stopPropagation()}
+                >
+                  📞
+                </a>
+              )}
+            </div>
+
+            {/* Services */}
+            {Array.isArray(detailBooking.services) && detailBooking.services.length > 0 && (
+              <div style={{ marginBottom: 14, border: "1px solid var(--ag-line)", borderRadius: 12, overflow: "hidden" }}>
+                {(detailBooking.services as any[]).map((s: any, i: number) => (
+                  <div key={i} style={{ display: "flex", gap: 8, padding: "9px 14px", borderBottom: i < (detailBooking.services as any[]).length - 1 ? "1px solid var(--ag-line2)" : "none", alignItems: "center" }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 700, flex: 1 }}>{s.name || s}</span>
+                    {s.duration && <span style={{ fontSize: 12, color: "var(--ag-muted)", fontWeight: 600 }}>{s.duration}min</span>}
+                    {s.price && <span style={{ fontSize: 13, fontWeight: 800, color: "var(--ag-accent)" }}>{s.price}€</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Meta badges */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, background: "var(--ag-chip)", borderRadius: 99, padding: "4px 10px" }}>
+                {stylists.find(s => s.slug === detailBooking.stylist)?.name || detailBooking.stylist}
+              </span>
+              {detailBooking.canal && (
+                <span style={{ fontSize: 12, fontWeight: 700, background: "oklch(0.95 0.04 230)", color: "oklch(0.38 0.13 230)", borderRadius: 99, padding: "4px 10px" }}>
+                  {detailBooking.canal}
+                </span>
+              )}
+              {detailBooking.skip_availability_check && (
+                <span style={{ fontSize: 12, fontWeight: 700, background: "oklch(0.96 0.05 75)", color: "oklch(0.48 0.12 65)", borderRadius: 99, padding: "4px 10px", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <ShieldAlert style={{ width: 12, height: 12 }} />
+                  Sin comprobar disponibilidad
+                </span>
+              )}
+            </div>
+
+            {/* Notes */}
+            {detailBooking.notes && !detailBooking.notes.includes("[✓ COMPLETADA]") && (
+              <div style={{ fontSize: 13, color: "var(--ag-muted)", background: "var(--ag-chip)", borderRadius: 10, padding: "8px 12px", marginBottom: 16 }}>
+                {detailBooking.notes}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <button
+                className="ag-btn"
+                style={{ justifyContent: "center" }}
+                onClick={e => { e.stopPropagation(); setDetailBooking(null); setSelectedBooking(detailBooking); setIsEditDialogOpen(true); }}
+              >Editar</button>
+              <button
+                className="ag-btn"
+                style={{ justifyContent: "center" }}
+                onClick={e => { e.stopPropagation(); setDetailBooking(null); handleMarkCompleted(detailBooking); }}
+              >{detailBooking.notes?.includes("[✓ COMPLETADA]") ? "Desmarcar" : "Completar"}</button>
+              {onNavigateToCash && !detailBooking.notes?.includes("[✓ COMPLETADA]") && (
+                <button
+                  className="ag-btn"
+                  style={{ justifyContent: "center" }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    sessionStorage.setItem("pendingChargeBooking", JSON.stringify({ id: detailBooking.id, customer_name: detailBooking.customer_name, stylist: detailBooking.stylist, services: detailBooking.services, fecha: detailBooking.Fecha, hora: detailBooking.Hora }));
+                    setDetailBooking(null);
+                    onNavigateToCash();
+                  }}
+                >Cobrar</button>
+              )}
+              <button
+                className="ag-btn"
+                style={{ justifyContent: "center", color: "oklch(0.55 0.18 25)" }}
+                onClick={e => { e.stopPropagation(); setDetailBooking(null); handleDeleteBooking(detailBooking); }}
+              >Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
