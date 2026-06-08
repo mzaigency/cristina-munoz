@@ -1111,7 +1111,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         <span className="wk-bar-fill" style={{ width: `${20 + pct * 80}%`, background: isOn ? "rgba(255,255,255,.9)" : "#4361ee" }} />
                       </span>
                       <span className="wk-count" style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                        {hasFullDayBlock && <Lock style={{ width: 9, height: 9, flexShrink: 0 }} />}
+                        {hasFullDayBlock && <Lock style={{ width: 9, height: 9, flexShrink: 0, color: isOn ? "#fecaca" : "#dc2626" }} />}
                         {realBkgs.length}
                       </span>
                     </span>
@@ -1254,8 +1254,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           : 0;
 
         const bookingsByStylist: Record<string, LocalBooking[]> = {};
+        const fullDayBlocksByStylist: Record<string, LocalBooking[]> = {};
         filteredStylists.forEach(s => {
-          bookingsByStylist[s.slug] = dayBkgs.filter(b => b.stylist === s.slug);
+          const all = dayBkgs.filter(b => b.stylist === s.slug);
+          bookingsByStylist[s.slug] = all.filter(b => !isFullDayBlocked(b));
+          fullDayBlocksByStylist[s.slug] = all.filter(b => isFullDayBlocked(b));
         });
 
         if (schedule.isSpecial) {
@@ -1409,19 +1412,19 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                             })()}
 
                             {/* Full-day blocked banner */}
-                            {sBkgs.some(b => isFullDayBlocked(b)) && (
+                            {(fullDayBlocksByStylist[stylist.slug] || []).length > 0 && (
                               <div style={{
                                 position: "absolute", top: TOP_PAD, left: 2, right: 2, zIndex: 3,
-                                borderRadius: 9, border: "1.5px dashed oklch(0.78 0.01 265)",
-                                background: "oklch(0.97 0.003 265)",
+                                borderRadius: 9, border: "1.5px dashed oklch(0.78 0.05 25)",
+                                background: "oklch(0.97 0.018 25)",
                                 padding: "5px 8px 5px 10px",
                                 display: "flex", alignItems: "center", gap: 7,
                               }}>
-                                <Lock style={{ width: 11, height: 11, color: "oklch(0.55 0.01 265)", flexShrink: 0 }} />
-                                <span style={{ fontSize: 12, fontWeight: 700, color: "oklch(0.50 0.012 265)", flex: 1 }}>Bloqueado</span>
+                                <Lock style={{ width: 11, height: 11, color: "#dc2626", flexShrink: 0 }} />
+                                <span style={{ fontSize: 12, fontWeight: 700, color: "#991b1b", flex: 1 }}>Bloqueado</span>
                                 <button
-                                  onClick={e => { e.stopPropagation(); const fb = sBkgs.find(b => isFullDayBlocked(b)); if (fb) handleDeleteBooking(fb); }}
-                                  className="p-1 rounded-md bg-gray-200 text-gray-500 hover:bg-red-100 hover:text-red-600 transition-all"
+                                  onClick={e => { e.stopPropagation(); const fb = (fullDayBlocksByStylist[stylist.slug] || [])[0]; if (fb) handleDeleteBooking(fb); }}
+                                  className="p-1 rounded-md bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 transition-all"
                                   title="Desbloquear"
                                 ><Trash2 style={{ width: 11, height: 11 }} /></button>
                               </div>
@@ -1433,8 +1436,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                               const layout = overlapLayout[booking.id] || { left: "0%", width: "100%", zIndex: 1 };
                               const isCompleted = booking.notes?.includes("[✓ COMPLETADA]");
                               const isBlocked = isBlockedBooking(booking);
-                              const isFullDay = isFullDayBlocked(booking);
-                              if (isFullDay) return null;
+                              const isFullDay = false;
                               const isHighlighted = highlightedBookingId === booking.id;
                               const isDragging = draggedBooking?.id === booking.id;
                               const isResizing2 = resizingBooking?.id === booking.id;
