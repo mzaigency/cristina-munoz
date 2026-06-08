@@ -289,8 +289,8 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 style={{ width: 28, height: 28, color: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
+      <div className="gp-loader">
+        <Loader2 className="gp-spinner" />
       </div>
     );
   }
@@ -400,7 +400,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                 </div>
               </div>
               <button className="gp-btn primary block" onClick={handleSave} disabled={saving}>
-                {saving ? <><Loader2 style={{ width: 14, height: 14, animation: "spin 0.7s linear infinite", display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />Guardando...</> : "Guardar producto"}
+                {saving ? <><Loader2 className="gp-spinner-sm" />Guardando...</> : "Guardar producto"}
               </button>
             </div>
           </DialogContent>
@@ -573,7 +573,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                 <p className="text-xs text-muted-foreground">Se actualizará el coste del producto</p>
               </div>
               <button className="gp-btn primary block" onClick={handleStockEntry} disabled={saving}>
-                {saving ? <Loader2 style={{ width: 14, height: 14, animation: "spin 0.7s linear infinite", display: "inline-block", marginRight: 6, verticalAlign: "middle" }} /> : <PackagePlus style={{ width: 14, height: 14, display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
+                {saving ? <Loader2 className="gp-spinner-sm" /> : <PackagePlus style={{ width: 14, height: 14, display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
                 Añadir stock
               </button>
             </div>

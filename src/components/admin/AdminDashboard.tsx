@@ -16,6 +16,7 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  Loader2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -237,9 +238,8 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid var(--gp-accent-soft)", borderTopColor: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div className="gp-loader">
+        <Loader2 className="gp-spinner" />
       </div>
     );
   }

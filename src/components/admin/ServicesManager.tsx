@@ -448,8 +448,8 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 style={{ width: 28, height: 28, color: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
+      <div className="gp-loader">
+        <Loader2 className="gp-spinner" />
       </div>
     );
   }
@@ -758,7 +758,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
           <DialogFooter>
             <button className="gp-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
             <button className="gp-btn primary" onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 style={{ width: 14, height: 14, animation: "spin 0.7s linear infinite", display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
+              {saving && <Loader2 className="gp-spinner-sm" />}
               {selectedService ? "Guardar Cambios" : "Crear Servicio"}
             </button>
           </DialogFooter>
@@ -815,7 +815,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                   onClick={handleDeleteCategoryImage}
                   disabled={uploading}
                 >
-                  {uploading ? <Loader2 style={{ width: 14, height: 14, animation: "spin 0.7s linear infinite" }} /> : <X style={{ width: 14, height: 14 }} />}
+                  {uploading ? <Loader2 className="gp-spinner-sm" /> : <X style={{ width: 14, height: 14 }} />}
                 </button>
               </div>
             )}

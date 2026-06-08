@@ -192,7 +192,7 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
             <AlertDialogCancel disabled={!!voidingId}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleVoidTransaction} disabled={!!voidingId}>
               {voidingId
-                ? <Loader2 style={{ width: 14, height: 14, animation: "spin .7s linear infinite", marginRight: 6 }} />
+                ? <Loader2 className="gp-spinner-sm" />
                 : <XCircle style={{ width: 14, height: 14, marginRight: 6 }} />}
               Anular transacción
             </AlertDialogAction>

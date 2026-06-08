@@ -286,7 +286,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 style={{ width: 28, height: 28, color: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
+        <Loader2 className="gp-spinner" />
       </div>
     );
   }

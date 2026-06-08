@@ -193,7 +193,7 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         disabled={loading || !startDate || !endDate}
       >
         {loading
-          ? <Loader2 style={{ width: 16, height: 16, animation: "spin .7s linear infinite" }} />
+          ? <Loader2 className="gp-spinner-sm" />
           : <Download style={{ width: 16, height: 16 }} />}
         Descargar Excel
       </button>

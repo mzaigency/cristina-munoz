@@ -219,7 +219,7 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 style={{ width: 28, height: 28, color: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
+        <Loader2 className="gp-spinner" />
       </div>
     );
   }
@@ -398,7 +398,7 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
           <DialogFooter>
             <button className="gp-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
             <button className="gp-btn primary" onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 style={{ width: 14, height: 14, animation: "spin 0.7s linear infinite", display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
+              {saving && <Loader2 className="gp-spinner-sm" />}
               {editingPackage ? "Guardar" : "Crear"}
             </button>
           </DialogFooter>

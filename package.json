@@ -76,6 +76,7 @@
     "firebase": "^12.11.0",
     "framer-motion": "^12.38.0",
     "immer": "^10.2.0",
+    "impeccable": "^2.3.2",
     "input-otp": "^1.4.2",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.462.0",

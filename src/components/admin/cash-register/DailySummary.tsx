@@ -176,7 +176,7 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isClosing}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleCloseRegister} disabled={isClosing}>
-              {isClosing ? <Loader2 style={{ width: 14, height: 14, animation: "spin .7s linear infinite", marginRight: 6 }} /> : <Lock style={{ width: 14, height: 14, marginRight: 6 }} />}
+              {isClosing ? <Loader2 className="gp-spinner-sm" /> : <Lock style={{ width: 14, height: 14, marginRight: 6 }} />}
               Cerrar caja
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -192,7 +192,7 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isReopening}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleReopenRegister} disabled={isReopening}>
-              {isReopening ? <Loader2 style={{ width: 14, height: 14, animation: "spin .7s linear infinite", marginRight: 6 }} /> : <LockOpen style={{ width: 14, height: 14, marginRight: 6 }} />}
+              {isReopening ? <Loader2 className="gp-spinner-sm" /> : <LockOpen style={{ width: 14, height: 14, marginRight: 6 }} />}
               Reabrir caja
             </AlertDialogAction>
           </AlertDialogFooter>

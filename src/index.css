@@ -1758,6 +1758,25 @@
 .gp-msg-item.on { background: var(--gp-accent-soft); }
 .gp-msg-thread { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
+/* ── Loaders & skeletons ── */
+.gp-loader { display: flex; justify-content: center; align-items: center; padding: 48px 20px; }
+.gp-spinner {
+  width: 28px; height: 28px; color: var(--gp-accent);
+  animation: gpSpin .8s linear infinite;
+}
+.gp-spinner-sm {
+  width: 14px; height: 14px; animation: gpSpin .8s linear infinite;
+  display: inline-block; margin-right: 6px; vertical-align: middle;
+}
+@keyframes gpSpin { to { transform: rotate(360deg); } }
+
+.gp-skel {
+  background: linear-gradient(90deg, var(--gp-chip) 0%, var(--gp-line) 50%, var(--gp-chip) 100%);
+  background-size: 200% 100%; border-radius: 10px;
+  animation: gpShimmer 1.5s linear infinite;
+}
+@keyframes gpShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
 /* ── Section fade-in ── */
 .gp-fade { opacity: 1; }
 @media (prefers-reduced-motion: no-preference) {
