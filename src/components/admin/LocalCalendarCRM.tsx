@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, CheckCheck, GripVertical, Banknote, ShieldAlert, UserCircle, Sparkles, ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import { Loader2, Plus, Trash2, Calendar as CalendarIcon, Ban, Search, X, Check, CheckCheck, GripVertical, Banknote, ShieldAlert, UserCircle, Sparkles, ChevronLeft, ChevronRight, Lock, Phone, MessageCircle, Pencil, Wallet, Clock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -109,10 +109,6 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const [blockStylist, setBlockStylist] = useState<string>("all");
   const [blockStartTime, setBlockStartTime] = useState<string>("09:00");
   const [blockEndTime, setBlockEndTime] = useState<string>("19:00");
-
-  // Completion dialog
-  const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
-  const [pendingCompletionBooking, setPendingCompletionBooking] = useState<LocalBooking | null>(null);
 
   // Series cancellation dialog
   const [seriesCancelDialogOpen, setSeriesCancelDialogOpen] = useState(false);
@@ -349,24 +345,19 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const handleMarkCompleted = async (booking: LocalBooking) => {
     const isAlreadyCompleted = booking.notes?.includes("[✓ COMPLETADA]");
 
-    if (!isAlreadyCompleted) {
-      setPendingCompletionBooking(booking);
-      setCompletionDialogOpen(true);
-      return;
-    }
-
-    // Unmark as completed
     try {
-      const updatedNotes = (booking.notes || "").replace("[✓ COMPLETADA] ", "");
-      const { error } = await supabase.from("bookings").update({ notes: updatedNotes }).eq("id", booking.id);
+      const updatedNotes = isAlreadyCompleted
+        ? (booking.notes || "").replace("[✓ COMPLETADA] ", "")
+        : `[✓ COMPLETADA] ${booking.notes || ""}`;
 
+      const { error } = await supabase.from("bookings").update({ notes: updatedNotes }).eq("id", booking.id);
       if (error) throw error;
 
       setBookings(bookings.map((b) => (b.id === booking.id ? { ...b, notes: updatedNotes } : b)));
 
       toast({
-        title: "Cita desmarcada",
-        description: "La cita se ha desmarcado",
+        title: isAlreadyCompleted ? "Cita desmarcada" : "Cita completada",
+        description: isAlreadyCompleted ? "La cita se ha desmarcado" : "¡Cliente atendido!",
       });
     } catch (error: any) {
       toast({
@@ -374,56 +365,6 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         description: error.message || "Error al actualizar la cita",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleConfirmCompletion = async (sendReviewMessage: boolean) => {
-    if (!pendingCompletionBooking) return;
-
-    try {
-      const updatedNotes = `[✓ COMPLETADA] ${pendingCompletionBooking.notes || ""}`;
-      const { error } = await supabase
-        .from("bookings")
-        .update({ notes: updatedNotes })
-        .eq("id", pendingCompletionBooking.id);
-
-      if (error) throw error;
-
-      setBookings(bookings.map((b) => (b.id === pendingCompletionBooking.id ? { ...b, notes: updatedNotes } : b)));
-
-      if (sendReviewMessage) {
-        try {
-          await supabase.functions.invoke("webhook-valoracion", {
-            body: {
-              customerName: pendingCompletionBooking.customer_name,
-              phone: pendingCompletionBooking.Telefono,
-              date: pendingCompletionBooking.Fecha,
-              time: pendingCompletionBooking.Hora,
-              stylist: pendingCompletionBooking.stylist,
-              services: Array.isArray(pendingCompletionBooking.services)
-                ? pendingCompletionBooking.services.map((s: any) => s.name)
-                : [],
-              tenant_id: tenantId,
-            },
-          });
-        } catch (webhookError) {
-          console.error("Error invoking webhook:", webhookError);
-        }
-      }
-
-      toast({
-        title: "Cita completada",
-        description: sendReviewMessage ? "¡Cliente atendido! Mensaje de valoración enviado" : "¡Cliente atendido!",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al completar la cita",
-        variant: "destructive",
-      });
-    } finally {
-      setCompletionDialogOpen(false);
-      setPendingCompletionBooking(null);
     }
   };
 
@@ -611,6 +552,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
     if (dayBookings.length > 0) {
       dayBookings.forEach((booking) => {
+        if (isFullDayBlocked(booking)) return;
         const [startH] = booking.Hora.split(":").map(Number);
         const endTime = booking.end_time || booking.Hora;
         const [endH, endM] = endTime.split(":").map(Number);
@@ -1880,31 +1822,6 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         </DialogContent>
       </Dialog>
 
-      {/* Completion Confirmation Dialog */}
-      <AlertDialog open={completionDialogOpen} onOpenChange={setCompletionDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Marcar cita como completada?</AlertDialogTitle>
-            <AlertDialogDescription>¿Deseas enviar un mensaje de valoración al cliente?</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                setCompletionDialogOpen(false);
-                setPendingCompletionBooking(null);
-              }}
-            >
-              Cancelar
-            </AlertDialogCancel>
-            <Button variant="outline" onClick={() => handleConfirmCompletion(false)}>
-              Solo completar
-            </Button>
-            <AlertDialogAction onClick={() => handleConfirmCompletion(true)}>
-              Completar y enviar mensaje
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Series Cancellation Dialog */}
       <AlertDialog open={seriesCancelDialogOpen} onOpenChange={setSeriesCancelDialogOpen}>
@@ -1941,131 +1858,172 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       </AlertDialog>
 
       {/* Booking detail sheet */}
-      {detailBooking && (
-        <div className="ag-detail-wrap" onClick={() => setDetailBooking(null)}>
-          <div className="ag-detail-sheet" onClick={e => e.stopPropagation()}>
-            <div className="ag-detail-grip" />
+      {detailBooking && (() => {
+        const isCompleted = detailBooking.notes?.includes("[✓ COMPLETADA]");
+        const cleanNotes = (detailBooking.notes || "").replace("[✓ COMPLETADA] ", "").trim();
+        const stylistColor = getStylistColor(detailBooking.stylist);
+        const stylistName = stylists.find(s => s.slug === detailBooking.stylist)?.name || detailBooking.stylist;
+        const phone = (detailBooking.Telefono || "").trim();
+        const phoneClean = phone.replace(/\s|-/g, "");
+        const initial = (detailBooking.customer_name || "?").trim().charAt(0).toUpperCase();
+        return (
+          <div className="ag-detail-wrap" onClick={() => setDetailBooking(null)}>
+            <div className="ag-detail-sheet" onClick={e => e.stopPropagation()}>
+              <div className="ag-detail-grip" />
+              <button className="ag-detail-close" onClick={() => setDetailBooking(null)} aria-label="Cerrar">
+                <X style={{ width: 16, height: 16 }} />
+              </button>
 
-            {/* Time + date */}
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-.03em", color: "var(--ag-ink)" }}>
+              {/* Status pill */}
+              {isCompleted && (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 800, color: "oklch(0.42 0.13 150)", background: "oklch(0.95 0.04 150)", padding: "4px 10px", borderRadius: 99, marginBottom: 10, letterSpacing: ".02em" }}>
+                  <Check style={{ width: 12, height: 12 }} />
+                  COMPLETADA
+                </div>
+              )}
+
+              {/* Time hero */}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
+                <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-.04em", color: "var(--ag-ink)", lineHeight: 1 }}>
                   {detailBooking.Hora?.slice(0, 5)}
                 </span>
                 {detailBooking.end_time && (
-                  <span style={{ fontSize: 15, fontWeight: 600, color: "var(--ag-muted)" }}>
-                    — {detailBooking.end_time.slice(0, 5)}
+                  <span style={{ fontSize: 17, fontWeight: 700, color: "var(--ag-muted)" }}>
+                    – {detailBooking.end_time.slice(0, 5)}
                   </span>
                 )}
-                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ag-muted)", textTransform: "capitalize" }}>
-                  {format(parseISO(detailBooking.Fecha), "EEE d MMM", { locale: es })}
-                </span>
               </div>
-              {detailBooking.total_duration > 0 && (
-                <span style={{ fontSize: 12, color: "var(--ag-muted)", fontWeight: 600 }}>{detailBooking.total_duration} min</span>
-              )}
-            </div>
-
-            {/* Client */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, padding: "10px 12px", background: "var(--ag-chip)", borderRadius: 14 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 11, background: `${getStylistColor(detailBooking.stylist) || "var(--ag-accent)"}22`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <UserCircle style={{ width: 20, height: 20, color: getStylistColor(detailBooking.stylist) || "var(--ag-accent)" }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{detailBooking.customer_name}</div>
-                {detailBooking.Telefono && (
-                  <a
-                    href={`tel:${detailBooking.Telefono}`}
-                    style={{ fontSize: 13, fontWeight: 600, color: "var(--ag-accent)", textDecoration: "none" }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    {detailBooking.Telefono}
-                  </a>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18, fontSize: 13, fontWeight: 600, color: "var(--ag-muted)" }}>
+                <span style={{ textTransform: "capitalize" }}>{format(parseISO(detailBooking.Fecha), "EEEE d 'de' MMMM", { locale: es })}</span>
+                {detailBooking.total_duration > 0 && (
+                  <>
+                    <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--ag-muted)" }} />
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <Clock style={{ width: 12, height: 12 }} />
+                      {detailBooking.total_duration} min
+                    </span>
+                  </>
                 )}
               </div>
-              {detailBooking.Telefono && (
-                <a
-                  href={`tel:${detailBooking.Telefono}`}
-                  style={{ width: 36, height: 36, borderRadius: 10, background: "var(--ag-accent)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", flexShrink: 0 }}
-                  title="Llamar"
-                  onClick={e => e.stopPropagation()}
-                >
-                  📞
-                </a>
-              )}
-            </div>
 
-            {/* Services */}
-            {Array.isArray(detailBooking.services) && detailBooking.services.length > 0 && (
-              <div style={{ marginBottom: 14, border: "1px solid var(--ag-line)", borderRadius: 12, overflow: "hidden" }}>
-                {(detailBooking.services as any[]).map((s: any, i: number) => (
-                  <div key={i} style={{ display: "flex", gap: 8, padding: "9px 14px", borderBottom: i < (detailBooking.services as any[]).length - 1 ? "1px solid var(--ag-line2)" : "none", alignItems: "center" }}>
-                    <span style={{ fontSize: 13.5, fontWeight: 700, flex: 1 }}>{s.name || s}</span>
-                    {s.duration && <span style={{ fontSize: 12, color: "var(--ag-muted)", fontWeight: 600 }}>{s.duration}min</span>}
-                    {s.price && <span style={{ fontSize: 13, fontWeight: 800, color: "var(--ag-accent)" }}>{s.price}€</span>}
+              {/* Client card */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, padding: "12px 14px", background: "var(--ag-chip)", borderRadius: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 13, background: `linear-gradient(150deg, ${stylistColor}, color-mix(in oklab, ${stylistColor}, #000 25%))`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", fontWeight: 800, fontSize: 17, letterSpacing: "-.02em" }}>
+                  {initial}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: "-.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{detailBooking.customer_name}</div>
+                  {phone && (
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ag-muted)", fontVariantNumeric: "tabular-nums" }}>
+                      {phone}
+                    </div>
+                  )}
+                </div>
+                {phone && (
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    <a
+                      href={`tel:${phoneClean}`}
+                      className="ag-detail-phone-btn"
+                      title="Llamar"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <Phone style={{ width: 17, height: 17 }} />
+                    </a>
+                    <a
+                      href={`https://wa.me/${phoneClean.replace(/^\+/, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ag-detail-phone-btn whatsapp"
+                      title="WhatsApp"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <MessageCircle style={{ width: 17, height: 17 }} />
+                    </a>
                   </div>
-                ))}
+                )}
               </div>
-            )}
 
-            {/* Meta badges */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, background: "var(--ag-chip)", borderRadius: 99, padding: "4px 10px" }}>
-                {stylists.find(s => s.slug === detailBooking.stylist)?.name || detailBooking.stylist}
-              </span>
-              {detailBooking.canal && (
-                <span style={{ fontSize: 12, fontWeight: 700, background: "oklch(0.95 0.04 230)", color: "oklch(0.38 0.13 230)", borderRadius: 99, padding: "4px 10px" }}>
-                  {detailBooking.canal}
-                </span>
+              {/* Services */}
+              {Array.isArray(detailBooking.services) && detailBooking.services.length > 0 && (
+                <div style={{ marginBottom: 14, border: "1px solid var(--ag-line)", borderRadius: 14, overflow: "hidden" }}>
+                  {(detailBooking.services as any[]).map((s: any, i: number) => (
+                    <div key={i} style={{ display: "flex", gap: 10, padding: "11px 14px", borderBottom: i < (detailBooking.services as any[]).length - 1 ? "1px solid var(--ag-line2)" : "none", alignItems: "center" }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, flex: 1 }}>{s.name || s}</span>
+                      {s.duration && <span style={{ fontSize: 12, color: "var(--ag-muted)", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{s.duration}min</span>}
+                      {s.price && <span style={{ fontSize: 14, fontWeight: 800, color: "var(--ag-accent)", fontVariantNumeric: "tabular-nums" }}>{s.price}€</span>}
+                    </div>
+                  ))}
+                </div>
               )}
-              {detailBooking.skip_availability_check && (
-                <span style={{ fontSize: 12, fontWeight: 700, background: "oklch(0.96 0.05 75)", color: "oklch(0.48 0.12 65)", borderRadius: 99, padding: "4px 10px", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                  <ShieldAlert style={{ width: 12, height: 12 }} />
-                  Sin comprobar disponibilidad
-                </span>
-              )}
-            </div>
 
-            {/* Notes */}
-            {detailBooking.notes && !detailBooking.notes.includes("[✓ COMPLETADA]") && (
-              <div style={{ fontSize: 13, color: "var(--ag-muted)", background: "var(--ag-chip)", borderRadius: 10, padding: "8px 12px", marginBottom: 16 }}>
-                {detailBooking.notes}
+              {/* Meta badges */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, background: `${stylistColor}1a`, color: stylistColor, borderRadius: 99, padding: "4px 11px", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: stylistColor }} />
+                  {stylistName}
+                </span>
+                {detailBooking.canal && (
+                  <span style={{ fontSize: 12, fontWeight: 700, background: "oklch(0.95 0.04 230)", color: "oklch(0.38 0.13 230)", borderRadius: 99, padding: "4px 11px", textTransform: "uppercase", letterSpacing: ".04em" }}>
+                    {detailBooking.canal}
+                  </span>
+                )}
+                {detailBooking.skip_availability_check && (
+                  <span style={{ fontSize: 12, fontWeight: 700, background: "oklch(0.96 0.05 75)", color: "oklch(0.48 0.12 65)", borderRadius: 99, padding: "4px 11px", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                    <ShieldAlert style={{ width: 12, height: 12 }} />
+                    Sin disponibilidad
+                  </span>
+                )}
               </div>
-            )}
 
-            {/* Actions */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <button
-                className="ag-btn"
-                style={{ justifyContent: "center" }}
-                onClick={e => { e.stopPropagation(); setDetailBooking(null); setSelectedBooking(detailBooking); setIsEditDialogOpen(true); }}
-              >Editar</button>
-              <button
-                className="ag-btn"
-                style={{ justifyContent: "center" }}
-                onClick={e => { e.stopPropagation(); setDetailBooking(null); handleMarkCompleted(detailBooking); }}
-              >{detailBooking.notes?.includes("[✓ COMPLETADA]") ? "Desmarcar" : "Completar"}</button>
-              {onNavigateToCash && !detailBooking.notes?.includes("[✓ COMPLETADA]") && (
+              {/* Notes */}
+              {cleanNotes && !cleanNotes.startsWith("Periodo bloqueado") && (
+                <div style={{ fontSize: 13, color: "var(--ag-ink2)", background: "var(--ag-chip)", borderLeft: "3px solid var(--ag-accent)", borderRadius: 10, padding: "10px 14px", marginBottom: 16, fontStyle: "italic" }}>
+                  {cleanNotes}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="ag-detail-actions">
                 <button
-                  className="ag-btn"
-                  style={{ justifyContent: "center" }}
-                  onClick={e => {
-                    e.stopPropagation();
-                    sessionStorage.setItem("pendingChargeBooking", JSON.stringify({ id: detailBooking.id, customer_name: detailBooking.customer_name, stylist: detailBooking.stylist, services: detailBooking.services, fecha: detailBooking.Fecha, hora: detailBooking.Hora }));
-                    setDetailBooking(null);
-                    onNavigateToCash();
-                  }}
-                >Cobrar</button>
-              )}
-              <button
-                className="ag-btn"
-                style={{ justifyContent: "center", color: "oklch(0.55 0.18 25)" }}
-                onClick={e => { e.stopPropagation(); setDetailBooking(null); handleDeleteBooking(detailBooking); }}
-              >Eliminar</button>
+                  className="ag-detail-action"
+                  onClick={e => { e.stopPropagation(); setDetailBooking(null); setSelectedBooking(detailBooking); setIsEditDialogOpen(true); }}
+                >
+                  <Pencil style={{ width: 15, height: 15 }} />
+                  Editar
+                </button>
+                <button
+                  className={`ag-detail-action ${isCompleted ? "" : "primary"}`}
+                  onClick={e => { e.stopPropagation(); setDetailBooking(null); handleMarkCompleted(detailBooking); }}
+                >
+                  <Check style={{ width: 15, height: 15 }} />
+                  {isCompleted ? "Desmarcar" : "Completar"}
+                </button>
+                {onNavigateToCash && !isCompleted && (
+                  <button
+                    className="ag-detail-action"
+                    onClick={e => {
+                      e.stopPropagation();
+                      sessionStorage.setItem("pendingChargeBooking", JSON.stringify({ id: detailBooking.id, customer_name: detailBooking.customer_name, stylist: detailBooking.stylist, services: detailBooking.services, fecha: detailBooking.Fecha, hora: detailBooking.Hora }));
+                      setDetailBooking(null);
+                      onNavigateToCash();
+                    }}
+                  >
+                    <Wallet style={{ width: 15, height: 15 }} />
+                    Cobrar
+                  </button>
+                )}
+                <button
+                  className="ag-detail-action danger"
+                  onClick={e => { e.stopPropagation(); setDetailBooking(null); handleDeleteBooking(detailBooking); }}
+                >
+                  <Trash2 style={{ width: 15, height: 15 }} />
+                  Eliminar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
