@@ -6,20 +6,18 @@ import { ROICalculator } from "@/components/admin/content/ROICalculator";
 import {
   Calendar,
   Wallet,
-  MessageCircle,
-  Star,
   TrendingUp,
   Clock,
   Plus,
+  Users,
+  UserPlus,
+  MessageCircle,
   ShoppingCart,
-  Package,
-  Briefcase,
-  Globe,
   Sparkles,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -33,17 +31,51 @@ interface DashboardStats {
   todayBookings: number;
   nextBookingTime: string | null;
   nextBookingName: string | null;
+  nextBookingService: string | null;
+  nextBookingStylist: string | null;
   todayRevenue: number;
-  unreadMessages: number;
-  pendingReviews: number;
   weeklyGrowth: number;
+  newClientsToday: number;
+  occupancy: number;
   pendingOrders: number;
-  ordersRevenue7d: number;
-  ordersCount7d: number;
-  newBookingsTodayTotal: number;
-  newBookingsTodayCrm: number;
-  newBookingsTodayWeb: number;
-  newBookingsYesterday: number;
+}
+
+interface TeamMember {
+  name: string;
+  today: number;
+  week: number;
+  color: string;
+}
+
+interface ActivityItem {
+  id: string;
+  text: string;
+  time: string;
+  tone: "accent" | "ok" | "warn" | "info";
+}
+
+const TEAM_COLORS = ["#d6489b", "#7b5bf5", "#06b6d4", "#f59e0b", "#22c55e", "#ef4444"];
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
+
+function OccRing({ pct }: { pct: number }) {
+  const size = 116, stroke = 12, r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  return (
+    <div style={{ position: "relative", width: size, height: size, flex: "none" }}>
+      <svg width={size} height={size}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--gp-chip)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--gp-accent)" strokeWidth={stroke}
+          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct)}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: "stroke-dashoffset .7s cubic-bezier(.4,0,.2,1)" }} />
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-.03em" }}>{Math.round(pct * 100)}%</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--gp-muted-c)" }}>ocupación</span>
+      </div>
+    </div>
+  );
 }
 
 export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDashboardProps) {
@@ -51,18 +83,16 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
     todayBookings: 0,
     nextBookingTime: null,
     nextBookingName: null,
+    nextBookingService: null,
+    nextBookingStylist: null,
     todayRevenue: 0,
-    unreadMessages: 0,
-    pendingReviews: 0,
     weeklyGrowth: 0,
+    newClientsToday: 0,
+    occupancy: 0,
     pendingOrders: 0,
-    ordersRevenue7d: 0,
-    ordersCount7d: 0,
-    newBookingsTodayTotal: 0,
-    newBookingsTodayCrm: 0,
-    newBookingsTodayWeb: 0,
-    newBookingsYesterday: 0,
   });
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenantAge, setTenantAge] = useState<number>(999);
   const [trainingOpen, setTrainingOpen] = useState(true);
@@ -90,71 +120,75 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       const today = format(new Date(), "yyyy-MM-dd");
       const now = format(new Date(), "HH:mm");
 
-      const { data: bookings, error: bookingsError } = await supabase
+      const { data: bookings } = await supabase
         .from("bookings")
-        .select("Hora, customer_name, status")
+        .select("Hora, customer_name, status, Stylist, Servicio")
         .eq("tenant_id", tenantId)
         .eq("Fecha", today)
         .neq("status", "cancelled")
         .order("Hora", { ascending: true });
 
-      if (bookingsError) throw bookingsError;
+      const upcomingBookings = (bookings || []).filter((b: any) => b.Hora >= now);
+      const nextBooking: any = upcomingBookings[0];
 
-      const upcomingBookings = bookings?.filter(b => b.Hora >= now) || [];
-      const nextBooking = upcomingBookings[0];
-
-      const { data: transactions, error: transactionsError } = await supabase
+      const { data: transactions } = await supabase
         .from("transactions")
-        .select("total")
+        .select("id, total, created_at, customer_name")
         .eq("tenant_id", tenantId)
         .gte("created_at", `${today}T00:00:00`)
         .lte("created_at", `${today}T23:59:59`)
-        .eq("voided", false);
+        .eq("voided", false)
+        .order("created_at", { ascending: false });
 
-      if (transactionsError) throw transactionsError;
+      const todayRevenue = (transactions || []).reduce((sum: number, t: any) => sum + (t.total || 0), 0);
 
-      const todayRevenue = transactions?.reduce((sum, t) => sum + (t.total || 0), 0) || 0;
+      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+      const twoWeeksAgo = new Date(); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-      const { data: conversations, error: convError } = await supabase
-        .from("conversations")
-        .select("unread_count_salon")
-        .eq("tenant_id", tenantId);
+      const { data: thisWeekTx } = await supabase.from("transactions").select("total").eq("tenant_id", tenantId).gte("created_at", weekAgo.toISOString()).eq("voided", false);
+      const { data: lastWeekTx } = await supabase.from("transactions").select("total").eq("tenant_id", tenantId).gte("created_at", twoWeeksAgo.toISOString()).lt("created_at", weekAgo.toISOString()).eq("voided", false);
+      const thisWeekTotal = (thisWeekTx || []).reduce((sum: number, t: any) => sum + (t.total || 0), 0);
+      const lastWeekTotal = (lastWeekTx || []).reduce((sum: number, t: any) => sum + (t.total || 0), 0);
+      const weeklyGrowth = lastWeekTotal > 0 ? Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100) : 0;
 
-      if (convError) throw convError;
+      const { data: stylistsData } = await supabase
+        .from("stylists")
+        .select("id, name, color")
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true)
+        .order("name");
 
-      const unreadMessages = conversations?.reduce((sum, c) => sum + (c.unread_count_salon || 0), 0) || 0;
+      const weekStart = new Date();
+      const dayOfWeek = weekStart.getDay();
+      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      weekStart.setDate(weekStart.getDate() + diff);
+      const weekStartStr = format(weekStart, "yyyy-MM-dd");
 
-      const { count: pendingReviews } = await supabase
-        .from("reviews")
+      const { data: weekBookings } = await supabase
+        .from("bookings")
+        .select("Stylist")
+        .eq("tenant_id", tenantId)
+        .gte("Fecha", weekStartStr)
+        .neq("status", "cancelled");
+
+      const teamList: TeamMember[] = (stylistsData || []).map((s: any, i: number) => ({
+        name: s.name,
+        color: s.color || TEAM_COLORS[i % TEAM_COLORS.length],
+        today: (bookings || []).filter((b: any) => b.Stylist === s.name || b.Stylist === s.id).length,
+        week: (weekBookings || []).filter((b: any) => b.Stylist === s.name || b.Stylist === s.id).length,
+      }));
+
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+      const { count: newClientsToday } = await supabase
+        .from("clients")
         .select("*", { count: "exact", head: true })
         .eq("tenant_id", tenantId)
-        .eq("approved", false);
+        .gte("created_at", todayStart.toISOString())
+        .lt("created_at", tomorrowStart.toISOString());
 
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const twoWeeksAgo = new Date();
-      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-
-      const { data: thisWeekTx } = await supabase
-        .from("transactions")
-        .select("total")
-        .eq("tenant_id", tenantId)
-        .gte("created_at", weekAgo.toISOString())
-        .eq("voided", false);
-
-      const { data: lastWeekTx } = await supabase
-        .from("transactions")
-        .select("total")
-        .eq("tenant_id", tenantId)
-        .gte("created_at", twoWeeksAgo.toISOString())
-        .lt("created_at", weekAgo.toISOString())
-        .eq("voided", false);
-
-      const thisWeekTotal = thisWeekTx?.reduce((sum, t) => sum + (t.total || 0), 0) || 0;
-      const lastWeekTotal = lastWeekTx?.reduce((sum, t) => sum + (t.total || 0), 0) || 0;
-      const weeklyGrowth = lastWeekTotal > 0
-        ? Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100)
-        : 0;
+      const stylistCount = Math.max(1, (stylistsData || []).length);
+      const occupancy = Math.min(1, (bookings || []).length / (stylistCount * 8));
 
       const { count: pendingOrdersCount } = await supabase
         .from("product_orders")
@@ -162,59 +196,28 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
         .eq("tenant_id", tenantId)
         .eq("status", "pending");
 
-      const { data: orders7d } = await supabase
-        .from("product_orders")
-        .select("total, status")
-        .eq("tenant_id", tenantId)
-        .gte("created_at", weekAgo.toISOString())
-        .neq("status", "cancelled");
+      const activityItems: ActivityItem[] = (transactions || []).slice(0, 5).map((t: any, i: number) => ({
+        id: `tx-${i}`,
+        text: t.customer_name
+          ? `Cobro de <b>${t.customer_name}</b> · ${formatCurrency(t.total)}`
+          : `Cobro registrado · ${formatCurrency(t.total)}`,
+        time: formatDistanceToNow(new Date(t.created_at), { locale: es, addSuffix: true }),
+        tone: "accent" as const,
+      }));
 
-      const ordersRevenue7d = orders7d?.reduce((sum, o: any) => sum + Number(o.total || 0), 0) || 0;
-      const ordersCount7d = orders7d?.length || 0;
-
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const tomorrowStart = new Date(todayStart);
-      tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-      const yesterdayStart = new Date(todayStart);
-      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-
-      const [{ data: createdToday }, { count: createdYesterday }] = await Promise.all([
-        supabase
-          .from("bookings")
-          .select("canal")
-          .eq("tenant_id", tenantId)
-          .neq("status", "cancelled")
-          .gte("created_at", todayStart.toISOString())
-          .lt("created_at", tomorrowStart.toISOString()),
-        supabase
-          .from("bookings")
-          .select("*", { count: "exact", head: true })
-          .eq("tenant_id", tenantId)
-          .neq("status", "cancelled")
-          .gte("created_at", yesterdayStart.toISOString())
-          .lt("created_at", todayStart.toISOString()),
-      ]);
-
-      const newBookingsTodayCrm = (createdToday || []).filter((b: any) => b.canal === "crm").length;
-      const newBookingsTodayWeb = (createdToday || []).filter((b: any) => b.canal !== "crm").length;
-      const newBookingsTodayTotal = createdToday?.length || 0;
-
+      setTeam(teamList);
+      setActivity(activityItems);
       setStats({
-        todayBookings: bookings?.length || 0,
+        todayBookings: (bookings || []).length,
         nextBookingTime: nextBooking?.Hora || null,
         nextBookingName: nextBooking?.customer_name || null,
+        nextBookingService: nextBooking?.Servicio || null,
+        nextBookingStylist: nextBooking?.Stylist || null,
         todayRevenue,
-        unreadMessages,
-        pendingReviews: pendingReviews || 0,
         weeklyGrowth,
+        newClientsToday: newClientsToday || 0,
+        occupancy,
         pendingOrders: pendingOrdersCount || 0,
-        ordersRevenue7d,
-        ordersCount7d,
-        newBookingsTodayTotal,
-        newBookingsTodayCrm,
-        newBookingsTodayWeb,
-        newBookingsYesterday: createdYesterday || 0,
       });
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -223,11 +226,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
-  };
-
-  const handleTrainingNavigate = (tab: string, subTab?: string) => {
+  const handleTrainingNavigate = (tab: string) => {
     onNavigate(tab);
   };
 
@@ -245,20 +244,19 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
     );
   }
 
-  const total = stats.newBookingsTodayTotal;
-  const crm = stats.newBookingsTodayCrm;
-  const web = stats.newBookingsTodayWeb;
-  const yest = stats.newBookingsYesterday;
-  const crmPct = total > 0 ? Math.round((crm / total) * 100) : 0;
-  const webPct = total > 0 ? 100 - crmPct : 0;
-  const diff = total - yest;
-
   const quickActions = [
     { label: "Cobrar", icon: <Wallet style={{ width: 18, height: 18 }} />, color: "var(--gp-accent)", onClick: () => onQuickAction("new-payment") },
     { label: "Pedidos", icon: <ShoppingCart style={{ width: 18, height: 18 }} />, color: "var(--gp-info)", onClick: navOrders },
     { label: "Mensajes", icon: <MessageCircle style={{ width: 18, height: 18 }} />, color: "var(--gp-ok)", onClick: () => onNavigate("clients") },
     { label: "Nueva cita", icon: <Plus style={{ width: 18, height: 18 }} />, color: "var(--gp-warn)", onClick: () => onQuickAction("new-booking") },
   ];
+
+  const toneColors: Record<string, string> = {
+    accent: "var(--gp-accent)",
+    ok: "var(--gp-ok)",
+    warn: "var(--gp-warn)",
+    info: "var(--gp-info)",
+  };
 
   return (
     <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
@@ -282,84 +280,68 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
         </div>
       </div>
 
-      {/* Hero row: próxima cita + citas nuevas hoy */}
+      {/* Hero: próxima cita + OccRing  |  Equipo hoy */}
       <div className="gp-grid gp-2col">
-        {/* Próxima cita hero */}
         <div className="gp-card" style={{ overflow: "hidden", position: "relative" }}>
           <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 130% at 90% -10%, color-mix(in oklab, var(--gp-accent), transparent 86%), transparent 60%)" }} />
-          <div style={{ position: "relative", padding: 22, display: "flex", flexDirection: "column", gap: 16 }}>
-            <span className="gp-badge accent" style={{ alignSelf: "flex-start" }}>
-              <Clock style={{ width: 12, height: 12 }} />
-              Próxima cita
-            </span>
-            {stats.nextBookingTime ? (
-              <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-                <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.03em", color: "var(--gp-accent)" }}>{stats.nextBookingTime}</span>
-                <div>
-                  <div style={{ fontSize: 17, fontWeight: 800, color: "var(--gp-ink)" }}>{stats.nextBookingName}</div>
-                  <div style={{ fontSize: 13, color: "var(--gp-muted-c)", fontWeight: 600 }}>{stats.todayBookings} citas hoy en total</div>
+          <div style={{ position: "relative", padding: 22, display: "flex", gap: 26, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <span className="gp-badge accent" style={{ marginBottom: 10, display: "inline-flex" }}>
+                <Clock style={{ width: 12, height: 12 }} />
+                Próxima cita
+              </span>
+              {stats.nextBookingTime ? (
+                <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 6 }}>
+                  <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.03em", color: "var(--gp-accent)" }}>{stats.nextBookingTime}</span>
+                  <div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: "var(--gp-ink)" }}>{stats.nextBookingName}</div>
+                    <div style={{ fontSize: 13.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
+                      {stats.nextBookingService
+                        ? `${stats.nextBookingService}${stats.nextBookingStylist ? ` · ${stats.nextBookingStylist}` : ""}`
+                        : `${stats.todayBookings} citas hoy en total`}
+                    </div>
+                  </div>
                 </div>
+              ) : (
+                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--gp-muted-c)", padding: "8px 0" }}>Sin más citas hoy</div>
+              )}
+              <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
+                <button className="gp-btn primary sm" onClick={() => onQuickAction("new-booking")}>
+                  <Sparkles style={{ width: 13, height: 13 }} />
+                  Nueva cita
+                </button>
+                <button className="gp-btn sm" onClick={() => onNavigate("agenda")}>
+                  <Calendar style={{ width: 13, height: 13 }} />
+                  Ver agenda
+                </button>
               </div>
-            ) : (
-              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--gp-muted-c)", padding: "8px 0" }}>Sin más citas hoy</div>
-            )}
-            <div style={{ display: "flex", gap: 9 }}>
-              <button className="gp-btn primary sm" onClick={() => onQuickAction("new-booking")}>
-                <Sparkles style={{ width: 13, height: 13 }} />
-                Nueva cita
-              </button>
-              <button className="gp-btn sm" onClick={() => onNavigate("agenda")}>
-                <Calendar style={{ width: 13, height: 13 }} />
-                Ver agenda
-              </button>
             </div>
+            <OccRing pct={stats.occupancy} />
           </div>
         </div>
 
-        {/* Citas nuevas hoy */}
         <div className="gp-card pad">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span className="gp-kpi-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
-                <Sparkles style={{ width: 16, height: 16 }} />
-              </span>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--gp-muted-c)", textTransform: "uppercase", letterSpacing: ".06em" }}>Citas nuevas hoy</div>
-                <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1, color: "var(--gp-ink)" }}>{total}</div>
-              </div>
-            </div>
-            <span className={`gp-badge ${diff >= 0 ? "ok" : "danger"}`}>
-              {diff >= 0 ? "+" : ""}{diff} vs ayer
-            </span>
+          <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 14, display: "flex", alignItems: "center", gap: 8, color: "var(--gp-ink)" }}>
+            <Users style={{ width: 15, height: 15 }} />
+            <span>Equipo hoy</span>
           </div>
-          {total > 0 ? (
-            <>
-              <div style={{ height: 6, borderRadius: 99, overflow: "hidden", background: "var(--gp-chip)", marginBottom: 12 }}>
-                <div style={{ height: "100%", width: `${crmPct}%`, background: "var(--gp-accent)", borderRadius: 99, display: "inline-block" }} />
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                  <span style={{ width: 30, height: 30, borderRadius: 9, background: "var(--gp-accent-soft)", color: "var(--gp-accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Briefcase style={{ width: 14, height: 14 }} />
+          {team.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              {team.map((member) => (
+                <div key={member.name} style={{ display: "flex", alignItems: "center", gap: 11 }}>
+                  <span style={{ width: 34, height: 34, borderRadius: 11, background: member.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, fontWeight: 800, flex: "none" }}>
+                    {member.name.charAt(0)}
                   </span>
-                  <div>
-                    <div style={{ fontSize: 10, color: "var(--gp-muted-c)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Admin</div>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>{crm} <span style={{ fontSize: 11, color: "var(--gp-muted-c)", fontWeight: 600 }}>({crmPct}%)</span></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{member.name.split(" ")[0]}</div>
+                    <div style={{ fontSize: 11.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>{member.today} citas hoy</div>
                   </div>
+                  <span className="gp-badge neutral">{member.week}/sem</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                  <span style={{ width: 30, height: 30, borderRadius: 9, background: "var(--gp-info-soft)", color: "var(--gp-info)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Globe style={{ width: 14, height: 14 }} />
-                  </span>
-                  <div>
-                    <div style={{ fontSize: 10, color: "var(--gp-muted-c)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Web</div>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>{web} <span style={{ fontSize: 11, color: "var(--gp-muted-c)", fontWeight: 600 }}>({webPct}%)</span></div>
-                  </div>
-                </div>
-              </div>
-            </>
+              ))}
+            </div>
           ) : (
-            <p style={{ fontSize: 13, color: "var(--gp-muted-c)", margin: 0 }}>Aún no se han creado citas hoy</p>
+            <p style={{ fontSize: 13, color: "var(--gp-muted-c)", margin: 0 }}>Sin equipo configurado</p>
           )}
         </div>
       </div>
@@ -377,36 +359,33 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
             )}
           </div>
           <div className="gp-kpi-val">{formatCurrency(stats.todayRevenue)}</div>
-          <div className="gp-kpi-lbl">Ingresos hoy</div>
+          <div className="gp-kpi-lbl">Ingresos de hoy</div>
         </div>
         <div className="gp-kpi" style={{ cursor: "pointer" }} onClick={() => onNavigate("agenda")}>
           <div className="gp-kpi-top">
             <span className="gp-kpi-ic" style={{ background: "var(--gp-info-soft)", color: "var(--gp-info)" }}><Calendar style={{ width: 16, height: 16 }} /></span>
           </div>
           <div className="gp-kpi-val">{stats.todayBookings}</div>
-          <div className="gp-kpi-lbl">Citas hoy</div>
+          <div className="gp-kpi-lbl">Citas de hoy</div>
         </div>
-        <div className="gp-kpi" style={{ cursor: "pointer" }} onClick={() => onNavigate("clients")}>
+        <div className="gp-kpi">
           <div className="gp-kpi-top">
-            <span className="gp-kpi-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}><MessageCircle style={{ width: 16, height: 16 }} /></span>
-            {stats.unreadMessages > 0 && <span className="gp-badge danger" style={{ fontSize: 10, padding: "2px 7px" }}>{stats.unreadMessages}</span>}
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}><UserPlus style={{ width: 16, height: 16 }} /></span>
           </div>
-          <div className="gp-kpi-val">{stats.unreadMessages}</div>
-          <div className="gp-kpi-lbl">Mensajes sin leer</div>
+          <div className="gp-kpi-val">{stats.newClientsToday}</div>
+          <div className="gp-kpi-lbl">Clientes nuevos</div>
         </div>
-        <div className="gp-kpi" style={{ cursor: "pointer" }} onClick={() => onNavigate("clients")}>
+        <div className="gp-kpi">
           <div className="gp-kpi-top">
-            <span className="gp-kpi-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}><Star style={{ width: 16, height: 16 }} /></span>
-            {stats.pendingReviews > 0 && <span className="gp-badge warn" style={{ fontSize: 10, padding: "2px 7px" }}>{stats.pendingReviews}</span>}
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}><TrendingUp style={{ width: 16, height: 16 }} /></span>
           </div>
-          <div className="gp-kpi-val">{stats.pendingReviews}</div>
-          <div className="gp-kpi-lbl">Reseñas pendientes</div>
+          <div className="gp-kpi-val">{Math.round(stats.occupancy * 100)}%</div>
+          <div className="gp-kpi-lbl">Ocupación</div>
         </div>
       </div>
 
-      {/* Atajos + pedidos */}
+      {/* Atajos rápidos + Actividad reciente */}
       <div className="gp-grid gp-2col">
-        {/* Atajos rápidos */}
         <div className="gp-card" style={{ overflow: "hidden" }}>
           <div className="gp-card-h"><h3>Atajos rápidos</h3></div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 1, background: "var(--gp-line2)" }}>
@@ -425,36 +404,25 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
           </div>
         </div>
 
-        {/* Pedidos */}
         <div className="gp-card" style={{ overflow: "hidden" }}>
-          <div className="gp-card-h">
-            <h3>Tienda</h3>
-            {stats.pendingOrders > 0 && <span className="gp-badge danger sub"><span className="pip" style={{ background: "currentColor" }} />{stats.pendingOrders} nuevos</span>}
-          </div>
-          <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 13, background: "var(--gp-accent-soft)", color: "var(--gp-accent)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
-                <ShoppingCart style={{ width: 18, height: 18 }} />
-              </span>
-              <div>
-                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.02em", color: "var(--gp-ink)" }}>{stats.pendingOrders}</div>
-                <div style={{ fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>pedidos pendientes</div>
-              </div>
+          <div className="gp-card-h"><h3>Actividad reciente</h3></div>
+          {activity.length > 0 ? (
+            <div className="gp-list">
+              {activity.map((item) => (
+                <div className="gp-row" key={item.id}>
+                  <span style={{ width: 38, height: 38, borderRadius: 11, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: `color-mix(in oklab, ${toneColors[item.tone]}, white 88%)`, color: toneColors[item.tone] }}>
+                    <Wallet style={{ width: 16, height: 16 }} />
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--gp-ink)" }} dangerouslySetInnerHTML={{ __html: item.text }} />
+                    <div style={{ fontSize: 12, color: "var(--gp-muted-c)", fontWeight: 600, marginTop: 1 }}>{item.time}</div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 13, background: "var(--gp-info-soft)", color: "var(--gp-info)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
-                <Package style={{ width: 18, height: 18 }} />
-              </span>
-              <div>
-                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.02em", color: "var(--gp-ink)" }}>{formatCurrency(stats.ordersRevenue7d)}</div>
-                <div style={{ fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>{stats.ordersCount7d} pedidos · últimos 7 días</div>
-              </div>
-            </div>
-            <button className="gp-btn primary sm block" style={{ marginTop: 0 }} onClick={navOrders}>
-              <ShoppingCart style={{ width: 13, height: 13 }} />
-              Ver pedidos
-            </button>
-          </div>
+          ) : (
+            <div style={{ padding: "20px 18px", fontSize: 13, color: "var(--gp-muted-c)" }}>Sin actividad reciente</div>
+          )}
         </div>
       </div>
 
