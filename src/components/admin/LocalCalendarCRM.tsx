@@ -143,8 +143,12 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     b.title === "Bloqueado" || b.customer_name === "Bloqueado" || b.customer_name === "BLOQUEADO" ||
     !!b.title?.includes("BLOQUEADO") || !!b.title?.includes("VACACIONES");
 
-  const isFullDayBlocked = (b: LocalBooking) =>
-    isBlockedBooking(b) && b.Hora === "00:00" && (b.end_time === "23:59" || b.end_time === "24:00");
+  const isFullDayBlocked = (b: LocalBooking) => {
+    if (!isBlockedBooking(b)) return false;
+    const h = (b.Hora || "").slice(0, 5);
+    const e = (b.end_time || "").slice(0, 5);
+    return h === "00:00" && (e === "23:59" || e === "24:00" || e === "00:00");
+  };
 
   // Lookup client when a booking is selected for editing
   useEffect(() => {
