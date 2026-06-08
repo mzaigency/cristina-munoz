@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bell, Store, CreditCard } from "lucide-react";
 import TenantSettings from "../TenantSettings";
 import { NotificationSettings } from "../NotificationSettings";
@@ -29,33 +28,31 @@ const SettingsSection = ({ tenantId, tenantSlug, subTab, onSubTabChange }: Setti
   ];
 
   return (
-    <div className="space-y-4">
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SettingsTab)}>
-        <TabsList className="w-full flex overflow-x-auto no-scrollbar gp-tabs">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="flex-1 min-w-fit flex items-center gap-1.5 text-xs px-3 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <tab.icon className="h-3.5 w-3.5" />
-              <span>{tab.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      <div className="gp-subtabs">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={`gp-subtab${activeTab === tab.id ? " on" : ""}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            <tab.icon style={{ width: 12, height: 12 }} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        <TabsContent value="general" className="mt-4">
-          <TenantSettings tenantId={tenantId} tenantSlug={tenantSlug} />
-        </TabsContent>
+      {activeTab === "general" && (
+        <TenantSettings tenantId={tenantId} tenantSlug={tenantSlug} />
+      )}
 
-        <TabsContent value="subscription" className="mt-4">
-          <SubscriptionManager tenantId={tenantId} />
-        </TabsContent>
+      {activeTab === "subscription" && (
+        <SubscriptionManager tenantId={tenantId} />
+      )}
 
-        <TabsContent value="notifications" className="mt-4">
-          <NotificationSettings tenantId={tenantId} />
-        </TabsContent>
-      </Tabs>
+      {activeTab === "notifications" && (
+        <NotificationSettings tenantId={tenantId} />
+      )}
     </div>
   );
 };

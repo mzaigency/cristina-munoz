@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { ImagePlus, Percent, Star, QrCode, Plus, Lock } from "lucide-react";
 import { QRCardGenerator } from "@/components/admin/content/QRCardGenerator";
 import { PostCreator } from "@/components/social/PostCreator";
@@ -9,10 +7,8 @@ import { PromotionsManager } from "../PromotionsManager";
 import { ReviewsManager } from "../ReviewsManager";
 import { LockedFeature } from "../LockedFeature";
 import { usePosts } from "@/hooks/usePosts";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlanLimits, type PlanFeature } from "@/hooks/usePlanLimits";
-import { cn } from "@/lib/utils";
 
 interface MarketingSectionProps {
   tenantId: string;
@@ -32,11 +28,6 @@ interface TabConfig {
   requiredFeature?: PlanFeature;
 }
 
-/**
- * Marketing section. Promos (from Catálogo) and Reseñas (from Clientes) now
- * live here as part of the new IA. Legacy URLs are transparently redirected
- * by TenantAdmin.
- */
 const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTabs }: MarketingSectionProps) => {
   const [internalTab, setInternalTab] = useState<MarketingTab>("posts");
   const validTabs: MarketingTab[] = ["posts", "promos", "resenas", "qr"];
@@ -84,51 +75,47 @@ const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTa
   const isTabLocked = (tab: TabConfig) =>
     tab.requiredFeature ? !hasFeature(tab.requiredFeature) : false;
 
-  const handleTabChange = (value: string) => {
-    const tab = tabs.find((t) => t.id === value);
-    if (tab && isTabLocked(tab)) return;
-    setActiveTab(value as MarketingTab);
+  const handleTabChange = (id: MarketingTab) => {
+    const tab = tabs.find((t) => t.id === id);
+    if (tab && !isTabLocked(tab)) setActiveTab(id);
   };
 
   return (
-    <div className="space-y-4">
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        {!hideTabs && (
-          <TabsList className="w-full flex overflow-x-auto no-scrollbar gp-tabs">
-            {tabs.map((tab) => {
-              const locked = isTabLocked(tab);
-              return (
-                <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
-                  disabled={locked}
-                  className={cn(
-                    "flex-1 min-w-fit flex items-center justify-center gap-1.5 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm relative",
-                    locked && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {locked ? <Lock className="h-4 w-4" /> : <tab.icon className="h-4 w-4" />}
-                  <span>{tab.label}</span>
-                  {tab.badge > 0 && activeTab !== tab.id && (
-                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center text-xs px-1.5">
-                      {tab.badge > 99 ? "99+" : tab.badge}
-                    </Badge>
-                  )}
-                  {locked && (
-                    <span className="hidden md:inline text-[10px] text-amber-600 ml-0.5">Pro</span>
-                  )}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-        )}
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {!hideTabs && (
+        <div className="gp-subtabs">
+          {tabs.map((tab) => {
+            const locked = isTabLocked(tab);
+            return (
+              <button
+                key={tab.id}
+                className={`gp-subtab${activeTab === tab.id ? " on" : ""}`}
+                onClick={() => handleTabChange(tab.id)}
+                style={locked ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+              >
+                {locked ? <Lock style={{ width: 11, height: 11 }} /> : <tab.icon style={{ width: 12, height: 12 }} />}
+                {tab.label}
+                {locked && (
+                  <span style={{ fontSize: 9, fontWeight: 800, color: "var(--gp-warn)", background: "var(--gp-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>
+                    Pro
+                  </span>
+                )}
+                {!locked && tab.badge > 0 && (
+                  <span className="gp-subtab-count">{tab.badge > 99 ? "99+" : tab.badge}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-        <TabsContent value="posts" className="mt-4 space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setPostCreatorOpen(true)} size="sm" className="gap-2">
-              <Plus className="h-4 w-4" />
+      {activeTab === "posts" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button className="gp-btn sm primary" onClick={() => setPostCreatorOpen(true)}>
+              <Plus style={{ width: 13, height: 13 }} />
               Nuevo Post
-            </Button>
+            </button>
           </div>
           <PostGrid
             posts={tenantPosts || []}
@@ -139,30 +126,24 @@ const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTa
             isOpen={postCreatorOpen}
             onClose={() => { setPostCreatorOpen(false); refetchTenantPosts(); }}
           />
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="promos" className="mt-4">
-          {promosLocked ? (
-            <LockedFeature
-              featureName="Promociones"
-              currentPlan={planSlug}
-              requiredPlan="pro"
-              tenantId={tenantId}
-              variant="inline"
-            />
-          ) : (
-            <PromotionsManager tenantId={tenantId} />
-          )}
-        </TabsContent>
+      {activeTab === "promos" && (
+        promosLocked ? (
+          <LockedFeature featureName="Promociones" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
+        ) : (
+          <PromotionsManager tenantId={tenantId} />
+        )
+      )}
 
-        <TabsContent value="resenas" className="mt-4">
-          <ReviewsManager tenantId={tenantId} />
-        </TabsContent>
+      {activeTab === "resenas" && (
+        <ReviewsManager tenantId={tenantId} />
+      )}
 
-        <TabsContent value="qr" className="mt-4">
-          <QRCardGenerator tenantId={tenantId} tenantSlug={tenantSlug} />
-        </TabsContent>
-      </Tabs>
+      {activeTab === "qr" && (
+        <QRCardGenerator tenantId={tenantId} tenantSlug={tenantSlug} />
+      )}
     </div>
   );
 };

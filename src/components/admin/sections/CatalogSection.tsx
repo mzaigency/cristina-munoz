@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Scissors, ShoppingBag, Package, Lock, Sparkles } from "lucide-react";
 import { ServicesManager } from "../ServicesManager";
@@ -9,7 +7,6 @@ import { ServicePackagesManager } from "../ServicePackagesManager";
 import { LockedFeature } from "../LockedFeature";
 import { AgendaImporter } from "../import/AgendaImporter";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
-import { cn } from "@/lib/utils";
 
 interface CatalogSectionProps {
   tenantId: string;
@@ -28,10 +25,6 @@ interface TabConfig {
   requiredPlan?: string;
 }
 
-/**
- * Catálogo section. Promociones moved to Marketing › Promos in the new IA;
- * legacy URLs are transparently redirected by TenantAdmin.
- */
 const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogSectionProps) => {
   const [internalTab, setInternalTab] = useState<CatalogTab>("services");
   const activeTab: CatalogTab = (subTab as CatalogTab) || internalTab;
@@ -61,51 +54,45 @@ const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogS
     return !hasFeature(tab.requiredFeature);
   };
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = (tabId: CatalogTab) => {
     const tab = tabs.find((t) => t.id === tabId);
-    if (tab && !isTabLocked(tab)) {
-      setActiveTab(tabId as CatalogTab);
-    }
+    if (tab && !isTabLocked(tab)) setActiveTab(tabId);
   };
 
   return (
-    <div className="space-y-4">
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        {!hideTabs && (
-          <TabsList className="w-full flex overflow-x-auto no-scrollbar gp-tabs">
-            {tabs.map((tab) => {
-              const locked = isTabLocked(tab);
-              return (
-                <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
-                  disabled={locked}
-                  className={cn(
-                    "flex-1 min-w-fit flex items-center gap-1.5 text-xs px-3 py-2",
-                    "data-[state=active]:bg-background data-[state=active]:shadow-sm",
-                    locked && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {locked ? <Lock className="h-3.5 w-3.5" /> : <tab.icon className="h-3.5 w-3.5" />}
-                  <span>{tab.label}</span>
-                  {locked && (
-                    <span className="hidden md:inline text-[10px] text-amber-600 ml-1">
-                      Pro
-                    </span>
-                  )}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-        )}
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {!hideTabs && (
+        <div className="gp-subtabs">
+          {tabs.map((tab) => {
+            const locked = isTabLocked(tab);
+            return (
+              <button
+                key={tab.id}
+                className={`gp-subtab${activeTab === tab.id ? " on" : ""}`}
+                onClick={() => handleTabChange(tab.id)}
+                style={locked ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+              >
+                {locked ? <Lock style={{ width: 11, height: 11 }} /> : <tab.icon style={{ width: 12, height: 12 }} />}
+                {tab.label}
+                {locked && (
+                  <span style={{ fontSize: 9, fontWeight: 800, color: "var(--gp-warn)", background: "var(--gp-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>
+                    Pro
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-        <TabsContent value="services" className="mt-4 space-y-3">
+      {activeTab === "services" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5">
-                <Sparkles className="h-4 w-4" />
+              <button className="gp-btn sm" style={{ alignSelf: "flex-start" }}>
+                <Sparkles style={{ width: 13, height: 13 }} />
                 Importar carta desde foto con IA
-              </Button>
+              </button>
             </SheetTrigger>
             <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-2xl">
               <SheetHeader className="text-left mb-2">
@@ -115,23 +102,22 @@ const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogS
             </SheetContent>
           </Sheet>
           <ServicesManager tenantId={tenantId} />
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="products" className="mt-4">
-          <ProductsManager tenantId={tenantId} />
-        </TabsContent>
+      {activeTab === "products" && (
+        <ProductsManager tenantId={tenantId} />
+      )}
 
-        <TabsContent value="packages" className="mt-4">
-          {isTabLocked(tabs[2]) ? (
-            <LockedFeature featureName="Paquetes" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
-          ) : (
-            <ServicePackagesManager tenantId={tenantId} />
-          )}
-        </TabsContent>
-      </Tabs>
+      {activeTab === "packages" && (
+        isTabLocked(tabs[2]) ? (
+          <LockedFeature featureName="Paquetes" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
+        ) : (
+          <ServicePackagesManager tenantId={tenantId} />
+        )
+      )}
     </div>
   );
 };
 
 export default CatalogSection;
-

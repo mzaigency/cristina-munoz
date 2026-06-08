@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Target, FileText, Lock, Sparkles } from "lucide-react";
 import { BusinessStats } from "../BusinessStats";
 import { MonthlyGoals } from "../MonthlyGoals";
@@ -8,7 +7,6 @@ import { LockedFeature } from "../LockedFeature";
 import { TenantFeedAnalytics } from "../TenantFeedAnalytics";
 import { usePlanLimits, PlanFeature } from "@/hooks/usePlanLimits";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 
 interface ReportsSectionProps {
   tenantId: string;
@@ -62,74 +60,68 @@ const ReportsSection = ({ tenantId, subTab, onSubTabChange }: ReportsSectionProp
     return !hasFeature(tab.requiredFeature);
   };
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = (tabId: ReportsTab) => {
     const tab = tabs.find((t) => t.id === tabId);
-    if (tab && !isTabLocked(tab)) {
-      setActiveTab(tabId as ReportsTab);
-    }
+    if (tab && !isTabLocked(tab)) setActiveTab(tabId);
   };
 
-  // Find first unlocked tab
-  const firstUnlocked = tabs.find((t) => !isTabLocked(t));
-  const currentTab = isTabLocked(tabs.find((t) => t.id === activeTab)!) ? (firstUnlocked?.id || "stats") : activeTab;
+  // If current tab is locked, fall back to first unlocked
+  const lockedActive = isTabLocked(tabs.find((t) => t.id === activeTab)!);
+  const currentTab = lockedActive
+    ? (tabs.find((t) => !isTabLocked(t))?.id || "stats")
+    : activeTab;
 
   return (
-    <div className="space-y-4">
-      <Tabs value={currentTab} onValueChange={handleTabChange}>
-        <TabsList className="w-full flex overflow-x-auto no-scrollbar gp-tabs">
-          {tabs.map((tab) => {
-            const locked = isTabLocked(tab);
-            return (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                disabled={locked}
-                className={cn(
-                  "flex-1 min-w-fit flex items-center gap-1.5 text-xs px-3 py-2",
-                  "data-[state=active]:bg-background data-[state=active]:shadow-sm",
-                  locked && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                {locked ? <Lock className="h-3.5 w-3.5" /> : <tab.icon className="h-3.5 w-3.5" />}
-                <span>{tab.label}</span>
-                {locked && (
-                  <span className="hidden md:inline text-[10px] text-amber-600 dark:text-amber-400 ml-1">
-                    {tab.requiredPlan === "business" ? "Business" : "Pro"}
-                  </span>
-                )}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      <div className="gp-subtabs">
+        {tabs.map((tab) => {
+          const locked = isTabLocked(tab);
+          return (
+            <button
+              key={tab.id}
+              className={`gp-subtab${currentTab === tab.id ? " on" : ""}`}
+              onClick={() => handleTabChange(tab.id)}
+              style={locked ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+            >
+              {locked ? <Lock style={{ width: 11, height: 11 }} /> : <tab.icon style={{ width: 12, height: 12 }} />}
+              {tab.label}
+              {locked && (
+                <span style={{ fontSize: 9, fontWeight: 800, color: "var(--gp-warn)", background: "var(--gp-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>
+                  {tab.requiredPlan === "business" ? "Business" : "Pro"}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
-        <TabsContent value="stats" className="mt-4">
-          {isTabLocked(tabs[0]) ? (
-            <LockedFeature featureName="Estadísticas" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
-          ) : (
-            <BusinessStats tenantId={tenantId} />
-          )}
-        </TabsContent>
+      {currentTab === "stats" && (
+        isTabLocked(tabs[0]) ? (
+          <LockedFeature featureName="Estadísticas" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
+        ) : (
+          <BusinessStats tenantId={tenantId} />
+        )
+      )}
 
-        <TabsContent value="feed" className="mt-4">
-          <TenantFeedAnalytics tenantId={tenantId} />
-        </TabsContent>
+      {currentTab === "feed" && (
+        <TenantFeedAnalytics tenantId={tenantId} />
+      )}
 
-        <TabsContent value="goals" className="mt-4">
-          {isTabLocked(tabs[2]) ? (
-            <LockedFeature featureName="Objetivos" currentPlan={planSlug} requiredPlan="business" tenantId={tenantId} variant="inline" />
-          ) : (
-            <MonthlyGoals tenantId={tenantId} />
-          )}
-        </TabsContent>
+      {currentTab === "goals" && (
+        isTabLocked(tabs[2]) ? (
+          <LockedFeature featureName="Objetivos" currentPlan={planSlug} requiredPlan="business" tenantId={tenantId} variant="inline" />
+        ) : (
+          <MonthlyGoals tenantId={tenantId} />
+        )
+      )}
 
-        <TabsContent value="pdf" className="mt-4">
-          {isTabLocked(tabs[3]) ? (
-            <LockedFeature featureName="Reportes PDF" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
-          ) : (
-            <PDFReportsGenerator tenantId={tenantId} tenantName={tenantName} />
-          )}
-        </TabsContent>
-      </Tabs>
+      {currentTab === "pdf" && (
+        isTabLocked(tabs[3]) ? (
+          <LockedFeature featureName="Reportes PDF" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
+        ) : (
+          <PDFReportsGenerator tenantId={tenantId} tenantName={tenantName} />
+        )
+      )}
     </div>
   );
 };
