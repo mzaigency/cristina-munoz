@@ -31,7 +31,7 @@ const SettingsSection = ({ tenantId, tenantSlug, subTab, onSubTabChange }: Setti
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SettingsTab)}>
-        <TabsList className="w-full flex overflow-x-auto no-scrollbar bg-muted/50 p-1 rounded-lg">
+        <TabsList className="w-full flex overflow-x-auto no-scrollbar gp-tabs">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.id}

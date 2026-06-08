@@ -99,7 +99,7 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AgendaTab)}>
         {!hideTabs && (
-          <TabsList className="w-full flex bg-muted/50 p-1 rounded-lg">
+          <TabsList className="w-full flex gp-tabs">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.id}

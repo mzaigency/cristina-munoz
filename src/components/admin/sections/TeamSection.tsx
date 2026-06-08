@@ -64,7 +64,7 @@ const TeamSection = ({ tenantId, subTab, onSubTabChange }: TeamSectionProps) => 
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="w-full flex overflow-x-auto no-scrollbar bg-muted/50 p-1 rounded-lg">
+        <TabsList className="w-full flex overflow-x-auto no-scrollbar gp-tabs">
           {tabs.map((tab) => {
             const locked = isTabLocked(tab);
             return (
