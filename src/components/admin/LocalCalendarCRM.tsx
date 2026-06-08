@@ -501,7 +501,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         for (const stylist of stylistsToBlock) {
           rows.push({
             tenant_id: tenantId,
-            customer_name: "BLOQUEADO",
+            customer_name: "Bloqueado",
             Telefono: "",
             Fecha: format(day, "yyyy-MM-dd"),
             Hora: blockPeriod === "hours" ? blockStartTime : "00:00",
@@ -513,12 +513,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 ? (parseInt(blockEndTime.split(":")[0]) - parseInt(blockStartTime.split(":")[0])) * 60
                 : 24 * 60,
             status: "confirmed",
-            title:
-              blockPeriod === "hours"
-                ? `🔒 BLOQUEADO - ${stylist.toUpperCase()}`
-                : `🌴 VACACIONES - ${stylist.toUpperCase()}`,
-            notes: blockPeriod === "hours" ? "Periodo bloqueado - Horas específicas" : "Periodo bloqueado - Vacaciones",
-            color: "#EF4444",
+            title: "Bloqueado",
+            notes: "Periodo bloqueado",
+            color: "oklch(0.72 0.01 265)",
             canal: "crm",
             recurrence_group_id: groupId,
           });
@@ -725,7 +722,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   // Drag & Drop handlers
   const handleDragStart = (e: React.DragEvent, booking: LocalBooking) => {
-    if (booking.title?.includes("🔒 BLOQUEADO") || booking.title?.includes("🌴 VACACIONES")) return;
+    if (booking.title === "Bloqueado" || booking.customer_name === "Bloqueado" || booking.customer_name === "BLOQUEADO" || booking.title?.includes("BLOQUEADO") || booking.title?.includes("VACACIONES")) return;
     setDraggedBooking(booking);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", booking.id);
@@ -910,7 +907,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const todayKey = format(new Date(), "yyyy-MM-dd");
   const todayBookings = groupedBookings[todayKey] || [];
   const completedToday = todayBookings.filter(b => b.notes?.includes("[✓ COMPLETADA]")).length;
-  const pendingToday = todayBookings.filter(b => !b.notes?.includes("[✓ COMPLETADA]") && !b.title?.includes("BLOQUEO") && !b.title?.includes("VACACIONES")).length;
+  const pendingToday = todayBookings.filter(b => !b.notes?.includes("[✓ COMPLETADA]") && b.title !== "Bloqueado" && b.customer_name !== "Bloqueado" && b.customer_name !== "BLOQUEADO" && !b.title?.includes("BLOQUEADO") && !b.title?.includes("VACACIONES")).length;
   const nowHour = new Date().getHours();
   const nowMinutes = new Date().getMinutes();
   const nextBooking = todayBookings.find(b => {
@@ -966,7 +963,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         const heroDayBookings = groupedBookings[activeKey] || [];
         const heroSchedule = getScheduleForDay(heroDay);
         const heroCompleted = heroDayBookings.filter(b => b.notes?.includes("[✓ COMPLETADA]")).length;
-        const heroPending = heroDayBookings.filter(b => !b.notes?.includes("[✓ COMPLETADA]") && !b.title?.includes("BLOQUEO") && !b.title?.includes("VACACIONES")).length;
+        const heroPending = heroDayBookings.filter(b => !b.notes?.includes("[✓ COMPLETADA]") && b.title !== "Bloqueado" && b.customer_name !== "Bloqueado" && b.customer_name !== "BLOQUEADO" && !b.title?.includes("BLOQUEADO") && !b.title?.includes("VACACIONES")).length;
         const heroTotal = heroCompleted + heroPending;
         const workMin = Math.max(1, stylists.length) * 660;
         const bookedMin = heroDayBookings.reduce((s, b) => s + (b.total_duration || 30), 0);
@@ -1393,11 +1390,12 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                               const pos = calculateBookingPosition(booking, activeDay);
                               const layout = overlapLayout[booking.id] || { left: "0%", width: "100%", zIndex: 1 };
                               const isCompleted = booking.notes?.includes("[✓ COMPLETADA]");
-                              const isBlocked = booking.title?.includes("🔒 BLOQUEADO") || booking.title?.includes("🌴 VACACIONES");
+                              const isBlocked = booking.title === "Bloqueado" || booking.customer_name === "Bloqueado" || booking.customer_name === "BLOQUEADO" || booking.title?.includes("BLOQUEADO") || booking.title?.includes("VACACIONES");
+                              const isFullDay = isBlocked && booking.Hora === "00:00" && (booking.end_time === "23:59" || booking.end_time === "24:00");
                               const isHighlighted = highlightedBookingId === booking.id;
                               const isDragging = draggedBooking?.id === booking.id;
                               const isResizing2 = resizingBooking?.id === booking.id;
-                              const bColor = isBlocked ? "#EF4444" : getStylistColor(booking.stylist);
+                              const bColor = isBlocked ? "oklch(0.68 0.01 265)" : getStylistColor(booking.stylist);
                               const svcs2 = Array.isArray(booking.services) ? booking.services.map((s: any) => s.name || s).filter(Boolean) : [];
                               const firstSvc = svcs2[0] || "";
                               const startT = booking.Hora.slice(0, 5);
@@ -1416,17 +1414,19 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                   className="group/card"
                                   style={{
                                     position: "absolute",
-                                    top: pos.top + TOP_PAD,
-                                    height: bH - 3,
+                                    top: isFullDay ? TOP_PAD : pos.top + TOP_PAD,
+                                    height: isFullDay ? totalH - TOP_PAD * 2 - 3 : bH - 3,
                                     left: `calc(${layout.left} + 2px)`,
                                     width: `calc(${layout.width} - 4px)`,
-                                    zIndex: isHighlighted ? 20 : layout.zIndex,
+                                    zIndex: isFullDay ? 0 : (isHighlighted ? 20 : layout.zIndex),
                                     borderRadius: 13,
-                                    border: `1px solid ${isCompleted ? "transparent" : `${bColor}40`}`,
-                                    background: isCompleted
-                                      ? "oklch(0.975 0.004 260)"
-                                      : isBlocked
-                                        ? "#EF444410"
+                                    border: isBlocked
+                                      ? `1.5px dashed oklch(0.78 0.01 265)`
+                                      : `1px solid ${isCompleted ? "transparent" : `${bColor}40`}`,
+                                    background: isBlocked
+                                      ? "oklch(0.97 0.003 265)"
+                                      : isCompleted
+                                        ? "oklch(0.975 0.004 260)"
                                         : `linear-gradient(160deg, ${bColor}25, ${bColor}15)`,
                                     overflow: "hidden",
                                     cursor: isBlocked ? "default" : "grab",
@@ -1467,11 +1467,30 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                     paddingLeft: 14, paddingRight: 10,
                                     height: "100%",
                                     display: "flex", flexDirection: "column", gap: 2,
-                                    ...(isOneLine
-                                      ? { justifyContent: "center" }
-                                      : { paddingTop: 6, paddingBottom: 6 }),
+                                    ...(isBlocked
+                                      ? { justifyContent: "center", alignItems: isFullDay ? "center" : undefined, paddingLeft: isFullDay ? 10 : 14 }
+                                      : isOneLine
+                                        ? { justifyContent: "center" }
+                                        : { paddingTop: 6, paddingBottom: 6 }),
                                   }}>
-                                    {isOneLine ? (
+                                    {isBlocked ? (
+                                      isFullDay ? (
+                                        <>
+                                          <span style={{ fontSize: 13, fontWeight: 800, color: "oklch(0.48 0.012 265)", letterSpacing: "-.01em" }}>Bloqueado</span>
+                                          <span style={{ fontSize: 11, fontWeight: 600, color: "oklch(0.62 0.01 265)" }}>Día completo</span>
+                                        </>
+                                      ) : isOneLine ? (
+                                        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                                          <span style={{ fontSize: 11, fontWeight: 700, color: "oklch(0.62 0.01 265)", flexShrink: 0 }}>{startT}</span>
+                                          <span style={{ fontSize: 12, fontWeight: 700, color: "oklch(0.50 0.012 265)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Bloqueado</span>
+                                        </div>
+                                      ) : (
+                                        <>
+                                          <span style={{ fontSize: 11, fontWeight: 700, color: "oklch(0.62 0.01 265)" }}>{startT}–{endT}</span>
+                                          <span style={{ fontSize: 13, fontWeight: 700, color: "oklch(0.48 0.012 265)" }}>Bloqueado</span>
+                                        </>
+                                      )
+                                    ) : isOneLine ? (
                                       <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
                                         <span style={{ fontSize: 11, fontWeight: 800, color: isCompleted ? "oklch(0.62 0.015 265)" : bColor, flexShrink: 0 }}>{startT}</span>
                                         {isCompleted && <Check style={{ width: 10, height: 10, color: "oklch(0.62 0.15 150)", flexShrink: 0 }} />}
@@ -1491,7 +1510,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                         </span>
                                         {isFull && (
                                           <span style={{ fontSize: 12, fontWeight: 600, color: "oklch(0.45 0.02 265)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                            {isBlocked ? booking.title : firstSvc}
+                                            {firstSvc}
                                             {svcs2.length > 1 && <span style={{ opacity: .6 }}> +{svcs2.length - 1}</span>}
                                           </span>
                                         )}
@@ -1535,7 +1554,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                     <div className="absolute top-0.5 right-0.5 z-20">
                                       <button
                                         onClick={e => { e.stopPropagation(); handleDeleteBooking(booking); }}
-                                        className="p-1 rounded-md bg-white/20 text-white hover:bg-white hover:text-red-600 transition-all"
+                                        className="p-1 rounded-md bg-gray-200 text-gray-500 hover:bg-red-100 hover:text-red-600 transition-all"
                                         title="Desbloquear"
                                       ><Trash2 style={{ width: 12, height: 12 }} /></button>
                                     </div>
