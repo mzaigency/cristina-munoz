@@ -1441,3 +1441,67 @@
   box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--gp-accent), transparent 40%);
 }
 .gp-subtab-count { font-size: 11px; font-weight: 800; background: color-mix(in oklab, currentColor, transparent 85%); padding: 1px 6px; border-radius: 99px; }
+
+/* ───── gp utilities (scoped to .gp-shell) ───── */
+.gp-shell .gp-card {
+  background: var(--gp-surface);
+  border: 1px solid var(--gp-line);
+  border-radius: var(--gp-r, 14px);
+  box-shadow: var(--gp-shadow-xs);
+  padding: 16px;
+}
+.gp-shell .gp-card-title { font-size: 11px; font-weight: 800; color: var(--gp-muted-c); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; }
+.gp-shell .gp-kpi {
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--gp-surface);
+  border: 1px solid var(--gp-line);
+  border-radius: 14px;
+  box-shadow: var(--gp-shadow-xs);
+  padding: 14px 16px;
+  transition: transform .15s var(--gp-ease), box-shadow .15s;
+}
+.gp-shell .gp-kpi:hover { transform: translateY(-1px); box-shadow: 0 6px 18px -10px rgba(20,22,40,.15); }
+.gp-shell .gp-kpi-ic {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gp-accent-soft); color: var(--gp-accent-ink);
+}
+.gp-shell .gp-kpi-label { font-size: 11.5px; font-weight: 700; color: var(--gp-muted-c); text-transform: uppercase; letter-spacing: .04em; }
+.gp-shell .gp-kpi-value { font-size: 27px; font-weight: 800; letter-spacing: -.02em; color: var(--gp-ink); font-variant-numeric: tabular-nums; line-height: 1; }
+.gp-shell .gp-kpi-delta { font-size: 11px; font-weight: 700; color: var(--gp-muted-c); }
+.gp-shell .gp-kpi-delta.pos { color: oklch(0.55 0.15 150); }
+.gp-shell .gp-kpi-delta.neg { color: oklch(0.55 0.18 25); }
+.gp-shell .gp-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--gp-surface);
+  border: 1px solid var(--gp-line);
+  transition: .15s var(--gp-ease);
+}
+.gp-shell .gp-row:hover { background: var(--gp-chip); }
+.gp-shell .gp-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 99px;
+  background: var(--gp-chip);
+  color: var(--gp-ink2);
+  font-size: 11px; font-weight: 700;
+  border: 1px solid var(--gp-line);
+}
+.gp-shell .gp-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 99px;
+  font-size: 12px; font-weight: 700;
+  background: var(--gp-chip); color: var(--gp-ink2);
+  border: 1px solid var(--gp-line);
+}
+.gp-shell .gp-pill.on { background: var(--gp-accent); color: #fff; border-color: transparent; }
+.gp-shell .gp-badge-ok { background: oklch(0.95 0.04 150); color: oklch(0.4 0.15 150); padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+.gp-shell .gp-badge-warn { background: oklch(0.96 0.05 75); color: oklch(0.45 0.15 65); padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+.gp-shell .gp-badge-danger { background: oklch(0.96 0.04 25); color: oklch(0.45 0.2 25); padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+.gp-shell .gp-badge-info { background: oklch(0.95 0.04 230); color: oklch(0.4 0.13 230); padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+
+@media (max-width: 919px) {
+  .gp-shell .gp-content { padding: 14px 12px; }
+  .gp-shell .gp-kpi-value { font-size: 22px; }
+}
