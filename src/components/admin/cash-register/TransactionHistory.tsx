@@ -1,32 +1,15 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Loader2, 
-  Banknote, 
-  CreditCard, 
+import {
+  Loader2,
+  Banknote,
+  CreditCard,
   XCircle,
-  MoreVertical,
   AlertTriangle,
-  UserCircle
+  UserCircle,
 } from "lucide-react";
 import { format } from "date-fns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,7 +43,6 @@ interface Transaction {
   voided: boolean;
   voided_at: string | null;
   voided_by: string | null;
-  // Enriched audit data
   created_by_name?: string;
   voided_by_name?: string;
 }
@@ -68,6 +50,30 @@ interface Transaction {
 interface TransactionHistoryProps {
   transactions: Transaction[];
   onUpdate: () => void;
+}
+
+const fmt = (n: number) =>
+  new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
+
+function PayMethod({ method }: { method: string }) {
+  if (method === "cash")
+    return (
+      <span className="gp-badge ok" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+        <Banknote style={{ width: 11, height: 11 }} /> Efectivo
+      </span>
+    );
+  if (method === "card")
+    return (
+      <span className="gp-badge info" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+        <CreditCard style={{ width: 11, height: 11 }} /> Tarjeta
+      </span>
+    );
+  return (
+    <span className="gp-badge neutral" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+      <Banknote style={{ width: 11, height: 11 }} />
+      <CreditCard style={{ width: 11, height: 11 }} /> Mixto
+    </span>
+  );
 }
 
 export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistoryProps) => {
@@ -78,35 +84,18 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
 
   const handleVoidTransaction = async () => {
     if (!selectedTransaction) return;
-
     try {
       setVoidingId(selectedTransaction.id);
       const { data: { user } } = await supabase.auth.getUser();
-
       const { error } = await supabase
         .from("transactions")
-        .update({
-          voided: true,
-          voided_at: new Date().toISOString(),
-          voided_by: user?.id,
-        })
+        .update({ voided: true, voided_at: new Date().toISOString(), voided_by: user?.id })
         .eq("id", selectedTransaction.id);
-
       if (error) throw error;
-
-      toast({
-        title: "Transacción anulada",
-        description: "El cobro se ha anulado correctamente",
-      });
-
+      toast({ title: "Transacción anulada", description: "El cobro se ha anulado correctamente" });
       onUpdate();
     } catch (error: any) {
-      console.error("Error voiding transaction:", error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo anular la transacción",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "No se pudo anular la transacción", variant: "destructive" });
     } finally {
       setVoidingId(null);
       setShowVoidDialog(false);
@@ -114,206 +103,86 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount);
-  };
-
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>No hay transacciones hoy</p>
+      <div className="gp-empty">
+        <div className="gp-empty-ic"><UserCircle style={{ width: 24, height: 24 }} /></div>
+        <p>Sin transacciones hoy</p>
       </div>
     );
   }
 
   return (
     <>
-      {/* Mobile Card View */}
-      <div className="space-y-3 md:hidden">
-        {transactions.map((transaction) => (
+      <div className="gp-list">
+        {transactions.map((t) => (
           <div
-            key={transaction.id}
-            className={`p-4 rounded-lg border ${transaction.voided ? "opacity-50 bg-muted" : ""}`}
+            key={t.id}
+            className="gp-row"
+            style={t.voided ? { opacity: 0.45, textDecoration: "line-through" } : {}}
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-sm font-medium">
-                  {format(new Date(transaction.created_at), "HH:mm")}
-                </span>
-                {transaction.voided && (
-                  <Badge variant="destructive" className="text-xs">Anulado</Badge>
-                )}
-              </div>
-              <span className="text-lg font-bold">
-                {formatCurrency(transaction.total)}
-              </span>
-            </div>
-            
-            {/* Audit info - who did what */}
-            <div className="mb-2 space-y-1 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <UserCircle className="h-3 w-3" />
-                <span>Atendió: <strong className="text-foreground">{transaction.stylist}</strong></span>
-              </div>
-              {transaction.created_by_name && (
-                <div className="flex items-center gap-1.5">
-                  <span className="ml-4">Cobró: <strong className="text-foreground">{transaction.created_by_name}</strong></span>
-                </div>
-              )}
-              {transaction.voided && transaction.voided_by_name && (
-                <div className="flex items-center gap-1.5 text-destructive">
-                  <span className="ml-4">Anuló: <strong>{transaction.voided_by_name}</strong></span>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center justify-between">
-              {transaction.payment_method === "cash" ? (
-                <Badge variant="outline" className="gap-1">
-                  <Banknote className="h-3 w-3" /> Efectivo
-                </Badge>
-              ) : transaction.payment_method === "card" ? (
-                <Badge variant="outline" className="gap-1">
-                  <CreditCard className="h-3 w-3" /> Tarjeta
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="gap-1">
-                  <Banknote className="h-3 w-3" />
-                  <CreditCard className="h-3 w-3" /> Mixto
-                </Badge>
-              )}
-              {!transaction.voided && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 text-destructive border-destructive/50"
-                  onClick={() => {
-                    setSelectedTransaction(transaction);
-                    setShowVoidDialog(true);
-                  }}
-                >
-                  <XCircle className="h-4 w-4 mr-1" /> Anular
-                </Button>
-              )}
-            </div>
-            {transaction.notes && (
-              <p className="text-sm text-muted-foreground mt-2">{transaction.notes}</p>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Desktop Table View */}
-      <div className="hidden md:block rounded-md border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Hora</TableHead>
-              <TableHead>Atendió</TableHead>
-              <TableHead>Cobró</TableHead>
-              <TableHead>Método</TableHead>
-              <TableHead className="text-right">Importe</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {transactions.map((transaction) => (
-              <TableRow
-                key={transaction.id}
-                className={transaction.voided ? "opacity-50 line-through" : ""}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+              <span
+                className="gp-mono"
+                style={{ fontSize: 13, fontWeight: 700, color: "var(--gp-muted-c)", flexShrink: 0 }}
               >
-                <TableCell className="font-mono text-sm">
-                  {format(new Date(transaction.created_at), "HH:mm")}
-                  {transaction.voided && (
-                    <Badge variant="destructive" className="ml-2 text-xs">
-                      Anulado
-                    </Badge>
+                {format(new Date(t.created_at), "HH:mm")}
+              </span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 600 }}>{t.stylist}</span>
+                  <PayMethod method={t.payment_method} />
+                  {t.voided && (
+                    <span className="gp-badge danger">Anulado</span>
                   )}
-                </TableCell>
-                <TableCell className="text-sm">
-                  {transaction.stylist}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  <div>
-                    {transaction.created_by_name || "-"}
-                    {transaction.voided && transaction.voided_by_name && (
-                      <div className="text-xs text-destructive mt-0.5">
-                        Anuló: {transaction.voided_by_name}
-                      </div>
+                </div>
+                {(t.created_by_name || (t.voided && t.voided_by_name)) && (
+                  <div style={{ fontSize: 12, color: "var(--gp-muted-c)", marginTop: 2 }}>
+                    {t.created_by_name && <span>Cobró: {t.created_by_name}</span>}
+                    {t.voided && t.voided_by_name && (
+                      <span style={{ marginLeft: 8, color: "var(--gp-danger)" }}>
+                        Anuló: {t.voided_by_name}
+                      </span>
                     )}
                   </div>
-                </TableCell>
-                <TableCell>
-                  {transaction.payment_method === "cash" ? (
-                    <Badge variant="outline" className="gap-1">
-                      <Banknote className="h-3 w-3" />
-                      Efectivo
-                    </Badge>
-                  ) : transaction.payment_method === "card" ? (
-                    <Badge variant="outline" className="gap-1">
-                      <CreditCard className="h-3 w-3" />
-                      Tarjeta
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="gap-1">
-                      <Banknote className="h-3 w-3" />
-                      <CreditCard className="h-3 w-3" />
-                      Mixto
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-right font-semibold text-lg">
-                  {formatCurrency(transaction.total)}
-                </TableCell>
-                <TableCell>
-                  {!transaction.voided && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedTransaction(transaction);
-                            setShowVoidDialog(true);
-                          }}
-                          className="text-destructive"
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Anular
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                )}
+                {t.notes && (
+                  <p style={{ fontSize: 12, color: "var(--gp-muted-c)", marginTop: 2 }}>{t.notes}</p>
+                )}
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+              <span className="gp-mono" style={{ fontSize: 15, fontWeight: 800 }}>{fmt(t.total)}</span>
+              {!t.voided && (
+                <button
+                  className="gp-icon-btn"
+                  style={{ color: "var(--gp-danger, #e53e3e)" }}
+                  title="Anular"
+                  onClick={() => { setSelectedTransaction(t); setShowVoidDialog(true); }}
+                >
+                  <XCircle style={{ width: 16, height: 16 }} />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
       <AlertDialog open={showVoidDialog} onOpenChange={setShowVoidDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
+            <AlertDialogTitle style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <AlertTriangle style={{ width: 18, height: 18, color: "var(--gp-danger, #e53e3e)" }} />
               ¿Anular esta transacción?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. La transacción quedará marcada como
-              anulada y no contará en los totales.
+              Esta acción no se puede deshacer. La transacción quedará marcada como anulada y no contará en los totales.
               {selectedTransaction && (
-                <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <p className="font-semibold text-lg">
-                    {formatCurrency(selectedTransaction.total)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(selectedTransaction.created_at), "HH:mm")} - {selectedTransaction.payment_method === "cash" ? "Efectivo" : "Tarjeta"}
+                <div style={{ marginTop: 14, padding: "12px 16px", background: "var(--gp-chip)", borderRadius: 10 }}>
+                  <p style={{ fontWeight: 700, fontSize: 17, margin: 0 }}>{fmt(selectedTransaction.total)}</p>
+                  <p style={{ fontSize: 13, color: "var(--gp-muted-c)", margin: "2px 0 0" }}>
+                    {format(new Date(selectedTransaction.created_at), "HH:mm")} ·{" "}
+                    {selectedTransaction.payment_method === "cash" ? "Efectivo" : selectedTransaction.payment_method === "card" ? "Tarjeta" : "Mixto"}
                   </p>
                 </div>
               )}
@@ -321,22 +190,11 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={!!voidingId}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleVoidTransaction}
-              disabled={!!voidingId}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {voidingId ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Anulando...
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Anular transacción
-                </>
-              )}
+            <AlertDialogAction onClick={handleVoidTransaction} disabled={!!voidingId}>
+              {voidingId
+                ? <Loader2 style={{ width: 14, height: 14, animation: "spin .7s linear infinite", marginRight: 6 }} />
+                : <XCircle style={{ width: 14, height: 14, marginRight: 6 }} />}
+              Anular transacción
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

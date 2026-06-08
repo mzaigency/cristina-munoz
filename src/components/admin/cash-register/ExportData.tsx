@@ -1,17 +1,25 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Loader2, Calendar, FileSpreadsheet } from "lucide-react";
+import { Download, Loader2, FileSpreadsheet } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import { es } from "date-fns/locale";
 
 interface ExportDataProps {
   tenantId: string;
 }
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "8px 10px",
+  fontSize: 13.5,
+  fontWeight: 500,
+  background: "var(--gp-chip)",
+  border: "1.5px solid var(--gp-line2)",
+  borderRadius: 10,
+  color: "var(--gp-fg)",
+  outline: "none",
+  boxSizing: "border-box",
+};
 
 export const ExportData = ({ tenantId }: ExportDataProps) => {
   const [loading, setLoading] = useState(false);
@@ -44,26 +52,16 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         return;
       }
 
-      // 1. Definir Cabeceras
-      // A: Fecha, B: Tarjeta, C: Efectivo, D: Descuento, E: Propinas
       const headers = ["Fecha y Hora", "Importe Tarjeta", "Importe Efectivo", "Descuento", "Propinas"];
-
       const fmtMoney = (amount: any) => (amount || 0).toFixed(2).replace(".", ",");
 
-      // 2. Construir filas de datos
       const rows = transactions.map((tx) => {
         const date = new Date(tx.created_at);
         let cardAmount = 0;
         let cashAmount = 0;
         const total = Number(tx.total || 0);
-
-        if (tx.payment_method === "card") {
-          cardAmount = total;
-        } else if (tx.payment_method === "cash") {
-          cashAmount = total;
-        }
-        // Si hay mixto, ajusta aquí tu lógica
-
+        if (tx.payment_method === "card") cardAmount = total;
+        else if (tx.payment_method === "cash") cashAmount = total;
         return [
           format(date, "dd/MM/yyyy HH:mm"),
           fmtMoney(cardAmount),
@@ -73,50 +71,23 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         ];
       });
 
-      // --- LÓGICA DE FÓRMULAS EXCEL ---
-
-      // La fila 1 es Cabeceras.
-      // Los datos empiezan en la fila 2.
       const dataStartRow = 2;
-      // Los datos terminan en: startRow + cantidad - 1.
       const dataEndRow = dataStartRow + transactions.length - 1;
-
-      // Dejamos una fila vacía después de los datos
       rows.push([]);
-
-      // La fila de TOTALES será la siguiente (transactions.length + 3)
       const totalRowIndex = dataEndRow + 2;
-
-      // Fila de Sumas por Columna
-      // Usamos =SUMA(...) porque el Excel estará en español.
       rows.push([
         "TOTALES",
-        `=SUMA(B${dataStartRow}:B${dataEndRow})`, // Suma Tarjeta
-        `=SUMA(C${dataStartRow}:C${dataEndRow})`, // Suma Efectivo
-        `=SUMA(D${dataStartRow}:D${dataEndRow})`, // Suma Descuento
-        `=SUMA(E${dataStartRow}:E${dataEndRow})`, // Suma Propinas
+        `=SUMA(B${dataStartRow}:B${dataEndRow})`,
+        `=SUMA(C${dataStartRow}:C${dataEndRow})`,
+        `=SUMA(D${dataStartRow}:D${dataEndRow})`,
+        `=SUMA(E${dataStartRow}:E${dataEndRow})`,
       ]);
-
-      // Fila vacía
       rows.push([]);
+      rows.push(["TOTAL GENERAL", "", `=B${totalRowIndex}+C${totalRowIndex}+E${totalRowIndex}-D${totalRowIndex}`, "", ""]);
 
-      // Fila de Total General Calculado
-      // Fórmula: (Total Tarjeta + Total Efectivo + Total Propinas) - Total Descuento
-      // Las celdas de totales están en la fila `totalRowIndex`
-      // Tarjeta es B, Efectivo es C, Descuento es D, Propinas es E
-      const formulaTotalGeneral = `=B${totalRowIndex}+C${totalRowIndex}+E${totalRowIndex}-D${totalRowIndex}`;
-
-      rows.push(["TOTAL GENERAL", "", formulaTotalGeneral, "", ""]);
-
-      // --- GENERACIÓN CSV ---
       const escapeCSV = (val: string) => {
-        // Si empieza con =, es fórmula, no le ponemos comillas o Excel lo trata como texto literal
-        if (typeof val === "string" && val.startsWith("=")) {
-          return val;
-        }
-        if (val.includes(";") || val.includes('"') || val.includes("\n")) {
-          return `"${val.replace(/"/g, '""')}"`;
-        }
+        if (typeof val === "string" && val.startsWith("=")) return val;
+        if (val.includes(";") || val.includes('"') || val.includes("\n")) return `"${val.replace(/"/g, '""')}"`;
         return val;
       };
 
@@ -125,9 +96,8 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
         ...rows.map((row) => row.map((cell) => escapeCSV(String(cell))).join(";")),
       ].join("\n");
 
-      const BOM = "\uFEFF";
+      const BOM = "﻿";
       const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -137,12 +107,8 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      toast({
-        title: "Excel Generado",
-        description: "Se han incluido las fórmulas de suma automáticamente.",
-      });
+      toast({ title: "Excel generado", description: "Fórmulas de suma incluidas automáticamente." });
     } catch (error: any) {
-      console.error("Error exporting:", error);
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -176,49 +142,61 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="text-center py-3 sm:py-4">
-        <FileSpreadsheet className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-primary mb-2 sm:mb-3" />
-        <h3 className="text-base sm:text-lg font-semibold">Exportar Caja</h3>
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          Genera un Excel con fórmulas automáticas
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ textAlign: "center", paddingTop: 8 }}>
+        <div className="gp-empty-ic" style={{ margin: "0 auto 10px" }}>
+          <FileSpreadsheet style={{ width: 24, height: 24 }} />
+        </div>
+        <h4 style={{ margin: 0 }}>Exportar caja</h4>
+        <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--gp-muted-c)" }}>
+          Excel con fórmulas automáticas
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
-        <Button variant="outline" size="sm" onClick={() => setQuickPeriod("week")} className="h-8 sm:h-9 text-xs sm:text-sm">
-          Semana
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setQuickPeriod("month")} className="h-8 sm:h-9 text-xs sm:text-sm">
-          Mes
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setQuickPeriod("year")} className="h-8 sm:h-9 text-xs sm:text-sm">
-          Año
-        </Button>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+        <button className="gp-btn sm" onClick={() => setQuickPeriod("week")}>Semana</button>
+        <button className="gp-btn sm" onClick={() => setQuickPeriod("month")}>Mes</button>
+        <button className="gp-btn sm" onClick={() => setQuickPeriod("year")}>Año</button>
       </div>
 
-      <Card className="p-3 sm:p-4">
-        <div className="grid grid-cols-2 gap-2 sm:gap-4">
+      <div className="gp-card" style={{ padding: "14px 16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
-            <Label className="text-xs sm:text-sm">Desde</Label>
-            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-9 sm:h-10 text-sm" />
+            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--gp-muted-c)", display: "block", marginBottom: 6 }}>
+              Desde
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              style={inputStyle}
+            />
           </div>
           <div>
-            <Label className="text-xs sm:text-sm">Hasta</Label>
-            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-9 sm:h-10 text-sm" />
+            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--gp-muted-c)", display: "block", marginBottom: 6 }}>
+              Hasta
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              style={inputStyle}
+            />
           </div>
         </div>
-      </Card>
+      </div>
 
-      <Button
+      <button
+        className="gp-btn primary"
+        style={{ width: "100%", justifyContent: "center", padding: "12px 20px", fontSize: 15 }}
         onClick={exportToCSV}
         disabled={loading || !startDate || !endDate}
-        className="w-full h-10 sm:h-12 gap-2 text-sm sm:text-base"
-        size="lg"
       >
-        {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Download className="h-4 w-4" />}
+        {loading
+          ? <Loader2 style={{ width: 16, height: 16, animation: "spin .7s linear infinite" }} />
+          : <Download style={{ width: 16, height: 16 }} />}
         Descargar Excel
-      </Button>
+      </button>
     </div>
   );
 };

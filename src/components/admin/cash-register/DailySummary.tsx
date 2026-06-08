@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Banknote, 
-  CreditCard, 
-  TrendingUp, 
-  Lock, 
+import {
+  Banknote,
+  CreditCard,
+  TrendingUp,
+  Lock,
   LockOpen,
   RefreshCw,
   Loader2,
-  Receipt
+  Receipt,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -40,6 +38,9 @@ interface DailySummaryProps {
   onRefresh: () => void;
 }
 
+const fmt = (n: number) =>
+  new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
+
 export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
   const [isClosing, setIsClosing] = useState(false);
   const [isReopening, setIsReopening] = useState(false);
@@ -51,40 +52,21 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
     try {
       setIsClosing(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("No autenticado");
-      }
-
-      const { error } = await supabase
-        .from("cash_register")
-        .upsert({
-          date: summary.date,
-          cash_total: summary.cashTotal,
-          card_total: summary.cardTotal,
-          total_sales: summary.totalSales,
-          transaction_count: summary.transactionCount,
-          closed_at: new Date().toISOString(),
-          closed_by: user.id,
-        }, {
-          onConflict: "date",
-        });
-
+      if (!user) throw new Error("No autenticado");
+      const { error } = await supabase.from("cash_register").upsert({
+        date: summary.date,
+        cash_total: summary.cashTotal,
+        card_total: summary.cardTotal,
+        total_sales: summary.totalSales,
+        transaction_count: summary.transactionCount,
+        closed_at: new Date().toISOString(),
+        closed_by: user.id,
+      }, { onConflict: "date" });
       if (error) throw error;
-
-      toast({
-        title: "Caja cerrada",
-        description: "El cierre de caja se ha registrado correctamente",
-      });
-      
+      toast({ title: "Caja cerrada" });
       onRefresh();
     } catch (error: any) {
-      console.error("Error closing register:", error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo cerrar la caja",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsClosing(false);
       setShowCloseDialog(false);
@@ -94,150 +76,82 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
   const handleReopenRegister = async () => {
     try {
       setIsReopening(true);
-      
-      const { error } = await supabase
-        .from("cash_register")
-        .update({
-          closed_at: null,
-          closed_by: null,
-        })
-        .eq("date", summary.date);
-
+      const { error } = await supabase.from("cash_register").update({ closed_at: null, closed_by: null }).eq("date", summary.date);
       if (error) throw error;
-
-      toast({
-        title: "Caja reabierta",
-        description: "La caja ha sido reabierta correctamente",
-      });
-      
+      toast({ title: "Caja reabierta" });
       onRefresh();
     } catch (error: any) {
-      console.error("Error reopening register:", error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo reabrir la caja",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsReopening(false);
       setShowReopenDialog(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount);
-  };
-
   return (
     <>
-      <div className="flex flex-col gap-3 mb-4">
-        <div className="flex items-center justify-between">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-lg sm:text-2xl font-bold text-foreground truncate">
-              Caja - {format(new Date(summary.date), "d MMM", { locale: es })}
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              {summary.transactionCount} transacciones
-            </p>
-          </div>
-          <div className="flex gap-1.5 sm:gap-2 shrink-0">
-            <Button variant="outline" size="sm" onClick={onRefresh} className="h-8 sm:h-9 px-2 sm:px-3">
-              <RefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline ml-2">Actualizar</span>
-            </Button>
-            {!summary.isClosed && summary.transactionCount > 0 && (
-              <Button 
-                variant="default" 
-                size="sm" 
-                onClick={() => setShowCloseDialog(true)}
-                className="h-8 sm:h-9 px-2 sm:px-3"
-              >
-                <Lock className="h-4 w-4" />
-                <span className="hidden sm:inline ml-2">Cerrar</span>
-              </Button>
-            )}
-            {summary.isClosed && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowReopenDialog(true)}
-                className="h-8 sm:h-9 px-2 sm:px-3"
-              >
-                <LockOpen className="h-4 w-4" />
-                <span className="hidden sm:inline ml-2">Reabrir</span>
-              </Button>
-            )}
-          </div>
+      <div className="gp-page-h" style={{ marginBottom: 0 }}>
+        <div>
+          <h2>Caja · {format(new Date(summary.date), "d MMM", { locale: es })}</h2>
+          <p>{summary.transactionCount} transacciones</p>
+        </div>
+        <div className="gp-page-actions">
+          <button className="gp-btn sm" onClick={onRefresh}>
+            <RefreshCw style={{ width: 13, height: 13 }} />
+            <span className="gp-hide-sm">Actualizar</span>
+          </button>
+          {!summary.isClosed && summary.transactionCount > 0 && (
+            <button className="gp-btn primary sm" onClick={() => setShowCloseDialog(true)}>
+              <Lock style={{ width: 13, height: 13 }} />
+              <span className="gp-hide-sm">Cerrar</span>
+            </button>
+          )}
+          {summary.isClosed && (
+            <button className="gp-btn sm" onClick={() => setShowReopenDialog(true)}>
+              <LockOpen style={{ width: 13, height: 13 }} />
+              <span className="gp-hide-sm">Reabrir</span>
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-200/50 dark:border-emerald-800/50">
-          <CardContent className="p-2.5 sm:p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-emerald-500/20 shrink-0">
-                <Banknote className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-emerald-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Efectivo</p>
-                <p className="text-sm sm:text-base md:text-lg font-bold text-emerald-600 truncate">
-                  {formatCurrency(summary.cashTotal)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-200/50 dark:border-blue-800/50">
-          <CardContent className="p-2.5 sm:p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-blue-500/20 shrink-0">
-                <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-blue-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Tarjeta</p>
-                <p className="text-sm sm:text-base md:text-lg font-bold text-blue-600 truncate">
-                  {formatCurrency(summary.cardTotal)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-2.5 sm:p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-primary/20 shrink-0">
-                <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Total</p>
-                <p className="text-sm sm:text-base md:text-lg font-bold text-primary truncate">
-                  {formatCurrency(summary.totalSales)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-violet-500/10 to-violet-600/5 border-violet-200/50 dark:border-violet-800/50">
-          <CardContent className="p-2.5 sm:p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-violet-500/20 shrink-0">
-                <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-violet-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Operaciones</p>
-                <p className="text-sm sm:text-base md:text-lg font-bold text-violet-600">
-                  {summary.transactionCount}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="gp-kpis">
+        <div className="gp-kpi">
+          <div className="gp-kpi-top">
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
+              <Banknote style={{ width: 16, height: 16 }} />
+            </span>
+          </div>
+          <div className="gp-kpi-val">{fmt(summary.cashTotal)}</div>
+          <div className="gp-kpi-lbl">Efectivo</div>
+        </div>
+        <div className="gp-kpi">
+          <div className="gp-kpi-top">
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-info-soft)", color: "var(--gp-info)" }}>
+              <CreditCard style={{ width: 16, height: 16 }} />
+            </span>
+          </div>
+          <div className="gp-kpi-val">{fmt(summary.cardTotal)}</div>
+          <div className="gp-kpi-lbl">Tarjeta</div>
+        </div>
+        <div className="gp-kpi">
+          <div className="gp-kpi-top">
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+              <TrendingUp style={{ width: 16, height: 16 }} />
+            </span>
+          </div>
+          <div className="gp-kpi-val">{fmt(summary.totalSales)}</div>
+          <div className="gp-kpi-lbl">Total</div>
+        </div>
+        <div className="gp-kpi">
+          <div className="gp-kpi-top">
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
+              <Receipt style={{ width: 16, height: 16 }} />
+            </span>
+          </div>
+          <div className="gp-kpi-val">{summary.transactionCount}</div>
+          <div className="gp-kpi-lbl">Operaciones</div>
+        </div>
       </div>
 
       <AlertDialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
@@ -245,19 +159,16 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Cerrar la caja de hoy?</AlertDialogTitle>
             <AlertDialogDescription>
-              Una vez cerrada la caja, no se podrán registrar más cobros para el día de hoy.
-              <div className="mt-4 p-4 bg-muted rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span>Efectivo:</span>
-                  <span className="font-semibold">{formatCurrency(summary.cashTotal)}</span>
+              Una vez cerrada no se podrán registrar más cobros hoy.
+              <div style={{ marginTop: 14, padding: "12px 16px", background: "var(--gp-chip)", borderRadius: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, fontWeight: 600 }}>
+                  <span>Efectivo</span><span className="gp-mono">{fmt(summary.cashTotal)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Tarjeta:</span>
-                  <span className="font-semibold">{formatCurrency(summary.cardTotal)}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, fontWeight: 600 }}>
+                  <span>Tarjeta</span><span className="gp-mono">{fmt(summary.cardTotal)}</span>
                 </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="font-semibold">Total:</span>
-                  <span className="font-bold text-primary">{formatCurrency(summary.totalSales)}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 800, borderTop: "1px solid var(--gp-line2)", paddingTop: 8 }}>
+                  <span>Total</span><span className="gp-mono" style={{ color: "var(--gp-accent)" }}>{fmt(summary.totalSales)}</span>
                 </div>
               </div>
             </AlertDialogDescription>
@@ -265,17 +176,8 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isClosing}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleCloseRegister} disabled={isClosing}>
-              {isClosing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Cerrando...
-                </>
-              ) : (
-                <>
-                  <Lock className="h-4 w-4 mr-2" />
-                  Cerrar caja
-                </>
-              )}
+              {isClosing ? <Loader2 style={{ width: 14, height: 14, animation: "spin .7s linear infinite", marginRight: 6 }} /> : <Lock style={{ width: 14, height: 14, marginRight: 6 }} />}
+              Cerrar caja
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -285,24 +187,13 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Reabrir la caja?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esto permitirá registrar nuevos cobros para el día de hoy.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Esto permitirá registrar nuevos cobros para hoy.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isReopening}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleReopenRegister} disabled={isReopening}>
-              {isReopening ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Reabriendo...
-                </>
-              ) : (
-                <>
-                  <LockOpen className="h-4 w-4 mr-2" />
-                  Reabrir caja
-                </>
-              )}
+              {isReopening ? <Loader2 style={{ width: 14, height: 14, animation: "spin .7s linear infinite", marginRight: 6 }} /> : <LockOpen style={{ width: 14, height: 14, marginRight: 6 }} />}
+              Reabrir caja
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

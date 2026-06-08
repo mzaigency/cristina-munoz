@@ -1283,7 +1283,7 @@
   --gp-sidebar-w: 252px;
   --gp-topbar-h: 64px;
 
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   background: var(--gp-bg);
   font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
@@ -1293,7 +1293,7 @@
 
 /* ── Sidebar ── */
 .gp-side {
-  width: var(--gp-sidebar-w); flex: none; position: sticky; top: 0; height: 100vh;
+  width: var(--gp-sidebar-w); flex: none; height: 100vh;
   background: var(--gp-surface); border-right: 1px solid var(--gp-line);
   display: flex; flex-direction: column; z-index: 30; overflow-y: auto;
 }
@@ -1351,7 +1351,7 @@
 .gp-user-role { font-size: 11px; color: var(--gp-muted-c); font-weight: 600; }
 
 /* ── Main column ── */
-.gp-main-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gp-main-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
 
 /* ── Topbar ── */
 .gp-topbar {
