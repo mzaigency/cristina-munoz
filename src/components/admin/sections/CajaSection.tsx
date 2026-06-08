@@ -119,13 +119,12 @@ const CajaSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CajaSection
               variant="inline"
             />
           ) : (
-            <div className="rounded-2xl border bg-card p-8 text-center space-y-3">
-              <Receipt className="h-10 w-10 mx-auto text-muted-foreground" />
-              <h3 className="text-lg font-bold">Cierre del día</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Próximamente: arqueo automático del día con resumen de cobros por método
-                de pago, descuadres y exportación a PDF. Mientras tanto, encuentra el detalle
-                completo en la pestaña <strong>Cobros</strong>.
+            <div className="gp-empty">
+              <span className="gp-empty-ic"><Receipt className="h-5 w-5" /></span>
+              <h3 className="text-base font-extrabold mb-1" style={{ color: "var(--gp-ink)" }}>Cierre del día</h3>
+              <p className="text-sm max-w-md mx-auto" style={{ color: "var(--gp-muted-c)" }}>
+                Próximamente: arqueo automático con resumen por método de pago, descuadres y exportación a PDF.
+                Mientras tanto, revisa el detalle en <strong>Cobros</strong>.
               </p>
             </div>
           )}
