@@ -949,40 +949,29 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     <div className="ag-root">
 
       {/* ── TOP BAR ─────────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 18, flexWrap: "wrap", marginBottom: 18 }}>
-        <div>
-          <button
-            className="ag-ia-btn"
-            onClick={() => setIsCreateDialogOpen(true)}
-          >
-            <Sparkles style={{ width: 14, height: 14, color: "#4361ee" }} />
-            Importar citas desde foto con IA
-          </button>
-        </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <button className="ag-btn ag-btn-ghost" onClick={() => setIsBlockDialogOpen(true)}>
-            <Ban style={{ width: 16, height: 16 }} />
-            <span className="ag-btn-tx">Bloquear</span>
-          </button>
-          <button
-            className="ag-btn ag-btn-primary"
-            onClick={() => setIsCreateDialogOpen(true)}
-            data-tour-step="new-appointment"
-          >
-            <Plus style={{ width: 17, height: 17 }} />
-            <span className="ag-btn-tx">Nueva cita</span>
-          </button>
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="ag-btn ag-btn-ghost" style={{ padding: "10px 13px" }}>
-                <CalendarIcon style={{ width: 16, height: 16 }} />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar mode="single" selected={weekStart} onSelect={handleJumpToDate} initialFocus weekStartsOn={1} />
-            </PopoverContent>
-          </Popover>
-        </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+        <button className="ag-btn ag-btn-ghost" onClick={() => setIsBlockDialogOpen(true)}>
+          <Ban style={{ width: 14, height: 14 }} />
+          <span className="ag-btn-tx">Bloquear</span>
+        </button>
+        <button
+          className="ag-btn ag-btn-primary"
+          onClick={() => setIsCreateDialogOpen(true)}
+          data-tour-step="new-appointment"
+        >
+          <Plus style={{ width: 15, height: 15 }} />
+          <span className="ag-btn-tx">Nueva cita</span>
+        </button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="ag-btn ag-btn-ghost ag-btn-icon" aria-label="Saltar a fecha">
+              <CalendarIcon style={{ width: 14, height: 14 }} />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar mode="single" selected={weekStart} onSelect={handleJumpToDate} initialFocus weekStartsOn={1} />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* ── HERO DAY ─────────────────────────────────────────── */}
@@ -1001,7 +990,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           const [h, m] = b.Hora.split(":").map(Number);
           return (h > nowHour || (h === nowHour && m > nowMinutes)) && !b.notes?.includes("[✓ COMPLETADA]");
         });
-        const R = 41, SW = 10, SIZE = 92;
+        const R = 28, SW = 7, SIZE = 68;
         const circ = 2 * Math.PI * R;
         const offset = circ * (1 - occPct);
         return (
