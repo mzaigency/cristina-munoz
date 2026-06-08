@@ -942,11 +942,10 @@ function MiniKPI({ icon: Icon, label, value, color, bg }: { icon: React.ElementT
 // Empty State Component
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
-        <BarChart3 className="h-8 w-8 text-muted-foreground/50" />
-      </div>
-      <p className="text-sm text-muted-foreground">{message}</p>
+    <div className="gp-empty">
+      <div className="gp-empty-ic"><BarChart3 style={{ width: 24, height: 24 }} /></div>
+      <h4>Sin datos</h4>
+      <p>{message}</p>
     </div>
   );
 }

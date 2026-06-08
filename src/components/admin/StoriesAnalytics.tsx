@@ -372,8 +372,9 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
         </CardHeader>
         <CardContent>
           {filteredStories.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <div className="gp-empty">
+              <div className="gp-empty-ic"><ImageIcon style={{ width: 24, height: 24 }} /></div>
+              <h4>Sin stories</h4>
               <p>No hay stories en este período</p>
             </div>
           ) : (

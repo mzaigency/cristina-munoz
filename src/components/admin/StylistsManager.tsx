@@ -650,10 +650,10 @@ export function StylistsManager({ tenantId }: StylistsManagerProps) {
       </CardHeader>
       <CardContent>
         {stylists.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground">
-            <User className="mx-auto mb-4 h-12 w-12 opacity-50" />
-            <p>No hay estilistas configurados</p>
-            <p className="text-sm">Añade tu primer estilista para empezar</p>
+          <div className="gp-empty">
+            <div className="gp-empty-ic"><User style={{ width: 24, height: 24 }} /></div>
+            <h4>Sin estilistas</h4>
+            <p>Añade tu primer estilista para empezar</p>
           </div>
         ) : (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
