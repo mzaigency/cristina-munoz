@@ -1775,7 +1775,22 @@
   background-size: 200% 100%; border-radius: 10px;
   animation: gpShimmer 1.5s linear infinite;
 }
+.gp-skel-text { height: 14px; border-radius: 7px; }
+.gp-skel-title { height: 22px; border-radius: 8px; }
+.gp-skel-card { height: 96px; border-radius: 16px; }
+.gp-skel-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+.gp-skel-row { display: flex; align-items: center; gap: 14px; padding: 13px 18px; border-bottom: 1px solid var(--gp-line2); }
 @keyframes gpShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── Unified focus ring for keyboard accessibility ── */
+.gp-shell button:focus-visible,
+.gp-shell a:focus-visible,
+.gp-shell input:focus-visible,
+.gp-shell textarea:focus-visible,
+.gp-shell select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--gp-accent-softer), 0 0 0 1.5px var(--gp-accent);
+}
 
 /* ── Section fade-in ── */
 .gp-fade { opacity: 1; }
