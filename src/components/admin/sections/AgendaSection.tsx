@@ -139,13 +139,12 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
         </TabsContent>
 
         <TabsContent value="semana" className="mt-4">
-          <div className="rounded-2xl border bg-card p-8 text-center space-y-3">
-            <CalendarDays className="h-10 w-10 mx-auto text-muted-foreground" />
-            <h3 className="text-lg font-bold">Vista semanal</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Próximamente: tablero de 7 columnas con todas las citas de la semana
-              de un vistazo. Por ahora, usa la vista <strong>Día</strong> y navega
-              entre días desde el calendario.
+          <div className="gp-empty">
+            <span className="gp-empty-ic"><CalendarDays className="h-5 w-5" /></span>
+            <h3 className="text-base font-extrabold mb-1" style={{ color: "var(--gp-ink)" }}>Vista semanal</h3>
+            <p className="text-sm max-w-md mx-auto" style={{ color: "var(--gp-muted-c)" }}>
+              Próximamente: tablero de 7 columnas con todas las citas de la semana de un vistazo.
+              Mientras tanto, usa la vista <strong>Día</strong>.
             </p>
           </div>
         </TabsContent>
