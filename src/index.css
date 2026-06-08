@@ -1,6 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Editorial typography utilities (used on tenant landing) ── */
+.font-editorial { font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-weight: 500; }
+.font-editorial-italic { font-family: "Playfair Display", Georgia, serif; font-style: italic; font-weight: 400; }
+.font-body { font-family: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif; }
+.tracking-editorial { letter-spacing: -0.025em; }
 
 
 /* iOS-inspired Design System

@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Scissors, Palette, Sparkles, Flower2 } from "lucide-react";
-import { ScrollReveal } from "@/components/animations/ScrollReveal";
-import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SectionHeader } from "./_shared/SectionHeader";
 
 interface Service {
   id: string;
@@ -24,15 +22,8 @@ interface CategoryImage {
 interface TenantServicesSectionProps {
   tenantId: string;
   tenantName?: string;
+  primaryColor?: string | null;
 }
-
-const categoryIcons: Record<string, any> = {
-  "Corte": Scissors,
-  "Coloración": Palette,
-  "Peinados y Tratamientos": Sparkles,
-  "Depilación y Maquillaje": Flower2,
-  "default": Scissors,
-};
 
 const formatDuration = (minutes: number): string => {
   if (minutes < 60) return `${minutes} min`;
@@ -42,12 +33,12 @@ const formatDuration = (minutes: number): string => {
   return `${hours}h ${mins}min`;
 };
 
-const formatPrice = (price: number | null, currency: string = '€'): string | null => {
+const formatPrice = (price: number | null): string | null => {
   if (price === null || price === undefined) return null;
-  return `${price.toFixed(2).replace('.', ',')} ${currency}`;
+  return `${price.toFixed(2).replace(".", ",")}€`;
 };
 
-export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSectionProps) => {
+export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: TenantServicesSectionProps) => {
   const [services, setServices] = useState<Service[]>([]);
   const [categoryImages, setCategoryImages] = useState<CategoryImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +56,7 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
           supabase
             .from("tenant_category_images")
             .select("category, image_url")
-            .eq("tenant_id", tenantId)
+            .eq("tenant_id", tenantId),
         ]);
 
         if (servicesRes.error) throw servicesRes.error;
@@ -78,22 +69,16 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
       }
     };
 
-    if (tenantId) {
-      fetchData();
-    }
+    if (tenantId) fetchData();
   }, [tenantId]);
 
   const getCategoryImage = (category: string): string | null => {
-    const customImage = categoryImages.find(ci => ci.category === category)?.image_url;
-    return customImage || null;
+    return categoryImages.find((ci) => ci.category === category)?.image_url || null;
   };
 
-  // Group services by category
   const groupedServices = services.reduce((acc, service) => {
     const category = service.category || "Otros";
-    if (!acc[category]) {
-      acc[category] = [];
-    }
+    if (!acc[category]) acc[category] = [];
     acc[category].push(service);
     return acc;
   }, {} as Record<string, Service[]>);
@@ -102,16 +87,13 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
 
   if (loading) {
     return (
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="mb-16 text-center">
-            <Skeleton className="h-10 w-64 mx-auto mb-4" />
-            <Skeleton className="h-1 w-24 mx-auto mb-4" />
-            <Skeleton className="h-6 w-96 mx-auto" />
-          </div>
+      <section className="py-20 md:py-28 bg-[#fafaf7]">
+        <div className="container mx-auto px-5 md:px-8 max-w-6xl">
+          <Skeleton className="h-12 w-80 mb-4" />
+          <Skeleton className="h-px w-16 mb-12" />
           <div className="space-y-8">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-64 w-full rounded-2xl" />
+              <Skeleton key={i} className="h-48 w-full rounded-2xl" />
             ))}
           </div>
         </div>
@@ -119,110 +101,103 @@ export const TenantServicesSection = ({ tenantId, tenantName }: TenantServicesSe
     );
   }
 
-  if (categories.length === 0) {
-    return (
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-4">Servicios</h2>
-          <p className="text-muted-foreground">No hay servicios disponibles en este momento.</p>
-        </div>
-      </section>
-    );
-  }
+  if (categories.length === 0) return null;
 
   return (
-    <section className="py-16 md:py-20 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="mb-8 md:mb-12 text-center">
-          <SmoothTitle>
-            <h2 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl md:text-4xl tracking-tight">
-              Nuestros Servicios
-            </h2>
-          </SmoothTitle>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2">
-            Descubre nuestra amplia gama de servicios profesionales
-            {tenantName && ` en ${tenantName}`}
-          </p>
-        </div>
+    <section id="servicios" className="py-20 md:py-28 bg-[#fafaf7]">
+      <div className="container mx-auto px-5 md:px-8 max-w-6xl">
+        <SectionHeader
+          eyebrow="Servicios"
+          title={
+            <>
+              La carta de <span className="font-editorial-italic">belleza</span>
+            </>
+          }
+          description={
+            tenantName
+              ? `Descubre la propuesta cuidada de ${tenantName}. Tratamientos pensados para realzar lo que ya eres.`
+              : "Tratamientos pensados para realzar lo que ya eres."
+          }
+          accentColor={primaryColor}
+        />
 
-        <div className="flex flex-col gap-4 max-w-3xl mx-auto">
-          {categories.map((category, idx) => {
-            const Icon = categoryIcons[category] || categoryIcons.default;
+        <div className="grid gap-10 lg:gap-14">
+          {categories.map((category) => {
             const categoryServices = groupedServices[category];
             const categoryImage = getCategoryImage(category);
 
             return (
-              <ScrollReveal key={category} delay={idx * 80}>
-                <div className="rounded-2xl overflow-hidden bg-card border border-primary/20 shadow-sm">
-                  {/* Category Header */}
+              <article
+                key={category}
+                className="grid md:grid-cols-[1.1fr_1.5fr] gap-6 md:gap-10 items-start"
+              >
+                {/* Image side */}
+                <div className="relative aspect-[4/5] md:aspect-[4/5] rounded-2xl overflow-hidden bg-neutral-100 shadow-[0_18px_40px_-22px_rgba(20,22,40,0.18)] group">
                   {categoryImage ? (
-                    <div className="relative h-32 sm:h-40">
-                      <img
-                        src={categoryImage}
-                        alt={category}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                      <div className="absolute bottom-4 left-4 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/80 backdrop-blur-md">
-                          <Icon className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-white tracking-tight">
-                          {category}
-                        </h3>
-                      </div>
-                    </div>
+                    <img
+                      src={categoryImage}
+                      alt={category}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                    />
                   ) : (
-                    <div className="px-5 py-4 border-b border-primary/10 bg-primary/5">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                          <Icon className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-foreground tracking-tight">
-                          {category}
-                        </h3>
-                      </div>
+                    <div className="w-full h-full flex items-center justify-center font-editorial text-5xl text-neutral-300">
+                      {category.charAt(0)}
                     </div>
                   )}
+                  {/* Editorial label */}
+                  <div className="absolute top-4 left-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-[10.5px] font-bold tracking-[0.18em] uppercase text-neutral-700">
+                    {String(categoryServices.length).padStart(2, "0")} servicios
+                  </div>
+                </div>
 
-                  {/* Services List - iOS style with brand accent */}
-                  <div className="divide-y divide-border/20">
-                    {categoryServices.map((service, serviceIdx) => {
+                {/* Services list */}
+                <div className="flex flex-col">
+                  <h3
+                    className="font-editorial text-neutral-900 tracking-[-0.02em] mb-1"
+                    style={{ fontSize: "clamp(1.6rem, 2.6vw, 2.2rem)", lineHeight: 1.1 }}
+                  >
+                    {category}
+                  </h3>
+                  <div className="h-px w-10 bg-neutral-300 mb-6 mt-3" />
+
+                  <ul className="divide-y divide-neutral-200/80">
+                    {categoryServices.map((service) => {
                       const totalDuration =
                         service.duration_part1_active +
                         service.duration_exposure_pause +
                         service.duration_part2_active;
-
                       const formattedPrice = formatPrice(service.price);
 
                       return (
-                        <div
+                        <li
                           key={service.id}
-                          className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-primary/5 active:bg-primary/10 transition-colors group touch-manipulation"
+                          className="flex items-baseline gap-4 py-4 group"
                         >
-                          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary/60 group-hover:bg-primary transition-colors flex-shrink-0" />
-                            <span className="font-medium text-foreground text-sm sm:text-[15px] truncate">
-                              {service.name}
+                          <span className="flex-1 font-body text-[15.5px] md:text-base font-medium text-neutral-800 leading-snug">
+                            {service.name}
+                          </span>
+                          {/* Editorial dotted leader */}
+                          <span
+                            className="flex-1 border-b border-dotted border-neutral-300 mb-1 mx-1 hidden sm:block opacity-60"
+                            aria-hidden
+                          />
+                          <span className="text-xs text-neutral-500 tabular-nums whitespace-nowrap font-body">
+                            {formatDuration(totalDuration)}
+                          </span>
+                          {formattedPrice && (
+                            <span
+                              className="font-editorial text-[17px] md:text-lg tabular-nums whitespace-nowrap text-neutral-900 ml-1"
+                            >
+                              {formattedPrice}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-2">
-                            <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
-                              {formatDuration(totalDuration)}
-                            </span>
-                            {formattedPrice && (
-                              <span className="text-xs sm:text-sm text-primary font-semibold tabular-nums whitespace-nowrap">
-                                {formattedPrice}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                          )}
+                        </li>
                       );
                     })}
-                  </div>
+                  </ul>
                 </div>
-              </ScrollReveal>
+              </article>
             );
           })}
         </div>
