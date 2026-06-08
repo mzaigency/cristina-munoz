@@ -1429,15 +1429,90 @@
 .gp-top-title { font-size: 18px; font-weight: 800; letter-spacing: -.02em; color: var(--gp-ink); }
 .gp-top-spacer { flex: 1; }
 
-/* "Nueva cita" topbar button */
+/* Topbar action group (desktop only — FAB handles mobile) */
+.gp-topbar-actions { display: flex; gap: 8px; align-items: center; }
 .gp-new-cita-btn {
   display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px;
-  border-radius: 11px; font-size: 13.5px; font-weight: 700; border: none; cursor: pointer;
+  border-radius: 12px; font-size: 13.5px; font-weight: 700; border: none; cursor: pointer;
   background: linear-gradient(150deg, var(--gp-accent), color-mix(in oklab, var(--gp-accent), #000 15%));
   color: #fff; box-shadow: 0 8px 18px -8px color-mix(in oklab, var(--gp-accent), transparent 35%);
   transition: .15s var(--gp-ease); font-family: inherit; white-space: nowrap;
 }
 .gp-new-cita-btn:hover { filter: brightness(1.07); transform: translateY(-1px); }
+.gp-new-cita-btn:active { transform: scale(.97); }
+.gp-topbar-cobrar {
+  display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px;
+  border-radius: 12px; font-size: 13.5px; font-weight: 700;
+  border: 1px solid var(--gp-line); background: var(--gp-surface); color: var(--gp-ink);
+  cursor: pointer; transition: .15s var(--gp-ease); font-family: inherit; white-space: nowrap;
+}
+.gp-topbar-cobrar:hover { background: var(--gp-chip); border-color: var(--gp-accent-soft); color: var(--gp-accent-ink); }
+.gp-topbar-cobrar:active { transform: scale(.97); }
+
+/* ── Mobile FAB speed-dial ── */
+.gp-fab {
+  display: none;
+  position: fixed; right: 18px;
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  z-index: 45;
+  width: 56px; height: 56px; border-radius: 50%;
+  border: none; cursor: pointer; font-family: inherit;
+  background: linear-gradient(150deg, var(--gp-accent), color-mix(in oklab, var(--gp-accent), #000 18%));
+  color: #fff;
+  box-shadow: 0 14px 28px -10px color-mix(in oklab, var(--gp-accent), transparent 40%),
+              0 4px 10px -4px rgba(20,22,40,.18);
+  align-items: center; justify-content: center;
+  transition: transform .22s var(--gp-ease), box-shadow .22s var(--gp-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.gp-fab:active { transform: scale(.94); }
+.gp-fab.open { transform: rotate(45deg); box-shadow: 0 18px 36px -10px color-mix(in oklab, var(--gp-accent), transparent 30%); }
+.gp-fab-ic { width: 24px; height: 24px; transition: transform .22s var(--gp-ease); }
+
+.gp-fab-backdrop {
+  display: none;
+  position: fixed; inset: 0; z-index: 44;
+  background: rgba(15,17,33,.34); backdrop-filter: blur(3px);
+  animation: gpFabFade .2s ease;
+}
+@keyframes gpFabFade { from { opacity: 0; } to { opacity: 1; } }
+
+.gp-fab-dial {
+  display: none;
+  position: fixed; right: 18px;
+  bottom: calc(148px + env(safe-area-inset-bottom));
+  z-index: 46;
+  flex-direction: column; align-items: flex-end; gap: 10px;
+  pointer-events: none; opacity: 0;
+  transform: translateY(10px) scale(.92); transform-origin: bottom right;
+  transition: opacity .2s var(--gp-ease), transform .22s var(--gp-ease);
+}
+.gp-fab-dial.open { opacity: 1; transform: none; pointer-events: auto; }
+.gp-fab-action {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--gp-surface); border: 1px solid var(--gp-line);
+  border-radius: 99px; padding: 5px 6px 5px 18px;
+  font-size: 14px; font-weight: 700; color: var(--gp-ink);
+  box-shadow: 0 10px 24px -8px rgba(20,22,40,.22), 0 2px 6px -2px rgba(20,22,40,.08);
+  cursor: pointer; font-family: inherit; white-space: nowrap;
+  transition: transform .15s var(--gp-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.gp-fab-action:active { transform: scale(.96); }
+.gp-fab-action-label { line-height: 1; }
+.gp-fab-action-ic {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--gp-accent); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 920px) {
+  .gp-topbar-actions { display: none; }
+  .gp-fab { display: inline-flex; }
+  .gp-fab-dial { display: flex; }
+  .gp-fab-backdrop { display: block; }
+}
 
 /* Sub-nav bar: visible on mobile only (desktop uses sidebar sub-items) */
 .gp-subnav-bar { display: none; }

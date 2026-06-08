@@ -16,6 +16,7 @@ import {
   Sparkles,
   Briefcase,
   ChevronDown,
+  Plus,
 } from "lucide-react";
 import { AdminHelpMenu } from "@/components/admin/layout/AdminHelpMenu";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -148,6 +149,7 @@ export default function TenantAdmin() {
   const [tenantLoading, setTenantLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [fabOpen, setFabOpen] = useState(false);
 
   const navigate = useNavigate();
   const { adminSlug: slug, section: sectionParam, subTab: subTabParam } =
@@ -616,13 +618,24 @@ export default function TenantAdmin() {
               onSignOut={handleSignOut}
             />
           </span>
-          <button
-            className="gp-new-cita-btn"
-            onClick={() => goToSection("agenda", "dia")}
-          >
-            <Sparkles className="h-4 w-4" />
-            <span className="gp-hide-sm">Nueva cita</span>
-          </button>
+          <div className="gp-topbar-actions">
+            <button
+              className="gp-topbar-cobrar"
+              onClick={() => goToSection("caja", "cobros")}
+              title="Cobrar"
+            >
+              <Wallet className="h-4 w-4" />
+              <span>Cobrar</span>
+            </button>
+            <button
+              className="gp-new-cita-btn"
+              onClick={() => goToSection("agenda", "dia")}
+              title="Nueva cita"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Nueva cita</span>
+            </button>
+          </div>
         </header>
 
         {/* Sub-nav: desktop sees sidebar sub-items; mobile sees this row */}
@@ -655,6 +668,34 @@ export default function TenantAdmin() {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* ── Mobile FAB Speed-dial ── */}
+      {fabOpen && <div className="gp-fab-backdrop" onClick={() => setFabOpen(false)} />}
+      <div className={`gp-fab-dial${fabOpen ? " open" : ""}`} aria-hidden={!fabOpen}>
+        <button
+          className="gp-fab-action"
+          onClick={() => { setFabOpen(false); goToSection("caja", "cobros"); }}
+          tabIndex={fabOpen ? 0 : -1}
+        >
+          <span className="gp-fab-action-label">Cobrar</span>
+          <span className="gp-fab-action-ic"><Wallet style={{ width: 18, height: 18 }} /></span>
+        </button>
+        <button
+          className="gp-fab-action"
+          onClick={() => { setFabOpen(false); goToSection("agenda", "dia"); }}
+          tabIndex={fabOpen ? 0 : -1}
+        >
+          <span className="gp-fab-action-label">Nueva cita</span>
+          <span className="gp-fab-action-ic"><Sparkles style={{ width: 18, height: 18 }} /></span>
+        </button>
+      </div>
+      <button
+        className={`gp-fab${fabOpen ? " open" : ""}`}
+        onClick={() => setFabOpen(v => !v)}
+        aria-label={fabOpen ? "Cerrar acciones" : "Acciones rápidas"}
+      >
+        <Plus className="gp-fab-ic" />
+      </button>
 
       {/* ── Mobile Bottom Nav ── */}
       <nav className="gp-bottom">
