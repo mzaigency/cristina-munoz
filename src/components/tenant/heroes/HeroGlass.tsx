@@ -1,11 +1,6 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Star, Sparkles, ArrowRight, Users } from "lucide-react";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import glowappIcon from "@/assets/glowapp-icon.png";
-import { FollowButton } from "@/components/social/FollowButton";
-import { useFollows } from "@/hooks/useFollows";
+import { Sparkles } from "lucide-react";
+import { HeroCTA, HeroStats, useHeroStats, EASE_OUT } from "./_shared";
 
 interface Tenant {
   id: string;
@@ -25,174 +20,160 @@ interface HeroGlassProps {
 }
 
 export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
-  const [stats, setStats] = useState({ rating: 0, since: new Date().getFullYear() });
-  const { useFollowerCount } = useFollows();
-  const { data: followerCount = 0 } = useFollowerCount(tenant.id);
-
-  const formatFollowers = (count: number) => {
-    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
-    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, "") + "K";
-    return count.toString();
-  };
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      const { data: reviewsData } = await supabase
-        .from("reviews")
-        .select("rating")
-        .eq("tenant_id", tenant.id)
-        .eq("approved", true);
-
-      const avgRating = reviewsData?.length
-        ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
-        : 0;
-
-      const { data: tenantData } = await supabase.from("tenants").select("created_at").eq("id", tenant.id).single();
-
-      const createdYear = tenantData?.created_at
-        ? new Date(tenantData.created_at).getFullYear()
-        : new Date().getFullYear();
-
-      setStats({ rating: Number(avgRating), since: createdYear });
-    };
-
-    if (tenant.id) fetchStats();
-  }, [tenant.id]);
+  const { rating, since, followers } = useHeroStats(tenant.id);
 
   const heroImages = tenant.hero_images as string[] | null;
   const mainImage = heroImages?.[0] || tenant.hero_image_url;
   const displayTagline = tenant.tagline || tenant.description || "Tu espacio de belleza y bienestar";
+  const accent = tenant.primary_color || "#8B5CF6";
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Background Image */}
-      {mainImage && (
+      {/* Background */}
+      {mainImage ? (
         <div className="absolute inset-0">
-          <img src={mainImage} alt={tenant.name} className="w-full h-full object-cover scale-105" />
-          <div className="absolute inset-0 bg-black/30" />
+          <motion.img
+            initial={{ scale: 1.06 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.8, ease: EASE_OUT }}
+            src={mainImage}
+            alt={tenant.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/55" />
         </div>
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(120% 90% at 50% 0%, ${accent} 0%, color-mix(in oklab, ${accent}, #000 25%) 70%, #1a1a1f 100%)`,
+          }}
+        />
       )}
 
       {/* Animated gradient orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          animate={{
-            x: [0, 50, 0],
-            y: [0, -30, 0],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-1/4 -left-1/4 w-[60%] h-[60%] rounded-full blur-3xl opacity-30"
-          style={{ backgroundColor: tenant.primary_color || "hsl(var(--primary))" }}
+          animate={{ x: [0, 40, 0], y: [0, -24, 0] }}
+          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-1/3 -left-1/4 w-[55%] h-[55%] rounded-full blur-3xl opacity-40"
+          style={{ backgroundColor: accent }}
         />
         <motion.div
-          animate={{
-            x: [0, -40, 0],
-            y: [0, 40, 0],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute -bottom-1/4 -right-1/4 w-[50%] h-[50%] rounded-full blur-3xl opacity-25"
-          style={{ backgroundColor: tenant.primary_color || "hsl(var(--primary))" }}
+          animate={{ x: [0, -35, 0], y: [0, 30, 0] }}
+          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
+          className="absolute -bottom-1/3 -right-1/4 w-[50%] h-[50%] rounded-full blur-3xl opacity-30"
+          style={{ backgroundColor: accent }}
         />
       </div>
 
-      {/* Main Content */}
-      <main className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-20">
-        {/* Glass Card */}
+      <main className="relative z-10 min-h-screen flex flex-col items-center justify-center px-5 py-16">
         <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.95 }}
+          initial={{ opacity: 0, y: 32, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-md"
+          transition={{ duration: 0.85, ease: EASE_OUT }}
+          className="w-full max-w-md relative"
         >
-          <div className="relative p-8 rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/30 shadow-2xl">
-            {/* Sparkle decoration */}
+          {/* Glass card — refined refraction */}
+          <div
+            className="relative p-8 md:p-9 rounded-[28px] overflow-hidden"
+            style={{
+              background: "linear-gradient(155deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
+              backdropFilter: "blur(28px) saturate(160%)",
+              WebkitBackdropFilter: "blur(28px) saturate(160%)",
+              border: "1px solid rgba(255,255,255,0.28)",
+              boxShadow:
+                "0 32px 64px -22px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18), inset 0 0 0 1px rgba(255,255,255,.04)",
+            }}
+          >
+            {/* Top sheen */}
+            <div
+              className="absolute inset-x-0 top-0 h-32 pointer-events-none"
+              style={{ background: "linear-gradient(to bottom, rgba(255,255,255,.18), transparent)" }}
+            />
+
+            {/* Sparkle badge */}
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              initial={{ opacity: 0, scale: 0.5, rotate: -30 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ duration: 0.8, delay: 0.4, type: "spring", bounce: 0.35 }}
               className="absolute -top-3 -right-3"
             >
-              <div className="p-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+              <div className="p-2.5 rounded-full bg-white/20 backdrop-blur-md border border-white/35 shadow-lg">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
             </motion.div>
 
-            {/* Logo */}
             {tenant.logo_url && tenant.show_logo_on_landing !== false && (
               <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.25, ease: EASE_OUT }}
                 className="flex justify-center mb-6"
               >
-                <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 p-3 shadow-lg">
+                <div className="w-[88px] h-[88px] rounded-2xl bg-white/22 backdrop-blur-md border border-white/35 p-3 shadow-lg">
                   <img src={tenant.logo_url} alt={tenant.name} className="w-full h-full object-contain" />
                 </div>
               </motion.div>
             )}
 
-            {/* Name */}
-            <h1 className="text-3xl md:text-4xl font-heading font-bold text-white text-center mb-3 drop-shadow-lg">
+            <motion.h1
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3, ease: EASE_OUT }}
+              className="font-heading font-bold text-white text-center mb-3 drop-shadow-[0_4px_24px_rgba(0,0,0,.4)] tracking-tight"
+              style={{ fontSize: "clamp(1.85rem, 5vw, 2.5rem)", lineHeight: 1.08 }}
+            >
               {tenant.name}
-            </h1>
+            </motion.h1>
 
-            {/* Tagline */}
-            <p className="text-sm md:text-base text-white/80 text-center mb-6 leading-relaxed">{displayTagline}</p>
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.4, ease: EASE_OUT }}
+              className="text-sm md:text-base text-white/85 text-center mb-6 leading-relaxed font-body"
+            >
+              {displayTagline}
+            </motion.p>
 
-            {/* Stats in glass pills */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-              {/* Followers */}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
-                <Users className="w-3.5 h-3.5 text-white/80" />
-                <span className="text-xs font-medium text-white">{formatFollowers(followerCount)}</span>
-              </div>
-              {stats.rating > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
-                  <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                  <span className="text-xs font-medium text-white">{stats.rating}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
-                <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
-                <span className="text-xs text-white/80">Desde {stats.since}</span>
-              </div>
-            </div>
+            <HeroStats
+              followers={followers}
+              rating={rating}
+              since={since}
+              variant="glass"
+              size="sm"
+              delay={0.5}
+              className="mb-7"
+            />
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col gap-3">
-              <Button
-                onClick={onBookNow}
-                size="lg"
-                className="w-full py-5 text-base font-semibold rounded-2xl bg-white text-gray-900 hover:bg-white/90 shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]"
-              >
-                Reservar cita
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-              <FollowButton
-                tenantId={tenant.id}
-                variant="default"
-                className="w-full bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 rounded-2xl py-5"
-              />
-            </div>
+            <HeroCTA
+              tenantId={tenant.id}
+              onBookNow={onBookNow}
+              primaryColor={tenant.primary_color}
+              label="Reservar cita"
+              iconStyle="arrow"
+              variant="white"
+              layout="stack"
+              className="items-stretch"
+            />
           </div>
         </motion.div>
 
-        {/* Bottom decoration */}
+        {/* Bouncing dots indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          transition={{ delay: 1, duration: 0.6 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1.5"
         >
-          <div className="flex items-center gap-2">
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={i}
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
-                className="w-1.5 h-1.5 rounded-full bg-white/50"
-              />
-            ))}
-          </div>
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              animate={{ y: [0, -6, 0], opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.18 }}
+              className="w-1.5 h-1.5 rounded-full bg-white/65"
+            />
+          ))}
         </motion.div>
       </main>
     </div>

@@ -1,11 +1,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, Star, Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import glowappIcon from "@/assets/glowapp-icon.png";
-import { FollowButton } from "@/components/social/FollowButton";
-import { useFollows } from "@/hooks/useFollows";
+import { useRef } from "react";
+import { ChevronDown } from "lucide-react";
+import { HeroCTA, HeroStats, useHeroStats, EASE_OUT } from "./_shared";
 
 interface Tenant {
   id: string;
@@ -32,172 +28,137 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
     offset: ["start start", "end start"],
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "32%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
 
-  const [stats, setStats] = useState({ rating: 0, reviewCount: 0, since: new Date().getFullYear() });
-  const { useFollowerCount } = useFollows();
-  const { data: followerCount = 0 } = useFollowerCount(tenant.id);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      const { data: reviewsData } = await supabase
-        .from("reviews")
-        .select("rating")
-        .eq("tenant_id", tenant.id)
-        .eq("approved", true);
-
-      const avgRating = reviewsData?.length
-        ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
-        : 0;
-
-      const { data: tenantData } = await supabase.from("tenants").select("created_at").eq("id", tenant.id).single();
-
-      const createdYear = tenantData?.created_at
-        ? new Date(tenantData.created_at).getFullYear()
-        : new Date().getFullYear();
-
-      setStats({ rating: Number(avgRating), reviewCount: reviewsData?.length || 0, since: createdYear });
-    };
-
-    if (tenant.id) fetchStats();
-  }, [tenant.id]);
-
-  const formatFollowers = (count: number) => {
-    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
-    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, "") + "K";
-    return count.toString();
-  };
+  const { rating, since, followers } = useHeroStats(tenant.id);
 
   const heroImages = tenant.hero_images as string[] | null;
   const heroImage = heroImages?.[0] || tenant.hero_image_url;
 
   const displayTagline = tenant.tagline || tenant.description || "Tu espacio de belleza y bienestar";
+  const accent = tenant.primary_color || "#8B5CF6";
+  const secondary = tenant.secondary_color || "#D946EF";
 
   return (
-    <div ref={containerRef} className="relative h-screen w-full overflow-hidden">
-      {/* Background Image with Parallax */}
-      <motion.div style={{ y, scale }} className="absolute inset-0">
+    <div ref={containerRef} className="relative h-screen w-full overflow-hidden bg-black">
+      {/* Background with parallax */}
+      <motion.div style={{ y, scale }} className="absolute inset-0 will-change-transform">
         {heroImage ? (
           <img src={heroImage} alt={tenant.name} className="w-full h-full object-cover" />
         ) : (
           <div
             className="w-full h-full"
-            style={{
-              background: `linear-gradient(135deg, ${tenant.primary_color || "#8B5CF6"} 0%, ${tenant.secondary_color || "#D946EF"} 100%)`,
-            }}
+            style={{ background: `linear-gradient(135deg, ${accent} 0%, ${secondary} 100%)` }}
           />
         )}
 
-        {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+        {/* Layered gradients — cinematic feel */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/85" />
+        <div
+          className="absolute inset-0 opacity-40"
+          style={{
+            background: `radial-gradient(80% 50% at 50% 35%, ${accent}33, transparent 70%)`,
+          }}
+        />
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black to-transparent" />
       </motion.div>
+
+      {/* Grain */}
+      <div
+        className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
 
       {/* Content */}
       <motion.div
         style={{ opacity }}
-        className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center"
+        className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center will-change-transform"
       >
-        {/* Logo */}
         {tenant.show_logo_on_landing && tenant.logo_url && (
           <motion.img
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.8, delay: 0.15, ease: EASE_OUT }}
             src={tenant.logo_url}
             alt={`${tenant.name} logo`}
-            className="w-20 h-20 md:w-24 md:h-24 object-contain mb-6 rounded-2xl shadow-2xl"
+            className="w-20 h-20 md:w-[88px] md:h-[88px] object-contain mb-7 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-2 shadow-2xl"
           />
         )}
 
-        {/* Name */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
+        <motion.span
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-4 tracking-tight"
-          style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
+          transition={{ duration: 0.6, delay: 0.25, ease: EASE_OUT }}
+          className="inline-flex items-center gap-2 mb-5 text-[10.5px] font-bold tracking-[0.22em] uppercase text-white/65"
+        >
+          <span className="inline-block w-5 h-px bg-white/55" />
+          Belleza & Bienestar
+          <span className="inline-block w-5 h-px bg-white/55" />
+        </motion.span>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 22 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.85, delay: 0.32, ease: EASE_OUT }}
+          className="font-heading font-bold text-white mb-5 tracking-[-0.03em]"
+          style={{
+            fontSize: "clamp(2.8rem, 8vw, 5.5rem)",
+            lineHeight: 0.98,
+            textShadow: "0 8px 40px rgba(0,0,0,.45)",
+          }}
         >
           {tenant.name}
         </motion.h1>
 
-        {/* Tagline */}
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="text-lg md:text-xl text-white/90 mb-6 max-w-md font-body"
+          transition={{ duration: 0.7, delay: 0.5, ease: EASE_OUT }}
+          className="text-lg md:text-xl text-white/85 mb-8 max-w-lg font-body font-light leading-relaxed"
         >
           {displayTagline}
         </motion.p>
 
-        {/* Stats Pills */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.7 }}
-          className="flex flex-wrap items-center justify-center gap-3 mb-8"
-        >
-          {/* Followers count */}
-          <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
-            <Users className="w-4 h-4 text-white/80" />
-            <span className="text-white font-medium text-sm">{formatFollowers(followerCount)}</span>
-            <span className="text-white/70 text-sm">seguidores</span>
-          </div>
+        <HeroStats
+          followers={followers}
+          rating={rating}
+          since={since}
+          variant="glass"
+          delay={0.6}
+          className="mb-9"
+        />
 
-          {stats.rating > 0 && (
-            <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
-              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span className="text-white font-medium text-sm">{stats.rating}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-4 py-2">
-            <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
-            <span className="text-white/90 text-sm">Desde {stats.since}</span>
-          </div>
-        </motion.div>
-
-        {/* CTA Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.9 }}
-          className="flex items-center gap-3"
-        >
-          <FollowButton
-            tenantId={tenant.id}
-            variant="default"
-            className="bg-white/15 backdrop-blur-md border-white/20 text-white hover:bg-white/25"
-          />
-          <Button
-            onClick={onBookNow}
-            size="lg"
-            className="text-base px-8 py-6 rounded-full shadow-2xl hover:scale-105 transition-transform"
-            style={{
-              background: `linear-gradient(135deg, ${tenant.primary_color || "#8B5CF6"} 0%, ${tenant.secondary_color || "#D946EF"} 100%)`,
-            }}
-          >
-            Reservar cita
-          </Button>
-        </motion.div>
+        <HeroCTA
+          tenantId={tenant.id}
+          onBookNow={onBookNow}
+          primaryColor={accent}
+          label="Reservar cita"
+          iconStyle="arrow"
+          variant="white"
+          className="justify-center"
+        />
       </motion.div>
 
-      {/* Scroll Indicator */}
+      {/* Scroll indicator */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+        style={{ opacity }}
+        className="absolute bottom-7 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
       >
         <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
           className="flex flex-col items-center gap-2"
         >
-          <span className="text-white/60 text-xs font-medium uppercase tracking-widest">Descubre más</span>
-          <ChevronDown className="w-5 h-5 text-white/60" />
+          <span className="text-white/55 text-[10px] font-bold tracking-[0.22em] uppercase">Descubre más</span>
+          <ChevronDown className="w-5 h-5 text-white/55" strokeWidth={2.2} />
         </motion.div>
       </motion.div>
     </div>

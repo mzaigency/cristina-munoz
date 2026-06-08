@@ -1,11 +1,6 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Star, Users } from "lucide-react";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import glowappIcon from "@/assets/glowapp-icon.png";
-import { FollowButton } from "@/components/social/FollowButton";
-import { useFollows } from "@/hooks/useFollows";
+import { MapPin } from "lucide-react";
+import { HeroCTA, HeroStats, useHeroStats, EASE_OUT } from "./_shared";
 
 interface Tenant {
   id: string;
@@ -28,110 +23,70 @@ interface HeroSplitProps {
 }
 
 export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
-  const [stats, setStats] = useState({ rating: 0, clients: 0, since: new Date().getFullYear() });
-  const { useFollowerCount } = useFollows();
-  const { data: followerCount = 0 } = useFollowerCount(tenant.id);
-
-  const formatFollowers = (count: number) => {
-    if (count >= 1000000) return (count / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
-    if (count >= 1000) return (count / 1000).toFixed(1).replace(/\.0$/, "") + "K";
-    return count.toString();
-  };
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      const { data: reviewsData } = await supabase
-        .from("reviews")
-        .select("rating")
-        .eq("tenant_id", tenant.id)
-        .eq("approved", true);
-
-      const avgRating = reviewsData?.length
-        ? (reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length).toFixed(1)
-        : 0;
-
-      const { data: bookingsData } = await supabase.from("bookings").select("customer_name").eq("tenant_id", tenant.id);
-
-      const uniqueClients = new Set(bookingsData?.map((b) => b.customer_name.toLowerCase().trim()) || []).size;
-
-      const { data: tenantData } = await supabase.from("tenants").select("created_at").eq("id", tenant.id).single();
-
-      const createdYear = tenantData?.created_at
-        ? new Date(tenantData.created_at).getFullYear()
-        : new Date().getFullYear();
-
-      setStats({
-        rating: Number(avgRating),
-        clients: uniqueClients,
-        since: createdYear,
-      });
-    };
-
-    if (tenant.id) {
-      fetchStats();
-    }
-  }, [tenant.id]);
+  const { rating, since, followers } = useHeroStats(tenant.id, { withClients: true });
 
   const heroImages = tenant.hero_images as string[] | null;
   const heroImage = heroImages?.[0] || tenant.hero_image_url;
 
   const displayTagline = tenant.tagline || tenant.description || "Tu espacio de belleza y bienestar";
   const location = [tenant.city, tenant.address].filter(Boolean).join(" · ");
+  const accent = tenant.primary_color || "#0EA5E9";
+  const secondary = tenant.secondary_color || "#06B6D4";
 
   return (
     <>
-      {/* Mobile: Full-screen immersive hero */}
-      <div className="lg:hidden min-h-screen relative overflow-hidden">
-        {/* Background Image */}
+      {/* ─── Mobile: bottom-aligned immersive hero ─── */}
+      <div className="lg:hidden min-h-screen relative overflow-hidden bg-black">
         {heroImage ? (
-          <div className="absolute inset-0">
-            <img src={heroImage} alt={tenant.name} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
-          </div>
+          <>
+            <motion.img
+              initial={{ scale: 1.06 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 1.6, ease: EASE_OUT }}
+              src={heroImage}
+              alt={tenant.name}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/15" />
+          </>
         ) : (
           <div
             className="absolute inset-0"
-            style={{
-              background: `linear-gradient(180deg, ${tenant.primary_color || "#0EA5E9"} 0%, ${tenant.secondary_color || "#06B6D4"} 100%)`,
-            }}
+            style={{ background: `linear-gradient(165deg, ${accent} 0%, ${secondary} 100%)` }}
           />
         )}
 
-        {/* Content */}
-        <div className="relative z-10 min-h-screen flex flex-col justify-end px-6 pb-12 pt-20">
-          {/* Logo */}
+        <div className="relative z-10 min-h-screen flex flex-col justify-end px-6 pb-14 pt-20">
           {tenant.logo_url && tenant.show_logo_on_landing !== false && (
             <motion.img
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.6, ease: EASE_OUT }}
               src={tenant.logo_url}
               alt={tenant.name}
-              className="w-14 h-14 object-contain mb-6 rounded-xl shadow-lg"
+              className="w-14 h-14 object-contain mb-7 rounded-xl shadow-2xl bg-white/15 backdrop-blur-md p-1.5 border border-white/20"
             />
           )}
 
-          {/* Name */}
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl font-heading font-bold text-white mb-3 leading-tight"
+            transition={{ duration: 0.7, delay: 0.1, ease: EASE_OUT }}
+            className="font-heading font-bold text-white mb-3 leading-[1.04] tracking-[-0.025em]"
+            style={{ fontSize: "clamp(2.2rem, 9vw, 3rem)" }}
           >
             {tenant.name}
           </motion.h1>
 
-          {/* Tagline */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-base text-white/80 font-body mb-4 leading-relaxed max-w-sm"
+            transition={{ duration: 0.6, delay: 0.2, ease: EASE_OUT }}
+            className="text-base text-white/80 font-body mb-5 leading-relaxed max-w-sm"
           >
             {displayTagline}
           </motion.p>
 
-          {/* Location */}
           {location && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -139,124 +94,92 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="flex items-center gap-2 text-white/70 mb-6"
             >
-              <MapPin className="w-4 h-4" />
+              <MapPin className="w-4 h-4" strokeWidth={2.2} />
               <span className="text-sm">{location}</span>
             </motion.div>
           )}
 
-          {/* Stats Row */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.35 }}
-            className="flex flex-wrap items-center gap-2 mb-6"
-          >
-            {/* Followers */}
-            <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-3 py-1.5">
-              <Users className="w-3.5 h-3.5 text-white/80" />
-              <span className="text-white text-sm font-medium">{formatFollowers(followerCount)}</span>
-            </div>
-            {stats.rating > 0 && (
-              <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-3 py-1.5">
-                <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                <span className="text-white text-sm font-medium">{stats.rating}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-3 py-1.5">
-              <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
-              <span className="text-white/90 text-xs">Desde {stats.since}</span>
-            </div>
-          </motion.div>
+          <HeroStats
+            followers={followers}
+            rating={rating}
+            since={since}
+            variant="glass"
+            size="sm"
+            delay={0.38}
+            className="justify-start mb-7"
+          />
 
-          {/* CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex flex-col gap-3"
-          >
-            <Button
-              onClick={onBookNow}
-              size="lg"
-              className="w-full py-5 text-base rounded-xl shadow-xl"
-              style={{
-                backgroundColor: tenant.primary_color || "hsl(var(--primary))",
-              }}
-            >
-              <Calendar className="w-5 h-5 mr-2" />
-              Reservar cita
-            </Button>
-            <FollowButton
-              tenantId={tenant.id}
-              variant="default"
-              className="w-full bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 rounded-xl py-5"
-            />
-          </motion.div>
+          <HeroCTA
+            tenantId={tenant.id}
+            onBookNow={onBookNow}
+            primaryColor={accent}
+            label="Reservar cita"
+            iconStyle="icon"
+            variant="solid"
+            layout="stack"
+            className="items-stretch"
+          />
         </div>
       </div>
 
-      {/* Desktop: Split layout with asymmetric design */}
-      <div className="hidden lg:flex min-h-screen">
-        {/* Image Side - Larger portion */}
+      {/* ─── Desktop: 60/40 split with diagonal mask ─── */}
+      <div className="hidden lg:flex min-h-screen bg-white">
         <motion.div
-          initial={{ opacity: 0, scale: 1.02 }}
+          initial={{ opacity: 0, scale: 1.04 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-          className="w-[55%] h-screen relative overflow-hidden"
+          transition={{ duration: 1.1, ease: EASE_OUT }}
+          className="w-[58%] h-screen relative overflow-hidden"
         >
           {heroImage ? (
             <img src={heroImage} alt={tenant.name} className="w-full h-full object-cover" />
           ) : (
             <div
               className="w-full h-full"
-              style={{
-                background: `linear-gradient(135deg, ${tenant.primary_color || "#0EA5E9"} 0%, ${tenant.secondary_color || "#06B6D4"} 100%)`,
-              }}
+              style={{ background: `linear-gradient(135deg, ${accent} 0%, ${secondary} 100%)` }}
             />
           )}
 
-          {/* Diagonal overlay */}
+          {/* Subtle dark vignette for text legibility on stats overlay */}
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/35 to-transparent pointer-events-none" />
+
+          {/* Diagonal feather → white panel */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 pointer-events-none"
             style={{
-              background: "linear-gradient(105deg, transparent 60%, rgba(255,255,255,1) 100%)",
+              background: "linear-gradient(100deg, transparent 64%, white 100%)",
             }}
           />
 
-          {/* Stats overlay on image */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="absolute bottom-12 left-12 flex items-center gap-2"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.55, ease: EASE_OUT }}
+            className="absolute bottom-12 left-12"
           >
-            {/* Followers */}
-            <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
-              <Users className="w-4 h-4 text-gray-600" />
-              <span className="text-gray-900 text-sm font-semibold">{formatFollowers(followerCount)}</span>
-            </div>
-            {stats.rating > 0 && (
-              <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
-                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span className="text-gray-900 text-sm font-semibold">{stats.rating}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg">
-              <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
-              <span className="text-gray-700 text-sm">Desde {stats.since}</span>
-            </div>
+            <HeroStats
+              followers={followers}
+              rating={rating}
+              since={since}
+              variant="glass"
+              size="sm"
+              delay={0}
+            />
           </motion.div>
         </motion.div>
 
-        {/* Content Side */}
         <motion.div
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="w-[45%] flex flex-col justify-center px-16 xl:px-24 bg-white"
+          transition={{ duration: 0.85, delay: 0.2, ease: EASE_OUT }}
+          className="w-[42%] flex flex-col justify-center px-14 xl:px-20 bg-white relative"
         >
-          <div className="max-w-md">
-            {/* Logo */}
+          {/* Soft accent halo */}
+          <div
+            className="absolute -left-32 top-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-3xl opacity-[0.08] pointer-events-none"
+            style={{ backgroundColor: accent }}
+          />
+
+          <div className="max-w-md relative">
             {tenant.logo_url && tenant.show_logo_on_landing !== false && (
               <motion.img
                 initial={{ opacity: 0 }}
@@ -264,63 +187,60 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 src={tenant.logo_url}
                 alt={tenant.name}
-                className="w-16 h-16 object-contain mb-10 rounded-xl"
+                className="w-16 h-16 object-contain mb-9 rounded-2xl"
               />
             )}
 
-            {/* Name */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+            <motion.span
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="text-5xl xl:text-6xl font-heading font-bold text-gray-900 mb-6 leading-[1.1]"
+              transition={{ duration: 0.6, delay: 0.45 }}
+              className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.18em] uppercase mb-5"
+              style={{ color: accent }}
+            >
+              <span className="inline-block w-6 h-px" style={{ backgroundColor: accent }} />
+              Tu cita te espera
+            </motion.span>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5, ease: EASE_OUT }}
+              className="font-heading font-bold text-neutral-900 mb-6 leading-[1.04] tracking-[-0.035em]"
+              style={{ fontSize: "clamp(2.8rem, 4.5vw, 4rem)" }}
             >
               {tenant.name}
             </motion.h1>
 
-            {/* Tagline */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="text-lg text-gray-600 font-body mb-6 leading-relaxed"
+              transition={{ duration: 0.7, delay: 0.6, ease: EASE_OUT }}
+              className="text-lg text-neutral-600 font-body mb-7 leading-relaxed"
             >
               {displayTagline}
             </motion.p>
 
-            {/* Location */}
             {location && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.7 }}
-                className="flex items-center gap-2 text-gray-500 mb-8"
+                className="flex items-center gap-2 text-neutral-500 mb-9"
               >
-                <MapPin className="w-4 h-4" />
+                <MapPin className="w-4 h-4" strokeWidth={2.2} />
                 <span className="text-sm">{location}</span>
               </motion.div>
             )}
 
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-              className="flex items-center gap-3"
-            >
-              <FollowButton tenantId={tenant.id} variant="default" className="rounded-full px-6 py-5" />
-              <Button
-                onClick={onBookNow}
-                size="lg"
-                className="px-8 py-5 text-base rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
-                style={{
-                  backgroundColor: tenant.primary_color || "hsl(var(--primary))",
-                }}
-              >
-                <Calendar className="w-5 h-5 mr-2" />
-                Reservar cita
-              </Button>
-            </motion.div>
+            <HeroCTA
+              tenantId={tenant.id}
+              onBookNow={onBookNow}
+              primaryColor={accent}
+              label="Reservar cita"
+              iconStyle="arrow"
+              variant="solid"
+            />
           </div>
         </motion.div>
       </div>
