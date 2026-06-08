@@ -1300,6 +1300,27 @@
 .ag-detail-action.primary:hover { filter: brightness(1.07); }
 .ag-detail-action.danger { color: oklch(0.55 0.18 25); }
 .ag-detail-action.danger:hover { background: oklch(0.96 0.04 25); border-color: oklch(0.86 0.08 25); }
+.ag-detail-action:disabled { opacity: .55; cursor: not-allowed; transform: none !important; }
+
+/* ── Quick payment method picker ── */
+.ag-pay-method {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  padding: 16px 10px; border-radius: 14px;
+  border: 1.5px solid var(--ag-line, oklch(0.925 0.007 265));
+  background: var(--ag-card, #fff); color: var(--ag-ink, oklch(0.24 0.02 265));
+  font-size: 13.5px; font-weight: 700; cursor: pointer;
+  transition: .15s cubic-bezier(.3,.9,.3,1); font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.ag-pay-method:hover { background: var(--ag-chip, oklch(0.968 0.006 265)); }
+.ag-pay-method:active { transform: scale(.97); }
+.ag-pay-method.on {
+  border-color: var(--ag-accent, #4361ee);
+  background: color-mix(in oklab, var(--ag-accent, #4361ee), white 92%);
+  color: var(--ag-accent, #4361ee);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ag-accent, #4361ee), transparent 88%);
+}
+.ag-pay-method:disabled { opacity: .55; cursor: not-allowed; transform: none !important; }
 
 /* ── Empty state ── */
 .ag-empty {

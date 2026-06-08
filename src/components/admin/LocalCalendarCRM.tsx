@@ -121,6 +121,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   // Booking detail sheet
   const [detailBooking, setDetailBooking] = useState<LocalBooking | null>(null);
+
+  // Quick payment sheet
+  const [paySheetBooking, setPaySheetBooking] = useState<LocalBooking | null>(null);
+  const [payMethod, setPayMethod] = useState<"cash" | "card">("cash");
+  const [paying, setPaying] = useState(false);
   const isMobile = useIsMobile();
 
   // Quick booking sheet (click on empty slot)
@@ -369,6 +374,73 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         description: error.message || "Error al actualizar la cita",
         variant: "destructive",
       });
+    }
+  };
+
+  const computeBookingTotal = (b: LocalBooking) => {
+    if (!Array.isArray(b.services)) return 0;
+    return (b.services as any[]).reduce(
+      (sum, s) => sum + (Number(s?.price) || 0) * (Number(s?.quantity) || 1),
+      0
+    );
+  };
+
+  const handleQuickCharge = async () => {
+    if (!paySheetBooking) return;
+    setPaying(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+
+      const total = computeBookingTotal(paySheetBooking);
+      const services = Array.isArray(paySheetBooking.services)
+        ? (paySheetBooking.services as any[]).map((s: any) => ({
+            id: s?.id ?? null,
+            name: s?.name ?? String(s ?? ""),
+            price: Number(s?.price) || 0,
+            quantity: Number(s?.quantity) || 1,
+            total: (Number(s?.price) || 0) * (Number(s?.quantity) || 1),
+            type: s?.type ?? "service",
+          }))
+        : [];
+
+      const { error } = await supabase.from("transactions").insert({
+        stylist: paySheetBooking.stylist,
+        stylist_id: null,
+        customer_name: paySheetBooking.customer_name || "Cliente",
+        services: services as any,
+        subtotal: total,
+        discount: 0,
+        total,
+        tip_amount: 0,
+        payment_method: payMethod,
+        payment_details: {},
+        created_by: user.id,
+        tenant_id: tenantId,
+        booking_id: paySheetBooking.id,
+      } as never);
+      if (error) throw error;
+
+      const today = new Date().toLocaleDateString("es-ES");
+      const newNotes = `[✓ COMPLETADA] [💳 COBRADA] ${today}`;
+      await supabase.from("bookings").update({ notes: newNotes }).eq("id", paySheetBooking.id);
+
+      setBookings(bookings.map(b => (b.id === paySheetBooking.id ? { ...b, notes: newNotes } : b)));
+
+      toast({
+        title: "Cobro registrado",
+        description: `${total.toFixed(2)}€ · ${paySheetBooking.customer_name}`,
+      });
+      setPaySheetBooking(null);
+      setDetailBooking(null);
+    } catch (error: any) {
+      toast({
+        title: "Error al cobrar",
+        description: error?.message || "Inténtalo de nuevo",
+        variant: "destructive",
+      });
+    } finally {
+      setPaying(false);
     }
   };
 
@@ -2002,14 +2074,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   <Check style={{ width: 15, height: 15 }} />
                   {isCompleted ? "Desmarcar" : "Completar"}
                 </button>
-                {onNavigateToCash && !isCompleted && (
+                {!isCompleted && (
                   <button
                     className="ag-detail-action"
                     onClick={e => {
                       e.stopPropagation();
-                      sessionStorage.setItem("pendingChargeBooking", JSON.stringify({ id: detailBooking.id, customer_name: detailBooking.customer_name, stylist: detailBooking.stylist, services: detailBooking.services, fecha: detailBooking.Fecha, hora: detailBooking.Hora }));
+                      setPayMethod("cash");
+                      setPaySheetBooking(detailBooking);
                       setDetailBooking(null);
-                      onNavigateToCash();
                     }}
                   >
                     <Wallet style={{ width: 15, height: 15 }} />
@@ -2024,6 +2096,106 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   Eliminar
                 </button>
               </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Quick payment sheet */}
+      {paySheetBooking && (() => {
+        const total = computeBookingTotal(paySheetBooking);
+        const svcs = Array.isArray(paySheetBooking.services) ? (paySheetBooking.services as any[]) : [];
+        return (
+          <div className="ag-detail-wrap" onClick={() => !paying && setPaySheetBooking(null)}>
+            <div className="ag-detail-sheet" onClick={e => e.stopPropagation()}>
+              <div className="ag-detail-grip" />
+              <button className="ag-detail-close" onClick={() => !paying && setPaySheetBooking(null)} aria-label="Cerrar" disabled={paying}>
+                <X style={{ width: 16, height: 16 }} />
+              </button>
+
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 800, color: "var(--ag-muted)", letterSpacing: ".08em", marginBottom: 10, textTransform: "uppercase" }}>
+                <Wallet style={{ width: 12, height: 12 }} />
+                Cobro rápido
+              </div>
+
+              {/* Total */}
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ag-muted)", marginBottom: 2 }}>Total a cobrar</div>
+                <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-.04em", color: "var(--ag-ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+                  {total.toFixed(2)}<span style={{ fontSize: 24, color: "var(--ag-muted)", marginLeft: 4 }}>€</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ag-muted)", marginTop: 4 }}>
+                  {paySheetBooking.customer_name}
+                </div>
+              </div>
+
+              {/* Services breakdown */}
+              {svcs.length > 0 && (
+                <div style={{ marginBottom: 16, border: "1px solid var(--ag-line)", borderRadius: 14, overflow: "hidden" }}>
+                  {svcs.map((s: any, i: number) => (
+                    <div key={i} style={{ display: "flex", gap: 8, padding: "9px 14px", borderBottom: i < svcs.length - 1 ? "1px solid var(--ag-line2)" : "none", alignItems: "center", fontSize: 13 }}>
+                      <span style={{ fontWeight: 700, flex: 1 }}>{s?.name || s}</span>
+                      <span style={{ fontWeight: 700, color: "var(--ag-muted)", fontVariantNumeric: "tabular-nums" }}>{((Number(s?.price) || 0) * (Number(s?.quantity) || 1)).toFixed(2)}€</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Method picker */}
+              <div style={{ fontSize: 12, fontWeight: 800, color: "var(--ag-muted)", marginBottom: 8, letterSpacing: ".04em", textTransform: "uppercase" }}>Método</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
+                <button
+                  className={`ag-pay-method${payMethod === "cash" ? " on" : ""}`}
+                  onClick={() => setPayMethod("cash")}
+                  disabled={paying}
+                >
+                  <Banknote style={{ width: 22, height: 22 }} />
+                  <span>Efectivo</span>
+                </button>
+                <button
+                  className={`ag-pay-method${payMethod === "card" ? " on" : ""}`}
+                  onClick={() => setPayMethod("card")}
+                  disabled={paying}
+                >
+                  <Wallet style={{ width: 22, height: 22 }} />
+                  <span>Tarjeta</span>
+                </button>
+              </div>
+
+              {/* Confirm */}
+              <button
+                className="ag-detail-action primary"
+                style={{ width: "100%", padding: "13px 16px", fontSize: 15 }}
+                onClick={handleQuickCharge}
+                disabled={paying || total <= 0}
+              >
+                {paying ? (
+                  <>
+                    <Loader2 className="gp-spinner-sm" style={{ marginRight: 0 }} />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <Check style={{ width: 16, height: 16 }} />
+                    Confirmar cobro · {total.toFixed(2)}€
+                  </>
+                )}
+              </button>
+
+              {onNavigateToCash && (
+                <button
+                  className="ag-detail-action"
+                  style={{ width: "100%", marginTop: 8, background: "transparent", border: "none", color: "var(--ag-muted)", fontSize: 12.5, fontWeight: 600, padding: 8 }}
+                  onClick={() => {
+                    sessionStorage.setItem("pendingChargeBooking", JSON.stringify({ id: paySheetBooking.id, customer_name: paySheetBooking.customer_name, stylist: paySheetBooking.stylist, services: paySheetBooking.services, fecha: paySheetBooking.Fecha, hora: paySheetBooking.Hora }));
+                    setPaySheetBooking(null);
+                    onNavigateToCash();
+                  }}
+                  disabled={paying}
+                >
+                  Opciones avanzadas (descuento, propina, mixto)
+                </button>
+              )}
             </div>
           </div>
         );
