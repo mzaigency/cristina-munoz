@@ -1265,10 +1265,11 @@
    Variables scoped to .gp-shell to avoid shadcn/Tailwind conflicts
    ============================================================ */
 .gp-shell {
-  --gp-accent: #4361ee;
-  --gp-accent-ink: #2b3fd4;
+  --gp-accent: #22408b;
+  --gp-accent-ink: #1a3270;
   --gp-accent-soft: color-mix(in oklab, var(--gp-accent), white 88%);
   --gp-accent-softer: color-mix(in oklab, var(--gp-accent), white 94%);
+  --gp-purple: #99329a;
   --gp-bg: oklch(0.98 0.006 265);
   --gp-surface: #ffffff;
   --gp-ink: oklch(0.24 0.02 265);
