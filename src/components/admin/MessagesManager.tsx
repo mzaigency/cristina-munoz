@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MessageCircle, Send, ArrowLeft, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
@@ -108,248 +106,125 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
 
   const totalUnread = conversations.reduce((acc, c) => acc + c.unread_count_salon, 0);
 
+  const newMsgDialog = (
+    <Dialog open={newMessageDialog} onOpenChange={setNewMessageDialog}>
+      <DialogContent className={isMobile ? "mx-4 max-w-[calc(100vw-32px)]" : undefined}>
+        <DialogHeader>
+          <DialogTitle>Iniciar conversación</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">
+              Buscar cliente por nombre o username
+            </label>
+            <Input
+              type="text"
+              placeholder="Nombre o @username"
+              value={searchUsername}
+              onChange={(e) => setSearchUsername(e.target.value)}
+            />
+            {searching && <p className="text-xs text-muted-foreground">Buscando...</p>}
+            <p className="text-xs text-muted-foreground mt-2">El cliente debe tener una cuenta registrada</p>
+          </div>
+          {searchResults.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Resultados:</p>
+              <div className="max-h-[200px] overflow-y-auto space-y-1">
+                {searchResults.map((profile) => (
+                  <button
+                    key={profile.id}
+                    onClick={() => handleSelectUser(profile)}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, background: "var(--gp-chip)", border: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}
+                  >
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
+                    ) : (
+                      <div className="gp-avatar" style={{ width: 36, height: 36, fontSize: 14 }}>
+                        {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontWeight: 600, fontSize: 14, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {profile.full_name || profile.username || 'Usuario'}
+                      </p>
+                      {profile.username && (
+                        <p style={{ fontSize: 12, color: "var(--gp-muted-c)", margin: 0 }}>@{profile.username}</p>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   // Mobile Layout
   if (isMobile) {
     return (
-      <div className="flex flex-col h-[calc(100vh-180px)] bg-background rounded-lg border overflow-hidden">
-        {/* Mobile Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b bg-card">
+      <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 180px)", background: "var(--gp-surface)", borderRadius: 12, border: "1px solid var(--gp-line2)", overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--gp-line2)", background: "var(--gp-surface)" }}>
           {selectedConversation ? (
             <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="h-10 w-10 p-0"
-                aria-label="Volver a conversaciones"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <span className="font-medium text-sm truncate flex-1 mx-3">
+              <button className="gp-icon-btn" onClick={handleBack} aria-label="Volver a conversaciones">
+                <ArrowLeft style={{ width: 18, height: 18 }} />
+              </button>
+              <span style={{ fontWeight: 600, fontSize: 14, flex: 1, marginLeft: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {selectedConversation.user?.full_name || selectedConversation.user?.email || 'Usuario'}
               </span>
             </>
           ) : (
             <>
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Mensajes</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <MessageCircle style={{ width: 18, height: 18, color: "var(--gp-accent)" }} />
+                <span style={{ fontWeight: 700, fontSize: 15 }}>Mensajes</span>
                 {totalUnread > 0 && (
-                  <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                    {totalUnread}
-                  </span>
+                  <span className="gp-badge accent">{totalUnread}</span>
                 )}
               </div>
-              <Dialog open={newMessageDialog} onOpenChange={setNewMessageDialog}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="h-10 min-w-[44px]" aria-label="Nuevo mensaje">
-                    <Plus className="h-4 w-4 mr-1" />
-                    <span className="sr-only sm:not-sr-only">Nuevo</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="mx-4 max-w-[calc(100vw-32px)]">
-                  <DialogHeader>
-                    <DialogTitle>Iniciar conversación</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        Buscar cliente por nombre o username
-                      </label>
-                      <Input
-                        type="text"
-                        placeholder="Nombre o @username"
-                        value={searchUsername}
-                        onChange={(e) => setSearchUsername(e.target.value)}
-                        className="h-12"
-                      />
-                      {searching && (
-                        <p className="text-xs text-muted-foreground">Buscando...</p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-2">
-                        El cliente debe tener una cuenta registrada
-                      </p>
-                    </div>
-                    
-                    {/* Search Results */}
-                    {searchResults.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Resultados:</p>
-                        <div className="max-h-[200px] overflow-y-auto space-y-1">
-                          {searchResults.map((profile) => (
-                            <button
-                              key={profile.id}
-                              onClick={() => handleSelectUser(profile)}
-                              className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
-                            >
-                              {profile.avatar_url ? (
-                                <img 
-                                  src={profile.avatar_url} 
-                                  alt="" 
-                                  className="w-10 h-10 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                                  {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">
-                                  {profile.full_name || profile.username || 'Usuario'}
-                                </p>
-                                {profile.username && (
-                                  <p className="text-xs text-muted-foreground truncate">
-                                    @{profile.username}
-                                  </p>
-                                )}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <button className="gp-btn primary sm" onClick={() => setNewMessageDialog(true)} aria-label="Nuevo mensaje">
+                <Plus style={{ width: 14, height: 14 }} /> Nuevo
+              </button>
             </>
           )}
         </div>
-
-        {/* Mobile Content */}
-        <div className="flex-1 overflow-hidden">
+        <div style={{ flex: 1, overflow: "hidden" }}>
           {selectedConversation ? (
-            <ChatWindow
-              conversation={selectedConversation}
-              messages={messages}
-              loading={loadingMessages}
-              onSendMessage={handleSendMessage}
-              currentUserId={user?.id || ''}
-              role="salon"
-            />
+            <ChatWindow conversation={selectedConversation} messages={messages} loading={loadingMessages} onSendMessage={handleSendMessage} currentUserId={user?.id || ''} role="salon" />
           ) : (
-            <ConversationList
-              conversations={conversations}
-              loading={loadingConversations}
-              selectedId={null}
-              onSelect={setSelectedConversation}
-              role="salon"
-            />
+            <ConversationList conversations={conversations} loading={loadingConversations} selectedId={null} onSelect={setSelectedConversation} role="salon" />
           )}
         </div>
+        {newMsgDialog}
       </div>
     );
   }
 
-  // Desktop Layout (unchanged)
+  // Desktop Layout
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <MessageCircle className="h-5 w-5" />
-          Mensajes Directos
-          {totalUnread > 0 && (
-            <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-              {totalUnread}
-            </span>
-          )}
-        </CardTitle>
-        
-        <Dialog open={newMessageDialog} onOpenChange={setNewMessageDialog}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Send className="h-4 w-4 mr-2" />
-              Nuevo mensaje
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Iniciar conversación</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Buscar cliente por nombre o username
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Nombre o @username"
-                  value={searchUsername}
-                  onChange={(e) => setSearchUsername(e.target.value)}
-                />
-                {searching && (
-                  <p className="text-xs text-muted-foreground">Buscando...</p>
-                )}
-                <p className="text-xs text-muted-foreground mt-2">
-                  El cliente debe tener una cuenta registrada
-                </p>
-              </div>
-              
-              {/* Search Results */}
-              {searchResults.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Resultados:</p>
-                  <div className="max-h-[200px] overflow-y-auto space-y-1">
-                    {searchResults.map((profile) => (
-                      <button
-                        key={profile.id}
-                        onClick={() => handleSelectUser(profile)}
-                        className="w-full flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
-                      >
-                        {profile.avatar_url ? (
-                          <img 
-                            src={profile.avatar_url} 
-                            alt="" 
-                            className="w-8 h-8 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
-                            {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate text-sm">
-                            {profile.full_name || profile.username || 'Usuario'}
-                          </p>
-                          {profile.username && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              @{profile.username}
-                            </p>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      </CardHeader>
-
-      <CardContent>
-        <div className="grid md:grid-cols-[300px_1fr] gap-4 h-[500px]">
-          <div className="border rounded-lg overflow-hidden">
-            <ConversationList
-              conversations={conversations}
-              loading={loadingConversations}
-              selectedId={selectedConversation?.id || null}
-              onSelect={setSelectedConversation}
-              role="salon"
-            />
-          </div>
-
-          <div className="border rounded-lg overflow-hidden">
-            <ChatWindow
-              conversation={selectedConversation}
-              messages={messages}
-              loading={loadingMessages}
-              onSendMessage={handleSendMessage}
-              currentUserId={user?.id || ''}
-              role="salon"
-            />
-          </div>
+    <div className="gp-card" style={{ overflow: "hidden" }}>
+      <div className="gp-page-h" style={{ padding: "16px 20px", borderBottom: "1px solid var(--gp-line2)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <h2 style={{ margin: 0 }}>Mensajes Directos</h2>
+          {totalUnread > 0 && <span className="gp-badge accent">{totalUnread}</span>}
         </div>
-      </CardContent>
-    </Card>
+        <div className="gp-page-actions">
+          <button className="gp-btn primary sm" onClick={() => setNewMessageDialog(true)}>
+            <Send style={{ width: 14, height: 14 }} /> Nuevo mensaje
+          </button>
+        </div>
+      </div>
+      <div className="gp-msg-layout">
+        <div className="gp-msg-list">
+          <ConversationList conversations={conversations} loading={loadingConversations} selectedId={selectedConversation?.id || null} onSelect={setSelectedConversation} role="salon" />
+        </div>
+        <div className="gp-msg-thread">
+          <ChatWindow conversation={selectedConversation} messages={messages} loading={loadingMessages} onSendMessage={handleSendMessage} currentUserId={user?.id || ''} role="salon" />
+        </div>
+      </div>
+      {newMsgDialog}
+    </div>
   );
 }

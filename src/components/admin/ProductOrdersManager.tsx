@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShoppingBag, Phone, User, Calendar, Loader2, Check, Package as PackageIcon, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -33,11 +29,11 @@ interface Props {
   tenantId: string;
 }
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Nuevo", color: "bg-amber-500/15 text-amber-700 border-amber-300" },
-  ready: { label: "Reservado", color: "bg-blue-500/15 text-blue-700 border-blue-300" },
-  delivered: { label: "Entregado", color: "bg-green-500/15 text-green-700 border-green-300" },
-  cancelled: { label: "Cancelado", color: "bg-red-500/15 text-red-700 border-red-300" },
+const STATUS_LABELS: Record<string, { label: string; tone: string }> = {
+  pending: { label: "Nuevo", tone: "warn" },
+  ready: { label: "Reservado", tone: "info" },
+  delivered: { label: "Entregado", tone: "ok" },
+  cancelled: { label: "Cancelado", tone: "neutral" },
 };
 
 import { markOrdersSeen } from "@/hooks/useUnseenOrders";
@@ -105,123 +101,117 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+        <Loader2 style={{ width: 28, height: 28, color: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Header */}
+      <div className="gp-page-h">
         <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <ShoppingBag className="h-5 w-5" />
-            Pedidos de tienda
-            {pendingCount > 0 && (
-              <Badge className="bg-amber-500 text-white">{pendingCount} nuevos</Badge>
-            )}
-          </h2>
-          <p className="text-sm text-muted-foreground">Pedidos de productos en tiempo real</p>
+          <h2>Pedidos de tienda</h2>
+          <p>
+            Pedidos de productos en tiempo real
+            {pendingCount > 0 && <> · <span style={{ color: "var(--gp-warn)", fontWeight: 800 }}>{pendingCount} nuevos</span></>}
+          </p>
         </div>
       </div>
 
-      <Tabs value={filter} onValueChange={setFilter}>
-        <TabsList className="w-full">
-          <TabsTrigger value="active" className="flex-1">Activos</TabsTrigger>
-          <TabsTrigger value="delivered" className="flex-1">Entregados</TabsTrigger>
-          <TabsTrigger value="cancelled" className="flex-1">Cancelados</TabsTrigger>
-          <TabsTrigger value="all" className="flex-1">Todos</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Filter tabs */}
+      <div className="gp-subtabs">
+        {[
+          { id: "active", label: "Activos" },
+          { id: "delivered", label: "Entregados" },
+          { id: "cancelled", label: "Cancelados" },
+          { id: "all", label: "Todos" },
+        ].map((t) => (
+          <button key={t.id} className={`gp-subtab${filter === t.id ? " on" : ""}`} onClick={() => setFilter(t.id)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
 
       {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <ShoppingBag className="h-12 w-12 mx-auto mb-3 opacity-30" />
+        <div className="gp-card">
+          <div className="gp-empty">
+            <div className="gp-empty-ic"><ShoppingBag style={{ width: 24, height: 24 }} /></div>
+            <h4>Sin pedidos</h4>
             <p>No hay pedidos en esta categoría</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {filtered.map((o) => {
             const statusInfo = STATUS_LABELS[o.status] || STATUS_LABELS.pending;
             return (
-              <Card key={o.id} className="overflow-hidden">
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold flex items-center gap-1.5">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          {o.customer_name}
-                        </h3>
-                        <Badge variant="outline" className={statusInfo.color}>
-                          {statusInfo.label}
-                        </Badge>
-                        {o.booking_id && (
-                          <Badge variant="outline" className="text-xs">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            Con cita
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {format(new Date(o.created_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
-                      </p>
-                      {o.customer_phone && (
-                        <a
-                          href={`tel:${o.customer_phone}`}
-                          className="text-xs text-primary flex items-center gap-1 mt-1 hover:underline"
-                        >
-                          <Phone className="h-3 w-3" /> {o.customer_phone}
-                        </a>
-                      )}
+              <div key={o.id} className="gp-card pad" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* Top row */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: "var(--gp-ink)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <User style={{ width: 14, height: 14, color: "var(--gp-muted-c)" }} />
+                        {o.customer_name}
+                      </span>
+                      <span className={`gp-badge ${statusInfo.tone}`}><span className="pip" style={{ background: "currentColor" }} />{statusInfo.label}</span>
+                      {o.booking_id && <span className="gp-badge neutral"><Calendar style={{ width: 10, height: 10 }} />Con cita</span>}
                     </div>
-                    <span className="text-xl font-bold text-primary shrink-0">
-                      {o.total.toFixed(2)} €
-                    </span>
+                    <div style={{ fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
+                      {format(new Date(o.created_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
+                    </div>
+                    {o.customer_phone && (
+                      <a href={`tel:${o.customer_phone}`} style={{ fontSize: 12.5, color: "var(--gp-accent)", fontWeight: 600, display: "flex", alignItems: "center", gap: 5, marginTop: 4, textDecoration: "none" }}>
+                        <Phone style={{ width: 12, height: 12 }} /> {o.customer_phone}
+                      </a>
+                    )}
                   </div>
+                  <span className="gp-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--gp-accent)", flex: "none" }}>
+                    {o.total.toFixed(2)} €
+                  </span>
+                </div>
 
-                  <div className="space-y-1 pl-2 border-l-2 border-primary/30">
-                    {o.items?.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-sm">
-                        <span>
-                          <PackageIcon className="h-3.5 w-3.5 inline mr-1.5 text-muted-foreground" />
-                          {item.quantity}× {item.name}
-                        </span>
-                        <span className="text-muted-foreground tabular-nums">
-                          {(item.quantity * item.price).toFixed(2)} €
-                        </span>
-                      </div>
-                    ))}
+                {/* Items */}
+                <div style={{ paddingLeft: 12, borderLeft: `2px solid var(--gp-accent-soft)`, display: "flex", flexDirection: "column", gap: 6 }}>
+                  {o.items?.map((item, idx) => (
+                    <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13.5, fontWeight: 600 }}>
+                      <span style={{ color: "var(--gp-ink2)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <PackageIcon style={{ width: 13, height: 13, color: "var(--gp-muted-c)" }} />
+                        {item.quantity}× {item.name}
+                      </span>
+                      <span className="gp-mono" style={{ color: "var(--gp-muted-c)", fontSize: 13 }}>
+                        {(item.quantity * item.price).toFixed(2)} €
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {o.notes && (
+                  <div style={{ fontSize: 13, background: "var(--gp-chip)", borderRadius: 10, padding: "10px 14px", color: "var(--gp-ink2)" }}>
+                    <span style={{ fontWeight: 700 }}>Notas:</span> {o.notes}
                   </div>
+                )}
 
-                  {o.notes && (
-                    <div className="text-xs bg-muted/50 rounded-md p-2 border">
-                      <span className="font-medium">Notas:</span> {o.notes}
-                    </div>
-                  )}
-
-                  {o.status !== "delivered" && o.status !== "cancelled" && (
-                    <div className="flex gap-2 pt-1">
-                      {o.status === "pending" && (
-                        <Button size="sm" className="flex-1" onClick={() => updateStatus(o.id, "ready")}>
-                          <Check className="h-4 w-4 mr-1" /> Reservar pedido
-                        </Button>
-                      )}
-                      {o.status === "ready" && (
-                        <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => updateStatus(o.id, "delivered")}>
-                          <PackageIcon className="h-4 w-4 mr-1" /> Marcar entregado
-                        </Button>
-                      )}
-                      <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => updateStatus(o.id, "cancelled")}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                {o.status !== "delivered" && o.status !== "cancelled" && (
+                  <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px solid var(--gp-line2)" }}>
+                    {o.status === "pending" && (
+                      <button className="gp-btn primary sm" style={{ flex: 1 }} onClick={() => updateStatus(o.id, "ready")}>
+                        <Check style={{ width: 14, height: 14 }} /> Reservar pedido
+                      </button>
+                    )}
+                    {o.status === "ready" && (
+                      <button className="gp-btn sm" style={{ flex: 1, background: "var(--gp-ok)", color: "#fff", borderColor: "transparent" }} onClick={() => updateStatus(o.id, "delivered")}>
+                        <PackageIcon style={{ width: 14, height: 14 }} /> Marcar entregado
+                      </button>
+                    )}
+                    <button className="gp-btn sm danger" onClick={() => updateStatus(o.id, "cancelled")}>
+                      <X style={{ width: 14, height: 14 }} />
+                    </button>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>

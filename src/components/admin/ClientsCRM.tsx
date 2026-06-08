@@ -1,11 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnimatePresence } from "framer-motion";
@@ -181,22 +178,20 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
     : { name: "", phone: "", email: "", notes: "", tags: [], birthday: "" };
 
   return (
-    <div className="space-y-4">
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="gp-page-h">
         <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> Clientes
-          </h2>
-          <p className="text-sm text-muted-foreground">{clients.length} registrados</p>
+          <h2>Clientes</h2>
+          <p>{clients.length} registrados</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => exportClientsCsv(clients)} aria-label="Exportar clientes a CSV">
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button onClick={handleNewClient} size="sm">
-            <UserPlus className="h-4 w-4 mr-1" /> Nuevo
-          </Button>
+        <div className="gp-page-actions">
+          <button className="gp-btn sm" onClick={() => exportClientsCsv(clients)} aria-label="Exportar clientes a CSV">
+            <Download style={{ width: 14, height: 14 }} />
+          </button>
+          <button className="gp-btn primary sm" onClick={handleNewClient}>
+            <UserPlus style={{ width: 14, height: 14 }} /> Nuevo
+          </button>
         </div>
       </div>
 
@@ -204,13 +199,12 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
       {!loading && <ClientStats clients={clients} />}
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
+      <div className="gp-search-top">
+        <Search style={{ width: 15, height: 15, color: "var(--gp-muted-c)", flexShrink: 0 }} />
+        <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Buscar por nombre, teléfono o email..."
-          className="pl-9"
         />
       </div>
 
@@ -224,20 +218,26 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
 
       {/* List */}
       {loading ? (
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-20 w-full" />)}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="gp-card" style={{ height: 72, background: "var(--gp-chip)" }} />
+          ))}
         </div>
       ) : filteredAndSorted.length === 0 ? (
-        <Card className="p-8 text-center">
-          <Users className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-          <h3 className="font-medium mb-1">{searchQuery || activeFilter !== "all" ? "Sin resultados" : "Sin clientes"}</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {searchQuery ? "Prueba con otro término" : activeFilter !== "all" ? "No hay clientes con este filtro" : "Añade tu primer cliente para empezar"}
-          </p>
-          {!searchQuery && activeFilter === "all" && (
-            <Button onClick={handleNewClient} size="sm"><UserPlus className="h-4 w-4 mr-1" /> Añadir cliente</Button>
-          )}
-        </Card>
+        <div className="gp-card">
+          <div className="gp-empty">
+            <div className="gp-empty-ic"><Users style={{ width: 24, height: 24 }} /></div>
+            <h4>{searchQuery || activeFilter !== "all" ? "Sin resultados" : "Sin clientes"}</h4>
+            <p>
+              {searchQuery ? "Prueba con otro término" : activeFilter !== "all" ? "No hay clientes con este filtro" : "Añade tu primer cliente para empezar"}
+            </p>
+            {!searchQuery && activeFilter === "all" && (
+              <button className="gp-btn primary sm" style={{ marginTop: 12 }} onClick={handleNewClient}>
+                <UserPlus style={{ width: 14, height: 14 }} /> Añadir cliente
+              </button>
+            )}
+          </div>
+        </div>
       ) : (
         <div className="space-y-2">
           <AnimatePresence mode="popLayout">

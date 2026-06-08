@@ -1,14 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Pencil, Trash2, Upload, Image, X, GripVertical, Crown } from "lucide-react";
 import { ImageCropper } from "./ImageCropper";
@@ -452,8 +448,8 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+        <Loader2 style={{ width: 28, height: 28, color: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
       </div>
     );
   }
@@ -462,183 +458,159 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex-1">
-            <h2 className="text-xl md:text-2xl font-bold">Gestión de Servicios</h2>
-            <p className="text-sm md:text-base text-muted-foreground">Añade, edita o elimina los servicios de tu negocio</p>
-            <div className="mt-3 max-w-xs">
-              <PlanUsageBar
-                current={currentServices}
-                max={maxServices}
-                label="Servicios"
-              />
+      <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div className="gp-page-h">
+          <div>
+            <h2>Gestión de Servicios</h2>
+            <p>Añade, edita o elimina los servicios de tu negocio</p>
+            <div style={{ marginTop: 8, maxWidth: 260 }}>
+              <PlanUsageBar current={currentServices} max={maxServices} label="Servicios" />
             </div>
           </div>
-          <Button 
-            onClick={handleOpenCreate} 
-            className="w-full md:w-auto h-11 md:h-10"
-            variant={canAddService() ? "default" : "outline"}
-          >
-            {canAddService() ? (
-              <>
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo Servicio
-              </>
-            ) : (
-              <>
-                <Crown className="h-4 w-4 mr-2 text-amber-500" />
-                Mejorar plan
-              </>
-            )}
-          </Button>
+          <div className="gp-page-actions">
+            <button
+              className={`gp-btn${canAddService() ? " primary" : ""}`}
+              onClick={handleOpenCreate}
+            >
+              {canAddService() ? (
+                <><Plus style={{ width: 14, height: 14 }} /> Nuevo Servicio</>
+              ) : (
+                <><Crown style={{ width: 14, height: 14, color: "var(--gp-warn)" }} /> Mejorar plan</>
+              )}
+            </button>
+          </div>
         </div>
 
       {categories.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground mb-4">No hay servicios todavía</p>
-            <Button onClick={handleOpenCreate}>
-              <Plus className="h-4 w-4 mr-2" />
-              Añadir primer servicio
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="gp-card">
+          <div className="gp-empty">
+            <div className="gp-empty-ic"><Image style={{ width: 24, height: 24 }} /></div>
+            <h4>Sin servicios</h4>
+            <p>No hay servicios todavía</p>
+            <button className="gp-btn primary" style={{ marginTop: 12 }} onClick={handleOpenCreate}>
+              <Plus style={{ width: 14, height: 14 }} /> Añadir primer servicio
+            </button>
+          </div>
+        </div>
       ) : (
-        <div className="space-y-6">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {categories.map((category) => (
-            <Card key={category}>
-              <CardHeader className="pb-3">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    {getCategoryImage(category) ? (
-                      <img 
-                        src={getCategoryImage(category)} 
-                        alt={category}
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <Image className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <CardTitle className="text-base sm:text-lg truncate">{category}</CardTitle>
-                      <CardDescription>{groupedServices[category].length} servicios</CardDescription>
+            <div key={category} className="gp-card">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid var(--gp-line2)", flexWrap: "wrap", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  {getCategoryImage(category) ? (
+                    <img
+                      src={getCategoryImage(category)}
+                      alt={category}
+                      style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
+                    />
+                  ) : (
+                    <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--gp-chip)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Image style={{ width: 20, height: 20, color: "var(--gp-muted-c)" }} />
                     </div>
+                  )}
+                  <div>
+                    <p style={{ fontWeight: 700, fontSize: 15, margin: 0 }}>{category}</p>
+                    <p style={{ fontSize: 12.5, color: "var(--gp-muted-c)", margin: 0 }}>{groupedServices[category].length} servicios</p>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="w-full sm:w-auto h-10"
-                    onClick={() => {
-                      setSelectedCategory(category);
-                      setIsCategoryImageDialogOpen(true);
-                    }}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Imagen
-                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {/* Mobile Card View */}
-                <div className="space-y-3 md:hidden">
+                <button
+                  className="gp-btn sm"
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    setIsCategoryImageDialogOpen(true);
+                  }}
+                >
+                  <Upload style={{ width: 13, height: 13 }} /> Imagen
+                </button>
+              </div>
+
+              <div style={{ padding: "12px 18px" }}>
+                {/* Mobile card list */}
+                <div className="flex flex-col gap-2 md:hidden">
                   {groupedServices[category].map((service) => (
-                    <div key={service.id} className="p-4 rounded-lg border">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate">{service.name}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant={service.type === "Compuesto" ? "secondary" : "outline"} className="text-xs">
-                              {service.type}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground">{formatDuration(service)}</span>
+                    <div key={service.id} style={{ padding: "12px 14px", borderRadius: 10, border: "1px solid var(--gp-line2)", background: "var(--gp-surface-2)" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <p style={{ fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{service.name}</p>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                            <span className="gp-badge neutral">{service.type}</span>
+                            <span style={{ fontSize: 12.5, color: "var(--gp-muted-c)" }}>{formatDuration(service)}</span>
                           </div>
                         </div>
                         {service.price !== null ? (
-                          <span className="font-bold text-primary shrink-0 ml-2">{service.price.toFixed(2)} €</span>
+                          <span className="gp-mono" style={{ fontWeight: 700, color: "var(--gp-accent)", flexShrink: 0, marginLeft: 8 }}>{service.price.toFixed(2)} €</span>
                         ) : (
-                          <span className="text-muted-foreground shrink-0 ml-2">-</span>
+                          <span style={{ color: "var(--gp-muted-c)", flexShrink: 0, marginLeft: 8 }}>-</span>
                         )}
                       </div>
-                      <div className="flex gap-2 mt-3">
-                        <Button variant="outline" size="sm" className="flex-1 h-10" onClick={() => handleOpenEdit(service)}>
-                          <Pencil className="h-4 w-4 mr-1" /> Editar
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-10 w-10 text-destructive border-destructive/50"
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="gp-btn sm" style={{ flex: 1 }} onClick={() => handleOpenEdit(service)}>
+                          <Pencil style={{ width: 13, height: 13 }} /> Editar
+                        </button>
+                        <button
+                          className="gp-btn sm danger"
                           onClick={() => {
                             setSelectedService(service);
                             setIsDeleteDialogOpen(true);
                           }}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          <Trash2 style={{ width: 13, height: 13 }} />
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Desktop Table View */}
+                {/* Desktop list */}
                 <div className="hidden md:block">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Duración</TableHead>
-                        <TableHead>Precio</TableHead>
-                        <TableHead className="w-[100px]">Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid var(--gp-line2)" }}>
+                        {["Nombre", "Tipo", "Duración", "Precio", "Acciones"].map(h => (
+                          <th key={h} style={{ textAlign: "left", padding: "8px 12px", fontSize: 12.5, fontWeight: 700, color: "var(--gp-muted-c)", letterSpacing: "0.02em" }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
                       {groupedServices[category].map((service) => (
-                        <TableRow key={service.id}>
-                          <TableCell className="font-medium">{service.name}</TableCell>
-                          <TableCell>
-                            <Badge variant={service.type === "Compuesto" ? "secondary" : "outline"}>
-                              {service.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{formatDuration(service)}</TableCell>
-                          <TableCell>
+                        <tr key={service.id} style={{ borderBottom: "1px solid var(--gp-line2)" }}>
+                          <td style={{ padding: "10px 12px", fontWeight: 600, fontSize: 14 }}>{service.name}</td>
+                          <td style={{ padding: "10px 12px" }}>
+                            <span className="gp-badge neutral">{service.type}</span>
+                          </td>
+                          <td style={{ padding: "10px 12px", fontSize: 13.5, color: "var(--gp-ink2)" }}>{formatDuration(service)}</td>
+                          <td style={{ padding: "10px 12px" }}>
                             {service.price !== null ? (
-                              <span className="font-medium text-primary">{service.price.toFixed(2)} €</span>
+                              <span className="gp-mono" style={{ fontWeight: 700, color: "var(--gp-accent)" }}>{service.price.toFixed(2)} €</span>
                             ) : (
-                              <span className="text-muted-foreground">-</span>
+                              <span style={{ color: "var(--gp-muted-c)" }}>-</span>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleOpenEdit(service)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
+                          </td>
+                          <td style={{ padding: "10px 12px" }}>
+                            <div style={{ display: "flex", gap: 4 }}>
+                              <button className="gp-icon-btn" onClick={() => handleOpenEdit(service)}>
+                                <Pencil style={{ width: 14, height: 14 }} />
+                              </button>
+                              <button
+                                className="gp-icon-btn"
+                                style={{ color: "var(--gp-danger)" }}
                                 onClick={() => {
                                   setSelectedService(service);
                                   setIsDeleteDialogOpen(true);
                                 }}
                               >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
+                                <Trash2 style={{ width: 14, height: 14 }} />
+                              </button>
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -684,17 +656,22 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                   </datalist>
                 </div>
                 {categories.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                     {categories.slice(0, 4).map((cat) => (
                       <button
                         key={cat}
                         type="button"
                         onClick={() => setFormData({ ...formData, category: cat })}
-                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
-                          formData.category === cat
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-muted hover:bg-accent border-transparent"
-                        }`}
+                        style={{
+                          fontSize: 12,
+                          padding: "2px 10px",
+                          borderRadius: 20,
+                          border: "1px solid " + (formData.category === cat ? "var(--gp-accent)" : "var(--gp-line2)"),
+                          background: formData.category === cat ? "var(--gp-accent-soft)" : "transparent",
+                          color: formData.category === cat ? "var(--gp-accent)" : "var(--gp-muted-c)",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                        }}
                       >
                         {cat}
                       </button>
@@ -779,13 +756,11 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            <button className="gp-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
+            <button className="gp-btn primary" onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 style={{ width: 14, height: 14, animation: "spin 0.7s linear infinite", display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
               {selectedService ? "Guardar Cambios" : "Crear Servicio"}
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -834,15 +809,14 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                   />
                 </div>
                 {/* Delete button */}
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2"
+                <button
+                  className="gp-btn sm danger"
+                  style={{ position: "absolute", top: 8, right: 8 }}
                   onClick={handleDeleteCategoryImage}
                   disabled={uploading}
                 >
-                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                </Button>
+                  {uploading ? <Loader2 style={{ width: 14, height: 14, animation: "spin 0.7s linear infinite" }} /> : <X style={{ width: 14, height: 14 }} />}
+                </button>
               </div>
             )}
             
@@ -875,9 +849,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCategoryImageDialogOpen(false)}>
-              Cerrar
-            </Button>
+            <button className="gp-btn" onClick={() => setIsCategoryImageDialogOpen(false)}>Cerrar</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

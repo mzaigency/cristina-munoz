@@ -3,28 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { OnboardingChecklist } from "@/components/admin/OnboardingChecklist";
 import { TrainingChecklist } from "@/components/admin/content/TrainingChecklist";
 import { ROICalculator } from "@/components/admin/content/ROICalculator";
-import { motion } from "framer-motion";
-import { 
-  Calendar, 
-  Wallet, 
-  MessageCircle, 
-  Star, 
+import {
+  Calendar,
+  Wallet,
+  MessageCircle,
+  Star,
   TrendingUp,
   Clock,
   Plus,
-  CreditCard,
-  Ban,
-  ArrowRight,
+  ShoppingCart,
+  Package,
+  Briefcase,
+  Globe,
   Sparkles,
   ChevronDown,
   ChevronUp,
-  ShoppingCart, 
-  Package,
-  Euro,
-  Globe,
-  Briefcase,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -46,18 +40,10 @@ interface DashboardStats {
   pendingOrders: number;
   ordersRevenue7d: number;
   ordersCount7d: number;
-  // Citas CREADAS hoy (no las del día), desglosadas por canal
   newBookingsTodayTotal: number;
   newBookingsTodayCrm: number;
   newBookingsTodayWeb: number;
   newBookingsYesterday: number;
-}
-
-interface QuickAction {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  color: string;
 }
 
 export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDashboardProps) {
@@ -81,12 +67,6 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
   const [tenantAge, setTenantAge] = useState<number>(999);
   const [trainingOpen, setTrainingOpen] = useState(true);
   const [roiOpen, setRoiOpen] = useState(false);
-
-  const quickActions: QuickAction[] = [
-    { id: "new-booking", label: "Nueva cita", icon: <Plus className="h-5 w-5" />, color: "bg-primary" },
-    { id: "new-payment", label: "Cobrar", icon: <CreditCard className="h-5 w-5" />, color: "bg-emerald-500" },
-    { id: "block-slot", label: "Bloquear", icon: <Ban className="h-5 w-5" />, color: "bg-amber-500" },
-  ];
 
   useEffect(() => {
     fetchDashboardStats();
@@ -172,11 +152,10 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
       const thisWeekTotal = thisWeekTx?.reduce((sum, t) => sum + (t.total || 0), 0) || 0;
       const lastWeekTotal = lastWeekTx?.reduce((sum, t) => sum + (t.total || 0), 0) || 0;
-      const weeklyGrowth = lastWeekTotal > 0 
-        ? Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100) 
+      const weeklyGrowth = lastWeekTotal > 0
+        ? Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100)
         : 0;
 
-      // Pedidos: pendientes y métricas de los últimos 7 días
       const { count: pendingOrdersCount } = await supabase
         .from("product_orders")
         .select("*", { count: "exact", head: true })
@@ -193,7 +172,6 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       const ordersRevenue7d = orders7d?.reduce((sum, o: any) => sum + Number(o.total || 0), 0) || 0;
       const ordersCount7d = orders7d?.length || 0;
 
-      // Citas CREADAS hoy y ayer (no las del día), por canal — filtrado por tenant
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       const tomorrowStart = new Date(todayStart);
@@ -250,286 +228,243 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
   };
 
   const handleTrainingNavigate = (tab: string, subTab?: string) => {
-    // Sub-tab is already stored in sessionStorage by TrainingChecklist
     onNavigate(tab);
   };
 
-  const statCards = [
-    {
-      id: "bookings",
-      label: "Citas hoy",
-      value: stats.todayBookings.toString(),
-      subtitle: stats.nextBookingTime 
-        ? `Próxima: ${stats.nextBookingTime} - ${stats.nextBookingName?.split(" ")[0]}`
-        : "Sin más citas hoy",
-      icon: <Calendar className="h-5 w-5" />,
-      color: "from-violet-500 to-purple-600",
-      tab: "agenda",
-    },
-    {
-      id: "revenue",
-      label: "Ingresos hoy",
-      value: formatCurrency(stats.todayRevenue),
-      subtitle: stats.weeklyGrowth >= 0 
-        ? `+${stats.weeklyGrowth}% vs semana pasada`
-        : `${stats.weeklyGrowth}% vs semana pasada`,
-      icon: <Wallet className="h-5 w-5" />,
-      color: "from-emerald-500 to-green-600",
-      tab: "agenda",
-    },
-    {
-      id: "messages",
-      label: "Mensajes",
-      value: stats.unreadMessages.toString(),
-      subtitle: stats.unreadMessages > 0 ? "sin leer" : "Todo al día",
-      icon: <MessageCircle className="h-5 w-5" />,
-      color: "from-blue-500 to-cyan-600",
-      tab: "clients",
-      badge: stats.unreadMessages > 0,
-    },
-    {
-      id: "reviews",
-      label: "Reseñas",
-      value: stats.pendingReviews.toString(),
-      subtitle: stats.pendingReviews > 0 ? "pendientes" : "Todas aprobadas",
-      icon: <Star className="h-5 w-5" />,
-      color: "from-amber-500 to-orange-600",
-      tab: "clients",
-      badge: stats.pendingReviews > 0,
-    },
-  ];
+  const navOrders = () => {
+    sessionStorage.setItem("openAgendaSubTab", "orders");
+    onNavigate("agenda");
+  };
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-24 bg-muted/50 animate-pulse rounded-[14px]" />
-          ))}
-        </div>
+      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid var(--gp-accent-soft)", borderTopColor: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     );
   }
 
-  const navOrders = () => onNavigate("pedidos");
+  const total = stats.newBookingsTodayTotal;
+  const crm = stats.newBookingsTodayCrm;
+  const web = stats.newBookingsTodayWeb;
+  const yest = stats.newBookingsYesterday;
+  const crmPct = total > 0 ? Math.round((crm / total) * 100) : 0;
+  const webPct = total > 0 ? 100 - crmPct : 0;
+  const diff = total - yest;
 
-  const greeting =
-    new Date().getHours() < 14 ? "Buenos días" : new Date().getHours() < 20 ? "Buenas tardes" : "Buenas noches";
-
-  const kpis = [
-    {
-      id: "revenue",
-      label: "Ingresos hoy",
-      value: formatCurrency(stats.todayRevenue),
-      delta: `${stats.weeklyGrowth >= 0 ? "+" : ""}${stats.weeklyGrowth}% vs sem. pasada`,
-      deltaPos: stats.weeklyGrowth >= 0,
-      icon: <Euro className="h-4 w-4" />,
-      onClick: () => onNavigate("caja"),
-    },
-    {
-      id: "bookings",
-      label: "Citas hoy",
-      value: stats.todayBookings.toString(),
-      delta: stats.nextBookingTime
-        ? `Próx · ${stats.nextBookingTime} ${stats.nextBookingName?.split(" ")[0] || ""}`
-        : "Sin más citas",
-      icon: <Calendar className="h-4 w-4" />,
-      onClick: () => onNavigate("agenda"),
-    },
-    {
-      id: "messages",
-      label: "Mensajes",
-      value: stats.unreadMessages.toString(),
-      delta: stats.unreadMessages > 0 ? "sin leer" : "Todo al día",
-      icon: <MessageCircle className="h-4 w-4" />,
-      onClick: () => onNavigate("messages"),
-      badge: stats.unreadMessages > 0,
-    },
-    {
-      id: "reviews",
-      label: "Reseñas",
-      value: stats.pendingReviews.toString(),
-      delta: stats.pendingReviews > 0 ? "pendientes" : "Todas aprobadas",
-      icon: <Star className="h-4 w-4" />,
-      onClick: () => onNavigate("resenas"),
-      badge: stats.pendingReviews > 0,
-    },
+  const quickActions = [
+    { label: "Cobrar", icon: <Wallet style={{ width: 18, height: 18 }} />, color: "var(--gp-accent)", onClick: () => onQuickAction("new-payment") },
+    { label: "Pedidos", icon: <ShoppingCart style={{ width: 18, height: 18 }} />, color: "var(--gp-info)", onClick: navOrders },
+    { label: "Mensajes", icon: <MessageCircle style={{ width: 18, height: 18 }} />, color: "var(--gp-ok)", onClick: () => onNavigate("clients") },
+    { label: "Nueva cita", icon: <Plus style={{ width: 18, height: 18 }} />, color: "var(--gp-warn)", onClick: () => onQuickAction("new-booking") },
   ];
 
   return (
-    <div className="space-y-5 pb-6">
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
       <OnboardingChecklist tenantId={tenantId} onNavigate={onNavigate} />
 
-      <div className="flex items-center justify-between gap-3 pt-1 flex-wrap">
-        <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--gp-muted-c)" }}>
-            {format(new Date(), "EEEE d 'de' MMMM", { locale: es })}
-          </p>
-          <h2 className="text-[20px] font-extrabold tracking-tight" style={{ color: "var(--gp-ink)" }}>
-            {greeting}
-          </h2>
+      {/* Page header */}
+      <div className="gp-page-h">
+        <div>
+          <h2>Resumen del día</h2>
+          <p>{format(new Date(), "EEEE d 'de' MMMM · yyyy", { locale: es })}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          {quickActions.map((action) => (
-            <button
-              key={action.id}
-              onClick={() => onQuickAction(action.id)}
-              className="gp-chip h-9 px-3 hover:bg-[var(--gp-accent-soft)] hover:text-[var(--gp-accent-ink)] transition"
-              title={action.label}
-            >
-              {action.icon}
-              <span className="hidden sm:inline">{action.label}</span>
-            </button>
-          ))}
+        <div className="gp-page-actions">
+          <button className="gp-btn gp-hide-sm" onClick={() => onNavigate("negocio")}>
+            <TrendingUp style={{ width: 14, height: 14 }} />
+            Informes
+          </button>
+          <button className="gp-btn primary" onClick={() => onQuickAction("new-booking")}>
+            <Plus style={{ width: 14, height: 14 }} />
+            Nueva cita
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {kpis.map((k, i) => (
-          <motion.button
-            key={k.id}
-            initial={{ y: 8 }}
-            animate={{ y: 0 }}
-            transition={{ delay: i * 0.04, duration: 0.2 }}
-            onClick={k.onClick}
-            className="gp-kpi text-left relative"
-          >
-            <div className="flex items-center justify-between">
-              <span className="gp-kpi-ic">{k.icon}</span>
-              {k.badge && <span className="h-2 w-2 rounded-full bg-[var(--gp-accent)] animate-pulse" />}
-            </div>
-            <p className="gp-kpi-value">{k.value}</p>
-            <p className="gp-kpi-label">{k.label}</p>
-            <p className={`gp-kpi-delta ${k.deltaPos === true ? "pos" : k.deltaPos === false ? "neg" : ""}`}>
-              {k.delta}
-            </p>
-          </motion.button>
-        ))}
-      </div>
-
-      {(() => {
-        const total = stats.newBookingsTodayTotal;
-        const crm = stats.newBookingsTodayCrm;
-        const web = stats.newBookingsTodayWeb;
-        const yest = stats.newBookingsYesterday;
-        const crmPct = total > 0 ? Math.round((crm / total) * 100) : 0;
-        const webPct = total > 0 ? 100 - crmPct : 0;
-        const diff = total - yest;
-        return (
-          <div className="gp-card">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="gp-card-title mb-1">Citas nuevas hoy</p>
-                <p className="text-[26px] font-extrabold leading-none tabular-nums" style={{ color: "var(--gp-ink)" }}>
-                  {total}
-                </p>
+      {/* Hero row: próxima cita + citas nuevas hoy */}
+      <div className="gp-grid gp-2col">
+        {/* Próxima cita hero */}
+        <div className="gp-card" style={{ overflow: "hidden", position: "relative" }}>
+          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 130% at 90% -10%, color-mix(in oklab, var(--gp-accent), transparent 86%), transparent 60%)" }} />
+          <div style={{ position: "relative", padding: 22, display: "flex", flexDirection: "column", gap: 16 }}>
+            <span className="gp-badge accent" style={{ alignSelf: "flex-start" }}>
+              <Clock style={{ width: 12, height: 12 }} />
+              Próxima cita
+            </span>
+            {stats.nextBookingTime ? (
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+                <span style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-.03em", color: "var(--gp-accent)" }}>{stats.nextBookingTime}</span>
+                <div>
+                  <div style={{ fontSize: 17, fontWeight: 800, color: "var(--gp-ink)" }}>{stats.nextBookingName}</div>
+                  <div style={{ fontSize: 13, color: "var(--gp-muted-c)", fontWeight: 600 }}>{stats.todayBookings} citas hoy en total</div>
+                </div>
               </div>
-              <span className={diff >= 0 ? "gp-badge-ok" : "gp-badge-danger"}>
-                {diff >= 0 ? "+" : ""}{diff} vs ayer
-              </span>
-            </div>
-
-            {total > 0 ? (
-              <>
-                <div className="flex h-1.5 rounded-full overflow-hidden" style={{ background: "var(--gp-line)" }}>
-                  <div style={{ width: `${crmPct}%`, background: "var(--gp-accent)" }} />
-                  <div style={{ width: `${webPct}%`, background: "var(--gp-purple)" }} />
-                </div>
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  <div className="flex items-center gap-2">
-                    <span className="h-7 w-7 rounded-lg flex items-center justify-center"
-                      style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent-ink)" }}>
-                      <Briefcase className="h-3.5 w-3.5" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--gp-muted-c)" }}>Admin</p>
-                      <p className="text-sm font-bold tabular-nums" style={{ color: "var(--gp-ink)" }}>
-                        {crm} <span className="text-[10px] font-medium" style={{ color: "var(--gp-muted-c)" }}>({crmPct}%)</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-7 w-7 rounded-lg flex items-center justify-center"
-                      style={{ background: "color-mix(in oklab, var(--gp-purple), white 88%)", color: "var(--gp-purple)" }}>
-                      <Globe className="h-3.5 w-3.5" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--gp-muted-c)" }}>Web</p>
-                      <p className="text-sm font-bold tabular-nums" style={{ color: "var(--gp-ink)" }}>
-                        {web} <span className="text-[10px] font-medium" style={{ color: "var(--gp-muted-c)" }}>({webPct}%)</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </>
             ) : (
-              <p className="text-xs" style={{ color: "var(--gp-muted-c)" }}>Aún no se han creado citas hoy</p>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--gp-muted-c)", padding: "8px 0" }}>Sin más citas hoy</div>
+            )}
+            <div style={{ display: "flex", gap: 9 }}>
+              <button className="gp-btn primary sm" onClick={() => onQuickAction("new-booking")}>
+                <Sparkles style={{ width: 13, height: 13 }} />
+                Nueva cita
+              </button>
+              <button className="gp-btn sm" onClick={() => onNavigate("agenda")}>
+                <Calendar style={{ width: 13, height: 13 }} />
+                Ver agenda
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Citas nuevas hoy */}
+        <div className="gp-card pad">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span className="gp-kpi-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+                <Sparkles style={{ width: 16, height: 16 }} />
+              </span>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--gp-muted-c)", textTransform: "uppercase", letterSpacing: ".06em" }}>Citas nuevas hoy</div>
+                <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1, color: "var(--gp-ink)" }}>{total}</div>
+              </div>
+            </div>
+            <span className={`gp-badge ${diff >= 0 ? "ok" : "danger"}`}>
+              {diff >= 0 ? "+" : ""}{diff} vs ayer
+            </span>
+          </div>
+          {total > 0 ? (
+            <>
+              <div style={{ height: 6, borderRadius: 99, overflow: "hidden", background: "var(--gp-chip)", marginBottom: 12 }}>
+                <div style={{ height: "100%", width: `${crmPct}%`, background: "var(--gp-accent)", borderRadius: 99, display: "inline-block" }} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                  <span style={{ width: 30, height: 30, borderRadius: 9, background: "var(--gp-accent-soft)", color: "var(--gp-accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Briefcase style={{ width: 14, height: 14 }} />
+                  </span>
+                  <div>
+                    <div style={{ fontSize: 10, color: "var(--gp-muted-c)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Admin</div>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>{crm} <span style={{ fontSize: 11, color: "var(--gp-muted-c)", fontWeight: 600 }}>({crmPct}%)</span></div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                  <span style={{ width: 30, height: 30, borderRadius: 9, background: "var(--gp-info-soft)", color: "var(--gp-info)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Globe style={{ width: 14, height: 14 }} />
+                  </span>
+                  <div>
+                    <div style={{ fontSize: 10, color: "var(--gp-muted-c)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Web</div>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>{web} <span style={{ fontSize: 11, color: "var(--gp-muted-c)", fontWeight: 600 }}>({webPct}%)</span></div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p style={{ fontSize: 13, color: "var(--gp-muted-c)", margin: 0 }}>Aún no se han creado citas hoy</p>
+          )}
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div className="gp-kpis">
+        <div className="gp-kpi">
+          <div className="gp-kpi-top">
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}><Wallet style={{ width: 16, height: 16 }} /></span>
+            {stats.weeklyGrowth !== 0 && (
+              <span className={`gp-kpi-delta ${stats.weeklyGrowth >= 0 ? "up" : "down"}`}>
+                <TrendingUp style={{ width: 11, height: 11 }} />
+                {stats.weeklyGrowth >= 0 ? "+" : ""}{stats.weeklyGrowth}%
+              </span>
             )}
           </div>
-        );
-      })()}
-
-      <div className="grid grid-cols-2 gap-3">
-        <button onClick={navOrders} className="gp-kpi text-left">
-          <div className="flex items-center justify-between">
-            <span className="gp-kpi-ic" style={{ background: "color-mix(in oklab, var(--gp-purple), white 88%)", color: "var(--gp-purple)" }}>
-              <ShoppingCart className="h-4 w-4" />
-            </span>
-            {stats.pendingOrders > 0 && <span className="gp-badge-warn">{stats.pendingOrders}</span>}
+          <div className="gp-kpi-val">{formatCurrency(stats.todayRevenue)}</div>
+          <div className="gp-kpi-lbl">Ingresos hoy</div>
+        </div>
+        <div className="gp-kpi" style={{ cursor: "pointer" }} onClick={() => onNavigate("agenda")}>
+          <div className="gp-kpi-top">
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-info-soft)", color: "var(--gp-info)" }}><Calendar style={{ width: 16, height: 16 }} /></span>
           </div>
-          <p className="gp-kpi-value">{stats.pendingOrders}</p>
-          <p className="gp-kpi-label">Pedidos pendientes</p>
-          <p className="gp-kpi-delta">{stats.ordersCount7d} · {formatCurrency(stats.ordersRevenue7d)} (7d)</p>
-        </button>
-        <button onClick={navOrders} className="gp-kpi text-left">
-          <div className="flex items-center justify-between">
-            <span className="gp-kpi-ic"><Package className="h-4 w-4" /></span>
+          <div className="gp-kpi-val">{stats.todayBookings}</div>
+          <div className="gp-kpi-lbl">Citas hoy</div>
+        </div>
+        <div className="gp-kpi" style={{ cursor: "pointer" }} onClick={() => onNavigate("clients")}>
+          <div className="gp-kpi-top">
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}><MessageCircle style={{ width: 16, height: 16 }} /></span>
+            {stats.unreadMessages > 0 && <span className="gp-badge danger" style={{ fontSize: 10, padding: "2px 7px" }}>{stats.unreadMessages}</span>}
           </div>
-          <p className="gp-kpi-value">{formatCurrency(stats.ordersRevenue7d)}</p>
-          <p className="gp-kpi-label">Tienda 7 días</p>
-          <p className="gp-kpi-delta">{stats.ordersCount7d} pedidos</p>
-        </button>
+          <div className="gp-kpi-val">{stats.unreadMessages}</div>
+          <div className="gp-kpi-lbl">Mensajes sin leer</div>
+        </div>
+        <div className="gp-kpi" style={{ cursor: "pointer" }} onClick={() => onNavigate("clients")}>
+          <div className="gp-kpi-top">
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}><Star style={{ width: 16, height: 16 }} /></span>
+            {stats.pendingReviews > 0 && <span className="gp-badge warn" style={{ fontSize: 10, padding: "2px 7px" }}>{stats.pendingReviews}</span>}
+          </div>
+          <div className="gp-kpi-val">{stats.pendingReviews}</div>
+          <div className="gp-kpi-lbl">Reseñas pendientes</div>
+        </div>
       </div>
 
-      {stats.nextBookingTime && (
-        <button onClick={() => onNavigate("agenda")} className="gp-row w-full text-left">
-          <span className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent-ink)" }}>
-            <Clock className="h-4 w-4" />
-          </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--gp-muted-c)" }}>Próxima cita</p>
-            <p className="text-sm font-bold truncate" style={{ color: "var(--gp-ink)" }}>
-              {stats.nextBookingTime} · {stats.nextBookingName}
-            </p>
+      {/* Atajos + pedidos */}
+      <div className="gp-grid gp-2col">
+        {/* Atajos rápidos */}
+        <div className="gp-card" style={{ overflow: "hidden" }}>
+          <div className="gp-card-h"><h3>Atajos rápidos</h3></div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 1, background: "var(--gp-line2)" }}>
+            {quickActions.map((a) => (
+              <button
+                key={a.label}
+                onClick={a.onClick}
+                style={{ border: "none", background: "var(--gp-surface)", padding: "18px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", transition: ".15s", fontFamily: "inherit" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gp-surface-2)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gp-surface)")}
+              >
+                <span style={{ width: 40, height: 40, borderRadius: 12, background: `color-mix(in oklab, ${a.color}, white 88%)`, color: a.color, display: "flex", alignItems: "center", justifyContent: "center" }}>{a.icon}</span>
+                <span style={{ fontWeight: 700, fontSize: 14, color: "var(--gp-ink)" }}>{a.label}</span>
+              </button>
+            ))}
           </div>
-          <ArrowRight className="h-4 w-4 shrink-0" style={{ color: "var(--gp-muted-c)" }} />
-        </button>
-      )}
+        </div>
 
-      {stats.pendingOrders > 0 && (
-        <button onClick={navOrders} className="gp-row w-full text-left">
-          <span className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "color-mix(in oklab, var(--gp-purple), white 88%)", color: "var(--gp-purple)" }}>
-            <ShoppingCart className="h-4 w-4" />
-          </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold" style={{ color: "var(--gp-ink)" }}>
-              Tienes {stats.pendingOrders} pedido{stats.pendingOrders > 1 ? "s" : ""} pendiente{stats.pendingOrders > 1 ? "s" : ""}
-            </p>
-            <p className="text-xs" style={{ color: "var(--gp-muted-c)" }}>Revísalos y prepáralos para entrega</p>
+        {/* Pedidos */}
+        <div className="gp-card" style={{ overflow: "hidden" }}>
+          <div className="gp-card-h">
+            <h3>Tienda</h3>
+            {stats.pendingOrders > 0 && <span className="gp-badge danger sub"><span className="pip" style={{ background: "currentColor" }} />{stats.pendingOrders} nuevos</span>}
           </div>
-          <ArrowRight className="h-4 w-4 shrink-0" style={{ color: "var(--gp-muted-c)" }} />
-        </button>
-      )}
+          <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 13, background: "var(--gp-accent-soft)", color: "var(--gp-accent)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+                <ShoppingCart style={{ width: 18, height: 18 }} />
+              </span>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.02em", color: "var(--gp-ink)" }}>{stats.pendingOrders}</div>
+                <div style={{ fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>pedidos pendientes</div>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 13, background: "var(--gp-info-soft)", color: "var(--gp-info)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+                <Package style={{ width: 18, height: 18 }} />
+              </span>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.02em", color: "var(--gp-ink)" }}>{formatCurrency(stats.ordersRevenue7d)}</div>
+                <div style={{ fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>{stats.ordersCount7d} pedidos · últimos 7 días</div>
+              </div>
+            </div>
+            <button className="gp-btn primary sm block" style={{ marginTop: 0 }} onClick={navOrders}>
+              <ShoppingCart style={{ width: 13, height: 13 }} />
+              Ver pedidos
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Training — collapsible, shown for tenants < 30 days */}
       {tenantAge < 30 && (
         <Collapsible open={trainingOpen} onOpenChange={setTrainingOpen}>
           <CollapsibleTrigger asChild>
-            <button className="w-full flex items-center justify-between px-1 py-2">
-              <h3 className="text-sm font-semibold text-foreground">📚 Formación</h3>
-              {trainingOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            <button style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 4px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--gp-ink)" }}>📚 Formación</span>
+              {trainingOpen ? <ChevronUp style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} /> : <ChevronDown style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />}
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -541,9 +476,9 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       {/* ROI — collapsible, always available */}
       <Collapsible open={roiOpen} onOpenChange={setRoiOpen}>
         <CollapsibleTrigger asChild>
-          <button className="w-full flex items-center justify-between px-1 py-2">
-            <h3 className="text-sm font-semibold text-foreground">📈 Retorno de inversión</h3>
-            {roiOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          <button style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 4px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--gp-ink)" }}>📈 Retorno de inversión</span>
+            {roiOpen ? <ChevronUp style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} /> : <ChevronDown style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />}
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>

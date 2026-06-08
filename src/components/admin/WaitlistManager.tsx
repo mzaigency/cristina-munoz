@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -32,7 +30,6 @@ import {
   Bell,
   CheckCircle,
   Loader2,
-  ListOrdered,
   Smartphone,
   MessageCircle,
   User,
@@ -50,9 +47,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProposeSlotDialog } from "./ProposeSlotDialog";
-import { cn } from "@/lib/utils";
 
 interface WaitlistEntry {
   id: string;
@@ -280,123 +275,69 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   };
 
   const getStatusBadge = (entry: WaitlistEntry) => {
-    if (entry.status === "proposed") {
-      return (
-        <Badge className="text-[10px] px-1.5 py-0.5 bg-blue-500 hover:bg-blue-600 text-white border-0">
-          <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-          Hueco propuesto
-        </Badge>
-      );
-    }
-    if (entry.status === "notified") {
-      return (
-        <Badge
-          variant="outline"
-          className="text-[10px] px-1.5 py-0.5 bg-amber-500/10 text-amber-700 border-amber-500/30"
-        >
-          <Bell className="h-2.5 w-2.5 mr-0.5" />
-          Avisada
-        </Badge>
-      );
-    }
-    if (entry.status === "booked") {
-      return (
-        <Badge className="text-[10px] px-1.5 py-0.5 bg-emerald-500 text-white border-0">
-          <CheckCircle className="h-2.5 w-2.5 mr-0.5" />
-          Reservada
-        </Badge>
-      );
-    }
-    if (entry.status === "cancelled") {
-      return (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 text-muted-foreground">
-          <XCircle className="h-2.5 w-2.5 mr-0.5" />
-          Cancelada
-        </Badge>
-      );
-    }
-    if (entry.status === "expired") {
-      return (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 text-muted-foreground">
-          <Hourglass className="h-2.5 w-2.5 mr-0.5" />
-          Caducada
-        </Badge>
-      );
-    }
+    if (entry.status === "proposed") return <span className="gp-badge info"><span className="pip" style={{ background: "currentColor" }} />Hueco propuesto</span>;
+    if (entry.status === "notified") return <span className="gp-badge warn"><Bell style={{ width: 10, height: 10 }} />Avisada</span>;
+    if (entry.status === "booked") return <span className="gp-badge ok"><span className="pip" style={{ background: "currentColor" }} />Reservada</span>;
+    if (entry.status === "cancelled") return <span className="gp-badge neutral"><XCircle style={{ width: 10, height: 10 }} />Cancelada</span>;
+    if (entry.status === "expired") return <span className="gp-badge neutral"><Hourglass style={{ width: 10, height: 10 }} />Caducada</span>;
     return null;
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+        <Loader2 style={{ width: 28, height: 28, color: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary/10">
-            <ListOrdered className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold">Lista de Espera</h2>
-            <p className="text-xs text-muted-foreground">
-              {activeEntries.length} esperando · {proposedEntries.length}{" "}
-              propuestas
-            </p>
-          </div>
+      <div className="gp-page-h">
+        <div>
+          <h2>Lista de espera</h2>
+          <p>{activeEntries.length} esperando · {proposedEntries.length} propuestas</p>
         </div>
-        <Button
-          onClick={() => setIsAddOpen(true)}
-          size="sm"
-          className="rounded-full h-9 px-4"
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          Añadir
-        </Button>
+        <div className="gp-page-actions">
+          <button className="gp-btn primary" onClick={() => setIsAddOpen(true)}>
+            <Plus style={{ width: 14, height: 14 }} />
+            Añadir
+          </button>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-        <TabsList className="grid grid-cols-3 w-full h-9">
-          <TabsTrigger value="active" className="text-xs">
-            Esperando {activeEntries.length > 0 && `(${activeEntries.length})`}
-          </TabsTrigger>
-          <TabsTrigger value="proposed" className="text-xs">
-            Propuestas {proposedEntries.length > 0 && `(${proposedEntries.length})`}
-          </TabsTrigger>
-          <TabsTrigger value="history" className="text-xs">
-            Historial
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Status tabs */}
+      <div className="gp-subtabs">
+        <button className={`gp-subtab${activeTab === "active" ? " on" : ""}`} onClick={() => setActiveTab("active")}>
+          Esperando {activeEntries.length > 0 && <span className="gp-subtab-count">{activeEntries.length}</span>}
+        </button>
+        <button className={`gp-subtab${activeTab === "proposed" ? " on" : ""}`} onClick={() => setActiveTab("proposed")}>
+          Propuestas {proposedEntries.length > 0 && <span className="gp-subtab-count">{proposedEntries.length}</span>}
+        </button>
+        <button className={`gp-subtab${activeTab === "history" ? " on" : ""}`} onClick={() => setActiveTab("history")}>
+          Historial
+        </button>
+      </div>
 
       {/* Empty state */}
       {tabEntries.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="py-12 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Clock className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <p className="text-muted-foreground font-medium">
+        <div className="gp-card">
+          <div className="gp-empty">
+            <div className="gp-empty-ic"><Clock style={{ width: 24, height: 24 }} /></div>
+            <h4>
               {activeTab === "active" && "Sin clientes en espera"}
               {activeTab === "proposed" && "Sin propuestas activas"}
               {activeTab === "history" && "Sin historial todavía"}
+            </h4>
+            <p>
+              {activeTab === "active" && "Los clientes pueden unirse cuando no haya huecos"}
+              {activeTab === "proposed" && "Propón un hueco a alguien de la lista"}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {activeTab === "active" &&
-                "Los clientes pueden unirse cuando no haya huecos"}
-              {activeTab === "proposed" &&
-                "Propón un hueco a alguien de la lista de espera"}
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
-        <div className="space-y-2">
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {tabEntries.map((entry, index) => {
             const isExpanded = expandedId === entry.id;
             const servicesText = getServicesText(entry.services);
@@ -404,212 +345,130 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
             const proposedStylistName = getStylistName(entry.proposed_stylist_id);
 
             return (
-              <Card
+              <div
                 key={entry.id}
-                className={cn(
-                  "relative overflow-hidden transition-all",
-                  entry.status === "proposed" && "border-blue-300 bg-blue-50/30",
-                  entry.priority >= 2 && "border-l-4 border-l-red-500",
-                  entry.priority === 1 && "border-l-4 border-l-amber-500"
-                )}
+                className="gp-card pad"
+                style={{
+                  ...(entry.status === "proposed" ? { borderColor: "color-mix(in oklab, var(--gp-info), white 55%)", background: "var(--gp-info-soft)" } : {}),
+                  ...(entry.priority >= 2 ? { borderLeft: "3px solid var(--gp-danger)" } : {}),
+                  ...(entry.priority === 1 ? { borderLeft: "3px solid var(--gp-warn)" } : {}),
+                }}
               >
-                <CardContent className="p-3">
-                  {/* Top row */}
-                  <div className="flex items-start gap-3">
-                    {activeTab === "active" && (
-                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <span className="text-xs font-bold text-primary">
-                          {index + 1}
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                  {activeTab === "active" && (
+                    <span style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--gp-accent-soft)", color: "var(--gp-accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flex: "none" }}>
+                      {index + 1}
+                    </span>
+                  )}
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: "var(--gp-ink)" }}>{entry.client_name}</span>
+                      {getStatusBadge(entry)}
+                    </div>
+
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 12px", fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
+                      {entry.user_id ? (
+                        <span style={{ color: "var(--gp-ok)", display: "flex", alignItems: "center", gap: 4 }}><Smartphone style={{ width: 13, height: 13 }} />App</span>
+                      ) : entry.client_phone ? (
+                        <a href={`tel:${entry.client_phone}`} style={{ color: "var(--gp-muted-c)", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
+                          <Phone style={{ width: 13, height: 13 }} />{entry.client_phone}
+                        </a>
+                      ) : (
+                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><User style={{ width: 13, height: 13 }} />Sin contacto</span>
+                      )}
+                      {entry.preferred_date && (
+                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          <CalendarIcon style={{ width: 13, height: 13 }} />
+                          {format(new Date(entry.preferred_date), "d MMM", { locale: es })}
+                          {entry.preferred_time_start && ` · ${entry.preferred_time_start.slice(0, 5)}`}
+                          {entry.preferred_time_end && `–${entry.preferred_time_end.slice(0, 5)}`}
                         </span>
+                      )}
+                    </div>
+
+                    {entry.status === "proposed" && entry.proposed_date && (
+                      <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--gp-info), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-info-soft)" }}>
+                        🎯 Propuesto: {format(new Date(entry.proposed_date), "d MMM", { locale: es })} · {String(entry.proposed_time).slice(0, 5)}
+                        {proposedStylistName && ` · ${proposedStylistName}`}
                       </div>
                     )}
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-semibold text-sm truncate">
-                          {entry.client_name}
-                        </h3>
-                        {getStatusBadge(entry)}
+                    {isExpanded && (
+                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "var(--gp-muted-c)" }}>
+                        {servicesText && <p style={{ margin: 0 }}><span style={{ fontWeight: 700, color: "var(--gp-ink2)" }}>Servicios:</span> {servicesText}</p>}
+                        {stylistName && <p style={{ margin: 0 }}><span style={{ fontWeight: 700, color: "var(--gp-ink2)" }}>Profesional:</span> {stylistName}</p>}
+                        {entry.notes && <p style={{ margin: 0, fontStyle: "italic" }}>"{entry.notes}"</p>}
+                        <p style={{ margin: 0, fontSize: 11 }}>Apuntada {format(new Date(entry.created_at), "d MMM HH:mm", { locale: es })}</p>
                       </div>
+                    )}
 
-                      {/* Contact + preferred date */}
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        {entry.user_id ? (
-                          <div className="flex items-center gap-1 text-emerald-600">
-                            <Smartphone className="h-3.5 w-3.5" />
-                            <span className="text-xs">App</span>
-                          </div>
-                        ) : entry.client_phone ? (
-                          <a
-                            href={`tel:${entry.client_phone}`}
-                            className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                          >
-                            <Phone className="h-3.5 w-3.5" />
-                            <span className="text-xs">{entry.client_phone}</span>
-                          </a>
-                        ) : (
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <User className="h-3.5 w-3.5" />
-                            <span className="text-xs">Sin contacto</span>
-                          </div>
-                        )}
-
-                        {entry.preferred_date && (
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <CalendarIcon className="h-3.5 w-3.5" />
-                            <span className="text-xs">
-                              {format(new Date(entry.preferred_date), "d MMM", {
-                                locale: es,
-                              })}
-                              {entry.preferred_time_start &&
-                                ` · ${entry.preferred_time_start.slice(0, 5)}`}
-                              {entry.preferred_time_end &&
-                                `–${entry.preferred_time_end.slice(0, 5)}`}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Proposed slot info */}
-                      {entry.status === "proposed" && entry.proposed_date && (
-                        <div className="mt-2 px-2.5 py-1.5 bg-blue-100/60 border border-blue-200 rounded-lg">
-                          <p className="text-[11px] text-blue-900 font-medium">
-                            🎯 Propuesto:{" "}
-                            {format(new Date(entry.proposed_date), "d MMM", {
-                              locale: es,
-                            })}{" "}
-                            · {String(entry.proposed_time).slice(0, 5)}
-                            {proposedStylistName && ` · ${proposedStylistName}`}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Expanded details */}
-                      {isExpanded && (
-                        <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                          {servicesText && (
-                            <p>
-                              <span className="font-medium text-foreground">
-                                Servicios:
-                              </span>{" "}
-                              {servicesText}
-                            </p>
-                          )}
-                          {stylistName && (
-                            <p>
-                              <span className="font-medium text-foreground">
-                                Profesional preferido:
-                              </span>{" "}
-                              {stylistName}
-                            </p>
-                          )}
-                          {entry.notes && (
-                            <p className="italic">"{entry.notes}"</p>
-                          )}
-                          <p className="text-[10px]">
-                            Apuntada{" "}
-                            {format(new Date(entry.created_at), "d MMM HH:mm", {
-                              locale: es,
-                            })}
-                          </p>
-                        </div>
-                      )}
-
-                      {(servicesText || entry.notes || stylistName) && (
-                        <button
-                          onClick={() =>
-                            setExpandedId(isExpanded ? null : entry.id)
-                          }
-                          className="mt-1.5 text-[11px] text-primary flex items-center gap-0.5 hover:underline"
-                        >
-                          {isExpanded ? (
-                            <>
-                              <ChevronUp className="h-3 w-3" />
-                              Menos detalles
-                            </>
-                          ) : (
-                            <>
-                              <ChevronDown className="h-3 w-3" />
-                              Ver detalles
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* More menu */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-52">
-                        {entry.client_phone && (
-                          <DropdownMenuItem asChild>
-                            <a href={`tel:${entry.client_phone}`}>
-                              <Phone className="h-4 w-4 mr-2" />
-                              Llamar
-                            </a>
-                          </DropdownMenuItem>
-                        )}
-                        {entry.client_phone && (
-                          <DropdownMenuItem onClick={() => handleSendWhatsApp(entry)}>
-                            <MessageCircle className="h-4 w-4 mr-2" />
-                            Mensaje WhatsApp
-                          </DropdownMenuItem>
-                        )}
-                        {["waiting", "notified", "proposed"].includes(
-                          entry.status
-                        ) && (
-                          <DropdownMenuItem onClick={() => handleMarkBooked(entry.id)}>
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Marcar como reservada
-                          </DropdownMenuItem>
-                        )}
-                        {["waiting", "notified", "proposed"].includes(
-                          entry.status
-                        ) && (
-                          <DropdownMenuItem onClick={() => handleCancel(entry.id)}>
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Cancelar entrada
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(entry.id)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {(servicesText || entry.notes || stylistName) && (
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : entry.id)}
+                        style={{ marginTop: 6, fontSize: 11.5, color: "var(--gp-accent)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 3, padding: 0, fontFamily: "inherit" }}
+                      >
+                        {isExpanded ? <><ChevronUp style={{ width: 12, height: 12 }} />Menos detalles</> : <><ChevronDown style={{ width: 12, height: 12 }} />Ver detalles</>}
+                      </button>
+                    )}
                   </div>
 
-                  {/* Action buttons (only for active entries) */}
-                  {["waiting", "notified"].includes(entry.status) && (
-                    <div className="flex gap-2 mt-3 pt-3 border-t border-border/50">
-                      <Button
-                        size="sm"
-                        onClick={() => setProposeEntry(entry)}
-                        className="flex-1 h-8 text-xs gap-1"
-                      >
-                        <Sparkles className="h-3.5 w-3.5" />
-                        Proponer hueco
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleMarkBooked(entry.id)}
-                        className="flex-1 h-8 text-xs gap-1"
-                      >
-                        <CalendarPlus className="h-3.5 w-3.5" />
-                        Ya reservada
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                  {/* More menu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="gp-icon-btn" style={{ width: 34, height: 34, flex: "none" }}>
+                        <MoreVertical style={{ width: 16, height: 16 }} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      {entry.client_phone && (
+                        <DropdownMenuItem asChild>
+                          <a href={`tel:${entry.client_phone}`}>
+                            <Phone className="h-4 w-4 mr-2" />
+                            Llamar
+                          </a>
+                        </DropdownMenuItem>
+                      )}
+                      {entry.client_phone && (
+                        <DropdownMenuItem onClick={() => handleSendWhatsApp(entry)}>
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Mensaje WhatsApp
+                        </DropdownMenuItem>
+                      )}
+                      {["waiting", "notified", "proposed"].includes(entry.status) && (
+                        <DropdownMenuItem onClick={() => handleMarkBooked(entry.id)}>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Marcar como reservada
+                        </DropdownMenuItem>
+                      )}
+                      {["waiting", "notified", "proposed"].includes(entry.status) && (
+                        <DropdownMenuItem onClick={() => handleCancel(entry.id)}>
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Cancelar entrada
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => handleDelete(entry.id)} className="text-destructive focus:text-destructive">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* Action buttons */}
+                {["waiting", "notified"].includes(entry.status) && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--gp-line2)" }}>
+                    <button className="gp-btn primary sm" style={{ flex: 1 }} onClick={() => setProposeEntry(entry)}>
+                      <Sparkles style={{ width: 13, height: 13 }} />
+                      Proponer hueco
+                    </button>
+                    <button className="gp-btn sm" style={{ flex: 1 }} onClick={() => handleMarkBooked(entry.id)}>
+                      <CalendarPlus style={{ width: 13, height: 13 }} />
+                      Ya reservada
+                    </button>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -617,24 +476,19 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
       {/* Info card */}
       {activeTab === "active" && activeEntries.length > 0 && (
-        <Card className="bg-muted/30 border-dashed">
-          <CardContent className="p-3">
-            <div className="flex items-start gap-2">
-              <div className="p-1.5 rounded-lg bg-primary/10 mt-0.5">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs font-medium">Cómo funciona</p>
-                <p className="text-[11px] text-muted-foreground">
-                  Pulsa <b>Proponer hueco</b> para ofrecer una fecha y hora a la
-                  clienta. Si tiene la app, le llega un aviso y puede confirmar
-                  con un toque (la cita se crea sola en tu agenda). Si no, se
-                  abre WhatsApp con un mensaje listo.
-                </p>
-              </div>
+        <div className="gp-card pad" style={{ background: "var(--gp-chip)", border: "1px dashed var(--gp-line)" }}>
+          <div style={{ display: "flex", gap: 10 }}>
+            <span style={{ width: 28, height: 28, borderRadius: 9, background: "var(--gp-accent-soft)", color: "var(--gp-accent)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+              <Sparkles style={{ width: 14, height: 14 }} />
+            </span>
+            <div>
+              <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "var(--gp-ink)" }}>Cómo funciona</p>
+              <p style={{ margin: 0, fontSize: 12.5, color: "var(--gp-muted-c)", lineHeight: 1.5 }}>
+                Pulsa <b>Proponer hueco</b> para ofrecer una fecha a la clienta. Si tiene la app, le llega un aviso y puede confirmar con un toque. Si no, se abre WhatsApp.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Add Dialog */}

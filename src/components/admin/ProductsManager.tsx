@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -13,14 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -300,8 +289,8 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+        <Loader2 style={{ width: 28, height: 28, color: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
       </div>
     );
   }
@@ -309,18 +298,19 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
   const lowStockProducts = products.filter(p => p.is_active && p.stock <= p.min_stock);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Package className="h-5 w-5" />
-          Productos ({products.length})
-        </h2>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => openDialog()} className="gap-2 w-full sm:w-auto h-11 sm:h-10">
-              <Plus className="h-4 w-4" /> Nuevo producto
-            </Button>
-          </DialogTrigger>
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="gp-page-h">
+        <div>
+          <h2>Productos</h2>
+          <p>{products.length} productos</p>
+        </div>
+        <div className="gp-page-actions">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <button className="gp-btn primary sm" onClick={() => openDialog()}>
+                <Plus style={{ width: 14, height: 14 }} /> Nuevo producto
+              </button>
+            </DialogTrigger>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{selectedProduct ? "Editar producto" : "Nuevo producto"}</DialogTitle>
@@ -409,150 +399,141 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                   <Input type="number" value={formData.min_stock} onChange={(e) => setFormData({ ...formData, min_stock: e.target.value })} placeholder="0" />
                 </div>
               </div>
-              <Button onClick={handleSave} disabled={saving} className="w-full">
-                {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Guardando...</> : "Guardar producto"}
-              </Button>
+              <button className="gp-btn primary block" onClick={handleSave} disabled={saving}>
+                {saving ? <><Loader2 style={{ width: 14, height: 14, animation: "spin 0.7s linear infinite", display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />Guardando...</> : "Guardar producto"}
+              </button>
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {lowStockProducts.length > 0 && (
-        <Card className="border-orange-300 bg-orange-50 dark:bg-orange-950/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
-              <AlertTriangle className="h-5 w-5" />
-              <span className="font-medium">Stock bajo en {lowStockProducts.length} producto(s)</span>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {lowStockProducts.map(p => (
-                <Badge key={p.id} variant="outline" className="text-orange-700 border-orange-300">
-                  {p.name}: {p.stock} uds
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="gp-card pad" style={{ borderColor: "color-mix(in oklab, var(--gp-warn), white 40%)", background: "var(--gp-warn-soft)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <AlertTriangle style={{ width: 16, height: 16, color: "var(--gp-warn)", flexShrink: 0 }} />
+            <span style={{ fontWeight: 700, fontSize: 14, color: "var(--gp-ink)" }}>Stock bajo en {lowStockProducts.length} producto(s)</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {lowStockProducts.map(p => (
+              <span key={p.id} className="gp-badge warn">{p.name}: {p.stock} uds</span>
+            ))}
+          </div>
+        </div>
       )}
 
       {products.length > 0 ? (
         <>
           {/* Mobile Card View */}
-          <div className="space-y-3 md:hidden">
+          <div className="flex flex-col gap-3 md:hidden">
             {products.map(product => (
-              <Card key={product.id} className={!product.is_active ? "opacity-50" : ""}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{product.name}</p>
-                      {product.barcode && <p className="text-xs text-muted-foreground">{product.barcode}</p>}
-                      <Badge variant="secondary" className="mt-1">{product.category || "Sin categoría"}</Badge>
-                    </div>
-                    <Badge variant={product.is_active ? "default" : "secondary"} onClick={() => toggleActive(product)} className="cursor-pointer shrink-0 ml-2">
-                      {product.is_active ? "Activo" : "Inactivo"}
-                    </Badge>
+              <div key={product.id} className="gp-card pad" style={!product.is_active ? { opacity: 0.55 } : {}}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{product.name}</p>
+                    {product.barcode && <p style={{ fontSize: 12, color: "var(--gp-muted-c)", margin: "2px 0 0" }}>{product.barcode}</p>}
+                    <span className="gp-badge neutral" style={{ marginTop: 6, display: "inline-flex" }}>{product.category || "Sin categoría"}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm mb-3">
-                    <div>
-                      <p className="text-muted-foreground">Coste</p>
-                      <p>{formatCurrency(product.cost)}</p>
+                  <button
+                    className={`gp-badge${product.is_active ? " ok" : " neutral"}`}
+                    style={{ cursor: "pointer", border: "none", fontFamily: "inherit", flexShrink: 0, marginLeft: 8 }}
+                    onClick={() => toggleActive(product)}
+                  >
+                    <span className="pip" style={{ background: "currentColor" }} />
+                    {product.is_active ? "Activo" : "Inactivo"}
+                  </button>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
+                  {[
+                    { label: "Coste", val: formatCurrency(product.cost), warn: false },
+                    { label: "Precio", val: formatCurrency(product.price), warn: false },
+                    { label: "Stock", val: `${product.stock} uds`, warn: product.stock <= product.min_stock },
+                  ].map(({ label, val, warn }) => (
+                    <div key={label}>
+                      <p style={{ fontSize: 11.5, color: "var(--gp-muted-c)", margin: 0 }}>{label}</p>
+                      <p style={{ fontSize: 13.5, fontWeight: 600, margin: 0, color: warn ? "var(--gp-warn)" : "var(--gp-ink)" }}>{val}</p>
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">Precio</p>
-                      <p className="font-medium">{formatCurrency(product.price)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Stock</p>
-                      <p className={product.stock <= product.min_stock ? "text-orange-600 font-medium" : ""}>
-                        {product.stock} uds
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1 h-10" onClick={() => openStockDialog(product)}>
-                      <PackagePlus className="h-4 w-4 mr-1" /> Stock
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-10 w-10" onClick={() => openDialog(product)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-10 w-10 text-destructive border-destructive/50"
-                      onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="gp-btn sm" style={{ flex: 1 }} onClick={() => openStockDialog(product)}>
+                    <PackagePlus style={{ width: 13, height: 13 }} /> Stock
+                  </button>
+                  <button className="gp-icon-btn" onClick={() => openDialog(product)}>
+                    <Pencil style={{ width: 14, height: 14 }} />
+                  </button>
+                  <button className="gp-icon-btn" style={{ color: "var(--gp-danger)" }} onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
+                    <Trash2 style={{ width: 14, height: 14 }} />
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
 
           {/* Desktop Table View */}
-          <Card className="hidden md:block">
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Producto</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead className="text-right">Coste</TableHead>
-                    <TableHead className="text-right">Precio</TableHead>
-                    <TableHead className="text-right">Stock</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="w-[140px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {products.map(product => (
-                    <TableRow key={product.id} className={!product.is_active ? "opacity-50" : ""}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{product.name}</p>
-                          {product.barcode && <p className="text-xs text-muted-foreground">{product.barcode}</p>}
-                        </div>
-                      </TableCell>
-                      <TableCell><Badge variant="secondary">{product.category || "Sin categoría"}</Badge></TableCell>
-                      <TableCell className="text-right text-muted-foreground">{formatCurrency(product.cost)}</TableCell>
-                      <TableCell className="text-right font-medium">{formatCurrency(product.price)}</TableCell>
-                      <TableCell className="text-right">
-                        <span className={product.stock <= product.min_stock ? "text-orange-600 font-medium" : ""}>
-                          {product.stock}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => toggleActive(product)}>
-                          <Badge variant={product.is_active ? "default" : "secondary"}>
-                            {product.is_active ? "Activo" : "Inactivo"}
-                          </Badge>
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openStockDialog(product)} title="Entrada de stock">
-                            <PackagePlus className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => openDialog(product)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive"
-                            onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+          <div className="gp-card hidden md:block" style={{ overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--gp-line2)" }}>
+                  {["Producto", "Categoría", "Coste", "Precio", "Stock", "Estado", ""].map(h => (
+                    <th key={h} style={{ textAlign: "left", padding: "10px 14px", fontSize: 12.5, fontWeight: 700, color: "var(--gp-muted-c)" }}>{h}</th>
                   ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map(product => (
+                  <tr key={product.id} style={{ borderBottom: "1px solid var(--gp-line2)", opacity: !product.is_active ? 0.55 : 1 }}>
+                    <td style={{ padding: "10px 14px" }}>
+                      <p style={{ fontWeight: 600, margin: 0 }}>{product.name}</p>
+                      {product.barcode && <p style={{ fontSize: 12, color: "var(--gp-muted-c)", margin: 0 }}>{product.barcode}</p>}
+                    </td>
+                    <td style={{ padding: "10px 14px" }}>
+                      <span className="gp-badge neutral">{product.category || "Sin categoría"}</span>
+                    </td>
+                    <td style={{ padding: "10px 14px", fontSize: 13.5, color: "var(--gp-muted-c)" }}>{formatCurrency(product.cost)}</td>
+                    <td style={{ padding: "10px 14px", fontWeight: 600 }}>{formatCurrency(product.price)}</td>
+                    <td style={{ padding: "10px 14px" }}>
+                      <span style={{ fontWeight: product.stock <= product.min_stock ? 700 : 400, color: product.stock <= product.min_stock ? "var(--gp-warn)" : "var(--gp-ink)" }}>
+                        {product.stock}
+                      </span>
+                    </td>
+                    <td style={{ padding: "10px 14px" }}>
+                      <button
+                        className={`gp-badge${product.is_active ? " ok" : " neutral"}`}
+                        style={{ cursor: "pointer", border: "none", fontFamily: "inherit" }}
+                        onClick={() => toggleActive(product)}
+                      >
+                        <span className="pip" style={{ background: "currentColor" }} />
+                        {product.is_active ? "Activo" : "Inactivo"}
+                      </button>
+                    </td>
+                    <td style={{ padding: "10px 14px" }}>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <button className="gp-icon-btn" onClick={() => openStockDialog(product)} title="Entrada de stock">
+                          <PackagePlus style={{ width: 14, height: 14 }} />
+                        </button>
+                        <button className="gp-icon-btn" onClick={() => openDialog(product)}>
+                          <Pencil style={{ width: 14, height: 14 }} />
+                        </button>
+                        <button className="gp-icon-btn" style={{ color: "var(--gp-danger)" }} onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
+                          <Trash2 style={{ width: 14, height: 14 }} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       ) : (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No hay productos configurados</p>
-            <p className="text-sm">Añade productos para poder venderlos desde la caja</p>
-          </CardContent>
-        </Card>
+        <div className="gp-card">
+          <div className="gp-empty">
+            <div className="gp-empty-ic"><Package style={{ width: 24, height: 24 }} /></div>
+            <h4>Sin productos</h4>
+            <p>Añade productos para poder venderlos desde la caja</p>
+          </div>
+        </div>
       )}
 
       {/* Stock Entry Dialog */}
@@ -591,10 +572,10 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                 />
                 <p className="text-xs text-muted-foreground">Se actualizará el coste del producto</p>
               </div>
-              <Button onClick={handleStockEntry} disabled={saving} className="w-full gap-2">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PackagePlus className="h-4 w-4" />}
+              <button className="gp-btn primary block" onClick={handleStockEntry} disabled={saving}>
+                {saving ? <Loader2 style={{ width: 14, height: 14, animation: "spin 0.7s linear infinite", display: "inline-block", marginRight: 6, verticalAlign: "middle" }} /> : <PackagePlus style={{ width: 14, height: 14, display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
                 Añadir stock
-              </Button>
+              </button>
             </div>
           )}
         </DialogContent>

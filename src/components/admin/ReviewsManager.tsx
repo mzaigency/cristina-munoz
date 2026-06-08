@@ -1,20 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Star, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,22 +109,13 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
     }
   };
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex gap-1">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`h-4 w-4 ${
-              i < rating
-                ? "fill-yellow-400 text-yellow-400"
-                : "fill-muted text-muted"
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
+  const renderStars = (rating: number) => (
+    <span style={{ display: "inline-flex", gap: 2, color: "var(--gp-warn)" }}>
+      {[...Array(5)].map((_, i) => (
+        <Star key={i} style={{ width: 14, height: 14, opacity: i < rating ? 1 : 0.22, fill: "currentColor" }} />
+      ))}
+    </span>
+  );
 
   const getAvailableMonths = () => {
     const months = new Set<string>();
@@ -153,171 +133,83 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant={filterType === "all" ? "default" : "outline"}
-              onClick={() => setFilterType("all")}
-              size="sm"
-            >
-              Todas
-            </Button>
-            <Button
-              variant={filterType === "month" ? "default" : "outline"}
-              onClick={() => setFilterType("month")}
-              size="sm"
-            >
-              Por Mes
-            </Button>
-            <Button
-              variant={filterType === "stars" ? "default" : "outline"}
-              onClick={() => setFilterType("stars")}
-              size="sm"
-            >
-              Por Estrellas
-            </Button>
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Page header */}
+      <div className="gp-page-h">
+        <div>
+          <h2>Reseñas</h2>
+          <p>Lo que opinan tus clientas · {filteredReviews.length} reseñas</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <div className="gp-subtabs" style={{ margin: 0 }}>
+          {(["all", "month", "stars"] as FilterType[]).map((f) => (
+            <button key={f} className={`gp-subtab${filterType === f ? " on" : ""}`} onClick={() => setFilterType(f)}>
+              {f === "all" ? "Todas" : f === "month" ? "Por mes" : "Por estrellas"}
+            </button>
+          ))}
+        </div>
+        {filterType === "month" && (
+          <div className="gp-subtabs" style={{ margin: 0 }}>
+            {getAvailableMonths().map((month) => (
+              <button key={month} className={`gp-subtab${selectedMonth === month ? " on" : ""}`} onClick={() => setSelectedMonth(month)}>
+                {getMonthLabel(month)}
+              </button>
+            ))}
           </div>
+        )}
+        {filterType === "stars" && (
+          <div className="gp-subtabs" style={{ margin: 0 }}>
+            {[5, 4, 3, 2, 1].map((stars) => (
+              <button key={stars} className={`gp-subtab${selectedStars === stars ? " on" : ""}`} onClick={() => setSelectedStars(stars)}>
+                {stars} <Star style={{ width: 11, height: 11, fill: "currentColor", color: "var(--gp-warn)" }} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-          {filterType === "month" && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {getAvailableMonths().map((month) => (
-                <Button
-                  key={month}
-                  variant={selectedMonth === month ? "default" : "outline"}
-                  onClick={() => setSelectedMonth(month)}
-                  size="sm"
-                >
-                  {getMonthLabel(month)}
-                </Button>
-              ))}
-            </div>
-          )}
-
-          {filterType === "stars" && (
-            <div className="mt-4 flex gap-2">
-              {[5, 4, 3, 2, 1].map((stars) => (
-                <Button
-                  key={stars}
-                  variant={selectedStars === stars ? "default" : "outline"}
-                  onClick={() => setSelectedStars(stars)}
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  {stars}
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                </Button>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Reseñas ({filteredReviews.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-center text-muted-foreground">Cargando...</p>
-          ) : filteredReviews.length === 0 ? (
-            <p className="text-center text-muted-foreground">No hay reseñas</p>
-          ) : (
-            <>
-              {/* Mobile Card View */}
-              <div className="space-y-3 md:hidden">
-                {filteredReviews.map((review) => (
-                  <div 
-                    key={review.id} 
-                    className={`p-4 rounded-lg border ${!review.approved ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200" : ""}`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(review.created_at), "dd/MM/yyyy HH:mm", { locale: es })}
-                      </span>
-                      <Badge variant={review.approved ? "default" : "secondary"}>
-                        {review.approved ? "Publicada" : "Pendiente"}
-                      </Badge>
-                    </div>
-                    <div className="mb-2">{renderStars(review.rating)}</div>
-                    <p className="text-sm mb-3">
-                      {review.comment || (
-                        <span className="text-muted-foreground italic">Sin comentario</span>
-                      )}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full h-11 text-destructive border-destructive/50"
-                      onClick={() => setReviewToDelete(review.id)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Eliminar
-                    </Button>
-                  </div>
-                ))}
+      {/* Reviews list */}
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 48, color: "var(--gp-muted-c)" }}>Cargando...</div>
+      ) : filteredReviews.length === 0 ? (
+        <div className="gp-card">
+          <div className="gp-empty">
+            <div className="gp-empty-ic"><Star style={{ width: 24, height: 24 }} /></div>
+            <h4>Sin reseñas</h4>
+            <p>No hay reseñas para este filtro</p>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {filteredReviews.map((review) => (
+            <div key={review.id} className="gp-card pad" style={!review.approved ? { borderColor: "color-mix(in oklab, var(--gp-warn), white 55%)", background: "var(--gp-warn-soft)" } : {}}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {renderStars(review.rating)}
+                  <span style={{ fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
+                    {format(new Date(review.created_at), "d MMM yyyy", { locale: es })}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className={`gp-badge ${review.approved ? "ok" : "warn"}`}>
+                    <span className="pip" style={{ background: "currentColor" }} />
+                    {review.approved ? "Publicada" : "Pendiente"}
+                  </span>
+                  <button className="gp-btn sm danger" onClick={() => setReviewToDelete(review.id)}>
+                    <Trash2 style={{ width: 13, height: 13 }} />
+                  </button>
+                </div>
               </div>
-
-              {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead>Estrellas</TableHead>
-                      <TableHead>Comentario</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredReviews.map((review) => (
-                      <TableRow key={review.id} className={!review.approved ? "bg-yellow-50 dark:bg-yellow-950/20" : ""}>
-                        <TableCell className="whitespace-nowrap">
-                          {format(
-                            new Date(review.created_at),
-                            "dd/MM/yyyy HH:mm",
-                            { locale: es }
-                          )}
-                        </TableCell>
-                        <TableCell>{renderStars(review.rating)}</TableCell>
-                        <TableCell className="max-w-md">
-                          {review.comment || (
-                            <span className="text-muted-foreground italic">
-                              Sin comentario
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={review.approved ? "default" : "secondary"}>
-                            {review.approved ? "Publicada" : "Pendiente"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setReviewToDelete(review.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: review.comment ? "var(--gp-ink2)" : "var(--gp-muted-c)", fontStyle: review.comment ? "normal" : "italic" }}>
+                {review.comment || "Sin comentario"}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
       <AlertDialog
         open={reviewToDelete !== null}
         onOpenChange={() => setReviewToDelete(null)}

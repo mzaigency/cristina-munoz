@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Receipt, History, Lock, Download } from "lucide-react";
 import { format } from "date-fns";
@@ -188,60 +186,48 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+        <Loader2 style={{ width: 28, height: 28, color: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Day Summary Cards */}
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <DailySummary summary={daySummary} onRefresh={fetchTodayData} />
 
-      {/* Main Content Tabs */}
-      <Card className="overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <CardHeader className="p-2 sm:p-4 pb-0">
-            <TabsList className="grid w-full grid-cols-3 h-auto p-1">
-              <TabsTrigger value="payment" className="gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
-                <Receipt className="h-4 w-4 shrink-0" />
-                <span className="hidden xs:inline sm:inline">Cobrar</span>
-              </TabsTrigger>
-              <TabsTrigger value="history" className="gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
-                <History className="h-4 w-4 shrink-0" />
-                <span className="hidden xs:inline sm:inline">Historial</span>
-              </TabsTrigger>
-              <TabsTrigger value="export" className="gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
-                <Download className="h-4 w-4 shrink-0" />
-                <span className="hidden xs:inline sm:inline">Exportar</span>
-              </TabsTrigger>
-            </TabsList>
-          </CardHeader>
-          <CardContent className="p-2 sm:p-4 pt-4 sm:pt-6">
-            <TabsContent value="payment" className="mt-0">
-              {daySummary.isClosed ? (
-                <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-muted-foreground">
-                  <Lock className="h-10 w-10 sm:h-12 sm:w-12 mb-3 sm:mb-4" />
-                  <p className="text-base sm:text-lg font-medium">Caja cerrada</p>
-                  <p className="text-xs sm:text-sm">No se pueden registrar más cobros hoy</p>
-                </div>
-              ) : (
-                <QuickPayment onTransactionCreated={handleTransactionCreated} tenantId={tenantId} />
-              )}
-            </TabsContent>
-            <TabsContent value="history" className="mt-0">
-              <TransactionHistory
-                transactions={transactions}
-                onUpdate={fetchTodayData}
-              />
-            </TabsContent>
-            <TabsContent value="export" className="mt-0">
-              <ExportData tenantId={tenantId} />
-            </TabsContent>
-          </CardContent>
-        </Tabs>
-      </Card>
+      <div className="gp-card" style={{ overflow: "hidden" }}>
+        <div className="gp-subtabs" style={{ margin: 0, borderBottom: "1px solid var(--gp-line2)", padding: "0 4px" }}>
+          {[
+            { id: "payment", label: "Cobrar", icon: <Receipt style={{ width: 14, height: 14 }} /> },
+            { id: "history", label: "Historial", icon: <History style={{ width: 14, height: 14 }} /> },
+            { id: "export", label: "Exportar", icon: <Download style={{ width: 14, height: 14 }} /> },
+          ].map(t => (
+            <button key={t.id} className={`gp-subtab${activeTab === t.id ? " on" : ""}`} onClick={() => setActiveTab(t.id)}>
+              {t.icon} {t.label}
+            </button>
+          ))}
+        </div>
+        <div style={{ padding: "16px 20px" }}>
+          {activeTab === "payment" && (
+            daySummary.isClosed ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", color: "var(--gp-muted-c)", textAlign: "center" }}>
+                <Lock style={{ width: 48, height: 48, marginBottom: 12 }} />
+                <p style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Caja cerrada</p>
+                <p style={{ fontSize: 13, margin: "4px 0 0" }}>No se pueden registrar más cobros hoy</p>
+              </div>
+            ) : (
+              <QuickPayment onTransactionCreated={handleTransactionCreated} tenantId={tenantId} />
+            )
+          )}
+          {activeTab === "history" && (
+            <TransactionHistory transactions={transactions} onUpdate={fetchTodayData} />
+          )}
+          {activeTab === "export" && (
+            <ExportData tenantId={tenantId} />
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -201,100 +198,89 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+        <Loader2 style={{ width: 28, height: 28, color: "var(--gp-accent)", animation: "spin 0.7s linear infinite" }} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="gp-page-h">
         <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Gift className="h-5 w-5 text-primary" />
-            Promociones y Cupones
-          </h2>
-          <p className="text-sm text-muted-foreground">{promotions.length} promociones</p>
+          <h2>Promociones y Cupones</h2>
+          <p>{promotions.length} promociones</p>
         </div>
-        <Button onClick={handleOpenCreate} size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          Nueva
-        </Button>
+        <div className="gp-page-actions">
+          <button className="gp-btn primary sm" onClick={handleOpenCreate}>
+            <Plus style={{ width: 14, height: 14 }} /> Nueva
+          </button>
+        </div>
       </div>
 
       {promotions.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Ticket className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">No hay promociones todavía</p>
-            <Button onClick={handleOpenCreate} className="mt-4">
-              <Plus className="h-4 w-4 mr-2" />
-              Crear primera promoción
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="gp-card">
+          <div className="gp-empty">
+            <div className="gp-empty-ic"><Ticket style={{ width: 24, height: 24 }} /></div>
+            <h4>Sin promociones</h4>
+            <p>No hay promociones todavía</p>
+            <button className="gp-btn primary" style={{ marginTop: 12 }} onClick={handleOpenCreate}>
+              <Plus style={{ width: 14, height: 14 }} /> Crear primera promoción
+            </button>
+          </div>
+        </div>
       ) : (
-        <div className="grid gap-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {promotions.map(promo => (
-            <Card key={promo.id} className={!promo.is_active ? "opacity-60" : ""}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold truncate">{promo.name}</h3>
-                      {!promo.is_active && (
-                        <Badge variant="secondary" className="text-[10px]">Inactivo</Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      <Badge variant="outline" className="gap-1">
-                        {promo.discount_type === "percentage" ? (
-                          <><Percent className="h-3 w-3" />{promo.discount_value}%</>
-                        ) : (
-                          <>{promo.discount_value}€</>
-                        )}
-                      </Badge>
-                      
-                      {promo.code && (
-                        <Badge 
-                          variant="secondary" 
-                          className="gap-1 cursor-pointer hover:bg-secondary/80"
-                          onClick={() => copyCode(promo.code!)}
-                        >
-                          <Tag className="h-3 w-3" />
-                          {promo.code}
-                          <Copy className="h-3 w-3" />
-                        </Badge>
-                      )}
-                      
-                      {promo.valid_until && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          Hasta {format(new Date(promo.valid_until), "d MMM", { locale: es })}
-                        </span>
-                      )}
-                      
-                      {promo.max_uses && (
-                        <span className="text-xs text-muted-foreground">
-                          {promo.uses_count}/{promo.max_uses} usos
-                        </span>
-                      )}
-                    </div>
+            <div key={promo.id} className="gp-card pad" style={!promo.is_active ? { opacity: 0.55 } : {}}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: "var(--gp-ink)" }}>{promo.name}</span>
+                    {!promo.is_active && <span className="gp-badge neutral"><span className="pip" style={{ background: "currentColor" }} />Inactivo</span>}
                   </div>
-                  
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEdit(promo)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(promo.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+                    <span className="gp-badge accent">
+                      {promo.discount_type === "percentage" ? (
+                        <><Percent style={{ width: 11, height: 11 }} />{promo.discount_value}%</>
+                      ) : (
+                        <>{promo.discount_value} €</>
+                      )}
+                    </span>
+                    {promo.code && (
+                      <button
+                        className="gp-badge neutral"
+                        style={{ cursor: "pointer", border: "1px solid var(--gp-line2)", background: "none", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 4 }}
+                        onClick={() => copyCode(promo.code!)}
+                      >
+                        <Tag style={{ width: 11, height: 11 }} />
+                        {promo.code}
+                        <Copy style={{ width: 11, height: 11 }} />
+                      </button>
+                    )}
+                    {promo.valid_until && (
+                      <span style={{ fontSize: 12.5, color: "var(--gp-muted-c)", display: "flex", alignItems: "center", gap: 4 }}>
+                        <Calendar style={{ width: 12, height: 12 }} />
+                        Hasta {format(new Date(promo.valid_until), "d MMM", { locale: es })}
+                      </span>
+                    )}
+                    {promo.max_uses && (
+                      <span style={{ fontSize: 12.5, color: "var(--gp-muted-c)" }}>
+                        {promo.uses_count}/{promo.max_uses} usos
+                      </span>
+                    )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="gp-icon-btn" onClick={() => handleOpenEdit(promo)}>
+                    <Edit style={{ width: 14, height: 14 }} />
+                  </button>
+                  <button className="gp-icon-btn" style={{ color: "var(--gp-danger)" }} onClick={() => handleDelete(promo.id)}>
+                    <Trash2 style={{ width: 14, height: 14 }} />
+                  </button>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -304,7 +290,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
           <DialogHeader>
             <DialogTitle>{editingPromotion ? "Editar Promoción" : "Nueva Promoción"}</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-2">
             <div>
               <Label>Nombre *</Label>
@@ -324,7 +310,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
                   placeholder="BLACKFRIDAY"
                   className="flex-1"
                 />
-                <Button variant="outline" size="sm" onClick={generateCode}>Generar</Button>
+                <button className="gp-btn sm" onClick={generateCode}>Generar</button>
               </div>
             </div>
 
@@ -414,11 +400,11 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            <button className="gp-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
+            <button className="gp-btn primary" onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 style={{ width: 14, height: 14, animation: "spin 0.7s linear infinite", display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
               {editingPromotion ? "Guardar" : "Crear"}
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
