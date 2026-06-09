@@ -70,8 +70,11 @@ const Index = () => {
   // Check if current user is superadmin — uses auth context, no extra getUser call
   const { user: authUser } = useAuth();
   useEffect(() => {
-    if (!authUser) { setIsSuperadmin(false); return; }
-    supabase.rpc('is_superadmin').then(({ data }) => {
+    if (!authUser) {
+      setIsSuperadmin(false);
+      return;
+    }
+    supabase.rpc("is_superadmin").then(({ data }) => {
       setIsSuperadmin(data === true);
     });
   }, [authUser?.id]);
@@ -101,12 +104,15 @@ const Index = () => {
     localStorage.removeItem(STORAGE_KEY);
   };
 
-  const { data: salons, isLoading, isFetching } = useQuery({
+  const {
+    data: salons,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["salons-premium-hub"],
     queryFn: async () => {
       // Use security-safe RPC function that only exposes public fields
-      const { data: tenants, error: tenantsError } = await supabase
-        .rpc("get_public_tenants");
+      const { data: tenants, error: tenantsError } = await supabase.rpc("get_public_tenants");
 
       if (tenantsError) throw tenantsError;
 
@@ -132,7 +138,7 @@ const Index = () => {
         const stats = statsMap.get(tenant.id);
         return {
           ...tenant,
-          features: tenant.features as TenantWithStats['features'],
+          features: tenant.features as TenantWithStats["features"],
           avgRating: stats ? stats.sum / stats.count : null,
           reviewCount: stats?.count || 0,
         };
@@ -151,10 +157,15 @@ const Index = () => {
   }, [queryClient]);
 
   // Get all tenant IDs for availability check
-  const tenantIds = useMemo(() => salons?.map(s => s.id) || [], [salons]);
-  
+  const tenantIds = useMemo(() => salons?.map((s) => s.id) || [], [salons]);
+
   // Check today's availability for "Disponibles hoy" — auto on mount once we have tenants
-  const { tenantsWithAvailability, loading: availabilityLoading, hasChecked, checkAvailability } = useTodayAvailability(tenantIds);
+  const {
+    tenantsWithAvailability,
+    loading: availabilityLoading,
+    hasChecked,
+    checkAvailability,
+  } = useTodayAvailability(tenantIds);
 
   useEffect(() => {
     if (tenantIds.length > 0 && !hasChecked && !availabilityLoading) {
@@ -165,17 +176,17 @@ const Index = () => {
   // Calculate distances for salons
   const salonsWithDistance = useMemo(() => {
     if (!salons) return [];
-    
-    return salons.map(salon => {
+
+    return salons.map((salon) => {
       let distance: number | null = null;
-      
+
       if (hasLocation && salon.city) {
         const cityCoords = CITY_COORDINATES[salon.city];
         if (cityCoords) {
           distance = calculateDistance(cityCoords.lat, cityCoords.lon);
         }
       }
-      
+
       return {
         ...salon,
         distance,
@@ -195,7 +206,7 @@ const Index = () => {
         salon.description?.toLowerCase().includes(query);
 
       const matchesFavorites = !showFavoritesOnly || favorites.includes(salon.id);
-      
+
       // Filter by business type category (excluding quick filters)
       const isQuickFilter = selectedCategory === "huecos" || selectedCategory === "popular";
       const matchesCategory = !selectedCategory || isQuickFilter || salon.features?.business_type === selectedCategory;
@@ -204,9 +215,8 @@ const Index = () => {
       const matchesAvailability = selectedCategory !== "huecos" || tenantsWithAvailability.includes(salon.id);
 
       // Filter for "popular" - only show salons with good ratings (>= 4 stars) or at least 2 reviews
-      const matchesPopular = selectedCategory !== "popular" || 
-        (salon.avgRating !== null && salon.avgRating >= 4) || 
-        salon.reviewCount >= 2;
+      const matchesPopular =
+        selectedCategory !== "popular" || (salon.avgRating !== null && salon.avgRating >= 4) || salon.reviewCount >= 2;
 
       return matchesSearch && matchesFavorites && matchesCategory && matchesAvailability && matchesPopular;
     });
@@ -241,7 +251,18 @@ const Index = () => {
     }
 
     return result;
-  }, [salonsWithDistance, searchQuery, showFavoritesOnly, favorites, selectedCategory, sortByDistance, hasLocation, tenantsWithAvailability, hasRecommendations, scoresMap]);
+  }, [
+    salonsWithDistance,
+    searchQuery,
+    showFavoritesOnly,
+    favorites,
+    selectedCategory,
+    sortByDistance,
+    hasLocation,
+    tenantsWithAvailability,
+    hasRecommendations,
+    scoresMap,
+  ]);
 
   // Reset visible count when filters change
   useEffect(() => {
@@ -257,209 +278,178 @@ const Index = () => {
 
   const handleLoadMore = () => {
     haptic.light();
-    setVisibleCount(prev => prev + ITEMS_PER_PAGE);
+    setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
   };
-
 
   return (
     <>
       <AppLayout>
-      <SEO
-        title="GlowApp | Reserva Cita en Salones de Belleza Cerca de Ti"
-        description="Descubre peluquerías, spas y centros de estética cerca de ti. Reserva cita online al instante. La app de belleza #1 en España con +500 salones."
-        keywords="reservar peluquería, salones belleza cerca, cita online spa, estética cerca de mí, manicura, pedicura, barbería, tratamientos faciales, GlowApp"
-        canonicalUrl="/"
-      />
-
-      {/* Liquid Glass animated background */}
-      <div className="fixed inset-0 -z-10 liquid-bg" />
-
-      {/* Header Bar */}
-      <SmartSearchHeader />
-
-      {/* Discovery Hero Strip */}
-      <motion.div
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="px-4 pt-3 pb-1"
-      >
-        <div className="relative rounded-2xl overflow-hidden border border-white/50 dark:border-white/10">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/3" />
-          <div className="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-primary/12 blur-2xl" />
-          <div className="absolute -bottom-4 left-6 w-28 h-28 rounded-full bg-accent/10 blur-xl" />
-          <div className="relative px-4 py-3.5 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[9.5px] font-bold tracking-[0.2em] uppercase text-primary/65 mb-0.5">
-                Belleza · Bienestar · Estilo
-              </p>
-              <h1 className="text-[1.3rem] font-bold text-foreground leading-tight">
-                Tu próximo salón favorito
-              </h1>
-              <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
-                +500 profesionales en España
-              </p>
-            </div>
-            <Sparkles className="h-9 w-9 text-primary/20 shrink-0" />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* AI Search Bar */}
-      <div className="py-3">
-        <AISearchBar
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          recentSearches={recentSearches}
-          onRecentSearchClick={(search) => setSearchQuery(search)}
-          onClearRecents={clearRecentSearches}
+        <SEO
+          title="GlowApp | Reserva Cita en Salones de Belleza Cerca de Ti"
+          description="Descubre peluquerías, spas y centros de estética cerca de ti. Reserva cita online al instante. La app de belleza #1 en España con +500 salones."
+          keywords="reservar peluquería, salones belleza cerca, cita online spa, estética cerca de mí, manicura, pedicura, barbería, tratamientos faciales, GlowApp"
+          canonicalUrl="/"
         />
-      </div>
 
-      {/* Feed Toggle */}
-      <FeedToggle 
-        mode={feedMode} 
-        onChange={setFeedMode} 
-        followingCount={followingCount}
-      />
+        {/* Liquid Glass animated background */}
+        <div className="fixed inset-0 -z-10 liquid-bg" />
 
-      {/* Main Content */}
-      <div className="px-4 pt-1 pb-28">
-        <AnimatePresence mode="wait">
-          {feedMode === "following" ? (
-            <motion.div
-              key="following"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <FollowingFeed />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="discover"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.2 }}
-            >
-              {/* Compact Section Header + Filters */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.4 }}
-                className="mb-4"
+        {/* Header Bar */}
+        <SmartSearchHeader />
+
+        {/* AI Search Bar */}
+        <div className="py-3">
+          <AISearchBar
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            recentSearches={recentSearches}
+            onRecentSearchClick={(search) => setSearchQuery(search)}
+            onClearRecents={clearRecentSearches}
+          />
+        </div>
+
+        {/* Feed Toggle */}
+        <FeedToggle mode={feedMode} onChange={setFeedMode} followingCount={followingCount} />
+
+        {/* Main Content */}
+        <div className="px-4 pt-1 pb-28">
+          <AnimatePresence mode="wait">
+            {feedMode === "following" ? (
+              <motion.div
+                key="following"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
               >
-                {/* Top row: Title (solo en modo grid filtrado) + Actions */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {(searchQuery || selectedCategory || showFavoritesOnly || sortByDistance) ? (
-                      <>
-                        {hasRecommendations && scoresMap.size > 0 ? (
-                          <Sparkles className="h-5 w-5 text-primary shrink-0" />
-                        ) : (
-                          <TrendingUp className="h-5 w-5 text-primary shrink-0" />
-                        )}
-                        <h2 className="text-lg font-bold text-foreground truncate">
-                          {searchQuery ? "Resultados" : "Filtrados"}
-                        </h2>
-                        <span className="text-xs text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full shrink-0">
-                          {filteredSalons?.length || 0}
+                <FollowingFeed />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="discover"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {/* Compact Section Header + Filters */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.4 }}
+                  className="mb-4"
+                >
+                  {/* Top row: Title (solo en modo grid filtrado) + Actions */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {searchQuery || selectedCategory || showFavoritesOnly || sortByDistance ? (
+                        <>
+                          {hasRecommendations && scoresMap.size > 0 ? (
+                            <Sparkles className="h-5 w-5 text-primary shrink-0" />
+                          ) : (
+                            <TrendingUp className="h-5 w-5 text-primary shrink-0" />
+                          )}
+                          <h2 className="text-lg font-bold text-foreground truncate">
+                            {searchQuery ? "Resultados" : "Filtrados"}
+                          </h2>
+                          <span className="text-xs text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full shrink-0">
+                            {filteredSalons?.length || 0}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Filtros rápidos
                         </span>
-                      </>
-                    ) : (
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        Filtros rápidos
-                      </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5" />
+                  </div>
+
+                  {/* Category Pills - more compact */}
+                  <CategoryPills
+                    selected={selectedCategory}
+                    onSelect={setSelectedCategory}
+                    tenantsWithAvailability={tenantsWithAvailability}
+                    loadingAvailability={availabilityLoading}
+                    hasCheckedAvailability={hasChecked}
+                    onCheckAvailability={checkAvailability}
+                  />
+                </motion.div>
+
+                {/* Modo SECCIONES (sin búsqueda ni filtro) o GRID (con filtros activos) */}
+                {!searchQuery &&
+                !selectedCategory &&
+                !showFavoritesOnly &&
+                !sortByDistance &&
+                salonsWithDistance.length > 0 ? (
+                  <DiscoverSections
+                    salons={salonsWithDistance}
+                    hasLocation={hasLocation}
+                    tenantsWithAvailability={tenantsWithAvailability}
+                    scoresMap={scoresMap}
+                    hasRecommendations={hasRecommendations}
+                    onRequestLocation={requestLocation}
+                    geoLoading={geoLoading}
+                  />
+                ) : visibleSalons && visibleSalons.length > 0 ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {visibleSalons.map((salon, index) => {
+                        const recScore = scoresMap.get(salon.id);
+                        return (
+                          <PremiumSalonCard
+                            key={salon.id}
+                            salon={salon}
+                            index={index}
+                            distance={salon.formattedDistance}
+                            hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
+                            recommendationScore={recScore?.score}
+                            matchReasons={recScore?.matchReasons}
+                          />
+                        );
+                      })}
+                    </div>
+
+                    {/* Load More Button */}
+                    {hasMoreSalons && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex justify-center pt-4"
+                      >
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={handleLoadMore}
+                          className="flex items-center gap-2 px-6 py-3 rounded-full liquid-glass-pill !bg-background/30 text-foreground font-semibold text-sm shadow-sm"
+                        >
+                          <span>Ver más</span>
+                          <span className="text-muted-foreground text-xs">
+                            ({filteredSalons.length - visibleCount} restantes)
+                          </span>
+                        </motion.button>
+                      </motion.div>
                     )}
                   </div>
-
-                  <div className="flex items-center gap-1.5" />
-
-                </div>
-
-                {/* Category Pills - more compact */}
-                <CategoryPills
-                  selected={selectedCategory}
-                  onSelect={setSelectedCategory}
-                  tenantsWithAvailability={tenantsWithAvailability}
-                  loadingAvailability={availabilityLoading}
-                  hasCheckedAvailability={hasChecked}
-                  onCheckAvailability={checkAvailability}
-                />
+                ) : (
+                  <EmptyState
+                    type={
+                      selectedCategory === "huecos" && hasChecked && tenantsWithAvailability.length === 0
+                        ? "no-availability"
+                        : searchQuery
+                          ? "no-results"
+                          : "empty"
+                    }
+                    searchQuery={searchQuery}
+                    onClearSearch={() => setSearchQuery("")}
+                    onClearFilter={() => setSelectedCategory(null)}
+                  />
+                )}
               </motion.div>
-
-              {/* Modo SECCIONES (sin búsqueda ni filtro) o GRID (con filtros activos) */}
-              {!searchQuery && !selectedCategory && !showFavoritesOnly && !sortByDistance && salonsWithDistance.length > 0 ? (
-                <DiscoverSections
-                  salons={salonsWithDistance}
-                  hasLocation={hasLocation}
-                  tenantsWithAvailability={tenantsWithAvailability}
-                  scoresMap={scoresMap}
-                  hasRecommendations={hasRecommendations}
-                  onRequestLocation={requestLocation}
-                  geoLoading={geoLoading}
-                />
-              ) : visibleSalons && visibleSalons.length > 0 ? (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {visibleSalons.map((salon, index) => {
-                      const recScore = scoresMap.get(salon.id);
-                      return (
-                        <PremiumSalonCard 
-                          key={salon.id} 
-                          salon={salon} 
-                          index={index} 
-                          distance={salon.formattedDistance}
-                          hasAvailabilityToday={tenantsWithAvailability.includes(salon.id)}
-                          recommendationScore={recScore?.score}
-                          matchReasons={recScore?.matchReasons}
-                        />
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Load More Button */}
-                  {hasMoreSalons && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex justify-center pt-4"
-                    >
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={handleLoadMore}
-                        className="flex items-center gap-2 px-6 py-3 rounded-full liquid-glass-pill !bg-background/30 text-foreground font-semibold text-sm shadow-sm"
-                      >
-                        <span>Ver más</span>
-                        <span className="text-muted-foreground text-xs">
-                          ({filteredSalons.length - visibleCount} restantes)
-                        </span>
-                      </motion.button>
-                    </motion.div>
-                  )}
-                </div>
-              ) : (
-                <EmptyState
-                  type={
-                    selectedCategory === "huecos" && hasChecked && tenantsWithAvailability.length === 0
-                      ? "no-availability"
-                      : searchQuery 
-                        ? "no-results" 
-                        : "empty"
-                  }
-                  searchQuery={searchQuery}
-                  onClearSearch={() => setSearchQuery("")}
-                  onClearFilter={() => setSelectedCategory(null)}
-                />
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-    </AppLayout>
+            )}
+          </AnimatePresence>
+        </div>
+      </AppLayout>
     </>
   );
 };
