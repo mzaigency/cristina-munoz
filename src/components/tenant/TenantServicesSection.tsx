@@ -125,40 +125,43 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
           {categories.map((category) => {
             const categoryServices = groupedServices[category];
             const categoryImage = getCategoryImage(category);
+            const hasImage = !!categoryImage;
 
             return (
               <article
                 key={category}
-                className="grid md:grid-cols-[1.1fr_1.5fr] gap-6 md:gap-10 items-start"
+                className={hasImage ? "grid md:grid-cols-[1.1fr_1.5fr] gap-6 md:gap-10 items-start" : "max-w-3xl mx-auto w-full"}
               >
-                {/* Image side */}
-                <div className="relative aspect-[4/5] md:aspect-[4/5] rounded-2xl overflow-hidden bg-neutral-100 shadow-[0_18px_40px_-22px_rgba(20,22,40,0.18)] group">
-                  {categoryImage ? (
+                {/* Image side — only when image exists */}
+                {hasImage && (
+                  <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-neutral-100 shadow-[0_18px_40px_-22px_rgba(20,22,40,0.18)] group">
                     <img
-                      src={categoryImage}
+                      src={categoryImage!}
                       alt={category}
                       loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center font-editorial text-5xl text-neutral-300">
-                      {category.charAt(0)}
+                    <div className="absolute top-4 left-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-[10.5px] font-bold tracking-[0.18em] uppercase text-neutral-700">
+                      {String(categoryServices.length).padStart(2, "0")} servicios
                     </div>
-                  )}
-                  {/* Editorial label */}
-                  <div className="absolute top-4 left-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-[10.5px] font-bold tracking-[0.18em] uppercase text-neutral-700">
-                    {String(categoryServices.length).padStart(2, "0")} servicios
                   </div>
-                </div>
+                )}
 
                 {/* Services list */}
                 <div className="flex flex-col">
-                  <h3
-                    className="font-editorial text-neutral-900 tracking-[-0.02em] mb-1"
-                    style={{ fontSize: "clamp(1.6rem, 2.6vw, 2.2rem)", lineHeight: 1.1 }}
-                  >
-                    {category}
-                  </h3>
+                  <div className="flex items-baseline justify-between gap-4 mb-1">
+                    <h3
+                      className="font-editorial text-neutral-900 tracking-[-0.02em]"
+                      style={{ fontSize: "clamp(1.6rem, 2.6vw, 2.2rem)", lineHeight: 1.1 }}
+                    >
+                      {category}
+                    </h3>
+                    {!hasImage && (
+                      <span className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-neutral-500 font-body whitespace-nowrap">
+                        {String(categoryServices.length).padStart(2, "0")} servicios
+                      </span>
+                    )}
+                  </div>
                   <div className="h-px w-10 bg-neutral-300 mb-6 mt-3" />
 
                   <ul className="divide-y divide-neutral-200/80">

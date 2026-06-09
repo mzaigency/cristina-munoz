@@ -35,7 +35,8 @@ export type AdminSection =
   | "clientes"
   | "catalogo"
   | "marketing"
-  | "negocio";
+  | "negocio"
+  | "ajustes";
 
 export type BadgeKey = "waitlist" | "orders" | "messages" | "reviews";
 
@@ -80,7 +81,11 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
   negocio: [
     { value: "equipo", label: "Equipo", icon: Users },
     { value: "informes", label: "Informes", icon: BarChart3 },
-    { value: "ajustes", label: "Ajustes", icon: Settings },
+  ],
+  ajustes: [
+    { value: "general", label: "General", icon: Settings },
+    { value: "plan", label: "Plan", icon: Receipt },
+    { value: "alertas", label: "Alertas", icon: Activity },
   ],
 };
 

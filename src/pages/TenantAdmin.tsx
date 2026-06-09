@@ -17,6 +17,7 @@ import {
   Briefcase,
   ChevronDown,
   Plus,
+  Settings,
 } from "lucide-react";
 import { AdminHelpMenu } from "@/components/admin/layout/AdminHelpMenu";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -41,6 +42,7 @@ import {
   NegocioSection,
   AgendaSection,
   CajaSection,
+  SettingsSection,
 } from "@/components/admin/sections";
 
 interface Tenant {
@@ -58,7 +60,8 @@ type SectionValue =
   | "clientes"
   | "catalogo"
   | "marketing"
-  | "negocio";
+  | "negocio"
+  | "ajustes";
 
 interface NavItem {
   value: SectionValue;
@@ -75,6 +78,7 @@ const VALID_SECTIONS: SectionValue[] = [
   "catalogo",
   "marketing",
   "negocio",
+  "ajustes",
 ];
 
 // Map legacy dashboard/tour navigation keys → new (section, subTab) URL slugs.
@@ -128,8 +132,8 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   informes: { section: "negocio", subTab: "informes" },
   stats: { section: "negocio", subTab: "informes" },
   goals: { section: "negocio", subTab: "informes" },
-  settings: { section: "negocio", subTab: "ajustes" },
-  ajustes: { section: "negocio", subTab: "ajustes" },
+  settings: { section: "ajustes", subTab: "general" },
+  ajustes: { section: "ajustes", subTab: "general" },
 };
 
 // Legacy URL combos that must be transparently redirected to their new home.
@@ -141,6 +145,7 @@ const LEGACY_URL_REDIRECTS: Record<string, { section: SectionValue; subTab: stri
   "inicio/pedidos": { section: "caja", subTab: "pedidos" },
   "clientes/resenas": { section: "marketing", subTab: "resenas" },
   "catalogo/promos": { section: "marketing", subTab: "promos" },
+  "negocio/ajustes": { section: "ajustes", subTab: "general" },
 };
 
 export default function TenantAdmin() {
@@ -229,9 +234,10 @@ export default function TenantAdmin() {
       { value: "catalogo", label: "Catálogo", icon: <ShoppingBag className="h-4 w-4" /> },
       { value: "marketing", label: "Marketing", icon: <Megaphone className="h-4 w-4" />, badge: marketingBadge },
       { value: "negocio", label: "Negocio", icon: <Briefcase className="h-4 w-4" /> },
+      { value: "ajustes", label: "Ajustes", icon: <Settings className="h-4 w-4" /> },
     ];
     if (isStylist && !isAdmin) {
-      return allItems.filter((item) => !["marketing", "negocio"].includes(item.value));
+      return allItems.filter((item) => !["marketing", "negocio", "ajustes"].includes(item.value));
     }
     return allItems;
   }, [notificationCounts, isAdmin, isStylist, waitlistCount, unseenOrders]);
@@ -448,6 +454,15 @@ export default function TenantAdmin() {
             subTab={activeSubTab}
           />
         );
+      case "ajustes":
+        return (
+          <SettingsSection
+            key={refreshKey}
+            tenantId={tenant.id}
+            tenantSlug={tenant.slug}
+            subTab={activeSubTab}
+          />
+        );
       default:
         return null;
     }
@@ -578,7 +593,7 @@ export default function TenantAdmin() {
             </span>
             <span className="gp-user-tx">
               <span className="gp-user-name">{userEmail}</span>
-              <span className="gp-user-role">Plan {subscriptionPlan || "Starter"}</span>
+              <span className="gp-user-role">{subscriptionPlan || "Starter"}</span>
             </span>
             <AdminAccountMenu
               tenantName={tenant.name}
