@@ -45,10 +45,16 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
       ) : (
         <div className="absolute inset-0">
           <div
-            className="absolute inset-0 opacity-50"
+            className="absolute inset-0"
             style={{
-              background: `radial-gradient(60% 50% at 50% 0%, ${tenant.primary_color || "#4361ee"}40, transparent 70%)`,
+              background: `radial-gradient(100% 80% at 30% 0%, ${tenant.primary_color || "#4361ee"}35, color-mix(in oklab, ${tenant.primary_color || "#4361ee"}, #050505 65%) 70%, #070707 100%)`,
             }}
+          />
+          <motion.div
+            animate={{ y: [0, -22, 0], opacity: [0.38, 0.55, 0.38] }}
+            transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-[85%] h-[55%] rounded-full blur-3xl"
+            style={{ backgroundColor: `${tenant.primary_color || "#4361ee"}55` }}
           />
         </div>
       )}

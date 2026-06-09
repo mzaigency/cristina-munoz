@@ -48,10 +48,29 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
         {heroImage ? (
           <img src={heroImage} alt={tenant.name} className="w-full h-full object-cover" />
         ) : (
-          <div
-            className="w-full h-full"
-            style={{ background: `linear-gradient(135deg, ${accent} 0%, ${secondary} 100%)` }}
-          />
+          <>
+            <div
+              className="w-full h-full"
+              style={{
+                background: `radial-gradient(120% 100% at 10% 0%, ${accent} 0%, ${secondary} 50%, color-mix(in oklab, ${accent}, #000 28%) 100%)`,
+              }}
+            />
+            {/* Depth orbs for no-image state */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <motion.div
+                animate={{ y: [0, -32, 0], x: [0, 20, 0] }}
+                transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-32 -right-20 w-[520px] h-[520px] rounded-full blur-3xl opacity-40"
+                style={{ backgroundColor: "white" }}
+              />
+              <motion.div
+                animate={{ y: [0, 30, 0], x: [0, -16, 0] }}
+                transition={{ duration: 17, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
+                className="absolute -bottom-40 -left-20 w-[440px] h-[440px] rounded-full blur-3xl opacity-30"
+                style={{ backgroundColor: secondary }}
+              />
+            </div>
+          </>
         )}
 
         {/* Layered gradients — cinematic feel */}

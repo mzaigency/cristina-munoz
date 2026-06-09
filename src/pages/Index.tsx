@@ -277,6 +277,34 @@ const Index = () => {
       {/* Header Bar */}
       <SmartSearchHeader />
 
+      {/* Discovery Hero Strip */}
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        className="px-4 pt-3 pb-1"
+      >
+        <div className="relative rounded-2xl overflow-hidden border border-white/50 dark:border-white/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/3" />
+          <div className="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-primary/12 blur-2xl" />
+          <div className="absolute -bottom-4 left-6 w-28 h-28 rounded-full bg-accent/10 blur-xl" />
+          <div className="relative px-4 py-3.5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[9.5px] font-bold tracking-[0.2em] uppercase text-primary/65 mb-0.5">
+                Belleza · Bienestar · Estilo
+              </p>
+              <h1 className="text-[1.3rem] font-bold text-foreground leading-tight">
+                Tu próximo salón favorito
+              </h1>
+              <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
+                +500 profesionales en España
+              </p>
+            </div>
+            <Sparkles className="h-9 w-9 text-primary/20 shrink-0" />
+          </div>
+        </div>
+      </motion.div>
+
       {/* AI Search Bar */}
       <div className="py-3">
         <AISearchBar

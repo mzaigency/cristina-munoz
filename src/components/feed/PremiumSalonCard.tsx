@@ -76,7 +76,7 @@ export function PremiumSalonCard({
         <div className="relative overflow-hidden liquid-glass-card">
           
           {/* Image Container */}
-          <div className={cn("relative overflow-hidden rounded-t-[24px]", isFeatured ? "h-64 sm:h-56" : "h-52")}>
+          <div className={cn("relative overflow-hidden rounded-t-[24px]", isFeatured ? "h-72 sm:h-64" : "h-64")}>
             {salon.hero_image_url ? (
               index === 0 ? (
                 <img
@@ -114,7 +114,12 @@ export function PremiumSalonCard({
             )}
             
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            {/* Primary color bottom glow accent */}
+            <div
+              className="absolute inset-x-0 bottom-0 h-24 opacity-35"
+              style={{ background: `linear-gradient(to top, ${primaryColor}66, transparent)` }}
+            />
             
             {/* Badges */}
             <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-2">

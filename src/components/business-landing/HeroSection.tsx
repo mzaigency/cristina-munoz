@@ -10,7 +10,7 @@ export const HeroSection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative overflow-hidden bg-background">
+    <section className="relative overflow-hidden" style={{ background: "linear-gradient(165deg, hsl(var(--primary) / 0.07) 0%, hsl(var(--background)) 45%, hsl(var(--background)) 100%)" }}>
       <AnimatedHeroBackground />
 
       <div className="container mx-auto px-4 pt-24 pb-12 md:pt-28 md:pb-20 relative z-10">
