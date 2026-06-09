@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Image, Palette, Type, Save, ExternalLink, Layout } from "lucide-react";
+import { Loader2, Upload, Image, Palette, Type, Save, Layout, Building2, Phone, Sparkles, Pencil } from "lucide-react";
 import { landingThemes } from "@/components/onboarding/landing-themes";
 
 interface TenantSettingsProps {
@@ -169,55 +169,60 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
   if (!tenant) return null;
 
   return (
-    <div className="space-y-6 pb-24">
-      {/* Header - Mobile responsive */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold">Personalización de Landing</h2>
-          <p className="text-sm md:text-base text-muted-foreground">Configura la apariencia de tu página web</p>
+    <div className="space-y-5 pb-28">
+      {/* Tip card - direct user to visual editor for landing visuals */}
+      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-purple-500/5 to-transparent p-4 flex items-start gap-3">
+        <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+          <Sparkles className="h-4 w-4 text-primary" />
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button variant="outline" asChild className="h-11 md:h-10">
-            <a href={`/${tenantSlug}`} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Ver web
-            </a>
-          </Button>
-          <Button onClick={handleSave} disabled={saving} className="h-11 md:h-10">
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            Guardar Cambios
-          </Button>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">Editor visual rápido</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Cambia temas, tipografías y colores en directo desde tu landing.
+          </p>
         </div>
+        <Button asChild variant="outline" size="sm" className="shrink-0 h-9 gap-1.5">
+          <a href={`/${tenantSlug}?edit=1`} target="_blank" rel="noopener noreferrer">
+            <Pencil className="h-3.5 w-3.5" />
+            Abrir
+          </a>
+        </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Información básica */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Type className="h-5 w-5" />
-              Información Básica
+      <div className="grid gap-5 lg:grid-cols-2">
+        {/* Identidad */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Building2 className="h-4 w-4 text-primary" />
+              Identidad del negocio
             </CardTitle>
-            <CardDescription>Nombre y descripción de tu negocio</CardDescription>
+            <CardDescription>Nombre, eslogan y descripción que verán tus clientes</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nombre del negocio</Label>
-              <Input id="name" value={tenant.name} onChange={(e) => setTenant({ ...tenant, name: e.target.value })} />
-            </div>
-            <div>
-              <Label htmlFor="heading_size">Tamaño del nombre</Label>
-              <select
-                id="heading_size"
-                value={tenant.heading_size || "xlarge"}
-                onChange={(e) => setTenant({ ...tenant, heading_size: e.target.value })}
-                className="w-full h-10 px-3 border rounded-md bg-background text-foreground"
-              >
-                <option value="medium">Mediano</option>
-                <option value="large">Grande</option>
-                <option value="xlarge">Extra grande</option>
-              </select>
-              <p className="text-xs text-muted-foreground mt-1">Solo cambia el tamaño del nombre en el hero</p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="sm:col-span-2">
+                <Label htmlFor="name">Nombre del negocio</Label>
+                <Input
+                  id="name"
+                  value={tenant.name}
+                  onChange={(e) => setTenant({ ...tenant, name: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="heading_size">Tamaño en hero</Label>
+                <select
+                  id="heading_size"
+                  value={tenant.heading_size || "xlarge"}
+                  onChange={(e) => setTenant({ ...tenant, heading_size: e.target.value })}
+                  className="w-full h-10 px-3 mt-1 border rounded-md bg-background text-foreground text-sm"
+                >
+                  <option value="medium">Mediano</option>
+                  <option value="large">Grande</option>
+                  <option value="xlarge">Extra grande</option>
+                </select>
+              </div>
             </div>
             <div>
               <Label htmlFor="tagline">Eslogan</Label>
@@ -226,6 +231,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                 value={tenant.tagline || ""}
                 onChange={(e) => setTenant({ ...tenant, tagline: e.target.value })}
                 placeholder="Tu peluquería de confianza"
+                className="mt-1"
               />
             </div>
             <div>
@@ -234,8 +240,9 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                 id="description"
                 value={tenant.description || ""}
                 onChange={(e) => setTenant({ ...tenant, description: e.target.value })}
-                placeholder="Descripción de tu negocio..."
+                placeholder="Describe tu negocio en pocas líneas..."
                 rows={3}
+                className="mt-1 resize-none"
               />
             </div>
           </CardContent>
@@ -243,12 +250,12 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
 
         {/* Colores */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5" />
-              Colores
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Palette className="h-4 w-4 text-primary" />
+              Colores de marca
             </CardTitle>
-            <CardDescription>Personaliza los colores de tu marca</CardDescription>
+            <CardDescription>Definen el acento visual de tu landing</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -311,58 +318,88 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
 
         {/* Tema de Landing */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Layout className="h-5 w-5" />
-              Tema de Landing
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Layout className="h-4 w-4 text-primary" />
+              Tema de landing
             </CardTitle>
-            <CardDescription>Elige el estilo visual de tu página web</CardDescription>
+            <CardDescription>Layout y estilo visual de toda la página</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              {landingThemes.map((theme) => (
-                <button
-                  key={theme.id}
-                  type="button"
-                  onClick={() => setTenant({ ...tenant, theme_id: theme.id })}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
-                    tenant.theme_id === theme.id
-                      ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <p className="font-semibold text-foreground">{theme.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{theme.description}</p>
-                </button>
-              ))}
+            <div className="grid grid-cols-2 gap-2.5">
+              {landingThemes.map((theme) => {
+                const isActive = tenant.theme_id === theme.id;
+                return (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setTenant({ ...tenant, theme_id: theme.id })}
+                    className={`group relative p-3 rounded-xl border-2 text-left transition-all overflow-hidden ${
+                      isActive
+                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <div
+                      className="absolute inset-x-0 top-0 h-1.5"
+                      style={{
+                        background: `linear-gradient(90deg, ${theme.defaultColors.primary}, ${theme.defaultColors.secondary})`,
+                      }}
+                    />
+                    <p className="font-semibold text-sm text-foreground mt-1">{theme.name}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{theme.description}</p>
+                  </button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Image className="h-5 w-5" />
-              Logo
+        {/* Imágenes (Logo + Hero combined) */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Image className="h-4 w-4 text-primary" />
+              Imágenes de marca
             </CardTitle>
-            <CardDescription>Sube el logo de tu negocio</CardDescription>
+            <CardDescription>Logo y foto principal de tu landing</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {tenant.logo_url && (
-                <div className="flex justify-center p-4 bg-muted rounded-lg">
-                  <img src={tenant.logo_url} alt="Logo" className="max-h-24 object-contain" />
+            <div className="grid gap-5 md:grid-cols-2">
+              {/* Logo */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Logo</Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="show_logo_landing" className="text-xs text-muted-foreground cursor-pointer">
+                      Mostrar en hero
+                    </Label>
+                    <input
+                      type="checkbox"
+                      id="show_logo_landing"
+                      checked={tenant.show_logo_on_landing}
+                      onChange={(e) => setTenant({ ...tenant, show_logo_on_landing: e.target.checked })}
+                      className="h-4 w-4 rounded border-input accent-primary cursor-pointer"
+                    />
+                  </div>
                 </div>
-              )}
-              <div>
-                <Label htmlFor="logo-upload" className="cursor-pointer">
-                  <div className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg hover:border-primary transition-colors">
+
+                <div className="aspect-square max-w-[160px] rounded-xl border-2 border-dashed border-border bg-muted/30 flex items-center justify-center overflow-hidden">
+                  {tenant.logo_url ? (
+                    <img src={tenant.logo_url} alt="Logo" className="max-h-full max-w-full object-contain p-3" />
+                  ) : (
+                    <Image className="h-8 w-8 text-muted-foreground/40" />
+                  )}
+                </div>
+
+                <Label htmlFor="logo-upload" className="cursor-pointer block">
+                  <div className="flex items-center justify-center gap-2 h-10 rounded-lg bg-muted hover:bg-muted/70 transition-colors text-sm">
                     {uploading === "logo" ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Upload className="h-5 w-5" />
+                      <Upload className="h-4 w-4" />
                     )}
-                    <span>{uploading === "logo" ? "Subiendo..." : "Subir Logo"}</span>
+                    <span>{uploading === "logo" ? "Subiendo..." : "Subir logo"}</span>
                   </div>
                 </Label>
                 <input
@@ -377,60 +414,27 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   disabled={uploading === "logo"}
                 />
               </div>
-              <div>
-                <Label htmlFor="logo_url">O introduce una URL</Label>
-                <Input
-                  id="logo_url"
-                  value={tenant.logo_url || ""}
-                  onChange={(e) => setTenant({ ...tenant, logo_url: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-              {/* Logo visibility toggle */}
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div>
-                  <Label htmlFor="show_logo_landing" className="text-sm font-medium">
-                    Mostrar logo en landing
-                  </Label>
-                  <p className="text-xs text-muted-foreground">El logo se mostrará en la sección hero de tu página</p>
-                </div>
-                <input
-                  type="checkbox"
-                  id="show_logo_landing"
-                  checked={tenant.show_logo_on_landing}
-                  onChange={(e) => setTenant({ ...tenant, show_logo_on_landing: e.target.checked })}
-                  className="h-5 w-5 rounded border-input accent-primary"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Hero Image */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Image className="h-5 w-5" />
-              Imagen Hero
-            </CardTitle>
-            <CardDescription>Imagen principal de tu landing page</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {tenant.hero_image_url && (
-                <div className="aspect-video relative overflow-hidden rounded-lg bg-muted">
-                  <img src={tenant.hero_image_url} alt="Hero" className="w-full h-full object-cover" />
+              {/* Hero image */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Imagen principal (hero)</Label>
+
+                <div className="aspect-video rounded-xl border-2 border-dashed border-border bg-muted/30 flex items-center justify-center overflow-hidden">
+                  {tenant.hero_image_url ? (
+                    <img src={tenant.hero_image_url} alt="Hero" className="w-full h-full object-cover" />
+                  ) : (
+                    <Image className="h-8 w-8 text-muted-foreground/40" />
+                  )}
                 </div>
-              )}
-              <div>
-                <Label htmlFor="hero-upload" className="cursor-pointer">
-                  <div className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg hover:border-primary transition-colors">
+
+                <Label htmlFor="hero-upload" className="cursor-pointer block">
+                  <div className="flex items-center justify-center gap-2 h-10 rounded-lg bg-muted hover:bg-muted/70 transition-colors text-sm">
                     {uploading === "hero" ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Upload className="h-5 w-5" />
+                      <Upload className="h-4 w-4" />
                     )}
-                    <span>{uploading === "hero" ? "Subiendo..." : "Subir Imagen Hero"}</span>
+                    <span>{uploading === "hero" ? "Subiendo..." : "Subir imagen hero"}</span>
                   </div>
                 </Label>
                 <input
@@ -444,25 +448,20 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   }}
                   disabled={uploading === "hero"}
                 />
-              </div>
-              <div>
-                <Label htmlFor="hero_image_url">O introduce una URL</Label>
-                <Input
-                  id="hero_image_url"
-                  value={tenant.hero_image_url || ""}
-                  onChange={(e) => setTenant({ ...tenant, hero_image_url: e.target.value })}
-                  placeholder="https://..."
-                />
+                <p className="text-[11px] text-muted-foreground">Recomendado: 1920×1080 o mayor</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Contacto */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Información de Contacto</CardTitle>
-            <CardDescription>Datos de contacto que aparecerán en tu landing</CardDescription>
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Phone className="h-4 w-4 text-primary" />
+              Información de contacto
+            </CardTitle>
+            <CardDescription>Aparecerá en el footer y en la sección de contacto</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
@@ -524,23 +523,22 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
 
       {/* Sticky guided save bar */}
       <div
-        className="sticky bottom-0 left-0 right-0 z-30 -mx-4 md:-mx-6 mt-6 px-4 md:px-6 py-3 bg-background/95 backdrop-blur-md border-t border-border flex items-center gap-3"
+        className="sticky bottom-0 left-0 right-0 z-30 -mx-4 md:-mx-6 mt-6 px-4 md:px-6 py-3 bg-background/90 backdrop-blur-xl border-t border-border flex items-center gap-3 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)]"
         style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
         role="status"
         aria-live="polite"
       >
-        <div className="flex-1 text-sm">
-          <span className="text-base mr-1" aria-hidden>👉</span>
-          <span className="font-medium">Cuando termines, pulsa <span className="text-primary">Guardar Cambios</span> para aplicar.</span>
-        </div>
+        <p className="flex-1 text-xs text-muted-foreground hidden sm:block">
+          Los cambios se aplican al guardar.
+        </p>
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="h-11 guided-halo"
+          className="h-11 w-full sm:w-auto guided-halo gap-2"
           data-guided-cta="true"
         >
-          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-          Guardar
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          Guardar cambios
         </Button>
       </div>
     </div>

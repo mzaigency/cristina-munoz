@@ -17,8 +17,10 @@ import {
   Loader2,
   Check,
   ArrowUpRight,
+  Layers,
 } from "lucide-react";
 import { TenantImageUploader } from "./TenantImageUploader";
+import { landingThemes, getThemeById } from "@/components/onboarding/landing-themes";
 
 interface Tenant {
   id: string;
@@ -44,6 +46,7 @@ interface Tenant {
   font_body?: string | null;
   heading_size?: string | null;
   button_style?: string | null;
+  theme_id?: string | null;
 }
 
 const extractUsername = (url: string | null, platform: "instagram" | "facebook" | "tiktok"): string => {
@@ -112,9 +115,10 @@ const COLOR_PRESETS = [
   { name: "Coral", primary: "#F43F5E", secondary: "#FB7185" },
 ];
 
-type TabKey = "design" | "typography" | "images" | "content";
+type TabKey = "theme" | "design" | "typography" | "images" | "content";
 
 const TABS: { key: TabKey; label: string; icon: typeof Palette }[] = [
+  { key: "theme", label: "Tema", icon: Layers },
   { key: "design", label: "Diseño", icon: Palette },
   { key: "typography", label: "Tipografía", icon: Type },
   { key: "images", label: "Imágenes", icon: ImageIcon },
@@ -130,8 +134,9 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
     font_body: tenant.font_body || "Inter",
     heading_size: tenant.heading_size || "xlarge",
     button_style: tenant.button_style || "rounded",
+    theme_id: tenant.theme_id || "immersive",
   });
-  const [activeTab, setActiveTab] = useState<TabKey>("design");
+  const [activeTab, setActiveTab] = useState<TabKey>("theme");
 
   // Track dirty state
   const isDirty = useMemo(() => {
@@ -141,8 +146,22 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
       font_body: tenant.font_body || "Inter",
       heading_size: tenant.heading_size || "xlarge",
       button_style: tenant.button_style || "rounded",
+      theme_id: tenant.theme_id || "immersive",
     });
   }, [formData, tenant]);
+
+  const applyTheme = (themeId: string) => {
+    const theme = getThemeById(themeId);
+    setFormData((prev) => ({
+      ...prev,
+      theme_id: theme.id,
+      primary_color: theme.defaultColors.primary,
+      secondary_color: theme.defaultColors.secondary,
+      font_heading: theme.recommendedFonts.heading,
+      font_body: theme.recommendedFonts.body,
+      button_style: theme.buttonStyle,
+    }));
+  };
 
   const handleChange = (field: keyof Tenant, value: string | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -175,6 +194,7 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
           font_body: formData.font_body,
           heading_size: formData.heading_size,
           button_style: formData.button_style,
+          theme_id: formData.theme_id,
         })
         .eq("id", tenant.id);
 
@@ -195,6 +215,7 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
       font_body: tenant.font_body || "Inter",
       heading_size: tenant.heading_size || "xlarge",
       button_style: tenant.button_style || "rounded",
+      theme_id: tenant.theme_id || "immersive",
     });
   };
 
@@ -256,6 +277,97 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
 
         {/* ─── Body ─── */}
         <div className="flex-1 overflow-y-auto px-5 py-6">
+          {/* THEME */}
+          {activeTab === "theme" && (
+            <div className="space-y-6">
+              <Section title="Tema de landing" caption="Cambia layout, colores y tipo">
+                <div className="grid grid-cols-2 gap-3">
+                  {landingThemes.map((theme) => {
+                    const isOn = formData.theme_id === theme.id;
+                    return (
+                      <button
+                        key={theme.id}
+                        type="button"
+                        onClick={() => applyTheme(theme.id)}
+                        className={`group relative rounded-2xl overflow-hidden border-2 text-left transition-all duration-200 ${
+                          isOn
+                            ? "border-neutral-900 shadow-[0_6px_16px_-6px_rgba(0,0,0,0.25)]"
+                            : "border-neutral-200 hover:border-neutral-400"
+                        }`}
+                      >
+                        {isOn && (
+                          <div className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-neutral-900 flex items-center justify-center shadow">
+                            <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                          </div>
+                        )}
+                        <div
+                          className="aspect-[4/5] relative flex flex-col items-center justify-center p-4"
+                          style={{
+                            background: `linear-gradient(135deg, ${theme.defaultColors.primary} 0%, ${theme.defaultColors.secondary} 100%)`,
+                          }}
+                        >
+                          {theme.heroLayout === "glass" && (
+                            <div className="absolute inset-4 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/30" />
+                          )}
+                          {theme.heroLayout === "split" && (
+                            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-white" />
+                          )}
+                          {theme.heroLayout === "minimal" && (
+                            <div className="absolute inset-0 bg-white/95" />
+                          )}
+                          <div className="relative z-10 flex flex-col items-center gap-1.5">
+                            <div
+                              className={`w-7 h-7 rounded-lg ${
+                                theme.heroLayout === "minimal" ? "bg-neutral-300" : "bg-white/85"
+                              }`}
+                            />
+                            <div
+                              className={`h-1.5 w-20 rounded-full ${
+                                theme.heroLayout === "minimal" ? "bg-neutral-900" : "bg-white"
+                              }`}
+                            />
+                            <div
+                              className={`h-1 w-12 rounded-full ${
+                                theme.heroLayout === "minimal" ? "bg-neutral-500" : "bg-white/70"
+                              }`}
+                            />
+                            <div
+                              className={`mt-1 h-4 w-14 shadow-md ${
+                                theme.heroLayout === "minimal" ? "bg-neutral-900" : "bg-white"
+                              }`}
+                              style={{
+                                borderRadius:
+                                  theme.buttonStyle === "pill"
+                                    ? "9999px"
+                                    : theme.buttonStyle === "rounded"
+                                    ? "8px"
+                                    : theme.buttonStyle === "square"
+                                    ? "4px"
+                                    : "0",
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="px-3 py-2 bg-white">
+                          <p className="text-[12px] font-bold text-neutral-900 truncate">{theme.name}</p>
+                          <p className="text-[10.5px] text-neutral-500 truncate">{theme.description}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </Section>
+
+              <div className="rounded-xl bg-neutral-50 border border-neutral-200 p-3 flex gap-2">
+                <Sparkles className="w-4 h-4 text-neutral-500 shrink-0 mt-0.5" strokeWidth={2} />
+                <p className="text-[11.5px] text-neutral-600 leading-relaxed">
+                  Al elegir un tema se aplican sus colores, fuentes y estilo de botón.
+                  Puedes seguir afinándolos en las pestañas Diseño y Tipografía.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* DESIGN */}
           {activeTab === "design" && (
             <div className="space-y-7">

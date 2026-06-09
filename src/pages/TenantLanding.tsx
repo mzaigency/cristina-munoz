@@ -85,6 +85,14 @@ const TenantLanding = () => {
   const { isAdmin, isStylist, hasAccess } = useTenantAccess(tenant?.id);
   const previewToken = searchParams.get("preview");
   const reviewParam = searchParams.get("review");
+  const editParam = searchParams.get("edit");
+
+  // Auto-open visual editor when navigating with ?edit=1 (e.g. from Settings shortcut)
+  useEffect(() => {
+    if (editParam === "1" && isAdmin && !isEditMode) {
+      setIsEditMode(true);
+    }
+  }, [editParam, isAdmin, isEditMode]);
 
   const handleReviewSubmitted = useCallback(() => {
     // Refresh reviews section
