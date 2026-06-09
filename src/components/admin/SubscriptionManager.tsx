@@ -35,6 +35,7 @@ interface StripeSubscriptionData {
   has_subscription?: boolean;
   status?: string;
   plan?: "monthly" | "annual" | null;
+  plan_slug?: string | null;
   price_id?: string;
   subscription_end?: string | null;
   trial_end?: string | null;
@@ -90,7 +91,9 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
   const fetchStripeData = useCallback(async () => {
     try {
-      const { data, error } = await supabase.functions.invoke("check-subscription");
+      const { data, error } = await supabase.functions.invoke("check-subscription", {
+        body: { tenantId },
+      });
       
       if (error) throw error;
       setStripeData(data);
@@ -98,7 +101,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
       console.error("Error checking Stripe subscription:", error);
       // Don't show error toast, just use tenant data as fallback
     }
-  }, []);
+  }, [tenantId]);
 
   const fetchAllData = useCallback(async () => {
     setLoading(true);
@@ -123,7 +126,9 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   const handleManageSubscription = async () => {
     setPortalLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        body: { tenantId },
+      });
 
       if (error) throw error;
       
@@ -164,7 +169,8 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
     );
   }
 
-  const currentPlan = (tenantPlan?.toLowerCase() || 'starter') as PlanSlug;
+  const syncedPlan = stripeData?.has_subscription && stripeData?.plan_slug ? stripeData.plan_slug : tenantPlan;
+  const currentPlan = (syncedPlan?.toLowerCase() || 'starter') as PlanSlug;
   const currentDbPlan = getDbPlan(currentPlan);
   const planIcons = PLAN_ICONS[currentPlan] || PLAN_ICONS.starter;
   const planInfo = {
