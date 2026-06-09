@@ -29,6 +29,29 @@ export function useSubscriptionStatus(tenantId: string | undefined): Subscriptio
     }
 
     try {
+      try {
+        const { data: stripeData, error: stripeError } = await supabase.functions.invoke("check-subscription", {
+          body: { tenantId },
+        });
+
+        if (!stripeError && stripeData?.has_subscription) {
+          const expDate = stripeData.subscription_end || null;
+          const active = stripeData.subscribed === true;
+          const days = expDate
+            ? Math.max(0, Math.ceil((new Date(expDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+            : null;
+
+          setPlan(stripeData.plan_slug || "starter");
+          setExpiresAt(expDate);
+          setIsActive(active);
+          setIsExpired(!active);
+          setDaysRemaining(active ? days : 0);
+          return;
+        }
+      } catch (stripeCheckError) {
+        console.warn("Stripe subscription sync skipped, using tenant fallback:", stripeCheckError);
+      }
+
       const { data: tenant, error } = await supabase
         .from("tenants")
         .select("subscription_plan, subscription_expires_at, is_active")
