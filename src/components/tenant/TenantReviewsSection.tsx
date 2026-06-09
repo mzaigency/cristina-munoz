@@ -182,9 +182,8 @@ export const TenantReviewsSection = ({ tenantId, primaryColor }: TenantReviewsSe
                     }}
                     className="group relative w-full h-[260px] cursor-pointer bg-white p-7 flex flex-col rounded-2xl border border-neutral-200/80 shadow-[0_8px_24px_-16px_rgba(20,22,40,0.12)] hover:shadow-[0_16px_36px_-16px_rgba(20,22,40,0.18)] transition-shadow duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                     style={{
-                      // @ts-expect-error css var
                       "--tw-ring-color": accent,
-                    } as React.CSSProperties}
+                    } as React.CSSProperties & Record<"--tw-ring-color", string>}
                   >
                     {/* Decorative quote mark */}
                     <Quote

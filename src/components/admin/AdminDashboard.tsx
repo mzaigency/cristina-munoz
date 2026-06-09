@@ -153,7 +153,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       const weeklyGrowth = lastWeekTotal > 0 ? Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100) : 0;
 
       const { data: stylistsData } = await supabase
-        .from("stylists")
+        .from("tenant_stylists")
         .select("id, name, color")
         .eq("tenant_id", tenantId)
         .eq("is_active", true)
