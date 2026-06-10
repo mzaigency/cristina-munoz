@@ -453,7 +453,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       </div>
 
       {/* Hero: próxima cita + OccRing  |  Equipo hoy */}
-      <div className="gp-grid gp-2col">
+      <div className="gp-2col-always">
         <div className="gp-card" style={{ overflow: "hidden", position: "relative" }}>
           <div
             style={{
@@ -468,21 +468,22 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
               position: "relative",
               padding: 22,
               display: "flex",
-              gap: 26,
+              gap: 16,
               alignItems: "center",
               flexWrap: "wrap",
             }}
           >
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <span className="gp-badge accent" style={{ marginBottom: 10, display: "inline-flex" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span className="gp-badge accent" style={{ marginBottom: 8, display: "inline-flex" }}>
                 <Clock style={{ width: 12, height: 12 }} />
                 Próxima cita
               </span>
               {stats.nextBookingTime ? (
-                <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 6 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
                   <span
+                    className="gp-next-appt-time"
                     style={{
-                      fontSize: 40,
+                      fontSize: 36,
                       fontWeight: 800,
                       letterSpacing: "-.03em",
                       color: "var(--gp-accent)",
@@ -490,29 +491,49 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
                   >
                     {stats.nextBookingTime}
                   </span>
-                  <div>
-                    <div style={{ fontSize: 17, fontWeight: 800, color: "var(--gp-ink)" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      className="gp-next-appt-name"
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 800,
+                        color: "var(--gp-ink)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {stats.nextBookingName}
                     </div>
-                    <div style={{ fontSize: 13.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--gp-muted-c)",
+                        fontWeight: 600,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {stats.nextBookingService
                         ? `${stats.nextBookingService}${
                             stats.nextBookingStylist ? ` · ${stats.nextBookingStylist}` : ""
                           }`
-                        : `${stats.todayBookings} citas hoy en total`}
+                        : `${stats.todayBookings} citas hoy`}
                     </div>
                   </div>
                 </div>
               ) : (
-                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--gp-muted-c)", padding: "8px 0" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--gp-muted-c)", padding: "6px 0" }}>
                   Sin más citas hoy
                 </div>
               )}
-              <div style={{ display: "flex", gap: 9, marginTop: 16, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
                 {stats.nextBookingId && (
                   <button className="gp-btn primary sm" onClick={handleRegisterArrival}>
                     <CheckCircle2 style={{ width: 13, height: 13 }} />
-                    Registrar llegada
+                    <span className="gp-hide-xs">Registrar llegada</span>
+                    <span className="gp-show-xs">Llegada</span>
                   </button>
                 )}
                 {!stats.nextBookingId && (
@@ -523,11 +544,13 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
                 )}
                 <button className="gp-btn sm" onClick={() => onNavigate("agenda")}>
                   <Calendar style={{ width: 13, height: 13 }} />
-                  Ver agenda
+                  <span className="gp-hide-xs">Ver agenda</span>
                 </button>
               </div>
             </div>
-            <OccRing pct={stats.occupancy} />
+            <div className="gp-next-appt-ring">
+              <OccRing pct={stats.occupancy} />
+            </div>
           </div>
         </div>
 
@@ -682,7 +705,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       </div>
 
       {/* Atajos rápidos + Actividad reciente */}
-      <div className="gp-grid gp-2col">
+      <div className="gp-2col-always">
         <div className="gp-card" style={{ overflow: "hidden" }}>
           <div className="gp-card-h">
             <h3>Atajos rápidos</h3>

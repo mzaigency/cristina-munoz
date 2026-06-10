@@ -1859,13 +1859,33 @@
 @keyframes gpFadeUp { from { transform: translateY(8px); } to { transform: none; } }
 
 /* ── Responsive ── */
+/* 2-col grid that stays 2 cols on all screen sizes (for dashboard widget rows) */
+.gp-2col-always { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+
 @media (max-width: 1100px) {
   .gp-kpis { grid-template-columns: repeat(2, 1fr); }
   .gp-2col, .gp-3col { grid-template-columns: 1fr; }
+  .gp-2col-always { grid-template-columns: 1fr 1fr; }
   .gp-msg-layout { flex-direction: column; }
   .gp-msg-list { width: 100%; border-right: none; border-bottom: 1px solid var(--gp-line2); max-height: 300px; }
 }
+/* xs visibility helpers */
+.gp-show-xs { display: none; }
+@media (max-width: 400px) {
+  .gp-hide-xs { display: none !important; }
+  .gp-show-xs { display: inline !important; }
+}
+
 @media (max-width: 560px) {
+  .gp-2col-always { gap: 10px; }
+  /* Compact próxima cita on mobile */
+  .gp-next-appt-ring { display: none; }
+  .gp-next-appt-time { font-size: 26px !important; }
+  .gp-next-appt-name { font-size: 13px !important; }
+  /* Tighter card padding on mobile */
+  .gp-2col-always .gp-card.pad { padding: 14px 12px; }
+  .gp-2col-always .gp-card-h { padding: 12px 14px; }
+  .gp-2col-always .gp-row { padding: 10px 12px; gap: 10px; }
   .gp-kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .gp-kpi { padding: 13px 14px; border-radius: 16px; }
   .gp-kpi-val { font-size: 22px; }
