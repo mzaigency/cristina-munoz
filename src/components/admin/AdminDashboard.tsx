@@ -710,49 +710,25 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
           <div className="gp-card-h">
             <h3>Atajos rápidos</h3>
           </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 1,
-              background: "var(--gp-line2)",
-            }}
-          >
+          <div className="gp-quick-grid">
             {quickActions.map((a) => (
               <button
                 key={a.label}
                 onClick={a.onClick}
-                style={{
-                  border: "none",
-                  background: "var(--gp-surface)",
-                  padding: "18px 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  cursor: "pointer",
-                  transition: ".15s",
-                  fontFamily: "inherit",
-                  textAlign: "left",
-                }}
+                className="gp-quick-btn"
                 onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gp-surface-2)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gp-surface)")}
               >
                 <span
+                  className="gp-quick-ic"
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 12,
                     background: `color-mix(in oklab, ${a.color}, white 86%)`,
                     color: a.color,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flex: "none",
                   }}
                 >
                   {a.icon}
                 </span>
-                <span style={{ fontWeight: 700, fontSize: 14, color: "var(--gp-ink)" }}>{a.label}</span>
+                <span className="gp-quick-lbl">{a.label}</span>
               </button>
             ))}
           </div>
