@@ -452,69 +452,23 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
         </div>
       </div>
 
-      {/* Hero: próxima cita + OccRing  |  Equipo hoy */}
-      <div className="gp-2col-always">
-        <div className="gp-card" style={{ overflow: "hidden", position: "relative" }}>
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "radial-gradient(120% 130% at 90% -10%, color-mix(in oklab, var(--gp-accent), transparent 86%), transparent 60%)",
-            }}
-          />
-          <div
-            style={{
-              position: "relative",
-              padding: 22,
-              display: "flex",
-              gap: 16,
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
+      {/* Dashboard grid — mobile-first, reorganized per breakpoint */}
+      <div className="gp-dash">
+        {/* PRÓXIMA CITA */}
+        <div className="gp-dash-next gp-card" style={{ overflow: "hidden", position: "relative" }}>
+          <div className="gp-next-bg" />
+          <div className="gp-next-inner">
+            <div className="gp-next-text">
               <span className="gp-badge accent" style={{ marginBottom: 8, display: "inline-flex" }}>
                 <Clock style={{ width: 12, height: 12 }} />
                 Próxima cita
               </span>
               {stats.nextBookingTime ? (
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
-                  <span
-                    className="gp-next-appt-time"
-                    style={{
-                      fontSize: 36,
-                      fontWeight: 800,
-                      letterSpacing: "-.03em",
-                      color: "var(--gp-accent)",
-                    }}
-                  >
-                    {stats.nextBookingTime}
-                  </span>
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      className="gp-next-appt-name"
-                      style={{
-                        fontSize: 15,
-                        fontWeight: 800,
-                        color: "var(--gp-ink)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {stats.nextBookingName}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "var(--gp-muted-c)",
-                        fontWeight: 600,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                <div className="gp-next-row">
+                  <span className="gp-next-time">{stats.nextBookingTime}</span>
+                  <div className="gp-next-meta">
+                    <div className="gp-next-name">{stats.nextBookingName}</div>
+                    <div className="gp-next-sub">
                       {stats.nextBookingService
                         ? `${stats.nextBookingService}${
                             stats.nextBookingStylist ? ` · ${stats.nextBookingStylist}` : ""
@@ -524,19 +478,16 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
                   </div>
                 </div>
               ) : (
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--gp-muted-c)", padding: "6px 0" }}>
-                  Sin más citas hoy
-                </div>
+                <div className="gp-next-empty">Sin más citas hoy</div>
               )}
-              <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-                {stats.nextBookingId && (
+              <div className="gp-next-actions">
+                {stats.nextBookingId ? (
                   <button className="gp-btn primary sm" onClick={handleRegisterArrival}>
                     <CheckCircle2 style={{ width: 13, height: 13 }} />
                     <span className="gp-hide-xs">Registrar llegada</span>
                     <span className="gp-show-xs">Llegada</span>
                   </button>
-                )}
-                {!stats.nextBookingId && (
+                ) : (
                   <button className="gp-btn primary sm" onClick={() => onQuickAction("new-booking")}>
                     <Sparkles style={{ width: 13, height: 13 }} />
                     Nueva cita
@@ -548,165 +499,86 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
                 </button>
               </div>
             </div>
-            <div className="gp-next-appt-ring">
+            <div className="gp-next-ring">
               <OccRing pct={stats.occupancy} />
             </div>
           </div>
         </div>
 
-        <div className="gp-card pad">
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 800,
-              marginBottom: 14,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              color: "var(--gp-ink)",
-            }}
-          >
-            <Users style={{ width: 15, height: 15 }} />
-            <span>Equipo hoy</span>
-          </div>
-          {team.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-              {team.map((member) => (
-                <div key={member.id} style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                  <span
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 11,
-                      background: member.color,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#fff",
-                      fontSize: 13,
-                      fontWeight: 800,
-                      flex: "none",
-                    }}
-                  >
-                    {member.name.charAt(0).toUpperCase()}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 13.5,
-                        fontWeight: 700,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {member.name.split(" ")[0]}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
-                      {member.today} citas hoy
-                    </div>
-                  </div>
-                  <span className="gp-badge neutral">{member.week}/sem</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ fontSize: 13, color: "var(--gp-muted-c)", margin: 0 }}>Sin equipo configurado</p>
-          )}
-        </div>
-      </div>
-
-      {/* KPIs */}
-      <div className="gp-kpis">
-        <div className="gp-kpi">
-          <div className="gp-kpi-top">
-            <span
-              className="gp-kpi-ic"
-              style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}
-            >
-              <Wallet style={{ width: 16, height: 16 }} />
-            </span>
-            {renderDelta(stats.revenueGrowth)}
-          </div>
-          <div className="gp-kpi-val">{formatCurrency(stats.todayRevenue)}</div>
-          <div className="gp-kpi-lbl">Ingresos de hoy</div>
-        </div>
-        <div className="gp-kpi" style={{ cursor: "pointer" }} onClick={() => onNavigate("agenda")}>
-          <div className="gp-kpi-top">
-            <span className="gp-kpi-ic" style={{ background: "var(--gp-info-soft)", color: "var(--gp-info)" }}>
-              <Calendar style={{ width: 16, height: 16 }} />
-            </span>
-            {renderDelta(stats.bookingsGrowth)}
-          </div>
-          <div className="gp-kpi-val">{stats.todayBookings}</div>
-          <div className="gp-kpi-lbl">Citas de hoy</div>
-          <div
-            style={{
-              display: "flex",
-              gap: 6,
-              marginTop: 8,
-              flexWrap: "wrap",
-            }}
-          >
-            <span
-              className="gp-badge"
-              style={{
-                background: "color-mix(in oklab, var(--gp-info), white 88%)",
-                color: "var(--gp-info)",
-              }}
-            >
-              <Globe style={{ width: 10, height: 10 }} />
-              {stats.todayBookingsWeb} web
-            </span>
-            <span
-              className="gp-badge"
-              style={{
-                background: "color-mix(in oklab, var(--gp-accent), white 88%)",
-                color: "var(--gp-accent)",
-              }}
-            >
-              <Building2 style={{ width: 10, height: 10 }} />
-              {stats.todayBookingsCrm} CRM
-            </span>
-          </div>
-        </div>
-        <div className="gp-kpi">
-          <div className="gp-kpi-top">
-            <span className="gp-kpi-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
-              <UserPlus style={{ width: 16, height: 16 }} />
-            </span>
-            {renderDelta(stats.newClientsGrowth)}
-          </div>
-          <div className="gp-kpi-val">{stats.newClientsToday}</div>
-          <div className="gp-kpi-lbl">Clientes nuevos</div>
-        </div>
-        <div className="gp-kpi">
-          <div className="gp-kpi-top">
-            <span className="gp-kpi-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
-              <TrendingUp style={{ width: 16, height: 16 }} />
-            </span>
-            {stats.occupancyDelta !== 0 && (
-              <span className={`gp-kpi-delta ${stats.occupancyDelta >= 0 ? "up" : "down"}`}>
-                <TrendingUp
-                  style={{
-                    width: 11,
-                    height: 11,
-                    transform: stats.occupancyDelta >= 0 ? undefined : "scaleY(-1)",
-                  }}
-                />
-                {stats.occupancyDelta >= 0 ? "+" : ""}
-                {stats.occupancyDelta}pp
+        {/* KPIs */}
+        <div className="gp-dash-kpis">
+          <div className="gp-kpi">
+            <div className="gp-kpi-top">
+              <span className="gp-kpi-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+                <Wallet style={{ width: 16, height: 16 }} />
               </span>
-            )}
+              {renderDelta(stats.revenueGrowth)}
+            </div>
+            <div className="gp-kpi-val">{formatCurrency(stats.todayRevenue)}</div>
+            <div className="gp-kpi-lbl">Ingresos de hoy</div>
           </div>
-          <div className="gp-kpi-val">{Math.round(stats.occupancy * 100)}%</div>
-          <div className="gp-kpi-lbl">Ocupación</div>
+          <div className="gp-kpi" style={{ cursor: "pointer" }} onClick={() => onNavigate("agenda")}>
+            <div className="gp-kpi-top">
+              <span className="gp-kpi-ic" style={{ background: "var(--gp-info-soft)", color: "var(--gp-info)" }}>
+                <Calendar style={{ width: 16, height: 16 }} />
+              </span>
+              {renderDelta(stats.bookingsGrowth)}
+            </div>
+            <div className="gp-kpi-val">{stats.todayBookings}</div>
+            <div className="gp-kpi-lbl">Citas de hoy</div>
+            <div className="gp-kpi-tags">
+              <span
+                className="gp-badge"
+                style={{ background: "color-mix(in oklab, var(--gp-info), white 88%)", color: "var(--gp-info)" }}
+              >
+                <Globe style={{ width: 10, height: 10 }} />
+                {stats.todayBookingsWeb} web
+              </span>
+              <span
+                className="gp-badge"
+                style={{ background: "color-mix(in oklab, var(--gp-accent), white 88%)", color: "var(--gp-accent)" }}
+              >
+                <Building2 style={{ width: 10, height: 10 }} />
+                {stats.todayBookingsCrm} CRM
+              </span>
+            </div>
+          </div>
+          <div className="gp-kpi">
+            <div className="gp-kpi-top">
+              <span className="gp-kpi-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
+                <UserPlus style={{ width: 16, height: 16 }} />
+              </span>
+              {renderDelta(stats.newClientsGrowth)}
+            </div>
+            <div className="gp-kpi-val">{stats.newClientsToday}</div>
+            <div className="gp-kpi-lbl">Clientes nuevos</div>
+          </div>
+          <div className="gp-kpi">
+            <div className="gp-kpi-top">
+              <span className="gp-kpi-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
+                <TrendingUp style={{ width: 16, height: 16 }} />
+              </span>
+              {stats.occupancyDelta !== 0 && (
+                <span className={`gp-kpi-delta ${stats.occupancyDelta >= 0 ? "up" : "down"}`}>
+                  <TrendingUp
+                    style={{
+                      width: 11,
+                      height: 11,
+                      transform: stats.occupancyDelta >= 0 ? undefined : "scaleY(-1)",
+                    }}
+                  />
+                  {stats.occupancyDelta >= 0 ? "+" : ""}
+                  {stats.occupancyDelta}pp
+                </span>
+              )}
+            </div>
+            <div className="gp-kpi-val">{Math.round(stats.occupancy * 100)}%</div>
+            <div className="gp-kpi-lbl">Ocupación</div>
+          </div>
         </div>
-      </div>
 
-      {/* Atajos rápidos + Actividad reciente */}
-      <div className="gp-2col-always">
-        <div className="gp-card" style={{ overflow: "hidden" }}>
+        {/* ATAJOS RÁPIDOS */}
+        <div className="gp-dash-shortcuts gp-card" style={{ overflow: "hidden" }}>
           <div className="gp-card-h">
             <h3>Atajos rápidos</h3>
           </div>
@@ -721,10 +593,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
               >
                 <span
                   className="gp-quick-ic"
-                  style={{
-                    background: `color-mix(in oklab, ${a.color}, white 86%)`,
-                    color: a.color,
-                  }}
+                  style={{ background: `color-mix(in oklab, ${a.color}, white 86%)`, color: a.color }}
                 >
                   {a.icon}
                 </span>
@@ -734,7 +603,8 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
           </div>
         </div>
 
-        <div className="gp-card" style={{ overflow: "hidden" }}>
+        {/* ACTIVIDAD RECIENTE */}
+        <div className="gp-dash-activity gp-card" style={{ overflow: "hidden" }}>
           <div className="gp-card-h" style={{ justifyContent: "space-between" }}>
             <h3>Actividad reciente</h3>
             <button className="gp-btn ghost sm" onClick={navActivity} style={{ fontSize: 12 }}>
@@ -748,14 +618,8 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
                 return (
                   <div className="gp-row" key={item.id}>
                     <span
+                      className="gp-act-ic"
                       style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 11,
-                        flex: "none",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
                         background: `color-mix(in oklab, ${tone.color}, white 88%)`,
                         color: tone.color,
                       }}
@@ -764,19 +628,10 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div
-                        style={{ fontSize: 13.5, fontWeight: 600, color: "var(--gp-ink)" }}
+                        className="gp-act-text"
                         dangerouslySetInnerHTML={{ __html: item.text }}
                       />
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: "var(--gp-muted-c)",
-                          fontWeight: 600,
-                          marginTop: 1,
-                        }}
-                      >
-                        {item.meta}
-                      </div>
+                      <div className="gp-act-meta">{item.meta}</div>
                     </div>
                   </div>
                 );
@@ -785,6 +640,36 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
           ) : (
             <div style={{ padding: "20px 18px", fontSize: 13, color: "var(--gp-muted-c)" }}>
               Sin actividad reciente
+            </div>
+          )}
+        </div>
+
+        {/* EQUIPO HOY */}
+        <div className="gp-dash-team gp-card">
+          <div className="gp-card-h">
+            <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Users style={{ width: 15, height: 15 }} />
+              Equipo hoy
+            </h3>
+          </div>
+          {team.length > 0 ? (
+            <div className="gp-team-list">
+              {team.map((member) => (
+                <div key={member.id} className="gp-team-row">
+                  <span className="gp-team-avatar" style={{ background: member.color }}>
+                    {member.name.charAt(0).toUpperCase()}
+                  </span>
+                  <div className="gp-team-info">
+                    <div className="gp-team-name">{member.name.split(" ")[0]}</div>
+                    <div className="gp-team-sub">{member.today} citas hoy</div>
+                  </div>
+                  <span className="gp-badge neutral">{member.week}/sem</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: "16px 18px", fontSize: 13, color: "var(--gp-muted-c)" }}>
+              Sin equipo configurado
             </div>
           )}
         </div>
