@@ -126,14 +126,20 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   difusion: { section: "marketing", subTab: "difusion" },
   broadcast: { section: "marketing", subTab: "difusion" },
   // Negocio
+  negocio: { section: "negocio", subTab: "resumen" },
   team: { section: "negocio", subTab: "equipo" },
   equipo: { section: "negocio", subTab: "equipo" },
   stylists: { section: "negocio", subTab: "equipo" },
-  hours: { section: "negocio", subTab: "equipo" },
-  reports: { section: "negocio", subTab: "informes" },
-  informes: { section: "negocio", subTab: "informes" },
-  stats: { section: "negocio", subTab: "informes" },
-  goals: { section: "negocio", subTab: "informes" },
+  hours: { section: "negocio", subTab: "horarios" },
+  horarios: { section: "negocio", subTab: "horarios" },
+  reports: { section: "negocio", subTab: "objetivos" },
+  informes: { section: "negocio", subTab: "estadisticas" },
+  stats: { section: "negocio", subTab: "estadisticas" },
+  estadisticas: { section: "negocio", subTab: "estadisticas" },
+  goals: { section: "negocio", subTab: "objetivos" },
+  objetivos: { section: "negocio", subTab: "objetivos" },
+  commissions: { section: "negocio", subTab: "equipo" },
+  comisiones: { section: "negocio", subTab: "equipo" },
   settings: { section: "ajustes", subTab: "general" },
   ajustes: { section: "ajustes", subTab: "general" },
 };
@@ -454,6 +460,7 @@ export default function TenantAdmin() {
             tenantId={tenant.id}
             tenantSlug={tenant.slug}
             subTab={activeSubTab}
+            onSubTabChange={(t) => goToSection("negocio", t)}
           />
         );
       case "ajustes":

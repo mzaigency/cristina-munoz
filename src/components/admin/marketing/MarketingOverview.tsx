@@ -9,6 +9,9 @@ import {
   Users,
   ArrowRight,
   Loader2,
+  Eye,
+  MousePointerClick,
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -47,6 +50,13 @@ interface TopReview {
 
 const ZERO_DIST = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as const;
 
+interface FeedMetrics {
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+}
+
 export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewProps) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<OverviewStats>({
@@ -61,6 +71,12 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
   });
   const [topPosts, setTopPosts] = useState<TopPost[]>([]);
   const [topReviews, setTopReviews] = useState<TopReview[]>([]);
+  const [feed, setFeed] = useState<FeedMetrics>({
+    impressions: 0,
+    clicks: 0,
+    conversions: 0,
+    ctr: 0,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -75,6 +91,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
         promosRes,
         topPostsRes,
         topReviewsRes,
+        feedRes,
       ] = await Promise.all([
         supabase
           .from("posts")
@@ -109,6 +126,10 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
           .gte("rating", 4)
           .order("created_at", { ascending: false })
           .limit(3),
+        supabase.rpc("get_tenant_feed_section_metrics" as never, {
+          p_tenant_id: tenantId,
+          days: 7,
+        }),
       ]);
 
       if (cancelled) return;
@@ -150,6 +171,23 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
       });
       setTopPosts(((topPostsRes.data as TopPost[] | null) ?? []).filter((p) => (p.likes_count ?? 0) > 0).slice(0, 6));
       setTopReviews((topReviewsRes.data as TopReview[] | null) ?? []);
+
+      const feedRows = (feedRes.data ?? []) as Array<{
+        impressions: number | string;
+        clicks: number | string;
+        conversions: number | string;
+      }>;
+      const feedTotals = feedRows.reduce(
+        (acc, r) => ({
+          impressions: acc.impressions + Number(r.impressions ?? 0),
+          clicks: acc.clicks + Number(r.clicks ?? 0),
+          conversions: acc.conversions + Number(r.conversions ?? 0),
+        }),
+        { impressions: 0, clicks: 0, conversions: 0 }
+      );
+      const ctr = feedTotals.impressions > 0 ? (feedTotals.clicks / feedTotals.impressions) * 100 : 0;
+      setFeed({ ...feedTotals, ctr });
+
       setLoading(false);
     };
 
@@ -304,6 +342,57 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
                 </span>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Feed analytics 7d */}
+      {feed.impressions > 0 && (
+        <section className="gp-card pad gp-mkt-card">
+          <div className="gp-mkt-card-h">
+            <div>
+              <h3>Tráfico del salón (7 días)</h3>
+              <p>Métricas del feed público</p>
+            </div>
+            <Sparkles style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
+          </div>
+          <div className="gp-mkt-quick">
+            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+                <Eye />
+              </div>
+              <div>
+                <strong>{feed.impressions.toLocaleString("es-ES")}</strong>
+                <span>Impresiones</span>
+              </div>
+            </div>
+            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
+                <MousePointerClick />
+              </div>
+              <div>
+                <strong>{feed.clicks.toLocaleString("es-ES")}</strong>
+                <span>Clicks</span>
+              </div>
+            </div>
+            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
+                <TrendingUp />
+              </div>
+              <div>
+                <strong>{feed.ctr.toFixed(1)}%</strong>
+                <span>CTR</span>
+              </div>
+            </div>
+            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-mkt-rose), white 80%)", color: "var(--gp-mkt-rose)" }}>
+                <Heart />
+              </div>
+              <div>
+                <strong>{feed.conversions.toLocaleString("es-ES")}</strong>
+                <span>Conversiones</span>
+              </div>
+            </div>
           </div>
         </section>
       )}
