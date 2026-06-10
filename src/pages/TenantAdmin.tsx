@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Plus,
   Settings,
+  Lock,
 } from "lucide-react";
 import { AdminHelpMenu } from "@/components/admin/layout/AdminHelpMenu";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,6 +32,7 @@ import { NotifBadge } from "@/components/admin/layout/NotifBadge";
 import { AdminAccountMenu } from "@/components/admin/layout/AdminAccountMenu";
 import { AdminCommandPalette } from "@/components/admin/layout/AdminCommandPalette";
 import { AdminSubNav, ADMIN_SUB_NAV, getDefaultSubTab, type AdminSection } from "@/components/admin/layout/AdminSubNav";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { useUnseenOrders } from "@/hooks/useUnseenOrders";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -181,6 +183,7 @@ export default function TenantAdmin() {
   } = useAdminNotifications(tenant?.id || null);
 
   const unseenOrders = useUnseenOrders(tenant?.id || "");
+  const { hasFeature } = usePlanLimits(tenant?.id || "");
   const [waitlistCount, setWaitlistCount] = useState(0);
 
   useEffect(() => {
@@ -461,6 +464,7 @@ export default function TenantAdmin() {
             tenantSlug={tenant.slug}
             subTab={activeSubTab}
             onSubTabChange={(t) => goToSection("negocio", t)}
+            hideTabs
           />
         );
       case "ajustes":
@@ -574,15 +578,19 @@ export default function TenantAdmin() {
                       const subBadge = sub.badgeKey
                         ? subNavCounts[sub.badgeKey as keyof typeof subNavCounts] || 0
                         : 0;
+                      const locked = sub.requiredFeature ? !hasFeature(sub.requiredFeature) : false;
                       return (
                         <button
                           key={sub.value}
-                          className={`gp-subitem${activeSubTab === sub.value ? " on" : ""}`}
-                          onClick={() => goToSection(item.value as SectionValue, sub.value)}
+                          className={`gp-subitem${activeSubTab === sub.value ? " on" : ""}${locked ? " locked" : ""}`}
+                          onClick={() => { if (!locked) goToSection(item.value as SectionValue, sub.value); }}
                         >
-                          <span className="gp-subdot" />
+                          {locked ? <Lock style={{ width: 11, height: 11, flexShrink: 0 }} /> : <span className="gp-subdot" />}
                           {sub.label}
-                          {subBadge > 0 && (
+                          {locked && (
+                            <span className="gp-subitem-badge" style={{ color: "var(--gp-warn)", marginLeft: "auto" }}>Pro</span>
+                          )}
+                          {subBadge > 0 && !locked && (
                             <span className="gp-subitem-badge">{subBadge}</span>
                           )}
                         </button>

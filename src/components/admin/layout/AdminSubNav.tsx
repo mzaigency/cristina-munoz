@@ -21,6 +21,8 @@ import {
   Receipt,
   ClipboardList,
   Lock,
+  Target,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -73,14 +75,19 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
     { value: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages" },
   ],
   marketing: [
+    { value: "resumen", label: "Resumen", icon: LayoutDashboard },
     { value: "posts", label: "Posts", icon: ImagePlus },
     { value: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions" },
     { value: "resenas", label: "Reseñas", icon: Star, badgeKey: "reviews" },
+    { value: "difusion", label: "Difusión", icon: Megaphone },
     { value: "qr", label: "Tarjetas QR", icon: QrCode },
   ],
   negocio: [
+    { value: "resumen", label: "Resumen", icon: LayoutDashboard },
     { value: "equipo", label: "Equipo", icon: Users },
-    { value: "informes", label: "Informes", icon: BarChart3 },
+    { value: "horarios", label: "Horarios", icon: Clock },
+    { value: "estadisticas", label: "Estadísticas", icon: BarChart3, requiredFeature: "advanced_analytics" },
+    { value: "objetivos", label: "Objetivos", icon: Target, requiredFeature: "monthly_goals" },
   ],
   ajustes: [
     { value: "general", label: "General", icon: Settings },

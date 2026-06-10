@@ -1438,6 +1438,8 @@
 .gp-subitem.on { color: var(--gp-accent-ink); font-weight: 700; }
 .gp-subdot { width: 5px; height: 5px; border-radius: 50%; background: var(--gp-line); flex: none; transition: .15s; }
 .gp-subitem.on .gp-subdot { background: var(--gp-accent); transform: scale(1.4); }
+.gp-subitem.locked { opacity: .55; cursor: not-allowed; }
+.gp-subitem.locked:hover { background: none; color: var(--gp-muted-c); }
 .gp-subitem-badge { margin-left: auto; font-size: 10.5px; font-weight: 800; color: #ef4444; }
 
 .gp-side-foot { padding: 10px 12px 14px; border-top: 1px solid var(--gp-line); }

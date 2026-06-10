@@ -21,6 +21,7 @@ interface NegocioSectionProps {
   tenantSlug: string;
   subTab?: string;
   onSubTabChange?: (subTab: string) => void;
+  hideTabs?: boolean;
 }
 
 type NegocioTab = "resumen" | "equipo" | "horarios" | "estadisticas" | "objetivos";
@@ -33,7 +34,7 @@ interface TabConfig {
   requiredPlan?: string;
 }
 
-const NegocioSection = ({ tenantId, subTab, onSubTabChange }: NegocioSectionProps) => {
+const NegocioSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: NegocioSectionProps) => {
   const validTabs: NegocioTab[] = ["resumen", "equipo", "horarios", "estadisticas", "objetivos"];
   const [internalTab, setInternalTab] = useState<NegocioTab>("resumen");
   const activeTab: NegocioTab = validTabs.includes(subTab as NegocioTab)
@@ -83,28 +84,30 @@ const NegocioSection = ({ tenantId, subTab, onSubTabChange }: NegocioSectionProp
 
   return (
     <div className="gp-mkt">
-      <div className="gp-mkt-tabs">
-        {tabs.map((tab) => {
-          const locked = isTabLocked(tab);
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              className={`gp-mkt-tab${activeTab === tab.id ? " on" : ""}${locked ? " locked" : ""}`}
-              onClick={() => handleTabChange(tab.id)}
-              type="button"
-            >
-              {locked ? <Lock /> : <Icon />}
-              <span>{tab.label}</span>
-              {locked && (
-                <span className="gp-mkt-tab-pro">
-                  {tab.requiredPlan === "business" ? "Business" : "Pro"}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {!hideTabs && (
+        <div className="gp-mkt-tabs">
+          {tabs.map((tab) => {
+            const locked = isTabLocked(tab);
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                className={`gp-mkt-tab${activeTab === tab.id ? " on" : ""}${locked ? " locked" : ""}`}
+                onClick={() => handleTabChange(tab.id)}
+                type="button"
+              >
+                {locked ? <Lock /> : <Icon />}
+                <span>{tab.label}</span>
+                {locked && (
+                  <span className="gp-mkt-tab-pro">
+                    {tab.requiredPlan === "business" ? "Business" : "Pro"}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="gp-mkt-body">
         {activeTab === "resumen" && (
