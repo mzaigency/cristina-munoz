@@ -119,10 +119,12 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   // Promos now in Marketing
   promos: { section: "marketing", subTab: "promos" },
   // Marketing
-  marketing: { section: "marketing" },
+  marketing: { section: "marketing", subTab: "resumen" },
   posts: { section: "marketing", subTab: "posts" },
   qr: { section: "marketing", subTab: "qr" },
-  whatsapp: { section: "marketing", subTab: "posts" },
+  whatsapp: { section: "marketing", subTab: "difusion" },
+  difusion: { section: "marketing", subTab: "difusion" },
+  broadcast: { section: "marketing", subTab: "difusion" },
   // Negocio
   team: { section: "negocio", subTab: "equipo" },
   equipo: { section: "negocio", subTab: "equipo" },

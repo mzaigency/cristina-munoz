@@ -1,11 +1,23 @@
-import { useState, useEffect } from "react";
-import { ImagePlus, Percent, Star, QrCode, Plus, Lock } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  LayoutDashboard,
+  ImagePlus,
+  Percent,
+  Star,
+  QrCode,
+  Plus,
+  Lock,
+  Megaphone,
+  Filter,
+} from "lucide-react";
 import { QRCardGenerator } from "@/components/admin/content/QRCardGenerator";
 import { PostCreator } from "@/components/social/PostCreator";
 import { PostGrid } from "@/components/social/PostGrid";
 import { PromotionsManager } from "../PromotionsManager";
 import { ReviewsManager } from "../ReviewsManager";
 import { LockedFeature } from "../LockedFeature";
+import { MarketingOverview } from "../marketing/MarketingOverview";
+import { MarketingBroadcast } from "../marketing/MarketingBroadcast";
 import { usePosts } from "@/hooks/usePosts";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlanLimits, type PlanFeature } from "@/hooks/usePlanLimits";
@@ -18,7 +30,7 @@ interface MarketingSectionProps {
   hideTabs?: boolean;
 }
 
-type MarketingTab = "posts" | "promos" | "resenas" | "qr";
+type MarketingTab = "resumen" | "posts" | "promos" | "resenas" | "difusion" | "qr";
 
 interface TabConfig {
   id: MarketingTab;
@@ -28,18 +40,42 @@ interface TabConfig {
   requiredFeature?: PlanFeature;
 }
 
-const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTabs }: MarketingSectionProps) => {
-  const [internalTab, setInternalTab] = useState<MarketingTab>("posts");
-  const validTabs: MarketingTab[] = ["posts", "promos", "resenas", "qr"];
+const POST_CATEGORIES = [
+  { id: "all", label: "Todas" },
+  { id: "corte", label: "Corte" },
+  { id: "color", label: "Color" },
+  { id: "peinado", label: "Peinado" },
+  { id: "tratamiento", label: "Tratamiento" },
+  { id: "uñas", label: "Uñas" },
+  { id: "maquillaje", label: "Maquillaje" },
+  { id: "otro", label: "Otro" },
+];
+
+const MarketingSection = ({
+  tenantId,
+  tenantSlug,
+  subTab,
+  onSubTabChange,
+  hideTabs,
+}: MarketingSectionProps) => {
+  const validTabs: MarketingTab[] = ["resumen", "posts", "promos", "resenas", "difusion", "qr"];
+  const [internalTab, setInternalTab] = useState<MarketingTab>("resumen");
   const activeTab: MarketingTab = validTabs.includes(subTab as MarketingTab)
     ? (subTab as MarketingTab)
     : internalTab;
+
   const setActiveTab = (t: MarketingTab) => {
     if (onSubTabChange) onSubTabChange(t);
     else setInternalTab(t);
   };
+
   const [postCreatorOpen, setPostCreatorOpen] = useState(false);
   const [pendingReviews, setPendingReviews] = useState(0);
+  const [activePromos, setActivePromos] = useState(0);
+  const [tenantName, setTenantName] = useState<string>("");
+  const [postFilter, setPostFilter] = useState<string>("all");
+  const [postSort, setPostSort] = useState<"recent" | "popular">("recent");
+
   const { tenantPosts, deletePost, refetchTenantPosts } = usePosts(tenantId);
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
   const promosLocked = !hasFeature("promotions");
@@ -54,21 +90,44 @@ const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTa
   }, [subTab]);
 
   useEffect(() => {
-    const fetchPendingReviews = async () => {
-      const { count } = await supabase
-        .from("reviews")
-        .select("id", { count: "exact", head: true })
-        .eq("tenant_id", tenantId)
-        .eq("approved", false);
-      setPendingReviews(count || 0);
+    let cancelled = false;
+    const fetchCounts = async () => {
+      const [revRes, promoRes, tenantRes] = await Promise.all([
+        supabase
+          .from("reviews")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", tenantId)
+          .eq("approved", false),
+        supabase
+          .from("promotions" as never)
+          .select("id, is_active, valid_until")
+          .eq("tenant_id", tenantId),
+        supabase.from("tenants").select("name").eq("id", tenantId).single(),
+      ]);
+      if (cancelled) return;
+      setPendingReviews(revRes.count ?? 0);
+      const now = new Date();
+      const promos = (promoRes.data ?? []) as Array<{ is_active: boolean | null; valid_until: string | null }>;
+      const active = promos.filter((p) => {
+        if (!p.is_active) return false;
+        if (p.valid_until && new Date(p.valid_until) < now) return false;
+        return true;
+      }).length;
+      setActivePromos(active);
+      setTenantName(tenantRes.data?.name ?? "");
     };
-    fetchPendingReviews();
+    fetchCounts();
+    return () => {
+      cancelled = true;
+    };
   }, [tenantId]);
 
   const tabs: TabConfig[] = [
+    { id: "resumen", label: "Resumen", icon: LayoutDashboard, badge: 0 },
     { id: "posts", label: "Posts", icon: ImagePlus, badge: 0 },
-    { id: "promos", label: "Promos", icon: Percent, badge: 0, requiredFeature: "promotions" },
+    { id: "promos", label: "Promos", icon: Percent, badge: activePromos, requiredFeature: "promotions" },
     { id: "resenas", label: "Reseñas", icon: Star, badge: pendingReviews },
+    { id: "difusion", label: "Difusión", icon: Megaphone, badge: 0 },
     { id: "qr", label: "Tarjetas QR", icon: QrCode, badge: 0 },
   ];
 
@@ -80,28 +139,45 @@ const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTa
     if (tab && !isTabLocked(tab)) setActiveTab(id);
   };
 
+  const sortedPosts = useMemo(() => {
+    const arr = [...(tenantPosts || [])];
+    if (postFilter !== "all") {
+      const f = postFilter;
+      const filtered = arr.filter((p) => (p.category ?? "otro") === f);
+      return postSort === "popular"
+        ? filtered.sort((a, b) => b.likes_count - a.likes_count)
+        : filtered;
+    }
+    return postSort === "popular"
+      ? arr.sort((a, b) => b.likes_count - a.likes_count)
+      : arr;
+  }, [tenantPosts, postFilter, postSort]);
+
+  const postStats = useMemo(() => {
+    const total = tenantPosts?.length ?? 0;
+    const likes = (tenantPosts ?? []).reduce((acc, p) => acc + p.likes_count, 0);
+    return { total, likes };
+  }, [tenantPosts]);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+    <div className="gp-mkt">
       {!hideTabs && (
-        <div className="gp-subtabs">
+        <div className="gp-mkt-tabs">
           {tabs.map((tab) => {
             const locked = isTabLocked(tab);
+            const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
-                className={`gp-subtab${activeTab === tab.id ? " on" : ""}`}
+                className={`gp-mkt-tab${activeTab === tab.id ? " on" : ""}${locked ? " locked" : ""}`}
                 onClick={() => handleTabChange(tab.id)}
-                style={locked ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                type="button"
               >
-                {locked ? <Lock style={{ width: 11, height: 11 }} /> : <tab.icon style={{ width: 12, height: 12 }} />}
-                {tab.label}
-                {locked && (
-                  <span style={{ fontSize: 9, fontWeight: 800, color: "var(--gp-warn)", background: "var(--gp-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>
-                    Pro
-                  </span>
-                )}
+                {locked ? <Lock /> : <Icon />}
+                <span>{tab.label}</span>
+                {locked && <span className="gp-mkt-tab-pro">Pro</span>}
                 {!locked && tab.badge > 0 && (
-                  <span className="gp-subtab-count">{tab.badge > 99 ? "99+" : tab.badge}</span>
+                  <span className="gp-mkt-tab-badge">{tab.badge > 99 ? "99+" : tab.badge}</span>
                 )}
               </button>
             );
@@ -109,41 +185,89 @@ const MarketingSection = ({ tenantId, tenantSlug, subTab, onSubTabChange, hideTa
         </div>
       )}
 
-      {activeTab === "posts" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button className="gp-btn sm primary" onClick={() => setPostCreatorOpen(true)}>
-              <Plus style={{ width: 13, height: 13 }} />
-              Nuevo Post
-            </button>
+      <div className="gp-mkt-body">
+        {activeTab === "resumen" && (
+          <MarketingOverview tenantId={tenantId} onNavigate={(t) => handleTabChange(t as MarketingTab)} />
+        )}
+
+        {activeTab === "posts" && (
+          <div className="gp-fade gp-mkt-posts">
+            <div className="gp-page-h">
+              <div>
+                <h2>Posts</h2>
+                <p>{postStats.total} publicaciones · {postStats.likes} likes</p>
+              </div>
+              <div className="gp-page-actions">
+                <button className="gp-btn primary sm" onClick={() => setPostCreatorOpen(true)}>
+                  <Plus style={{ width: 13, height: 13 }} /> Nuevo Post
+                </button>
+              </div>
+            </div>
+
+            <div className="gp-mkt-posts-toolbar">
+              <div className="gp-mkt-chip-row">
+                {POST_CATEGORIES.map((c) => (
+                  <button
+                    key={c.id}
+                    className={`gp-mkt-chip${postFilter === c.id ? " on" : ""}`}
+                    onClick={() => setPostFilter(c.id)}
+                    type="button"
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+              <div className="gp-mkt-chip-row">
+                <Filter style={{ width: 13, height: 13, color: "var(--gp-muted-c)" }} />
+                <button
+                  className={`gp-mkt-chip${postSort === "recent" ? " on" : ""}`}
+                  onClick={() => setPostSort("recent")}
+                  type="button"
+                >
+                  Recientes
+                </button>
+                <button
+                  className={`gp-mkt-chip${postSort === "popular" ? " on" : ""}`}
+                  onClick={() => setPostSort("popular")}
+                  type="button"
+                >
+                  Más likes
+                </button>
+              </div>
+            </div>
+
+            <PostGrid posts={sortedPosts} isAdmin onDelete={(postId) => deletePost(postId)} />
+            <PostCreator
+              isOpen={postCreatorOpen}
+              onClose={() => {
+                setPostCreatorOpen(false);
+                refetchTenantPosts();
+              }}
+            />
           </div>
-          <PostGrid
-            posts={tenantPosts || []}
-            isAdmin
-            onDelete={(postId) => deletePost(postId)}
-          />
-          <PostCreator
-            isOpen={postCreatorOpen}
-            onClose={() => { setPostCreatorOpen(false); refetchTenantPosts(); }}
-          />
-        </div>
-      )}
+        )}
 
-      {activeTab === "promos" && (
-        promosLocked ? (
-          <LockedFeature featureName="Promociones" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
-        ) : (
-          <PromotionsManager tenantId={tenantId} />
-        )
-      )}
+        {activeTab === "promos" &&
+          (promosLocked ? (
+            <LockedFeature
+              featureName="Promociones"
+              currentPlan={planSlug}
+              requiredPlan="pro"
+              tenantId={tenantId}
+              variant="inline"
+            />
+          ) : (
+            <PromotionsManager tenantId={tenantId} />
+          ))}
 
-      {activeTab === "resenas" && (
-        <ReviewsManager tenantId={tenantId} />
-      )}
+        {activeTab === "resenas" && <ReviewsManager tenantId={tenantId} />}
 
-      {activeTab === "qr" && (
-        <QRCardGenerator tenantId={tenantId} tenantSlug={tenantSlug} />
-      )}
+        {activeTab === "difusion" && (
+          <MarketingBroadcast tenantId={tenantId} tenantSlug={tenantSlug} tenantName={tenantName} />
+        )}
+
+        {activeTab === "qr" && <QRCardGenerator tenantId={tenantId} tenantSlug={tenantSlug} />}
+      </div>
     </div>
   );
 };
