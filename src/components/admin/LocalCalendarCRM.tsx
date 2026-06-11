@@ -126,6 +126,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const [paySheetBooking, setPaySheetBooking] = useState<LocalBooking | null>(null);
   const [payMethod, setPayMethod] = useState<"cash" | "card">("cash");
   const [paying, setPaying] = useState(false);
+  const [customTotal, setCustomTotal] = useState<string>("");
+  const [editingTotal, setEditingTotal] = useState(false);
   const isMobile = useIsMobile();
 
   // Quick booking sheet (click on empty slot)
@@ -392,7 +394,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No autenticado");
 
-      const total = computeBookingTotal(paySheetBooking);
+      const parsedCustom = parseFloat(customTotal);
+      const total = customTotal !== "" && !isNaN(parsedCustom) && parsedCustom >= 0
+        ? parsedCustom
+        : computeBookingTotal(paySheetBooking);
       const services = Array.isArray(paySheetBooking.services)
         ? (paySheetBooking.services as any[]).map((s: any) => ({
             id: s?.id ?? null,
@@ -2071,6 +2076,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                     onClick={e => {
                       e.stopPropagation();
                       setPayMethod("cash");
+                      setCustomTotal("");
+                      setEditingTotal(false);
                       setPaySheetBooking(detailBooking);
                       setDetailBooking(null);
                     }}
@@ -2095,6 +2102,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       {/* Quick payment sheet */}
       {paySheetBooking && (() => {
         const total = computeBookingTotal(paySheetBooking);
+        const parsedCustom = parseFloat(customTotal);
+        const effectiveTotal = customTotal !== "" && !isNaN(parsedCustom) && parsedCustom >= 0
+          ? parsedCustom
+          : total;
         const svcs = Array.isArray(paySheetBooking.services) ? (paySheetBooking.services as any[]) : [];
         return (
           <div className="ag-detail-wrap" onClick={() => !paying && setPaySheetBooking(null)}>
@@ -2109,12 +2120,68 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 Cobro rápido
               </div>
 
-              {/* Total */}
+              {/* Total (editable) */}
               <div style={{ marginBottom: 18 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ag-muted)", marginBottom: 2 }}>Total a cobrar</div>
-                <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-.04em", color: "var(--ag-ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
-                  {total.toFixed(2)}<span style={{ fontSize: 24, color: "var(--ag-muted)", marginLeft: 4 }}>€</span>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ag-muted)", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                  Total a cobrar
+                  {!editingTotal && !paying && (
+                    <button
+                      onClick={() => { setCustomTotal(effectiveTotal.toFixed(2)); setEditingTotal(true); }}
+                      style={{ border: "none", background: "var(--ag-chip, var(--gp-chip))", padding: "3px 7px", cursor: "pointer", color: "var(--ag-muted)", display: "inline-flex", alignItems: "center", gap: 4, borderRadius: 6, fontSize: 11, fontWeight: 700, fontFamily: "inherit" }}
+                      title="Modificar importe"
+                    >
+                      <Pencil style={{ width: 10, height: 10 }} />
+                      Modificar
+                    </button>
+                  )}
                 </div>
+                {editingTotal ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      autoFocus
+                      value={customTotal}
+                      onChange={e => setCustomTotal(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") setEditingTotal(false);
+                        if (e.key === "Escape") { setCustomTotal(""); setEditingTotal(false); }
+                      }}
+                      style={{
+                        fontSize: 36, fontWeight: 800, letterSpacing: "-.04em", color: "var(--ag-ink)",
+                        lineHeight: 1, fontVariantNumeric: "tabular-nums", border: "none",
+                        borderBottom: "2px solid var(--gp-accent)", outline: "none",
+                        background: "transparent", width: "130px", fontFamily: "inherit", padding: "2px 0",
+                      }}
+                    />
+                    <span style={{ fontSize: 24, color: "var(--ag-muted)" }}>€</span>
+                    <button
+                      onClick={() => setEditingTotal(false)}
+                      style={{ border: "none", background: "var(--gp-ok, #22c55e)", color: "#fff", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}
+                    >
+                      <Check style={{ width: 14, height: 14 }} />
+                    </button>
+                    <button
+                      onClick={() => { setCustomTotal(""); setEditingTotal(false); }}
+                      style={{ border: "1px solid var(--ag-line)", background: "none", color: "var(--ag-muted)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}
+                    >
+                      <X style={{ width: 14, height: 14 }} />
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 0 }}>
+                    <span style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-.04em", color: "var(--ag-ink)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+                      {effectiveTotal.toFixed(2)}
+                    </span>
+                    <span style={{ fontSize: 24, color: "var(--ag-muted)", marginLeft: 4 }}>€</span>
+                    {customTotal !== "" && Math.abs(effectiveTotal - total) > 0.001 && (
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ag-muted)", marginLeft: 10, textDecoration: "line-through", alignSelf: "center" }}>
+                        {total.toFixed(2)}€
+                      </span>
+                    )}
+                  </div>
+                )}
                 <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ag-muted)", marginTop: 4 }}>
                   {paySheetBooking.customer_name}
                 </div>
@@ -2158,7 +2225,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 className="ag-detail-action primary"
                 style={{ width: "100%", padding: "13px 16px", fontSize: 15 }}
                 onClick={handleQuickCharge}
-                disabled={paying || total <= 0}
+                disabled={paying || effectiveTotal <= 0}
               >
                 {paying ? (
                   <>
@@ -2168,7 +2235,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 ) : (
                   <>
                     <Check style={{ width: 16, height: 16 }} />
-                    Confirmar cobro · {total.toFixed(2)}€
+                    Confirmar cobro · {effectiveTotal.toFixed(2)}€
                   </>
                 )}
               </button>
