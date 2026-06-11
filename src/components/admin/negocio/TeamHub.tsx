@@ -79,13 +79,13 @@ export function TeamHub({ tenantId }: TeamHubProps) {
         .eq("tenant_id", tenantId)
         .gte("Fecha", format(monthStart, "yyyy-MM-dd"))
         .lte("Fecha", format(monthEnd, "yyyy-MM-dd")),
-      supabase
-        .from("reviews")
-        .select("rating, stylist_id" as never)
+      (supabase
+        .from("reviews") as any)
+        .select("rating, stylist_id")
         .eq("tenant_id", tenantId)
         .eq("approved", true),
       supabase
-        .from("stylist_commissions" as never)
+        .from("stylist_commissions")
         .select("stylist_id, commission_percentage, commission_type")
         .eq("tenant_id", tenantId),
     ]);

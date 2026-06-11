@@ -109,7 +109,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
           .eq("tenant_id", tenantId)
           .eq("approved", false),
         supabase
-          .from("promotions" as never)
+          .from("promotions")
           .select("id, uses_count, is_active, valid_until"),
         supabase
           .from("posts")
@@ -126,7 +126,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
           .gte("rating", 4)
           .order("created_at", { ascending: false })
           .limit(3),
-        supabase.rpc("get_tenant_feed_section_metrics" as never, {
+        supabase.rpc("get_tenant_feed_section_metrics", {
           p_tenant_id: tenantId,
           days: 7,
         }),
@@ -177,7 +177,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
         clicks: number | string;
         conversions: number | string;
       }>;
-      const feedTotals = feedRows.reduce(
+      const feedTotals = feedRows.reduce<{ impressions: number; clicks: number; conversions: number }>(
         (acc, r) => ({
           impressions: acc.impressions + Number(r.impressions ?? 0),
           clicks: acc.clicks + Number(r.clicks ?? 0),

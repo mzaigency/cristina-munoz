@@ -71,7 +71,7 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
 
     const [goalRes, txRes, bookingsRes, clientsRes, histGoalsRes] = await Promise.all([
       supabase
-        .from("monthly_goals" as never)
+        .from("monthly_goals")
         .select("*")
         .eq("tenant_id", tenantId)
         .eq("month", currentMonth)
@@ -97,7 +97,7 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
         .gte("created_at", subMonths(monthStart, 11).toISOString())
         .lte("created_at", monthEndISO),
       supabase
-        .from("monthly_goals" as never)
+        .from("monthly_goals")
         .select("month, year, revenue_goal")
         .eq("tenant_id", tenantId),
     ]);
@@ -180,7 +180,7 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
     };
     if (goal.id) {
       const { error } = await supabase
-        .from("monthly_goals" as never)
+        .from("monthly_goals")
         .update(payload)
         .eq("id", goal.id);
       setSaving(false);
@@ -190,7 +190,7 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
       }
     } else {
       const { data, error } = await supabase
-        .from("monthly_goals" as never)
+        .from("monthly_goals")
         .insert(payload)
         .select("id")
         .single();

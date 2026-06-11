@@ -46,7 +46,7 @@ interface BookingRow {
   id: string;
   Fecha: string;
   Hora: string;
-  Cliente: string | null;
+  customer_name: string | null;
   services: unknown;
 }
 
@@ -91,7 +91,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       const [stylRes, commRes, txRes, bookingsRes, reviewsRes, recentRes] = await Promise.all([
         supabase.from("tenant_stylists").select("*").eq("id", stylistId).single(),
         supabase
-          .from("stylist_commissions" as never)
+          .from("stylist_commissions")
           .select("*")
           .eq("stylist_id", stylistId)
           .maybeSingle(),
@@ -109,15 +109,15 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
           .eq("tenant_id", tenantId)
           .gte("Fecha", format(monthStart, "yyyy-MM-dd"))
           .lte("Fecha", format(monthEnd, "yyyy-MM-dd")),
-        supabase
-          .from("reviews")
-          .select("rating" as never)
+        (supabase
+          .from("reviews") as any)
+          .select("rating")
           .eq("tenant_id", tenantId)
-          .eq("stylist_id" as never, stylistId)
+          .eq("stylist_id", stylistId)
           .eq("approved", true),
         supabase
           .from("bookings")
-          .select("id, Fecha, Hora, Cliente, services")
+          .select("id, Fecha, Hora, customer_name, services")
           .eq("tenant_id", tenantId)
           .order("Fecha", { ascending: false })
           .order("Hora", { ascending: false })
@@ -209,7 +209,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
     };
     if (commission.id) {
       const { error } = await supabase
-        .from("stylist_commissions" as never)
+        .from("stylist_commissions")
         .update(payload)
         .eq("id", commission.id);
       setSaving(false);
@@ -219,7 +219,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       }
     } else {
       const { data, error } = await supabase
-        .from("stylist_commissions" as never)
+        .from("stylist_commissions")
         .insert(payload)
         .select("id")
         .single();
@@ -361,7 +361,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                           <span>{b.Hora?.slice(0, 5)}</span>
                         </div>
                         <div className="gp-neg-recent-info">
-                          <strong>{b.Cliente ?? "Cliente"}</strong>
+                          <strong>{b.customer_name ?? "Cliente"}</strong>
                           {svc && <span>{svc}</span>}
                         </div>
                       </div>

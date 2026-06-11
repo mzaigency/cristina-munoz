@@ -132,7 +132,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
   const fetchPromotions = async () => {
     try {
       const { data, error } = await supabase
-        .from("promotions" as never)
+        .from("promotions")
         .select("*")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
@@ -244,13 +244,13 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
       };
       if (editingPromotion) {
         const { error } = await supabase
-          .from("promotions" as never)
+          .from("promotions")
           .update(payload)
           .eq("id", editingPromotion.id);
         if (error) throw error;
         toast({ title: "Promoción actualizada" });
       } else {
-        const { error } = await supabase.from("promotions" as never).insert(payload);
+        const { error } = await supabase.from("promotions").insert(payload);
         if (error) throw error;
         toast({ title: "Promoción creada" });
       }
@@ -267,7 +267,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar esta promoción?")) return;
     try {
-      const { error } = await supabase.from("promotions" as never).delete().eq("id", id);
+      const { error } = await supabase.from("promotions").delete().eq("id", id);
       if (error) throw error;
       toast({ title: "Promoción eliminada" });
       fetchPromotions();
@@ -280,7 +280,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
   const toggleActive = async (promo: Promotion) => {
     try {
       const { error } = await supabase
-        .from("promotions" as never)
+        .from("promotions")
         .update({ is_active: !promo.is_active })
         .eq("id", promo.id);
       if (error) throw error;

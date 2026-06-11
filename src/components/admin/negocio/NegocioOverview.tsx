@@ -92,7 +92,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
           .gte("created_at", monthStartISO)
           .lte("created_at", monthEndISO),
         supabase
-          .from("monthly_goals" as never)
+          .from("monthly_goals")
           .select("revenue_goal")
           .eq("tenant_id", tenantId)
           .eq("month", now.getMonth() + 1)
@@ -104,9 +104,9 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
           .eq("tenant_id", tenantId)
           .gte("Fecha", monthStartDate)
           .lte("Fecha", monthEndDate),
-        supabase
-          .from("reviews")
-          .select("rating, stylist_id" as never)
+        (supabase
+          .from("reviews") as any)
+          .select("rating, stylist_id")
           .eq("tenant_id", tenantId)
           .eq("approved", true),
         supabase
