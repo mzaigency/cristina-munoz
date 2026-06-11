@@ -1321,7 +1321,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
             )}
 
             <div className="ag-gridcard">
-              <div className="ag-scroller" style={{ maxHeight: "66vh" }}>
+              <div className="ag-scroller">
                 <div className="ag-grid" style={{ minWidth: "100%" }}>
 
                   {/* ── Sticky column headers ── */}

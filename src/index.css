@@ -1205,7 +1205,7 @@
 .ag-scroller { overflow: auto; position: relative; scrollbar-width: thin; }
 
 /* ── Column headers ── */
-.ag-head { position: sticky; top: 0; z-index: 6; background: var(--ag-card); border-bottom: 1px solid var(--ag-line); }
+.ag-head { position: sticky; top: var(--gp-topbar-h, 64px); z-index: 6; background: var(--ag-card); border-bottom: 1px solid var(--ag-line); }
 .ag-corner {
   position: sticky; left: 0; z-index: 2; background: var(--ag-card);
   display: flex; align-items: center; padding: 0 0 0 16px;
@@ -1592,6 +1592,7 @@
   .gp-top-crumb { font-size: 9.5px; }
   .gp-new-cita-btn { padding: 9px 13px; font-size: 13px; border-radius: 12px; }
   .gp-subnav-bar { display: block; position: sticky; top: calc(env(safe-area-inset-top) + 56px); z-index: 18; }
+  .ag-head { top: calc(env(safe-area-inset-top) + 56px + 58px); }
   .gp-content { padding: 14px 12px; }
   .gp-hide-sm { display: none !important; }
   .gp-topbar-account-mobile { display: flex; }
