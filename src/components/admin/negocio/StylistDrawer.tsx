@@ -91,7 +91,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       const [stylRes, commRes, txRes, bookingsRes, reviewsRes, recentRes] = await Promise.all([
         supabase.from("tenant_stylists").select("*").eq("id", stylistId).single(),
         supabase
-          .from("stylist_commissions" as never)
+          .from("stylist_commissions")
           .select("*")
           .eq("stylist_id", stylistId)
           .maybeSingle(),
@@ -209,7 +209,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
     };
     if (commission.id) {
       const { error } = await supabase
-        .from("stylist_commissions" as never)
+        .from("stylist_commissions")
         .update(payload)
         .eq("id", commission.id);
       setSaving(false);
@@ -219,7 +219,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       }
     } else {
       const { data, error } = await supabase
-        .from("stylist_commissions" as never)
+        .from("stylist_commissions")
         .insert(payload)
         .select("id")
         .single();

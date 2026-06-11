@@ -92,7 +92,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
           .gte("created_at", monthStartISO)
           .lte("created_at", monthEndISO),
         supabase
-          .from("monthly_goals" as never)
+          .from("monthly_goals")
           .select("revenue_goal")
           .eq("tenant_id", tenantId)
           .eq("month", now.getMonth() + 1)

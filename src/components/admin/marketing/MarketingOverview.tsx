@@ -109,7 +109,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
           .eq("tenant_id", tenantId)
           .eq("approved", false),
         supabase
-          .from("promotions" as never)
+          .from("promotions")
           .select("id, uses_count, is_active, valid_until"),
         supabase
           .from("posts")
