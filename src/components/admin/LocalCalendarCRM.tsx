@@ -1388,7 +1388,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                           <div
                             key={stylist.slug}
                             className={`ag-col${isLast ? " ag-col-last" : ""}`}
-                            style={{ flex: "1 1 0", minWidth: 160, height: totalH, position: "relative" }}
+                            style={{ flex: "1 1 0", minWidth: 160, height: totalH, position: "relative", ["--stylist-c" as string]: stylist.color }}
                             onDragOver={e => handleDragOverColumn(e, stylist.slug, schedule.startHour)}
                             onDragLeave={handleDragLeave}
                             onDrop={e => handleDropOnColumn(e, stylist.slug, schedule.startHour, activeKey)}
@@ -1414,12 +1414,19 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                 setQuickBooking({ date: activeDay, time: timeStr, stylistSlug: stylist.slug });
                               };
                               const slotTop = (hour - schedule.startHour) * 60 * PPM + TOP_PAD;
+                              const hh = String(hour).padStart(2, "0");
                               return (
                                 <div key={hour} style={{ position: "absolute", left: 0, right: 0, top: slotTop, height: 60 * PPM }}>
-                                  <div style={{ position: "absolute", inset: "0 0 50% 0", cursor: "pointer" }}
-                                    onClick={e => { if (!(e.target as HTMLElement).closest("[data-booking-id]")) openQuick(0); }} />
-                                  <div style={{ position: "absolute", inset: "50% 0 0 0", cursor: "pointer", borderTop: "1px dashed oklch(0.955 0.004 265)" }}
-                                    onClick={e => { if (!(e.target as HTMLElement).closest("[data-booking-id]")) openQuick(30); }} />
+                                  <div
+                                    className="ag-slot-half ag-slot-half-top"
+                                    data-time={`${hh}:00`}
+                                    onClick={e => { if (!(e.target as HTMLElement).closest("[data-booking-id]")) openQuick(0); }}
+                                  />
+                                  <div
+                                    className="ag-slot-half ag-slot-half-bot"
+                                    data-time={`${hh}:30`}
+                                    onClick={e => { if (!(e.target as HTMLElement).closest("[data-booking-id]")) openQuick(30); }}
+                                  />
                                 </div>
                               );
                             })}
