@@ -357,18 +357,56 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     const isAlreadyCompleted = booking.notes?.includes("[✓ COMPLETADA]");
 
     try {
-      const updatedNotes = isAlreadyCompleted
-        ? (booking.notes || "").replace("[✓ COMPLETADA] ", "")
-        : `[✓ COMPLETADA] ${booking.notes || ""}`;
+      // Obtener info de servicio compuesto (no está en LocalBooking)
+      const { data: meta } = await supabase
+        .from("bookings")
+        .select("id, compound_part, related_booking_id, notes")
+        .eq("id", booking.id)
+        .maybeSingle();
 
-      const { error } = await supabase.from("bookings").update({ notes: updatedNotes }).eq("id", booking.id);
-      if (error) throw error;
+      // Buscar la cita hermana (parte 1 o 2) si es compuesta
+      const siblingIds: string[] = [];
+      if (meta?.related_booking_id) {
+        siblingIds.push(meta.related_booking_id);
+      } else if (meta?.compound_part) {
+        const { data: sibling } = await supabase
+          .from("bookings")
+          .select("id, notes")
+          .eq("related_booking_id", booking.id)
+          .maybeSingle();
+        if (sibling?.id) siblingIds.push(sibling.id);
+      }
 
-      setBookings(bookings.map((b) => (b.id === booking.id ? { ...b, notes: updatedNotes } : b)));
+      const toggleNotes = (current: string | null) => {
+        const has = current?.includes("[✓ COMPLETADA]");
+        return isAlreadyCompleted
+          ? (current || "").replace("[✓ COMPLETADA] ", "")
+          : has ? (current || "") : `[✓ COMPLETADA] ${current || ""}`;
+      };
+
+      const updatedNotes = toggleNotes(booking.notes);
+
+      const ids = [booking.id, ...siblingIds];
+      // Actualizar cada cita con sus propias notas (puede que difieran)
+      await Promise.all(
+        ids.map(async (id) => {
+          if (id === booking.id) {
+            return supabase.from("bookings").update({ notes: updatedNotes }).eq("id", id);
+          }
+          const { data: row } = await supabase.from("bookings").select("notes").eq("id", id).maybeSingle();
+          return supabase.from("bookings").update({ notes: toggleNotes(row?.notes ?? null) }).eq("id", id);
+        })
+      );
+
+      setBookings(bookings.map((b) =>
+        ids.includes(b.id) ? { ...b, notes: toggleNotes(b.notes) } : b
+      ));
 
       toast({
         title: isAlreadyCompleted ? "Cita desmarcada" : "Cita completada",
-        description: isAlreadyCompleted ? "La cita se ha desmarcado" : "¡Cliente atendido!",
+        description: siblingIds.length
+          ? (isAlreadyCompleted ? "Ambas partes desmarcadas" : "¡Servicio completo atendido!")
+          : (isAlreadyCompleted ? "La cita se ha desmarcado" : "¡Cliente atendido!"),
       });
     } catch (error: any) {
       toast({
