@@ -1871,6 +1871,27 @@
    - Components share .msg-* class namespace only — no Tailwind colour leaks
    ═══════════════════════════════════════════════════════════════ */
 
+/* Token re-declaration: msg-* must work outside .gp-shell too (portal,
+   user-facing route). Mirrors the .gp-shell values so the overlay and
+   user pages render correctly when not nested under the admin shell. */
+.msg-shell-desktop,
+.msg-shell-mobile,
+.msg-mobile-overlay {
+  --gp-accent: #22408b;
+  --gp-accent-ink: #1a3270;
+  --gp-accent-soft: color-mix(in oklab, var(--gp-accent), white 88%);
+  --gp-accent-softer: color-mix(in oklab, var(--gp-accent), white 94%);
+  --gp-bg: oklch(0.98 0.006 265);
+  --gp-surface: #ffffff;
+  --gp-ink: oklch(0.24 0.02 265);
+  --gp-muted-c: oklch(0.62 0.015 265);
+  --gp-line: oklch(0.925 0.007 265);
+  --gp-line2: oklch(0.955 0.004 265);
+  --gp-chip: oklch(0.968 0.006 265);
+  --gp-shadow-xs: 0 1px 2px rgba(20,22,40,.05);
+  --gp-ease: cubic-bezier(.3,.9,.3,1);
+}
+
 /* ── Shells ─────────────────────────────────────────────────── */
 .msg-shell-desktop {
   display: grid;
