@@ -161,16 +161,14 @@ export default function Messages() {
                 </span>
               </header>
               <div className="msg-sidebar">
-                <div className="msg-sidebar-body">
-                  <ConversationList
-                    conversations={conversations}
-                    loading={loadingConversations}
-                    selectedId={null}
-                    onSelect={handleSelectConversation}
-                    role="user"
-                    showSearch={false}
-                  />
-                </div>
+                <ConversationList
+                  conversations={conversations}
+                  loading={loadingConversations}
+                  selectedId={null}
+                  onSelect={handleSelectConversation}
+                  role="user"
+                  showSearch={false}
+                />
               </div>
             </div>
           </div>
