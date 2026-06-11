@@ -117,7 +117,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
           .eq("approved", true),
         supabase
           .from("bookings")
-          .select("id, Fecha, Hora, Cliente, services")
+          .select("id, Fecha, Hora, customer_name, services")
           .eq("tenant_id", tenantId)
           .order("Fecha", { ascending: false })
           .order("Hora", { ascending: false })
