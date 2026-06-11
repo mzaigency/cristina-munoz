@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Send, MessageCircle, CheckCheck, Check, CalendarCheck, Bell, XCircle, Star, Camera } from 'lucide-react';
+import { Send, MessageCircle, CheckCheck, Check, CalendarCheck, Bell, XCircle, Star, Camera, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Message, Conversation } from '@/hooks/useConversations';
 import { StoryReplyPreview } from './StoryReplyPreview';
 import { TypingIndicator } from './TypingIndicator';
@@ -21,6 +19,7 @@ interface ChatWindowProps {
   onSendMessage: (content: string) => void;
   currentUserId: string;
   role: 'user' | 'salon';
+  onBack?: () => void;
 }
 
 const getMessageIcon = (type: string) => {
@@ -66,6 +65,7 @@ export function ChatWindow({
   onSendMessage,
   currentUserId,
   role,
+  onBack,
 }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -163,13 +163,13 @@ export function ChatWindow({
 
   if (!conversation) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gradient-to-b from-muted/20 to-muted/5">
-        <div className="w-24 h-24 rounded-full bg-muted/50 flex items-center justify-center mb-6">
-          <MessageCircle className="h-12 w-12 text-muted-foreground/40" />
+      <div className="msg-empty-thread">
+        <div className="msg-empty-thread-icon">
+          <MessageCircle className="h-10 w-10" />
         </div>
-        <h3 className="text-xl font-semibold mb-2 text-foreground">Mensajes</h3>
-        <p className="text-sm text-muted-foreground max-w-xs">
-          Selecciona una conversación para ver los mensajes
+        <h3 className="text-lg font-semibold mb-1">Tus mensajes</h3>
+        <p className="text-sm text-muted-foreground max-w-[260px]">
+          Selecciona una conversación para empezar a chatear con tus clientes.
         </p>
       </div>
     );
@@ -183,27 +183,34 @@ export function ChatWindow({
   const avatarUrl = role === 'user' ? conversation.tenant?.logo_url : null;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-gradient-to-b from-muted/10 to-background">
-      {/* Header estilo iOS */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b bg-background/80 backdrop-blur-xl shrink-0">
-        <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+    <div className="msg-chat">
+      {/* Header: WhatsApp/Instagram-style */}
+      <header className="msg-chat-header">
+        {onBack && (
+          <button onClick={onBack} className="msg-chat-back" aria-label="Volver">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
+        <Avatar className="msg-chat-header-avatar">
           <AvatarImage src={avatarUrl || undefined} />
-          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-semibold">
+          <AvatarFallback className="msg-chat-header-avatar-fb">
             {displayName.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-semibold text-[15px] truncate">{displayName}</h2>
-          {role === 'user' && conversation.tenant?.slug && (
-            <p className="text-xs text-muted-foreground">En línea</p>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-[15px] font-semibold leading-tight truncate">{displayName}</h2>
+          {otherTyping ? (
+            <p className="text-[11px] gp-text-brand font-medium">escribiendo…</p>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">En línea</p>
           )}
         </div>
-      </div>
+      </header>
 
       {/* Messages area - scrollable */}
-      <div className="flex-1 overflow-hidden min-h-0">
+      <div className="msg-chat-body">
         <ScrollArea className="h-full" ref={scrollRef}>
-          <div className="p-4 space-y-3">
+          <div className="msg-chat-msglist">
           {loading && messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-sm text-muted-foreground">Cargando mensajes...</p>
@@ -237,24 +244,19 @@ export function ChatWindow({
                 return (
                   <div key={message.id}>
                     {showDate && (
-                      <div className="flex justify-center my-6">
-                        <span className="text-xs font-medium text-muted-foreground bg-muted/80 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-sm">
+                      <div className="msg-date-sep">
+                        <span>
                           {format(new Date(message.created_at), "EEEE, d 'de' MMMM", { locale: es })}
                         </span>
                       </div>
                     )}
 
-                    <div className={cn(
-                      'flex gap-2 mb-1',
-                      isOwn ? 'justify-end' : 'justify-start'
-                    )}>
+                    <div className={cn('msg-row', isOwn ? 'msg-row-own' : 'msg-row-other')}>
                       <div
                         className={cn(
-                          'max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm',
-                          isOwn
-                            ? 'bg-primary text-primary-foreground rounded-br-md'
-                            : 'bg-card border border-border/50 rounded-bl-md',
-                          isSystemMessage && !isOwn && 'bg-muted/80 border-primary/20'
+                          'msg-bubble',
+                          isOwn ? 'msg-bubble-own' : 'msg-bubble-other',
+                          isSystemMessage && !isOwn && 'msg-bubble-system'
                         )}
                       >
                         {/* Story reply preview */}
@@ -263,40 +265,23 @@ export function ChatWindow({
                         )}
 
                         {isSystemMessage && messageLabel && (
-                          <div className={cn(
-                            'flex items-center gap-1.5 text-xs font-semibold mb-1.5',
-                            isOwn ? 'text-primary-foreground/80' : 'text-primary'
-                          )}>
+                          <div className="msg-bubble-syslabel">
                             {messageIcon}
                             {messageLabel}
                           </div>
                         )}
-                        
-                        <p className={cn(
-                          'text-[15px] leading-relaxed whitespace-pre-wrap break-words',
-                          isOwn ? 'text-primary-foreground' : 'text-foreground'
-                        )}>
-                          {message.content}
-                        </p>
-                        
-                        <div className={cn(
-                          'flex items-center gap-1 mt-1',
-                          isOwn ? 'justify-end' : ''
-                        )}>
-                          <span className={cn(
-                            'text-[10px]',
-                            isOwn ? 'text-primary-foreground/60' : 'text-muted-foreground'
-                          )}>
+
+                        <p className="msg-bubble-text">{message.content}</p>
+
+                        <div className="msg-bubble-meta">
+                          <span className="msg-bubble-time">
                             {format(new Date(message.created_at), 'HH:mm')}
                           </span>
                           {isOwn && (
                             message.is_read ? (
-                              <CheckCheck className={cn(
-                                'h-3.5 w-3.5',
-                                isOwn ? 'text-primary-foreground/60' : 'text-primary'
-                              )} />
+                              <CheckCheck className="h-3.5 w-3.5 msg-bubble-read" />
                             ) : (
-                              <Check className="h-3.5 w-3.5 text-primary-foreground/60" />
+                              <Check className="h-3.5 w-3.5 msg-bubble-sent" />
                             )
                           )}
                         </div>
@@ -318,25 +303,24 @@ export function ChatWindow({
         </AnimatePresence>
       </div>
 
-      {/* Input estilo iOS - siempre visible */}
-      <form onSubmit={handleSubmit} className="p-3 border-t bg-background shrink-0">
-        <div className="flex gap-2 items-center">
-          <Input
-            ref={inputRef}
-            value={newMessage}
-            onChange={handleInputChange}
-            placeholder="Mensaje"
-            className="flex-1 rounded-full bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/50 px-4 h-11"
-          />
-          <Button 
-            type="submit" 
-            size="icon" 
-            disabled={!newMessage.trim()}
-            className="h-11 w-11 rounded-full shrink-0 shadow-lg shadow-primary/20 disabled:shadow-none transition-all"
-          >
-            <Send className="h-5 w-5" />
-          </Button>
-        </div>
+      {/* Input - WhatsApp/Instagram-style */}
+      <form onSubmit={handleSubmit} className="msg-chat-input-wrap">
+        <input
+          ref={inputRef}
+          value={newMessage}
+          onChange={handleInputChange}
+          placeholder="Mensaje…"
+          className="msg-chat-input"
+        />
+        <Button
+          type="submit"
+          size="icon"
+          disabled={!newMessage.trim()}
+          className="msg-chat-send"
+          aria-label="Enviar"
+        >
+          <Send className="h-4 w-4" />
+        </Button>
       </form>
     </div>
   );

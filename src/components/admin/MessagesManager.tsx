@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { MessageCircle, Send, ArrowLeft, Plus } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { MessageCircle, Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
 import { useConversations, useMessages, Conversation, getOrCreateConversation } from '@/hooks/useConversations';
@@ -34,6 +35,19 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
       markAsRead('salon');
     }
   }, [selectedConversation?.id]);
+
+  // Hide admin bottom nav on mobile when chat is open (Instagram-style fullscreen)
+  useEffect(() => {
+    if (!isMobile) return;
+    if (selectedConversation) {
+      document.body.classList.add('msg-chat-open');
+    } else {
+      document.body.classList.remove('msg-chat-open');
+    }
+    return () => {
+      document.body.classList.remove('msg-chat-open');
+    };
+  }, [isMobile, selectedConversation]);
 
   const handleSendMessage = (content: string) => {
     if (user) {
@@ -75,10 +89,10 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
   const handleSelectUser = async (profile: any) => {
     try {
       const conversationId = await getOrCreateConversation(tenantId, profile.id);
-      
+
       if (conversationId) {
         await refetch();
-        const newConv = conversations.find(c => c.id === conversationId);
+        const newConv = conversations.find((c) => c.id === conversationId);
         if (newConv) {
           setSelectedConversation(newConv);
         }
@@ -100,15 +114,11 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
     }
   };
 
-  const handleBack = () => {
-    setSelectedConversation(null);
-  };
-
   const totalUnread = conversations.reduce((acc, c) => acc + c.unread_count_salon, 0);
 
   const newMsgDialog = (
     <Dialog open={newMessageDialog} onOpenChange={setNewMessageDialog}>
-      <DialogContent className={isMobile ? "mx-4 max-w-[calc(100vw-32px)]" : undefined}>
+      <DialogContent className={isMobile ? 'mx-4 max-w-[calc(100vw-32px)]' : undefined}>
         <DialogHeader>
           <DialogTitle>Iniciar conversación</DialogTitle>
         </DialogHeader>
@@ -117,38 +127,42 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
             <label className="text-sm font-medium mb-2 block">
               Buscar cliente por nombre o username
             </label>
-            <Input
-              type="text"
-              placeholder="Nombre o @username"
-              value={searchUsername}
-              onChange={(e) => setSearchUsername(e.target.value)}
-            />
-            {searching && <p className="text-xs text-muted-foreground">Buscando...</p>}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Nombre o @username"
+                value={searchUsername}
+                onChange={(e) => setSearchUsername(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            {searching && <p className="text-xs text-muted-foreground mt-2">Buscando...</p>}
             <p className="text-xs text-muted-foreground mt-2">El cliente debe tener una cuenta registrada</p>
           </div>
           {searchResults.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium">Resultados:</p>
-              <div className="max-h-[200px] overflow-y-auto space-y-1">
+              <div className="max-h-[260px] overflow-y-auto space-y-1">
                 {searchResults.map((profile) => (
                   <button
                     key={profile.id}
                     onClick={() => handleSelectUser(profile)}
-                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, background: "var(--gp-chip)", border: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}
+                    className="msg-newchat-result"
                   >
                     {profile.avatar_url ? (
-                      <img src={profile.avatar_url} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
+                      <img src={profile.avatar_url} alt="" className="msg-newchat-avatar" />
                     ) : (
-                      <div className="gp-avatar" style={{ width: 36, height: 36, fontSize: 14 }}>
+                      <div className="msg-newchat-avatar msg-newchat-avatar-fb">
                         {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontWeight: 600, fontSize: 14, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div className="min-w-0 flex-1 text-left">
+                      <p className="text-sm font-semibold truncate">
                         {profile.full_name || profile.username || 'Usuario'}
                       </p>
                       {profile.username && (
-                        <p style={{ fontSize: 12, color: "var(--gp-muted-c)", margin: 0 }}>@{profile.username}</p>
+                        <p className="text-xs text-muted-foreground truncate">@{profile.username}</p>
                       )}
                     </div>
                   </button>
@@ -161,69 +175,91 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
     </Dialog>
   );
 
-  // Mobile Layout
+  // ─────────────────────── Mobile Layout ───────────────────────
   if (isMobile) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 180px)", background: "var(--gp-surface)", borderRadius: 12, border: "1px solid var(--gp-line2)", overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--gp-line2)", background: "var(--gp-surface)" }}>
-          {selectedConversation ? (
-            <>
-              <button className="gp-icon-btn" onClick={handleBack} aria-label="Volver a conversaciones">
-                <ArrowLeft style={{ width: 18, height: 18 }} />
-              </button>
-              <span style={{ fontWeight: 600, fontSize: 14, flex: 1, marginLeft: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {selectedConversation.user?.full_name || selectedConversation.user?.email || 'Usuario'}
-              </span>
-            </>
-          ) : (
-            <>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <MessageCircle style={{ width: 18, height: 18, color: "var(--gp-accent)" }} />
-                <span style={{ fontWeight: 700, fontSize: 15 }}>Mensajes</span>
-                {totalUnread > 0 && (
-                  <span className="gp-badge accent">{totalUnread}</span>
-                )}
-              </div>
-              <button className="gp-btn primary sm" onClick={() => setNewMessageDialog(true)} aria-label="Nuevo mensaje">
-                <Plus style={{ width: 14, height: 14 }} /> Nuevo
-              </button>
-            </>
-          )}
-        </div>
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          {selectedConversation ? (
-            <ChatWindow conversation={selectedConversation} messages={messages} loading={loadingMessages} onSendMessage={handleSendMessage} currentUserId={user?.id || ''} role="salon" />
-          ) : (
-            <ConversationList conversations={conversations} loading={loadingConversations} selectedId={null} onSelect={setSelectedConversation} role="salon" />
-          )}
-        </div>
-        {newMsgDialog}
+    const chatOverlay = selectedConversation && (
+      <div className="msg-mobile-overlay">
+        <ChatWindow
+          conversation={selectedConversation}
+          messages={messages}
+          loading={loadingMessages}
+          onSendMessage={handleSendMessage}
+          currentUserId={user?.id || ''}
+          role="salon"
+          onBack={() => setSelectedConversation(null)}
+        />
       </div>
+    );
+
+    return (
+      <>
+        <div className="msg-mobile-shell">
+          <header className="msg-mobile-list-header">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 gp-text-brand" />
+              <h2 className="text-base font-bold">Mensajes</h2>
+              {totalUnread > 0 && (
+                <span className="msg-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+              )}
+            </div>
+            <button onClick={() => setNewMessageDialog(true)} className="msg-new-btn" aria-label="Nuevo mensaje">
+              <Plus className="h-4 w-4" />
+            </button>
+          </header>
+          <div className="msg-mobile-list-body">
+            <ConversationList
+              conversations={conversations}
+              loading={loadingConversations}
+              selectedId={null}
+              onSelect={setSelectedConversation}
+              role="salon"
+            />
+          </div>
+        </div>
+
+        {/* Fullscreen overlay above admin bottom nav */}
+        {chatOverlay && createPortal(chatOverlay, document.body)}
+
+        {newMsgDialog}
+      </>
     );
   }
 
-  // Desktop Layout
+  // ─────────────────────── Desktop Layout ───────────────────────
   return (
-    <div className="gp-card" style={{ overflow: "hidden" }}>
-      <div className="gp-page-h" style={{ padding: "16px 20px", borderBottom: "1px solid var(--gp-line2)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <h2 style={{ margin: 0 }}>Mensajes Directos</h2>
-          {totalUnread > 0 && <span className="gp-badge accent">{totalUnread}</span>}
-        </div>
-        <div className="gp-page-actions">
-          <button className="gp-btn primary sm" onClick={() => setNewMessageDialog(true)}>
-            <Send style={{ width: 14, height: 14 }} /> Nuevo mensaje
+    <div className="msg-desktop">
+      <aside className="msg-desktop-sidebar">
+        <header className="msg-desktop-sidebar-header">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold">Mensajes</h2>
+            {totalUnread > 0 && (
+              <span className="msg-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+            )}
+          </div>
+          <button onClick={() => setNewMessageDialog(true)} className="msg-new-btn" aria-label="Nuevo mensaje">
+            <Plus className="h-4 w-4" />
           </button>
+        </header>
+        <div className="msg-desktop-sidebar-body">
+          <ConversationList
+            conversations={conversations}
+            loading={loadingConversations}
+            selectedId={selectedConversation?.id || null}
+            onSelect={setSelectedConversation}
+            role="salon"
+          />
         </div>
-      </div>
-      <div className="gp-msg-layout">
-        <div className="gp-msg-list">
-          <ConversationList conversations={conversations} loading={loadingConversations} selectedId={selectedConversation?.id || null} onSelect={setSelectedConversation} role="salon" />
-        </div>
-        <div className="gp-msg-thread">
-          <ChatWindow conversation={selectedConversation} messages={messages} loading={loadingMessages} onSendMessage={handleSendMessage} currentUserId={user?.id || ''} role="salon" />
-        </div>
-      </div>
+      </aside>
+      <main className="msg-desktop-thread">
+        <ChatWindow
+          conversation={selectedConversation}
+          messages={messages}
+          loading={loadingMessages}
+          onSendMessage={handleSendMessage}
+          currentUserId={user?.id || ''}
+          role="salon"
+        />
+      </main>
       {newMsgDialog}
     </div>
   );
