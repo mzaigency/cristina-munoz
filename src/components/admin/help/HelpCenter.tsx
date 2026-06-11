@@ -187,7 +187,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
         </div>
         <Button
           onClick={() => { onOpenChange(false); onStartTour(); }}
-          className="w-full h-9 gap-2 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0 shadow-md"
+          className="w-full h-9 gap-2 gp-grad-brand"
         >
           <Sparkles className="h-3.5 w-3.5" />
           <span className="text-xs font-semibold">Hacer el tour guiado</span>
@@ -220,7 +220,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
                     className="rounded-xl border border-border/60 bg-card hover:border-border transition-colors overflow-hidden"
                   >
                     <div className="flex items-center gap-3 px-3 py-2.5 bg-muted/40">
-                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-950/30 dark:to-purple-950/30 flex items-center justify-center text-pink-600 dark:text-pink-300 shrink-0">
+                      <div className="h-8 w-8 rounded-lg gp-grad-brand-soft flex items-center justify-center gp-text-brand shrink-0">
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -242,7 +242,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
                             <span
                               className={cn(
                                 "w-1 h-1 rounded-full shrink-0",
-                                locked ? "bg-muted-foreground/40" : "bg-pink-500",
+                                locked ? "bg-muted-foreground/40" : "bg-[color:var(--gp-accent)]",
                               )}
                             />
                             <span className="flex-1">{b.text}</span>

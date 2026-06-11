@@ -4012,6 +4012,35 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   Brand utility classes (Glowapp palette)
+   ═══════════════════════════════════════════════════════════════ */
+
+.gp-grad-brand {
+  background: linear-gradient(135deg, var(--gp-accent) 0%, color-mix(in oklab, var(--gp-accent), var(--gp-purple) 55%) 100%);
+  color: #fff;
+  border: 0;
+  box-shadow: 0 6px 16px -8px color-mix(in oklab, var(--gp-accent), transparent 30%);
+  transition: 0.18s var(--gp-ease);
+}
+.gp-grad-brand:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--gp-accent-ink) 0%, var(--gp-purple) 100%);
+  box-shadow: 0 8px 20px -8px color-mix(in oklab, var(--gp-accent), transparent 20%);
+  transform: translateY(-1px);
+}
+.gp-grad-brand:active:not(:disabled) { transform: translateY(0); }
+
+.gp-grad-brand-soft {
+  background: linear-gradient(135deg, var(--gp-accent-soft), color-mix(in oklab, var(--gp-accent-soft), var(--gp-purple) 12%));
+}
+
+.gp-grad-bar {
+  background: linear-gradient(90deg, var(--gp-accent), var(--gp-purple));
+}
+
+.gp-text-brand { color: var(--gp-accent); }
+.gp-text-brand-ink { color: var(--gp-accent-ink); }
+
+/* ═══════════════════════════════════════════════════════════════
    QR Card Generator
    ═══════════════════════════════════════════════════════════════ */
 
@@ -4191,7 +4220,7 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
 /* Template grid */
 .qr-gen-tplgrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
 }
 
@@ -4284,5 +4313,12 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
   .qr-gen-preview-card[data-format="a4"] .qr-gen-preview-frame {
     max-width: min(280px, 100%);
   }
+}
+
+@media (max-width: 480px) {
+  .qr-gen-tplgrid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .qr-gen-tpl-meta .text-\[10px\] { display: none; }
 }
 

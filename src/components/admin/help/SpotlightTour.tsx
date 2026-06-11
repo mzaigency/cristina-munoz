@@ -58,7 +58,7 @@ function ConfettiBurst({ trigger }: { trigger: number }) {
         x: (Math.random() - 0.5) * 220,
         y: -120 - Math.random() * 80,
         rot: (Math.random() - 0.5) * 360,
-        color: ["#ec4899", "#a855f7", "#f59e0b", "#10b981", "#3b82f6"][i % 5],
+        color: ["#22408b", "#99329a", "#f59e0b", "#10b981", "#3b82f6"][i % 5],
         size: 6 + Math.random() * 4,
         delay: i * 0.02,
       })),
@@ -335,7 +335,7 @@ export function SpotlightTour({
                   position: "absolute",
                   borderRadius: 14,
                   boxShadow:
-                    "0 0 0 9999px rgba(15, 23, 42, 0.62), 0 0 0 3px rgba(236, 72, 153, 0.85)",
+                    "0 0 0 9999px rgba(15, 23, 42, 0.62), 0 0 0 3px rgba(153, 50, 154, 0.85)",
                   pointerEvents: "none",
                 }}
               />
@@ -351,7 +351,7 @@ export function SpotlightTour({
                   width: rect.width + 8,
                   height: rect.height + 8,
                   borderRadius: 16,
-                  border: "2px solid rgba(236, 72, 153, 0.55)",
+                  border: "2px solid rgba(153, 50, 154, 0.55)",
                   pointerEvents: "none",
                 }}
               />
@@ -427,7 +427,7 @@ export function SpotlightTour({
                     initial={false}
                     animate={{ width: i <= stepIdx ? "100%" : "0%" }}
                     transition={{ duration: 0.35, ease: [0.2, 0.7, 0.3, 1] }}
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-pink-500 to-purple-500"
+                    className="absolute inset-y-0 left-0 gp-grad-bar"
                   />
                 </button>
               ))}
@@ -453,7 +453,7 @@ export function SpotlightTour({
                       initial={{ scale: 0, rotate: -25 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ type: "spring", damping: 12, stiffness: 240, delay: 0.05 }}
-                      className="h-12 w-12 rounded-xl bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-950/40 dark:to-purple-950/40 flex items-center justify-center shrink-0 text-2xl"
+                      className="h-12 w-12 rounded-xl gp-grad-brand-soft flex items-center justify-center shrink-0 text-2xl"
                     >
                       <span>{step.emoji}</span>
                     </motion.div>
@@ -511,7 +511,7 @@ export function SpotlightTour({
                       initial={{ opacity: 0, y: 10, scale: 0.9 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ delay: 0.28, type: "spring", damping: 16, stiffness: 280 }}
-                      className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-pink-600 dark:text-pink-400"
+                      className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold gp-text-brand"
                     >
                       <Sparkles className="h-3.5 w-3.5" />
                       {step.cheer}
@@ -542,7 +542,7 @@ export function SpotlightTour({
                 <Button
                   size="sm"
                   onClick={next}
-                  className="gap-1 h-8 px-3 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0 shadow-md"
+                  className="gap-1 h-8 px-3 gp-grad-brand"
                 >
                   {isLast ? (
                     <>

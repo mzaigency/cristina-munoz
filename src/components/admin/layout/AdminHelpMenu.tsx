@@ -47,8 +47,8 @@ export function AdminHelpMenu({ tenantId, onTourTabChange }: AdminHelpMenuProps)
             onClick={() => { setMenuOpen(false); setTourOpen(true); }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted transition-colors text-left"
           >
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-pink-500/15 to-purple-500/15 flex items-center justify-center shrink-0">
-              <Sparkles className="h-4 w-4 text-pink-600" />
+            <div className="h-8 w-8 rounded-lg gp-grad-brand-soft flex items-center justify-center shrink-0">
+              <Sparkles className="h-4 w-4 gp-text-brand" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-medium">Tour guiado</div>

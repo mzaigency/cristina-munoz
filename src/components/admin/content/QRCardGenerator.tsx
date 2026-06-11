@@ -33,7 +33,9 @@ interface TenantBranding {
 
 const TEMPLATES = [
   { id: "salon", label: "Tu Salón", hint: "Colores de tu marca" },
+  { id: "glow", label: "Glowapp", hint: "Azul y púrpura brand" },
   { id: "elegant", label: "Elegante", hint: "Crema y dorado" },
+  { id: "boho", label: "Boho", hint: "Terracota y arena" },
   { id: "minimal", label: "Minimalista", hint: "Blanco y negro" },
   { id: "dark", label: "Oscuro", hint: "Negro y dorado" },
 ] as const;
@@ -43,7 +45,9 @@ type Format = "card" | "a4";
 
 const TEMPLATE_FONTS: Record<TemplateId, { heading: string; body: string }> = {
   salon: { heading: "", body: "" },
+  glow: { heading: "Inter", body: "Inter" },
   elegant: { heading: "Playfair Display", body: "Cormorant Garamond" },
+  boho: { heading: "DM Serif Display", body: "Karla" },
   minimal: { heading: "Inter", body: "Inter" },
   dark: { heading: "Bebas Neue", body: "Raleway" },
 };
@@ -80,8 +84,12 @@ function getTemplateStyles(tid: TemplateId, pc: string, sc: string): TemplateSty
         accent: sc,
         qrBg: "#FFFFFF",
       };
+    case "glow":
+      return { bg: "#22408b", text: "#FFFFFF", sub: "rgba(255,255,255,0.65)", accent: "#E0C8F0", qrBg: "#FFFFFF" };
     case "elegant":
       return { bg: "#FAF7F2", text: "#2C1810", sub: "#8B7355", accent: "#B8860B", qrBg: "#FFFFFF" };
+    case "boho":
+      return { bg: "#E8DCC8", text: "#5D3A2E", sub: "rgba(93,58,46,0.65)", accent: "#C9764D", qrBg: "#FAF1E6" };
     case "minimal":
       return { bg: "#FFFFFF", text: "#111111", sub: "#888888", accent: "#111111", qrBg: "#F5F5F5" };
     case "dark":
@@ -214,29 +222,53 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
   const renderCard = useCallback(async (ctx: CanvasRenderingContext2D, s: TemplateStyle, fonts: { heading: string; body: string }) => {
     const w = 1200, h = 800;
 
-    ctx.fillStyle = s.bg;
+    // Background base
+    if (template === "glow") {
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, "#22408b");
+      grad.addColorStop(1, "#99329a");
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = s.bg;
+    }
     ctx.beginPath();
     ctx.roundRect(0, 0, w, h, 32);
     ctx.fill();
 
+    // Per-template decoration
     if (template === "elegant") {
-      ctx.strokeStyle = hexToRgba("#B8860B", 0.25);
-      ctx.lineWidth = 3;
+      // Inner border
+      ctx.strokeStyle = hexToRgba("#B8860B", 0.3);
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(20, 20, w - 40, h - 40, 24);
+      ctx.roundRect(24, 24, w - 48, h - 48, 22);
+      ctx.stroke();
+      // Corner ornaments
+      ctx.strokeStyle = hexToRgba("#B8860B", 0.55);
+      ctx.lineWidth = 1.5;
+      const c = 56;
+      ctx.beginPath();
+      ctx.moveTo(c, 56); ctx.lineTo(c + 24, 56);
+      ctx.moveTo(56, c); ctx.lineTo(56, c + 24);
+      ctx.moveTo(w - c - 24, h - 56); ctx.lineTo(w - c, h - 56);
+      ctx.moveTo(w - 56, h - c - 24); ctx.lineTo(w - 56, h - c);
       ctx.stroke();
     }
     if (template === "dark") {
-      const glow = ctx.createLinearGradient(80, 24, w - 80, 24);
-      glow.addColorStop(0, "rgba(229,192,123,0)");
-      glow.addColorStop(0.5, "rgba(229,192,123,0.5)");
-      glow.addColorStop(1, "rgba(229,192,123,0)");
-      ctx.strokeStyle = glow;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(80, 24);
-      ctx.lineTo(w - 80, 24);
-      ctx.stroke();
+      // Top and bottom gold bars
+      const glowT = ctx.createLinearGradient(80, 0, w - 80, 0);
+      glowT.addColorStop(0, "rgba(229,192,123,0)");
+      glowT.addColorStop(0.5, "rgba(229,192,123,0.7)");
+      glowT.addColorStop(1, "rgba(229,192,123,0)");
+      ctx.fillStyle = glowT;
+      ctx.fillRect(80, 26, w - 160, 1.5);
+      ctx.fillRect(80, h - 28, w - 160, 1.5);
+      // Vignette
+      const vg = ctx.createRadialGradient(w / 2, h / 2, 100, w / 2, h / 2, w * 0.7);
+      vg.addColorStop(0, "rgba(229,192,123,0.06)");
+      vg.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, w, h);
     }
     if (template === "minimal") {
       ctx.strokeStyle = "#E5E5E5";
@@ -247,10 +279,45 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     }
     if (template === "salon") {
       const overlay = ctx.createLinearGradient(0, 0, w, h);
-      overlay.addColorStop(0, "rgba(255,255,255,0.08)");
-      overlay.addColorStop(1, "rgba(0,0,0,0.08)");
+      overlay.addColorStop(0, "rgba(255,255,255,0.10)");
+      overlay.addColorStop(1, "rgba(0,0,0,0.10)");
       ctx.fillStyle = overlay;
       ctx.fillRect(0, 0, w, h);
+      // Accent corner glow
+      const cg = ctx.createRadialGradient(w - 200, 100, 0, w - 200, 100, 400);
+      cg.addColorStop(0, hexToRgba(sc, 0.18));
+      cg.addColorStop(1, hexToRgba(sc, 0));
+      ctx.fillStyle = cg;
+      ctx.fillRect(0, 0, w, h);
+    }
+    if (template === "glow") {
+      // Sparkle overlay
+      const sp = ctx.createRadialGradient(w * 0.75, h * 0.3, 0, w * 0.75, h * 0.3, 350);
+      sp.addColorStop(0, "rgba(255,255,255,0.18)");
+      sp.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = sp;
+      ctx.fillRect(0, 0, w, h);
+      // Accent thin top line
+      ctx.fillStyle = "rgba(255,255,255,0.25)";
+      ctx.fillRect(80, 26, w - 160, 1);
+    }
+    if (template === "boho") {
+      // Cream arch behind QR area
+      ctx.fillStyle = hexToRgba("#C9764D", 0.12);
+      ctx.beginPath();
+      ctx.arc(w - 270, h / 2, 280, 0, Math.PI * 2);
+      ctx.fill();
+      // Wavy line top
+      ctx.strokeStyle = hexToRgba("#C9764D", 0.5);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      let waveY = 50;
+      for (let x = 80; x <= w - 80; x += 4) {
+        const y = waveY + Math.sin((x - 80) * 0.05) * 4;
+        if (x === 80) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
     }
 
     const contentX = 80;
@@ -321,27 +388,84 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
   const renderA4 = useCallback(async (ctx: CanvasRenderingContext2D, s: TemplateStyle, fonts: { heading: string; body: string }) => {
     const w = 2480, h = 3508;
 
-    ctx.fillStyle = s.bg;
+    // Background base
+    if (template === "glow") {
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, "#22408b");
+      grad.addColorStop(1, "#99329a");
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = s.bg;
+    }
     ctx.fillRect(0, 0, w, h);
 
     if (template === "salon") {
       const overlay = ctx.createLinearGradient(0, 0, w, h);
-      overlay.addColorStop(0, "rgba(255,255,255,0.06)");
-      overlay.addColorStop(1, "rgba(0,0,0,0.10)");
+      overlay.addColorStop(0, "rgba(255,255,255,0.08)");
+      overlay.addColorStop(1, "rgba(0,0,0,0.12)");
       ctx.fillStyle = overlay;
+      ctx.fillRect(0, 0, w, h);
+      const cg = ctx.createRadialGradient(w - 400, 200, 0, w - 400, 200, 800);
+      cg.addColorStop(0, hexToRgba(sc, 0.18));
+      cg.addColorStop(1, hexToRgba(sc, 0));
+      ctx.fillStyle = cg;
+      ctx.fillRect(0, 0, w, h);
+    }
+    if (template === "glow") {
+      const sp = ctx.createRadialGradient(w * 0.78, h * 0.22, 0, w * 0.78, h * 0.22, 1100);
+      sp.addColorStop(0, "rgba(255,255,255,0.18)");
+      sp.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = sp;
       ctx.fillRect(0, 0, w, h);
     }
     if (template === "elegant") {
-      ctx.strokeStyle = hexToRgba("#B8860B", 0.3);
-      ctx.lineWidth = 6;
+      ctx.strokeStyle = hexToRgba("#B8860B", 0.35);
+      ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.roundRect(80, 80, w - 160, h - 160, 30);
       ctx.stroke();
+      // Inner double-line
+      ctx.strokeStyle = hexToRgba("#B8860B", 0.2);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(110, 110, w - 220, h - 220, 22);
+      ctx.stroke();
+    }
+    if (template === "boho") {
+      // Arch behind central QR
+      ctx.fillStyle = hexToRgba("#C9764D", 0.13);
+      ctx.beginPath();
+      ctx.arc(w / 2, h * 0.55, 900, Math.PI, 0, false);
+      ctx.fill();
+      // Wavy line top + bottom
+      ctx.strokeStyle = hexToRgba("#C9764D", 0.55);
+      ctx.lineWidth = 4;
+      for (const baseY of [180, h - 180]) {
+        ctx.beginPath();
+        for (let x = 200; x <= w - 200; x += 6) {
+          const y = baseY + Math.sin((x - 200) * 0.012) * 12;
+          if (x === 200) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
     }
     if (template === "minimal") {
       ctx.strokeStyle = "#E5E5E5";
       ctx.lineWidth = 4;
       ctx.strokeRect(40, 40, w - 80, h - 80);
+    }
+    if (template === "dark") {
+      // Gold thin border
+      ctx.strokeStyle = hexToRgba("#E5C07B", 0.4);
+      ctx.lineWidth = 3;
+      ctx.strokeRect(80, 80, w - 160, h - 160);
+      // Vignette
+      const vg = ctx.createRadialGradient(w / 2, h / 2, 200, w / 2, h / 2, w * 0.8);
+      vg.addColorStop(0, "rgba(229,192,123,0.05)");
+      vg.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, w, h);
     }
 
     const centerX = w / 2;
@@ -540,10 +664,23 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
 
   // ── Template thumbnail bg colors (for visual selector) ──
   const templatePreviewBgs: Record<TemplateId, string> = {
-    salon: pc, elegant: "#FAF7F2", minimal: "#FFFFFF", dark: "#0F0F0F",
+    salon: pc,
+    glow: "linear-gradient(135deg, #22408b, #99329a)",
+    elegant: "#FAF7F2",
+    boho: "#E8DCC8",
+    minimal: "#FFFFFF",
+    dark: "#0F0F0F",
   };
   const templateAccents: Record<TemplateId, string> = {
-    salon: sc, elegant: "#B8860B", minimal: "#111111", dark: "#E5C07B",
+    salon: sc,
+    glow: "#E0C8F0",
+    elegant: "#B8860B",
+    boho: "#C9764D",
+    minimal: "#111111",
+    dark: "#E5C07B",
+  };
+  const templateBgForLight: Record<TemplateId, string> = {
+    salon: pc, glow: "#22408b", elegant: "#FAF7F2", boho: "#E8DCC8", minimal: "#FFFFFF", dark: "#0F0F0F",
   };
 
   return (
@@ -580,7 +717,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
 
             {/* Action buttons under preview */}
             <div className="qr-gen-actions">
-              <Button onClick={handleDownload} className="flex-1 gap-2 h-11 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0 shadow-md">
+              <Button onClick={handleDownload} className="flex-1 gap-2 h-11 gp-grad-brand">
                 <Download className="h-4 w-4" />
                 <span className="text-sm font-semibold">Descargar PNG</span>
               </Button>
@@ -638,7 +775,8 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
                 const isOn = template === t.id;
                 const bgColor = templatePreviewBgs[t.id];
                 const accentColor = templateAccents[t.id];
-                const isLight = isLightColor(bgColor.startsWith("#") ? bgColor : "#FFFFFF");
+                const bgForLight = templateBgForLight[t.id];
+                const isLight = isLightColor(bgForLight.startsWith("#") ? bgForLight : "#FFFFFF");
                 return (
                   <button
                     key={t.id}
