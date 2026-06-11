@@ -361,7 +361,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                           <span>{b.Hora?.slice(0, 5)}</span>
                         </div>
                         <div className="gp-neg-recent-info">
-                          <strong>{b.Cliente ?? "Cliente"}</strong>
+                          <strong>{b.customer_name ?? "Cliente"}</strong>
                           {svc && <span>{svc}</span>}
                         </div>
                       </div>
