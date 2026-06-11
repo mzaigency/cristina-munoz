@@ -46,7 +46,7 @@ interface BookingRow {
   id: string;
   Fecha: string;
   Hora: string;
-  Cliente: string | null;
+  customer_name: string | null;
   services: unknown;
 }
 
