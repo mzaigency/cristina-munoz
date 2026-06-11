@@ -1201,8 +1201,8 @@
 }
 
 /* ── Grid card ── */
-.ag-gridcard { background: var(--ag-card); border: 1px solid var(--ag-line); border-radius: 20px; overflow: hidden; box-shadow: var(--ag-shadow); }
-.ag-scroller { overflow: auto; position: relative; scrollbar-width: thin; }
+.ag-gridcard { background: var(--ag-card); border: 1px solid var(--ag-line); border-radius: 20px; overflow: visible; box-shadow: var(--ag-shadow); }
+.ag-scroller { overflow-x: auto; overflow-y: visible; position: relative; scrollbar-width: thin; }
 
 /* ── Column headers ── */
 .ag-head { position: sticky; top: var(--gp-topbar-h, 64px); z-index: 6; background: var(--ag-card); border-bottom: 1px solid var(--ag-line); }
