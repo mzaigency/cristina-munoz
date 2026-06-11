@@ -177,7 +177,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
         clicks: number | string;
         conversions: number | string;
       }>;
-      const feedTotals = feedRows.reduce(
+      const feedTotals = feedRows.reduce<{ impressions: number; clicks: number; conversions: number }>(
         (acc, r) => ({
           impressions: acc.impressions + Number(r.impressions ?? 0),
           clicks: acc.clicks + Number(r.clicks ?? 0),
