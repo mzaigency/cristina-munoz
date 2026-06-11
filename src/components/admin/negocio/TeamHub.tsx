@@ -85,7 +85,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
         .eq("tenant_id", tenantId)
         .eq("approved", true),
       supabase
-        .from("stylist_commissions" as never)
+        .from("stylist_commissions")
         .select("stylist_id, commission_percentage, commission_type")
         .eq("tenant_id", tenantId),
     ]);
