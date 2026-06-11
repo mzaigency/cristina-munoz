@@ -4010,3 +4010,279 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
   .gp-neg-festivos-banner { flex-direction: column; align-items: flex-start; gap: 10px; }
   .gp-neg-festivos-banner .gp-btn { width: 100%; justify-content: center; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR Card Generator
+   ═══════════════════════════════════════════════════════════════ */
+
+.qr-gen {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.qr-gen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.qr-gen-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+@media (min-width: 920px) {
+  .qr-gen-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 28px;
+    align-items: start;
+  }
+  /* Preview on right on desktop */
+  .qr-gen-preview-wrap { order: 2; }
+  .qr-gen-controls { order: 1; }
+}
+
+/* ── Preview ── */
+.qr-gen-preview-wrap {
+  min-width: 0;
+}
+
+.qr-gen-preview-sticky {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 920px) {
+  .qr-gen-preview-sticky {
+    position: sticky;
+    top: calc(var(--gp-topbar-h, 64px) + 18px);
+  }
+}
+
+.qr-gen-preview-card {
+  background: linear-gradient(135deg, oklch(0.95 0.012 280), oklch(0.93 0.015 320));
+  border: 1px solid var(--gp-line);
+  border-radius: 24px;
+  padding: 18px;
+  box-shadow: var(--gp-shadow-xs);
+  position: relative;
+  overflow: hidden;
+}
+
+.qr-gen-preview-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(236, 72, 153, 0.08), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.08), transparent 50%);
+  pointer-events: none;
+}
+
+.qr-gen-preview-card[data-format="a4"] .qr-gen-preview-frame {
+  max-width: min(360px, 100%);
+  margin: 0 auto;
+}
+
+.qr-gen-preview-frame {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 12px 32px -12px rgba(20, 22, 40, 0.18),
+    0 4px 12px -4px rgba(20, 22, 40, 0.12);
+  background: #fff;
+}
+
+.qr-gen-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
+.qr-gen-rendering {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gp-accent);
+  box-shadow: 0 4px 12px -4px rgba(20, 22, 40, 0.15);
+}
+
+.qr-gen-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Controls ── */
+.qr-gen-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+
+.qr-gen-controls > section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qr-gen-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gp-muted-c);
+  margin: 0;
+}
+
+/* Format segmented control */
+.qr-gen-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--gp-chip);
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--gp-line);
+}
+
+.qr-gen-seg-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  color: var(--gp-muted-c);
+  cursor: pointer;
+  transition: 0.18s var(--gp-ease);
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.qr-gen-seg-btn:hover {
+  background: color-mix(in oklab, var(--gp-surface), white 50%);
+  color: var(--gp-ink2);
+}
+
+.qr-gen-seg-btn.on {
+  background: var(--gp-surface);
+  color: var(--gp-accent-ink);
+  box-shadow: 0 2px 6px -2px rgba(20, 22, 40, 0.12);
+}
+
+/* Template grid */
+.qr-gen-tplgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.qr-gen-tpl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: var(--gp-surface);
+  border: 1px solid var(--gp-line);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.18s var(--gp-ease);
+  text-align: left;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.qr-gen-tpl:hover {
+  border-color: var(--gp-line2);
+  background: color-mix(in oklab, var(--gp-surface), var(--gp-accent-soft) 30%);
+}
+
+.qr-gen-tpl.on {
+  border-color: var(--gp-accent);
+  background: var(--gp-accent-softer);
+  box-shadow: 0 0 0 2px var(--gp-accent-soft);
+}
+
+.qr-gen-tpl-swatch {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 8px;
+}
+
+.qr-gen-tpl-accent {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 24px;
+  height: 4px;
+  border-radius: 99px;
+}
+
+.qr-gen-tpl-dots {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  font-weight: 800;
+}
+
+.qr-gen-tpl-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Booking link card */
+.qr-gen-link-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--gp-chip);
+  border: 1px solid var(--gp-line);
+  border-radius: 14px;
+}
+
+.qr-gen-link-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--gp-accent-soft);
+  color: var(--gp-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 920px) {
+  .qr-gen-tplgrid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .qr-gen-preview-card[data-format="a4"] .qr-gen-preview-frame {
+    max-width: min(280px, 100%);
+  }
+}
+

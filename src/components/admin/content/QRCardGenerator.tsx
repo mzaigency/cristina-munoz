@@ -1,9 +1,17 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Download, Share2, Smartphone, Image as ImageIcon, FileText } from "lucide-react";
+import {
+  Download,
+  Share2,
+  Smartphone,
+  Image as ImageIcon,
+  FileText,
+  Sparkles,
+  Copy,
+  Loader2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,10 +32,10 @@ interface TenantBranding {
 }
 
 const TEMPLATES = [
-  { id: "salon", label: "Tu Salón" },
-  { id: "elegant", label: "Elegante" },
-  { id: "minimal", label: "Minimalista" },
-  { id: "dark", label: "Oscuro" },
+  { id: "salon", label: "Tu Salón", hint: "Colores de tu marca" },
+  { id: "elegant", label: "Elegante", hint: "Crema y dorado" },
+  { id: "minimal", label: "Minimalista", hint: "Blanco y negro" },
+  { id: "dark", label: "Oscuro", hint: "Negro y dorado" },
 ] as const;
 
 type TemplateId = typeof TEMPLATES[number]["id"];
@@ -113,11 +121,13 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
   const [glowLogoImage, setGlowLogoImage] = useState<HTMLImageElement | null>(null);
+  const [rendering, setRendering] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
 
   const bookingUrl = `https://www.glowapp.app/${tenantSlug}`;
 
+  // ── Load tenant branding ──
   useEffect(() => {
     const fetchTenant = async () => {
       const { data } = await supabase
@@ -139,6 +149,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     fetchTenant();
   }, [tenantId]);
 
+  // ── Load fonts ──
   useEffect(() => {
     const loadFonts = async () => {
       const allFonts = new Set<string>();
@@ -175,6 +186,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     if (branding.font_heading) loadFonts();
   }, [branding.font_heading, branding.font_body]);
 
+  // ── Load images ──
   useEffect(() => {
     if (!branding.logo_url) { setLogoImage(null); return; }
     loadImage(branding.logo_url).then(setLogoImage);
@@ -184,7 +196,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     loadImage(glowappLetras).then(setGlowLogoImage);
   }, []);
 
-  // QR size scales with format
+  // ── Generate QR ──
   useEffect(() => {
     const qrSize = format === "a4" ? 1400 : 400;
     QRCode.toDataURL(bookingUrl, {
@@ -199,7 +211,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
   const sc = branding.secondary_color;
 
   // ───────── CARD (horizontal 1200x800) ─────────
-  const renderCard = async (ctx: CanvasRenderingContext2D, s: TemplateStyle, fonts: { heading: string; body: string }) => {
+  const renderCard = useCallback(async (ctx: CanvasRenderingContext2D, s: TemplateStyle, fonts: { heading: string; body: string }) => {
     const w = 1200, h = 800;
 
     ctx.fillStyle = s.bg;
@@ -303,17 +315,15 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
         ctx.textAlign = "left";
       }
     }
-  };
+  }, [template, logoImage, branding.name, tagline, bookingUrl, qrDataUrl]);
 
   // ───────── A4 POSTER (vertical 2480x3508 @ 300dpi) ─────────
-  const renderA4 = async (ctx: CanvasRenderingContext2D, s: TemplateStyle, fonts: { heading: string; body: string }) => {
+  const renderA4 = useCallback(async (ctx: CanvasRenderingContext2D, s: TemplateStyle, fonts: { heading: string; body: string }) => {
     const w = 2480, h = 3508;
 
-    // Background
     ctx.fillStyle = s.bg;
     ctx.fillRect(0, 0, w, h);
 
-    // Salon overlay
     if (template === "salon") {
       const overlay = ctx.createLinearGradient(0, 0, w, h);
       overlay.addColorStop(0, "rgba(255,255,255,0.06)");
@@ -337,7 +347,6 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     const centerX = w / 2;
     let y = 320;
 
-    // Salon logo (centered, top)
     if (logoImage) {
       const logoSize = 220;
       const logoX = centerX - logoSize / 2;
@@ -357,7 +366,6 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
       y += 60;
     }
 
-    // H1 "RESERVA TU CITA"
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillStyle = s.text;
@@ -365,7 +373,6 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     ctx.fillText("RESERVA TU CITA", centerX, y);
     y += 230;
 
-    // H2 "en {salon}"
     ctx.fillStyle = s.text;
     ctx.font = `100px "${fonts.heading}", sans-serif`;
     const salonLine = `en ${branding.name || "nuestro salón"}`;
@@ -373,14 +380,12 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     y += 130;
     ctx.textBaseline = "alphabetic";
 
-    // Accent line
     ctx.fillStyle = s.accent;
     ctx.beginPath();
     ctx.roundRect(centerX - 120, y, 240, 8, 4);
     ctx.fill();
     y += 100;
 
-    // QR Code (huge, centered)
     if (qrDataUrl) {
       const qrImg = await loadImage(qrDataUrl);
       if (qrImg) {
@@ -389,7 +394,6 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
         const qrY = y;
         const pad = 60;
 
-        // White card behind QR with shadow
         ctx.save();
         ctx.shadowColor = "rgba(0,0,0,0.12)";
         ctx.shadowBlur = 60;
@@ -405,19 +409,16 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
       }
     }
 
-    // "Escanea con tu móvil"
     ctx.fillStyle = s.sub;
     ctx.font = `54px "${fonts.body}", sans-serif`;
     ctx.fillText("Escanea con tu móvil", centerX, y);
     y += 90;
 
-    // URL
     ctx.fillStyle = s.accent;
     ctx.font = `bold 60px "${fonts.body}", sans-serif`;
     ctx.fillText(bookingUrl.replace("https://", ""), centerX, y);
     y += 80;
 
-    // Tagline (if non-default)
     if (tagline && tagline !== "Reserva tu cita online") {
       ctx.fillStyle = s.sub;
       ctx.font = `italic 44px "${fonts.body}", sans-serif`;
@@ -425,7 +426,6 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
       y += 70;
     }
 
-    // Footer separator + Glowapp logo
     const footerY = h - 240;
     ctx.strokeStyle = hexToRgba(s.text === "#FFFFFF" ? "#FFFFFF" : "#000000", 0.1);
     ctx.lineWidth = 2;
@@ -434,7 +434,6 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     ctx.lineTo(centerX + 400, footerY);
     ctx.stroke();
 
-    // "Hecho con" + logo
     if (glowLogoImage) {
       const logoH = 90;
       const aspect = glowLogoImage.width / glowLogoImage.height;
@@ -452,7 +451,6 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
       ctx.textAlign = "left";
       ctx.fillText(label, startX, midY);
 
-      // Invert logo for dark backgrounds
       const isDarkBg = !isLightColor(s.bg.startsWith("#") ? s.bg : "#FFFFFF");
       if (isDarkBg || template === "dark") {
         ctx.save();
@@ -472,14 +470,15 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
       ctx.textBaseline = "alphabetic";
       ctx.textAlign = "center";
     }
-  };
+  }, [template, logoImage, branding.name, tagline, bookingUrl, qrDataUrl, glowLogoImage]);
 
-  const generateCanvas = async (): Promise<HTMLCanvasElement | null> => {
+  const renderToCanvas = useCallback(async () => {
     const canvas = canvasRef.current;
-    if (!canvas) return null;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
+    if (!ctx) return;
 
+    setRendering(true);
     const isA4 = format === "a4";
     canvas.width = isA4 ? 2480 : 1200;
     canvas.height = isA4 ? 3508 : 800;
@@ -487,15 +486,26 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     const s = getTemplateStyles(template, pc, sc);
     const fonts = getTemplateFonts(template, branding);
 
-    if (isA4) await renderA4(ctx, s, fonts);
-    else await renderCard(ctx, s, fonts);
+    try {
+      if (isA4) await renderA4(ctx, s, fonts);
+      else await renderCard(ctx, s, fonts);
+    } catch (e) {
+      console.warn("Canvas render error:", e);
+    } finally {
+      setRendering(false);
+    }
+  }, [format, template, pc, sc, branding, renderCard, renderA4]);
 
-    return canvas;
-  };
+  // ── Live re-render: debounced for tagline, instant for selectors ──
+  useEffect(() => {
+    const t = setTimeout(() => { renderToCanvas(); }, 80);
+    return () => clearTimeout(t);
+  }, [renderToCanvas]);
 
   const handleDownload = async () => {
-    const canvas = await generateCanvas();
+    const canvas = canvasRef.current;
     if (!canvas) return;
+    await renderToCanvas();
     const link = document.createElement("a");
     const prefix = format === "a4" ? "cartel-A4" : "tarjeta";
     link.download = `${prefix}-${tenantSlug}.png`;
@@ -508,8 +518,9 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
   };
 
   const handleShare = async () => {
-    const canvas = await generateCanvas();
+    const canvas = canvasRef.current;
     if (!canvas) return;
+    await renderToCanvas();
     canvas.toBlob(async (blob) => {
       if (!blob) return;
       const filename = `${format === "a4" ? "cartel" : "tarjeta"}-${tenantSlug}.png`;
@@ -527,209 +538,175 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     });
   };
 
-  // — Preview —
-  const previewStyles = getTemplateStyles(template, pc, sc);
-  const previewFonts = getTemplateFonts(template, branding);
-
+  // ── Template thumbnail bg colors (for visual selector) ──
   const templatePreviewBgs: Record<TemplateId, string> = {
     salon: pc, elegant: "#FAF7F2", minimal: "#FFFFFF", dark: "#0F0F0F",
   };
+  const templateAccents: Record<TemplateId, string> = {
+    salon: sc, elegant: "#B8860B", minimal: "#111111", dark: "#E5C07B",
+  };
 
   return (
-    <div className="space-y-5">
-      {/* Format selector */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-foreground">Formato</h3>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => setFormat("card")}
-            className={cn(
-              "flex items-center justify-center gap-2 h-14 rounded-xl border transition-all",
-              format === "card"
-                ? "ring-2 ring-primary border-transparent bg-primary/5 text-primary"
-                : "border-border text-muted-foreground hover:border-muted-foreground/40",
-            )}
-          >
-            <ImageIcon className="h-4 w-4" />
-            <div className="text-left leading-tight">
-              <div className="text-sm font-semibold">Tarjeta</div>
-              <div className="text-[10px] opacity-70">Horizontal · redes</div>
-            </div>
-          </button>
-          <button
-            onClick={() => setFormat("a4")}
-            className={cn(
-              "flex items-center justify-center gap-2 h-14 rounded-xl border transition-all",
-              format === "a4"
-                ? "ring-2 ring-primary border-transparent bg-primary/5 text-primary"
-                : "border-border text-muted-foreground hover:border-muted-foreground/40",
-            )}
-          >
-            <FileText className="h-4 w-4" />
-            <div className="text-left leading-tight">
-              <div className="text-sm font-semibold">Cartel A4</div>
-              <div className="text-[10px] opacity-70">Vertical · imprimir</div>
-            </div>
-          </button>
+    <div className="qr-gen">
+      {/* ── Heading ── */}
+      <div className="qr-gen-head">
+        <div>
+          <h2 className="text-lg font-bold">Tarjetas QR</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Genera tarjetas y carteles con tu QR de reserva
+          </p>
         </div>
       </div>
 
-      {/* Template selector */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-foreground">Estilo</h3>
-        <div className="grid grid-cols-4 gap-2">
-          {TEMPLATES.map((t) => {
-            const ts = getTemplateStyles(t.id, pc, sc);
-            return (
+      {/* ── Body: 2-col desktop, stacked mobile ── */}
+      <div className="qr-gen-grid">
+        {/* ── Preview (top on mobile, right on desktop, sticky) ── */}
+        <div className="qr-gen-preview-wrap">
+          <div className="qr-gen-preview-sticky">
+            <div className="qr-gen-preview-card" data-format={format}>
+              <div className="qr-gen-preview-frame">
+                {rendering && (
+                  <div className="qr-gen-rendering">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                )}
+                <canvas
+                  ref={canvasRef}
+                  className="qr-gen-canvas"
+                  style={{ aspectRatio: format === "a4" ? "210/297" : "3/2" }}
+                />
+              </div>
+            </div>
+
+            {/* Action buttons under preview */}
+            <div className="qr-gen-actions">
+              <Button onClick={handleDownload} className="flex-1 gap-2 h-11 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0 shadow-md">
+                <Download className="h-4 w-4" />
+                <span className="text-sm font-semibold">Descargar PNG</span>
+              </Button>
+              <Button onClick={handleShare} variant="outline" className="gap-2 h-11">
+                <Share2 className="h-4 w-4" />
+                <span className="text-sm font-semibold hidden sm:inline">Compartir</span>
+              </Button>
+            </div>
+
+            {format === "a4" && (
+              <p className="text-[11px] text-muted-foreground text-center mt-2">
+                <Sparkles className="inline h-3 w-3 mr-0.5 -mt-0.5" />
+                2480×3508 px @ 300 DPI · Listo para imprimir
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* ── Controls (left on desktop, below preview on mobile) ── */}
+        <div className="qr-gen-controls">
+          {/* Format segmented control */}
+          <section>
+            <h3 className="qr-gen-label">Formato</h3>
+            <div className="qr-gen-seg">
               <button
-                key={t.id}
-                onClick={() => setTemplate(t.id)}
-                className={cn(
-                  "relative h-14 rounded-xl overflow-hidden transition-all",
-                  template === t.id ? "ring-2 ring-primary shadow-lg scale-[1.03]" : "ring-1 ring-border hover:ring-muted-foreground/30"
-                )}
-                style={{ background: templatePreviewBgs[t.id] }}
+                onClick={() => setFormat("card")}
+                className={cn("qr-gen-seg-btn", format === "card" && "on")}
+                type="button"
               >
-                <span className="absolute bottom-1 left-2 text-[10px] font-medium" style={{ color: ts.text }}>
-                  {t.label}
-                </span>
+                <ImageIcon className="h-4 w-4" />
+                <div className="text-left leading-tight">
+                  <div className="text-[13px] font-semibold">Tarjeta</div>
+                  <div className="text-[10px] opacity-70">Horizontal · redes</div>
+                </div>
               </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Tagline */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Eslogan (opcional)</label>
-        <Input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Reserva tu cita online" maxLength={50} />
-      </div>
-
-      {/* Preview */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          {format === "card" ? (
-            <div className="relative p-5 aspect-[3/2] flex" style={{ background: previewStyles.bg }}>
-              <div className="flex-1 flex flex-col justify-between min-w-0 pr-3">
-                <div className="space-y-2">
-                  {branding.logo_url && (
-                    <img src={branding.logo_url} alt="" className="h-8 w-8 rounded-lg object-cover" />
-                  )}
-                  <div className="pt-1">
-                    <h3 className="text-base font-bold truncate" style={{ color: previewStyles.text, fontFamily: `"${previewFonts.heading}", sans-serif` }}>
-                      {branding.name || "Tu Salón"}
-                    </h3>
-                    <div className="w-6 h-0.5 rounded-full mt-1.5" style={{ background: previewStyles.accent }} />
-                    <p className="text-[10px] mt-2" style={{ color: previewStyles.sub, fontFamily: `"${previewFonts.body}", sans-serif` }}>
-                      {tagline}
-                    </p>
-                  </div>
+              <button
+                onClick={() => setFormat("a4")}
+                className={cn("qr-gen-seg-btn", format === "a4" && "on")}
+                type="button"
+              >
+                <FileText className="h-4 w-4" />
+                <div className="text-left leading-tight">
+                  <div className="text-[13px] font-semibold">Cartel A4</div>
+                  <div className="text-[10px] opacity-70">Vertical · imprimir</div>
                 </div>
-                <p className="text-[8px] font-medium truncate" style={{ color: previewStyles.accent, fontFamily: `"${previewFonts.body}", sans-serif` }}>
-                  {bookingUrl.replace("https://", "")}
-                </p>
-              </div>
-              <div className="flex items-center shrink-0">
-                {qrDataUrl && (
-                  <div className="p-1.5 rounded-lg shadow-sm flex flex-col items-center gap-1" style={{ background: previewStyles.qrBg }}>
-                    <img src={qrDataUrl} alt="QR Code" className="w-20 h-20" />
-                    <span className="text-[7px]" style={{ color: "#888", fontFamily: `"${previewFonts.body}", sans-serif` }}>
-                      Escanea para reservar
-                    </span>
-                  </div>
-                )}
-              </div>
+              </button>
             </div>
-          ) : (
-            <div
-              className="relative mx-auto flex flex-col items-center justify-between"
-              style={{
-                background: previewStyles.bg,
-                aspectRatio: "210 / 297",
-                width: "100%",
-                maxWidth: "320px",
-                padding: "16px 14px",
-              }}
-            >
-              <div className="flex flex-col items-center text-center w-full gap-2">
-                {branding.logo_url && (
-                  <img src={branding.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover mb-1" />
-                )}
-                <h3 className="text-[18px] font-bold leading-tight" style={{ color: previewStyles.text, fontFamily: `"${previewFonts.heading}", sans-serif` }}>
-                  RESERVA TU CITA
-                </h3>
-                <p className="text-[10px] -mt-1" style={{ color: previewStyles.text, fontFamily: `"${previewFonts.heading}", sans-serif` }}>
-                  en {branding.name || "nuestro salón"}
-                </p>
-                <div className="w-8 h-[2px] rounded-full" style={{ background: previewStyles.accent }} />
-              </div>
+          </section>
 
-              {qrDataUrl && (
-                <div className="rounded-lg shadow-md p-2" style={{ background: previewStyles.qrBg }}>
-                  <img src={qrDataUrl} alt="QR" className="w-32 h-32" />
-                </div>
-              )}
-
-              <div className="flex flex-col items-center text-center w-full gap-1">
-                <p className="text-[9px]" style={{ color: previewStyles.sub, fontFamily: `"${previewFonts.body}", sans-serif` }}>
-                  Escanea con tu móvil
-                </p>
-                <p className="text-[10px] font-bold" style={{ color: previewStyles.accent, fontFamily: `"${previewFonts.body}", sans-serif` }}>
-                  {bookingUrl.replace("https://", "")}
-                </p>
-                <div className="h-px w-24 my-1 opacity-30" style={{ background: previewStyles.text }} />
-                <div className="flex items-center gap-1.5 opacity-80">
-                  <span className="text-[7px]" style={{ color: previewStyles.sub }}>Hecho con</span>
-                  <img
-                    src={glowappLetras}
-                    alt="Glowapp"
-                    className="h-3 object-contain"
-                    style={{ filter: template === "dark" || !isLightColor(previewStyles.bg.startsWith("#") ? previewStyles.bg : "#FFFFFF") ? "invert(1) brightness(2)" : "none" }}
-                  />
-                </div>
-              </div>
+          {/* Template grid */}
+          <section>
+            <h3 className="qr-gen-label">Estilo</h3>
+            <div className="qr-gen-tplgrid">
+              {TEMPLATES.map((t) => {
+                const isOn = template === t.id;
+                const bgColor = templatePreviewBgs[t.id];
+                const accentColor = templateAccents[t.id];
+                const isLight = isLightColor(bgColor.startsWith("#") ? bgColor : "#FFFFFF");
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setTemplate(t.id)}
+                    type="button"
+                    className={cn("qr-gen-tpl", isOn && "on")}
+                  >
+                    <div
+                      className="qr-gen-tpl-swatch"
+                      style={{ background: bgColor }}
+                    >
+                      <span
+                        className="qr-gen-tpl-accent"
+                        style={{ background: accentColor }}
+                      />
+                      <span
+                        className="qr-gen-tpl-dots"
+                        style={{ color: isLight ? "rgba(0,0,0,.25)" : "rgba(255,255,255,.4)" }}
+                      >
+                        ▪ ▪ ▪
+                      </span>
+                    </div>
+                    <div className="qr-gen-tpl-meta">
+                      <div className="text-[13px] font-semibold">{t.label}</div>
+                      <div className="text-[10px] text-muted-foreground">{t.hint}</div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </section>
 
-      {/* Actions */}
-      <div className="flex gap-3">
-        <Button onClick={handleDownload} className="flex-1 gap-2">
-          <Download className="h-4 w-4" />
-          {format === "a4" ? "Descargar cartel A4" : "Descargar PNG"}
-        </Button>
-        <Button onClick={handleShare} variant="outline" className="flex-1 gap-2">
-          <Share2 className="h-4 w-4" />
-          Compartir
-        </Button>
-      </div>
+          {/* Tagline */}
+          <section>
+            <h3 className="qr-gen-label">Eslogan</h3>
+            <Input
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+              placeholder="Reserva tu cita online"
+              maxLength={50}
+              className="h-10"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1.5">
+              {tagline.length}/50 caracteres
+            </p>
+          </section>
 
-      {format === "a4" && (
-        <p className="text-[11px] text-muted-foreground text-center -mt-2">
-          PNG 2480×3508 px @ 300 DPI · imprime en A4 sin pérdida
-        </p>
-      )}
-
-      <canvas ref={canvasRef} className="hidden" />
-
-      {/* Booking link */}
-      <Card className="bg-muted/30">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Smartphone className="h-5 w-5 text-primary" />
+          {/* Booking link */}
+          <section className="qr-gen-link-card">
+            <div className="qr-gen-link-icon">
+              <Smartphone className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">Tu link de reservas</p>
-              <p className="text-xs text-muted-foreground truncate">{bookingUrl}</p>
+              <p className="text-[12px] font-semibold text-foreground">Tu link de reservas</p>
+              <p className="text-[11px] text-muted-foreground truncate">{bookingUrl}</p>
             </div>
-            <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(bookingUrl); toast({ title: "Copiado" }); }}>
-              Copiar
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => { navigator.clipboard.writeText(bookingUrl); toast({ title: "Copiado" }); }}
+              className="h-8 px-2.5"
+            >
+              <Copy className="h-3.5 w-3.5 mr-1" />
+              <span className="text-[11px] font-semibold">Copiar</span>
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </section>
+        </div>
+      </div>
     </div>
   );
 }
