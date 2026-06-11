@@ -126,7 +126,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
           .gte("rating", 4)
           .order("created_at", { ascending: false })
           .limit(3),
-        supabase.rpc("get_tenant_feed_section_metrics" as never, {
+        supabase.rpc("get_tenant_feed_section_metrics", {
           p_tenant_id: tenantId,
           days: 7,
         }),
