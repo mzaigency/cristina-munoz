@@ -266,7 +266,11 @@ const MarketingSection = ({
           <MarketingBroadcast tenantId={tenantId} tenantSlug={tenantSlug} tenantName={tenantName} />
         )}
 
-        {activeTab === "qr" && <QRCardGenerator tenantId={tenantId} tenantSlug={tenantSlug} />}
+        {activeTab === "qr" && (
+          <div data-tour-target="marketing-qr">
+            <QRCardGenerator tenantId={tenantId} tenantSlug={tenantSlug} />
+          </div>
+        )}
       </div>
     </div>
   );

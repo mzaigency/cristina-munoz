@@ -365,7 +365,7 @@ export default function TenantAdmin() {
     toast({ title: "Actualizado", description: "Datos actualizados correctamente" });
   }, [tenant?.id, refetchNotifications]);
 
-  // Legacy navigate adapter used by AdminDashboard/InteractiveTour
+  // Legacy navigate adapter used by AdminDashboard and SpotlightTour
   const handleNavigate = useCallback(
     (tab: string, subTab?: string) => {
       const mapped = LEGACY_NAV_MAP[tab];
@@ -545,7 +545,7 @@ export default function TenantAdmin() {
           </span>
         </div>
 
-        <nav className="gp-nav">
+        <nav className="gp-nav" data-tour-target="sidebar-nav">
           {navItems.map((item) => {
             const isActive = activeSection === item.value;
             const subs = ADMIN_SUB_NAV[item.value as AdminSection] || [];
@@ -636,7 +636,7 @@ export default function TenantAdmin() {
             <span className="gp-top-title">{activeSubLabel}</span>
           </div>
           <div className="gp-top-spacer" />
-          <AdminHelpMenu onTourTabChange={handleNavigate} />
+          <AdminHelpMenu tenantId={tenant.id} onTourTabChange={handleNavigate} />
           {/* Account menu: visible on mobile where sidebar is hidden */}
           <span className="gp-topbar-account-mobile">
             <AdminAccountMenu
@@ -730,7 +730,7 @@ export default function TenantAdmin() {
       </button>
 
       {/* ── Mobile Bottom Nav ── */}
-      <nav className="gp-bottom">
+      <nav className="gp-bottom" data-tour-target="mobile-bottom-nav">
         {primaryNav.map((item) => {
           const badgeCount = typeof item.badge === "number" ? item.badge : 0;
           const showBadge = badgeCount > 0 && activeSection !== item.value;

@@ -431,7 +431,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
   };
 
   return (
-    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
+    <div className="gp-fade" data-tour-target="inicio-stats" style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
       <OnboardingChecklist tenantId={tenantId} onNavigate={onNavigate} />
 
       {/* Page header */}

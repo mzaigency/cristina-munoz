@@ -82,7 +82,7 @@ const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange, hid
           </TabsList>
         )}
 
-        <TabsContent value="directory" className="mt-4">
+        <TabsContent value="directory" className="mt-4" data-tour-target="clientes-directorio">
           <ClientsCRM tenantId={tenantId} initialClientId={initialClientId} />
         </TabsContent>
 

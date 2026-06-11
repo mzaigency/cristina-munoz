@@ -49,7 +49,7 @@ const CajaSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CajaSection
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+    <div data-tour-target="caja-cobros" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       {!hideTabs && (
         <div className="gp-subtabs">
           {tabs.map((tab) => (

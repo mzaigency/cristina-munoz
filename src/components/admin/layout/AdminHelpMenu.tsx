@@ -1,22 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HelpCircle, Sparkles, BookOpen, Keyboard } from "lucide-react";
-import { HelpTutorial } from "@/components/admin/HelpTutorial";
-import { InteractiveTour } from "@/components/admin/InteractiveTour";
+import { SpotlightTour, tourHasBeenSeen } from "@/components/admin/help/SpotlightTour";
+import { HelpCenter } from "@/components/admin/help/HelpCenter";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 interface AdminHelpMenuProps {
+  tenantId: string;
   onTourTabChange?: (tab: string, subTab?: string) => void;
 }
 
 /**
- * Single "?" entrypoint that consolidates the Interactive Tour, Help Center,
- * and a Cmd+K hint. Reduces header clutter from 2 loose icons to 1.
+ * "?" entrypoint — launches SpotlightTour or opens HelpCenter.
+ * Auto-launches tour on first visit (localStorage flag).
  */
-export function AdminHelpMenu({ onTourTabChange }: AdminHelpMenuProps) {
+export function AdminHelpMenu({ tenantId, onTourTabChange }: AdminHelpMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const { hasFeature } = usePlanLimits(tenantId);
+
+  // Auto-launch tour for first-time users
+  useEffect(() => {
+    if (tourHasBeenSeen()) return;
+    const t = setTimeout(() => setTourOpen(true), 1200);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <>
@@ -37,12 +47,12 @@ export function AdminHelpMenu({ onTourTabChange }: AdminHelpMenuProps) {
             onClick={() => { setMenuOpen(false); setTourOpen(true); }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted transition-colors text-left"
           >
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/15 to-purple-500/15 flex items-center justify-center shrink-0">
-              <Sparkles className="h-4 w-4 text-primary" />
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-pink-500/15 to-purple-500/15 flex items-center justify-center shrink-0">
+              <Sparkles className="h-4 w-4 text-pink-600" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-medium">Tour guiado</div>
-              <div className="text-[11px] text-muted-foreground">Recorrido interactivo</div>
+              <div className="text-[11px] text-muted-foreground">90 segundos · 10 pasos</div>
             </div>
           </button>
 
@@ -55,7 +65,7 @@ export function AdminHelpMenu({ onTourTabChange }: AdminHelpMenuProps) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-medium">Centro de ayuda</div>
-              <div className="text-[11px] text-muted-foreground">Guía detallada por sección</div>
+              <div className="text-[11px] text-muted-foreground">Buscar funciones</div>
             </div>
           </button>
 
@@ -67,14 +77,18 @@ export function AdminHelpMenu({ onTourTabChange }: AdminHelpMenuProps) {
         </PopoverContent>
       </Popover>
 
-      {/* Controlled instances — no trigger rendered, only the modal/overlay */}
-      <InteractiveTour
+      <SpotlightTour
         open={tourOpen}
         onOpenChange={setTourOpen}
-        hideTrigger
-        onTabChange={onTourTabChange}
+        onNavigate={onTourTabChange}
+        hasFeature={hasFeature}
       />
-      <HelpTutorial open={helpOpen} onOpenChange={setHelpOpen} hideTrigger />
+      <HelpCenter
+        open={helpOpen}
+        onOpenChange={setHelpOpen}
+        onStartTour={() => setTourOpen(true)}
+        hasFeature={hasFeature}
+      />
     </>
   );
 }

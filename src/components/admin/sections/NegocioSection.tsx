@@ -113,7 +113,11 @@ const NegocioSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: NegocioS
         {activeTab === "resumen" && (
           <NegocioOverview tenantId={tenantId} onNavigate={(t) => handleTabChange(t as NegocioTab)} />
         )}
-        {activeTab === "equipo" && <TeamHub tenantId={tenantId} />}
+        {activeTab === "equipo" && (
+          <div data-tour-target="negocio-equipo">
+            <TeamHub tenantId={tenantId} />
+          </div>
+        )}
         {activeTab === "horarios" && <HoursManager tenantId={tenantId} />}
         {activeTab === "estadisticas" &&
           (isTabLocked(tabs[3]) ? (

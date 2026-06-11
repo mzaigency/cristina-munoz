@@ -92,7 +92,7 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
       )}
 
       {activeTab === "dia" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div data-tour-target="agenda-calendar" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Sheet>
             <SheetTrigger asChild>
               <button className="gp-btn sm" style={{ alignSelf: "flex-start" }}>
