@@ -1535,7 +1535,16 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 </div>
               )}
 
-              <div className="ag-gridcard">
+              <div
+                className="ag-gridcard"
+                style={{
+                  borderRadius: "20px",
+                  overflow: "hidden",
+                  border: "1px solid oklch(0.925 0.007 265)",
+                  boxShadow: "0 10px 40px -16px rgba(20, 22, 40, 0.08)",
+                  background: "#ffffff",
+                }}
+              >
                 <div className="ag-scroller">
                   <div className="ag-grid" style={{ minWidth: "100%" }}>
                     {/* ── Sticky column headers ── */}
