@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Image, Play } from 'lucide-react';
+import { Image as ImageIcon, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
 
 interface StoryReplyPreviewProps {
   storyId: string;
-  isOwn: boolean;
 }
 
 interface StoryData {
@@ -18,54 +16,48 @@ interface StoryData {
   } | null;
 }
 
-export function StoryReplyPreview({ storyId, isOwn }: StoryReplyPreviewProps) {
+export function StoryReplyPreview({ storyId }: StoryReplyPreviewProps) {
   const [story, setStory] = useState<StoryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    const fetchStory = async () => {
+    let cancelled = false;
+    (async () => {
       try {
-        // Fetch story with tenant info - include expired stories for context
         const { data, error: fetchError } = await supabase
           .from('salon_stories')
-          .select(`
-            id,
-            image_url,
-            caption,
-            tenant:tenants(name, logo_url)
-          `)
+          .select(
+            `id, image_url, caption, tenant:tenants(name, logo_url)`
+          )
           .eq('id', storyId)
           .maybeSingle();
 
+        if (cancelled) return;
         if (fetchError) throw fetchError;
-        
-        if (data) {
-          setStory(data as StoryData);
-        } else {
-          setError(true);
-        }
-      } catch (err) {
-        console.error('Error fetching story:', err);
-        setError(true);
+        if (data) setStory(data as StoryData);
+        else setError(true);
+      } catch {
+        if (!cancelled) setError(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-
-    fetchStory();
   }, [storyId]);
 
   if (loading) {
     return (
-      <div className={cn(
-        'flex items-center gap-2 p-2 rounded-lg mb-2',
-        isOwn ? 'bg-primary-foreground/10' : 'bg-muted/50'
-      )}>
-        <div className="w-12 h-16 rounded-md bg-muted animate-pulse" />
-        <div className="flex-1 space-y-1">
-          <div className="h-3 w-20 bg-muted rounded animate-pulse" />
-          <div className="h-2 w-16 bg-muted rounded animate-pulse" />
+      <div className="msg-story" aria-busy="true">
+        <div className="msg-story-thumb">
+          <div className="msg-story-thumb-fb">
+            <ImageIcon className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="msg-story-info">
+          <p className="msg-story-title">Cargando historia…</p>
         </div>
       </div>
     );
@@ -73,80 +65,32 @@ export function StoryReplyPreview({ storyId, isOwn }: StoryReplyPreviewProps) {
 
   if (error || !story) {
     return (
-      <div className={cn(
-        'flex items-center gap-2 p-2 rounded-lg mb-2',
-        isOwn ? 'bg-primary-foreground/10' : 'bg-muted/50'
-      )}>
-        <div className={cn(
-          'w-12 h-16 rounded-md flex items-center justify-center',
-          isOwn ? 'bg-primary-foreground/20' : 'bg-muted'
-        )}>
-          <Image className={cn(
-            'h-5 w-5',
-            isOwn ? 'text-primary-foreground/50' : 'text-muted-foreground'
-          )} />
+      <div className="msg-story">
+        <div className="msg-story-thumb">
+          <div className="msg-story-thumb-fb">
+            <ImageIcon className="h-5 w-5" />
+          </div>
         </div>
-        <div className="flex-1">
-          <p className={cn(
-            'text-xs font-medium',
-            isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
-          )}>
-            Historia no disponible
-          </p>
-          <p className={cn(
-            'text-[10px]',
-            isOwn ? 'text-primary-foreground/50' : 'text-muted-foreground/70'
-          )}>
-            La historia ha expirado o fue eliminada
-          </p>
+        <div className="msg-story-info">
+          <p className="msg-story-title">Historia no disponible</p>
+          <p className="msg-story-caption">Expiró o fue eliminada</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={cn(
-      'flex items-center gap-2 p-2 rounded-lg mb-2 cursor-pointer transition-all hover:opacity-80',
-      isOwn ? 'bg-primary-foreground/10' : 'bg-muted/50'
-    )}>
-      {/* Story thumbnail */}
-      <div className="relative w-12 h-16 rounded-md overflow-hidden shrink-0">
-        <img
-          src={story.image_url}
-          alt="Story"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-          <Play className="h-4 w-4 text-white fill-white" />
+    <div className="msg-story">
+      <div className="msg-story-thumb">
+        <img src={story.image_url} alt="Historia" />
+        <div className="msg-story-thumb-play">
+          <Play className="h-3.5 w-3.5 fill-current" />
         </div>
       </div>
-
-      {/* Story info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-0.5">
-          <span className={cn(
-            'text-xs font-semibold',
-            isOwn ? 'text-primary-foreground/90' : 'text-foreground'
-          )}>
-            📷 Respuesta a historia
-          </span>
-        </div>
-        {story.caption && (
-          <p className={cn(
-            'text-[11px] truncate',
-            isOwn ? 'text-primary-foreground/60' : 'text-muted-foreground'
-          )}>
-            {story.caption}
-          </p>
-        )}
-        {story.tenant && (
-          <p className={cn(
-            'text-[10px]',
-            isOwn ? 'text-primary-foreground/50' : 'text-muted-foreground/70'
-          )}>
-            {story.tenant.name}
-          </p>
-        )}
+      <div className="msg-story-info">
+        <p className="msg-story-title">Respuesta a historia</p>
+        {story.caption && <p className="msg-story-caption">{story.caption}</p>}
+        {story.tenant && <p className="msg-story-tenant">{story.tenant.name}</p>}
       </div>
     </div>
   );

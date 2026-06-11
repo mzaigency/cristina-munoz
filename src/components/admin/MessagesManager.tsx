@@ -5,7 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
-import { useConversations, useMessages, Conversation, getOrCreateConversation } from '@/hooks/useConversations';
+import {
+  useConversations,
+  useMessages,
+  Conversation,
+  getOrCreateConversation,
+} from '@/hooks/useConversations';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -13,6 +18,14 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface MessagesManagerProps {
   tenantId: string;
+}
+
+interface ProfileRow {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
 }
 
 export function MessagesManager({ tenantId }: MessagesManagerProps) {
@@ -23,89 +36,78 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
   const [newMessageDialog, setNewMessageDialog] = useState(false);
   const [searchUsername, setSearchUsername] = useState('');
   const [searching, setSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<ProfileRow[]>([]);
 
-  const { conversations, loading: loadingConversations, refetch } = useConversations('salon', tenantId);
+  const { conversations, loading: loadingConversations, refetch } = useConversations(
+    'salon',
+    tenantId
+  );
   const { messages, loading: loadingMessages, sendMessage, markAsRead } = useMessages(
     selectedConversation?.id || null
   );
 
   useEffect(() => {
-    if (selectedConversation) {
-      markAsRead('salon');
-    }
+    if (selectedConversation) markAsRead('salon');
   }, [selectedConversation?.id]);
 
-  // Hide admin bottom nav on mobile when chat is open (Instagram-style fullscreen)
+  // Hide admin bottom nav while chat is open on mobile
   useEffect(() => {
     if (!isMobile) return;
-    if (selectedConversation) {
-      document.body.classList.add('msg-chat-open');
-    } else {
-      document.body.classList.remove('msg-chat-open');
-    }
+    if (selectedConversation) document.body.classList.add('msg-chat-open');
+    else document.body.classList.remove('msg-chat-open');
     return () => {
       document.body.classList.remove('msg-chat-open');
     };
   }, [isMobile, selectedConversation]);
 
   const handleSendMessage = (content: string) => {
-    if (user) {
-      sendMessage(content, 'salon', user.id);
-    }
+    if (user) sendMessage(content, 'salon', user.id);
   };
 
-  // Real-time search as user types
+  // Live search
   useEffect(() => {
-    const searchUsers = async () => {
+    const run = async () => {
       const term = searchUsername.trim();
       if (term.length < 2) {
         setSearchResults([]);
         return;
       }
-
       setSearching(true);
       try {
-        const { data: profiles, error } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('id, username, full_name, email, avatar_url')
           .or(`username.ilike.%${term}%,full_name.ilike.%${term}%`)
           .limit(10);
-
         if (error) throw error;
-        setSearchResults(profiles || []);
-      } catch (error) {
-        console.error('Error searching users:', error);
+        setSearchResults((data || []) as ProfileRow[]);
+      } catch (err) {
+        console.error('Error searching users:', err);
         setSearchResults([]);
       } finally {
         setSearching(false);
       }
     };
-
-    const debounce = setTimeout(searchUsers, 300);
-    return () => clearTimeout(debounce);
+    const t = setTimeout(run, 300);
+    return () => clearTimeout(t);
   }, [searchUsername]);
 
-  const handleSelectUser = async (profile: any) => {
+  const handleSelectUser = async (profile: ProfileRow) => {
     try {
-      const conversationId = await getOrCreateConversation(tenantId, profile.id);
-
-      if (conversationId) {
-        await refetch();
-        const newConv = conversations.find((c) => c.id === conversationId);
-        if (newConv) {
-          setSelectedConversation(newConv);
-        }
-        setNewMessageDialog(false);
-        setSearchUsername('');
-        setSearchResults([]);
-        toast({
-          title: 'Conversación creada',
-          description: `Ahora puedes enviar mensajes a ${profile.full_name || profile.username || profile.email}`,
-        });
-      }
-    } catch (error) {
-      console.error('Error starting conversation:', error);
+      const id = await getOrCreateConversation(tenantId, profile.id);
+      if (!id) return;
+      await refetch();
+      const newConv = conversations.find((c) => c.id === id);
+      if (newConv) setSelectedConversation(newConv);
+      setNewMessageDialog(false);
+      setSearchUsername('');
+      setSearchResults([]);
+      toast({
+        title: 'Conversación creada',
+        description: `Ahora puedes escribir a ${profile.full_name || profile.username || profile.email}`,
+      });
+    } catch (err) {
+      console.error('Error starting conversation:', err);
       toast({
         title: 'Error',
         description: 'No se pudo iniciar la conversación',
@@ -137,32 +139,38 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
                 className="pl-9"
               />
             </div>
-            {searching && <p className="text-xs text-muted-foreground mt-2">Buscando...</p>}
-            <p className="text-xs text-muted-foreground mt-2">El cliente debe tener una cuenta registrada</p>
+            {searching && (
+              <p className="text-xs text-muted-foreground mt-2">Buscando…</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">
+              El cliente debe tener una cuenta registrada
+            </p>
           </div>
           {searchResults.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-medium">Resultados:</p>
+              <p className="text-sm font-medium">Resultados</p>
               <div className="max-h-[260px] overflow-y-auto space-y-1">
-                {searchResults.map((profile) => (
+                {searchResults.map((p) => (
                   <button
-                    key={profile.id}
-                    onClick={() => handleSelectUser(profile)}
+                    key={p.id}
+                    onClick={() => handleSelectUser(p)}
                     className="msg-newchat-result"
                   >
-                    {profile.avatar_url ? (
-                      <img src={profile.avatar_url} alt="" className="msg-newchat-avatar" />
+                    {p.avatar_url ? (
+                      <img src={p.avatar_url} alt="" className="msg-newchat-avatar" />
                     ) : (
                       <div className="msg-newchat-avatar msg-newchat-avatar-fb">
-                        {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
+                        {(p.full_name || p.username || 'U').charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="min-w-0 flex-1 text-left">
                       <p className="text-sm font-semibold truncate">
-                        {profile.full_name || profile.username || 'Usuario'}
+                        {p.full_name || p.username || 'Usuario'}
                       </p>
-                      {profile.username && (
-                        <p className="text-xs text-muted-foreground truncate">@{profile.username}</p>
+                      {p.username && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          @{p.username}
+                        </p>
                       )}
                     </div>
                   </button>
@@ -175,7 +183,7 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
     </Dialog>
   );
 
-  // ─────────────────────── Mobile Layout ───────────────────────
+  // ── Mobile ────────────────────────────────────────────────
   if (isMobile) {
     const chatOverlay = selectedConversation && (
       <div className="msg-mobile-overlay">
@@ -193,73 +201,90 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
 
     return (
       <>
-        <div className="msg-mobile-shell">
-          <header className="msg-mobile-list-header">
-            <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 gp-text-brand" />
-              <h2 className="text-base font-bold">Mensajes</h2>
+        <div className="msg-shell-mobile">
+          <header className="msg-sidebar-header">
+            <span className="msg-sidebar-title">
+              <MessageCircle className="h-5 w-5" style={{ color: 'var(--gp-accent)' }} />
+              Mensajes
               {totalUnread > 0 && (
-                <span className="msg-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+                <span className="msg-unread-badge">
+                  {totalUnread > 99 ? '99+' : totalUnread}
+                </span>
               )}
-            </div>
-            <button onClick={() => setNewMessageDialog(true)} className="msg-new-btn" aria-label="Nuevo mensaje">
+            </span>
+            <button
+              type="button"
+              onClick={() => setNewMessageDialog(true)}
+              className="msg-new-btn"
+              aria-label="Nuevo mensaje"
+            >
               <Plus className="h-4 w-4" />
             </button>
           </header>
-          <div className="msg-mobile-list-body">
+          <div className="msg-sidebar">
             <ConversationList
               conversations={conversations}
               loading={loadingConversations}
               selectedId={null}
               onSelect={setSelectedConversation}
               role="salon"
+              showSearch={false}
             />
           </div>
         </div>
 
-        {/* Fullscreen overlay above admin bottom nav */}
         {chatOverlay && createPortal(chatOverlay, document.body)}
-
         {newMsgDialog}
       </>
     );
   }
 
-  // ─────────────────────── Desktop Layout ───────────────────────
+  // ── Desktop ───────────────────────────────────────────────
   return (
-    <div className="msg-desktop">
-      <aside className="msg-desktop-sidebar">
-        <header className="msg-desktop-sidebar-header">
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold">Mensajes</h2>
+    <div className="msg-shell-desktop">
+      <aside className="msg-sidebar">
+        <header className="msg-sidebar-header">
+          <span className="msg-sidebar-title">
+            Mensajes
             {totalUnread > 0 && (
-              <span className="msg-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+              <span className="msg-unread-badge">
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </span>
             )}
-          </div>
-          <button onClick={() => setNewMessageDialog(true)} className="msg-new-btn" aria-label="Nuevo mensaje">
+          </span>
+          <button
+            type="button"
+            onClick={() => setNewMessageDialog(true)}
+            className="msg-new-btn"
+            aria-label="Nuevo mensaje"
+          >
             <Plus className="h-4 w-4" />
           </button>
         </header>
-        <div className="msg-desktop-sidebar-body">
-          <ConversationList
-            conversations={conversations}
-            loading={loadingConversations}
-            selectedId={selectedConversation?.id || null}
-            onSelect={setSelectedConversation}
-            role="salon"
-          />
-        </div>
-      </aside>
-      <main className="msg-desktop-thread">
-        <ChatWindow
-          conversation={selectedConversation}
-          messages={messages}
-          loading={loadingMessages}
-          onSendMessage={handleSendMessage}
-          currentUserId={user?.id || ''}
+        <ConversationList
+          conversations={conversations}
+          loading={loadingConversations}
+          selectedId={selectedConversation?.id || null}
+          onSelect={setSelectedConversation}
           role="salon"
         />
-      </main>
+        <div className="msg-sidebar-hint">
+          <span>
+            <kbd>↑↓</kbd> Navegar
+          </span>
+          <span>
+            <kbd>Enter</kbd> Abrir
+          </span>
+        </div>
+      </aside>
+      <ChatWindow
+        conversation={selectedConversation}
+        messages={messages}
+        loading={loadingMessages}
+        onSendMessage={handleSendMessage}
+        currentUserId={user?.id || ''}
+        role="salon"
+      />
       {newMsgDialog}
     </div>
   );

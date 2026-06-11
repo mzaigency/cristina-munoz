@@ -1,9 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Send, MessageCircle, CheckCheck, Check, CalendarCheck, Bell, XCircle, Star, Camera, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Send,
+  MessageCircle,
+  CheckCheck,
+  Check,
+  CalendarCheck,
+  Bell,
+  XCircle,
+  Star,
+  Camera,
+  ArrowLeft,
+} from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Message, Conversation } from '@/hooks/useConversations';
 import { StoryReplyPreview } from './StoryReplyPreview';
@@ -51,11 +60,15 @@ const getMessageLabel = (type: string) => {
       return 'Cita cancelada';
     case 'review_request':
       return 'Valoración';
-    case 'story_reply':
-      return null; // Don't show label, preview handles it
     default:
       return null;
   }
+};
+
+const formatDateLabel = (date: Date) => {
+  if (isToday(date)) return 'Hoy';
+  if (isYesterday(date)) return 'Ayer';
+  return format(date, "EEEE, d 'de' MMMM", { locale: es });
 };
 
 export function ChatWindow({
@@ -63,48 +76,49 @@ export function ChatWindow({
   messages,
   loading,
   onSendMessage,
-  currentUserId,
   role,
   onBack,
 }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingRef = useRef(false);
 
+  // Autoscroll to bottom on message change
   useEffect(() => {
-    // Scroll to bottom on new messages
-    if (scrollRef.current) {
-      const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
-      }
+    if (bodyRef.current) {
+      bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, otherTyping]);
 
+  // Focus input when conversation changes
   useEffect(() => {
-    // Focus input when conversation changes
-    if (conversation && inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (conversation && inputRef.current) inputRef.current.focus();
   }, [conversation?.id]);
 
-  // Typing indicator - realtime presence
+  // Single shared presence channel for typing per conversation
   useEffect(() => {
     if (!conversation?.id) return;
 
-    const channel = supabase.channel(`typing:${conversation.id}`);
+    const channel = supabase.channel(`typing:${conversation.id}`, {
+      config: { presence: { key: role } },
+    });
+    channelRef.current = channel;
 
     channel
       .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const typingUsers = Object.values(state).flat() as unknown as Array<{ is_typing?: boolean; user_type?: string }>;
-        const otherUserTyping = typingUsers.some(
-          (u) => u?.is_typing && u?.user_type !== role
+        const state = channel.presenceState() as Record<
+          string,
+          Array<{ is_typing?: boolean; user_type?: string }>
+        >;
+        const someoneElseTyping = Object.entries(state).some(
+          ([key, entries]) =>
+            key !== role && entries.some((e) => e?.is_typing === true)
         );
-        setOtherTyping(otherUserTyping);
+        setOtherTyping(someoneElseTyping);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -114,63 +128,54 @@ export function ChatWindow({
 
     return () => {
       supabase.removeChannel(channel);
+      channelRef.current = null;
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      isTypingRef.current = false;
     };
   }, [conversation?.id, role]);
 
-  // Broadcast typing status
-  const broadcastTyping = async (typing: boolean) => {
-    if (!conversation?.id) return;
-    
-    const channel = supabase.channel(`typing:${conversation.id}`);
-    await channel.track({ is_typing: typing, user_type: role });
+  const broadcastTyping = (typing: boolean) => {
+    if (!channelRef.current) return;
+    channelRef.current.track({ is_typing: typing, user_type: role });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
-    
-    // Broadcast typing status
-    if (!isTyping) {
-      setIsTyping(true);
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
       broadcastTyping(true);
     }
-
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    // Set timeout to stop typing indicator
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
+      isTypingRef.current = false;
       broadcastTyping(false);
-    }, 2000);
+    }, 1800);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    // Stop typing indicator
-    setIsTyping(false);
+    const trimmed = newMessage.trim();
+    if (!trimmed) return;
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    isTypingRef.current = false;
     broadcastTyping(false);
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    onSendMessage(newMessage.trim());
+    onSendMessage(trimmed);
     setNewMessage('');
   };
 
+  // Placeholder for desktop when no conversation
   if (!conversation) {
     return (
-      <div className="msg-empty-thread">
-        <div className="msg-empty-thread-icon">
-          <MessageCircle className="h-10 w-10" />
+      <div className="msg-thread">
+        <div className="msg-thread-placeholder">
+          <div className="msg-thread-placeholder-icon">
+            <MessageCircle className="h-10 w-10" />
+          </div>
+          <h3 className="msg-thread-placeholder-title">Tus mensajes</h3>
+          <p className="msg-thread-placeholder-text">
+            Selecciona una conversación para empezar a chatear.
+          </p>
         </div>
-        <h3 className="text-lg font-semibold mb-1">Tus mensajes</h3>
-        <p className="text-sm text-muted-foreground max-w-[260px]">
-          Selecciona una conversación para empezar a chatear con tus clientes.
-        </p>
       </div>
     );
   }
@@ -180,147 +185,146 @@ export function ChatWindow({
       ? conversation.tenant?.name || 'Salón'
       : conversation.user?.full_name || conversation.user?.email || 'Cliente';
 
-  const avatarUrl = role === 'user' ? conversation.tenant?.logo_url : null;
+  const avatarUrl =
+    role === 'user'
+      ? conversation.tenant?.logo_url
+      : conversation.user?.avatar_url;
 
   return (
-    <div className="msg-chat">
-      {/* Header: WhatsApp/Instagram-style */}
-      <header className="msg-chat-header">
+    <div className="msg-thread">
+      {/* Header */}
+      <header className="msg-thread-header">
         {onBack && (
-          <button onClick={onBack} className="msg-chat-back" aria-label="Volver">
+          <button
+            type="button"
+            onClick={onBack}
+            className="msg-thread-back"
+            aria-label="Volver"
+          >
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
-        <Avatar className="msg-chat-header-avatar">
-          <AvatarImage src={avatarUrl || undefined} />
-          <AvatarFallback className="msg-chat-header-avatar-fb">
+        <Avatar className="msg-thread-avatar">
+          <AvatarImage src={avatarUrl || undefined} alt={displayName} />
+          <AvatarFallback className="msg-thread-avatar-fb">
             {displayName.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-[15px] font-semibold leading-tight truncate">{displayName}</h2>
-          {otherTyping ? (
-            <p className="text-[11px] gp-text-brand font-medium">escribiendo…</p>
-          ) : (
-            <p className="text-[11px] text-muted-foreground">En línea</p>
-          )}
+        <div className="msg-thread-info">
+          <p className="msg-thread-name">{displayName}</p>
+          <p
+            className={cn(
+              'msg-thread-status',
+              otherTyping && 'msg-thread-status-typing'
+            )}
+          >
+            {otherTyping ? 'escribiendo…' : 'En línea'}
+          </p>
         </div>
       </header>
 
-      {/* Messages area - scrollable */}
-      <div className="msg-chat-body">
-        <ScrollArea className="h-full" ref={scrollRef}>
-          <div className="msg-chat-msglist">
-          {loading && messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-sm text-muted-foreground">Cargando mensajes...</p>
+      {/* Body */}
+      <div ref={bodyRef} className="msg-thread-body">
+        {loading && messages.length === 0 ? (
+          <div className="msg-thread-loading">
+            <p className="msg-thread-empty-text">Cargando mensajes…</p>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="msg-thread-empty">
+            <div className="msg-thread-empty-icon">
+              <MessageCircle className="h-8 w-8" />
             </div>
-          ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
-              </div>
-              <p className="font-medium text-foreground mb-1">Inicia la conversación</p>
-              <p className="text-sm text-muted-foreground">Envía un mensaje para comenzar</p>
-            </div>
-          ) : (
-            <>
-              {messages.map((message, index) => {
-                const isOwn =
-                  (role === 'user' && message.sender_type === 'user') ||
-                  (role === 'salon' && message.sender_type === 'salon');
+            <p className="msg-thread-empty-title">Inicia la conversación</p>
+            <p className="msg-thread-empty-text">
+              Envía el primer mensaje para empezar.
+            </p>
+          </div>
+        ) : (
+          <div className="msg-thread-list">
+            {messages.map((m, i) => {
+              const isOwn =
+                (role === 'user' && m.sender_type === 'user') ||
+                (role === 'salon' && m.sender_type === 'salon');
 
-                const showDate =
-                  index === 0 ||
-                  format(new Date(messages[index - 1].created_at), 'yyyy-MM-dd') !==
-                    format(new Date(message.created_at), 'yyyy-MM-dd');
+              const date = new Date(m.created_at);
+              const prevDate = i > 0 ? new Date(messages[i - 1].created_at) : null;
+              const showDate =
+                !prevDate ||
+                format(prevDate, 'yyyy-MM-dd') !== format(date, 'yyyy-MM-dd');
 
-                const isSystemMessage = message.message_type !== 'text' && message.message_type !== 'story_reply';
-                const isStoryReply = message.message_type === 'story_reply';
-                const storyId = isStoryReply && message.metadata?.story_id ? message.metadata.story_id : null;
-                const messageIcon = getMessageIcon(message.message_type);
-                const messageLabel = getMessageLabel(message.message_type);
+              const isStoryReply = m.message_type === 'story_reply';
+              const storyId =
+                isStoryReply && m.metadata?.story_id ? m.metadata.story_id : null;
+              const isSystem =
+                m.message_type !== 'text' && m.message_type !== 'story_reply';
 
-                return (
-                  <div key={message.id}>
-                    {showDate && (
-                      <div className="msg-date-sep">
-                        <span>
-                          {format(new Date(message.created_at), "EEEE, d 'de' MMMM", { locale: es })}
-                        </span>
-                      </div>
-                    )}
+              const icon = getMessageIcon(m.message_type);
+              const label = getMessageLabel(m.message_type);
 
-                    <div className={cn('msg-row', isOwn ? 'msg-row-own' : 'msg-row-other')}>
-                      <div
-                        className={cn(
-                          'msg-bubble',
-                          isOwn ? 'msg-bubble-own' : 'msg-bubble-other',
-                          isSystemMessage && !isOwn && 'msg-bubble-system'
-                        )}
-                      >
-                        {/* Story reply preview */}
-                        {isStoryReply && storyId && (
-                          <StoryReplyPreview storyId={storyId} isOwn={isOwn} />
-                        )}
+              return (
+                <div key={m.id}>
+                  {showDate && (
+                    <div className="msg-date">
+                      <span>{formatDateLabel(date)}</span>
+                    </div>
+                  )}
+                  <div className={cn('msg-row', isOwn ? 'msg-row-own' : 'msg-row-other')}>
+                    <div
+                      className={cn(
+                        'msg-bubble',
+                        isOwn ? 'msg-bubble-own' : 'msg-bubble-other',
+                        isSystem && 'msg-bubble-system'
+                      )}
+                    >
+                      {storyId && <StoryReplyPreview storyId={storyId} />}
 
-                        {isSystemMessage && messageLabel && (
-                          <div className="msg-bubble-syslabel">
-                            {messageIcon}
-                            {messageLabel}
-                          </div>
-                        )}
-
-                        <p className="msg-bubble-text">{message.content}</p>
-
-                        <div className="msg-bubble-meta">
-                          <span className="msg-bubble-time">
-                            {format(new Date(message.created_at), 'HH:mm')}
-                          </span>
-                          {isOwn && (
-                            message.is_read ? (
-                              <CheckCheck className="h-3.5 w-3.5 msg-bubble-read" />
-                            ) : (
-                              <Check className="h-3.5 w-3.5 msg-bubble-sent" />
-                            )
-                          )}
+                      {isSystem && label && (
+                        <div className="msg-syslabel">
+                          {icon}
+                          {label}
                         </div>
+                      )}
+
+                      <p className="msg-text">{m.content}</p>
+
+                      <div className="msg-meta">
+                        <span className="msg-time">{format(date, 'HH:mm')}</span>
+                        {isOwn &&
+                          (m.is_read ? (
+                            <CheckCheck className="h-3.5 w-3.5 msg-tick msg-tick-read" />
+                          ) : (
+                            <Check className="h-3.5 w-3.5 msg-tick" />
+                          ))}
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </>
-          )}
+                </div>
+              );
+            })}
+
+            <AnimatePresence>{otherTyping && <TypingIndicator />}</AnimatePresence>
           </div>
-        </ScrollArea>
-        
-        {/* Typing indicator */}
-        <AnimatePresence>
-          {otherTyping && (
-            <TypingIndicator name={displayName} />
-          )}
-        </AnimatePresence>
+        )}
       </div>
 
-      {/* Input - WhatsApp/Instagram-style */}
-      <form onSubmit={handleSubmit} className="msg-chat-input-wrap">
+      {/* Input */}
+      <form onSubmit={handleSubmit} className="msg-input-wrap">
         <input
           ref={inputRef}
           value={newMessage}
           onChange={handleInputChange}
           placeholder="Mensaje…"
-          className="msg-chat-input"
+          className="msg-input"
+          aria-label="Mensaje"
         />
-        <Button
+        <button
           type="submit"
-          size="icon"
           disabled={!newMessage.trim()}
-          className="msg-chat-send"
+          className="msg-send"
           aria-label="Enviar"
         >
           <Send className="h-4 w-4" />
-        </Button>
+        </button>
       </form>
     </div>
   );

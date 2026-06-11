@@ -1,14 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, Keyboard } from 'lucide-react';
+import { ChevronLeft, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
-import { useConversations, useMessages, Conversation, getOrCreateConversation } from '@/hooks/useConversations';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  useConversations,
+  useMessages,
+  Conversation,
+  getOrCreateConversation,
+} from '@/hooks/useConversations';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AppLayout } from '@/components/navigation/AppLayout';
 
 export default function Messages() {
@@ -34,32 +38,23 @@ export default function Messages() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
-      navigate('/auth?redirect=/mensajes');
-    }
+    if (!user) navigate('/auth?redirect=/mensajes');
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    // Mark messages as read when conversation is selected
-    if (selectedConversation) {
-      markAsRead('user');
-    }
+    if (selectedConversation) markAsRead('user');
   }, [selectedConversation?.id]);
 
-  // Auto-open chat from a booking link (?tenant=...)
+  // Auto-open from booking link ?tenant=
   useEffect(() => {
     if (!user?.id || !tenantFromUrl) return;
-
     let cancelled = false;
-
     (async () => {
-      const conversationId = await getOrCreateConversation(tenantFromUrl, user.id);
-      if (cancelled || !conversationId) return;
-
-      setPendingConversationId(conversationId);
+      const id = await getOrCreateConversation(tenantFromUrl, user.id);
+      if (cancelled || !id) return;
+      setPendingConversationId(id);
       await refetchConversations();
     })();
-
     return () => {
       cancelled = true;
     };
@@ -67,7 +62,6 @@ export default function Messages() {
 
   useEffect(() => {
     if (!pendingConversationId) return;
-
     const found = conversations.find((c) => c.id === pendingConversationId);
     if (found) {
       setSelectedConversation(found);
@@ -76,10 +70,18 @@ export default function Messages() {
     }
   }, [pendingConversationId, conversations, navigate]);
 
+  // Hide bottom nav on mobile while chat open
+  useEffect(() => {
+    if (!isMobile) return;
+    if (selectedConversation) document.body.classList.add('msg-chat-open');
+    else document.body.classList.remove('msg-chat-open');
+    return () => {
+      document.body.classList.remove('msg-chat-open');
+    };
+  }, [isMobile, selectedConversation]);
+
   const handleSendMessage = (content: string) => {
-    if (user) {
-      sendMessage(content, 'user', user.id);
-    }
+    if (user) sendMessage(content, 'user', user.id);
   };
 
   const handleSelectConversation = useCallback((conv: Conversation) => {
@@ -90,16 +92,13 @@ export default function Messages() {
     setSelectedConversation(null);
   }, []);
 
-  // Keyboard shortcut: Escape to go back
+  // Escape closes chat
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selectedConversation) {
-        handleBack();
-      }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedConversation) handleBack();
     };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [selectedConversation, handleBack]);
 
   if (authLoading || !user) {
@@ -110,173 +109,138 @@ export default function Messages() {
     );
   }
 
-  // Mobile layout - iOS style
+  const totalUnread = conversations.reduce((acc, c) => acc + c.unread_count_user, 0);
+
+  // ── Mobile ────────────────────────────────────────────────
   if (isMobile) {
+    const chatOverlay = selectedConversation && (
+      <div className="msg-mobile-overlay">
+        <ChatWindow
+          conversation={selectedConversation}
+          messages={messages}
+          loading={loadingMessages}
+          onSendMessage={handleSendMessage}
+          currentUserId={user.id}
+          role="user"
+          onBack={handleBack}
+        />
+      </div>
+    );
+
     return (
       <AppLayout hideNavigation={!!selectedConversation}>
         <div className="min-h-screen bg-background">
-          {/* Header iOS style */}
           <div className="sticky top-0 z-10 liquid-glass-solid pt-[env(safe-area-inset-top)]">
             <div className="flex items-center h-14 px-2">
-              {selectedConversation ? (
-                <Button
-                  variant="ghost"
-                  onClick={handleBack}
-                  className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                  <span className="text-[17px]">Atrás</span>
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/')}
-                  className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                  <span className="text-[17px]">Atrás</span>
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/')}
+                className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
+                aria-label="Volver al inicio"
+              >
+                <ChevronLeft className="h-6 w-6" />
+                <span className="text-[17px]">Atrás</span>
+              </Button>
               <h1 className="flex-1 text-center text-[17px] font-semibold truncate pr-10">
-                {selectedConversation ? selectedConversation.tenant?.name || 'Chat' : 'Mensajes'}
+                Mensajes
               </h1>
             </div>
           </div>
 
-          {/* Content */}
-          <div className={selectedConversation ? "h-[calc(100vh-56px-env(safe-area-inset-top))]" : "h-[calc(100vh-56px-env(safe-area-inset-top)-80px)]"}>
-            {selectedConversation ? (
-              <ChatWindow
-                conversation={selectedConversation}
-                messages={messages}
-                loading={loadingMessages}
-                onSendMessage={handleSendMessage}
-                currentUserId={user?.id || ''}
-                role="user"
-              />
-            ) : (
-              <ConversationList
-                conversations={conversations}
-                loading={loadingConversations}
-                selectedId={null}
-                onSelect={handleSelectConversation}
-                role="user"
-              />
-            )}
+          <div className="px-3 pt-3 pb-24">
+            <div className="msg-shell-mobile">
+              <header className="msg-sidebar-header">
+                <span className="msg-sidebar-title">
+                  <MessageCircle className="h-5 w-5" style={{ color: 'var(--gp-accent)' }} />
+                  Chats
+                  {totalUnread > 0 && (
+                    <span className="msg-unread-badge">
+                      {totalUnread > 99 ? '99+' : totalUnread}
+                    </span>
+                  )}
+                </span>
+              </header>
+              <div className="msg-sidebar">
+                <div className="msg-sidebar-body">
+                  <ConversationList
+                    conversations={conversations}
+                    loading={loadingConversations}
+                    selectedId={null}
+                    onSelect={handleSelectConversation}
+                    role="user"
+                    showSearch={false}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
+
+          {chatOverlay && createPortal(chatOverlay, document.body)}
         </div>
       </AppLayout>
     );
   }
 
-  // Desktop layout - iOS inspired with better accessibility
+  // ── Desktop ───────────────────────────────────────────────
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-muted/30">
-        {/* Skip link for keyboard users */}
-        <a
-          href="#chat-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground"
-        >
-          Saltar a la conversación
-        </a>
-
-        {/* Header */}
-        <div className="sticky top-0 z-10 liquid-glass-solid border-b border-border/30">
-          <div className="container mx-auto flex items-center justify-between h-16 px-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/')}
-              className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
-              aria-label="Ir al inicio"
-            >
-              <ChevronLeft className="h-6 w-6" />
-              <span>Atrás</span>
-            </Button>
-            <h1 className="text-lg font-semibold">Mensajes</h1>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-muted-foreground" aria-label="Atajos de teclado">
-                  <Keyboard className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <div className="space-y-2 text-sm">
-                  <p className="font-semibold">Atajos de teclado</p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                    <span>
-                      <kbd className="px-1 rounded bg-muted">↑↓</kbd> Navegar
-                    </span>
-                    <span>
-                      <kbd className="px-1 rounded bg-muted">Enter</kbd> Abrir
-                    </span>
-                    <span>
-                      <kbd className="px-1 rounded bg-muted">Esc</kbd> Cerrar chat
-                    </span>
-                    <span>
-                      <kbd className="px-1 rounded bg-muted">Home/End</kbd> Ir al inicio/fin
-                    </span>
-                  </div>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-
-        {/* Content */}
-        <main className="container mx-auto py-6 px-4" role="main" aria-label="Centro de mensajes">
-          <div
-            className="bg-background rounded-2xl border border-border/50 shadow-lg overflow-hidden"
-            style={{ height: 'calc(100vh - 120px)' }}
+    <div className="min-h-screen" style={{ background: 'var(--gp-bg)' }}>
+      <div className="sticky top-0 z-10 liquid-glass-solid border-b border-border/30">
+        <div className="container mx-auto flex items-center justify-between h-16 px-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
           >
-            <div className="grid md:grid-cols-[380px_1fr] h-full">
-              {/* Conversation list */}
-              <nav
-                className="border-r border-border/50 bg-background flex flex-col h-full overflow-hidden"
-                role="navigation"
-                aria-label="Lista de conversaciones"
-              >
-                <div className="p-4 border-b border-border/30 shrink-0">
-                  <h2 className="text-xl font-bold" id="chats-heading">
-                    Chats
-                  </h2>
-                </div>
-                <div className="flex-1 overflow-hidden" aria-labelledby="chats-heading">
-                  <ConversationList
-                    conversations={conversations}
-                    loading={loadingConversations}
-                    selectedId={selectedConversation?.id || null}
-                    onSelect={handleSelectConversation}
-                    role="user"
-                  />
-                </div>
-              </nav>
-
-              {/* Chat window */}
-              <section
-                id="chat-content"
-                className="flex flex-col h-full overflow-hidden"
-                role="region"
-                aria-label={
-                  selectedConversation
-                    ? `Chat con ${selectedConversation.tenant?.name || 'salón'}`
-                    : 'Selecciona una conversación'
-                }
-              >
-                <ChatWindow
-                  conversation={selectedConversation}
-                  messages={messages}
-                  loading={loadingMessages}
-                  onSendMessage={handleSendMessage}
-                  currentUserId={user?.id || ''}
-                  role="user"
-                />
-              </section>
-            </div>
-          </div>
-        </main>
+            <ChevronLeft className="h-6 w-6" />
+            <span>Atrás</span>
+          </Button>
+          <h1 className="text-lg font-semibold">Mensajes</h1>
+          <span className="w-[72px]" />
+        </div>
       </div>
-    </TooltipProvider>
+
+      <main className="container mx-auto py-6 px-4">
+        <div className="msg-shell-desktop">
+          <aside className="msg-sidebar">
+            <header className="msg-sidebar-header">
+              <span className="msg-sidebar-title">
+                Chats
+                {totalUnread > 0 && (
+                  <span className="msg-unread-badge">
+                    {totalUnread > 99 ? '99+' : totalUnread}
+                  </span>
+                )}
+              </span>
+            </header>
+            <ConversationList
+              conversations={conversations}
+              loading={loadingConversations}
+              selectedId={selectedConversation?.id || null}
+              onSelect={handleSelectConversation}
+              role="user"
+            />
+            <div className="msg-sidebar-hint">
+              <span>
+                <kbd>↑↓</kbd> Navegar
+              </span>
+              <span>
+                <kbd>Enter</kbd> Abrir
+              </span>
+              <span>
+                <kbd>Esc</kbd> Cerrar
+              </span>
+            </div>
+          </aside>
+          <ChatWindow
+            conversation={selectedConversation}
+            messages={messages}
+            loading={loadingMessages}
+            onSendMessage={handleSendMessage}
+            currentUserId={user.id}
+            role="user"
+          />
+        </div>
+      </main>
+    </div>
   );
 }
-
