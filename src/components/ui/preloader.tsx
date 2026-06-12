@@ -36,7 +36,7 @@ export function Preloader({
   logoUrl,
   logoVariant = "card",
   accentColor,
-  minDuration = 600,
+  minDuration = 300,
 }: PreloaderProps) {
   const loaderRef = useRef<HTMLDivElement>(null);
   const centerRef = useRef<HTMLDivElement>(null);
@@ -77,7 +77,7 @@ export function Preloader({
     gsap.fromTo(
       centerRef.current,
       { opacity: 0, scale: 0.85 },
-      { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" },
+      { opacity: 1, scale: 1, duration: 0.25, ease: "power2.out" },
     );
   }, []);
 
@@ -89,14 +89,14 @@ export function Preloader({
       onComplete: () => setDone(true),
     });
 
-    tl.to(centerRef.current, { scale: 3, opacity: 0, duration: 0.5 });
+    tl.to(centerRef.current, { scale: 3, opacity: 0, duration: 0.35 });
     tl.to(
       loaderRef.current,
       {
         y: "-105%",
         borderBottomLeftRadius: "50% 20%",
         borderBottomRightRadius: "50% 20%",
-        duration: 0.7,
+        duration: 0.5,
       },
       "<",
     );
