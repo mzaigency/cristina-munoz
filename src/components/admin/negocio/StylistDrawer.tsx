@@ -2,10 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   X,
-  Users,
   Clock,
   Percent,
-  Settings,
   Calendar,
   Euro,
   Star,
@@ -14,6 +12,8 @@ import {
   Camera,
   Pencil,
   Moon,
+  History,
+  UserCog,
 } from "lucide-react";
 import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -30,6 +30,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { StylistScheduleEditor } from "../StylistScheduleEditor";
+
+/**
+ * Ficha del profesional — una sola página scrolleable, sin pestañas.
+ * Orden: lo que consultas a diario arriba (mes, horario, comisión),
+ * lo que tocas una vez al final (perfil, eliminar).
+ */
 
 interface Props {
   tenantId: string;
@@ -70,8 +76,6 @@ interface DaySchedule {
   end_time: string | null;
 }
 
-type Tab = "resumen" | "horario" | "comision" | "ajustes";
-
 const PRESET_COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6", "#EF4444", "#06B6D4", "#84CC16"];
 const COMMISSION_PRESETS = [30, 40, 50, 60];
 /** Lunes primero, como StylistScheduleEditor. */
@@ -96,7 +100,6 @@ const hhmm = (t: string | null) => (t ? t.slice(0, 5) : "");
 
 export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props) {
   const { toast } = useToast();
-  const [tab, setTab] = useState<Tab>("resumen");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [stylist, setStylist] = useState<Stylist | null>(null);
@@ -130,7 +133,6 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       setSchedule(own as DaySchedule[]);
       return;
     }
-    // Sin horario propio: usa el del salón
     const { data: salon } = await supabase
       .from("tenant_business_hours")
       .select("day_of_week, is_open, open_time, close_time")
@@ -337,7 +339,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
   return (
     <div className="gp-neg-drawer-backdrop" onClick={onClose}>
       <div className="gp-neg-drawer" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
+        {/* ── Cabecera fija ── */}
         <div className="gp-neg-drawer-h">
           <div className="gp-neg-drawer-h-left">
             <button
@@ -389,298 +391,271 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="gp-neg-drawer-tabs">
-          {(
-            [
-              { id: "resumen" as Tab, label: "Resumen", icon: Users },
-              { id: "horario" as Tab, label: "Horario", icon: Clock },
-              { id: "comision" as Tab, label: "Comisión", icon: Percent },
-              { id: "ajustes" as Tab, label: "Ajustes", icon: Settings },
-            ]
-          ).map((t) => {
-            const Icon = t.icon;
-            return (
-              <button
-                key={t.id}
-                className={`gp-neg-drawer-tab${tab === t.id ? " on" : ""}`}
-                onClick={() => setTab(t.id)}
-                type="button"
-              >
-                <Icon style={{ width: 13, height: 13 }} />
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Body */}
-        <div className="gp-neg-drawer-body">
-          {tab === "resumen" && (
-            <div className="gp-neg-drawer-section">
-              <div className="gp-neg-mini-kpis">
-                <div className="gp-neg-mini-kpi">
-                  <Calendar />
-                  <strong>{bookingsMonth}</strong>
-                  <span>Citas mes</span>
-                </div>
-                <div className="gp-neg-mini-kpi">
-                  <Euro />
-                  <strong>{Math.round(revenueMonth).toLocaleString("es-ES")}€</strong>
-                  <span>Ingresos</span>
-                </div>
-                <div className="gp-neg-mini-kpi">
-                  <Star />
-                  <strong>{ratingAvg > 0 ? ratingAvg.toFixed(1) : "—"}</strong>
-                  <span>{reviewsCount} reseñas</span>
-                </div>
-                <div className="gp-neg-mini-kpi">
-                  <Percent />
-                  <strong>{earnings}€</strong>
-                  <span>A pagar</span>
-                </div>
+        {/* ── Contenido: un solo scroll ── */}
+        <div className="gp-neg-drawer-body gp-team-detail">
+          {/* Este mes */}
+          <section>
+            <div className="gp-neg-mini-kpis">
+              <div className="gp-neg-mini-kpi">
+                <Calendar />
+                <strong>{bookingsMonth}</strong>
+                <span>Citas mes</span>
               </div>
-
-              <h4 className="gp-neg-section-h">Últimas citas</h4>
-              {recentBookings.length === 0 ? (
-                <p className="gp-neg-empty-text">Sin citas todavía.</p>
-              ) : (
-                <div className="gp-neg-recent">
-                  {recentBookings.map((b) => {
-                    const svc = firstServiceName(b.services);
-                    let dateLabel = "";
-                    try {
-                      dateLabel = format(parseISO(b.Fecha), "d MMM", { locale: es });
-                    } catch {
-                      dateLabel = b.Fecha;
-                    }
-                    return (
-                      <div key={b.id} className="gp-neg-recent-row">
-                        <div className="gp-neg-recent-date">
-                          <strong>{dateLabel}</strong>
-                          <span>{hhmm(b.Hora)}</span>
-                        </div>
-                        <div className="gp-neg-recent-info">
-                          <strong>{b.customer_name ?? "Cliente"}</strong>
-                          {svc && <span>{svc}</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              <div className="gp-neg-mini-kpi">
+                <Euro />
+                <strong>{Math.round(revenueMonth).toLocaleString("es-ES")}€</strong>
+                <span>Facturado</span>
+              </div>
+              <div className="gp-neg-mini-kpi">
+                <Star />
+                <strong>{ratingAvg > 0 ? ratingAvg.toFixed(1) : "—"}</strong>
+                <span>{reviewsCount} reseñas</span>
+              </div>
+              <div className="gp-neg-mini-kpi">
+                <Percent />
+                <strong>{earnings}€</strong>
+                <span>A pagar</span>
+              </div>
             </div>
-          )}
+          </section>
 
-          {tab === "horario" && (
-            <div className="gp-neg-drawer-section">
-              {usesSalonHours && (
-                <div className="gp-neg-sched-note">
-                  Usa el horario del salón. Edítalo para darle horario propio.
-                </div>
-              )}
-              {schedule === null ? (
-                <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
-                  <Loader2 className="gp-spinner-sm" />
-                </div>
-              ) : (
-                <div className="gp-neg-sched">
-                  {orderedSchedule.map(({ value, label, row }) => {
-                    const working = row?.is_working && row.start_time && row.end_time;
-                    return (
-                      <div key={value} className={`gp-neg-sched-row${working ? "" : " off"}`}>
-                        <span className="gp-neg-sched-day">{label}</span>
-                        {working ? (
-                          <span className="gp-neg-sched-hours">
-                            {hhmm(row!.start_time)} – {hhmm(row!.end_time)}
-                          </span>
-                        ) : (
-                          <span className="gp-neg-sched-rest">
-                            <Moon style={{ width: 11, height: 11 }} /> Descansa
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              <button className="gp-btn primary" onClick={() => setScheduleOpen(true)} type="button">
-                <Pencil style={{ width: 13, height: 13 }} /> Editar horario
+          {/* Horario */}
+          <section>
+            <div className="gp-team-sec-h">
+              <h4 className="gp-neg-section-h">
+                <Clock /> Horario semanal
+              </h4>
+              <button className="gp-btn sm" onClick={() => setScheduleOpen(true)} type="button">
+                <Pencil style={{ width: 12, height: 12 }} /> Editar
               </button>
             </div>
-          )}
-
-          {tab === "comision" && (
-            <div className="gp-neg-drawer-section">
-              <p className="gp-neg-help">Define cuánto cobra {stylist.name} por su trabajo.</p>
-              <div className="gp-neg-form-row">
-                <label>Tipo</label>
-                <div className="gp-mkt-chip-row">
-                  <button
-                    className={`gp-mkt-chip${commission.commission_type === "percentage" ? " on" : ""}`}
-                    onClick={() => {
-                      setCommission({ ...commission, commission_type: "percentage" });
-                      setCommissionDirty(true);
-                    }}
-                    type="button"
-                  >
-                    % de lo facturado
-                  </button>
-                  <button
-                    className={`gp-mkt-chip${commission.commission_type === "fixed" ? " on" : ""}`}
-                    onClick={() => {
-                      setCommission({ ...commission, commission_type: "fixed" });
-                      setCommissionDirty(true);
-                    }}
-                    type="button"
-                  >
-                    € fijo por cita
-                  </button>
-                </div>
+            {usesSalonHours && (
+              <div className="gp-neg-sched-note">Usa el horario del salón. Edítalo para darle uno propio.</div>
+            )}
+            {schedule === null ? (
+              <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
+                <Loader2 className="gp-spinner-sm" />
               </div>
-
-              {commission.commission_type === "percentage" ? (
-                <div className="gp-neg-form-row">
-                  <label>Porcentaje</label>
-                  <div className="gp-mkt-chip-row">
-                    {COMMISSION_PRESETS.map((p) => (
-                      <button
-                        key={p}
-                        className={`gp-mkt-chip${commission.commission_percentage === p ? " on" : ""}`}
-                        onClick={() => {
-                          setCommission({ ...commission, commission_percentage: p });
-                          setCommissionDirty(true);
-                        }}
-                        type="button"
-                      >
-                        {p}%
-                      </button>
-                    ))}
-                    <div className="gp-neg-input-suffix sm">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={commission.commission_percentage}
-                        onChange={(e) => {
-                          setCommission({
-                            ...commission,
-                            commission_percentage: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)),
-                          });
-                          setCommissionDirty(true);
-                        }}
-                      />
-                      <span>%</span>
+            ) : (
+              <div className="gp-neg-sched">
+                {orderedSchedule.map(({ value, label, row }) => {
+                  const working = row?.is_working && row.start_time && row.end_time;
+                  return (
+                    <div key={value} className={`gp-neg-sched-row${working ? "" : " off"}`}>
+                      <span className="gp-neg-sched-day">{label}</span>
+                      {working ? (
+                        <span className="gp-neg-sched-hours">
+                          {hhmm(row!.start_time)} – {hhmm(row!.end_time)}
+                        </span>
+                      ) : (
+                        <span className="gp-neg-sched-rest">
+                          <Moon style={{ width: 11, height: 11 }} /> Descansa
+                        </span>
+                      )}
                     </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="gp-neg-form-row">
-                  <label>Fijo por cita</label>
-                  <div className="gp-neg-input-suffix">
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* Comisión */}
+          <section>
+            <div className="gp-team-sec-h">
+              <h4 className="gp-neg-section-h">
+                <Percent /> Comisión
+              </h4>
+            </div>
+            <div className="gp-neg-form-row">
+              <div className="gp-mkt-chip-row">
+                <button
+                  className={`gp-mkt-chip${commission.commission_type === "percentage" ? " on" : ""}`}
+                  onClick={() => {
+                    setCommission({ ...commission, commission_type: "percentage" });
+                    setCommissionDirty(true);
+                  }}
+                  type="button"
+                >
+                  % de lo facturado
+                </button>
+                <button
+                  className={`gp-mkt-chip${commission.commission_type === "fixed" ? " on" : ""}`}
+                  onClick={() => {
+                    setCommission({ ...commission, commission_type: "fixed" });
+                    setCommissionDirty(true);
+                  }}
+                  type="button"
+                >
+                  € fijo por cita
+                </button>
+              </div>
+            </div>
+
+            {commission.commission_type === "percentage" ? (
+              <div className="gp-neg-form-row">
+                <div className="gp-mkt-chip-row">
+                  {COMMISSION_PRESETS.map((p) => (
+                    <button
+                      key={p}
+                      className={`gp-mkt-chip${commission.commission_percentage === p ? " on" : ""}`}
+                      onClick={() => {
+                        setCommission({ ...commission, commission_percentage: p });
+                        setCommissionDirty(true);
+                      }}
+                      type="button"
+                    >
+                      {p}%
+                    </button>
+                  ))}
+                  <div className="gp-neg-input-suffix sm">
                     <input
                       type="number"
                       min="0"
-                      value={commission.commission_fixed}
+                      max="100"
+                      value={commission.commission_percentage}
                       onChange={(e) => {
                         setCommission({
                           ...commission,
-                          commission_fixed: Math.max(0, parseFloat(e.target.value) || 0),
+                          commission_percentage: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)),
                         });
                         setCommissionDirty(true);
                       }}
                     />
-                    <span>€</span>
+                    <span>%</span>
                   </div>
                 </div>
-              )}
-
-              <div className="gp-neg-earn-preview">
-                <div>
-                  <span>
-                    {commission.commission_type === "percentage" ? "Facturado este mes" : "Citas este mes"}
-                  </span>
-                  <strong>
-                    {commission.commission_type === "percentage"
-                      ? `${Math.round(revenueMonth).toLocaleString("es-ES")}€`
-                      : bookingsMonth}
-                  </strong>
-                </div>
-                <div>
-                  <span>A pagar</span>
-                  <strong className="gp-neg-earn-big">{earnings}€</strong>
+              </div>
+            ) : (
+              <div className="gp-neg-form-row">
+                <div className="gp-neg-input-suffix">
+                  <input
+                    type="number"
+                    min="0"
+                    value={commission.commission_fixed}
+                    onChange={(e) => {
+                      setCommission({
+                        ...commission,
+                        commission_fixed: Math.max(0, parseFloat(e.target.value) || 0),
+                      });
+                      setCommissionDirty(true);
+                    }}
+                  />
+                  <span>€</span>
                 </div>
               </div>
+            )}
 
+            <div className="gp-neg-earn-preview">
+              <div>
+                <span>{commission.commission_type === "percentage" ? "Facturado este mes" : "Citas este mes"}</span>
+                <strong>
+                  {commission.commission_type === "percentage"
+                    ? `${Math.round(revenueMonth).toLocaleString("es-ES")}€`
+                    : bookingsMonth}
+                </strong>
+              </div>
+              <div>
+                <span>A pagar</span>
+                <strong className="gp-neg-earn-big">{earnings}€</strong>
+              </div>
+            </div>
+
+            {commissionDirty && (
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button
-                  className="gp-btn primary"
-                  onClick={saveCommission}
-                  disabled={saving || !commissionDirty}
-                  type="button"
-                >
+                <button className="gp-btn primary" onClick={saveCommission} disabled={saving} type="button">
                   {saving && <Loader2 className="gp-spinner-sm" />}
-                  {commissionDirty ? "Guardar cambios" : "Guardado"}
+                  Guardar comisión
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </section>
 
-          {tab === "ajustes" && (
-            <div className="gp-neg-drawer-section">
-              <div className="gp-neg-form-row">
-                <label>Nombre</label>
-                <input
-                  type="text"
-                  value={stylist.name}
-                  onChange={(e) => setStylist({ ...stylist, name: e.target.value })}
-                  onBlur={(e) => {
-                    const v = e.target.value.trim();
-                    if (v && v !== stylist.name) updateStylist({ name: v });
-                  }}
-                />
+          {/* Últimas citas */}
+          <section>
+            <div className="gp-team-sec-h">
+              <h4 className="gp-neg-section-h">
+                <History /> Últimas citas
+              </h4>
+            </div>
+            {recentBookings.length === 0 ? (
+              <p className="gp-neg-empty-text">Sin citas todavía.</p>
+            ) : (
+              <div className="gp-neg-recent">
+                {recentBookings.map((b) => {
+                  const svc = firstServiceName(b.services);
+                  let dateLabel = "";
+                  try {
+                    dateLabel = format(parseISO(b.Fecha), "d MMM", { locale: es });
+                  } catch {
+                    dateLabel = b.Fecha;
+                  }
+                  return (
+                    <div key={b.id} className="gp-neg-recent-row">
+                      <div className="gp-neg-recent-date">
+                        <strong>{dateLabel}</strong>
+                        <span>{hhmm(b.Hora)}</span>
+                      </div>
+                      <div className="gp-neg-recent-info">
+                        <strong>{b.customer_name ?? "Cliente"}</strong>
+                        {svc && <span>{svc}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="gp-neg-form-row">
-                <label>Color en la agenda</label>
-                <div className="gp-neg-color-row">
-                  {PRESET_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      className={`gp-neg-color-dot${stylist.color === c ? " on" : ""}`}
-                      style={{ background: c }}
-                      onClick={() => updateStylist({ color: c })}
-                      type="button"
-                      aria-label={`Color ${c}`}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="gp-neg-form-row gp-neg-form-toggle">
-                <div>
-                  <label>Activo</label>
-                  <p className="gp-neg-help" style={{ margin: 0 }}>
-                    Los inactivos no aparecen al reservar.
-                  </p>
-                </div>
-                <Switch
-                  checked={stylist.is_active}
-                  onCheckedChange={(v) => updateStylist({ is_active: v })}
-                />
-              </div>
+            )}
+          </section>
 
-              <div className="gp-neg-danger-zone">
-                <h4>Zona de peligro</h4>
-                <button
-                  className="gp-btn danger"
-                  onClick={() => setConfirmDelete(true)}
-                  disabled={saving}
-                  type="button"
-                >
-                  <Trash2 style={{ width: 14, height: 14 }} /> Eliminar del equipo
-                </button>
+          {/* Perfil */}
+          <section>
+            <div className="gp-team-sec-h">
+              <h4 className="gp-neg-section-h">
+                <UserCog /> Perfil
+              </h4>
+            </div>
+            <div className="gp-neg-form-row">
+              <label>Nombre</label>
+              <input
+                type="text"
+                value={stylist.name}
+                onChange={(e) => setStylist({ ...stylist, name: e.target.value })}
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (v && v !== stylist.name) updateStylist({ name: v });
+                }}
+              />
+            </div>
+            <div className="gp-neg-form-row">
+              <label>Color en la agenda</label>
+              <div className="gp-neg-color-row">
+                {PRESET_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    className={`gp-neg-color-dot${stylist.color === c ? " on" : ""}`}
+                    style={{ background: c }}
+                    onClick={() => updateStylist({ color: c })}
+                    type="button"
+                    aria-label={`Color ${c}`}
+                  />
+                ))}
               </div>
             </div>
-          )}
+            <div className="gp-neg-form-row gp-neg-form-toggle">
+              <div>
+                <label>Activo</label>
+                <p className="gp-neg-help" style={{ margin: 0 }}>
+                  Los inactivos no aparecen al reservar.
+                </p>
+              </div>
+              <Switch checked={stylist.is_active} onCheckedChange={(v) => updateStylist({ is_active: v })} />
+            </div>
+
+            <div className="gp-neg-danger-zone">
+              <button className="gp-btn danger" onClick={() => setConfirmDelete(true)} disabled={saving} type="button">
+                <Trash2 style={{ width: 14, height: 14 }} /> Eliminar del equipo
+              </button>
+            </div>
+          </section>
         </div>
       </div>
 
@@ -703,8 +678,8 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar a {stylist.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se borra del equipo y deja de aparecer al reservar. Sus citas e historial no se borran.
-              Esta acción no se puede deshacer.
+              Se borra del equipo y deja de aparecer al reservar. Sus citas e historial no se borran. Esta acción
+              no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

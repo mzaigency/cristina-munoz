@@ -4,16 +4,22 @@ import {
   Users,
   Plus,
   Search,
-  Star,
-  Euro,
   Calendar,
-  Percent,
+  Euro,
   Loader2,
-  TrendingUp,
+  ChevronRight,
+  Moon,
+  Wallet,
 } from "lucide-react";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 import { StylistDrawer } from "./StylistDrawer";
 import { useToast } from "@/hooks/use-toast";
+
+/**
+ * Equipo — lista tipo contactos, pensada para equipos de 1-10 personas.
+ * Cada fila responde de un vistazo: ¿trabaja hoy? ¿cuánto lleva este mes?
+ * ¿cuánto le tengo que pagar? El detalle vive en el drawer.
+ */
 
 interface TeamHubProps {
   tenantId: string;
@@ -25,7 +31,6 @@ interface Stylist {
   slug: string;
   color: string | null;
   avatar_url: string | null;
-  google_calendar_id: string | null;
   is_active: boolean;
   user_id: string | null;
 }
@@ -33,20 +38,38 @@ interface Stylist {
 interface StylistMetrics {
   bookings: number;
   revenue: number;
-  rating: number;
   commissionPct: number | null;
+  commissionFixed: number | null;
   commissionType: string | null;
 }
 
+interface TodayHours {
+  working: boolean;
+  start: string | null;
+  end: string | null;
+}
+
 const PRESET_COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6", "#EF4444", "#06B6D4", "#84CC16"];
+
+const hhmm = (t: string | null) => (t ? t.slice(0, 5) : "");
+
+function earningsFor(m: StylistMetrics): number | null {
+  if (m.commissionType === "percentage" && m.commissionPct != null) {
+    return Math.round((m.revenue * m.commissionPct) / 100);
+  }
+  if (m.commissionType === "fixed" && m.commissionFixed != null) {
+    return Math.round(m.commissionFixed * m.bookings);
+  }
+  return null;
+}
 
 export function TeamHub({ tenantId }: TeamHubProps) {
   const { toast } = useToast();
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [metrics, setMetrics] = useState<Map<string, StylistMetrics>>(new Map());
+  const [today, setToday] = useState<Map<string, TodayHours>>(new Map());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -58,8 +81,9 @@ export function TeamHub({ tenantId }: TeamHubProps) {
     const now = new Date();
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
+    const todayDow = now.getDay();
 
-    const [stylistsRes, txRes, bookingsRes, reviewsRes, commissionsRes] = await Promise.all([
+    const [stylistsRes, txRes, bookingsRes, commissionsRes, ownHoursRes, salonHoursRes] = await Promise.all([
       supabase
         .from("tenant_stylists")
         .select("*")
@@ -79,30 +103,35 @@ export function TeamHub({ tenantId }: TeamHubProps) {
         .eq("tenant_id", tenantId)
         .gte("Fecha", format(monthStart, "yyyy-MM-dd"))
         .lte("Fecha", format(monthEnd, "yyyy-MM-dd")),
-      (supabase
-        .from("reviews") as any)
-        .select("rating, stylist_id")
-        .eq("tenant_id", tenantId)
-        .eq("approved", true),
       supabase
         .from("stylist_commissions")
-        .select("stylist_id, commission_percentage, commission_type")
+        .select("stylist_id, commission_percentage, commission_fixed, commission_type")
         .eq("tenant_id", tenantId),
+      supabase
+        .from("stylist_business_hours")
+        .select("stylist_id, is_working, start_time, end_time")
+        .eq("day_of_week", todayDow),
+      supabase
+        .from("tenant_business_hours")
+        .select("is_open, open_time, close_time")
+        .eq("tenant_id", tenantId)
+        .eq("day_of_week", todayDow)
+        .maybeSingle(),
     ]);
 
     const sts = (stylistsRes.data ?? []) as Stylist[];
     const txs = (txRes.data ?? []) as Array<{ total: number; stylist_id: string | null }>;
     const bookings = (bookingsRes.data ?? []) as Array<{ stylist: string | null }>;
-    const reviews = (reviewsRes.data ?? []) as Array<{ rating: number; stylist_id: string | null }>;
     const commissions = (commissionsRes.data ?? []) as Array<{
       stylist_id: string | null;
       commission_percentage: number | null;
+      commission_fixed: number | null;
       commission_type: string | null;
     }>;
 
     const map = new Map<string, StylistMetrics>();
     sts.forEach((s) =>
-      map.set(s.id, { bookings: 0, revenue: 0, rating: 0, commissionPct: null, commissionType: null })
+      map.set(s.id, { bookings: 0, revenue: 0, commissionPct: null, commissionFixed: null, commissionType: null }),
     );
 
     txs.forEach((t) => {
@@ -120,68 +149,74 @@ export function TeamHub({ tenantId }: TeamHubProps) {
       if (m) m.bookings += 1;
     });
 
-    const ratingAcc = new Map<string, { sum: number; count: number }>();
-    reviews.forEach((r) => {
-      if (!r.stylist_id) return;
-      const entry = ratingAcc.get(r.stylist_id) ?? { sum: 0, count: 0 };
-      entry.sum += r.rating;
-      entry.count += 1;
-      ratingAcc.set(r.stylist_id, entry);
-    });
-    ratingAcc.forEach((v, id) => {
-      const m = map.get(id);
-      if (m) m.rating = v.count > 0 ? v.sum / v.count : 0;
-    });
-
     commissions.forEach((c) => {
       if (!c.stylist_id) return;
       const m = map.get(c.stylist_id);
       if (m) {
         m.commissionPct = c.commission_percentage;
+        m.commissionFixed = c.commission_fixed;
         m.commissionType = c.commission_type;
+      }
+    });
+
+    // Horario de HOY: propio si existe, si no el del salón
+    const salonToday = salonHoursRes.data as {
+      is_open: boolean;
+      open_time: string | null;
+      close_time: string | null;
+    } | null;
+    const ownToday = (ownHoursRes.data ?? []) as Array<{
+      stylist_id: string;
+      is_working: boolean;
+      start_time: string | null;
+      end_time: string | null;
+    }>;
+    const ownMap = new Map(ownToday.map((h) => [h.stylist_id, h]));
+    const todayMap = new Map<string, TodayHours>();
+    sts.forEach((s) => {
+      const own = ownMap.get(s.id);
+      if (own) {
+        todayMap.set(s.id, { working: own.is_working, start: own.start_time, end: own.end_time });
+      } else if (salonToday) {
+        todayMap.set(s.id, { working: salonToday.is_open, start: salonToday.open_time, end: salonToday.close_time });
       }
     });
 
     setStylists(sts);
     setMetrics(map);
+    setToday(todayMap);
     setLoading(false);
   };
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return stylists.filter((s) => {
-      if (filter === "active" && !s.is_active) return false;
-      if (filter === "inactive" && s.is_active) return false;
-      if (term && !s.name.toLowerCase().includes(term)) return false;
-      return true;
-    });
-  }, [stylists, search, filter]);
-
-  const counts = useMemo(
-    () => ({
-      all: stylists.length,
-      active: stylists.filter((s) => s.is_active).length,
-      inactive: stylists.filter((s) => !s.is_active).length,
-    }),
-    [stylists]
+  const term = search.trim().toLowerCase();
+  const actives = useMemo(
+    () => stylists.filter((s) => s.is_active && (!term || s.name.toLowerCase().includes(term))),
+    [stylists, term],
+  );
+  const inactives = useMemo(
+    () => stylists.filter((s) => !s.is_active && (!term || s.name.toLowerCase().includes(term))),
+    [stylists, term],
   );
 
-  const totals = useMemo(() => {
-    let revenue = 0;
+  const teamTotals = useMemo(() => {
     let bookings = 0;
-    metrics.forEach((m) => {
-      revenue += m.revenue;
+    let toPay = 0;
+    stylists.forEach((s) => {
+      if (!s.is_active) return;
+      const m = metrics.get(s.id);
+      if (!m) return;
       bookings += m.bookings;
+      toPay += earningsFor(m) ?? 0;
     });
-    return { revenue, bookings };
-  }, [metrics]);
+    return { bookings, toPay };
+  }, [stylists, metrics]);
 
   const openCreate = () => {
-    // Sugiere el primer color que nadie use todavía
     const used = new Set(stylists.map((s) => s.color));
     setNewColor(PRESET_COLORS.find((c) => !used.has(c)) ?? PRESET_COLORS[0]);
     setNewName("");
@@ -226,61 +261,86 @@ export function TeamHub({ tenantId }: TeamHubProps) {
     );
   }
 
+  const renderRow = (s: Stylist) => {
+    const m = metrics.get(s.id) ?? {
+      bookings: 0,
+      revenue: 0,
+      commissionPct: null,
+      commissionFixed: null,
+      commissionType: null,
+    };
+    const pay = earningsFor(m);
+    const t = today.get(s.id);
+
+    return (
+      <button key={s.id} className="gp-team-row" onClick={() => setSelectedId(s.id)} type="button">
+        <div
+          className="gp-neg-stylist-avatar gp-team-row-avatar"
+          style={{ background: s.color || "var(--gp-accent)" }}
+        >
+          {s.avatar_url ? <img src={s.avatar_url} alt="" /> : <span>{s.name.charAt(0).toUpperCase()}</span>}
+        </div>
+
+        <div className="gp-team-row-main">
+          <strong>{s.name}</strong>
+          {s.is_active ? (
+            t ? (
+              t.working && t.start && t.end ? (
+                <span className="gp-team-today on">
+                  Hoy {hhmm(t.start)}–{hhmm(t.end)}
+                </span>
+              ) : (
+                <span className="gp-team-today">
+                  <Moon style={{ width: 11, height: 11 }} /> Hoy descansa
+                </span>
+              )
+            ) : (
+              <span className="gp-team-today">Sin horario</span>
+            )
+          ) : (
+            <span className="gp-team-today">Inactivo</span>
+          )}
+        </div>
+
+        <div className="gp-team-row-stats">
+          <span className="gp-team-stat">
+            <Calendar />
+            {m.bookings}
+            <small>citas</small>
+          </span>
+          <span className="gp-team-stat">
+            <Euro />
+            {Math.round(m.revenue).toLocaleString("es-ES")}
+            <small>factura</small>
+          </span>
+          <span className={`gp-team-stat${pay != null ? " pay" : ""}`}>
+            <Wallet />
+            {pay != null ? `${pay.toLocaleString("es-ES")}€` : "—"}
+            <small>a pagar</small>
+          </span>
+        </div>
+
+        <ChevronRight className="gp-team-row-chev" />
+      </button>
+    );
+  };
+
   return (
-    <div className="gp-fade gp-neg-team">
+    <div className="gp-fade">
+      {/* Cabecera */}
       <div className="gp-page-h">
         <div>
           <h2>Equipo</h2>
-          <p>
-            {counts.active} activos · {totals.bookings} citas mes ·{" "}
-            {Math.round(totals.revenue).toLocaleString("es-ES")}€
-          </p>
+          <p>Quién trabaja, cuánto produce y cuánto le pagas este mes.</p>
         </div>
         <div className="gp-page-actions">
           <button className="gp-btn primary sm" onClick={openCreate} type="button">
-            <Plus style={{ width: 13, height: 13 }} /> Añadir profesional
+            <Plus style={{ width: 13, height: 13 }} /> Añadir
           </button>
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="gp-mkt-posts-toolbar">
-        <div className="gp-mkt-chip-row">
-          <button
-            className={`gp-mkt-chip${filter === "all" ? " on" : ""}`}
-            onClick={() => setFilter("all")}
-            type="button"
-          >
-            Todos ({counts.all})
-          </button>
-          <button
-            className={`gp-mkt-chip${filter === "active" ? " on" : ""}`}
-            onClick={() => setFilter("active")}
-            type="button"
-          >
-            Activos ({counts.active})
-          </button>
-          <button
-            className={`gp-mkt-chip${filter === "inactive" ? " on" : ""}`}
-            onClick={() => setFilter("inactive")}
-            type="button"
-          >
-            Inactivos ({counts.inactive})
-          </button>
-        </div>
-        <div className="gp-mkt-search" style={{ maxWidth: 280 }}>
-          <Search style={{ width: 14, height: 14, color: "var(--gp-muted-c)" }} />
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Grid */}
-      {filtered.length === 0 ? (
+      {stylists.length === 0 ? (
         <div className="gp-card">
           <div className="gp-empty">
             <div className="gp-empty-ic">
@@ -294,89 +354,50 @@ export function TeamHub({ tenantId }: TeamHubProps) {
           </div>
         </div>
       ) : (
-        <div className="gp-neg-team-grid">
-          {filtered.map((s) => {
-            const m = metrics.get(s.id) ?? {
-              bookings: 0,
-              revenue: 0,
-              rating: 0,
-              commissionPct: null,
-              commissionType: null,
-            };
-            const earnings =
-              m.commissionType === "percentage" && m.commissionPct != null
-                ? Math.round((m.revenue * m.commissionPct) / 100)
-                : null;
-            return (
-              <button
-                key={s.id}
-                className={`gp-neg-stylist${!s.is_active ? " is-off" : ""}`}
-                onClick={() => setSelectedId(s.id)}
-                type="button"
-              >
-                <div className="gp-neg-stylist-h">
-                  <div
-                    className="gp-neg-stylist-avatar"
-                    style={{ background: s.color || "var(--gp-accent)" }}
-                  >
-                    {s.avatar_url ? (
-                      <img src={s.avatar_url} alt={s.name} />
-                    ) : (
-                      <span>{s.name.charAt(0).toUpperCase()}</span>
-                    )}
-                  </div>
-                  <div className="gp-neg-stylist-info">
-                    <strong>{s.name}</strong>
-                    <span>
-                      {s.is_active ? (
-                        <span className="gp-badge ok">
-                          <span className="pip" style={{ background: "currentColor" }} />
-                          Activo
-                        </span>
-                      ) : (
-                        <span className="gp-badge neutral">Inactivo</span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-                <div className="gp-neg-stylist-kpis">
-                  <div className="gp-neg-stylist-kpi">
-                    <Calendar style={{ width: 12, height: 12 }} />
-                    <span>{m.bookings}</span>
-                    <small>citas</small>
-                  </div>
-                  <div className="gp-neg-stylist-kpi">
-                    <Euro style={{ width: 12, height: 12 }} />
-                    <span>{Math.round(m.revenue).toLocaleString("es-ES")}</span>
-                    <small>€</small>
-                  </div>
-                  <div className="gp-neg-stylist-kpi">
-                    <Star style={{ width: 12, height: 12 }} />
-                    <span>{m.rating > 0 ? m.rating.toFixed(1) : "—"}</span>
-                    <small>rating</small>
-                  </div>
-                </div>
-                {(m.commissionPct != null || earnings != null) && (
-                  <div className="gp-neg-stylist-foot">
-                    <span>
-                      <Percent style={{ width: 11, height: 11 }} />
-                      {m.commissionPct != null ? `${m.commissionPct}% comisión` : "Sin comisión"}
-                    </span>
-                    {earnings != null && (
-                      <span className="gp-neg-stylist-foot-earn">
-                        <TrendingUp style={{ width: 11, height: 11 }} />
-                        {earnings}€ a pagar
-                      </span>
-                    )}
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        <>
+          {/* Resumen del mes */}
+          <div className="gp-team-kpis">
+            <div className="gp-team-kpi">
+              <span>{actives.length === 1 ? "Profesional activo" : "Profesionales activos"}</span>
+              <strong>{stylists.filter((s) => s.is_active).length}</strong>
+            </div>
+            <div className="gp-team-kpi">
+              <span>Citas del equipo · mes</span>
+              <strong>{teamTotals.bookings}</strong>
+            </div>
+            <div className="gp-team-kpi pay">
+              <span>Total a pagar · mes</span>
+              <strong>{teamTotals.toPay.toLocaleString("es-ES")}€</strong>
+            </div>
+          </div>
+
+          {/* Buscador solo cuando hay equipo grande */}
+          {stylists.length > 8 && (
+            <div className="gp-mkt-search" style={{ maxWidth: 280, marginBottom: 12 }}>
+              <Search style={{ width: 14, height: 14, color: "var(--gp-muted-c)" }} />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          )}
+
+          {/* Activos */}
+          <div className="gp-team-list">{actives.map(renderRow)}</div>
+
+          {/* Inactivos, discretos al final */}
+          {inactives.length > 0 && (
+            <>
+              <div className="gp-team-divider">Inactivos ({inactives.length})</div>
+              <div className="gp-team-list is-off">{inactives.map(renderRow)}</div>
+            </>
+          )}
+        </>
       )}
 
-      {/* Drawer */}
+      {/* Drawer de detalle */}
       {selectedId && (
         <StylistDrawer
           tenantId={tenantId}
@@ -386,7 +407,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
         />
       )}
 
-      {/* Create dialog */}
+      {/* Alta */}
       {creating && (
         <div className="gp-neg-create-backdrop" onClick={() => !saving && setCreating(false)}>
           <div className="gp-neg-create" onClick={(e) => e.stopPropagation()}>
@@ -405,7 +426,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
               />
             </label>
             <label>
-              <span>Color</span>
+              <span>Color en la agenda</span>
               <div className="gp-neg-color-row">
                 {PRESET_COLORS.map((c) => (
                   <button
@@ -414,6 +435,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
                     style={{ background: c }}
                     onClick={() => setNewColor(c)}
                     type="button"
+                    aria-label={`Color ${c}`}
                   />
                 ))}
               </div>
