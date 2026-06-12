@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Eye, EyeOff, ArrowLeft, ArrowRight, Mail, CheckCircle, MapPin, Check } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cities as getCitiesES, provinces as getProvincesES } from "all-spanish-cities";
+import { loadSpanishCities, loadSpanishProvinces, type SpanishProvince } from "@/lib/spanishLocations";
 import { motion, AnimatePresence } from "motion/react";
 import { Progress } from "@/components/ui/progress";
 
@@ -132,20 +132,29 @@ export default function Auth() {
     }
   }, [watchedFirstName, watchedLastName, isSignUp, usernameManuallyEdited]);
 
-  const provincesList = useMemo(() => {
-    return getProvincesES()
-      .map((p) => ({ code: p.code, name: p.name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, []);
+  const [provincesList, setProvincesList] = useState<SpanishProvince[]>([]);
+  useEffect(() => {
+    if (!isSignUp) return;
+    loadSpanishProvinces().then(setProvincesList).catch(() => {});
+  }, [isSignUp]);
 
-  const citiesList = useMemo(() => {
-    if (!selectedProvince) return [];
-    const province = getProvincesES().find((p) => p.name === selectedProvince);
-    if (!province) return [];
-    return getCitiesES({ code_province: province.code })
-      .map((c) => c.name)
-      .sort();
-  }, [selectedProvince]);
+  const [citiesList, setCitiesList] = useState<string[]>([]);
+  useEffect(() => {
+    const province = provincesList.find((p) => p.name === selectedProvince);
+    if (!province) {
+      setCitiesList([]);
+      return;
+    }
+    let cancelled = false;
+    loadSpanishCities(province.code)
+      .then((cities) => {
+        if (!cancelled) setCitiesList(cities);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProvince, provincesList]);
 
   const filteredCities = useMemo(() => {
     if (!citySearch) return citiesList.slice(0, 50);
@@ -293,8 +302,8 @@ export default function Auth() {
           if (!matchedProvince && cityCandidate) {
             const normalizedCity = normalize(cityCandidate);
             for (const prov of provincesList) {
-              const provCities = getCitiesES({ code_province: prov.code });
-              if (provCities.some((c) => normalize(c.name) === normalizedCity)) {
+              const provCities = await loadSpanishCities(prov.code);
+              if (provCities.some((c) => normalize(c) === normalizedCity)) {
                 matchedProvince = prov;
                 break;
               }
@@ -305,7 +314,7 @@ export default function Auth() {
             signUpForm.setValue("province", matchedProvince.name, { shouldValidate: true });
 
             if (cityCandidate) {
-              const allCities = getCitiesES({ code_province: matchedProvince.code }).map((c) => c.name);
+              const allCities = await loadSpanishCities(matchedProvince.code);
               const normalizedCity = normalize(cityCandidate);
               const matchedCity = allCities.find((c) => normalize(c) === normalizedCity)
                 || allCities.find((c) => normalize(c).includes(normalizedCity) || normalizedCity.includes(normalize(c)));
