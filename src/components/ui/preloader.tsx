@@ -9,10 +9,16 @@ interface PreloaderProps {
    * datos asíncronos, pásalo enlazado al estado de carga (`ready={!loading}`).
    */
   ready?: boolean;
-  /** Texto bajo el logo (o central si no hay logo). */
+  /** Texto bajo el logo (o central si no hay logo). Si se omite, no hay texto. */
   text?: string;
-  /** Logo mostrado en una tarjeta blanca estilo icono de app. */
+  /** Logo central. */
   logoUrl?: string | null;
+  /**
+   * "card": logo en tarjeta blanca estilo icono de app (logos cuadrados de
+   * negocios, legible sobre oscuro sea cual sea su color).
+   * "bare": logo tal cual, sin tarjeta (wordmarks anchos con transparencia).
+   */
+  logoVariant?: "card" | "bare";
   /** Color de marca para el lavado de fondo y el glow. Por defecto, primary. */
   accentColor?: string | null;
   /**
@@ -28,7 +34,7 @@ interface PreloaderProps {
  * `ready` es false; al pasar a true, el bloque central escala hacia el
  * espectador y la cortina sube con el borde inferior curvado.
  */
-export function Preloader({ ready, text = "Cargando…", logoUrl, accentColor, once }: PreloaderProps) {
+export function Preloader({ ready, text, logoUrl, logoVariant = "card", accentColor, once }: PreloaderProps) {
   const loaderRef = useRef<HTMLDivElement>(null);
   const centerRef = useRef<HTMLDivElement>(null);
   const [docReady, setDocReady] = useState(false);
@@ -137,15 +143,24 @@ export function Preloader({ ready, text = "Cargando…", logoUrl, accentColor, o
           style={{ backgroundColor: accent }}
         />
 
-        {logoUrl && (
-          <div className="relative h-20 w-20 rounded-[24px] bg-white p-3 shadow-2xl ring-1 ring-white/30">
-            <img src={logoUrl} alt="" className="h-full w-full object-contain" />
+        {logoUrl &&
+          (logoVariant === "bare" ? (
+            <img
+              src={logoUrl}
+              alt=""
+              className="relative h-14 w-auto max-w-[280px] object-contain drop-shadow-[0_4px_24px_rgba(255,255,255,0.25)]"
+            />
+          ) : (
+            <div className="relative h-20 w-20 rounded-[24px] bg-white p-3 shadow-2xl ring-1 ring-white/30">
+              <img src={logoUrl} alt="" className="h-full w-full object-contain" />
+            </div>
+          ))}
+
+        {text && (
+          <div className="relative max-w-xs text-center font-display text-xl font-semibold tracking-tight text-white">
+            {text}
           </div>
         )}
-
-        <div className="relative max-w-xs text-center font-display text-xl font-semibold tracking-tight text-white">
-          {text}
-        </div>
       </div>
     </div>
   );

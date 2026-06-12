@@ -213,7 +213,7 @@ const TenantLanding = () => {
   };
 
   if (loading) {
-    return <Preloader ready={false} text="Preparando…" />;
+    return <Preloader ready={false} />;
   }
 
   if (!tenant) {

@@ -53,7 +53,7 @@ export default function ForBusiness() {
       />
 
       <div className="min-h-screen bg-background">
-        <Preloader text="GlowApp" logoUrl={glowappLogo} />
+        <Preloader logoUrl={glowappLogo} logoVariant="bare" />
         <StickyHeader />
         <HeroSection />
         <ForWhoSection />

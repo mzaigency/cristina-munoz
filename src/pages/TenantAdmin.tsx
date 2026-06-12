@@ -488,7 +488,7 @@ export default function TenantAdmin() {
   const loading = tenantLoading || accessLoading;
 
   if (loading || subscriptionLoading) {
-    return <Preloader once="admin" ready={false} text="Preparando tu panel…" />;
+    return <Preloader once="admin" ready={false} />;
   }
 
   if (!hasAccess || !tenant) return null;
