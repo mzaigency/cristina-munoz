@@ -14,6 +14,7 @@ import {
   Moon,
   History,
   UserCog,
+  Store,
 } from "lucide-react";
 import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -119,6 +120,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
   const [usesSalonHours, setUsesSalonHours] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmSalonHours, setConfirmSalonHours] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -305,6 +307,21 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
     onChanged();
   };
 
+  /** Borra el horario propio y vuelve al del salón (con confirmación previa). */
+  const revertToSalonHours = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("stylist_business_hours").delete().eq("stylist_id", stylistId);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Error", description: "No se pudo restaurar el horario", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Horario del salón", description: `${stylist?.name} vuelve a seguir el horario del negocio.` });
+    setSchedule(null);
+    loadSchedule();
+    onChanged();
+  };
+
   const handleDelete = async () => {
     if (!stylist) return;
     setSaving(true);
@@ -425,12 +442,46 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
               <h4 className="gp-neg-section-h">
                 <Clock /> Horario semanal
               </h4>
-              <button className="gp-btn sm" onClick={() => setScheduleOpen(true)} type="button">
-                <Pencil style={{ width: 12, height: 12 }} /> Editar
+              {!usesSalonHours && (
+                <button className="gp-btn sm" onClick={() => setScheduleOpen(true)} type="button">
+                  <Pencil style={{ width: 12, height: 12 }} /> Editar
+                </button>
+              )}
+            </div>
+
+            {/* De dónde sale el horario: del salón o propio */}
+            <div className="gp-team-seg" role="radiogroup" aria-label="Origen del horario">
+              <button
+                className={`gp-team-seg-opt${usesSalonHours ? " on" : ""}`}
+                onClick={() => {
+                  if (!usesSalonHours) setConfirmSalonHours(true);
+                }}
+                role="radio"
+                aria-checked={usesSalonHours}
+                type="button"
+              >
+                <Store style={{ width: 13, height: 13 }} />
+                Del salón
+              </button>
+              <button
+                className={`gp-team-seg-opt${!usesSalonHours ? " on" : ""}`}
+                onClick={() => {
+                  if (usesSalonHours) setScheduleOpen(true);
+                }}
+                role="radio"
+                aria-checked={!usesSalonHours}
+                type="button"
+              >
+                <UserCog style={{ width: 13, height: 13 }} />
+                Propio
               </button>
             </div>
+
             {usesSalonHours && (
-              <div className="gp-neg-sched-note">Usa el horario del salón. Edítalo para darle uno propio.</div>
+              <p className="gp-neg-help" style={{ margin: 0 }}>
+                Sigue el horario del negocio: si cambias el del salón, el suyo cambia también. Toca
+                «Propio» para personalizarlo.
+              </p>
             )}
             {schedule === null ? (
               <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
@@ -672,6 +723,22 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
           tenantId={tenantId}
         />
       )}
+
+      <AlertDialog open={confirmSalonHours} onOpenChange={setConfirmSalonHours}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Volver al horario del salón?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se borrará el horario propio de {stylist.name} y pasará a seguir el horario general del
+              negocio. Las citas ya reservadas no se tocan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={revertToSalonHours}>Usar horario del salón</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent onClick={(e) => e.stopPropagation()}>

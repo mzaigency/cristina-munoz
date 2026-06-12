@@ -4412,6 +4412,38 @@ body.msg-chat-open { overflow: hidden; }
   .gp-team-stat:nth-child(2) { display: none; }
 }
 
+/* ---- Equipo: origen del horario (segmentado) ---- */
+.gp-team-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: var(--gp-soft);
+  border: 1px solid var(--gp-line);
+  border-radius: 12px;
+  padding: 4px;
+}
+.gp-team-seg-opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gp-muted-c);
+  cursor: pointer;
+  transition: all 0.15s var(--gp-ease);
+}
+.gp-team-seg-opt:hover { color: var(--gp-ink); }
+.gp-team-seg-opt.on {
+  background: var(--gp-surface);
+  color: var(--gp-ink);
+  box-shadow: var(--gp-shadow-xs);
+}
+
 /* ---- Equipo: ficha (drawer un solo scroll) ---- */
 .gp-team-detail { display: flex; flex-direction: column; gap: 22px; }
 .gp-team-detail section { display: flex; flex-direction: column; gap: 10px; }
