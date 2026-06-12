@@ -1,4 +1,4 @@
-/* eslint-disable no-restricted-globals */
+ 
 
 // Firebase Cloud Messaging Service Worker
 // Handles push notifications when the app is in the background

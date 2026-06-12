@@ -212,7 +212,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       const name = selectedBooking.customer_name.trim().toLowerCase();
       const phone = selectedBooking.Telefono?.trim();
 
-      let query = supabase
+      const query = supabase
         .from("clients" as any)
         .select("id, name, tags, total_visits, total_spent, last_visit_at, notes")
         .eq("tenant_id", tenantId);
@@ -713,8 +713,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     }
 
     // Calculate start and end hours from business hours
-    let defaultStartHour = Math.floor(dayHours.morningStart / 60);
-    let defaultEndHour =
+    const defaultStartHour = Math.floor(dayHours.morningStart / 60);
+    const defaultEndHour =
       dayHours.afternoonEnd > 0 ? Math.ceil(dayHours.afternoonEnd / 60) : Math.ceil(dayHours.morningEnd / 60);
 
     const dayBookings = bookings.filter((b) => b.Fecha === format(dayDate, "yyyy-MM-dd"));

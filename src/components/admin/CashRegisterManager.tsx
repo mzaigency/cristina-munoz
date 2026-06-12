@@ -113,7 +113,7 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
       });
 
       // Fetch profiles for audit display
-      let profilesMap: Record<string, string> = {};
+      const profilesMap: Record<string, string> = {};
       if (userIds.size > 0) {
         const { data: profiles } = await supabase
           .from("profiles")

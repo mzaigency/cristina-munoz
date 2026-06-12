@@ -113,7 +113,7 @@ export function useConversations(role: "user" | "salon", tenantId?: string) {
 
       // Batch fetch last messages for ALL conversations in one query
       // Using a subquery approach with DISTINCT ON
-      let lastMessagesMap = new Map<string, { content: string; sender_type: string; created_at: string }>();
+      const lastMessagesMap = new Map<string, { content: string; sender_type: string; created_at: string }>();
 
       if (conversationIds.length > 0) {
         // Fetch the most recent message per conversation
@@ -140,7 +140,7 @@ export function useConversations(role: "user" | "salon", tenantId?: string) {
       }
 
       // Batch fetch user profiles for salon view (one query for all users)
-      let userProfilesMap = new Map<
+      const userProfilesMap = new Map<
         string,
         { id: string; full_name: string | null; email: string; avatar_url: string | null }
       >();

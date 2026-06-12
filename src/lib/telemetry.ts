@@ -31,7 +31,7 @@ const LAST_CLICK_KEY = "glow_last_section_click";
 const FLUSH_INTERVAL_MS = 5000;
 const FLUSH_BATCH_SIZE = 10;
 
-let queue: Array<Record<string, unknown>> = [];
+const queue: Array<Record<string, unknown>> = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
 function isOptedOut(): boolean {

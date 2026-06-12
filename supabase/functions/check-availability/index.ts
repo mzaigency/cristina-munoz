@@ -198,7 +198,7 @@ serve(async (req) => {
 
     // Pre-fetch stylist-specific overrides for that date (per stylist, win over tenant override)
     const stylistIds = stylistsToCheck.map((s) => s.id).filter(Boolean);
-    let stylistOverridesById: Record<string, any> = {};
+    const stylistOverridesById: Record<string, any> = {};
     if (stylistIds.length > 0) {
       const { data: sOverrides } = await supabase
         .from('stylist_hours_overrides')

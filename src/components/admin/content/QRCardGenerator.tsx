@@ -311,7 +311,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
       ctx.strokeStyle = hexToRgba("#C9764D", 0.5);
       ctx.lineWidth = 2;
       ctx.beginPath();
-      let waveY = 50;
+      const waveY = 50;
       for (let x = 80; x <= w - 80; x += 4) {
         const y = waveY + Math.sin((x - 80) * 0.05) * 4;
         if (x === 80) ctx.moveTo(x, y);
