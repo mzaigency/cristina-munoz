@@ -9,6 +9,8 @@ import { ShopCartProvider } from "@/contexts/ShopCartContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { MaintenanceScreen } from "@/components/MaintenanceScreen";
 import { supabase } from "@/integrations/supabase/client";
+import { Preloader } from "@/components/ui/preloader";
+import glowappLogo from "@/assets/glowapp-logo.png";
 
 // Lazy load non-critical UI components to reduce initial JS bundle
 const Toaster = lazy(() => import("@/components/ui/toaster").then((m) => ({ default: m.Toaster })));
@@ -82,6 +84,22 @@ const PageLoader = () => (
     </div>
   </div>
 );
+
+// Intro de marca al abrir la app (PWA o web). Solo en rutas del shell de
+// consumidor: las landings de tenant/negocios y el admin ya tienen su propia
+// cortina y se doblarían. App se monta una vez por carga de página, así que
+// la intro no se repite al navegar entre rutas.
+const APP_INTRO_PATHS = new Set(["/", "/index", "/mis-citas", "/perfil", "/mensajes"]);
+
+const AppIntro = () => {
+  const [show] = useState(
+    () => typeof window !== "undefined" && APP_INTRO_PATHS.has(window.location.pathname),
+  );
+  if (!show) return null;
+  // minDuration cubre la carga del chunk lazy inicial para que al levantarse
+  // la cortina no asome el spinner de Suspense.
+  return <Preloader logoUrl={glowappLogo} logoVariant="bare" minDuration={800} />;
+};
 
 // Maintenance gate wrapper
 const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
@@ -163,6 +181,7 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <>
+        <AppIntro />
         <AuthProvider>
           <ShopCartProvider>
           <Suspense fallback={null}>
