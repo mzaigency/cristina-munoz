@@ -4514,6 +4514,96 @@ body.msg-chat-open { overflow: hidden; }
   background: linear-gradient(to top, var(--gp-surface) 75%, transparent);
 }
 
+/* ---- Equipo: aviso de límite de plan ---- */
+.gp-team-overlimit {
+  margin-bottom: 12px;
+  padding: 9px 14px;
+  border: 1px solid color-mix(in oklab, var(--gp-warn), transparent 55%);
+  background: color-mix(in oklab, var(--gp-warn), transparent 92%);
+  border-radius: 12px;
+  font-size: 12.5px;
+  color: var(--gp-ink);
+}
+.gp-team-overlimit button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gp-accent);
+  cursor: pointer;
+}
+.gp-team-overlimit button:hover { text-decoration: underline; }
+
+/* ---- Equipo: ausencias del profesional ---- */
+.gp-absences { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.gp-absences-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gp-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.gp-absences-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+  font-size: 13px;
+}
+.gp-absences-row + .gp-absences-row { border-top: 1px solid var(--gp-line); }
+.gp-absences-dates { font-weight: 700; color: var(--gp-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.gp-absences-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gp-muted-c);
+  font-size: 12.5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.gp-absences-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed var(--gp-line);
+  border-radius: 12px;
+  background: var(--gp-soft);
+}
+.gp-absences-form-dates { display: flex; align-items: center; gap: 8px; }
+.gp-absences-form-dates input[type="date"] {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--gp-line);
+  border-radius: 9px;
+  background: var(--gp-surface);
+  color: var(--gp-ink);
+  font-size: 13px;
+}
+.gp-absences-form-dates > span { color: var(--gp-muted-c); font-weight: 600; }
+.gp-absences-form-label {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--gp-line);
+  border-radius: 9px;
+  background: var(--gp-surface);
+  color: var(--gp-ink);
+  font-size: 13px;
+}
+.gp-absences-form-label:focus,
+.gp-absences-form-dates input[type="date"]:focus {
+  outline: none;
+  border-color: var(--gp-accent);
+  box-shadow: 0 0 0 3px var(--gp-accent-soft);
+}
+.gp-absences-form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
 /* ---- Equipo: ficha (drawer un solo scroll) ---- */
 .gp-team-detail { display: flex; flex-direction: column; gap: 22px; }
 .gp-team-detail section { display: flex; flex-direction: column; gap: 10px; }

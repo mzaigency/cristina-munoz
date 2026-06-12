@@ -15,7 +15,6 @@ import {
   History,
   UserCog,
   Store,
-  CalendarOff,
 } from "lucide-react";
 import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -31,9 +30,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { SeasonalHoursManager } from "../SeasonalHoursManager";
 import { InlineScheduleEditor } from "./InlineScheduleEditor";
+import { StylistAbsences } from "./StylistAbsences";
 
 /**
  * Ficha del profesional — una sola página scrolleable, sin pestañas.
@@ -123,7 +121,6 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
   const [usesSalonHours, setUsesSalonHours] = useState(false);
   /** true mientras se edita el horario propio inline. */
   const [editingSchedule, setEditingSchedule] = useState(false);
-  const [seasonalOpen, setSeasonalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSalonHours, setConfirmSalonHours] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -535,14 +532,8 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
               </>
             )}
 
-            <button
-              className="gp-btn sm"
-              style={{ alignSelf: "flex-start" }}
-              onClick={() => setSeasonalOpen(true)}
-              type="button"
-            >
-              <CalendarOff style={{ width: 12, height: 12 }} /> Vacaciones y festivos
-            </button>
+            {/* Vacaciones y festivos, inline */}
+            <StylistAbsences tenantId={tenantId} stylistId={stylistId} />
           </section>
 
           {/* Comisión */}
@@ -745,18 +736,6 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
         </div>
       </div>
 
-      {/* Vacaciones y festivos del profesional */}
-      <Dialog open={seasonalOpen} onOpenChange={setSeasonalOpen}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <DialogHeader>
-            <DialogTitle>Vacaciones y festivos</DialogTitle>
-            <DialogDescription>
-              Periodos en los que {stylist.name} no acepta reservas (vacaciones, bajas, festivos propios).
-            </DialogDescription>
-          </DialogHeader>
-          <SeasonalHoursManager tenantId={tenantId} stylistId={stylistId} stylistName={stylist.name} compact />
-        </DialogContent>
-      </Dialog>
 
       <AlertDialog open={confirmSalonHours} onOpenChange={setConfirmSalonHours}>
         <AlertDialogContent onClick={(e) => e.stopPropagation()}>

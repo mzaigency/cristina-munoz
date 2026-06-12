@@ -14,6 +14,9 @@ import {
 import { startOfMonth, endOfMonth, format } from "date-fns";
 import { StylistDrawer } from "./StylistDrawer";
 import { useToast } from "@/hooks/use-toast";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { PlanUsageBar } from "@/components/admin/PlanUsageBar";
+import { UpgradePrompt } from "@/components/admin/UpgradePrompt";
 
 /**
  * Equipo — lista tipo contactos, pensada para equipos de 1-10 personas.
@@ -75,6 +78,16 @@ export function TeamHub({ tenantId }: TeamHubProps) {
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState(PRESET_COLORS[0]);
   const [saving, setSaving] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const {
+    maxStylists,
+    currentStylists,
+    canAddStylist,
+    isOverLimit,
+    planSlug,
+    getUpgradePlanForLimit,
+    refetch: refetchLimits,
+  } = usePlanLimits(tenantId);
 
   const load = async () => {
     setLoading(true);
@@ -217,6 +230,11 @@ export function TeamHub({ tenantId }: TeamHubProps) {
   }, [stylists, metrics]);
 
   const openCreate = () => {
+    // Al límite del plan: upgrade sutil en vez del formulario
+    if (!canAddStylist()) {
+      setUpgradeOpen(true);
+      return;
+    }
     const used = new Set(stylists.map((s) => s.color));
     setNewColor(PRESET_COLORS.find((c) => !used.has(c)) ?? PRESET_COLORS[0]);
     setNewName("");
@@ -250,6 +268,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
     setCreating(false);
     setNewName("");
     await load();
+    refetchLimits();
     if (data?.id) setSelectedId(data.id);
   };
 
@@ -333,12 +352,30 @@ export function TeamHub({ tenantId }: TeamHubProps) {
           <h2>Equipo</h2>
           <p>Quién trabaja, cuánto produce y cuánto le pagas este mes.</p>
         </div>
-        <div className="gp-page-actions">
+        <div className="gp-page-actions" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
           <button className="gp-btn primary sm" onClick={openCreate} type="button">
             <Plus style={{ width: 13, height: 13 }} /> Añadir
           </button>
+          {maxStylists < 999 && (
+            <PlanUsageBar
+              current={currentStylists}
+              max={maxStylists}
+              label="profesionales"
+              className="w-[150px]"
+            />
+          )}
         </div>
       </div>
+
+      {/* Pasado del límite (p. ej. tras bajar de plan): aviso fino */}
+      {isOverLimit("stylists") && (
+        <div className="gp-team-overlimit">
+          Tienes {currentStylists} profesionales y tu plan incluye {maxStylists}.{" "}
+          <button onClick={() => setUpgradeOpen(true)} type="button">
+            Mejorar plan
+          </button>
+        </div>
+      )}
 
       {stylists.length === 0 ? (
         <div className="gp-card">
@@ -396,6 +433,16 @@ export function TeamHub({ tenantId }: TeamHubProps) {
           )}
         </>
       )}
+
+      {/* Upgrade sutil: solo al intentar añadir estando al límite */}
+      <UpgradePrompt
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        currentPlan={planSlug}
+        targetPlan={getUpgradePlanForLimit("stylists") || "pro"}
+        feature="Más profesionales en tu equipo"
+        tenantId={tenantId}
+      />
 
       {/* Drawer de detalle */}
       {selectedId && (
