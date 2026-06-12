@@ -52,7 +52,7 @@ export function AdminHelpMenu({ tenantId, onTourTabChange }: AdminHelpMenuProps)
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-medium">Tour guiado</div>
-              <div className="text-[11px] text-muted-foreground">40 segundos · 5 pasos</div>
+              <div className="text-[11px] text-muted-foreground">1 minuto · 10 pasos</div>
             </div>
           </button>
 
