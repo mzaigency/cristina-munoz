@@ -4447,6 +4447,73 @@ body.msg-chat-open { overflow: hidden; }
   box-shadow: var(--gp-shadow-xs);
 }
 
+/* ---- Equipo: editor de horario inline ---- */
+.gp-sched-edit { display: flex; flex-direction: column; gap: 10px; }
+.gp-sched-edit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+}
+.gp-sched-edit-row + .gp-sched-edit-row { border-top: 1px solid var(--gp-line); }
+.gp-sched-edit-row.off { background: var(--gp-soft); }
+.gp-sched-edit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.gp-sched-edit-head-actions { display: flex; align-items: center; gap: 10px; }
+.gp-sched-edit-times {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gp-sched-edit-times input[type="time"] {
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--gp-line);
+  border-radius: 9px;
+  background: var(--gp-surface);
+  color: var(--gp-ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  width: 92px;
+}
+.gp-sched-edit-times input[type="time"]:focus {
+  outline: none;
+  border-color: var(--gp-accent);
+  box-shadow: 0 0 0 3px var(--gp-accent-soft);
+}
+.gp-sched-edit-times > span { color: var(--gp-muted-c); font-weight: 600; }
+.gp-sched-edit-times.break input[type="time"] { background: var(--gp-soft); }
+.gp-sched-edit-break-ic { width: 13px; height: 13px; color: var(--gp-muted-c); flex-shrink: 0; }
+.gp-sched-edit-row-actions { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.gp-sched-edit-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--gp-muted-c);
+  cursor: pointer;
+  transition: all 0.15s var(--gp-ease);
+}
+.gp-sched-edit-ic:hover { background: var(--gp-soft); color: var(--gp-ink); }
+.gp-sched-edit-ic svg { width: 15px; height: 15px; }
+.gp-sched-edit-bar {
+  position: sticky;
+  bottom: -16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 0;
+  background: linear-gradient(to top, var(--gp-surface) 75%, transparent);
+}
+
 /* ---- Equipo: ficha (drawer un solo scroll) ---- */
 .gp-team-detail { display: flex; flex-direction: column; gap: 22px; }
 .gp-team-detail section { display: flex; flex-direction: column; gap: 10px; }

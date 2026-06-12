@@ -15,6 +15,7 @@ import {
   History,
   UserCog,
   Store,
+  CalendarOff,
 } from "lucide-react";
 import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -30,7 +31,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { StylistScheduleEditor } from "../StylistScheduleEditor";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SeasonalHoursManager } from "../SeasonalHoursManager";
+import { InlineScheduleEditor } from "./InlineScheduleEditor";
 
 /**
  * Ficha del profesional — una sola página scrolleable, sin pestañas.
@@ -79,7 +82,7 @@ interface DaySchedule {
 
 const PRESET_COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6", "#EF4444", "#06B6D4", "#84CC16"];
 const COMMISSION_PRESETS = [30, 40, 50, 60];
-/** Lunes primero, como StylistScheduleEditor. */
+/** Lunes primero, como InlineScheduleEditor. */
 const WEEK_DAYS = [
   { value: 1, label: "Lun" },
   { value: 2, label: "Mar" },
@@ -118,7 +121,9 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
   const [recentBookings, setRecentBookings] = useState<BookingRow[]>([]);
   const [schedule, setSchedule] = useState<DaySchedule[] | null>(null);
   const [usesSalonHours, setUsesSalonHours] = useState(false);
-  const [scheduleOpen, setScheduleOpen] = useState(false);
+  /** true mientras se edita el horario propio inline. */
+  const [editingSchedule, setEditingSchedule] = useState(false);
+  const [seasonalOpen, setSeasonalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSalonHours, setConfirmSalonHours] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -442,8 +447,8 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
               <h4 className="gp-neg-section-h">
                 <Clock /> Horario semanal
               </h4>
-              {!usesSalonHours && (
-                <button className="gp-btn sm" onClick={() => setScheduleOpen(true)} type="button">
+              {!usesSalonHours && !editingSchedule && (
+                <button className="gp-btn sm" onClick={() => setEditingSchedule(true)} type="button">
                   <Pencil style={{ width: 12, height: 12 }} /> Editar
                 </button>
               )}
@@ -452,24 +457,29 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
             {/* De dónde sale el horario: del salón o propio */}
             <div className="gp-team-seg" role="radiogroup" aria-label="Origen del horario">
               <button
-                className={`gp-team-seg-opt${usesSalonHours ? " on" : ""}`}
+                className={`gp-team-seg-opt${usesSalonHours && !editingSchedule ? " on" : ""}`}
                 onClick={() => {
-                  if (!usesSalonHours) setConfirmSalonHours(true);
+                  if (editingSchedule && usesSalonHours) {
+                    // Estaba creando uno propio sin guardar: basta con descartar
+                    setEditingSchedule(false);
+                  } else if (!usesSalonHours) {
+                    setConfirmSalonHours(true);
+                  }
                 }}
                 role="radio"
-                aria-checked={usesSalonHours}
+                aria-checked={usesSalonHours && !editingSchedule}
                 type="button"
               >
                 <Store style={{ width: 13, height: 13 }} />
                 Del salón
               </button>
               <button
-                className={`gp-team-seg-opt${!usesSalonHours ? " on" : ""}`}
+                className={`gp-team-seg-opt${!usesSalonHours || editingSchedule ? " on" : ""}`}
                 onClick={() => {
-                  if (usesSalonHours) setScheduleOpen(true);
+                  if (usesSalonHours && !editingSchedule) setEditingSchedule(true);
                 }}
                 role="radio"
-                aria-checked={!usesSalonHours}
+                aria-checked={!usesSalonHours || editingSchedule}
                 type="button"
               >
                 <UserCog style={{ width: 13, height: 13 }} />
@@ -477,37 +487,62 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
               </button>
             </div>
 
-            {usesSalonHours && (
-              <p className="gp-neg-help" style={{ margin: 0 }}>
-                Sigue el horario del negocio: si cambias el del salón, el suyo cambia también. Toca
-                «Propio» para personalizarlo.
-              </p>
-            )}
-            {schedule === null ? (
-              <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
-                <Loader2 className="gp-spinner-sm" />
-              </div>
+            {editingSchedule ? (
+              <InlineScheduleEditor
+                tenantId={tenantId}
+                stylistId={stylistId}
+                onSaved={() => {
+                  setEditingSchedule(false);
+                  setSchedule(null);
+                  loadSchedule();
+                  onChanged();
+                }}
+                onDiscard={() => setEditingSchedule(false)}
+              />
             ) : (
-              <div className="gp-neg-sched">
-                {orderedSchedule.map(({ value, label, row }) => {
-                  const working = row?.is_working && row.start_time && row.end_time;
-                  return (
-                    <div key={value} className={`gp-neg-sched-row${working ? "" : " off"}`}>
-                      <span className="gp-neg-sched-day">{label}</span>
-                      {working ? (
-                        <span className="gp-neg-sched-hours">
-                          {hhmm(row!.start_time)} – {hhmm(row!.end_time)}
-                        </span>
-                      ) : (
-                        <span className="gp-neg-sched-rest">
-                          <Moon style={{ width: 11, height: 11 }} /> Descansa
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <>
+                {usesSalonHours && (
+                  <p className="gp-neg-help" style={{ margin: 0 }}>
+                    Sigue el horario del negocio: si cambias el del salón, el suyo cambia también. Toca
+                    «Propio» para personalizarlo.
+                  </p>
+                )}
+                {schedule === null ? (
+                  <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
+                    <Loader2 className="gp-spinner-sm" />
+                  </div>
+                ) : (
+                  <div className="gp-neg-sched">
+                    {orderedSchedule.map(({ value, label, row }) => {
+                      const working = row?.is_working && row.start_time && row.end_time;
+                      return (
+                        <div key={value} className={`gp-neg-sched-row${working ? "" : " off"}`}>
+                          <span className="gp-neg-sched-day">{label}</span>
+                          {working ? (
+                            <span className="gp-neg-sched-hours">
+                              {hhmm(row!.start_time)} – {hhmm(row!.end_time)}
+                            </span>
+                          ) : (
+                            <span className="gp-neg-sched-rest">
+                              <Moon style={{ width: 11, height: 11 }} /> Descansa
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
+
+            <button
+              className="gp-btn sm"
+              style={{ alignSelf: "flex-start" }}
+              onClick={() => setSeasonalOpen(true)}
+              type="button"
+            >
+              <CalendarOff style={{ width: 12, height: 12 }} /> Vacaciones y festivos
+            </button>
           </section>
 
           {/* Comisión */}
@@ -710,19 +745,18 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
         </div>
       </div>
 
-      {scheduleOpen && (
-        <StylistScheduleEditor
-          open={scheduleOpen}
-          onClose={() => {
-            setScheduleOpen(false);
-            setSchedule(null);
-            loadSchedule();
-          }}
-          stylistId={stylistId}
-          stylistName={stylist.name}
-          tenantId={tenantId}
-        />
-      )}
+      {/* Vacaciones y festivos del profesional */}
+      <Dialog open={seasonalOpen} onOpenChange={setSeasonalOpen}>
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Vacaciones y festivos</DialogTitle>
+            <DialogDescription>
+              Periodos en los que {stylist.name} no acepta reservas (vacaciones, bajas, festivos propios).
+            </DialogDescription>
+          </DialogHeader>
+          <SeasonalHoursManager tenantId={tenantId} stylistId={stylistId} stylistName={stylist.name} compact />
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={confirmSalonHours} onOpenChange={setConfirmSalonHours}>
         <AlertDialogContent onClick={(e) => e.stopPropagation()}>
