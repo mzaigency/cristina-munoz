@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar } from "lucide-react";
 import { FollowButton } from "@/components/social/FollowButton";
+import { LiquidButton } from "@/components/ui/liquid-glass-button";
 import { EASE_OUT } from "./heroAnimations";
 import type { CSSProperties } from "react";
 
@@ -9,8 +10,8 @@ interface HeroCTAProps {
   onBookNow: () => void;
   primaryColor?: string | null;
   label?: string;
-  /** "solid" = filled accent button (default). "white" = white-on-dark. "outline" = transparent border. */
-  variant?: "solid" | "white" | "outline";
+  /** "solid" = filled accent button (default). "white" = white-on-dark. "outline" = transparent border. "glass" = liquid glass over imagery. */
+  variant?: "solid" | "white" | "outline" | "glass";
   /** "icon" = Calendar icon left. "arrow" = ArrowRight on right. */
   iconStyle?: "icon" | "arrow" | "none";
   className?: string;
@@ -56,23 +57,41 @@ export function HeroCTA({
       transition={{ duration: 0.6, delay: 0.6, ease: EASE_OUT }}
       className={`flex ${layout === "stack" ? "flex-col w-full max-w-sm" : "flex-row flex-wrap items-center"} gap-3 ${className}`}
     >
-      <motion.button
-        onClick={onBookNow}
-        whileTap={{ scale: 0.97 }}
-        whileHover={{ y: -1.5 }}
-        transition={{ type: "spring", stiffness: 400, damping: 22 }}
-        className={`${baseBtn} ${sizeBtn} ${radiusBtn} ${shadowClass} hover:brightness-[1.06]`}
-        style={variantStyle}
-      >
-        {iconStyle === "icon" && <Calendar className="w-4 h-4 sm:w-[18px] sm:h-[18px]" strokeWidth={2.4} />}
-        <span>{label}</span>
-        {iconStyle === "arrow" && (
-          <ArrowRight
-            className="w-4 h-4 sm:w-[18px] sm:h-[18px] transition-transform duration-300 group-hover:translate-x-0.5"
-            strokeWidth={2.4}
-          />
-        )}
-      </motion.button>
+      {variant === "glass" ? (
+        <LiquidButton
+          onClick={onBookNow}
+          variant="on-media"
+          size="xl"
+          className={`${sizeBtn} ${radiusBtn} gap-2.5`}
+        >
+          {iconStyle === "icon" && <Calendar className="w-4 h-4 sm:w-[18px] sm:h-[18px]" strokeWidth={2.4} />}
+          <span>{label}</span>
+          {iconStyle === "arrow" && (
+            <ArrowRight
+              className="w-4 h-4 sm:w-[18px] sm:h-[18px] transition-transform duration-300 group-hover:translate-x-0.5"
+              strokeWidth={2.4}
+            />
+          )}
+        </LiquidButton>
+      ) : (
+        <motion.button
+          onClick={onBookNow}
+          whileTap={{ scale: 0.97 }}
+          whileHover={{ y: -1.5 }}
+          transition={{ type: "spring", stiffness: 400, damping: 22 }}
+          className={`${baseBtn} ${sizeBtn} ${radiusBtn} ${shadowClass} hover:brightness-[1.06]`}
+          style={variantStyle}
+        >
+          {iconStyle === "icon" && <Calendar className="w-4 h-4 sm:w-[18px] sm:h-[18px]" strokeWidth={2.4} />}
+          <span>{label}</span>
+          {iconStyle === "arrow" && (
+            <ArrowRight
+              className="w-4 h-4 sm:w-[18px] sm:h-[18px] transition-transform duration-300 group-hover:translate-x-0.5"
+              strokeWidth={2.4}
+            />
+          )}
+        </motion.button>
+      )}
 
       {showFollow && (
         <FollowButton

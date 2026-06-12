@@ -24,6 +24,7 @@ import { FeedToggle, FeedMode } from "@/components/feed/FeedToggle";
 import { FollowingFeed } from "@/components/feed/FollowingFeed";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { cn } from "@/lib/utils";
+import { LiquidButton } from "@/components/ui/liquid-glass-button";
 
 interface TenantWithStats {
   id: string;
@@ -418,16 +419,12 @@ const Index = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="flex justify-center pt-4"
                       >
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={handleLoadMore}
-                          className="flex items-center gap-2 px-6 py-3 rounded-full liquid-glass-pill !bg-background/30 text-foreground font-semibold text-sm shadow-sm"
-                        >
+                        <LiquidButton onClick={handleLoadMore} size="lg">
                           <span>Ver más</span>
                           <span className="text-muted-foreground text-xs">
                             ({filteredSalons.length - visibleCount} restantes)
                           </span>
-                        </motion.button>
+                        </LiquidButton>
                       </motion.div>
                     )}
                   </div>

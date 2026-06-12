@@ -228,7 +228,7 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
               primaryColor={tenant.primary_color}
               label="Reservar cita"
               iconStyle="arrow"
-              variant="white"
+              variant="glass"
               layout="stack"
               className="items-stretch"
             />
