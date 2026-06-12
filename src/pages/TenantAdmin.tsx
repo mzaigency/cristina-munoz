@@ -488,7 +488,7 @@ export default function TenantAdmin() {
   const loading = tenantLoading || accessLoading;
 
   if (loading || subscriptionLoading) {
-    return <Preloader once="admin" ready={false} />;
+    return <Preloader ready={false} />;
   }
 
   if (!hasAccess || !tenant) return null;
@@ -515,7 +515,6 @@ export default function TenantAdmin() {
   return (
     <div className="gp-shell">
       <Preloader
-        once="admin"
         ready
         text={tenant.name}
         logoUrl={tenant.logo_url}
