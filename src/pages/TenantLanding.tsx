@@ -290,7 +290,12 @@ const TenantLanding = () => {
       buttonStyle={tenant.button_style}
     >
       <div className="min-h-screen bg-background overflow-x-hidden">
-        <Preloader ready text={tenant.name} />
+        <Preloader
+          ready
+          text={tenant.name}
+          logoUrl={tenant.logo_url}
+          accentColor={tenant.primary_color}
+        />
 
         {/* Safe area spacer for top notch */}
         <div 

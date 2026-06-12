@@ -14,6 +14,7 @@ import {
 } from "@/components/business-landing";
 import { B2BLeadForm } from "@/components/business-landing/B2BLeadForm";
 import { Preloader } from "@/components/ui/preloader";
+import glowappLogo from "@/assets/glowapp-logo.png";
 
 export default function ForBusiness() {
   return (
@@ -52,7 +53,7 @@ export default function ForBusiness() {
       />
 
       <div className="min-h-screen bg-background">
-        <Preloader text="GlowApp" />
+        <Preloader text="GlowApp" logoUrl={glowappLogo} />
         <StickyHeader />
         <HeroSection />
         <ForWhoSection />

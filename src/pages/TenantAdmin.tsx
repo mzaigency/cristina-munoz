@@ -488,7 +488,7 @@ export default function TenantAdmin() {
   const loading = tenantLoading || accessLoading;
 
   if (loading || subscriptionLoading) {
-    return <Preloader ready={false} text="Preparando tu panel…" />;
+    return <Preloader once="admin" ready={false} text="Preparando tu panel…" />;
   }
 
   if (!hasAccess || !tenant) return null;
@@ -514,7 +514,13 @@ export default function TenantAdmin() {
 
   return (
     <div className="gp-shell">
-      <Preloader ready text={tenant.name} />
+      <Preloader
+        once="admin"
+        ready
+        text={tenant.name}
+        logoUrl={tenant.logo_url}
+        accentColor={tenant.primary_color}
+      />
       <AdminCommandPalette
         tenantSlug={slug || ""}
         onNavigate={(path) => navigate(path)}
