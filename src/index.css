@@ -4000,7 +4000,10 @@ body.msg-chat-open { overflow: hidden; }
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  z-index: 100;
+  /* Sobre el shell del admin (topbar 20, sidebar 30, bottom 40, fab 45)
+     pero bajo los Dialog/AlertDialog de shadcn (z-50) que abre el drawer:
+     editor de horario y confirmaciones deben quedar por encima. */
+  z-index: 48;
   display: flex;
   justify-content: flex-end;
   animation: gpFadeIn 0.18s ease-out;
