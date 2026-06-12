@@ -112,7 +112,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-background/95 backdrop-blur-sm border-b shadow-sm" : "bg-transparent border-transparent"
+        isScrolled ? "liquid-glass-solid !border-x-0 !border-t-0 border-b shadow-sm" : "bg-transparent border-transparent"
       }`}
       style={{
         paddingTop: "env(safe-area-inset-top)",

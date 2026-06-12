@@ -60,8 +60,9 @@ export function BottomNavigation() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 liquid-glass-solid pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-center justify-around h-[60px] max-w-lg mx-auto px-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pointer-events-none">
+        <div className="pointer-events-auto liquid-glass-solid rounded-[30px] overflow-hidden max-w-lg mx-auto">
+          <div className="flex items-center justify-around h-[60px] px-2">
           {navItems.map(({ path, icon: Icon, label }, index) => {
             const active = isActive(path);
             const showBadge = path === "/mensajes" && unreadCount > 0;
@@ -163,6 +164,7 @@ export function BottomNavigation() {
               </div>
             );
           })}
+          </div>
         </div>
       </nav>
 

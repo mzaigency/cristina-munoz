@@ -41,7 +41,7 @@ export const StickyHeader = () => {
         animate={{ y: 0 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
-            ? "bg-background/90 backdrop-blur-xl border-b border-border shadow-sm"
+            ? "liquid-glass-solid !border-x-0 !border-t-0 shadow-sm"
             : "bg-transparent"
         }`}
         style={{ paddingTop: "env(safe-area-inset-top)" }}

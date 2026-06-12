@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { LiquidButton } from "@/components/ui/liquid-glass-button";
 import { ArrowRight, Scissors, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AnimatedHeroBackground } from "./AnimatedHeroBackground";
@@ -70,16 +71,15 @@ export const HeroSection = () => {
                 Probar 30 días gratis
                 <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </Button>
-              <Button
+              <LiquidButton
                 size="lg"
-                variant="ghost"
-                className="text-base px-5 py-6 rounded-full hover:bg-secondary"
+                className="text-base px-6"
                 onClick={() => {
                   document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
                 }}
               >
                 Ver cómo funciona
-              </Button>
+              </LiquidButton>
             </motion.div>
 
             {/* Live status / proof */}

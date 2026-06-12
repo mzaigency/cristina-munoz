@@ -28,10 +28,10 @@ export const FloatingMobileCTA = () => {
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-background/90 backdrop-blur-xl border-t border-border md:hidden"
-          style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+          className="fixed bottom-0 left-0 right-0 z-50 px-3 md:hidden pointer-events-none"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
         >
-          <div className="flex items-center gap-3">
+          <div className="pointer-events-auto liquid-glass-solid rounded-[24px] p-3 flex items-center gap-3">
             <Button
               className="flex-1 rounded-full gradient-primary border-0"
               onClick={() => navigate("/onboarding")}
