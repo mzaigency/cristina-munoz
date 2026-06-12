@@ -558,6 +558,7 @@ export default function TenantAdmin() {
                   className={`gp-navitem${isActive ? " on" : ""}`}
                   onClick={() => handleTabClick(item.value)}
                   data-tour-step={`nav-${item.value}`}
+                  data-tour-nav={item.value}
                 >
                   <span className="gp-navitem-ic">{item.icon}</span>
                   {item.label}
@@ -741,6 +742,7 @@ export default function TenantAdmin() {
               key={item.value}
               className={`gp-bottom-item${activeSection === item.value ? " on" : ""}`}
               onClick={() => handleTabClick(item.value)}
+              data-tour-nav={item.value}
             >
               <span className="gp-bottom-ic" style={{ position: "relative" }}>
                 {item.icon}
@@ -754,6 +756,7 @@ export default function TenantAdmin() {
           <button
             className={`gp-bottom-item${extraActive ? " on" : ""}`}
             onClick={() => setMoreOpen(true)}
+            data-tour-nav="more"
           >
             <span className="gp-bottom-ic"><Menu className="h-5 w-5" /></span>
             Más

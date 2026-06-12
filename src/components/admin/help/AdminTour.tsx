@@ -650,7 +650,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
             <ConfettiBurst trigger={confettiTick} />
 
             {/* Progreso segmentado */}
-            <div className="flex gap-1 px-4 pt-3">
+            <div className="flex gap-1 pl-4 pr-11 pt-3">
               {STEPS.map((s, i) => (
                 <button
                   key={s.id}
