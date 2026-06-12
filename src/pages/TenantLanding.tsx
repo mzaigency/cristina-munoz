@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
-import { Loader2 } from "lucide-react";
+import { Preloader } from "@/components/ui/preloader";
 import { TenantServicesSection } from "@/components/tenant/TenantServicesSection";
 import { TenantBookingFlow } from "@/components/tenant/TenantBookingFlow";
 import { TenantHero } from "@/components/tenant/TenantHero";
@@ -213,14 +213,7 @@ const TenantLanding = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando...</p>
-        </div>
-      </div>
-    );
+    return <Preloader ready={false} text="Preparando…" />;
   }
 
   if (!tenant) {
@@ -297,6 +290,8 @@ const TenantLanding = () => {
       buttonStyle={tenant.button_style}
     >
       <div className="min-h-screen bg-background overflow-x-hidden">
+        <Preloader ready text={tenant.name} />
+
         {/* Safe area spacer for top notch */}
         <div 
           className="fixed top-0 left-0 right-0 bg-background z-[99]" 

@@ -2,9 +2,9 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Preloader } from "@/components/ui/preloader";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2,
   Home,
   Calendar,
   Wallet,
@@ -488,11 +488,7 @@ export default function TenantAdmin() {
   const loading = tenantLoading || accessLoading;
 
   if (loading || subscriptionLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <Preloader ready={false} text="Preparando tu panel…" />;
   }
 
   if (!hasAccess || !tenant) return null;
@@ -518,6 +514,7 @@ export default function TenantAdmin() {
 
   return (
     <div className="gp-shell">
+      <Preloader ready text={tenant.name} />
       <AdminCommandPalette
         tenantSlug={slug || ""}
         onNavigate={(path) => navigate(path)}

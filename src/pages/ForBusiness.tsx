@@ -13,6 +13,7 @@ import {
   FloatingMobileCTA,
 } from "@/components/business-landing";
 import { B2BLeadForm } from "@/components/business-landing/B2BLeadForm";
+import { Preloader } from "@/components/ui/preloader";
 
 export default function ForBusiness() {
   return (
@@ -51,6 +52,7 @@ export default function ForBusiness() {
       />
 
       <div className="min-h-screen bg-background">
+        <Preloader text="GlowApp" />
         <StickyHeader />
         <HeroSection />
         <ForWhoSection />
