@@ -180,9 +180,17 @@ export function TeamHub({ tenantId }: TeamHubProps) {
     return { revenue, bookings };
   }, [metrics]);
 
+  const openCreate = () => {
+    // Sugiere el primer color que nadie use todavía
+    const used = new Set(stylists.map((s) => s.color));
+    setNewColor(PRESET_COLORS.find((c) => !used.has(c)) ?? PRESET_COLORS[0]);
+    setNewName("");
+    setCreating(true);
+  };
+
   const handleCreate = async () => {
     if (!newName.trim()) {
-      toast({ title: "Nombre requerido", variant: "destructive" });
+      toast({ title: "Ponle un nombre", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -203,10 +211,9 @@ export function TeamHub({ tenantId }: TeamHubProps) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Estilista añadido" });
+    toast({ title: `${newName.trim()} ya está en el equipo 🎉` });
     setCreating(false);
     setNewName("");
-    setNewColor(PRESET_COLORS[0]);
     await load();
     if (data?.id) setSelectedId(data.id);
   };
@@ -230,8 +237,8 @@ export function TeamHub({ tenantId }: TeamHubProps) {
           </p>
         </div>
         <div className="gp-page-actions">
-          <button className="gp-btn primary sm" onClick={() => setCreating(true)} type="button">
-            <Plus style={{ width: 13, height: 13 }} /> Nuevo
+          <button className="gp-btn primary sm" onClick={openCreate} type="button">
+            <Plus style={{ width: 13, height: 13 }} /> Añadir profesional
           </button>
         </div>
       </div>
@@ -279,10 +286,10 @@ export function TeamHub({ tenantId }: TeamHubProps) {
             <div className="gp-empty-ic">
               <Users style={{ width: 24, height: 24 }} />
             </div>
-            <h4>Sin estilistas</h4>
-            <p>Añade tu primer profesional</p>
-            <button className="gp-btn primary" style={{ marginTop: 12 }} onClick={() => setCreating(true)}>
-              <Plus style={{ width: 14, height: 14 }} /> Añadir
+            <h4>Tu equipo, aquí</h4>
+            <p>Añade a cada profesional para asignarle citas, horario y comisión.</p>
+            <button className="gp-btn primary" style={{ marginTop: 12 }} onClick={openCreate}>
+              <Plus style={{ width: 14, height: 14 }} /> Añadir profesional
             </button>
           </div>
         </div>
@@ -383,13 +390,16 @@ export function TeamHub({ tenantId }: TeamHubProps) {
       {creating && (
         <div className="gp-neg-create-backdrop" onClick={() => !saving && setCreating(false)}>
           <div className="gp-neg-create" onClick={(e) => e.stopPropagation()}>
-            <h3>Nuevo estilista</h3>
+            <h3>Nuevo profesional</h3>
             <label>
               <span>Nombre</span>
               <input
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !saving) handleCreate();
+                }}
                 placeholder="Ej: Cristina Muñoz"
                 autoFocus
               />
@@ -414,7 +424,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
               </button>
               <button className="gp-btn primary" onClick={handleCreate} disabled={saving}>
                 {saving && <Loader2 className="gp-spinner-sm" />}
-                Crear
+                Añadir al equipo
               </button>
             </div>
           </div>
