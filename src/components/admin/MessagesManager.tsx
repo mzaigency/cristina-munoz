@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { MessageCircle, Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -199,9 +199,14 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
       </div>
     );
 
+    // Admin mobile: topbar 56px + bottom nav ~64px + safe areas
+    const adminMobileShellStyle: React.CSSProperties = {
+      height: 'calc(100dvh - 56px - env(safe-area-inset-top) - 64px - env(safe-area-inset-bottom))',
+    };
+
     return (
       <>
-        <div className="msg-shell-mobile">
+        <div className="msg-shell-mobile" style={adminMobileShellStyle}>
           <header className="msg-sidebar-header">
             <span className="msg-sidebar-title">
               <MessageCircle className="h-5 w-5" style={{ color: 'var(--gp-accent)' }} />

@@ -129,8 +129,13 @@ export default function Messages() {
 
     return (
       <AppLayout hideNavigation={!!selectedConversation}>
-        <div className="min-h-screen bg-background">
-          <div className="sticky top-0 z-10 liquid-glass-solid pt-[env(safe-area-inset-top)]">
+        {/* Full-viewport column: no page scroll — list scrolls internally */}
+        <div
+          className="flex flex-col bg-background overflow-hidden"
+          style={{ height: '100dvh' }}
+        >
+          {/* Page header */}
+          <div className="liquid-glass-solid flex-shrink-0 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center h-14 px-2">
               <Button
                 variant="ghost"
@@ -147,7 +152,8 @@ export default function Messages() {
             </div>
           </div>
 
-          <div className="px-3 pt-3 pb-24">
+          {/* Shell fills remaining space */}
+          <div className="flex-1 min-h-0 px-3 py-3 pb-[calc(12px+env(safe-area-inset-bottom)+80px)] flex flex-col">
             <div className="msg-shell-mobile">
               <header className="msg-sidebar-header">
                 <span className="msg-sidebar-title">
