@@ -811,6 +811,22 @@
     }
   }
 
+  /* Entrada del bloque central del preloader (sustituye a GSAP) */
+  @keyframes preloader-pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .preloader-center {
+    animation: preloader-pop-in 250ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
   /* Pulse and glow */
   @keyframes pulse-soft {
     0%, 100% {

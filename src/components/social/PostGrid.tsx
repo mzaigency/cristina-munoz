@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Trash2 } from "lucide-react";
 import { Post } from "@/hooks/usePosts";
 import { PostModal } from "./PostModal";
 import { cn } from "@/lib/utils";
+import { supabaseImage } from "@/lib/supabaseImage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,7 +70,7 @@ export function PostGrid({ posts, className, isAdmin, onDelete }: PostGridProps)
             style={{ borderRadius: "0.5rem" }}
           >
             <img
-              src={post.image_url}
+              src={supabaseImage(post.image_url, { width: 400 })}
               alt={post.caption || "Post"}
               className="w-full h-full object-cover transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.04] group-active:scale-95 !rounded-xl"
               style={{ borderRadius: "0.75rem" }}

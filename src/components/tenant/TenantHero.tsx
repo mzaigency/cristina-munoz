@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { FollowerStats } from "@/components/social/FollowerStats";
 import { FollowButton } from "@/components/social/FollowButton";
+import { supabaseImage } from "@/lib/supabaseImage";
 
 interface Tenant {
   id: string;
@@ -70,7 +71,7 @@ export const TenantHero = ({ tenant, onBookNow, rating, reviewCount }: TenantHer
       {hasHeroImage && (
         <motion.div className="absolute inset-0 z-0" style={{ y: imageY, scale: imageScale }}>
           <motion.img
-            src={tenant.hero_image_url!}
+            src={supabaseImage(tenant.hero_image_url, { width: 1280 })}
             alt={`${tenant.name}`}
             className="w-full h-full object-cover"
             loading="eager"

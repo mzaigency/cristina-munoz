@@ -98,7 +98,7 @@ const AppIntro = () => {
   if (!show) return null;
   // minDuration cubre la carga del chunk lazy inicial para que al levantarse
   // la cortina no asome el spinner de Suspense.
-  return <Preloader logoUrl={glowappLogo} logoVariant="bare" minDuration={800} />;
+  return <Preloader logoUrl={glowappLogo} logoVariant="bare" minDuration={500} />;
 };
 
 // Maintenance gate wrapper

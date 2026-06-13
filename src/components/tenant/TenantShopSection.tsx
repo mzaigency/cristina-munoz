@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { ProductDetailDialog, ShopProductDetail } from "./ProductDetailDialog";
 import { ShopCart } from "./ShopCart";
 import { cn } from "@/lib/utils";
+import { supabaseImage } from "@/lib/supabaseImage";
 
 interface TenantShopSectionProps {
   tenantId: string;
@@ -78,7 +79,7 @@ export const TenantShopSection = ({ tenantId, tenantSlug }: TenantShopSectionPro
                 <div className="relative aspect-square overflow-hidden bg-muted/40">
                   {p.image_url ? (
                     <img
-                      src={p.image_url}
+                      src={supabaseImage(p.image_url, { width: 400 })}
                       alt={p.name}
                       loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]"

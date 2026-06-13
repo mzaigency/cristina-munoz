@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFollows } from "@/hooks/useFollows";
 import { cn } from "@/lib/utils";
+import { supabaseImage } from "@/lib/supabaseImage";
 import { useHaptic } from "@/hooks/useHaptic";
 import { RecommendationBadge } from "./RecommendationBadge";
 
@@ -80,7 +81,7 @@ export function PremiumSalonCard({
             {salon.hero_image_url ? (
               index === 0 ? (
                 <img
-                  src={salon.hero_image_url}
+                  src={supabaseImage(salon.hero_image_url, { width: 800 })}
                   alt={salon.name}
                   className="w-full h-full object-cover"
                   loading="eager"
@@ -89,7 +90,7 @@ export function PremiumSalonCard({
                 />
               ) : (
                 <motion.img
-                  src={salon.hero_image_url}
+                  src={supabaseImage(salon.hero_image_url, { width: 800 })}
                   alt={salon.name}
                   className="w-full h-full object-cover"
                   loading="lazy"

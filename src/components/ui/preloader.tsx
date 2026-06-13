@@ -1,4 +1,3 @@
-import gsap from "gsap";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 interface PreloaderProps {
@@ -29,6 +28,9 @@ interface PreloaderProps {
  * `ready` es false; al pasar a true (y tras `minDuration` y la carga del
  * logo), el bloque central escala hacia el espectador y la cortina sube con
  * el borde inferior curvado.
+ *
+ * Animaciones en CSS puro (transiciones interrumpibles, fuera del hilo
+ * principal) — sin dependencias de runtime.
  */
 export function Preloader({
   ready,
@@ -39,7 +41,6 @@ export function Preloader({
   minDuration = 300,
 }: PreloaderProps) {
   const loaderRef = useRef<HTMLDivElement>(null);
-  const centerRef = useRef<HTMLDivElement>(null);
   const [docReady, setDocReady] = useState(false);
   const [done, setDone] = useState(false);
   const [minElapsed, setMinElapsed] = useState(minDuration <= 0);
@@ -70,39 +71,20 @@ export function Preloader({
 
   const isReady = (ready ?? docReady) && minElapsed && logoLoaded;
 
-  // Entrada suave del bloque central. La salida nunca arranca antes de
-  // minDuration, así que no compite con esta animación.
-  useLayoutEffect(() => {
-    if (!centerRef.current) return;
-    gsap.fromTo(
-      centerRef.current,
-      { opacity: 0, scale: 0.85 },
-      { opacity: 1, scale: 1, duration: 0.25, ease: "power2.out" },
-    );
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!isReady || !loaderRef.current || !centerRef.current) return;
-
-    const tl = gsap.timeline({
-      defaults: { ease: "power2.inOut" },
-      onComplete: () => setDone(true),
-    });
-
-    tl.to(centerRef.current, { scale: 3, opacity: 0, duration: 0.35 });
-    tl.to(
-      loaderRef.current,
-      {
-        y: "-105%",
-        borderBottomLeftRadius: "50% 20%",
-        borderBottomRightRadius: "50% 20%",
-        duration: 0.5,
-      },
-      "<",
-    );
-
+  // Al estar listo: la transición CSS de salida arranca (clase data-exiting).
+  // Cuando termina la cortina (la más larga), desmontar.
+  useEffect(() => {
+    if (!isReady || !loaderRef.current) return;
+    const node = loaderRef.current;
+    const onEnd = (e: TransitionEvent) => {
+      if (e.target === node && e.propertyName === "transform") setDone(true);
+    };
+    node.addEventListener("transitionend", onEnd);
+    // Fallback por si transitionend no dispara (p.ej. reduced-motion).
+    const t = setTimeout(() => setDone(true), 600);
     return () => {
-      tl.kill();
+      node.removeEventListener("transitionend", onEnd);
+      clearTimeout(t);
     };
   }, [isReady]);
 
@@ -117,12 +99,12 @@ export function Preloader({
   return (
     <div
       ref={loaderRef}
-      className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-white shadow-2xl"
-      style={{
-        transform: "translateY(0%)",
-        borderBottomLeftRadius: "0%",
-        borderBottomRightRadius: "0%",
-      }}
+      data-exiting={isReady || undefined}
+      className={[
+        "fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-white shadow-2xl",
+        "translate-y-0 [transition:transform_450ms_cubic-bezier(0.32,0.72,0,1),border-radius_450ms_cubic-bezier(0.32,0.72,0,1)]",
+        "data-[exiting]:-translate-y-[105%] data-[exiting]:rounded-b-[50%]",
+      ].join(" ")}
     >
       {/* Lavado radial con el color de marca */}
       <div
@@ -133,7 +115,13 @@ export function Preloader({
         }}
       />
 
-      <div ref={centerRef} className="relative flex flex-col items-center gap-5 px-6">
+      <div
+        className={[
+          "preloader-center relative flex flex-col items-center gap-5 px-6",
+          "[transition:transform_320ms_cubic-bezier(0.23,1,0.32,1),opacity_320ms_cubic-bezier(0.23,1,0.32,1)]",
+          isReady ? "scale-[3] opacity-0" : "scale-100 opacity-100",
+        ].join(" ")}
+      >
         {/* Glow pulsante tras el logo */}
         <div
           aria-hidden
