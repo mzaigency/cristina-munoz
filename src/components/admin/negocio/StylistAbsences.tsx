@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Plus, X, CalendarOff, Clock, CalendarIcon } from "lucide-react";
-import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay } from "date-fns";
+import { format, parseISO, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
@@ -69,29 +69,9 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
   }, [stylistId]);
 
   const openAdd = () => {
-    const today = new Date();
-    setRange({ from: today, to: today });
+    setRange(undefined); // Empieza vacío para que el usuario elija
     setLabel("Vacaciones");
     setAdding(true);
-  };
-
-  const applyPreset = (preset: "today" | "tomorrow" | "week" | "weekend") => {
-    const today = new Date();
-    if (preset === "today") {
-      setRange({ from: today, to: today });
-    } else if (preset === "tomorrow") {
-      const t = addDays(today, 1);
-      setRange({ from: t, to: t });
-    } else if (preset === "week") {
-      setRange({
-        from: startOfWeek(today, { weekStartsOn: 1 }),
-        to: endOfWeek(today, { weekStartsOn: 1 }),
-      });
-    } else if (preset === "weekend") {
-      const sat = addDays(startOfWeek(today, { weekStartsOn: 1 }), 5);
-      const sun = addDays(sat, 1);
-      setRange({ from: sat, to: sun });
-    }
   };
 
   const add = async () => {
@@ -135,7 +115,7 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
   };
 
   const rangeLabel = (() => {
-    if (!range?.from) return "Elige fechas";
+    if (!range?.from) return "Selecciona un día o rango de fechas";
     const f = range.from;
     const t = range.to ?? range.from;
     if (isSameDay(f, t)) return format(f, "EEE d MMM", { locale: es });
@@ -143,9 +123,7 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
   })();
 
   const dayCount = range?.from
-    ? Math.round(
-        ((range.to ?? range.from).getTime() - range.from.getTime()) / (1000 * 60 * 60 * 24),
-      ) + 1
+    ? Math.round(((range.to ?? range.from).getTime() - range.from.getTime()) / (1000 * 60 * 60 * 24)) + 1
     : 0;
 
   return (
@@ -181,8 +159,8 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
                   r.label || "Vacaciones"
                 ) : (
                   <>
-                    <Clock style={{ width: 11, height: 11 }} /> Horario especial{" "}
-                    {r.open_time?.slice(0, 5)}–{r.close_time?.slice(0, 5)}
+                    <Clock style={{ width: 11, height: 11 }} /> Horario especial {r.open_time?.slice(0, 5)}–
+                    {r.close_time?.slice(0, 5)}
                   </>
                 )}
               </span>
@@ -214,35 +192,7 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
             gap: 12,
           }}
         >
-          {/* Presets rápidos */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {[
-              { id: "today", label: "Hoy" },
-              { id: "tomorrow", label: "Mañana" },
-              { id: "weekend", label: "Finde" },
-              { id: "week", label: "Esta semana" },
-            ].map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => applyPreset(p.id as any)}
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: "6px 12px",
-                  borderRadius: 999,
-                  border: "1px solid oklch(0.92 0.01 265)",
-                  background: "#fff",
-                  color: "#22408b",
-                  cursor: "pointer",
-                }}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Selector de rango único */}
+          {/* Selector de rango simplificado */}
           <Popover open={calOpen} onOpenChange={setCalOpen}>
             <PopoverTrigger asChild>
               <button
@@ -261,9 +211,7 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
                 }}
               >
                 <CalendarIcon style={{ width: 16, height: 16, color: "#22408b" }} />
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#1f2340", flex: 1 }}>
-                  {rangeLabel}
-                </span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#1f2340", flex: 1 }}>{rangeLabel}</span>
                 {dayCount > 0 && (
                   <span
                     style={{
@@ -284,10 +232,7 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
               <Calendar
                 mode="range"
                 selected={range}
-                onSelect={(r) => {
-                  setRange(r);
-                  if (r?.from && r?.to) setCalOpen(false);
-                }}
+                onSelect={(r) => setRange(r)}
                 numberOfMonths={1}
                 locale={es}
                 weekStartsOn={1}
