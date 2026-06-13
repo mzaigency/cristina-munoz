@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Plus, X, CalendarOff, Clock } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { Loader2, Plus, X, CalendarOff, Clock, CalendarIcon } from "lucide-react";
+import { format, parseISO, addDays, startOfWeek, endOfWeek, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 
 /**
  * Ausencias del profesional (vacaciones, bajas, festivos propios), inline en
@@ -35,14 +39,18 @@ const fmtDay = (iso: string) => {
   }
 };
 
+const REASONS = ["Vacaciones", "Baja", "Libre", "Personal", "Formación"];
+
+const toIso = (d: Date) => format(d, "yyyy-MM-dd");
+
 export function StylistAbsences({ tenantId, stylistId }: Props) {
   const { toast } = useToast();
   const [rows, setRows] = useState<Override[] | null>(null);
   const [adding, setAdding] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [label, setLabel] = useState("");
+  const [range, setRange] = useState<DateRange | undefined>(undefined);
+  const [label, setLabel] = useState("Vacaciones");
+  const [calOpen, setCalOpen] = useState(false);
 
   const load = async () => {
     const today = format(new Date(), "yyyy-MM-dd");
@@ -61,18 +69,38 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
   }, [stylistId]);
 
   const openAdd = () => {
-    const today = format(new Date(), "yyyy-MM-dd");
-    setFrom(today);
-    setTo(today);
-    setLabel("");
+    const today = new Date();
+    setRange({ from: today, to: today });
+    setLabel("Vacaciones");
     setAdding(true);
   };
 
+  const applyPreset = (preset: "today" | "tomorrow" | "week" | "weekend") => {
+    const today = new Date();
+    if (preset === "today") {
+      setRange({ from: today, to: today });
+    } else if (preset === "tomorrow") {
+      const t = addDays(today, 1);
+      setRange({ from: t, to: t });
+    } else if (preset === "week") {
+      setRange({
+        from: startOfWeek(today, { weekStartsOn: 1 }),
+        to: endOfWeek(today, { weekStartsOn: 1 }),
+      });
+    } else if (preset === "weekend") {
+      const sat = addDays(startOfWeek(today, { weekStartsOn: 1 }), 5);
+      const sun = addDays(sat, 1);
+      setRange({ from: sat, to: sun });
+    }
+  };
+
   const add = async () => {
-    if (!from || !to) {
-      toast({ title: "Elige las fechas", variant: "destructive" });
+    if (!range?.from) {
+      toast({ title: "Elige al menos un día", variant: "destructive" });
       return;
     }
+    const from = range.from;
+    const to = range.to ?? range.from;
     if (to < from) {
       toast({ title: "La fecha de fin es anterior al inicio", variant: "destructive" });
       return;
@@ -81,8 +109,8 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
     const { error } = await supabase.from("stylist_hours_overrides").insert({
       tenant_id: tenantId,
       stylist_id: stylistId,
-      date_from: from,
-      date_to: to,
+      date_from: toIso(from),
+      date_to: toIso(to),
       is_closed: true,
       label: label.trim() || "Vacaciones",
     });
@@ -105,6 +133,20 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
     toast({ title: "Ausencia eliminada" });
     load();
   };
+
+  const rangeLabel = (() => {
+    if (!range?.from) return "Elige fechas";
+    const f = range.from;
+    const t = range.to ?? range.from;
+    if (isSameDay(f, t)) return format(f, "EEE d MMM", { locale: es });
+    return `${format(f, "d MMM", { locale: es })} – ${format(t, "d MMM", { locale: es })}`;
+  })();
+
+  const dayCount = range?.from
+    ? Math.round(
+        ((range.to ?? range.from).getTime() - range.from.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1
+    : 0;
 
   return (
     <div className="gp-absences">
@@ -159,29 +201,147 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
       )}
 
       {adding && (
-        <div className="gp-absences-form">
-          <div className="gp-absences-form-dates">
-            <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} aria-label="Desde" />
-            <span>–</span>
-            <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} aria-label="Hasta" />
+        <div
+          style={{
+            marginTop: 12,
+            padding: 14,
+            borderRadius: 14,
+            border: "1px solid oklch(0.925 0.007 265)",
+            background: "linear-gradient(180deg, rgba(34,64,139,0.04), rgba(153,50,154,0.03))",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          {/* Presets rápidos */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {[
+              { id: "today", label: "Hoy" },
+              { id: "tomorrow", label: "Mañana" },
+              { id: "weekend", label: "Finde" },
+              { id: "week", label: "Esta semana" },
+            ].map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => applyPreset(p.id as any)}
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  padding: "6px 12px",
+                  borderRadius: 999,
+                  border: "1px solid oklch(0.92 0.01 265)",
+                  background: "#fff",
+                  color: "#22408b",
+                  cursor: "pointer",
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
-          <input
-            type="text"
-            className="gp-absences-form-label"
-            placeholder="Motivo (Vacaciones, baja…)"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !saving) add();
-            }}
-          />
+
+          {/* Selector de rango único */}
+          <Popover open={calOpen} onOpenChange={setCalOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  border: "1px solid oklch(0.92 0.01 265)",
+                  background: "#fff",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  width: "100%",
+                }}
+              >
+                <CalendarIcon style={{ width: 16, height: 16, color: "#22408b" }} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#1f2340", flex: 1 }}>
+                  {rangeLabel}
+                </span>
+                {dayCount > 0 && (
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "#22408b",
+                      background: "rgba(34,64,139,0.1)",
+                      padding: "3px 8px",
+                      borderRadius: 999,
+                    }}
+                  >
+                    {dayCount} {dayCount === 1 ? "día" : "días"}
+                  </span>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
+              <Calendar
+                mode="range"
+                selected={range}
+                onSelect={(r) => {
+                  setRange(r);
+                  if (r?.from && r?.to) setCalOpen(false);
+                }}
+                numberOfMonths={1}
+                locale={es}
+                weekStartsOn={1}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* Motivo */}
+          <div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {REASONS.map((r) => {
+                const on = label === r;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setLabel(r)}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: "5px 11px",
+                      borderRadius: 999,
+                      border: on ? "1px solid #99329a" : "1px solid oklch(0.92 0.01 265)",
+                      background: on ? "rgba(153,50,154,0.1)" : "#fff",
+                      color: on ? "#99329a" : "#525673",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {r}
+                  </button>
+                );
+              })}
+            </div>
+            <input
+              type="text"
+              className="gp-absences-form-label"
+              placeholder="O escribe otro motivo…"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !saving) add();
+              }}
+            />
+          </div>
+
           <div className="gp-absences-form-actions">
             <button className="gp-btn sm" onClick={() => setAdding(false)} disabled={saving} type="button">
               Cancelar
             </button>
             <button className="gp-btn primary sm" onClick={add} disabled={saving} type="button">
               {saving && <Loader2 className="gp-spinner-sm" />}
-              Añadir
+              Guardar ausencia
             </button>
           </div>
         </div>
