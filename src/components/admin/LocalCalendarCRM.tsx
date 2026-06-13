@@ -1676,6 +1676,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                           const sBkgs = bookingsByStylist[stylist.slug] || [];
                           const overlapLayout = calculateOverlapLayout(sBkgs, activeDay);
                           const isLast = colIdx === filteredStylists.length - 1;
+                          const activeDayKey = format(activeDay, "yyyy-MM-dd");
+                          const absence = stylistAbsences.find(
+                            (a) =>
+                              a.stylist_slug === stylist.slug &&
+                              a.is_closed &&
+                              a.date_from <= activeDayKey &&
+                              a.date_to >= activeDayKey,
+                          );
 
                           return (
                             <div
