@@ -129,7 +129,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
     <div
       key={service.id}
       className={cn(
-        "flex items-center justify-between rounded-xl border bg-card p-3 sm:p-4 cursor-pointer transition-all duration-200 hover:bg-accent/50 active:bg-accent/70 group touch-manipulation",
+        "flex items-center justify-between rounded-xl border bg-card p-3 sm:p-4 cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-accent/50 active:bg-accent/70 active:scale-[0.99] group touch-manipulation",
         selected.some((s) => s.id === service.id) && 'bg-primary/10 border-primary shadow-sm',
         isInPackage && 'opacity-60 pointer-events-none'
       )}
@@ -186,7 +186,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
                 <div
                   key={pkg.id}
                   className={cn(
-                    "relative rounded-xl border-2 p-4 cursor-pointer transition-all duration-200 hover:shadow-md",
+                    "relative rounded-xl border-2 p-4 cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-md active:scale-[0.99]",
                     isSelected 
                       ? "border-primary bg-primary/10 shadow-md" 
                       : "border-dashed border-primary/40 bg-gradient-to-r from-primary/5 to-transparent hover:border-primary/60"
@@ -297,7 +297,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
           onClick={handleNext} 
           disabled={selected.length === 0}
           data-guided-cta="true"
-          className="w-full sm:w-auto h-11 transition-transform duration-200 hover:scale-105 disabled:scale-100 touch-manipulation"
+          className="w-full sm:w-auto h-11 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-[1.03] active:scale-[0.97] disabled:scale-100 touch-manipulation"
         >
           Continuar
         </Button>

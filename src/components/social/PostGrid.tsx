@@ -71,14 +71,14 @@ export function PostGrid({ posts, className, isAdmin, onDelete }: PostGridProps)
             <img
               src={post.image_url}
               alt={post.caption || "Post"}
-              className="w-full h-full object-cover transition-transform group-active:scale-95 !rounded-xl"
+              className="w-full h-full object-cover transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.04] group-active:scale-95 !rounded-xl"
               style={{ borderRadius: "0.75rem" }}
               loading="lazy"
             />
 
             {/* Hover overlay */}
             <div
-              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white !rounded-xl"
+              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-out flex items-center justify-center gap-4 text-white !rounded-xl"
               style={{ borderRadius: "0.75rem" }}
             >
               <div className="flex items-center gap-1.5">

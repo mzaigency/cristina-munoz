@@ -505,7 +505,7 @@ export const DateTimeSelection = ({
                                       );
                                     }}
                                     className={cn(
-                                      "h-auto min-h-[2.5rem] transition-all duration-200 hover:shadow-md flex-col gap-0.5 py-1.5",
+                                      "h-auto min-h-[2.5rem] transition-[box-shadow,transform,background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-md active:scale-[0.97] flex-col gap-0.5 py-1.5",
                                       time === slot && !customHour && !customMinute && "shadow-glow",
                                     )}
                                   >
@@ -566,7 +566,7 @@ export const DateTimeSelection = ({
                                       );
                                     }}
                                     className={cn(
-                                      "h-auto min-h-[2.5rem] transition-all duration-200 hover:shadow-md flex-col gap-0.5 py-1.5",
+                                      "h-auto min-h-[2.5rem] transition-[box-shadow,transform,background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-md active:scale-[0.97] flex-col gap-0.5 py-1.5",
                                       time === slot && !customHour && !customMinute && "shadow-glow",
                                     )}
                                   >
@@ -607,7 +607,7 @@ export const DateTimeSelection = ({
                   <Card
                     key={s.slug}
                     className={cn(
-                      "cursor-pointer border-2 p-3 flex items-center gap-3 transition-all touch-manipulation",
+                      "cursor-pointer border-2 p-3 flex items-center gap-3 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] touch-manipulation",
                       selectedSlotStylist === s.slug
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/50",
@@ -642,7 +642,7 @@ export const DateTimeSelection = ({
       </div>
 
       <div className="flex justify-between pt-4">
-        <Button variant="outline" onClick={onBack} className="transition-transform duration-200 hover:scale-105">
+        <Button variant="outline" onClick={onBack} className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-[1.03] active:scale-[0.97]">
           Volver
         </Button>
         <Button
@@ -653,7 +653,7 @@ export const DateTimeSelection = ({
             (stylist === "any" && !customHour && !customMinute && (slotToStylists[time]?.length || 0) > 1 && !selectedSlotStylist)
           }
           data-guided-cta="true"
-          className="transition-transform duration-200 hover:scale-105 disabled:scale-100"
+          className="transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-[1.03] active:scale-[0.97] disabled:scale-100"
         >
           Continuar
         </Button>

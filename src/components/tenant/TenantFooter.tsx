@@ -193,7 +193,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
               {tenant.phone && (
                 <a
                   href={`tel:${tenant.phone}`}
-                  className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors duration-200 ease-out"
                 >
                   <Phone className="h-5 w-5 flex-shrink-0 text-primary" />
                   <span>{tenant.phone}</span>
@@ -203,7 +203,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
               {tenant.email && (
                 <a
                   href={`mailto:${tenant.email}`}
-                  className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors duration-200 ease-out"
                 >
                   <Mail className="h-5 w-5 flex-shrink-0 text-primary" />
                   <span>{tenant.email}</span>
@@ -243,7 +243,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
               href="https://www.glowapp.app"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-500/20 transition-all touch-manipulation"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-500/20 transition-all duration-200 ease-out active:scale-[0.97] touch-manipulation"
             >
               <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
               <span className="text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
@@ -254,10 +254,10 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
             {/* Links and Copyright */}
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
               <div className="flex items-center gap-6">
-                <a href="/privacidad" className="hover:text-primary transition-colors py-2 touch-manipulation">
+                <a href="/privacidad" className="hover:text-primary transition-colors duration-200 ease-out py-2 touch-manipulation">
                   Privacidad
                 </a>
-                <a href="/terminos" className="hover:text-primary transition-colors py-2 touch-manipulation">
+                <a href="/terminos" className="hover:text-primary transition-colors duration-200 ease-out py-2 touch-manipulation">
                   Términos
                 </a>
               </div>

@@ -120,9 +120,11 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
       <AnimatePresence>
         {totalQty > 0 && (
           <motion.button
-            initial={{ scale: 0, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0, y: 20 }}
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            transition={{ type: "spring", duration: 0.4, bounce: 0.25 }}
+            whileTap={{ scale: 0.96 }}
             aria-label={`Abrir carrito con ${totalQty} productos, total ${totalPrice.toFixed(2)} euros`}
             onClick={() => setOpen(true)}
             className={cn(
@@ -157,8 +159,9 @@ export const ShopCart = ({ tenantId }: ShopCartProps) => {
 
             {success ? (
               <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
+                initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
                 className="py-12 text-center space-y-3"
               >
                 <div className="mx-auto h-16 w-16 rounded-full bg-green-500/15 flex items-center justify-center">

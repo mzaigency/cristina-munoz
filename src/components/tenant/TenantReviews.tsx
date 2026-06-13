@@ -91,7 +91,7 @@ export const TenantReviews = ({ tenantId }: TenantReviewsProps) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {reviews.map((review) => (
-            <Card key={review.id} className="hover:shadow-md transition-shadow">
+            <Card key={review.id} className="hover:shadow-md hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar className="h-10 w-10">

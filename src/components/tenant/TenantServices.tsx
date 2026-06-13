@@ -97,7 +97,7 @@ export const TenantServices = ({ tenantId }: TenantServicesProps) => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {categoryServices.map((service) => (
-                  <Card key={service.id} className="hover:shadow-md transition-shadow">
+                  <Card key={service.id} className="hover:shadow-md hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex items-center justify-between">
                         {service.name}

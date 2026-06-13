@@ -71,7 +71,7 @@ export const TenantShopSection = ({ tenantId, tenantSlug }: TenantShopSectionPro
                   "group relative text-left overflow-hidden",
                   "bg-card border border-border/60",
                   "shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.10)]",
-                  "transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]",
+                  "transition-[box-shadow,transform] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:-translate-y-0.5 active:scale-[0.98]",
                   "flex flex-col"
                 )}
               >
@@ -81,7 +81,7 @@ export const TenantShopSection = ({ tenantId, tenantSlug }: TenantShopSectionPro
                       src={p.image_url}
                       alt={p.name}
                       loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">

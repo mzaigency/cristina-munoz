@@ -131,7 +131,7 @@ export const ProductDetailDialog = ({ product, tenantId, open, onClose }: Produc
             onClick={handleAdd}
             disabled={product.stock === 0 || maxQty < 1 || added}
             className={cn(
-              "w-full h-12 rounded-xl text-base font-semibold transition-all",
+              "w-full h-12 rounded-xl text-base font-semibold",
               added && "bg-green-600 hover:bg-green-600"
             )}
           >
