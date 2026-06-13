@@ -254,30 +254,38 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   useEffect(() => {
     const fetchAbsences = async () => {
       const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-      const { data } = await supabase
-        .from("stylist_hours_overrides")
-        .select("date_from, date_to, is_closed, label, open_time, close_time, tenant_stylists!inner(slug)")
-        .eq("tenant_id", tenantId)
-        .lte("date_from", format(addDays(weekEnd, 1), "yyyy-MM-dd"))
-        .gte("date_to", format(weekStart, "yyyy-MM-dd"));
-      if (data) {
-        setStylistAbsences(
-          (data as any[]).map((r) => ({
-            stylist_slug: r.tenant_stylists?.slug ?? "",
+      const [overridesRes, stylistsRes] = await Promise.all([
+        supabase
+          .from("stylist_hours_overrides")
+          .select("stylist_id, date_from, date_to, is_closed, label, open_time, close_time")
+          .eq("tenant_id", tenantId)
+          .lte("date_from", format(addDays(weekEnd, 1), "yyyy-MM-dd"))
+          .gte("date_to", format(weekStart, "yyyy-MM-dd")),
+        supabase
+          .from("tenant_stylists")
+          .select("id, slug")
+          .eq("tenant_id", tenantId),
+      ]);
+      const idToSlug = new Map<string, string>();
+      (stylistsRes.data ?? []).forEach((s: any) => idToSlug.set(s.id, s.slug));
+      const rows = (overridesRes.data ?? []) as any[];
+      setStylistAbsences(
+        rows
+          .map((r) => ({
+            stylist_slug: idToSlug.get(r.stylist_id) ?? "",
             date_from: r.date_from,
             date_to: r.date_to,
             is_closed: !!r.is_closed,
             label: r.label,
             open_time: r.open_time,
             close_time: r.close_time,
-          })).filter((r) => r.stylist_slug),
-        );
-      } else {
-        setStylistAbsences([]);
-      }
+          }))
+          .filter((r) => r.stylist_slug),
+      );
     };
     fetchAbsences();
   }, [weekStart, tenantId]);
+
 
 
 
