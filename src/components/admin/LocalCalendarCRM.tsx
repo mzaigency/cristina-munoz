@@ -27,6 +27,7 @@ import {
   Pencil,
   Wallet,
   Clock,
+  CalendarOff,
 } from "lucide-react";
 import {
   Dialog,
