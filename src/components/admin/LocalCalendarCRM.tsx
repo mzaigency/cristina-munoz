@@ -27,6 +27,7 @@ import {
   Pencil,
   Wallet,
   Clock,
+  CalendarOff,
 } from "lucide-react";
 import {
   Dialog,
@@ -114,6 +115,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<string>("");
   const [highlightedBookingId, setHighlightedBookingId] = useState<string | null>(null);
+  const [stylistAbsences, setStylistAbsences] = useState<
+    Array<{ stylist_slug: string; date_from: string; date_to: string; is_closed: boolean; label: string | null; open_time: string | null; close_time: string | null }>
+  >([]);
 
   // Drag & Drop state
   const [draggedBooking, setDraggedBooking] = useState<LocalBooking | null>(null);
@@ -246,6 +250,36 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   useEffect(() => {
     fetchBookings();
   }, [weekStart, tenantId]);
+
+  useEffect(() => {
+    const fetchAbsences = async () => {
+      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+      const { data } = await supabase
+        .from("stylist_hours_overrides")
+        .select("date_from, date_to, is_closed, label, open_time, close_time, tenant_stylists!inner(slug)")
+        .eq("tenant_id", tenantId)
+        .lte("date_from", format(addDays(weekEnd, 1), "yyyy-MM-dd"))
+        .gte("date_to", format(weekStart, "yyyy-MM-dd"));
+      if (data) {
+        setStylistAbsences(
+          (data as any[]).map((r) => ({
+            stylist_slug: r.tenant_stylists?.slug ?? "",
+            date_from: r.date_from,
+            date_to: r.date_to,
+            is_closed: !!r.is_closed,
+            label: r.label,
+            open_time: r.open_time,
+            close_time: r.close_time,
+          })).filter((r) => r.stylist_slug),
+        );
+      } else {
+        setStylistAbsences([]);
+      }
+    };
+    fetchAbsences();
+  }, [weekStart, tenantId]);
+
+
 
   const fetchBookings = async (silent = false) => {
     try {
@@ -1643,6 +1677,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                           const sBkgs = bookingsByStylist[stylist.slug] || [];
                           const overlapLayout = calculateOverlapLayout(sBkgs, activeDay);
                           const isLast = colIdx === filteredStylists.length - 1;
+                          const activeDayKey = format(activeDay, "yyyy-MM-dd");
+                          const absence = stylistAbsences.find(
+                            (a) =>
+                              a.stylist_slug === stylist.slug &&
+                              a.is_closed &&
+                              a.date_from <= activeDayKey &&
+                              a.date_to >= activeDayKey,
+                          );
 
                           return (
                             <div
@@ -1767,6 +1809,73 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                     </div>
                                   );
                                 })()}
+
+                              {/* Stylist absence overlay */}
+                              {absence && (
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    zIndex: 30,
+                                    background:
+                                      "repeating-linear-gradient(135deg, rgba(153,50,154,0.08) 0 12px, rgba(34,64,139,0.08) 12px 24px), rgba(255,255,255,0.55)",
+                                    backdropFilter: "blur(2px)",
+                                    WebkitBackdropFilter: "blur(2px)",
+                                    border: `1.5px dashed ${stylist.color}80`,
+                                    borderRadius: 12,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 8,
+                                    padding: 16,
+                                    textAlign: "center",
+                                    pointerEvents: "auto",
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  title={absence.label || "Ausencia"}
+                                >
+                                  <div
+                                    style={{
+                                      width: 42,
+                                      height: 42,
+                                      borderRadius: "50%",
+                                      background: `linear-gradient(140deg, ${stylist.color}, ${stylist.color}cc)`,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      boxShadow: `0 6px 18px -8px ${stylist.color}99`,
+                                    }}
+                                  >
+                                    <CalendarOff style={{ width: 20, height: 20, color: "#fff" }} />
+                                  </div>
+                                  <div style={{ fontSize: 13, fontWeight: 800, color: "#1f2340", letterSpacing: 0.2 }}>
+                                    No trabaja hoy
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      color: stylist.color,
+                                      background: `${stylist.color}18`,
+                                      padding: "4px 10px",
+                                      borderRadius: 999,
+                                      maxWidth: "90%",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {absence.label || "Ausencia"}
+                                  </div>
+                                  {absence.date_from !== absence.date_to && (
+                                    <div style={{ fontSize: 10, color: "oklch(0.5 0.015 265)", fontWeight: 600 }}>
+                                      {format(parseISO(absence.date_from), "d MMM", { locale: es })} –{" "}
+                                      {format(parseISO(absence.date_to), "d MMM", { locale: es })}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
 
                               {/* Full-day blocked banner */}
                               {(fullDayBlocksByStylist[stylist.slug] || []).length > 0 && (
