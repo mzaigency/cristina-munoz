@@ -1809,6 +1809,73 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                   );
                                 })()}
 
+                              {/* Stylist absence overlay */}
+                              {absence && (
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    zIndex: 30,
+                                    background:
+                                      "repeating-linear-gradient(135deg, rgba(153,50,154,0.08) 0 12px, rgba(34,64,139,0.08) 12px 24px), rgba(255,255,255,0.55)",
+                                    backdropFilter: "blur(2px)",
+                                    WebkitBackdropFilter: "blur(2px)",
+                                    border: `1.5px dashed ${stylist.color}80`,
+                                    borderRadius: 12,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 8,
+                                    padding: 16,
+                                    textAlign: "center",
+                                    pointerEvents: "auto",
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  title={absence.label || "Ausencia"}
+                                >
+                                  <div
+                                    style={{
+                                      width: 42,
+                                      height: 42,
+                                      borderRadius: "50%",
+                                      background: `linear-gradient(140deg, ${stylist.color}, ${stylist.color}cc)`,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      boxShadow: `0 6px 18px -8px ${stylist.color}99`,
+                                    }}
+                                  >
+                                    <CalendarOff style={{ width: 20, height: 20, color: "#fff" }} />
+                                  </div>
+                                  <div style={{ fontSize: 13, fontWeight: 800, color: "#1f2340", letterSpacing: 0.2 }}>
+                                    No trabaja hoy
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      color: stylist.color,
+                                      background: `${stylist.color}18`,
+                                      padding: "4px 10px",
+                                      borderRadius: 999,
+                                      maxWidth: "90%",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {absence.label || "Ausencia"}
+                                  </div>
+                                  {absence.date_from !== absence.date_to && (
+                                    <div style={{ fontSize: 10, color: "oklch(0.5 0.015 265)", fontWeight: 600 }}>
+                                      {format(parseISO(absence.date_from), "d MMM", { locale: es })} –{" "}
+                                      {format(parseISO(absence.date_to), "d MMM", { locale: es })}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
                               {/* Full-day blocked banner */}
                               {(fullDayBlocksByStylist[stylist.slug] || []).length > 0 && (
                                 <div
