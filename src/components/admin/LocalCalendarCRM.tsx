@@ -114,6 +114,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<string>("");
   const [highlightedBookingId, setHighlightedBookingId] = useState<string | null>(null);
+  const [stylistAbsences, setStylistAbsences] = useState<
+    Array<{ stylist_slug: string; date_from: string; date_to: string; is_closed: boolean; label: string | null; open_time: string | null; close_time: string | null }>
+  >([]);
 
   // Drag & Drop state
   const [draggedBooking, setDraggedBooking] = useState<LocalBooking | null>(null);
