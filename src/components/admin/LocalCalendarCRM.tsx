@@ -250,6 +250,36 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     fetchBookings();
   }, [weekStart, tenantId]);
 
+  useEffect(() => {
+    const fetchAbsences = async () => {
+      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+      const { data } = await supabase
+        .from("stylist_hours_overrides")
+        .select("date_from, date_to, is_closed, label, open_time, close_time, tenant_stylists!inner(slug)")
+        .eq("tenant_id", tenantId)
+        .lte("date_from", format(addDays(weekEnd, 1), "yyyy-MM-dd"))
+        .gte("date_to", format(weekStart, "yyyy-MM-dd"));
+      if (data) {
+        setStylistAbsences(
+          (data as any[]).map((r) => ({
+            stylist_slug: r.tenant_stylists?.slug ?? "",
+            date_from: r.date_from,
+            date_to: r.date_to,
+            is_closed: !!r.is_closed,
+            label: r.label,
+            open_time: r.open_time,
+            close_time: r.close_time,
+          })).filter((r) => r.stylist_slug),
+        );
+      } else {
+        setStylistAbsences([]);
+      }
+    };
+    fetchAbsences();
+  }, [weekStart, tenantId]);
+
+
+
   const fetchBookings = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
