@@ -166,6 +166,54 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Verify authentication and authorization
+    const authHeader = req.headers.get('Authorization');
+    let authenticatedUser = null;
+    let isAdminOrStylist = false;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+      if (user && !authError) {
+        authenticatedUser = user;
+
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .in('role', ['admin', 'stylist', 'superadmin']);
+
+        isAdminOrStylist = roleData && roleData.length > 0;
+      }
+    }
+
+    // Security Checks
+    // 1. Prevent IDOR: Ensure user can only create bookings for themselves unless they are admin/stylist
+    if (bookingData.user_id) {
+      if (!authenticatedUser) {
+        // Unauthenticated users cannot assign a user_id
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Authentication required to assign user_id' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (bookingData.user_id !== authenticatedUser.id && !isAdminOrStylist) {
+        // Authenticated users cannot create bookings for other users
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Cannot create booking for another user' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // 2. Privilege Escalation: Only admins/stylists can skip availability checks
+    if (bookingData.skipAvailabilityCheck && !isAdminOrStylist) {
+      console.warn(`Unauthorized attempt to skip availability check by user ${authenticatedUser?.id || 'guest'}`);
+      bookingData.skipAvailabilityCheck = false;
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
