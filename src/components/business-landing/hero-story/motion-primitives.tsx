@@ -31,7 +31,7 @@ export function ChatBubble({
         alignSelf: isRight ? "flex-end" : "flex-start",
         borderTopLeftRadius: isRight ? 18 : 6,
         borderTopRightRadius: isRight ? 6 : 18,
-        border: tone === "brand" ? "none" : "1px solid rgba(255,255,255,0.08)",
+        border: tone === "brand" ? "none" : "1px solid rgba(0,0,0,0.06)",
       }}
     >
       {tone === "muted" && (
