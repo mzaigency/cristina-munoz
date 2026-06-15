@@ -101,12 +101,21 @@ export const SalonTestimonials = () => {
 
               {/* Autora */}
               <figcaption className="mt-7 flex items-center gap-3 border-t border-border/60 pt-6">
-                <span
-                  className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl text-sm font-bold text-white shadow-md"
-                  style={{ backgroundImage: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))" }}
-                >
-                  {t.initials}
-                </span>
+                {t.logo ? (
+                  <img
+                    src={t.logo}
+                    alt={`Logo de ${t.name}`}
+                    loading="lazy"
+                    className="h-12 w-12 flex-none rounded-2xl border border-border/60 object-cover shadow-md"
+                  />
+                ) : (
+                  <span
+                    className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl text-sm font-bold text-white shadow-md"
+                    style={{ backgroundImage: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))" }}
+                  >
+                    {t.initials}
+                  </span>
+                )}
                 <div>
                   <p className="font-semibold text-foreground">{t.name}</p>
                   <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
