@@ -4,7 +4,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { motion } from "framer-motion";
 import { ArrowRight, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { GlowappPhoneCarousel } from "./mockups/GlowappPhoneCarousel";
+import { GlowappPhoneCarousel, RING_C, RING_PCT } from "./mockups/GlowappPhoneCarousel";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -153,6 +153,8 @@ export const CinematicHero = () => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const isMobile = window.innerWidth < 768;
 
+    const ringCounter = { v: 0 };
+
     const ctx = gsap.context(() => {
       gsap.set(".ch-reveal", { visibility: "visible" });
 
@@ -160,6 +162,9 @@ export const CinematicHero = () => {
         // Estado final estático, sin scrub
         gsap.set([".ch-hero-text"], { autoAlpha: 0 });
         gsap.set([".ch-card", ".ch-device", ".ch-badge", ".ch-card-left", ".ch-card-right", ".ch-cta"], { autoAlpha: 1, clearProps: "transform" });
+        gsap.set(".ch-res-ring", { strokeDashoffset: RING_C * (1 - RING_PCT) });
+        const el = document.querySelector(".ch-res-count");
+        if (el) el.textContent = "127";
         return;
       }
 
@@ -195,7 +200,16 @@ export const CinematicHero = () => {
         .fromTo(".ch-card-right", { x: 70, autoAlpha: 0, scale: 0.85 }, { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 1.4 }, "-=1.8")
         .fromTo(".ch-card-left", { x: -50, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.3 }, "-=1.4")
         .fromTo(".ch-badge", { y: 70, autoAlpha: 0, scale: 0.7 }, { y: 0, autoAlpha: 1, scale: 1, ease: "back.out(1.5)", duration: 1.2, stagger: 0.16 }, "-=1.3")
-        .to({}, { duration: 2 })
+        // Anillo de reservas se rellena con el scroll + contador sube
+        .to(".ch-res-ring", { strokeDashoffset: RING_C * (1 - RING_PCT), ease: "none", duration: 2.4 }, "ring")
+        .to(ringCounter, {
+          v: 127, snap: { v: 1 }, ease: "none", duration: 2.4,
+          onUpdate: () => {
+            const el = document.querySelector(".ch-res-count");
+            if (el) el.textContent = String(Math.round(ringCounter.v));
+          },
+        }, "ring")
+        .to({}, { duration: 1 })
         .set(".ch-hero-text", { autoAlpha: 0 })
         .set(".ch-cta", { autoAlpha: 1 })
         .to({}, { duration: 1 })
