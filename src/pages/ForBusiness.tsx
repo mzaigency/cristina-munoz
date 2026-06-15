@@ -3,6 +3,7 @@ import {
   StickyHeader,
   CinematicHero,
   SocialProofStrip,
+  ScrollPanelReveal,
   PanelShowcase,
   FeatureSpotlights,
   RoiCalculator,
@@ -59,6 +60,7 @@ export default function ForBusiness() {
         <StickyHeader />
         <CinematicHero />
         <SocialProofStrip />
+        <ScrollPanelReveal />
         <PanelShowcase />
         <FeatureSpotlights />
         <RoiCalculator />
