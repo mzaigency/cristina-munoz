@@ -12,7 +12,6 @@ import {
   FAQSection,
   ClosingCTA,
   Footer,
-  FloatingMobileCTA,
 } from "@/components/business-landing";
 import { Preloader } from "@/components/ui/preloader";
 import { LandingBackground } from "@/components/ui/landing-background";
