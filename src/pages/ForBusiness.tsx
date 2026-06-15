@@ -1,19 +1,17 @@
 import { SEO } from "@/components/SEO";
 import {
   StickyHeader,
-  HeroSection,
-  ForWhoSection,
-  PainPointsSection,
-  FeaturesShowcase,
-  TestimonialsSection,
-  PricingSection,
+  CinematicHero,
+  PanelShowcase,
+  FeatureSpotlights,
+  HowItWorks,
   FAQSection,
-  FinalCTASection,
+  ClosingCTA,
   Footer,
   FloatingMobileCTA,
 } from "@/components/business-landing";
-import { B2BLeadForm } from "@/components/business-landing/B2BLeadForm";
 import { Preloader } from "@/components/ui/preloader";
+import { LandingBackground } from "@/components/ui/landing-background";
 import glowappLogo from "@/assets/glowapp-logo.png";
 
 export default function ForBusiness() {
@@ -21,7 +19,7 @@ export default function ForBusiness() {
     <>
       <SEO
         title="GlowApp para Negocios | Tu salón de belleza digitalizado"
-        description="Reservas 24/7, calendario inteligente, caja registradora y analytics. Todo lo que tu salón necesita para crecer. 30 días gratis."
+        description="Reservas 24/7, agenda, caja y tu propia web profesional. Todo lo que tu salón necesita en una sola app. Empieza gratis, sin tarjeta."
         keywords="software salón belleza, app peluquería, gestión barbería, reservas online spa, agenda profesional belleza"
         canonicalUrl="/negocios"
         breadcrumbs={[
@@ -30,40 +28,38 @@ export default function ForBusiness() {
         ]}
         faq={[
           {
-            question: "¿Cuánto cuesta GlowApp para negocios?",
+            question: "¿Cuánto cuesta empezar con GlowApp?",
             answer:
-              "GlowApp ofrece tres planes (Starter, Pro y Business) con 30 días de prueba gratis sin tarjeta. Consulta los precios actuales en la sección de planes de esta página.",
+              "Empezar es gratis y sin tarjeta. Creas tu salón, montas tu web y abres reservas sin pagar nada para arrancar.",
           },
           {
             question: "¿Qué incluye la plataforma para negocios?",
             answer:
-              "Incluye página web profesional, sistema de reservas 24/7, calendario inteligente, caja registradora, analytics y publicaciones. Las funcionalidades varían según el plan.",
+              "Incluye página web profesional, sistema de reservas 24/7, agenda inteligente multi-profesional, caja registradora, fichas de clientes y analytics.",
           },
           {
             question: "¿Puedo gestionar varios estilistas?",
             answer:
-              "Sí. Starter incluye 1 profesional, Pro hasta 5 y Business profesionales ilimitados.",
+              "Sí. Puedes añadir varios profesionales, cada uno con su propio horario y calendario. Los clientes eligen con quién reservar.",
           },
           {
-            question: "¿Cómo empiezo a usar GlowApp?",
+            question: "¿Necesito conocimientos técnicos?",
             answer:
-              "Regístrate gratis y configura tu negocio en unos minutos. No necesitas conocimientos técnicos y tienes 30 días de prueba sin compromiso ni tarjeta.",
+              "No. GlowApp se usa desde el móvil sin saber de tecnología y la configuración básica tarda unos 5 minutos guiados paso a paso.",
           },
         ]}
       />
 
-      <div className="min-h-screen bg-background">
+      <div className="relative min-h-screen">
+        <LandingBackground />
         <Preloader logoUrl={glowappLogo} logoVariant="bare" />
         <StickyHeader />
-        <HeroSection />
-        <ForWhoSection />
-        <PainPointsSection />
-        <FeaturesShowcase />
-        <TestimonialsSection />
-        <PricingSection />
-        <B2BLeadForm />
+        <CinematicHero />
+        <PanelShowcase />
+        <FeatureSpotlights />
+        <HowItWorks />
         <FAQSection />
-        <FinalCTASection />
+        <ClosingCTA />
         <Footer />
         <FloatingMobileCTA />
       </div>

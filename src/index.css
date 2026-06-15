@@ -4,6 +4,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Ashing — wordmark de marca GlowApp ──
+   Coloca el archivo en public/fonts/ashing.woff2 (y .woff opcional).
+   Hasta entonces, cae a Playfair como fallback. */
+@font-face {
+  font-family: "Ashing";
+  src: local("Ashing"),
+       url("/fonts/ashing.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+.font-ashing { font-family: "Ashing", "Playfair Display", Georgia, serif; }
+
 /* ── Editorial typography utilities (used on tenant landing) ── */
 .font-editorial { font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-weight: 500; }
 .font-editorial-italic { font-family: "Playfair Display", Georgia, serif; font-style: italic; font-weight: 400; }

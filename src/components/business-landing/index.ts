@@ -1,5 +1,9 @@
 export { HeroSection } from './HeroSection';
+export { CinematicHero } from './CinematicHero';
+export { PanelShowcase } from './PanelShowcase';
+export { FeatureSpotlights, HowItWorks, ClosingCTA } from './BusinessSections';
 export { StickyHeader } from './StickyHeader';
+export { ValueProps } from './ValueProps';
 export { PainPointsSection } from './PainPointsSection';
 export { ForWhoSection } from './ForWhoSection';
 export { FeaturesShowcase } from './FeaturesShowcase';

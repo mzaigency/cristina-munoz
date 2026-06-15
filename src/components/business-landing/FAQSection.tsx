@@ -10,15 +10,15 @@ const faqs = [
   },
   {
     question: "¿Necesito conocimientos técnicos?",
-    answer: "Para nada. GlowApp está diseñado para ser usado desde el móvil sin ningún conocimiento técnico. Si sabes usar WhatsApp, sabes usar GlowApp.",
+    answer: "Para nada. Glowapp está diseñado para ser usado desde el móvil sin ningún conocimiento técnico. Si sabes usar WhatsApp, sabes usar Glowapp.",
   },
   {
-    question: "¿Cómo funciona el período de prueba?",
-    answer: "Tienes 30 días completamente gratis con todas las funciones del plan. Al terminar la prueba, eliges si continuar o no.",
+    question: "¿Cuánto cuesta empezar?",
+    answer: "Empezar es gratis y sin tarjeta. Creas tu salón, montas tu web y abres reservas sin pagar nada. Si más adelante quieres funciones avanzadas, hablamos — pero para arrancar no necesitas poner un euro.",
   },
   {
     question: "¿Mis clientes tienen que instalar algo?",
-    answer: "No. Tus clientes acceden a tu página web y reservan desde el navegador del móvil. Si quieren, pueden añadir GlowApp a la pantalla de inicio como una app — es opcional, pero más cómodo.",
+    answer: "No. Tus clientes acceden a tu página web y reservan desde el navegador del móvil. Si quieren, pueden añadir Glowapp a la pantalla de inicio como una app — es opcional, pero más cómodo.",
   },
   {
     question: "¿Funciona con mi equipo de estilistas?",
@@ -34,7 +34,7 @@ export const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-20 bg-background">
+    <section id="faq" className="scroll-mt-20 py-20">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

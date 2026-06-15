@@ -1,84 +1,52 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Clock, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { AuroraBackground } from "./AuroraBackground";
+
+const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 export const FinalCTASection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-20 md:py-28 relative overflow-hidden">
-      {/* Brand gradient base */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-accent" />
+    <section className="relative isolate overflow-hidden py-24 text-white md:py-32">
+      <AuroraBackground />
 
-      {/* Animated blobs */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="container relative z-10 mx-auto px-4">
         <motion.div
-          className="absolute top-0 left-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"
-          animate={{ x: [-200, -150, -200], y: [-200, -150, -200] }}
-          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"
-          animate={{ x: [200, 150, 200], y: [200, 150, 200] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        />
-        {/* Subtle grid */}
-        <div
-          className="absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-      </div>
-
-      <div className="container mx-auto px-4 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="max-w-3xl mx-auto text-center"
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: EASE_OUT }}
+          className="mx-auto max-w-3xl text-center"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur border border-white/25 mb-6">
-            <Sparkles className="w-3.5 h-3.5 text-white" />
-            <span className="text-xs font-medium text-white tracking-wide uppercase">
-              Tu salón, en su mejor versión
-            </span>
-          </div>
-
-          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-5 leading-[1.05]">
-            Deja que GlowApp se encargue.
-            <br />
-            <span className="italic font-serif font-normal text-white/85">
-              Tú dedícate a brillar.
-            </span>
+          <h2 className="text-balance text-3xl font-bold leading-[1.05] tracking-tight sm:text-5xl md:text-6xl">
+            Monta tu salón en GlowApp
+            <br className="hidden sm:block" /> en lo que tardas un café.
           </h2>
 
-          <p className="text-base sm:text-lg text-white/80 mb-9 max-w-xl mx-auto">
-            30 días gratis. Sin permanencia. Si no te enamora, te vas.
+          <p className="mx-auto mt-6 max-w-xl text-base text-white/65 sm:text-lg">
+            Sin tarjeta, sin permanencia y sin saber de tecnología. Si no te
+            convence, lo dejas cuando quieras.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto bg-white text-primary hover:bg-white/95 text-base font-semibold px-8 py-6 rounded-full shadow-2xl group"
+          <div className="mt-10 flex justify-center">
+            <button
               onClick={() => navigate("/onboarding")}
+              className="group relative inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-base font-semibold text-white shadow-[0_8px_30px_-6px_hsl(var(--primary)/0.7)] transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-[0_12px_44px_-6px_hsl(var(--accent)/0.75)] active:scale-[0.98] sm:w-auto"
+              style={{ backgroundImage: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))" }}
             >
-              Empezar gratis ahora
-              <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-            </Button>
+              Crea tu salón gratis
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+            </button>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-white/75 text-sm">
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-white/55">
             <span className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4" />
-              Listo en 10 minutos
+              <Clock className="h-4 w-4" /> Listo en 5 minutos
             </span>
             <span className="flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4" />
-              Cancela cuando quieras
+              <ShieldCheck className="h-4 w-4" /> Sin tarjeta · Cancela cuando quieras
             </span>
           </div>
         </motion.div>

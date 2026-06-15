@@ -61,7 +61,7 @@ export const Footer = () => {
         </div>
 
         <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">© {currentYear} GlowApp. Todos los derechos reservados.</p>
+          <p className="text-sm text-muted-foreground">© {currentYear} Glowapp. Todos los derechos reservados.</p>
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             Hecho con <Heart className="w-4 h-4 text-red-500 fill-red-500" /> en España
           </p>

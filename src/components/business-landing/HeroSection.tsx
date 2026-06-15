@@ -1,170 +1,153 @@
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { LiquidButton } from "@/components/ui/liquid-glass-button";
-import { ArrowRight, Scissors, Sparkles } from "lucide-react";
+import { ArrowRight, Calendar, Globe, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AnimatedHeroBackground } from "./AnimatedHeroBackground";
+import { AuroraBackground } from "./AuroraBackground";
 import { DemoLanding } from "./demos";
-import { LiveSalonsRow } from "./LiveSalonsRow";
+
+const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 export const HeroSection = () => {
   const navigate = useNavigate();
 
+  const scrollToProduct = () =>
+    document.getElementById("producto")?.scrollIntoView({ behavior: "smooth" });
+
   return (
-    <section className="relative overflow-hidden" style={{ background: "linear-gradient(165deg, hsl(var(--primary) / 0.07) 0%, hsl(var(--background)) 45%, hsl(var(--background)) 100%)" }}>
-      <AnimatedHeroBackground />
+    <section className="relative isolate overflow-hidden text-white">
+      <AuroraBackground />
 
-      <div className="container mx-auto px-4 pt-24 pb-12 md:pt-28 md:pb-20 relative z-10">
-        <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-12 items-center max-w-6xl mx-auto">
-          {/* LEFT — Copy */}
-          <div className="text-center lg:text-left">
-            {/* Eyebrow */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/70 backdrop-blur border border-border shadow-sm mb-6"
-            >
-              <Scissors className="w-3.5 h-3.5 text-accent" />
-              <span className="text-[11px] sm:text-xs font-medium text-foreground/80 tracking-wide uppercase">
-                Hecho en España · Para peluquerías, barberías y estética
-              </span>
-            </motion.div>
+      <div className="container relative z-10 mx-auto px-4 pb-24 pt-28 md:pb-32 md:pt-36">
+        <div className="mx-auto max-w-3xl text-center">
+          {/* Eyebrow */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: EASE_OUT }}
+            className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-4 py-1.5 backdrop-blur-md"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-white/80" />
+            <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/75 sm:text-xs">
+              Para peluquerías, barberías y estética
+            </span>
+          </motion.div>
 
-            {/* Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-[2.25rem] leading-[1.05] sm:text-5xl md:text-6xl lg:text-[4.25rem] lg:leading-[1.02] font-bold tracking-tight mb-5"
+          {/* Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.08, ease: EASE_OUT }}
+            className="text-balance text-[2.5rem] font-bold leading-[1.04] tracking-tight sm:text-6xl md:text-[4.5rem] md:leading-[1.01]"
+          >
+            El sistema operativo
+            <br className="hidden sm:block" /> de{" "}
+            <span
+              className="bg-clip-text text-transparent"
+              style={{
+                backgroundImage:
+                  "linear-gradient(100deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 60%, #c084fc 100%)",
+              }}
             >
-              <span className="text-foreground">Tu libreta no debería</span>
-              <br />
-              <span className="text-foreground">decidir cuánto facturas</span>
-              <br />
-              <span className="italic font-serif font-normal text-gradient">este mes.</span>
-            </motion.h1>
+              tu salón
+            </span>
+            .
+          </motion.h1>
 
-            {/* Sub */}
-            <motion.p
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-7 leading-relaxed"
-            >
-              GlowApp gestiona tus reservas, tu caja y tus clientes mientras tú haces lo que mejor sabes hacer:{" "}
-              <span className="text-foreground font-medium">que la gente salga guapa por la puerta.</span>
-            </motion.p>
+          {/* Sub */}
+          <motion.p
+            initial={{ opacity: 0, y: 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.16, ease: EASE_OUT }}
+            className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-white/70 sm:text-lg"
+          >
+            Reservas 24/7, agenda, caja y tu propia web. Todo en una sola app,
+            pensada para que gestiones tu salón sin papeles ni complicaciones.
+          </motion.p>
 
-            {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 mb-6"
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.24, ease: EASE_OUT }}
+            className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+          >
+            <button
+              onClick={() => navigate("/onboarding")}
+              className="group relative inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-base font-semibold text-white shadow-[0_8px_30px_-6px_hsl(var(--primary)/0.7)] transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-[0_12px_40px_-6px_hsl(var(--accent)/0.7)] active:scale-[0.98] sm:w-auto"
+              style={{
+                backgroundImage:
+                  "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))",
+              }}
             >
-              <Button
-                size="lg"
-                className="text-base px-7 py-6 rounded-full gradient-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all border-0 group"
-                onClick={() => navigate("/onboarding")}
-              >
-                Probar 30 días gratis
-                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </Button>
-              <LiquidButton
-                size="lg"
-                className="text-base px-6"
-                onClick={() => {
-                  document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Ver cómo funciona
-              </LiquidButton>
-            </motion.div>
+              Crea tu salón gratis
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+            </button>
+            <button
+              onClick={scrollToProduct}
+              className="inline-flex w-full items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-6 py-4 text-base font-medium text-white backdrop-blur-md transition-[transform,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-white/[0.12] active:scale-[0.98] sm:w-auto"
+            >
+              Ver el producto
+            </button>
+          </motion.div>
 
-            {/* Live status / proof */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex items-center gap-2 justify-center lg:justify-start text-xs sm:text-sm text-muted-foreground"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-              </span>
-              <span>
-                <span className="font-semibold text-foreground">Reservas online</span> activas ahora mismo
-              </span>
-            </motion.div>
+          {/* Microcopy */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mt-4 text-sm text-white/50"
+          >
+            Listo en 5 minutos · Sin tarjeta · Sin permanencia
+          </motion.p>
+        </div>
 
-            {/* Salon names row — dynamic from DB */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              <LiveSalonsRow />
-            </motion.div>
+        {/* Product mockup — producto REAL */}
+        <motion.div
+          initial={{ opacity: 0, y: 40, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.3, ease: EASE_OUT }}
+          className="relative mx-auto mt-16 w-[260px] sm:w-[290px]"
+          style={{ aspectRatio: "9/19.5" }}
+        >
+          {/* Halo */}
+          <div
+            className="absolute -inset-10 rounded-[3rem] blur-3xl"
+            style={{
+              background:
+                "radial-gradient(circle, hsl(var(--accent) / 0.4), hsl(var(--primary) / 0.25), transparent 70%)",
+            }}
+          />
+
+          {/* Phone */}
+          <div className="relative h-full rounded-[2.6rem] border border-white/15 bg-black p-[6px] shadow-2xl">
+            <div className="absolute left-1/2 top-3 z-10 flex h-[26px] w-[90px] -translate-x-1/2 items-center justify-center rounded-full bg-black">
+              <div className="mr-7 h-2 w-2 rounded-full bg-white/20" />
+            </div>
+            <div className="scrollbar-hide h-full overflow-hidden overflow-y-auto rounded-[2.2rem] bg-background pt-9">
+              <DemoLanding />
+            </div>
+            <div className="absolute bottom-2.5 left-1/2 h-[4px] w-[110px] -translate-x-1/2 rounded-full bg-white/25" />
           </div>
 
-          {/* RIGHT — Mockup */}
+          {/* Chips de feature factuales (no métricas inventadas) */}
           <motion.div
-            initial={{ opacity: 0, y: 30, rotate: -2 }}
-            animate={{ opacity: 1, y: 0, rotate: 0 }}
-            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-            className="relative mx-auto"
+            initial={{ opacity: 0, scale: 0.85, x: -10 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            transition={{ delay: 0.9, type: "spring", duration: 0.6, bounce: 0.3 }}
+            className="absolute -left-6 top-24 flex items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.08] px-3 py-2 backdrop-blur-xl sm:-left-12"
           >
-            <div
-              className="relative mx-auto w-[260px] sm:w-[280px] lg:w-[300px]"
-              style={{ aspectRatio: "9/19.5" }}
-            >
-              {/* Glow halo */}
-              <div className="absolute -inset-6 rounded-[3rem] bg-gradient-to-br from-primary/30 via-accent/20 to-transparent blur-3xl" />
-
-              {/* Phone */}
-              <div className="relative h-full bg-foreground rounded-[2.4rem] p-[6px] border border-border shadow-2xl">
-                {/* Dynamic island */}
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[90px] h-[26px] bg-foreground rounded-full z-10 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-foreground/40 mr-7" />
-                </div>
-                <div className="h-full rounded-[2rem] overflow-hidden bg-background overflow-y-auto scrollbar-hide pt-9">
-                  <DemoLanding />
-                </div>
-                {/* Bottom bar */}
-                <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 w-[110px] h-[4px] bg-foreground/30 rounded-full" />
-              </div>
-
-              {/* Floating sticker — proof */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1, type: "spring" }}
-                className="absolute -left-4 top-20 sm:-left-8 bg-background rounded-2xl border border-border shadow-xl px-3 py-2 flex items-center gap-2"
-              >
-                <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="text-[10px] text-muted-foreground leading-tight">Ahorro semanal</p>
-                  <p className="text-sm font-bold text-foreground leading-tight">+8 horas</p>
-                </div>
-              </motion.div>
-
-              {/* Floating sticker — booking */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1.2, type: "spring" }}
-                className="absolute -right-3 bottom-28 sm:-right-6 bg-background rounded-2xl border border-border shadow-xl px-3 py-2"
-              >
-                <p className="text-[10px] text-muted-foreground leading-tight">Nueva reserva</p>
-                <p className="text-sm font-bold text-foreground leading-tight">María · 17:30</p>
-                <p className="text-[10px] text-success leading-tight font-medium">Confirmada ✓</p>
-              </motion.div>
-            </div>
+            <Calendar className="h-4 w-4 text-white/90" />
+            <span className="text-xs font-medium text-white/90">Reservas 24/7</span>
           </motion.div>
-        </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85, x: 10 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            transition={{ delay: 1.05, type: "spring", duration: 0.6, bounce: 0.3 }}
+            className="absolute -right-4 bottom-28 flex items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.08] px-3 py-2 backdrop-blur-xl sm:-right-10"
+          >
+            <Globe className="h-4 w-4 text-white/90" />
+            <span className="text-xs font-medium text-white/90">Tu propia web</span>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );

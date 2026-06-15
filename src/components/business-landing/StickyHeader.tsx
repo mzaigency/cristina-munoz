@@ -7,8 +7,9 @@ import glowappLogo from "@/assets/glowapp-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
-  { label: "Funciones", href: "#features" },
-  { label: "Precios", href: "#pricing" },
+  { label: "El panel", href: "#producto" },
+  { label: "Ventajas", href: "#ventajas" },
+  { label: "Cómo funciona", href: "#como-funciona" },
   { label: "FAQ", href: "#faq" },
 ];
 
@@ -67,7 +68,7 @@ export const StickyHeader = () => {
                 <button
                   key={item.label}
                   onClick={() => scrollToSection(item.href)}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {item.label}
                 </button>
@@ -76,22 +77,18 @@ export const StickyHeader = () => {
 
             <div className="hidden md:flex items-center gap-4">
               {!isAuthenticated && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate("/auth")}
-                >
+                <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
                   Iniciar sesión
                 </Button>
               )}
-              <Button
-                size="sm"
-                className="rounded-full gradient-primary border-0"
+              <button
                 onClick={() => navigate("/onboarding")}
+                className="group inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold text-white shadow-md shadow-primary/30 transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-lg hover:shadow-accent/40 active:scale-[0.97]"
+                style={{ backgroundImage: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))" }}
               >
-                Prueba gratis
-                <ArrowRight className="ml-1 w-4 h-4" />
-              </Button>
+                Empieza gratis
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </button>
             </div>
 
             <Button
@@ -139,7 +136,7 @@ export const StickyHeader = () => {
                   className="w-full gradient-primary border-0"
                   onClick={() => { navigate("/onboarding"); setIsMobileMenuOpen(false); }}
                 >
-                  Prueba gratis
+                  Empieza gratis
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>
