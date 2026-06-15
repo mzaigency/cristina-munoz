@@ -1,6 +1,7 @@
 import { Chars } from "./shared";
 import { GoogleSearchEmpty } from "./motion-primitives";
-import cristinaMobile from "@/assets/business-landing/cristina-mobile.png";
+import cristinaMobileAsset from "@/assets/business-landing/cristina-mobile.png.asset.json";
+const cristinaMobile = cristinaMobileAsset.url;
 
 /**
  * Beat 4 — Sin web, invisible → tu propia web en 5 min.
