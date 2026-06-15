@@ -89,8 +89,18 @@ const TX = [
 
 export const CajaMockup = () => (
   <div className="gp-shell" style={shellStyle}>
-    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <Head title="Caja" action="Cobrar" icon={<CreditCard style={{ width: 14, height: 14 }} />} />
+      {/* Subtabs reales del CashRegisterManager */}
+      <div className="gp-subtabs" style={{ margin: 0, borderBottom: "1px solid var(--gp-line2)", padding: "0 4px" }}>
+        {[
+          { id: "payment", label: "Cobrar", icon: <CreditCard style={{ width: 14, height: 14 }} />, on: true },
+          { id: "history", label: "Historial", icon: <Calendar style={{ width: 14, height: 14 }} />, on: false },
+          { id: "export", label: "Exportar", icon: <Download style={{ width: 14, height: 14 }} />, on: false },
+        ].map((t) => (
+          <button key={t.id} className={`gp-subtab${t.on ? " on" : ""}`}>{t.icon} {t.label}</button>
+        ))}
+      </div>
       <div className="gp-dash-kpis" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
         {[
           { l: "Efectivo", v: "150,00 €", ic: <Wallet style={{ width: 16, height: 16 }} />, bg: "var(--gp-ok-soft)", c: "var(--gp-ok)" },

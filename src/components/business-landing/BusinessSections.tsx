@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { ReactNode } from "react";
 import { ArrowRight, Check, CalendarClock, Wallet, Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { BookingMockup } from "./mockups/BookingMockup";
+import { TenantLandingMockup } from "./mockups/TenantLandingMockup";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -111,7 +111,7 @@ const PhoneVisual = () => (
   <div className="relative h-[420px] w-[210px] rounded-[2.4rem] bg-black p-[5px] shadow-2xl">
     <div className="relative h-full overflow-hidden rounded-[2rem] bg-white">
       <div className="absolute left-1/2 top-[5px] z-50 h-[22px] w-[76px] -translate-x-1/2 rounded-full bg-black" />
-      <BookingMockup />
+      <TenantLandingMockup />
     </div>
   </div>
 );
@@ -144,26 +144,16 @@ const CashVisual = () => (
 );
 
 const WebVisual = () => (
-  <div className="w-[300px] overflow-hidden rounded-xl bg-white shadow-xl">
+  <div className="w-[320px] overflow-hidden rounded-xl bg-white shadow-xl">
     {/* browser chrome */}
     <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-3 py-2">
-      <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-      <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-      <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+      <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+      <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+      <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
       <span className="ml-2 flex-1 truncate rounded-md bg-white px-2 py-1 text-[10px] text-slate-400">glowapp.app/cristina-munoz</span>
     </div>
-    <div className="relative h-28" style={{ backgroundImage: "linear-gradient(140deg, hsl(var(--primary)), hsl(var(--accent)))" }}>
-      <div className="absolute bottom-3 left-4 text-white">
-        <p className="font-serif text-lg italic leading-none">Cristina Muñoz</p>
-        <p className="mt-1 text-[10px] text-white/80">Peluquería · Madrid · ★ 4,9</p>
-      </div>
-    </div>
-    <div className="space-y-2 p-4 text-slate-900">
-      <div className="flex justify-between text-[11px]"><span>Corte + peinado</span><span className="font-semibold">25 €</span></div>
-      <div className="flex justify-between text-[11px]"><span>Color completo</span><span className="font-semibold">55 €</span></div>
-      <button className="mt-2 w-full rounded-lg py-2 text-[12px] font-semibold text-white" style={{ backgroundImage: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))" }}>
-        Reservar cita
-      </button>
+    <div className="h-[280px] overflow-hidden">
+      <TenantLandingMockup />
     </div>
   </div>
 );
