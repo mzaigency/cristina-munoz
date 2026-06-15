@@ -5572,3 +5572,20 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
   }
 }
 
+
+/* Stage scaler — keeps fixed-px mockups pixel-perfect and responsive */
+.stage-scale {
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.stage-scale > .stage-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--stage-w, 900px);
+  height: var(--stage-h, 562px);
+  transform-origin: top left;
+  transform: scale(calc(100cqw / var(--stage-w, 900)));
+}
