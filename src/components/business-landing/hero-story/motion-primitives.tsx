@@ -20,8 +20,8 @@ export function ChatBubble({
   const bg =
     tone === "brand"
       ? "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))"
-      : "rgba(255,255,255,0.08)";
-  const color = tone === "brand" ? "#fff" : "rgba(255,255,255,0.78)";
+      : "rgba(0,0,0,0.04)";
+  const color = tone === "brand" ? "#fff" : "rgba(0,0,0,0.72)";
   return (
     <div
       className="ch-fx-item flex max-w-[78%] items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium leading-snug shadow-[0_10px_30px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md md:text-base"
