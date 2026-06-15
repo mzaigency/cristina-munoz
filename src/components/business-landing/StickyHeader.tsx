@@ -8,8 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { label: "El panel", href: "#producto" },
-  { label: "Ventajas", href: "#ventajas" },
-  { label: "Calculadora", href: "#calculadora" },
+  { label: "Cómo funciona", href: "#como-funciona" },
   { label: "Precio", href: "#precio" },
   { label: "FAQ", href: "#faq" },
 ];
