@@ -9,9 +9,9 @@ import { BookingCard, ChatBubble } from "./motion-primitives";
 export function BeatWhatsapps() {
   return (
     <div className="ch-beat ch-beat-1 ch-story-layer pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-      {/* PAIN FX — burbujas en parallax Z */}
+      {/* PAIN FX — burbujas en parallax Z, desplazadas a los lados para no tapar el texto */}
       <div
-        className="ch-pain-fx ch-pain-fx-1 absolute inset-0 flex flex-col items-stretch justify-center gap-2 px-6 md:px-20"
+        className="ch-pain-fx ch-pain-fx-1 absolute inset-0 flex flex-col items-stretch justify-center gap-3 px-3 md:px-10"
         style={{ transformStyle: "preserve-3d" }}
         aria-hidden
       >
@@ -37,7 +37,7 @@ export function BeatWhatsapps() {
       </div>
 
       {/* PAIN TEXT */}
-      <p className="ch-story-pain relative z-10 max-w-[18ch] rounded-3xl bg-background/70 px-5 py-3 font-sans text-4xl font-bold leading-[1.05] tracking-tight backdrop-blur-md md:text-6xl lg:text-7xl">
+      <p className="ch-story-pain relative z-10 max-w-[18ch] font-sans text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
         El móvil no para.
         <br />
         <Chars text="WhatsApps" /> a todas horas.

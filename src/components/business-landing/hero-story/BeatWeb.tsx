@@ -9,15 +9,15 @@ const cristinaMobile = cristinaMobileAsset.url;
 export function BeatWeb() {
   return (
     <div className="ch-beat ch-beat-4 ch-story-layer pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-      {/* PAIN FX — búsqueda fallida en Google con resultados de competencia detrás */}
+      {/* PAIN FX — búsqueda fallida en Google, desplazada arriba para no tapar el texto */}
       <div
-        className="ch-pain-fx ch-pain-fx-4 absolute inset-0 flex items-center justify-center"
+        className="ch-pain-fx ch-pain-fx-4 absolute inset-0 flex flex-col items-center justify-start pt-[12vh]"
         style={{ transformStyle: "preserve-3d" }}
         aria-hidden
       >
         <div
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          style={{ transform: "translate(-50%, -50%) translateZ(-220px)" }}
+          className="absolute left-1/2 top-[12vh] -translate-x-1/2"
+          style={{ transform: "translate(-50%, 0) translateZ(-220px)" }}
         >
           <div className="flex gap-3 opacity-60 blur-[1px]">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -33,7 +33,7 @@ export function BeatWeb() {
         </div>
       </div>
 
-      <p className="ch-story-pain relative z-10 max-w-[20ch] rounded-3xl bg-background/70 px-5 py-3 font-sans text-4xl font-bold leading-[1.05] tracking-tight backdrop-blur-md md:text-6xl lg:text-7xl">
+      <p className="ch-story-pain relative z-10 max-w-[20ch] font-sans text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
         Sin web propia,
         <br />
         eres <Chars text="invisible" />.

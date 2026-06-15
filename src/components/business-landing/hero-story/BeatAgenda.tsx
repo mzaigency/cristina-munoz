@@ -7,9 +7,9 @@ import { CalendarGrid } from "./motion-primitives";
 export function BeatAgenda() {
   return (
     <div className="ch-beat ch-beat-2 ch-story-layer pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-      {/* PAIN FX — grid con huecos rojos en parallax */}
+      {/* PAIN FX — grid con huecos rojos en parallax, desplazado arriba */}
       <div
-        className="ch-pain-fx ch-pain-fx-2 absolute inset-0 flex items-center justify-center"
+        className="ch-pain-fx ch-pain-fx-2 absolute inset-0 flex flex-col items-center justify-start pt-[10vh]"
         style={{ transformStyle: "preserve-3d" }}
         aria-hidden
       >
