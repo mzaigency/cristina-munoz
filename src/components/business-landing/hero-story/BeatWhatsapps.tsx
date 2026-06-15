@@ -54,7 +54,7 @@ export function BeatWhatsapps() {
         <p className="ch-text-gradient font-serif text-4xl italic leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
           <span className="font-ashing not-italic">Glowapp</span> responde por ti.
         </p>
-        <p className="mt-5 text-base font-light text-blue-100/70 md:text-xl">
+        <p className="mt-5 text-base font-light text-muted-foreground md:text-xl">
           Reservas solas, 24/7. Tú, tranquila.
         </p>
       </div>
