@@ -86,7 +86,7 @@ export function BookingCard() {
 export function CalendarGrid({ filled }: { filled: boolean }) {
   const slots = Array.from({ length: 28 });
   return (
-    <div className="ch-fx-item mx-auto grid w-full max-w-[420px] grid-cols-7 gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-md">
+    <div className="ch-fx-item mx-auto grid w-full max-w-[420px] grid-cols-7 gap-1.5 rounded-2xl border border-black/[0.06] bg-black/[0.02] p-3 backdrop-blur-md">
       {slots.map((_, i) => {
         const isFilled = filled && i % 3 !== 0;
         const isGap = !filled && i % 3 === 0;
