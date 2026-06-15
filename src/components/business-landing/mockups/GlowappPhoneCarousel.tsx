@@ -1,6 +1,7 @@
 import { useState, CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Clock, Wallet, Calendar, CheckCircle2, Plus, TrendingUp, Star, Scissors } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Wallet, Calendar, CheckCircle2, Plus, TrendingUp } from "lucide-react";
+import { TenantLandingMockup } from "./TenantLandingMockup";
 
 // Radio del anillo (debe coincidir con el cálculo del timeline en CinematicHero)
 export const RING_R = 64;
