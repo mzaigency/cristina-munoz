@@ -149,29 +149,11 @@ function ScreenCaja({ active }: { active: boolean }) {
   );
 }
 
-/* ---------- Pantalla WEB (landing tenant real) ---------- */
+/* ---------- Pantalla WEB (landing tenant real, captura mobile) ---------- */
 function ScreenWeb() {
-  const svc = [{ n: "Corte + peinado", p: "25 €" }, { n: "Color completo", p: "55 €" }, { n: "Mechas balayage", p: "80 €" }];
   return (
-    <div className="flex h-full flex-col bg-white pt-9 text-slate-900">
-      <div className="relative h-32 shrink-0 overflow-hidden">
-        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(150deg, hsl(var(--primary)), hsl(var(--accent)))" }} />
-        <div className="absolute inset-0 bg-black/30" />
-        <div className="absolute bottom-3 left-4 right-4 text-white">
-          <p className="font-serif text-xl italic leading-none">Cristina Muñoz</p>
-          <div className="mt-1 flex items-center gap-2 text-[10px] text-white/85"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> 4,9 · Madrid</div>
-        </div>
-      </div>
-      <div className="flex-1 space-y-2 p-4">
-        <p className="flex items-center gap-1.5 text-xs font-bold"><Scissors className="h-3.5 w-3.5 text-primary" /> Servicios</p>
-        {svc.map((s) => (
-          <div key={s.n} className="flex items-center justify-between rounded-xl border border-slate-200 bg-card p-2.5 shadow-sm">
-            <span className="text-[12px] font-semibold">{s.n}</span>
-            <span className="rounded-md bg-secondary px-2 py-0.5 text-[11px] font-bold">{s.p}</span>
-          </div>
-        ))}
-        <button className="mt-1 w-full rounded-xl py-2.5 text-xs font-bold text-white" style={{ backgroundImage: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))" }}>Reservar cita</button>
-      </div>
+    <div className="h-full w-full overflow-hidden bg-white">
+      <TenantLandingMockup variant="mobile" />
     </div>
   );
 }
