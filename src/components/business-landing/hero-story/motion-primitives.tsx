@@ -175,9 +175,9 @@ export function CashClose({ amountLabel }: { amountLabel: string }) {
 /** Resultado de Google "No encontrado" — pain beat 4. */
 export function GoogleSearchEmpty() {
   return (
-    <div className="ch-fx-item mx-auto w-full max-w-[360px] rounded-2xl border border-white/10 bg-white/[0.05] p-4 text-left backdrop-blur-md">
-      <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5">
-        <svg viewBox="0 0 24 24" className="h-4 w-4 text-white/60" fill="none">
+    <div className="ch-fx-item mx-auto w-full max-w-[360px] rounded-2xl border border-black/[0.06] bg-white/80 p-4 text-left backdrop-blur-md shadow-md">
+      <div className="flex items-center gap-2 rounded-full border border-black/[0.06] bg-black/[0.03] px-3 py-1.5">
+        <svg viewBox="0 0 24 24" className="h-4 w-4 text-muted-foreground" fill="none">
           <circle
             cx="11"
             cy="11"
@@ -192,13 +192,13 @@ export function GoogleSearchEmpty() {
             strokeLinecap="round"
           />
         </svg>
-        <span className="text-xs text-white/70">tu salón cerca de mí</span>
+        <span className="text-xs text-muted-foreground">tu salón cerca de mí</span>
       </div>
       <div className="mt-3 space-y-1.5">
-        <div className="h-2 w-3/4 rounded bg-white/10" />
-        <div className="h-2 w-2/3 rounded bg-white/10" />
-        <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs font-medium text-red-200">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-red-400/25">
+        <div className="h-2 w-3/4 rounded bg-black/8" />
+        <div className="h-2 w-2/3 rounded bg-black/8" />
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-300/40 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+          <span className="grid h-5 w-5 place-items-center rounded-full bg-red-100">
             ✕
           </span>
           Tu salón no aparece
