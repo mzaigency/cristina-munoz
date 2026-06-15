@@ -33,7 +33,7 @@ export function BeatWeb() {
         </div>
       </div>
 
-      <p className="ch-story-pain relative z-10 font-sans text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
+      <p className="ch-story-pain relative z-10 max-w-[20ch] rounded-3xl bg-background/70 px-5 py-3 font-sans text-4xl font-bold leading-[1.05] tracking-tight backdrop-blur-md md:text-6xl lg:text-7xl">
         Sin web propia,
         <br />
         eres <Chars text="invisible" />.
