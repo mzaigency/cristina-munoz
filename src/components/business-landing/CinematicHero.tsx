@@ -2,9 +2,9 @@ import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { motion } from "framer-motion";
-import { ArrowRight, TrendingUp, Star } from "lucide-react";
+import { ArrowRight, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DashboardMockup } from "./mockups/DashboardMockup";
+import { GlowappPhoneCarousel } from "./mockups/GlowappPhoneCarousel";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -189,11 +189,11 @@ export const CinematicHero = () => {
         .to([".ch-hero-text", ".ch-grid"], { scale: 1.12, filter: "blur(16px)", opacity: 0.15, ease: "power2.inOut", duration: 2 }, 0)
         .to(".ch-card", { y: 0, ease: "power3.inOut", duration: 2 }, 0)
         .to(".ch-card", { width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: 1.5 })
-        .fromTo(".ch-card-right", { y: -30, autoAlpha: 0, scale: 0.9 }, { y: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 1.3 }, "-=1.4")
-        .fromTo(".ch-card-left", { y: -16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, ease: "power4.out", duration: 1.2 }, "-=1.0")
         .fromTo(".ch-device",
           { y: 200, z: -400, rotationX: 42, autoAlpha: 0, scale: 0.72 },
-          { y: 0, z: 0, rotationX: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 2.2 }, "-=0.9")
+          { y: 0, z: 0, rotationX: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 2.2 }, "-=0.6")
+        .fromTo(".ch-card-right", { x: 70, autoAlpha: 0, scale: 0.85 }, { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 1.4 }, "-=1.8")
+        .fromTo(".ch-card-left", { x: -50, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.3 }, "-=1.4")
         .fromTo(".ch-badge", { y: 70, autoAlpha: 0, scale: 0.7 }, { y: 0, autoAlpha: 1, scale: 1, ease: "back.out(1.5)", duration: 1.2, stagger: 0.16 }, "-=1.3")
         .to({}, { duration: 2 })
         .set(".ch-hero-text", { autoAlpha: 0 })
@@ -260,103 +260,84 @@ export const CinematicHero = () => {
         >
           <div className="ch-sheen" aria-hidden />
 
-          {/* Stack vertical: marca → promesa → producto (sin solapamientos) */}
-          <div className="relative z-10 mx-auto flex h-full w-full max-w-3xl flex-col items-center justify-center gap-4 px-6 py-8 text-center md:gap-5">
-            {/* Wordmark */}
-            <h2 className="ch-card-right ch-reveal ch-card-silver font-ashing text-5xl leading-none tracking-tight md:text-7xl">
-              Glowapp
-            </h2>
-
-            {/* Promesa */}
-            <div className="ch-card-left ch-reveal max-w-xl">
-              <h3 className="font-sans text-xl font-bold tracking-tight text-white md:text-2xl">
-                Todo tu salón, en una app.
+          {/* Composición 3-col: texto · iPhone · wordmark (estilo template) */}
+          <div className="relative z-10 mx-auto grid h-full w-full max-w-6xl grid-cols-1 items-center gap-8 px-6 py-10 lg:grid-cols-[0.9fr_auto_0.9fr] lg:gap-4 lg:px-10">
+            {/* LEFT — texto */}
+            <div className="ch-card-left ch-reveal order-2 text-center lg:order-1 lg:pr-2 lg:text-left">
+              <h3 className="font-sans text-2xl font-bold leading-[1.08] tracking-tight text-white md:text-3xl lg:text-[2.6rem]">
+                Todo tu salón,<br className="hidden lg:block" /> en una app.
               </h3>
-              <p className="mx-auto mt-1.5 hidden max-w-md text-sm font-light leading-relaxed text-blue-100/70 md:block">
-                Tú llevas el negocio desde el panel. Tus clientes reservan desde tu web.
+              <p className="mx-auto mt-4 max-w-xs text-sm font-light leading-relaxed text-blue-100/60 lg:mx-0">
+                Tú llevas el negocio desde el panel. Tus clientes reservan desde tu web. Sin papeles, sin llamadas, sin líos.
               </p>
             </div>
 
-            {/* Device — protagonista */}
-            <div className="ch-device ch-reveal relative flex items-center justify-center" style={{ perspective: "1100px" }}>
-              <div ref={deviceRef} className="will-change-transform" style={{ transformStyle: "preserve-3d" }}>
-                {/* Mac / navegador — panel real (gp-) */}
-                <div className="ch-mac-bezel relative w-[300px] rounded-xl p-2 sm:w-[480px] sm:rounded-2xl sm:p-2.5 lg:w-[560px]">
-                  <div className="ch-screen-glare pointer-events-none absolute inset-2 z-40 rounded-lg sm:inset-2.5" aria-hidden />
-                  {/* barra navegador */}
-                  <div className="flex items-center gap-1.5 rounded-t-lg bg-[#1a1a20] px-3 py-1.5">
-                    <span className="h-2 w-2 rounded-full bg-[#ff5f57]" />
-                    <span className="h-2 w-2 rounded-full bg-[#febc2e]" />
-                    <span className="h-2 w-2 rounded-full bg-[#28c840]" />
+            {/* CENTER — iPhone con carrusel */}
+            <div className="ch-device ch-reveal order-1 flex items-center justify-center lg:order-2" style={{ perspective: "1100px" }}>
+              <div ref={deviceRef} className="relative will-change-transform" style={{ transformStyle: "preserve-3d" }}>
+                {/* iPhone */}
+                <div className="ch-bezel relative h-[500px] w-[244px] rounded-[2.8rem] sm:h-[540px] sm:w-[264px]">
+                  {/* botones laterales */}
+                  <span className="absolute -left-[3px] top-[110px] h-7 w-[3px] rounded-l bg-gradient-to-r from-[#3a3a44] to-[#15151a]" />
+                  <span className="absolute -left-[3px] top-[150px] h-11 w-[3px] rounded-l bg-gradient-to-r from-[#3a3a44] to-[#15151a]" />
+                  <span className="absolute -left-[3px] top-[206px] h-11 w-[3px] rounded-l bg-gradient-to-r from-[#3a3a44] to-[#15151a]" />
+                  <span className="absolute -right-[3px] top-[165px] h-16 w-[3px] rounded-r bg-gradient-to-l from-[#3a3a44] to-[#15151a]" />
+                  {/* pantalla */}
+                  <div className="absolute inset-[6px] overflow-hidden rounded-[2.4rem] bg-[#0a0f1e]">
+                    <div className="ch-screen-glare pointer-events-none absolute inset-0 z-[60]" aria-hidden />
+                    <div className="absolute left-1/2 top-[10px] z-[60] flex h-[26px] w-[92px] -translate-x-1/2 items-center justify-end rounded-full bg-black px-3">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                    </div>
+                    <GlowappPhoneCarousel />
                   </div>
-                  <div className="relative h-[260px] overflow-hidden rounded-b-lg bg-white sm:h-[340px] lg:h-[360px]">
-                    <DashboardMockup />
-                  </div>
                 </div>
-              </div>
 
-              {/* Badges flotantes — fuera del device, sin tapar texto */}
-              <div className="ch-badge ch-reveal absolute -left-4 top-6 flex items-center gap-2 rounded-2xl p-2.5 md:-left-20">
-                <span className="text-sm">🗓️</span>
-                <div className="text-left">
-                  <p className="text-[11px] font-bold leading-tight text-white">Reservas 24/7</p>
-                  <p className="text-[9px] text-blue-200/60">Mientras duermes</p>
-                </div>
-              </div>
-              <div className="ch-badge ch-reveal absolute -right-4 bottom-10 flex items-center gap-2 rounded-2xl p-2.5 md:-right-20">
-                <span className="text-sm">🌐</span>
-                <div className="text-left">
-                  <p className="text-[11px] font-bold leading-tight text-white">Tu propia web</p>
-                  <p className="text-[9px] text-blue-200/60">glowapp.app/tunombre</p>
-                </div>
-              </div>
-
-              {/* Gráfico animado de ingresos (motion loop) — solo desktop */}
-              <div className="ch-badge ch-reveal absolute -right-24 top-4 hidden flex-col gap-1.5 rounded-2xl p-3 lg:flex">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-[10px] font-semibold text-blue-200/70">Ingresos semana</p>
-                  <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-400">
-                    <TrendingUp className="h-2.5 w-2.5" />+18%
-                  </span>
-                </div>
-                <div className="flex h-9 items-end gap-1">
-                  {[0.5, 0.75, 0.55, 0.9, 1, 0.7].map((base, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-2 rounded-sm"
-                      style={{ background: "linear-gradient(hsl(var(--accent)), hsl(var(--primary)))" }}
-                      animate={{ height: [`${base * 60}%`, `${Math.min(base + 0.25, 1) * 100}%`, `${base * 60}%`] }}
-                      transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.18 }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Contador de reservas + estrellas (motion loop) — solo desktop */}
-              <motion.div
-                className="ch-badge ch-reveal absolute -left-24 bottom-6 hidden flex-col gap-1 rounded-2xl p-3 lg:flex"
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <div className="flex items-center gap-1.5">
+                {/* Badge glass — fuera del teléfono (arriba-izq) */}
+                <motion.div
+                  className="ch-badge ch-reveal absolute -left-6 top-14 flex items-center gap-2.5 rounded-2xl p-3 lg:-left-24"
+                  animate={{ y: [0, -7, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                >
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                   </span>
-                  <p className="text-[11px] font-bold text-white">Nueva reserva</p>
-                </div>
-                <div className="flex gap-0.5">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <motion.span
-                      key={i}
-                      animate={{ scale: [1, 1.25, 1], opacity: [0.6, 1, 0.6] }}
-                      transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.12 }}
-                    >
-                      <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-                    </motion.span>
-                  ))}
-                </div>
-              </motion.div>
+                  <div className="text-left">
+                    <p className="text-[11px] font-bold leading-tight text-white">Nueva reserva</p>
+                    <p className="text-[9px] text-blue-200/60">Confirmada · 17:30</p>
+                  </div>
+                </motion.div>
+
+                {/* Badge glass — fuera del teléfono (abajo-der) con mini-barras */}
+                <motion.div
+                  className="ch-badge ch-reveal absolute -right-6 bottom-20 flex flex-col gap-1.5 rounded-2xl p-3 lg:-right-24"
+                  animate={{ y: [0, 7, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-semibold text-blue-200/70">Ingresos</p>
+                    <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-400"><TrendingUp className="h-2.5 w-2.5" />+18%</span>
+                  </div>
+                  <div className="flex h-7 items-end gap-1">
+                    {[0.5, 0.75, 0.55, 0.9, 1, 0.7].map((base, i) => (
+                      <motion.div
+                        key={i}
+                        className="w-1.5 rounded-sm"
+                        style={{ background: "linear-gradient(hsl(var(--accent)), hsl(var(--primary)))" }}
+                        animate={{ height: [`${base * 55}%`, `${Math.min(base + 0.25, 1) * 100}%`, `${base * 55}%`] }}
+                        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.18 }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* RIGHT — wordmark gigante */}
+            <div className="ch-card-right ch-reveal order-3 flex justify-center lg:order-3 lg:justify-end">
+              <h2 className="ch-card-silver font-ashing text-6xl leading-none tracking-tight md:text-8xl lg:text-[6.5rem]">
+                Glowapp
+              </h2>
             </div>
           </div>
         </div>
