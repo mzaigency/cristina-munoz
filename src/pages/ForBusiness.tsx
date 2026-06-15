@@ -4,11 +4,9 @@ import {
   CinematicHero,
   SocialProofStrip,
   PanelShowcase,
-  FeatureSpotlights,
-  RoiCalculator,
   SalonTestimonials,
-  PricingCompare,
   HowItWorks,
+  PricingCompare,
   FAQSection,
   ClosingCTA,
   Footer,
@@ -60,11 +58,9 @@ export default function ForBusiness() {
         <CinematicHero />
         <SocialProofStrip />
         <PanelShowcase />
-        <FeatureSpotlights />
-        <RoiCalculator />
         <SalonTestimonials />
-        <PricingCompare />
         <HowItWorks />
+        <PricingCompare />
         <FAQSection />
         <ClosingCTA />
         <Footer />
