@@ -22,9 +22,12 @@ const STATS: Stat[] = [
   { value: 25, format: (v) => `−${Math.round(v)}%`, label: "plantones con recordatorios" },
 ];
 
+const CRISTINA_LOGO =
+  "https://lyeyzdbplrgqsvyxpfek.supabase.co/storage/v1/object/public/tenant-assets/a1b2c3d4-e5f6-7890-abcd-ef1234567890/logo-1766948799579.png";
+
 const SALONS = [
-  { name: "Cristina Muñoz", sector: "Peluquería · Madrid", Icon: Scissors },
-  { name: "Montserrat Faig", sector: "Fisioterapia · Barcelona", Icon: HeartPulse },
+  { name: "Cristina Muñoz", sector: "Peluquería · Santpedor", Icon: Scissors, logo: CRISTINA_LOGO as string | null },
+  { name: "Montserrat Faig", sector: "Fisioterapia · Manresa", Icon: HeartPulse, logo: null as string | null },
 ];
 
 export const SocialProofStrip = () => {
