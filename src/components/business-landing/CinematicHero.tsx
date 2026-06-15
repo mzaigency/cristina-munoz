@@ -178,11 +178,15 @@ export const CinematicHero = () => {
         .to(".ch-track", { duration: 1.4, autoAlpha: 1, y: 0, scale: 1, filter: "blur(0px)", ease: "expo.out" })
         .to(".ch-track-2", { duration: 1.2, clipPath: "inset(0 0% 0 0)", autoAlpha: 1, ease: "power4.inOut" }, "-=0.9");
 
+      // Estado inicial de los motion graphics de cada beat
+      gsap.set(".ch-pain-fx", { autoAlpha: 0 });
+      gsap.set(".ch-sol-fx", { autoAlpha: 0, scale: 0.9 });
+
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: "+=4800",
+          end: "+=6200",
           pin: true,
           scrub: 1,
           anticipatePin: 1,
@@ -197,37 +201,69 @@ export const CinematicHero = () => {
         .set(".ch-hero-text", { autoAlpha: 0 })
         .to(".ch-story", { autoAlpha: 1, ease: "power2.out", duration: 0.6 }, "-=0.4");
 
-      // ── Helper: un beat dolor→solución con desintegración de la palabra-dolor
-      const beat = (sel: string) => {
+      // ── Helper: un beat dolor→solución con motion graphic propio.
+      // Cada beat tiene `.ch-pain-fx-N` (gráfico del dolor) y `.ch-sol-fx-N`
+      // (gráfico de la solución) además del texto.
+      const beat = (idx: number) => {
+        const sel = `.ch-beat-${idx}`;
+        const painFx = `${sel} .ch-pain-fx`;
+        const solFx = `${sel} .ch-sol-fx`;
+
         tl
-          // dolor entra desde el fondo (z negativo + blur), frío
+          // dolor entra desde el fondo: texto + motion graphic juntos
           .fromTo(sel,
             { autoAlpha: 0, z: zIn, filter: "blur(14px)" },
-            { autoAlpha: 1, z: 0, filter: "blur(0px)", ease: "expo.out", duration: 1.6 })
-          .to({}, { duration: 0.9 }) // sostiene el dolor
+            { autoAlpha: 1, z: 0, filter: "blur(0px)", ease: "expo.out", duration: 1.4 })
+          .fromTo(painFx,
+            { autoAlpha: 0, scale: 0.85, y: 40, rotateX: 12 },
+            { autoAlpha: 1, scale: 1, y: 0, rotateX: 0, ease: "expo.out", duration: 1.4 },
+            "<")
+          // hijos del gráfico entran en cascada para sensación de "se acumula"
+          .fromTo(`${painFx} .ch-fx-item`,
+            { autoAlpha: 0, y: -30, scale: 0.7, rotation: () => gsap.utils.random(-12, 12) },
+            { autoAlpha: 1, y: 0, scale: 1, rotation: 0, ease: "back.out(1.6)", duration: 0.9, stagger: { each: 0.06, from: "random" } },
+            "<0.15")
+          .to({}, { duration: 0.7 }) // sostiene el dolor
           // la palabra-dolor se desintegra char a char
           .to(`${sel} .ch-char`, {
             x: () => gsap.utils.random(-scatter, scatter),
             y: () => gsap.utils.random(-scatter * 0.7, scatter * 0.7),
             rotation: () => gsap.utils.random(-55, 55),
             filter: "blur(10px)", autoAlpha: 0,
-            stagger: { each: 0.05, from: "random" },
-            ease: "power2.in", duration: 1,
+            stagger: { each: 0.04, from: "random" },
+            ease: "power2.in", duration: 0.9,
           })
-          // el resto de la frase de dolor se apaga
-          .to(`${sel} .ch-story-pain`, { autoAlpha: 0, filter: "blur(8px)", ease: "power2.in", duration: 0.7 }, "<0.25")
-          // la solución florece en gradiente de marca
+          // el resto del texto de dolor se apaga
+          .to(`${sel} .ch-story-pain`, { autoAlpha: 0, filter: "blur(8px)", ease: "power2.in", duration: 0.6 }, "<0.2")
+          // el gráfico del dolor se dispersa hacia el fondo
+          .to(`${painFx} .ch-fx-item`, {
+            autoAlpha: 0,
+            scale: 0.5,
+            y: () => gsap.utils.random(-60, 60),
+            x: () => gsap.utils.random(-80, 80),
+            rotation: () => gsap.utils.random(-30, 30),
+            filter: "blur(6px)",
+            ease: "power2.in",
+            duration: 0.8,
+            stagger: { each: 0.03, from: "random" },
+          }, "<")
+          // la solución florece: gráfico + texto
+          .fromTo(solFx,
+            { autoAlpha: 0, scale: 0.85, y: 30, filter: "blur(12px)" },
+            { autoAlpha: 1, scale: 1, y: 0, filter: "blur(0px)", ease: "expo.out", duration: 1.1 },
+            "<0.2")
           .fromTo(`${sel} .ch-story-sol`,
-            { autoAlpha: 0, scale: 0.92, filter: "blur(12px)" },
-            { autoAlpha: 1, scale: 1, filter: "blur(0px)", ease: "expo.out", duration: 1.2 }, "<0.15")
-          .to({}, { duration: 1 }) // sostiene la solución
-          // sale empujado hacia el frente
-          .to(sel, { autoAlpha: 0, z: zOut, filter: "blur(10px)", ease: "power2.in", duration: 1 });
+            { autoAlpha: 0, scale: 0.94, filter: "blur(12px)" },
+            { autoAlpha: 1, scale: 1, filter: "blur(0px)", ease: "expo.out", duration: 1.1 }, "<")
+          .to({}, { duration: 0.8 }) // sostiene la solución
+          // todo el beat sale empujado hacia el frente
+          .to(sel, { autoAlpha: 0, z: zOut, filter: "blur(10px)", ease: "power2.in", duration: 0.9 });
       };
 
-      beat(".ch-beat-1");
-      beat(".ch-beat-2");
-      beat(".ch-beat-3");
+      beat(1);
+      beat(2);
+      beat(3);
+      beat(4);
 
       // ── Slogan: bloom tipográfico desde el centro
       tl
