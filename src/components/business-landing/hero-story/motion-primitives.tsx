@@ -70,13 +70,13 @@ export function BookingCard() {
         </svg>
       </div>
       <div className="min-w-0 flex-1 text-left">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-300/90">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-600/90">
           Reserva confirmada
         </p>
-        <p className="truncate text-base font-semibold text-white">
+        <p className="truncate text-base font-semibold text-foreground">
           Lucía · Corte + color
         </p>
-        <p className="text-xs text-white/60">Jueves 18:30 · 1 h 30 min</p>
+        <p className="text-xs text-muted-foreground">Jueves 18:30 · 1 h 30 min</p>
       </div>
     </div>
   );
