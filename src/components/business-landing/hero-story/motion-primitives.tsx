@@ -46,10 +46,10 @@ export function ChatBubble({
 export function BookingCard() {
   return (
     <div
-      className="ch-fx-item mx-auto flex w-full max-w-[320px] items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/15 to-white/[0.03] px-4 py-3 backdrop-blur-xl"
+      className="ch-fx-item mx-auto flex w-full max-w-[320px] items-center gap-3 rounded-2xl border border-black/6 bg-gradient-to-br from-white to-white/70 px-4 py-3 backdrop-blur-xl shadow-lg"
       style={{
         boxShadow:
-          "0 30px 60px -20px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.18)",
+          "0 12px 40px -12px rgba(0,0,0,0.12), inset 0 1px 1px rgba(255,255,255,0.8)",
       }}
     >
       <div
