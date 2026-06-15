@@ -59,7 +59,7 @@ export function HeroStory() {
 
         {/* ───────── Slogan ───────── */}
         <div className="ch-beat ch-beat-slogan ch-story-layer pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <p className="font-sans text-3xl font-bold leading-[1.06] tracking-tight text-white md:text-5xl lg:text-6xl">
+          <p className="font-sans text-3xl font-bold leading-[1.06] tracking-tight text-foreground md:text-5xl lg:text-6xl">
             El software de salón
           </p>
           <p className="ch-text-gradient mt-1 font-serif text-4xl italic leading-[1.06] tracking-tight md:text-6xl lg:text-7xl">
@@ -69,7 +69,7 @@ export function HeroStory() {
 
         {/* ───────── Remate ───────── */}
         <div className="ch-beat ch-beat-remate ch-story-layer pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-          <h2 className="ch-remate relative font-serif text-4xl italic leading-[1.08] tracking-tight text-white md:text-6xl lg:text-7xl">
+          <h2 className="ch-remate relative font-serif text-4xl italic leading-[1.08] tracking-tight text-foreground md:text-6xl lg:text-7xl">
             Tú, a hacer brillar el salón.
             <span className="ch-shine pointer-events-none absolute inset-0" aria-hidden />
           </h2>
