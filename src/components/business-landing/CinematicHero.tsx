@@ -24,6 +24,16 @@ if (typeof window !== "undefined") {
 const INJECTED_STYLES = `
   .ch-reveal { visibility: hidden; }
 
+  /* Estado inicial oculto para evitar FOUC antes de que GSAP arranque
+     (si no, todos los beats salen apilados de golpe al cargar). */
+  .ch-beat,
+  .ch-pain-fx,
+  .ch-sol-fx,
+  .ch-story-sol,
+  .ch-story,
+  .ch-cta { opacity: 0; visibility: hidden; }
+
+
   .ch-grain {
     position: absolute; inset: 0; pointer-events: none; z-index: 50;
     opacity: 0.04; mix-blend-mode: multiply;
@@ -115,9 +125,12 @@ const INJECTED_STYLES = `
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .ch-reveal { visibility: visible !important; }
+    .ch-reveal,
+    .ch-story,
+    .ch-cta { opacity: 1 !important; visibility: visible !important; }
   }
 `;
+
 
 export const CinematicHero = () => {
   const navigate = useNavigate();
