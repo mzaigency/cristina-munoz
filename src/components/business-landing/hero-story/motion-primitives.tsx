@@ -148,30 +148,23 @@ export function PaperReceipt({ amount }: { amount: string }) {
 export function CashClose({ amountLabel }: { amountLabel: string }) {
   return (
     <div
-      className="ch-fx-item mx-auto w-full max-w-[340px] rounded-2xl border border-white/10 bg-gradient-to-br from-white/15 to-white/[0.03] p-5 text-left backdrop-blur-xl"
+      className="ch-fx-item mx-auto w-full max-w-[340px] rounded-2xl border border-black/[0.06] bg-gradient-to-br from-white to-white/70 p-5 text-left backdrop-blur-xl"
       style={{
         boxShadow:
-          "0 30px 60px -20px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.18)",
+          "0 12px 40px -12px rgba(0,0,0,0.12), inset 0 1px 1px rgba(255,255,255,0.8)",
       }}
     >
-      <p className="text-[11px] font-medium uppercase tracking-wider text-white/60">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         Cierre de caja · hoy
       </p>
       <p
-        className="mt-1 font-serif text-4xl font-bold leading-none text-white md:text-5xl"
-        style={{
-          backgroundImage:
-            "linear-gradient(100deg, #ffffff 0%, #b9c0d6 100%)",
-          WebkitBackgroundClip: "text",
-          backgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
+        className="mt-1 font-serif text-4xl font-bold leading-none text-foreground md:text-5xl"
       >
         {amountLabel}
       </p>
-      <div className="mt-3 flex items-center justify-between text-xs text-white/70">
+      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
         <span>14 servicios</span>
-        <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 font-semibold text-emerald-300">
+        <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-700">
           +18% vs ayer
         </span>
       </div>
