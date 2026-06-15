@@ -98,13 +98,13 @@ export function CalendarGrid({ filled }: { filled: boolean }) {
               background: isFilled
                 ? "linear-gradient(160deg, hsl(var(--primary)/0.85), hsl(var(--accent)/0.75))"
                 : isGap
-                  ? "repeating-linear-gradient(45deg, rgba(239,68,68,0.18) 0 4px, transparent 4px 8px)"
-                  : "rgba(255,255,255,0.06)",
+                  ? "repeating-linear-gradient(45deg, rgba(239,68,68,0.15) 0 4px, transparent 4px 8px)"
+                  : "rgba(0,0,0,0.04)",
               border: isGap
-                ? "1px dashed rgba(239,68,68,0.45)"
+                ? "1px dashed rgba(239,68,68,0.4)"
                 : isFilled
-                  ? "1px solid rgba(255,255,255,0.18)"
-                  : "1px solid rgba(255,255,255,0.04)",
+                  ? "1px solid rgba(255,255,255,0.3)"
+                  : "1px solid rgba(0,0,0,0.04)",
               boxShadow: isFilled
                 ? "0 4px 12px -4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18)"
                 : "none",
