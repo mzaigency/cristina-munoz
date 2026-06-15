@@ -22,7 +22,7 @@ export default function ForBusiness() {
     <>
       <SEO
         title="Glowapp para Negocios | Tu salón de belleza digitalizado, gratis"
-        description="Reservas 24/7, agenda, caja y tu propia web profesional. Todo lo que tu salón necesita en una sola app. Empieza gratis, sin tarjeta y sin permanencia."
+        description="Reservas 24/7, agenda, caja y tu propia web profesional. Todo lo que tu salón necesita en una sola app. Empieza gratis, sin permanencia."
         keywords="software salón belleza, app peluquería, gestión barbería, reservas online spa, agenda profesional belleza, alternativa Booksy gratis"
         canonicalUrl="/negocios"
         breadcrumbs={[
@@ -33,7 +33,7 @@ export default function ForBusiness() {
           {
             question: "¿Cuánto cuesta empezar con Glowapp?",
             answer:
-              "Empezar es gratis y sin tarjeta. Creas tu salón, montas tu web y abres reservas sin pagar nada para arrancar.",
+              "Empezar es gratis el primer mes. Creas tu salón, montas tu web y abres reservas sin pagar nada para arrancar.",
           },
           {
             question: "¿Qué incluye la plataforma para negocios?",

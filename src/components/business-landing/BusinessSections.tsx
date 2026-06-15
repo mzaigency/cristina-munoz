@@ -350,7 +350,7 @@ export const ClosingCTA = () => {
               </span>
             </h2>
             <p className="mx-auto mt-6 max-w-md text-base text-white/65 sm:text-lg">
-              Monta <span className="font-ashing">Glowapp</span> en 5 minutos. Gratis, sin tarjeta y sin permanencia.
+              Monta <span className="font-ashing">Glowapp</span> en 5 minutos. Gratis el primer mes, sin permanencia.
             </p>
             <div className="mt-10 flex justify-center">
               <button
