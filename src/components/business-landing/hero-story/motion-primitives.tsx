@@ -20,8 +20,8 @@ export function ChatBubble({
   const bg =
     tone === "brand"
       ? "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))"
-      : "rgba(255,255,255,0.08)";
-  const color = tone === "brand" ? "#fff" : "rgba(255,255,255,0.78)";
+      : "rgba(0,0,0,0.04)";
+  const color = tone === "brand" ? "#fff" : "rgba(0,0,0,0.72)";
   return (
     <div
       className="ch-fx-item flex max-w-[78%] items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium leading-snug shadow-[0_10px_30px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md md:text-base"
@@ -31,7 +31,7 @@ export function ChatBubble({
         alignSelf: isRight ? "flex-end" : "flex-start",
         borderTopLeftRadius: isRight ? 18 : 6,
         borderTopRightRadius: isRight ? 6 : 18,
-        border: tone === "brand" ? "none" : "1px solid rgba(255,255,255,0.08)",
+        border: tone === "brand" ? "none" : "1px solid rgba(0,0,0,0.06)",
       }}
     >
       {tone === "muted" && (
@@ -46,10 +46,10 @@ export function ChatBubble({
 export function BookingCard() {
   return (
     <div
-      className="ch-fx-item mx-auto flex w-full max-w-[320px] items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/15 to-white/[0.03] px-4 py-3 backdrop-blur-xl"
+      className="ch-fx-item mx-auto flex w-full max-w-[320px] items-center gap-3 rounded-2xl border border-black/6 bg-gradient-to-br from-white to-white/70 px-4 py-3 backdrop-blur-xl shadow-lg"
       style={{
         boxShadow:
-          "0 30px 60px -20px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.18)",
+          "0 12px 40px -12px rgba(0,0,0,0.12), inset 0 1px 1px rgba(255,255,255,0.8)",
       }}
     >
       <div
@@ -70,13 +70,13 @@ export function BookingCard() {
         </svg>
       </div>
       <div className="min-w-0 flex-1 text-left">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-300/90">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-600/90">
           Reserva confirmada
         </p>
-        <p className="truncate text-base font-semibold text-white">
+        <p className="truncate text-base font-semibold text-foreground">
           Lucía · Corte + color
         </p>
-        <p className="text-xs text-white/60">Jueves 18:30 · 1 h 30 min</p>
+        <p className="text-xs text-muted-foreground">Jueves 18:30 · 1 h 30 min</p>
       </div>
     </div>
   );
@@ -86,7 +86,7 @@ export function BookingCard() {
 export function CalendarGrid({ filled }: { filled: boolean }) {
   const slots = Array.from({ length: 28 });
   return (
-    <div className="ch-fx-item mx-auto grid w-full max-w-[420px] grid-cols-7 gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-md">
+    <div className="ch-fx-item mx-auto grid w-full max-w-[420px] grid-cols-7 gap-1.5 rounded-2xl border border-black/[0.06] bg-black/[0.02] p-3 backdrop-blur-md">
       {slots.map((_, i) => {
         const isFilled = filled && i % 3 !== 0;
         const isGap = !filled && i % 3 === 0;
@@ -98,13 +98,13 @@ export function CalendarGrid({ filled }: { filled: boolean }) {
               background: isFilled
                 ? "linear-gradient(160deg, hsl(var(--primary)/0.85), hsl(var(--accent)/0.75))"
                 : isGap
-                  ? "repeating-linear-gradient(45deg, rgba(239,68,68,0.18) 0 4px, transparent 4px 8px)"
-                  : "rgba(255,255,255,0.06)",
+                  ? "repeating-linear-gradient(45deg, rgba(239,68,68,0.15) 0 4px, transparent 4px 8px)"
+                  : "rgba(0,0,0,0.04)",
               border: isGap
-                ? "1px dashed rgba(239,68,68,0.45)"
+                ? "1px dashed rgba(239,68,68,0.4)"
                 : isFilled
-                  ? "1px solid rgba(255,255,255,0.18)"
-                  : "1px solid rgba(255,255,255,0.04)",
+                  ? "1px solid rgba(255,255,255,0.3)"
+                  : "1px solid rgba(0,0,0,0.04)",
               boxShadow: isFilled
                 ? "0 4px 12px -4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18)"
                 : "none",
@@ -148,30 +148,23 @@ export function PaperReceipt({ amount }: { amount: string }) {
 export function CashClose({ amountLabel }: { amountLabel: string }) {
   return (
     <div
-      className="ch-fx-item mx-auto w-full max-w-[340px] rounded-2xl border border-white/10 bg-gradient-to-br from-white/15 to-white/[0.03] p-5 text-left backdrop-blur-xl"
+      className="ch-fx-item mx-auto w-full max-w-[340px] rounded-2xl border border-black/[0.06] bg-gradient-to-br from-white to-white/70 p-5 text-left backdrop-blur-xl"
       style={{
         boxShadow:
-          "0 30px 60px -20px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.18)",
+          "0 12px 40px -12px rgba(0,0,0,0.12), inset 0 1px 1px rgba(255,255,255,0.8)",
       }}
     >
-      <p className="text-[11px] font-medium uppercase tracking-wider text-white/60">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         Cierre de caja · hoy
       </p>
       <p
-        className="mt-1 font-serif text-4xl font-bold leading-none text-white md:text-5xl"
-        style={{
-          backgroundImage:
-            "linear-gradient(100deg, #ffffff 0%, #b9c0d6 100%)",
-          WebkitBackgroundClip: "text",
-          backgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
+        className="mt-1 font-serif text-4xl font-bold leading-none text-foreground md:text-5xl"
       >
         {amountLabel}
       </p>
-      <div className="mt-3 flex items-center justify-between text-xs text-white/70">
+      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
         <span>14 servicios</span>
-        <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 font-semibold text-emerald-300">
+        <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-700">
           +18% vs ayer
         </span>
       </div>
@@ -182,9 +175,9 @@ export function CashClose({ amountLabel }: { amountLabel: string }) {
 /** Resultado de Google "No encontrado" — pain beat 4. */
 export function GoogleSearchEmpty() {
   return (
-    <div className="ch-fx-item mx-auto w-full max-w-[360px] rounded-2xl border border-white/10 bg-white/[0.05] p-4 text-left backdrop-blur-md">
-      <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5">
-        <svg viewBox="0 0 24 24" className="h-4 w-4 text-white/60" fill="none">
+    <div className="ch-fx-item mx-auto w-full max-w-[360px] rounded-2xl border border-black/[0.06] bg-white/80 p-4 text-left backdrop-blur-md shadow-md">
+      <div className="flex items-center gap-2 rounded-full border border-black/[0.06] bg-black/[0.03] px-3 py-1.5">
+        <svg viewBox="0 0 24 24" className="h-4 w-4 text-muted-foreground" fill="none">
           <circle
             cx="11"
             cy="11"
@@ -199,13 +192,13 @@ export function GoogleSearchEmpty() {
             strokeLinecap="round"
           />
         </svg>
-        <span className="text-xs text-white/70">tu salón cerca de mí</span>
+        <span className="text-xs text-muted-foreground">tu salón cerca de mí</span>
       </div>
       <div className="mt-3 space-y-1.5">
-        <div className="h-2 w-3/4 rounded bg-white/10" />
-        <div className="h-2 w-2/3 rounded bg-white/10" />
-        <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs font-medium text-red-200">
-          <span className="grid h-5 w-5 place-items-center rounded-full bg-red-400/25">
+        <div className="h-2 w-3/4 rounded bg-black/8" />
+        <div className="h-2 w-2/3 rounded bg-black/8" />
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-300/40 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+          <span className="grid h-5 w-5 place-items-center rounded-full bg-red-100">
             ✕
           </span>
           Tu salón no aparece

@@ -63,8 +63,8 @@ export function BeatWeb() {
         <p className="ch-text-gradient font-serif text-4xl italic leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
           Tu propio sitio, hoy.
         </p>
-        <p className="mt-4 text-base font-light text-blue-100/70 md:text-xl">
-          tusalon<span className="text-white/40">.glowapp.app</span> · listo en 5 min
+        <p className="mt-4 text-base font-light text-muted-foreground md:text-xl">
+          tusalon<span className="text-foreground/40">.glowapp.app</span> · listo en 5 min
         </p>
       </div>
     </div>

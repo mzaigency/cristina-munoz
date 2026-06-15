@@ -62,24 +62,24 @@ const INJECTED_STYLES = `
     filter: drop-shadow(0 10px 24px hsl(var(--accent) / 0.18));
   }
 
-  /* Texto plateado dentro de la tarjeta oscura */
+  /* Texto plateado dentro de la tarjeta clara */
   .ch-card-silver {
-    background: linear-gradient(180deg, #ffffff 0%, #b9c0d6 100%);
+    background: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
     -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent; color: transparent;
     transform: translateZ(0);
-    filter: drop-shadow(0 12px 24px rgba(0,0,0,0.6)) drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+    filter: drop-shadow(0 8px 16px hsl(var(--accent) / 0.25));
   }
 
-  /* Tarjeta física profunda — navy de marca */
+  /* Tarjeta física profunda — fondo claro */
   .ch-card {
-    background: linear-gradient(150deg, hsl(223 55% 17%) 0%, hsl(258 45% 8%) 100%);
+    background: linear-gradient(150deg, #f4f7fb 0%, #ece8f4 100%);
     box-shadow:
-      0 40px 100px -20px rgba(0,0,0,0.55),
-      0 20px 40px -20px rgba(0,0,0,0.45),
-      inset 0 1px 2px rgba(255,255,255,0.18),
-      inset 0 -2px 4px rgba(0,0,0,0.6);
-    border: 1px solid rgba(255,255,255,0.05);
+      0 40px 100px -20px rgba(0,0,0,0.12),
+      0 20px 40px -20px rgba(0,0,0,0.08),
+      inset 0 1px 2px rgba(255,255,255,0.8),
+      inset 0 -2px 4px rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.06);
   }
   .ch-sheen {
     position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 40;
@@ -115,13 +115,13 @@ const INJECTED_STYLES = `
   .ch-btn-ghost:active { transform: translateY(1px) scale(0.99); }
 
   /* ── Relato parallax (acto 2) ── */
-  /* Dolor: gris-azulado frío y desaturado. */
-  .ch-story-pain { color: hsl(220 16% 72%); text-shadow: 0 12px 40px rgba(0,0,0,0.5); }
-  .ch-story-pain .ch-char { color: #fff; }
+  /* Dolor: gris oscuro sobre fondo claro. */
+  .ch-story-pain { color: hsl(var(--muted-foreground)); text-shadow: none; }
+  .ch-story-pain .ch-char { color: hsl(var(--foreground)); }
   /* Barrido de luz sobre el remate (banda diagonal que cruza, scrubbeada). */
   .ch-shine {
-    background: linear-gradient(100deg, transparent 38%, rgba(255,255,255,0.6) 50%, transparent 62%);
-    mix-blend-mode: screen;
+    background: linear-gradient(100deg, transparent 38%, rgba(255,255,255,0.85) 50%, transparent 62%);
+    mix-blend-mode: overlay;
   }
 
   @media (prefers-reduced-motion: reduce) {
