@@ -6,13 +6,13 @@ import { CashClose, PaperReceipt } from "./motion-primitives";
  */
 export function BeatTickets() {
   const tickets = [
-    { amount: "€ 28", x: "8%", y: "18%", z: -280, r: -14 },
-    { amount: "€ 65", x: "72%", y: "10%", z: -220, r: 10 },
-    { amount: "€ 42", x: "22%", y: "62%", z: -160, r: -6 },
-    { amount: "€ 18", x: "60%", y: "68%", z: -100, r: 18 },
-    { amount: "€ 95", x: "44%", y: "30%", z: -40, r: -3 },
-    { amount: "€ 32", x: "85%", y: "55%", z: 20, r: 7 },
-    { amount: "€ 50", x: "5%", y: "42%", z: 60, r: -22 },
+    { amount: "€ 28", x: "8%", y: "10%", z: -280, r: -14 },
+    { amount: "€ 65", x: "72%", y: "8%", z: -220, r: 10 },
+    { amount: "€ 42", x: "15%", y: "72%", z: -160, r: -6 },
+    { amount: "€ 18", x: "65%", y: "78%", z: -100, r: 18 },
+    { amount: "€ 95", x: "78%", y: "28%", z: -40, r: -3 },
+    { amount: "€ 32", x: "85%", y: "65%", z: 20, r: 7 },
+    { amount: "€ 50", x: "5%", y: "55%", z: 60, r: -22 },
   ];
 
   return (
