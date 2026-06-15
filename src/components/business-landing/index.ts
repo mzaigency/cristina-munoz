@@ -14,3 +14,5 @@ export { FAQSection } from './FAQSection';
 export { FinalCTASection } from './FinalCTASection';
 export { Footer } from './Footer';
 export { FloatingMobileCTA } from './FloatingMobileCTA';
+export { SocialProofStrip } from './SocialProofStrip';
+export { LiveSalonsRow } from './LiveSalonsRow';

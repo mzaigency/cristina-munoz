@@ -9,6 +9,9 @@ import {
   ClosingCTA,
   Footer,
   FloatingMobileCTA,
+  SocialProofStrip,
+  TestimonialsSection,
+  PricingSection,
 } from "@/components/business-landing";
 import { Preloader } from "@/components/ui/preloader";
 import { LandingBackground } from "@/components/ui/landing-background";
@@ -55,9 +58,12 @@ export default function ForBusiness() {
         <Preloader logoUrl={glowappLogo} logoVariant="bare" />
         <StickyHeader />
         <CinematicHero />
+        <SocialProofStrip />
         <PanelShowcase />
         <FeatureSpotlights />
+        <TestimonialsSection />
         <HowItWorks />
+        <PricingSection />
         <FAQSection />
         <ClosingCTA />
         <Footer />
