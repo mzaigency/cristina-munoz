@@ -68,7 +68,6 @@ export default function ForBusiness() {
         <FAQSection />
         <ClosingCTA />
         <Footer />
-        <FloatingMobileCTA />
       </div>
     </>
   );
