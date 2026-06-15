@@ -91,14 +91,14 @@ function Spotlight({ kicker, icon, title, body, bullets, visual, reverse }: Spot
         <motion.div
           animate={{ y: [0, -10, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          className="relative flex w-full max-w-md items-center justify-center overflow-hidden rounded-[28px] p-8"
+          className="relative flex w-full max-w-md items-center justify-center overflow-hidden rounded-[24px] p-5 sm:rounded-[28px] sm:p-8"
           style={cardStyle}
         >
           <div
             className="pointer-events-none absolute inset-0 opacity-60"
             style={{ background: "radial-gradient(600px circle at 30% 20%, hsl(var(--accent)/0.25), transparent 60%)" }}
           />
-          <div className="relative">{visual}</div>
+          <div className="relative w-full flex justify-center">{visual}</div>
         </motion.div>
       </motion.div>
     </div>
