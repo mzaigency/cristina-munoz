@@ -17,7 +17,7 @@ interface Stat {
 }
 const STATS: Stat[] = [
   { value: 5, format: (v) => `${Math.round(v)} min`, label: "para montar tu salón" },
-  { value: 0, format: () => "0 €", label: "para empezar, sin tarjeta" },
+  { value: 0, format: () => "0 €", label: "para empezar el primer mes" },
   { value: 24, format: () => "24/7", label: "reservas, también de noche" },
   { value: 25, format: (v) => `−${Math.round(v)}%`, label: "plantones con recordatorios" },
 ];
