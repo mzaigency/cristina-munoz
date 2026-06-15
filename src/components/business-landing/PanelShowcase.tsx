@@ -94,8 +94,11 @@ export const PanelShowcase = () => {
                 glowapp.app/admin/{active.id}
               </span>
             </div>
-            {/* screen */}
-            <div className="relative aspect-[16/10] bg-[#f6f7fb]">
+            {/* screen — pixel-perfect 900x562 stage, escala con el contenedor */}
+            <div
+              className="stage-scale bg-[#f6f7fb]"
+              style={{ aspectRatio: "900 / 562", ['--stage-w' as any]: '900px', ['--stage-h' as any]: '562px' }}
+            >
               <AnimatePresence mode="wait">
                 <motion.div
                   key={active.id}
@@ -103,7 +106,7 @@ export const PanelShowcase = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.99 }}
                   transition={{ duration: 0.3, ease: EASE }}
-                  className="absolute inset-0"
+                  className="stage-inner"
                 >
                   {active.render()}
                 </motion.div>

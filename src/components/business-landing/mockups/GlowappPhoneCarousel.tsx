@@ -194,9 +194,14 @@ export function GlowappPhoneCarousel() {
           <motion.div
             key={screens[idx].id}
             custom={dir}
-            initial={(d: number) => ({ opacity: 0, x: d * 36 })}
-            animate={{ opacity: 1, x: 0 }}
-            exit={(d: number) => ({ opacity: 0, x: -d * 36 })}
+            variants={{
+              initial: (d: number) => ({ opacity: 0, x: d * 36 }),
+              animate: { opacity: 1, x: 0 },
+              exit: (d: number) => ({ opacity: 0, x: -d * 36 }),
+            }}
+            initial="initial"
+            animate="animate"
+            exit="exit"
             transition={{ duration: 0.35, ease: EASE }}
             className="absolute inset-0"
           >
