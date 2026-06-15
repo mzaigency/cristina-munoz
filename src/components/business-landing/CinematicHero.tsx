@@ -328,7 +328,7 @@ export const CinematicHero = () => {
           Empieza hoy.
         </h2>
         <p className="mx-auto mb-9 max-w-md text-base font-light text-muted-foreground md:text-lg">
-          Crea tu salón en <span className="font-ashing">Glowapp</span> en 5 minutos. Sin tarjeta, sin permanencia.
+          Crea tu salón en <span className="font-ashing">Glowapp</span> en 5 minutos. Sin permanencia.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row">
           <button onClick={() => navigate("/onboarding")} className="ch-btn-primary group inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-4 text-base font-semibold">
