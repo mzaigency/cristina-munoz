@@ -107,12 +107,55 @@ function Spotlight({ kicker, icon, title, body, bullets, visual, reverse }: Spot
 
 /* Visuales compactos por feature */
 
-const PhoneVisual = () => (
-  <div className="relative h-[420px] w-[210px] rounded-[2.4rem] bg-black p-[5px] shadow-2xl">
-    <div className="relative h-full overflow-hidden rounded-[2rem] bg-white">
-      <div className="absolute left-1/2 top-[5px] z-50 h-[22px] w-[76px] -translate-x-1/2 rounded-full bg-black" />
-      <TenantLandingMockup variant="mobile" />
+// Agenda que se llena sola — visual distinto del mockup web (evita redundancia)
+const AGENDA_SLOTS = [
+  { t: "10:00", n: "María L.", s: "Corte + color", c: "hsl(var(--primary))" },
+  { t: "11:30", n: "Ana P.", s: "Peinado", c: "hsl(var(--accent))" },
+  { t: "13:00", n: "Carmen R.", s: "Mechas", c: "hsl(199 89% 48%)" },
+  { t: "17:30", n: "Sofía D.", s: "Manicura", c: "hsl(142 71% 45%)" },
+];
+const AgendaFillVisual = () => (
+  <div className="relative w-[270px] rounded-2xl bg-white p-5 text-slate-900 shadow-xl">
+    <div className="mb-4 flex items-center justify-between">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Hoy · agenda</p>
+        <p className="text-lg font-extrabold tracking-tight">8 citas</p>
+      </div>
+      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-600">+3 hoy</span>
     </div>
+    <div className="space-y-2">
+      {AGENDA_SLOTS.map((a, i) => (
+        <motion.div
+          key={a.t}
+          initial={{ opacity: 0, x: 20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.25 + i * 0.13, ease: EASE }}
+          className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-2.5"
+        >
+          <span className="text-[11px] font-bold tabular-nums text-slate-400">{a.t}</span>
+          <span className="h-7 w-1 flex-none rounded-full" style={{ background: a.c }} />
+          <div className="min-w-0">
+            <p className="truncate text-[12px] font-semibold leading-tight">{a.n}</p>
+            <p className="truncate text-[10px] text-slate-400">{a.s}</p>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+    {/* Toast nueva reserva */}
+    <motion.div
+      initial={{ opacity: 0, y: 12, scale: 0.9 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ delay: 1.05, type: "spring", bounce: 0.4 }}
+      className="absolute -bottom-3 -right-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-lg ring-1 ring-black/5"
+    >
+      <span className="relative flex h-2 w-2">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+      </span>
+      <span className="text-[11px] font-semibold text-slate-700">Nueva reserva online</span>
+    </motion.div>
   </div>
 );
 
@@ -169,7 +212,7 @@ export const FeatureSpotlights = () => {
           transition={{ duration: 0.6, ease: EASE }}
           className="mx-auto mb-20 max-w-2xl text-center"
         >
-          <Eyebrow>Por qué Glowapp</Eyebrow>
+          <Eyebrow>Por qué <span className="font-ashing">Glowapp</span></Eyebrow>
           <h2 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
             El papeleo no paga facturas.{" "}
             <span className="font-serif italic" style={{ background: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
@@ -177,7 +220,7 @@ export const FeatureSpotlights = () => {
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-base text-muted-foreground sm:text-lg">
-            Glowapp se encarga de lo aburrido para que tú te dediques a lo que se te da bien.
+            <span className="font-ashing">Glowapp</span> se encarga de lo aburrido para que tú te dediques a lo que se te da bien.
           </p>
         </motion.div>
 
@@ -188,7 +231,7 @@ export const FeatureSpotlights = () => {
             title={<>Llena tu agenda<br className="hidden sm:block" /> mientras duermes</>}
             body="Tus clientes reservan desde tu web a cualquier hora, sin que cojas el teléfono. Cada hueco libre se vende solo."
             bullets={["Confirmación automática por la app", "Recordatorios que reducen los plantones", "Si cancelan, el hueco se libera solo"]}
-            visual={<PhoneVisual />}
+            visual={<AgendaFillVisual />}
           />
           <Spotlight
             reverse
@@ -307,7 +350,7 @@ export const ClosingCTA = () => {
               </span>
             </h2>
             <p className="mx-auto mt-6 max-w-md text-base text-white/65 sm:text-lg">
-              Monta Glowapp en 5 minutos. Gratis, sin tarjeta y sin permanencia.
+              Monta <span className="font-ashing">Glowapp</span> en 5 minutos. Gratis, sin tarjeta y sin permanencia.
             </p>
             <div className="mt-10 flex justify-center">
               <button

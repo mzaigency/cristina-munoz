@@ -2,16 +2,17 @@ import { SEO } from "@/components/SEO";
 import {
   StickyHeader,
   CinematicHero,
+  SocialProofStrip,
   PanelShowcase,
   FeatureSpotlights,
+  RoiCalculator,
+  SalonTestimonials,
+  PricingCompare,
   HowItWorks,
   FAQSection,
   ClosingCTA,
   Footer,
   FloatingMobileCTA,
-  SocialProofStrip,
-  TestimonialsSection,
-  PricingSection,
 } from "@/components/business-landing";
 import { Preloader } from "@/components/ui/preloader";
 import { LandingBackground } from "@/components/ui/landing-background";
@@ -21,9 +22,9 @@ export default function ForBusiness() {
   return (
     <>
       <SEO
-        title="GlowApp para Negocios | Tu salón de belleza digitalizado"
-        description="Reservas 24/7, agenda, caja y tu propia web profesional. Todo lo que tu salón necesita en una sola app. Empieza gratis, sin tarjeta."
-        keywords="software salón belleza, app peluquería, gestión barbería, reservas online spa, agenda profesional belleza"
+        title="Glowapp para Negocios | Tu salón de belleza digitalizado, gratis"
+        description="Reservas 24/7, agenda, caja y tu propia web profesional. Todo lo que tu salón necesita en una sola app. Empieza gratis, sin tarjeta y sin permanencia."
+        keywords="software salón belleza, app peluquería, gestión barbería, reservas online spa, agenda profesional belleza, alternativa Booksy gratis"
         canonicalUrl="/negocios"
         breadcrumbs={[
           { name: "Inicio", url: "/" },
@@ -31,7 +32,7 @@ export default function ForBusiness() {
         ]}
         faq={[
           {
-            question: "¿Cuánto cuesta empezar con GlowApp?",
+            question: "¿Cuánto cuesta empezar con Glowapp?",
             answer:
               "Empezar es gratis y sin tarjeta. Creas tu salón, montas tu web y abres reservas sin pagar nada para arrancar.",
           },
@@ -41,14 +42,14 @@ export default function ForBusiness() {
               "Incluye página web profesional, sistema de reservas 24/7, agenda inteligente multi-profesional, caja registradora, fichas de clientes y analytics.",
           },
           {
-            question: "¿Puedo gestionar varios estilistas?",
+            question: "¿Puedo gestionar varios profesionales?",
             answer:
               "Sí. Puedes añadir varios profesionales, cada uno con su propio horario y calendario. Los clientes eligen con quién reservar.",
           },
           {
             question: "¿Necesito conocimientos técnicos?",
             answer:
-              "No. GlowApp se usa desde el móvil sin saber de tecnología y la configuración básica tarda unos 5 minutos guiados paso a paso.",
+              "No. Glowapp se usa desde el móvil sin saber de tecnología y la configuración básica tarda unos 5 minutos guiados paso a paso.",
           },
         ]}
       />
@@ -61,9 +62,10 @@ export default function ForBusiness() {
         <SocialProofStrip />
         <PanelShowcase />
         <FeatureSpotlights />
-        <TestimonialsSection />
+        <RoiCalculator />
+        <SalonTestimonials />
+        <PricingCompare />
         <HowItWorks />
-        <PricingSection />
         <FAQSection />
         <ClosingCTA />
         <Footer />

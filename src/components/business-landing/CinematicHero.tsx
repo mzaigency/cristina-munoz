@@ -1,23 +1,25 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { motion } from "framer-motion";
-import { ArrowRight, TrendingUp } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { GlowappPhoneCarousel, RING_C, RING_PCT } from "./mockups/GlowappPhoneCarousel";
+import { HeroStory } from "./HeroStory";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
 /**
- * Hero cinemático de Glowapp. Acto pinned corto (híbrido): texto editorial →
- * la tarjeta premium sube y se expande → mockup 3D del producto (Mac en
- * desktop, iPhone en móvil) con parallax de ratón → badges + CTA. Al terminar
- * suelta el scroll a las secciones normales de abajo.
+ * Hero cinemático de Glowapp. Un único acto pinned y scrubbeado:
+ *   1. Texto editorial → la tarjeta navy sube y se expande a escenario fullscreen.
+ *   2. Relato parallax 3D (`HeroStory`): 3 beats dolor→solución con tipografía
+ *      cinética — la palabra-dolor se desintegra char a char y resuelve en
+ *      gradiente de marca (WhatsApps, contabilidad a mano, agenda caótica).
+ *   3. Slogan "El software de salón que no te cuesta nada" + remate con barrido
+ *      de luz "Tú, a hacer brillar el salón." → CTA. Suelta el scroll abajo.
  *
- * Identidad Glowapp: fondo claro, gradiente azul→morado de marca, mezcla de
- * Plus Jakarta Sans + Playfair Display (italic) de la landing de tenant.
+ * Identidad Glowapp: gradiente azul→morado de marca, Plus Jakarta Sans +
+ * Playfair Display (italic). GSAP solo vive aquí (pin único + scrub).
  */
 const INJECTED_STYLES = `
   .ch-reveal { visibility: hidden; }
@@ -75,20 +77,6 @@ const INJECTED_STYLES = `
     mix-blend-mode: screen;
   }
 
-  /* Hardware de device */
-  .ch-bezel {
-    background-color: #0c0c10;
-    box-shadow: inset 0 0 0 2px #3a3a44, inset 0 0 0 7px #000,
-      0 40px 80px -15px rgba(0,0,0,0.7), 0 15px 25px -5px rgba(0,0,0,0.5);
-  }
-  .ch-mac-bezel {
-    background: linear-gradient(180deg, #1a1a20 0%, #0c0c10 100%);
-    box-shadow: inset 0 0 0 1px #34343c, 0 50px 90px -25px rgba(0,0,0,0.6), 0 20px 40px -10px rgba(0,0,0,0.45);
-  }
-  .ch-screen-glare {
-    background: linear-gradient(110deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 45%);
-  }
-
   /* Badge flotante de cristal */
   .ch-badge {
     background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 100%);
@@ -116,6 +104,16 @@ const INJECTED_STYLES = `
   .ch-btn-ghost:hover { transform: translateY(-3px); background: hsl(var(--foreground) / 0.08); }
   .ch-btn-ghost:active { transform: translateY(1px) scale(0.99); }
 
+  /* ── Relato parallax (acto 2) ── */
+  /* Dolor: gris-azulado frío y desaturado. */
+  .ch-story-pain { color: hsl(220 16% 72%); text-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+  .ch-story-pain .ch-char { color: #fff; }
+  /* Barrido de luz sobre el remate (banda diagonal que cruza, scrubbeada). */
+  .ch-shine {
+    background: linear-gradient(100deg, transparent 38%, rgba(255,255,255,0.6) 50%, transparent 62%);
+    mix-blend-mode: screen;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .ch-reveal { visibility: visible !important; }
   }
@@ -125,23 +123,23 @@ export const CinematicHero = () => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  const deviceRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
 
-  // Parallax de ratón sobre el device + sheen de la tarjeta
+  // Parallax de ratón sobre el escenario 3D + sheen de la tarjeta
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return;
     const onMove = (e: MouseEvent) => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
-        if (!cardRef.current || !deviceRef.current) return;
+        if (!cardRef.current || !stageRef.current) return;
         const rect = cardRef.current.getBoundingClientRect();
         cardRef.current.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
         cardRef.current.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
         const xVal = (e.clientX / window.innerWidth - 0.5) * 2;
         const yVal = (e.clientY / window.innerHeight - 0.5) * 2;
-        gsap.to(deviceRef.current, { rotationY: xVal * 9, rotationX: -yVal * 9, ease: "power3.out", duration: 1.1 });
+        gsap.to(stageRef.current, { rotationY: xVal * 6, rotationX: -yVal * 6, ease: "power3.out", duration: 1.2 });
       });
     };
     window.addEventListener("mousemove", onMove);
@@ -153,25 +151,26 @@ export const CinematicHero = () => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const isMobile = window.innerWidth < 768;
 
-    const ringCounter = { v: 0 };
+    const zIn = isMobile ? -320 : -520;
+    const zOut = isMobile ? 200 : 320;
+    const scatter = isMobile ? 55 : 90;
 
     const ctx = gsap.context(() => {
       gsap.set(".ch-reveal", { visibility: "visible" });
 
       if (reduce) {
-        // Estado final estático, sin scrub
-        gsap.set([".ch-hero-text"], { autoAlpha: 0 });
-        gsap.set([".ch-card", ".ch-device", ".ch-badge", ".ch-card-left", ".ch-card-right", ".ch-cta"], { autoAlpha: 1, clearProps: "transform" });
-        gsap.set(".ch-res-ring", { strokeDashoffset: RING_C * (1 - RING_PCT) });
-        const el = document.querySelector(".ch-res-count");
-        if (el) el.textContent = "127";
+        // Sin scrub: hero editorial estático. El relato y el CTA se omiten
+        // (las secciones de abajo siguen ofreciendo conversión).
+        gsap.set([".ch-card", ".ch-story", ".ch-cta"], { autoAlpha: 0 });
         return;
       }
 
       gsap.set(".ch-track", { autoAlpha: 0, y: 60, scale: 0.88, filter: "blur(16px)" });
       gsap.set(".ch-track-2", { autoAlpha: 0, clipPath: "inset(0 100% 0 0)" });
       gsap.set(".ch-card", { y: () => window.innerHeight + 200, autoAlpha: 1 });
-      gsap.set([".ch-card-left", ".ch-card-right", ".ch-device", ".ch-badge"], { autoAlpha: 0 });
+      gsap.set(".ch-story", { autoAlpha: 0 });
+      gsap.set(".ch-beat", { autoAlpha: 0 });
+      gsap.set(".ch-story-sol", { autoAlpha: 0 });
       gsap.set(".ch-cta", { autoAlpha: 0, scale: 0.85, filter: "blur(20px)" });
 
       const intro = gsap.timeline({ delay: 0.25 });
@@ -183,37 +182,74 @@ export const CinematicHero = () => {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: isMobile ? "+=1100" : "+=1800",
+          end: "+=4800",
           pin: true,
           scrub: 1,
           anticipatePin: 1,
         },
       });
 
+      // ── Acto 1 → escenario: la tarjeta navy sube y se expande a fullscreen
       tl
         .to([".ch-hero-text", ".ch-grid"], { scale: 1.12, filter: "blur(16px)", opacity: 0.15, ease: "power2.inOut", duration: 2 }, 0)
         .to(".ch-card", { y: 0, ease: "power3.inOut", duration: 2 }, 0)
         .to(".ch-card", { width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: 1.5 })
-        .fromTo(".ch-device",
-          { y: 200, z: -400, rotationX: 42, autoAlpha: 0, scale: 0.72 },
-          { y: 0, z: 0, rotationX: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 2.2 }, "-=0.6")
-        .fromTo(".ch-card-right", { x: 70, autoAlpha: 0, scale: 0.85 }, { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 1.4 }, "-=1.8")
-        .fromTo(".ch-card-left", { x: -50, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.3 }, "-=1.4")
-        .fromTo(".ch-badge", { y: 70, autoAlpha: 0, scale: 0.7 }, { y: 0, autoAlpha: 1, scale: 1, ease: "back.out(1.5)", duration: 1.2, stagger: 0.16 }, "-=1.3")
-        // Anillo de reservas se rellena con el scroll + contador sube
-        .to(".ch-res-ring", { strokeDashoffset: RING_C * (1 - RING_PCT), ease: "none", duration: 2.4 }, "ring")
-        .to(ringCounter, {
-          v: 127, snap: { v: 1 }, ease: "none", duration: 2.4,
-          onUpdate: () => {
-            const el = document.querySelector(".ch-res-count");
-            if (el) el.textContent = String(Math.round(ringCounter.v));
-          },
-        }, "ring")
-        .to({}, { duration: 1 })
         .set(".ch-hero-text", { autoAlpha: 0 })
+        .to(".ch-story", { autoAlpha: 1, ease: "power2.out", duration: 0.6 }, "-=0.4");
+
+      // ── Helper: un beat dolor→solución con desintegración de la palabra-dolor
+      const beat = (sel: string) => {
+        tl
+          // dolor entra desde el fondo (z negativo + blur), frío
+          .fromTo(sel,
+            { autoAlpha: 0, z: zIn, filter: "blur(14px)" },
+            { autoAlpha: 1, z: 0, filter: "blur(0px)", ease: "expo.out", duration: 1.6 })
+          .to({}, { duration: 0.9 }) // sostiene el dolor
+          // la palabra-dolor se desintegra char a char
+          .to(`${sel} .ch-char`, {
+            x: () => gsap.utils.random(-scatter, scatter),
+            y: () => gsap.utils.random(-scatter * 0.7, scatter * 0.7),
+            rotation: () => gsap.utils.random(-55, 55),
+            filter: "blur(10px)", autoAlpha: 0,
+            stagger: { each: 0.05, from: "random" },
+            ease: "power2.in", duration: 1,
+          })
+          // el resto de la frase de dolor se apaga
+          .to(`${sel} .ch-story-pain`, { autoAlpha: 0, filter: "blur(8px)", ease: "power2.in", duration: 0.7 }, "<0.25")
+          // la solución florece en gradiente de marca
+          .fromTo(`${sel} .ch-story-sol`,
+            { autoAlpha: 0, scale: 0.92, filter: "blur(12px)" },
+            { autoAlpha: 1, scale: 1, filter: "blur(0px)", ease: "expo.out", duration: 1.2 }, "<0.15")
+          .to({}, { duration: 1 }) // sostiene la solución
+          // sale empujado hacia el frente
+          .to(sel, { autoAlpha: 0, z: zOut, filter: "blur(10px)", ease: "power2.in", duration: 1 });
+      };
+
+      beat(".ch-beat-1");
+      beat(".ch-beat-2");
+      beat(".ch-beat-3");
+
+      // ── Slogan: bloom tipográfico desde el centro
+      tl
+        .fromTo(".ch-beat-slogan",
+          { autoAlpha: 0, scale: 0.85, filter: "blur(16px)" },
+          { autoAlpha: 1, scale: 1, filter: "blur(0px)", ease: "expo.out", duration: 1.6 })
+        .to({}, { duration: 1.2 })
+        .to(".ch-beat-slogan", { autoAlpha: 0, scale: 1.06, filter: "blur(10px)", ease: "power2.in", duration: 1 });
+
+      // ── Remate: entra + barrido de luz cruzando el texto
+      tl
+        .set(".ch-shine", { xPercent: -130 })
+        .fromTo(".ch-beat-remate",
+          { autoAlpha: 0, scale: 0.92, filter: "blur(12px)" },
+          { autoAlpha: 1, scale: 1, filter: "blur(0px)", ease: "expo.out", duration: 1.3 })
+        .to(".ch-shine", { xPercent: 130, ease: "power2.inOut", duration: 1.4 }, "<0.35")
+        .to({}, { duration: 0.8 });
+
+      // ── CTA: el escenario se contrae y aparece la llamada a la acción
+      tl
         .set(".ch-cta", { autoAlpha: 1 })
-        .to({}, { duration: 1 })
-        .to([".ch-device", ".ch-badge", ".ch-card-left", ".ch-card-right"], { scale: 0.92, y: -30, autoAlpha: 0, ease: "power3.in", duration: 1, stagger: 0.04 })
+        .to(".ch-story", { autoAlpha: 0, ease: "power2.in", duration: 1 }, "pullback")
         .to(".ch-card", { width: isMobile ? "92vw" : "84vw", height: isMobile ? "90vh" : "82vh", borderRadius: isMobile ? "28px" : "36px", ease: "expo.inOut", duration: 1.6 }, "pullback")
         .to(".ch-cta", { scale: 1, filter: "blur(0px)", ease: "expo.inOut", duration: 1.6 }, "pullback");
     }, containerRef);
@@ -240,7 +276,7 @@ export const CinematicHero = () => {
           gestionado solo.
         </h1>
         <p className="ch-track ch-reveal mx-auto mt-6 max-w-lg text-base font-light text-muted-foreground md:text-lg">
-          Reservas, agenda, caja y tu propia web. Todo en Glowapp.
+          Reservas, agenda, caja y tu propia web. Todo en <span className="font-ashing">Glowapp</span>, <span className="font-medium text-foreground">gratis</span>.
         </p>
       </div>
 
@@ -250,7 +286,7 @@ export const CinematicHero = () => {
           Empieza hoy.
         </h2>
         <p className="mx-auto mb-9 max-w-md text-base font-light text-muted-foreground md:text-lg">
-          Crea tu salón en Glowapp en 5 minutos. Sin tarjeta, sin permanencia.
+          Crea tu salón en <span className="font-ashing">Glowapp</span> en 5 minutos. Sin tarjeta, sin permanencia.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row">
           <button onClick={() => navigate("/onboarding")} className="ch-btn-primary group inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-4 text-base font-semibold">
@@ -266,93 +302,16 @@ export const CinematicHero = () => {
         </div>
       </div>
 
-      {/* Tarjeta física */}
+      {/* Tarjeta física → escenario del relato */}
       <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ perspective: "1500px" }}>
         <div
           ref={cardRef}
           className="ch-card ch-reveal relative flex h-[92vh] w-[92vw] items-center justify-center overflow-hidden rounded-[28px] md:h-[82vh] md:w-[84vw] md:rounded-[36px]"
+          style={{ perspective: "1400px" }}
         >
           <div className="ch-sheen" aria-hidden />
-
-          {/* Composición 3-col: texto · iPhone · wordmark (estilo template) */}
-          <div className="relative z-10 mx-auto grid h-full w-full max-w-6xl grid-cols-1 items-center gap-8 px-6 py-10 lg:grid-cols-[0.9fr_auto_0.9fr] lg:gap-4 lg:px-10">
-            {/* LEFT — texto */}
-            <div className="ch-card-left ch-reveal order-2 text-center lg:order-1 lg:pr-2 lg:text-left">
-              <h3 className="font-sans text-2xl font-bold leading-[1.08] tracking-tight text-white md:text-3xl lg:text-[2.6rem]">
-                Todo tu salón,<br className="hidden lg:block" /> en una app.
-              </h3>
-              <p className="mx-auto mt-4 max-w-xs text-sm font-light leading-relaxed text-blue-100/60 lg:mx-0">
-                Tú llevas el negocio desde el panel. Tus clientes reservan desde tu web. Sin papeles, sin llamadas, sin líos.
-              </p>
-            </div>
-
-            {/* CENTER — iPhone con carrusel */}
-            <div className="ch-device ch-reveal order-1 flex items-center justify-center lg:order-2" style={{ perspective: "1100px" }}>
-              <div ref={deviceRef} className="relative will-change-transform" style={{ transformStyle: "preserve-3d" }}>
-                {/* iPhone */}
-                <div className="ch-bezel relative h-[500px] w-[244px] rounded-[2.8rem] sm:h-[540px] sm:w-[264px]">
-                  {/* botones laterales */}
-                  <span className="absolute -left-[3px] top-[110px] h-7 w-[3px] rounded-l bg-gradient-to-r from-[#3a3a44] to-[#15151a]" />
-                  <span className="absolute -left-[3px] top-[150px] h-11 w-[3px] rounded-l bg-gradient-to-r from-[#3a3a44] to-[#15151a]" />
-                  <span className="absolute -left-[3px] top-[206px] h-11 w-[3px] rounded-l bg-gradient-to-r from-[#3a3a44] to-[#15151a]" />
-                  <span className="absolute -right-[3px] top-[165px] h-16 w-[3px] rounded-r bg-gradient-to-l from-[#3a3a44] to-[#15151a]" />
-                  {/* pantalla */}
-                  <div className="absolute inset-[6px] overflow-hidden rounded-[2.4rem] bg-[#0a0f1e]">
-                    <div className="ch-screen-glare pointer-events-none absolute inset-0 z-[60]" aria-hidden />
-                    <div className="absolute left-1/2 top-[10px] z-[60] flex h-[26px] w-[92px] -translate-x-1/2 items-center justify-end rounded-full bg-black px-3">
-                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                    </div>
-                    <GlowappPhoneCarousel />
-                  </div>
-                </div>
-
-                {/* Badge glass — fuera del teléfono (arriba-izq) */}
-                <motion.div
-                  className="ch-badge ch-reveal absolute -left-6 top-14 flex items-center gap-2.5 rounded-2xl p-3 lg:-left-24"
-                  animate={{ y: [0, -7, 0] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                  </span>
-                  <div className="text-left">
-                    <p className="text-[11px] font-bold leading-tight text-white">Nueva reserva</p>
-                    <p className="text-[9px] text-blue-200/60">Confirmada · 17:30</p>
-                  </div>
-                </motion.div>
-
-                {/* Badge glass — fuera del teléfono (abajo-der) con mini-barras */}
-                <motion.div
-                  className="ch-badge ch-reveal absolute -right-6 bottom-20 flex flex-col gap-1.5 rounded-2xl p-3 lg:-right-24"
-                  animate={{ y: [0, 7, 0] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-[10px] font-semibold text-blue-200/70">Ingresos</p>
-                    <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-400"><TrendingUp className="h-2.5 w-2.5" />+18%</span>
-                  </div>
-                  <div className="flex h-7 items-end gap-1">
-                    {[0.5, 0.75, 0.55, 0.9, 1, 0.7].map((base, i) => (
-                      <motion.div
-                        key={i}
-                        className="w-1.5 rounded-sm"
-                        style={{ background: "linear-gradient(hsl(var(--accent)), hsl(var(--primary)))" }}
-                        animate={{ height: [`${base * 55}%`, `${Math.min(base + 0.25, 1) * 100}%`, `${base * 55}%`] }}
-                        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.18 }}
-                      />
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-
-            {/* RIGHT — wordmark gigante */}
-            <div className="ch-card-right ch-reveal order-3 flex justify-center lg:order-3 lg:justify-end">
-              <h2 className="ch-card-silver font-ashing text-6xl leading-none tracking-tight md:text-8xl lg:text-[6.5rem]">
-                Glowapp
-              </h2>
-            </div>
+          <div ref={stageRef} className="absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
+            <HeroStory />
           </div>
         </div>
       </div>

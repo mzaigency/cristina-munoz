@@ -1,74 +1,98 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Calendar, Star, ShieldCheck, Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { LiveSalonsRow } from "./LiveSalonsRow";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+import { Scissors, HeartPulse, Star } from "lucide-react";
+import { AnimatedNumber, EASE, gradientText } from "./_landingShared";
 
 /**
- * Banda de prueba social con métricas reales (rellenadas desde DB).
- * Muestra: reservas gestionadas · salones activos · valoración media · pagos seguros.
- * Pensada para colocarse justo después del hero, antes del PanelShowcase.
+ * Franja de prueba social bajo el hero. Dos capas:
+ *  1) Métricas honestas del producto (count-up al entrar en viewport).
+ *  2) Negocios REALES que ya funcionan con Glowapp (Cristina Muñoz · Montserrat
+ *     Faig) — prueba social verificable, no números inflados.
  */
+
+interface Stat {
+  value: number;
+  format: (v: number) => string;
+  label: string;
+}
+const STATS: Stat[] = [
+  { value: 5, format: (v) => `${Math.round(v)} min`, label: "para montar tu salón" },
+  { value: 0, format: () => "0 €", label: "para empezar, sin tarjeta" },
+  { value: 24, format: () => "24/7", label: "reservas, también de noche" },
+  { value: 25, format: (v) => `−${Math.round(v)}%`, label: "plantones con recordatorios" },
+];
+
+const SALONS = [
+  { name: "Cristina Muñoz", sector: "Peluquería · Madrid", Icon: Scissors },
+  { name: "Montserrat Faig", sector: "Fisioterapia · Barcelona", Icon: HeartPulse },
+];
+
 export const SocialProofStrip = () => {
-  const [bookings, setBookings] = useState<number | null>(null);
-  const [tenants, setTenants] = useState<number | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      const [b, t] = await Promise.all([
-        supabase.from("bookings").select("id", { count: "exact", head: true }),
-        supabase.from("tenants").select("id", { count: "exact", head: true }).eq("is_active", true),
-      ]);
-      if (typeof b.count === "number") setBookings(b.count);
-      if (typeof t.count === "number") setTenants(t.count);
-    })();
-  }, []);
-
-  const fmtBookings = (n: number | null) => {
-    if (n === null) return "—";
-    if (n >= 1000) return `${(Math.floor(n / 100) / 10).toFixed(1).replace(".", ",")}k+`;
-    return `${Math.max(n, 10)}+`;
-  };
-
-  const items = [
-    { icon: Calendar, value: fmtBookings(bookings), label: "reservas gestionadas" },
-    { icon: Sparkles, value: tenants !== null ? `${Math.max(tenants, 1)}+` : "—", label: tenants === 1 ? "salón activo" : "salones activos" },
-    { icon: Star, value: "4,9★", label: "valoración media" },
-    { icon: ShieldCheck, value: "Stripe", label: "pagos seguros · RGPD" },
-  ];
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section className="relative py-10 sm:py-14 bg-background/60 backdrop-blur-sm border-y border-border/50">
+    <section className="relative py-14 md:py-20">
       <div className="container mx-auto px-4">
+        {/* Métricas */}
+        <div
+          ref={ref}
+          className="mx-auto grid max-w-5xl grid-cols-2 gap-y-10 rounded-3xl border border-border/60 bg-card/70 px-6 py-10 shadow-sm backdrop-blur-sm md:grid-cols-4 md:gap-x-4 md:px-10"
+        >
+          {STATS.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 18 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: i * 0.1, duration: 0.5, ease: EASE }}
+              className="relative text-center md:px-4"
+            >
+              {i > 0 && (
+                <span className="absolute left-0 top-1/2 hidden h-10 w-px -translate-y-1/2 bg-border md:block" />
+              )}
+              <div
+                className="text-4xl font-bold tracking-tight tabular-nums sm:text-5xl"
+                style={gradientText}
+              >
+                <AnimatedNumber value={inView ? s.value : 0} format={s.format} />
+              </div>
+              <p className="mt-2 text-xs leading-snug text-muted-foreground sm:text-sm">
+                {s.label}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Negocios reales */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5 max-w-5xl mx-auto"
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.5, ease: EASE }}
+          className="mx-auto mt-10 flex max-w-3xl flex-col items-center gap-5 sm:flex-row sm:justify-center sm:gap-10"
         >
-          {items.map((it) => {
-            const Icon = it.icon;
-            return (
-              <div
-                key={it.label}
-                className="flex flex-col items-center text-center px-3 py-4 sm:py-5 rounded-2xl bg-background/80 border border-border/60 shadow-sm"
-              >
-                <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-2" />
-                <p className="text-xl sm:text-2xl font-bold text-foreground leading-none">
-                  {it.value}
-                </p>
-                <p className="text-[11px] sm:text-xs text-muted-foreground mt-1.5 leading-tight">
-                  {it.label}
-                </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Negocios reales que ya funcionan con <span className="font-ashing">Glowapp</span>
+          </p>
+          <div className="flex items-center gap-6">
+            {SALONS.map(({ name, sector, Icon }) => (
+              <div key={name} className="flex items-center gap-2.5">
+                <span
+                  className="flex h-9 w-9 flex-none items-center justify-center rounded-xl text-white shadow-sm"
+                  style={{ backgroundImage: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))" }}
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+                <div className="text-left leading-tight">
+                  <p className="text-sm font-semibold text-foreground">{name}</p>
+                  <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" /> {sector}
+                  </p>
+                </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </motion.div>
-
-        <div className="max-w-5xl mx-auto">
-          <LiveSalonsRow />
-        </div>
       </div>
     </section>
   );

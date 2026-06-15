@@ -1,7 +1,12 @@
 export { HeroSection } from './HeroSection';
 export { CinematicHero } from './CinematicHero';
+export { SocialProofStrip } from './SocialProofStrip';
+export { ProblemAgitation } from './ProblemAgitation';
 export { PanelShowcase } from './PanelShowcase';
 export { FeatureSpotlights, HowItWorks, ClosingCTA } from './BusinessSections';
+export { RoiCalculator } from './RoiCalculator';
+export { SalonTestimonials } from './SalonTestimonials';
+export { PricingCompare } from './PricingCompare';
 export { StickyHeader } from './StickyHeader';
 export { ValueProps } from './ValueProps';
 export { PainPointsSection } from './PainPointsSection';
@@ -14,5 +19,4 @@ export { FAQSection } from './FAQSection';
 export { FinalCTASection } from './FinalCTASection';
 export { Footer } from './Footer';
 export { FloatingMobileCTA } from './FloatingMobileCTA';
-export { SocialProofStrip } from './SocialProofStrip';
 export { LiveSalonsRow } from './LiveSalonsRow';

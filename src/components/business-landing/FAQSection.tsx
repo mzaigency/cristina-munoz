@@ -5,28 +5,36 @@ import { SectionEyebrow } from "./SectionEyebrow";
 
 const faqs = [
   {
+    question: "¿De verdad es gratis? ¿Dónde está la trampa?",
+    answer: "No hay trampa. Creas tu salón, montas tu web y abres reservas sin pagar nada y sin meter tarjeta. Empezamos siendo gratis para que cualquier negocio pueda digitalizarse. Si en el futuro lanzamos funciones avanzadas de pago, te lo diremos claro y tú decides — lo que tienes hoy se queda.",
+  },
+  {
+    question: "¿Mis datos y los de mis clientes están seguros?",
+    answer: "Sí. Tus datos y los de tus clientes están cifrados y alojados en servidores europeos, cumpliendo el RGPD. No vendemos ni cedemos información a terceros, y tus clientes son tuyos — no de un marketplace.",
+  },
+  {
+    question: "¿Puedo pasar mi agenda desde otra app o desde papel?",
+    answer: "Sí. Puedes empezar de cero en minutos o traer tus servicios, horarios y clientes. Si vienes de otra herramienta o de la libreta de toda la vida, te echamos una mano para que no pierdas nada por el camino.",
+  },
+  {
     question: "¿Cuánto tiempo tarda en configurarse?",
     answer: "La configuración básica toma unos 5 minutos. Solo necesitas añadir tus servicios, horarios y una foto de tu negocio. El sistema te guía paso a paso.",
   },
   {
     question: "¿Necesito conocimientos técnicos?",
-    answer: "Para nada. Glowapp está diseñado para ser usado desde el móvil sin ningún conocimiento técnico. Si sabes usar WhatsApp, sabes usar Glowapp.",
-  },
-  {
-    question: "¿Cuánto cuesta empezar?",
-    answer: "Empezar es gratis y sin tarjeta. Creas tu salón, montas tu web y abres reservas sin pagar nada. Si más adelante quieres funciones avanzadas, hablamos — pero para arrancar no necesitas poner un euro.",
+    answer: "Para nada. Glowapp está diseñado para usarse desde el móvil sin ningún conocimiento técnico. Si sabes usar WhatsApp, sabes usar Glowapp.",
   },
   {
     question: "¿Mis clientes tienen que instalar algo?",
     answer: "No. Tus clientes acceden a tu página web y reservan desde el navegador del móvil. Si quieren, pueden añadir Glowapp a la pantalla de inicio como una app — es opcional, pero más cómodo.",
   },
   {
-    question: "¿Funciona con mi equipo de estilistas?",
+    question: "¿Funciona con mi equipo de profesionales?",
     answer: "Sí. Puedes añadir varios profesionales, cada uno con su propio horario y calendario. Los clientes eligen con quién quieren reservar.",
   },
   {
     question: "¿Qué pasa si tengo problemas o dudas?",
-    answer: "Tienes soporte incluido por chat y email. Respondemos en menos de 24 horas (normalmente mucho antes). También tenemos tutoriales y guías en la app.",
+    answer: "Tienes soporte en español por chat y email incluido. Respondemos en menos de 24 horas (normalmente mucho antes). También tienes tutoriales y guías en la app.",
   },
 ];
 

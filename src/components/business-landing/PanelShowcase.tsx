@@ -1,17 +1,46 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, CalendarDays, Wallet, Users, BarChart3 } from "lucide-react";
-import { DashboardMockup } from "./mockups/DashboardMockup";
-import { AgendaMockup, CajaMockup, ClientesMockup, AnalyticsMockup } from "./mockups/PanelMockups";
+import { LayoutDashboard, CalendarDays, Wallet, BarChart3 } from "lucide-react";
+import panelInicio from "@/assets/panel-inicio.png";
+import panelAgenda from "@/assets/panel-agenda.png";
+import panelCaja from "@/assets/panel-caja.png";
+import panelNegocio from "@/assets/panel-negocio.png";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 const TABS = [
-  { id: "inicio", label: "Inicio", icon: LayoutDashboard, render: () => <DashboardMockup />, blurb: "Tu día de un vistazo: próxima cita, ingresos y ocupación." },
-  { id: "agenda", label: "Agenda", icon: CalendarDays, render: () => <AgendaMockup />, blurb: "Todos tus profesionales en una sola pantalla, sin solapamientos." },
-  { id: "caja", label: "Caja", icon: Wallet, render: () => <CajaMockup />, blurb: "Cobra en efectivo, tarjeta o Bizum. El cierre se hace solo." },
-  { id: "clientes", label: "Clientes", icon: Users, render: () => <ClientesMockup />, blurb: "Cada cliente con su historial, sus visitas y lo que se gasta." },
-  { id: "informes", label: "Informes", icon: BarChart3, render: () => <AnalyticsMockup />, blurb: "Sabe qué servicio te da más margen sin abrir un Excel." },
+  {
+    id: "inicio",
+    label: "Inicio",
+    icon: LayoutDashboard,
+    img: panelInicio,
+    urlPath: "inicio",
+    blurb: "Tu día de un vistazo: próxima cita, ingresos y ocupación en tiempo real.",
+  },
+  {
+    id: "agenda",
+    label: "Agenda",
+    icon: CalendarDays,
+    img: panelAgenda,
+    urlPath: "agenda/dia",
+    blurb: "Todos tus profesionales en una sola pantalla, sin solapamientos.",
+  },
+  {
+    id: "caja",
+    label: "Caja",
+    icon: Wallet,
+    img: panelCaja,
+    urlPath: "caja",
+    blurb: "Cobra en efectivo, tarjeta o Bizum. El cierre se hace solo.",
+  },
+  {
+    id: "negocio",
+    label: "Negocio",
+    icon: BarChart3,
+    img: panelNegocio,
+    urlPath: "negocio",
+    blurb: "Objetivos, ranking de equipo e insights del mes sin abrir un Excel.",
+  },
 ];
 
 export const PanelShowcase = () => {
@@ -19,7 +48,6 @@ export const PanelShowcase = () => {
 
   return (
     <section id="producto" className="relative scroll-mt-20 overflow-hidden py-24 md:py-32">
-      {/* glow de fondo sutil */}
       <div
         className="pointer-events-none absolute left-1/2 top-0 h-[480px] w-[900px] -translate-x-1/2 opacity-40 blur-[120px]"
         style={{ background: "radial-gradient(circle, hsl(var(--primary)/0.18), hsl(var(--accent)/0.12), transparent 70%)" }}
@@ -39,7 +67,15 @@ export const PanelShowcase = () => {
           </span>
           <h2 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
             Tu negocio entero,{" "}
-            <span className="font-serif italic" style={{ background: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+            <span
+              className="font-serif italic"
+              style={{
+                background: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
               en una pantalla.
             </span>
           </h2>
@@ -64,7 +100,9 @@ export const PanelShowcase = () => {
                 key={t.id}
                 onClick={() => setActive(t)}
                 className={`group inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-[transform,background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97] ${
-                  on ? "text-white shadow-lg shadow-primary/25" : "border border-border bg-card text-muted-foreground hover:text-foreground"
+                  on
+                    ? "text-white shadow-lg shadow-primary/25"
+                    : "border border-border bg-card text-muted-foreground hover:text-foreground"
                 }`}
                 style={on ? { backgroundImage: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))" } : undefined}
               >
@@ -82,39 +120,38 @@ export const PanelShowcase = () => {
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.8, ease: EASE }}
           style={{ perspective: 1400 }}
-          className="mx-auto max-w-4xl"
+          className="mx-auto max-w-5xl"
         >
           <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_50px_90px_-30px_rgba(20,22,48,0.4)]">
-            {/* chrome */}
+            {/* Chrome bar */}
             <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-2.5">
               <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
               <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
               <span className="h-3 w-3 rounded-full bg-[#28c840]" />
               <span className="mx-auto flex items-center gap-1.5 rounded-md bg-white px-3 py-1 text-[11px] text-slate-400 shadow-inner">
-                glowapp.app/admin/{active.id}
+                glowapp.app/admin/{active.urlPath}
               </span>
             </div>
-            {/* screen — pixel-perfect 900x562 stage, escala con el contenedor */}
-            <div
-              className="stage-scale bg-[#f6f7fb]"
-              style={{ aspectRatio: "900 / 562", ['--stage-w' as any]: '900px', ['--stage-h' as any]: '562px' }}
-            >
+
+            {/* Screenshot */}
+            <div className="relative w-full overflow-hidden bg-[#f6f7fb]">
               <AnimatePresence mode="wait">
-                <motion.div
+                <motion.img
                   key={active.id}
-                  initial={{ opacity: 0, y: 14, scale: 0.99 }}
+                  src={active.img}
+                  alt={`Panel Glowapp — ${active.label}`}
+                  initial={{ opacity: 0, y: 10, scale: 0.995 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.99 }}
-                  transition={{ duration: 0.3, ease: EASE }}
-                  className="stage-inner"
-                >
-                  {active.render()}
-                </motion.div>
+                  exit={{ opacity: 0, y: -8, scale: 0.995 }}
+                  transition={{ duration: 0.28, ease: EASE }}
+                  className="block w-full object-cover object-top"
+                  draggable={false}
+                />
               </AnimatePresence>
             </div>
           </div>
 
-          {/* caption */}
+          {/* Caption */}
           <AnimatePresence mode="wait">
             <motion.p
               key={active.id}
