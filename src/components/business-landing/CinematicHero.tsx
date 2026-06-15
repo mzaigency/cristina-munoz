@@ -286,14 +286,7 @@ export const CinematicHero = () => {
         .to({}, { duration: 1.2 })
         .to(".ch-beat-slogan", { autoAlpha: 0, scale: 1.06, filter: "blur(10px)", ease: "power2.in", duration: 1 });
 
-      // ── Remate: entra + barrido de luz cruzando el texto
-      tl
-        .set(".ch-shine", { xPercent: -130 })
-        .fromTo(".ch-beat-remate",
-          { autoAlpha: 0, scale: 0.92, filter: "blur(12px)" },
-          { autoAlpha: 1, scale: 1, filter: "blur(0px)", ease: "expo.out", duration: 1.3 })
-        .to(".ch-shine", { xPercent: 130, ease: "power2.inOut", duration: 1.4 }, "<0.35")
-        .to({}, { duration: 0.8 });
+      // (Remate eliminado — el slogan cierra el acto antes del CTA)
 
       // ── CTA: el escenario se contrae y aparece la llamada a la acción
       tl
