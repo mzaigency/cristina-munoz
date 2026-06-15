@@ -19,7 +19,7 @@ export const BookingMockup = () => {
           <p className="font-serif text-lg italic leading-tight">Cristina Muñoz</p>
           <div className="mt-1 flex items-center gap-3 text-[10px] text-white/85">
             <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-white" /> 4,9</span>
-            <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Madrid</span>
+            <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Santpedor</span>
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Abierto</span>
           </div>
         </div>

@@ -22,9 +22,12 @@ const STATS: Stat[] = [
   { value: 25, format: (v) => `−${Math.round(v)}%`, label: "plantones con recordatorios" },
 ];
 
+const CRISTINA_LOGO =
+  "https://lyeyzdbplrgqsvyxpfek.supabase.co/storage/v1/object/public/tenant-assets/a1b2c3d4-e5f6-7890-abcd-ef1234567890/logo-1766948799579.png";
+
 const SALONS = [
-  { name: "Cristina Muñoz", sector: "Peluquería · Madrid", Icon: Scissors },
-  { name: "Montserrat Faig", sector: "Fisioterapia · Barcelona", Icon: HeartPulse },
+  { name: "Cristina Muñoz", sector: "Peluquería · Santpedor", Icon: Scissors, logo: CRISTINA_LOGO as string | null },
+  { name: "Montserrat Faig", sector: "Fisioterapia · Manresa", Icon: HeartPulse, logo: null as string | null },
 ];
 
 export const SocialProofStrip = () => {
@@ -75,14 +78,23 @@ export const SocialProofStrip = () => {
             Negocios reales que ya funcionan con <span className="font-ashing">Glowapp</span>
           </p>
           <div className="flex items-center gap-6">
-            {SALONS.map(({ name, sector, Icon }) => (
+            {SALONS.map(({ name, sector, Icon, logo }) => (
               <div key={name} className="flex items-center gap-2.5">
-                <span
-                  className="flex h-9 w-9 flex-none items-center justify-center rounded-xl text-white shadow-sm"
-                  style={{ backgroundImage: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))" }}
-                >
-                  <Icon className="h-4 w-4" />
-                </span>
+                {logo ? (
+                  <img
+                    src={logo}
+                    alt={`Logo de ${name}`}
+                    loading="lazy"
+                    className="h-9 w-9 flex-none rounded-xl border border-border/60 object-cover shadow-sm"
+                  />
+                ) : (
+                  <span
+                    className="flex h-9 w-9 flex-none items-center justify-center rounded-xl text-white shadow-sm"
+                    style={{ backgroundImage: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))" }}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                )}
                 <div className="text-left leading-tight">
                   <p className="text-sm font-semibold text-foreground">{name}</p>
                   <p className="flex items-center gap-1 text-[11px] text-muted-foreground">

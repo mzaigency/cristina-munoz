@@ -12,7 +12,8 @@ type Salon = {
 };
 
 const FALLBACK: Salon[] = [
-  { id: "1", name: "Cristina Muñoz Perruqueria", slug: "cristina-munoz", city: "Barcelona", logo_url: null },
+  { id: "1", name: "Cristina Muñoz Perruqueria", slug: "cristina-munoz", city: "Santpedor", logo_url: null },
+  { id: "2", name: "Montserrat Faig", slug: "montserratfaig", city: "Manresa", logo_url: null },
 ];
 
 export const LiveSalonsRow = () => {
