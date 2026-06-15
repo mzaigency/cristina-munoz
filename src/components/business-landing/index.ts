@@ -3,7 +3,6 @@ export { CinematicHero } from './CinematicHero';
 export { SocialProofStrip } from './SocialProofStrip';
 export { ProblemAgitation } from './ProblemAgitation';
 export { PanelShowcase } from './PanelShowcase';
-export { ScrollPanelReveal } from './ScrollPanelReveal';
 export { FeatureSpotlights, HowItWorks, ClosingCTA } from './BusinessSections';
 export { RoiCalculator } from './RoiCalculator';
 export { SalonTestimonials } from './SalonTestimonials';
