@@ -37,7 +37,7 @@ export function BeatWhatsapps() {
       </div>
 
       {/* PAIN TEXT */}
-      <p className="ch-story-pain relative z-10 font-sans text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
+      <p className="ch-story-pain relative z-10 max-w-[18ch] rounded-3xl bg-background/70 px-5 py-3 font-sans text-4xl font-bold leading-[1.05] tracking-tight backdrop-blur-md md:text-6xl lg:text-7xl">
         El móvil no para.
         <br />
         <Chars text="WhatsApps" /> a todas horas.
