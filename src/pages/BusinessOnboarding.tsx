@@ -4,20 +4,21 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { 
-  Loader2, ArrowLeft, ArrowRight, Zap, Crown, Check, Sparkles, Users, Scissors, 
-  Clock, Star, Shield, CalendarCheck, Gift, Phone, Globe, BarChart3, 
-  MessageCircle, ChevronDown, Lock, CreditCard
+import {
+  Loader2, ArrowLeft, ArrowRight, Zap, Crown, Check, Building2, Star, Quote,
+  Shield, ChevronDown, Lock, Scissors, HeartPulse, Sparkles,
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { motion, AnimatePresence } from "motion/react";
 import { SupportButton } from "@/components/common/SupportButton";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { SectionHeader, gradientText, gradientBg } from "@/components/business-landing/_landingShared";
 
 const businessSchema = z.object({
   businessName: z.string().trim().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
@@ -33,106 +34,64 @@ const businessSchema = z.object({
 
 type BusinessFormValues = z.infer<typeof businessSchema>;
 type PlanSlug = "starter" | "pro" | "business";
-type BillingCycle = "monthly" | "annual";
 
-interface PlanInfo {
-  name: string;
-  icon: React.ReactNode;
-  monthlyPrice: number;
-  annualPrice: number;
-  stylists: string;
-  services: string;
-  features: string[];
-  color: string;
-  popular?: boolean;
-  cta: string;
-}
-
-// Fallback plans used only while DB loads
-const FALLBACK_PLANS: Record<PlanSlug, PlanInfo> = {
-  starter: {
-    name: "Starter",
-    icon: <Zap className="h-5 w-5" />,
-    monthlyPrice: 19,
-    annualPrice: 190,
-    stylists: "1 profesional",
-    services: "15 servicios",
-    features: ["Landing profesional", "Reservas 24/7", "Calendario inteligente", "Reseñas verificadas", "Stories"],
-    color: "from-blue-500 to-cyan-500",
-    cta: "Empezar gratis"
-  },
-  pro: {
-    name: "Pro",
-    icon: <Crown className="h-5 w-5" />,
-    monthlyPrice: 39,
-    annualPrice: 390,
-    stylists: "3 profesionales",
-    services: "25 servicios",
-    features: ["Todo de Starter", "Caja registradora", "Analíticas avanzadas", "Promociones", "Paquetes de servicios"],
-    color: "from-amber-500 to-orange-500",
-    popular: true,
-    cta: "Probar Pro gratis"
-  },
-  business: {
-    name: "Business",
-    icon: <Sparkles className="h-5 w-5" />,
-    monthlyPrice: 89,
-    annualPrice: 890,
-    stylists: "Ilimitados",
-    services: "Ilimitados",
-    features: ["Todo de Pro", "Comisiones por estilista", "Objetivos mensuales", "Lista de espera", "Soporte prioritario"],
-    color: "from-purple-500 to-pink-500",
-    cta: "Probar Business"
-  }
+const PLAN_ICONS: Record<string, { Icon: typeof Zap; opacity: string }> = {
+  starter: { Icon: Zap, opacity: "opacity-70" },
+  pro: { Icon: Crown, opacity: "opacity-100" },
+  business: { Icon: Building2, opacity: "opacity-100" },
 };
 
-const BENEFITS = [
-  { 
-    icon: CalendarCheck, 
-    title: "Reservas mientras duermes", 
-    desc: "Tus clientes reservan 24/7. Sin llamadas, sin WhatsApps perdidos.",
-    stat: "73%",
-    statLabel: "reservan fuera de horario"
-  },
-  { 
-    icon: Globe, 
-    title: "Tu web profesional en 5 min", 
-    desc: "Landing page optimizada con SEO, galería, servicios y reseñas.",
-    stat: "5 min",
-    statLabel: "para estar online"
-  },
-  { 
-    icon: BarChart3, 
-    title: "Controla tu negocio", 
-    desc: "Caja registradora, analíticas y objetivos. Todo en un solo lugar.",
-    stat: "2x",
-    statLabel: "más organizado"
-  },
-];
+const PLAN_SUBTITLES: Record<string, string> = {
+  starter: "Para empezar",
+  pro: "Para crecer",
+  business: "Sin límites",
+};
+
+const FEATURE_LABELS: Record<string, string> = {
+  stories: "Stories",
+  messages: "Mensajes directos",
+  cash_register: "Caja registradora",
+  advanced_analytics: "Analytics avanzados",
+  promotions: "Promociones y paquetes",
+  packages: "Paquetes de servicios",
+  pdf_reports: "Informes PDF",
+  commissions: "Comisiones por estilista",
+  monthly_goals: "Objetivos mensuales",
+  waitlist: "Lista de espera",
+  products: "Productos",
+  whatsapp_reminders: "Recordatorios por WhatsApp",
+};
+
+const CRISTINA_LOGO =
+  "https://lyeyzdbplrgqsvyxpfek.supabase.co/storage/v1/object/public/tenant-assets/a1b2c3d4-e5f6-7890-abcd-ef1234567890/logo-1766948799579.png";
 
 const TESTIMONIALS = [
   {
-    name: "María L.",
-    role: "Peluquería Glamour",
-    text: "Desde que uso GlowApp, las reservas por teléfono bajaron un 80%. Mis clientas reservan solas y yo tengo más tiempo.",
-    rating: 5,
+    initials: "CM",
+    name: "Cristina Muñoz",
+    sector: "Peluquería · Santpedor",
+    Icon: Scissors,
+    logo: CRISTINA_LOGO as string | null,
+    quote:
+      "Antes vivía pegada al teléfono. Ahora las clientas reservan solas, hasta de madrugada, y yo abro la app y veo el día ya montado.",
+    metric: "Reservas mientras duermo",
+    metricLabel: "la agenda se llena sin coger el teléfono",
   },
   {
-    name: "Carlos R.",
-    role: "Barbería Urban",
-    text: "La caja registradora y las analíticas me han cambiado el negocio. Ahora sé exactamente cuánto factura cada estilista.",
-    rating: 5,
-  },
-  {
-    name: "Ana P.",
-    role: "Centro de Estética Bella",
-    text: "En 10 minutos ya tenía mi pagina web, servicios y calendario funcionando. Mis clientas están encantadas.",
-    rating: 5,
+    initials: "MF",
+    name: "Montserrat Faig",
+    sector: "Fisioterapia · Manresa",
+    Icon: HeartPulse,
+    logo: null as string | null,
+    quote:
+      "Los pacientes que faltaban sin avisar eran mi pesadilla. Con los recordatorios automáticos los plantones casi han desaparecido.",
+    metric: "Plantones bajo control",
+    metricLabel: "los recordatorios hacen el trabajo",
   },
 ];
 
 const OBJECTIONS = [
-  { q: "¿Y si no me convence?", a: "30 días gratis sin compromiso. Sin tarjeta hasta que decidas. Cancelas con un clic." },
+  { q: "¿Y si no me convence?", a: "30 días gratis sin compromiso. Cancelas con un clic antes de que termine el periodo y no se cobra nada." },
   { q: "¿Es difícil de configurar?", a: "Un asistente te guía paso a paso. En 5 minutos tienes tu web lista con servicios, horarios y equipo." },
   { q: "¿Mis clientes sabrán usarlo?", a: "La experiencia de reserva es tan simple como pedir un Uber. Tus clientes lo amarán." },
   { q: "¿Puedo cambiar de plan?", a: "Sí, puedes subir o bajar de plan en cualquier momento. Sin penalizaciones." },
@@ -141,7 +100,7 @@ const OBJECTIONS = [
 export default function BusinessOnboarding() {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanSlug>("pro");
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("annual");
+  const [isAnnual, setIsAnnual] = useState(true);
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -149,57 +108,24 @@ export default function BusinessOnboarding() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
-  const { plans: dbPlans } = useSubscriptionPlans();
-
-  const PLANS = useMemo(() => {
-    if (dbPlans.length === 0) return FALLBACK_PLANS;
-    const result: Record<string, PlanInfo> = {};
-    const ICONS: Record<string, { icon: React.ReactNode; color: string; cta: string; popular?: boolean }> = {
-      starter: { icon: <Zap className="h-5 w-5" />, color: "from-blue-500 to-cyan-500", cta: "Empezar gratis" },
-      pro: { icon: <Crown className="h-5 w-5" />, color: "from-amber-500 to-orange-500", cta: "Probar Pro gratis", popular: true },
-      business: { icon: <Sparkles className="h-5 w-5" />, color: "from-purple-500 to-pink-500", cta: "Probar Business" },
-    };
-    dbPlans.forEach((p) => {
-      const meta = ICONS[p.slug] || ICONS.starter;
-      const ms = p.max_stylists;
-      const sv = p.max_services;
-      result[p.slug as PlanSlug] = {
-        name: p.name,
-        icon: meta.icon,
-        monthlyPrice: p.monthly_price,
-        annualPrice: p.annual_price || Math.round(p.monthly_price * 10),
-        stylists: ms && ms >= 999 ? "Ilimitados" : `${ms || 1} profesional${(ms || 1) > 1 ? "es" : ""}`,
-        services: sv && sv >= 999 ? "Ilimitados" : `${sv || 15} servicios`,
-        features: FALLBACK_PLANS[p.slug as PlanSlug]?.features || [],
-        color: meta.color,
-        popular: meta.popular,
-        cta: meta.cta,
-      };
-    });
-    return result as Record<PlanSlug, PlanInfo>;
-  }, [dbPlans]);
   const pricingRef = useRef<HTMLDivElement>(null);
+  const { plans, loading: plansLoading } = useSubscriptionPlans();
 
   const handlePlanSelect = (slug: PlanSlug) => {
     setSelectedPlan(slug);
     setShowForm(true);
     setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 150);
   };
 
   const scrollToPricing = () => {
-    pricingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    pricingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const form = useForm<BusinessFormValues>({
     resolver: zodResolver(businessSchema),
-    defaultValues: {
-      businessName: "",
-      businessSlug: "",
-      email: "",
-      phone: "",
-    },
+    defaultValues: { businessName: "", businessSlug: "", email: "", phone: "" },
   });
 
   const watchBusinessName = form.watch("businessName");
@@ -254,31 +180,24 @@ export default function BusinessOnboarding() {
       navigate(`/auth?redirect=/onboarding&mode=register`);
       return;
     }
-
     setLoading(true);
     try {
-      // Persist selected plan + business data so OnboardingSetup can provision correctly
-      // after returning from Stripe checkout
       localStorage.setItem("onboarding_plan_slug", selectedPlan);
-      localStorage.setItem("onboarding_billing_cycle", billingCycle);
+      localStorage.setItem("onboarding_billing_cycle", isAnnual ? "annual" : "monthly");
       localStorage.setItem("onboarding_business_name", values.businessName);
       localStorage.setItem("onboarding_business_slug", values.businessSlug);
 
       const { data, error } = await supabase.functions.invoke("create-business-checkout", {
         body: {
           planSlug: selectedPlan,
-          billingCycle: billingCycle,
+          billingCycle: isAnnual ? "annual" : "monthly",
           businessName: values.businessName,
           businessSlug: values.businessSlug,
         },
       });
-
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
-
-      if (data?.url) {
-        window.location.href = data.url;
-      }
+      if (data?.url) window.location.href = data.url;
     } catch (error: unknown) {
       toast({
         title: "Error",
@@ -290,42 +209,68 @@ export default function BusinessOnboarding() {
     }
   };
 
+  const buildFeatureList = (plan: typeof plans[0]) => {
+    const list: string[] = [];
+    const ms = plan.max_stylists;
+    const sv = plan.max_services;
+    list.push(ms && ms >= 999 ? "Profesionales ilimitados" : `${ms || 1} profesional${(ms || 1) > 1 ? "es" : ""}`);
+    list.push(sv && sv >= 999 ? "Servicios ilimitados" : `Hasta ${sv || 15} servicios`);
+    const idx = plans.indexOf(plan);
+    if (idx === 1) list.push("Todo de Starter +");
+    if (idx === 2) list.push("Todo de Pro +");
+    if (plan.features) {
+      const prevFeatures = idx > 0 ? plans[idx - 1]?.features || {} : {};
+      Object.entries(plan.features).forEach(([key, enabled]) => {
+        if (enabled && !prevFeatures[key] && FEATURE_LABELS[key]) {
+          list.push(FEATURE_LABELS[key]);
+        }
+      });
+    }
+    return list;
+  };
+
+  const currentPlanObj = useMemo(
+    () => plans.find((p) => p.slug === selectedPlan) || plans[1] || plans[0],
+    [plans, selectedPlan]
+  );
+
   if (checkingAuth) {
     return (
       <AppLayout hideNavigation>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="w-14 h-14 rounded-2xl liquid-glass-card flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       </AppLayout>
     );
   }
 
-  const currentPlan = PLANS[selectedPlan];
-  const savings = Math.round(currentPlan.monthlyPrice * 12 - currentPlan.annualPrice);
-
   return (
     <AppLayout hideNavigation>
       <SEO
-        title="Digitaliza tu Salón - GlowApp | Reservas Online en 5 Minutos"
-        description="Crea tu web profesional y recibe reservas 24/7. 30 días gratis. Sin tarjeta. Más de 500 salones ya confían en GlowApp."
+        title="Digitaliza tu Salón - Glowapp | Reservas Online en 5 Minutos"
+        description="Crea tu web profesional y recibe reservas 24/7. 30 días gratis. Más de 500 salones ya confían en Glowapp."
         canonicalUrl="/onboarding"
         faq={OBJECTIONS.map((o) => ({ question: o.q, answer: o.a }))}
       />
 
-      {/* Minimal header */}
-      <div 
-        className="sticky top-0 z-40 bg-background/80 backdrop-blur-2xl border-b border-white/10"
+      {/* Sticky header */}
+      <div
+        className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        <div className="px-4 py-3 flex items-center justify-between">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="h-8 w-8 rounded-full bg-white/5">
+        <div className="container mx-auto flex items-center justify-between px-4 py-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+            className="h-9 w-9 rounded-full"
+            aria-label="Volver"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Button 
+          <Button
             onClick={scrollToPricing}
-            className="h-8 rounded-full gradient-primary text-primary-foreground text-xs px-4 shadow-lg shadow-primary/20"
+            className="h-9 rounded-full gradient-primary px-4 text-xs text-white shadow-md"
           >
             Empezar gratis
           </Button>
@@ -334,345 +279,323 @@ export default function BusinessOnboarding() {
 
       <div className="pb-24">
         {/* ===== HERO ===== */}
-        <section className="px-4 pt-8 pb-10 text-center">
+        <section className="container mx-auto px-4 pt-10 pb-12 text-center md:pt-20 md:pb-16">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            {/* Urgency badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-5">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-medium text-emerald-500">30 días gratis</span>
-            </div>
+            <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              30 días gratis
+            </span>
 
-            <h1 className="text-[28px] leading-[1.15] font-bold text-foreground mb-3 tracking-tight">
-              Deja de perder clientes<br />
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="mx-auto max-w-2xl text-balance text-[34px] font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-6xl">
+              Deja de perder clientes{" "}
+              <span className="font-serif italic" style={gradientText}>
                 por no estar online
               </span>
             </h1>
 
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-6 leading-relaxed">
+            <p className="mx-auto mt-5 max-w-md text-base text-muted-foreground sm:text-lg">
               Tu web profesional con reservas 24/7 lista en 5 minutos. Sin saber programar.
             </p>
 
-            <Button 
-              onClick={scrollToPricing}
-              className="h-12 px-8 rounded-2xl gradient-primary text-primary-foreground shadow-xl shadow-primary/25 text-base font-semibold"
-            >
-              Crear mi salón gratis
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
+            <div className="mt-7 flex flex-col items-center gap-3">
+              <Button
+                onClick={scrollToPricing}
+                className="h-12 rounded-2xl gradient-primary px-8 text-base font-semibold text-white shadow-xl shadow-primary/25"
+              >
+                Crear mi salón gratis
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Shield className="h-3 w-3" />
+                Cancela cuando quieras · Sin compromisos
+              </p>
+            </div>
 
-            <p className="text-[11px] text-muted-foreground mt-3 flex items-center justify-center gap-1.5">
-              <Shield className="h-3 w-3" />
-              Cancela cuando quieras · Sin compromisos
-            </p>
+            {/* Social proof strip */}
+            <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-6 rounded-2xl border border-border/60 bg-card/60 px-6 py-4 backdrop-blur-sm">
+              <div className="text-center">
+                <p className="text-xl font-bold text-foreground">500+</p>
+                <p className="text-[10px] text-muted-foreground">Salones</p>
+              </div>
+              <div className="h-8 w-px bg-border" />
+              <div className="text-center">
+                <p className="text-xl font-bold text-foreground">50K+</p>
+                <p className="text-[10px] text-muted-foreground">Reservas/mes</p>
+              </div>
+              <div className="h-8 w-px bg-border" />
+              <div className="flex flex-col items-center">
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">4.9</p>
+              </div>
+            </div>
           </motion.div>
         </section>
 
-        {/* ===== SOCIAL PROOF BAR ===== */}
-        <motion.section 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="px-4 mb-10"
-        >
-          <div className="flex items-center justify-center gap-4 py-3 rounded-2xl bg-white/[0.03] border border-white/5">
-            <div className="text-center">
-              <p className="text-lg font-bold text-foreground">500+</p>
-              <p className="text-[10px] text-muted-foreground">Salones activos</p>
-            </div>
-            <div className="w-px h-8 bg-white/10" />
-            <div className="text-center">
-              <p className="text-lg font-bold text-foreground">50K+</p>
-              <p className="text-[10px] text-muted-foreground">Reservas/mes</p>
-            </div>
-            <div className="w-px h-8 bg-white/10" />
-            <div className="text-center flex flex-col items-center">
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-3 w-3 text-amber-400 fill-amber-400" />
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5">4.9 valoración</p>
-            </div>
-          </div>
-        </motion.section>
+        {/* ===== TESTIMONIALS (real salones) ===== */}
+        <section className="container mx-auto px-4 py-14 md:py-20">
+          <SectionHeader
+            eyebrow="Salones reales"
+            title={
+              <>
+                No te lo decimos nosotros.{" "}
+                <span className="font-serif italic" style={gradientText}>
+                  Te lo dicen ellas.
+                </span>
+              </>
+            }
+            subtitle="Negocios que cambiaron la libreta por Glowapp y no han vuelto atrás."
+            className="mb-10"
+          />
 
-        {/* ===== BENEFITS ===== */}
-        <section className="px-4 mb-12">
-          <motion.h2 
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-xl font-bold text-foreground text-center mb-6"
+          <motion.div
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.16 } } }}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2"
           >
-            Todo lo que necesitas<br />para crecer
-          </motion.h2>
-
-          <div className="space-y-3">
-            {BENEFITS.map((benefit, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -16 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="flex gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/5"
+            {TESTIMONIALS.map((t) => (
+              <motion.figure
+                key={t.name}
+                variants={{
+                  hidden: { opacity: 0, y: 30, scale: 0.96 },
+                  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", duration: 0.8, bounce: 0.2 } },
+                }}
+                className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/60 bg-card/85 p-6 shadow-sm backdrop-blur-sm transition-shadow duration-300 hover:shadow-[0_24px_50px_-16px_rgba(20,22,48,0.16)] sm:p-8"
               >
-                <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <benefit.icon className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-foreground mb-0.5">{benefit.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{benefit.desc}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-lg font-bold text-primary">{benefit.stat}</p>
-                  <p className="text-[9px] text-muted-foreground leading-tight">{benefit.statLabel}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
+                <Quote className="absolute right-6 top-6 h-10 w-10 text-primary/10" />
 
-        {/* ===== TESTIMONIALS ===== */}
-        <section className="px-4 mb-12">
-          <motion.h2 
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-xl font-bold text-foreground text-center mb-1"
-          >
-            Lo que dicen nuestros clientes
-          </motion.h2>
-          <p className="text-xs text-muted-foreground text-center mb-5">Historias reales de profesionales como tú</p>
-
-          <div className="space-y-3">
-            {TESTIMONIALS.map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="p-4 rounded-2xl bg-white/[0.03] border border-white/5"
-              >
-                <div className="flex gap-0.5 mb-2">
-                  {[...Array(t.rating)].map((_, j) => (
-                    <Star key={j} className="h-3 w-3 text-amber-400 fill-amber-400" />
+                <div className="mb-4 flex gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-sm text-foreground/90 leading-relaxed mb-3 italic">
-                  "{t.text}"
-                </p>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-xs font-bold text-primary">{t.name.charAt(0)}</span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground">{t.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{t.role}</p>
-                  </div>
+
+                <blockquote className="font-serif text-lg italic leading-relaxed text-foreground sm:text-xl">
+                  «{t.quote}»
+                </blockquote>
+
+                <div className="mt-5 inline-flex w-fit flex-col rounded-2xl bg-primary/[0.06] px-4 py-3">
+                  <span className="text-base font-bold tracking-tight sm:text-lg" style={gradientText}>
+                    {t.metric}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{t.metricLabel}</span>
                 </div>
-              </motion.div>
+
+                <figcaption className="mt-6 flex items-center gap-3 border-t border-border/60 pt-5">
+                  {t.logo ? (
+                    <img
+                      src={t.logo}
+                      alt={`Logo de ${t.name}`}
+                      loading="lazy"
+                      className="h-11 w-11 flex-none rounded-2xl border border-border/60 object-cover shadow-md"
+                    />
+                  ) : (
+                    <span
+                      className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl text-sm font-bold text-white shadow-md"
+                      style={{ backgroundImage: gradientBg }}
+                    >
+                      {t.initials}
+                    </span>
+                  )}
+                  <div>
+                    <p className="font-semibold text-foreground">{t.name}</p>
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <t.Icon className="h-3 w-3" /> {t.sector}
+                    </p>
+                  </div>
+                </figcaption>
+              </motion.figure>
             ))}
-          </div>
+          </motion.div>
         </section>
 
         {/* ===== PRICING ===== */}
-        <section ref={pricingRef} className="px-4 mb-10 scroll-mt-20">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-6"
-          >
-            <h2 className="text-xl font-bold text-foreground mb-1">Elige tu plan</h2>
-            <p className="text-xs text-muted-foreground">30 días gratis en todos los planes</p>
-          </motion.div>
+        <section ref={pricingRef} className="scroll-mt-20 bg-secondary/50 py-14 md:py-20">
+          <div className="container mx-auto px-4">
+            <SectionHeader
+              eyebrow="Precios transparentes"
+              title="Elige tu plan"
+              subtitle="Todos los planes incluyen 30 días de prueba gratis. Cancela cuando quieras."
+              className="mb-8"
+            />
 
-          {/* Billing toggle */}
-          <div className="flex flex-col items-center gap-2 mb-5">
-            <div className="relative inline-flex items-center gap-0.5 p-1 rounded-2xl bg-white/5 border border-white/10">
-              <button
-                type="button"
-                onClick={() => setBillingCycle("monthly")}
-                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
-                  billingCycle === "monthly"
-                    ? "bg-background/80 shadow-sm text-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                Mensual
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingCycle("annual")}
-                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
-                  billingCycle === "annual"
-                    ? "bg-primary shadow-sm text-primary-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                Anual
-              </button>
-              <span className="absolute -top-2 -right-1 bg-emerald-500 text-white text-[9px] px-1.5 py-0.5 rounded-md font-bold">
-                -17%
-              </span>
-            </div>
-            <AnimatePresence>
-              {billingCycle === "annual" && (
-                <motion.p
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="text-[11px] text-emerald-500 font-medium flex items-center gap-1"
-                >
-                  <Gift className="h-3 w-3" />
-                  Ahorras hasta 178€/año
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Plan cards */}
-          <div className="space-y-3">
-            {(Object.entries(PLANS) as [PlanSlug, PlanInfo][]).map(([slug, plan], idx) => {
-              const isSelected = selectedPlan === slug && showForm;
-              const monthlyEq = billingCycle === "annual" ? Math.round(plan.annualPrice / 12) : plan.monthlyPrice;
-              const planSavings = Math.round(plan.monthlyPrice * 12 - plan.annualPrice);
-              
-              return (
-                <motion.div
-                  key={slug}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.06 }}
-                  className={`relative rounded-2xl border transition-all ${
-                    plan.popular
-                      ? "border-primary/30 bg-primary/[0.03]"
-                      : "border-white/10 bg-white/[0.02]"
+            <div className="mb-10 flex justify-center">
+              <div className="inline-flex items-center gap-3 rounded-full border border-border bg-background p-1">
+                <span
+                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                    !isAnnual ? "bg-primary/10 font-medium text-foreground" : "text-muted-foreground"
                   }`}
                 >
-                  {plan.popular && (
-                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                      <span className="bg-primary text-primary-foreground text-[10px] px-3 py-0.5 rounded-full font-semibold shadow-sm">
-                        Más popular
-                      </span>
-                    </div>
-                  )}
+                  Mensual
+                </span>
+                <Switch checked={isAnnual} onCheckedChange={setIsAnnual} />
+                <span
+                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                    isAnnual ? "bg-primary/10 font-medium text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  Anual
+                  <span className="ml-1 text-xs font-medium text-emerald-600">−20%</span>
+                </span>
+              </div>
+            </div>
 
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`p-1.5 rounded-xl bg-gradient-to-br ${plan.color} text-white`}>
-                          {plan.icon}
+            {plansLoading ? (
+              <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-96 animate-pulse rounded-2xl bg-muted" />
+                ))}
+              </div>
+            ) : (
+              <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+                {plans.map((plan, index) => {
+                  const meta = PLAN_ICONS[plan.slug] || PLAN_ICONS.starter;
+                  const Icon = meta.Icon;
+                  const isPopular = index === 1;
+                  const annualPrice = plan.annual_price || Math.round(plan.monthly_price * 10);
+                  const annualMonthly = Math.round(annualPrice / 12);
+                  const annualSavings = plan.monthly_price * 12 - annualPrice;
+                  const features = buildFeatureList(plan);
+                  const isSelected = selectedPlan === plan.slug && showForm;
+
+                  return (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`relative rounded-2xl p-6 transition-all ${
+                        isPopular
+                          ? "border-2 border-primary bg-background shadow-xl shadow-primary/10"
+                          : isSelected
+                          ? "border-2 border-primary/60 bg-background"
+                          : "border border-border bg-background"
+                      }`}
+                    >
+                      {isPopular && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-lg">
+                            Más popular
+                          </span>
                         </div>
-                        <div>
-                          <h3 className="font-bold text-foreground">{plan.name}</h3>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-xl font-bold text-foreground">{monthlyEq}€</span>
-                            <span className="text-[11px] text-muted-foreground">/mes</span>
-                            {billingCycle === "annual" && (
-                              <span className="text-[10px] text-muted-foreground line-through ml-1">{plan.monthlyPrice}€</span>
-                            )}
-                          </div>
+                      )}
+
+                      <div className="mb-6">
+                        <div
+                          className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl gradient-primary shadow-lg shadow-primary/20 ${meta.opacity}`}
+                        >
+                          <Icon className="h-5 w-5 text-white" />
                         </div>
+                        <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{PLAN_SUBTITLES[plan.slug] || ""}</p>
                       </div>
-                      
+
+                      <div className="mb-6">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-4xl font-bold text-foreground">
+                            {isAnnual ? annualMonthly : plan.monthly_price}€
+                          </span>
+                          <span className="text-sm text-muted-foreground">/mes</span>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {annualPrice}€/año {annualSavings > 0 && <>(ahorras {annualSavings}€)</>}
+                        </p>
+                      </div>
+
+                      <ul className="mb-6 space-y-3">
+                        {features.map((feature, i) => (
+                          <li key={i} className="flex items-start gap-3">
+                            <div
+                              className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full ${
+                                isPopular ? "bg-primary/15" : "bg-secondary"
+                              }`}
+                            >
+                              <Check className="h-3 w-3 text-primary" />
+                            </div>
+                            <span className="text-sm text-muted-foreground">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+
                       <Button
-                        onClick={() => handlePlanSelect(slug)}
-                        variant={plan.popular ? "default" : "outline"}
-                        className={`h-9 rounded-xl text-xs px-4 ${
-                          plan.popular 
-                            ? "gradient-primary text-primary-foreground shadow-md shadow-primary/20" 
-                            : "bg-white/5 border-white/10"
+                        onClick={() => handlePlanSelect(plan.slug as PlanSlug)}
+                        className={`h-12 w-full rounded-xl font-medium ${
+                          isPopular
+                            ? "gradient-primary border-0 text-white"
+                            : "border border-border bg-secondary text-foreground hover:bg-secondary/80"
                         }`}
                       >
-                        {plan.cta}
+                        Empezar gratis
                       </Button>
-                    </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
 
-                    {billingCycle === "annual" && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[10px] text-muted-foreground">
-                          Facturado {plan.annualPrice}€/año
-                        </span>
-                        <span className="text-[10px] text-emerald-500 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                          Ahorras {planSavings}€
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Features row */}
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 pt-3 border-t border-white/5">
-                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                        <Users className="h-3 w-3" /> {plan.stylists}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                        <Scissors className="h-3 w-3" /> {plan.services}
-                      </span>
-                      {plan.features.slice(0, 2).map((f, fi) => (
-                        <span key={fi} className="text-[11px] text-muted-foreground flex items-center gap-1">
-                          <Check className="h-3 w-3 text-emerald-500" /> {f}
-                        </span>
-                      ))}
-                      {plan.features.length > 2 && (
-                        <span className="text-[10px] text-primary font-medium">
-                          +{plan.features.length - 2} más
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+            <div className="mt-10 flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-primary" /> 30 días gratis
+              </span>
+              <span className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-primary" /> Cancela cuando quieras
+              </span>
+              <span className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-primary" /> Sin permanencia
+              </span>
+            </div>
           </div>
         </section>
 
         {/* ===== FORM ===== */}
         <AnimatePresence>
-          {showForm && (
+          {showForm && currentPlanObj && (
             <motion.section
               ref={formRef}
               initial={{ opacity: 0, y: 20, height: 0 }}
               animate={{ opacity: 1, y: 0, height: "auto" }}
               exit={{ opacity: 0, y: 20, height: 0 }}
-              className="px-4 mb-10 scroll-mt-20"
+              className="container mx-auto scroll-mt-20 px-4 py-12"
             >
-              <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-5">
-                <div className="text-center mb-5">
-                  <div className="flex items-center justify-center gap-2 mb-1.5">
-                    <div className={`p-1.5 rounded-xl bg-gradient-to-br ${currentPlan.color} text-white`}>
-                      {currentPlan.icon}
-                    </div>
-                    <h3 className="text-lg font-bold text-foreground">Plan {currentPlan.name}</h3>
+              <div className="mx-auto max-w-xl rounded-3xl border-2 border-primary/30 bg-background p-6 shadow-xl shadow-primary/10 sm:p-8">
+                <div className="mb-6 text-center">
+                  <div className="mb-2 inline-flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <h3 className="text-lg font-bold text-foreground">
+                      Plan <span style={gradientText}>{currentPlanObj.name}</span>
+                    </h3>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {user ? "Solo necesitamos el nombre de tu salón" : "Crea una cuenta para continuar"}
                   </p>
                 </div>
 
                 {!user ? (
                   <div className="space-y-3">
-                    <Button 
-                      onClick={() => navigate("/auth?redirect=/onboarding&mode=register")} 
-                      className="w-full h-12 rounded-2xl gradient-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    <Button
+                      onClick={() => navigate("/auth?redirect=/onboarding&mode=register")}
+                      className="h-12 w-full rounded-2xl gradient-primary text-base font-semibold text-white shadow-lg shadow-primary/20"
                     >
                       Crear cuenta gratis
-                      <ArrowRight className="h-4 w-4 ml-2" />
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => navigate("/auth?redirect=/onboarding")}
-                      className="w-full h-11 rounded-2xl bg-white/5 border-white/10 text-sm"
+                      className="h-11 w-full rounded-2xl"
                     >
                       Ya tengo cuenta
                     </Button>
                   </div>
                 ) : (
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                       <FormField
                         control={form.control}
                         name="businessName"
@@ -680,7 +603,12 @@ export default function BusinessOnboarding() {
                           <FormItem>
                             <FormLabel className="text-xs">Nombre del salón</FormLabel>
                             <FormControl>
-                              <Input placeholder="Mi Salón de Belleza" {...field} disabled={loading} className="h-11 rounded-xl bg-white/5 border-white/10" />
+                              <Input
+                                placeholder="Mi Salón de Belleza"
+                                {...field}
+                                disabled={loading}
+                                className="h-11 rounded-xl"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -695,8 +623,15 @@ export default function BusinessOnboarding() {
                             <FormLabel className="text-xs">URL de tu salón</FormLabel>
                             <FormControl>
                               <div className="flex items-center">
-                                <span className="text-[11px] text-muted-foreground mr-2 shrink-0">glowapp.app/</span>
-                                <Input placeholder="mi-salon" {...field} disabled={loading} className="h-11 rounded-xl flex-1 bg-white/5 border-white/10" />
+                                <span className="mr-2 shrink-0 text-[11px] text-muted-foreground">
+                                  glowapp.app/
+                                </span>
+                                <Input
+                                  placeholder="mi-salon"
+                                  {...field}
+                                  disabled={loading}
+                                  className="h-11 flex-1 rounded-xl"
+                                />
                               </div>
                             </FormControl>
                             <FormMessage />
@@ -711,7 +646,13 @@ export default function BusinessOnboarding() {
                           <FormItem>
                             <FormLabel className="text-xs">Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="contacto@misalon.com" {...field} disabled={loading} className="h-11 rounded-xl bg-white/5 border-white/10" />
+                              <Input
+                                type="email"
+                                placeholder="contacto@misalon.com"
+                                {...field}
+                                disabled={loading}
+                                className="h-11 rounded-xl"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -721,26 +662,27 @@ export default function BusinessOnboarding() {
                       <div className="pt-2">
                         <Button
                           type="submit"
-                          className="w-full h-12 rounded-2xl gradient-primary text-primary-foreground shadow-xl shadow-primary/25 text-base font-semibold"
+                          className="h-12 w-full rounded-2xl gradient-primary text-base font-semibold text-white shadow-xl shadow-primary/25"
                           disabled={loading}
                         >
                           {loading ? (
-                            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Procesando...</>
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Procesando...
+                            </>
                           ) : (
                             <>
                               Empezar 30 días gratis
-                              <ArrowRight className="h-4 w-4 ml-2" />
+                              <ArrowRight className="ml-2 h-4 w-4" />
                             </>
                           )}
                         </Button>
 
-                        {/* Trust signals under CTA */}
-                        <div className="flex items-center justify-center gap-3 mt-3">
-                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                            <Lock className="h-3 w-3" /> SSL seguro
+                        <div className="mt-3 flex items-center justify-center gap-3">
+                          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <Lock className="h-3 w-3" /> Pago seguro
                           </span>
-                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                            <Shield className="h-3 w-3" /> Cancela gratis
+                          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <Shield className="h-3 w-3" /> Cancela cuando quieras
                           </span>
                         </div>
                       </div>
@@ -752,21 +694,25 @@ export default function BusinessOnboarding() {
           )}
         </AnimatePresence>
 
-        {/* ===== FAQ / OBJECTIONS ===== */}
-        <section className="px-4 mb-10">
-          <h2 className="text-lg font-bold text-foreground text-center mb-4">Preguntas frecuentes</h2>
-          <div className="space-y-2">
+        {/* ===== FAQ ===== */}
+        <section className="container mx-auto px-4 py-14 md:py-20">
+          <SectionHeader
+            eyebrow="Dudas frecuentes"
+            title="Resolvemos lo importante"
+            className="mb-10"
+          />
+          <div className="mx-auto max-w-2xl space-y-3">
             {OBJECTIONS.map((obj, i) => (
               <details
                 key={i}
-                className="group rounded-2xl bg-white/[0.03] border border-white/5 overflow-hidden"
+                className="group overflow-hidden rounded-2xl border border-border/60 bg-card/85 backdrop-blur-sm"
               >
-                <summary className="flex items-center justify-between p-4 cursor-pointer list-none">
-                  <span className="text-sm font-medium text-foreground pr-4">{obj.q}</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-180" />
+                <summary className="flex cursor-pointer list-none items-center justify-between p-5">
+                  <span className="pr-4 text-sm font-medium text-foreground sm:text-base">{obj.q}</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                 </summary>
-                <div className="px-4 pb-4 pt-0">
-                  <p className="text-xs text-muted-foreground leading-relaxed">{obj.a}</p>
+                <div className="px-5 pb-5 pt-0">
+                  <p className="text-sm leading-relaxed text-muted-foreground">{obj.a}</p>
                 </div>
               </details>
             ))}
@@ -774,23 +720,26 @@ export default function BusinessOnboarding() {
         </section>
 
         {/* ===== FINAL CTA ===== */}
-        <section className="px-4 mb-8">
-          <div className="text-center p-6 rounded-2xl bg-primary/5 border border-primary/10">
-            <h2 className="text-lg font-bold text-foreground mb-2">
-              ¿Listo para digitalizar tu salón?
+        <section className="container mx-auto px-4 pb-10">
+          <div className="mx-auto max-w-3xl rounded-3xl border border-primary/15 bg-primary/[0.04] p-8 text-center sm:p-12">
+            <h2 className="text-balance text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+              ¿Listo para{" "}
+              <span className="font-serif italic" style={gradientText}>
+                digitalizar tu salón?
+              </span>
             </h2>
-            <p className="text-xs text-muted-foreground mb-4 max-w-xs mx-auto">
-              Únete a más de 500 profesionales que ya gestionan su negocio con GlowApp.
+            <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground sm:text-base">
+              Únete a los profesionales que ya gestionan su negocio con Glowapp.
             </p>
             <Button
               onClick={scrollToPricing}
-              className="h-11 px-6 rounded-2xl gradient-primary text-primary-foreground shadow-lg shadow-primary/20 font-semibold"
+              className="mt-6 h-12 rounded-2xl gradient-primary px-6 text-base font-semibold text-white shadow-lg shadow-primary/20"
             >
               Crear mi salón gratis
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Sin tarjeta · Sin compromiso · Cancela cuando quieras
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Gratis el primer mes · Sin permanencia · Cancela cuando quieras
             </p>
           </div>
         </section>
