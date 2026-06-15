@@ -139,10 +139,11 @@ export const CinematicHero = () => {
   const stageRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
 
-  // Parallax de ratón sobre el escenario 3D + sheen de la tarjeta
+  // Parallax de ratón sobre el escenario 3D + sheen de la tarjeta (solo desktop)
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return;
+    const isMobile = window.innerWidth < 768;
+    if (reduce || isMobile) return;
     const onMove = (e: MouseEvent) => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
@@ -159,14 +160,17 @@ export const CinematicHero = () => {
     return () => { window.removeEventListener("mousemove", onMove); cancelAnimationFrame(rafRef.current); };
   }, []);
 
-  // Timeline cinemático (pin híbrido)
+  // Timeline cinemático (pin único). En móvil NO se pinea: el hero se
+  // renderiza como bloque estático (ver markup más abajo) para que el usuario
+  // alcance el CTA sin tener que scrollear 6 pantallas.
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const isMobile = window.innerWidth < 768;
+    if (isMobile) return; // Plan 2: sin pin en móvil
 
-    const zIn = isMobile ? -320 : -520;
-    const zOut = isMobile ? 200 : 320;
-    const scatter = isMobile ? 55 : 90;
+    const zIn = -520;
+    const zOut = 320;
+    const scatter = 90;
 
     const ctx = gsap.context(() => {
       gsap.set(".ch-reveal", { visibility: "visible" });
