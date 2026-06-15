@@ -166,6 +166,63 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Security: Verify Authentication & Authorization
+    const authHeader = req.headers.get('Authorization');
+    let authenticatedUser = null;
+    let userRole = null;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+      if (authError) {
+        console.warn('Invalid token provided:', authError);
+        return new Response(
+          JSON.stringify({ error: 'Invalid authentication token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      authenticatedUser = user;
+
+      if (authenticatedUser) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', authenticatedUser.id)
+          .maybeSingle();
+        userRole = roleData?.role;
+      }
+    }
+
+    // Security: Validate user_id assignment
+    if (bookingData.user_id) {
+      if (!authenticatedUser) {
+        return new Response(
+          JSON.stringify({ error: 'Guest users cannot assign bookings to a user account' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (bookingData.user_id !== authenticatedUser.id) {
+        if (userRole !== 'admin' && userRole !== 'stylist') {
+          return new Response(
+            JSON.stringify({ error: 'Unauthorized to create booking for another user' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
+    // Security: Validate skipAvailabilityCheck
+    if (bookingData.skipAvailabilityCheck) {
+      if (userRole !== 'admin' && userRole !== 'stylist') {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized to skip availability check' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
