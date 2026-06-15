@@ -111,13 +111,13 @@ const PhoneVisual = () => (
   <div className="relative h-[420px] w-[210px] rounded-[2.4rem] bg-black p-[5px] shadow-2xl">
     <div className="relative h-full overflow-hidden rounded-[2rem] bg-white">
       <div className="absolute left-1/2 top-[5px] z-50 h-[22px] w-[76px] -translate-x-1/2 rounded-full bg-black" />
-      <TenantLandingMockup />
+      <TenantLandingMockup variant="mobile" />
     </div>
   </div>
 );
 
 const CashVisual = () => (
-  <div className="w-[260px] rounded-2xl bg-white p-5 text-slate-900 shadow-xl">
+  <div className="w-[240px] rounded-2xl bg-white p-5 text-slate-900 shadow-xl sm:w-[260px]">
     <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Cierre de caja · hoy</p>
     <p className="mt-1 text-3xl font-extrabold tracking-tight">420,00 €</p>
     <div className="mt-4 space-y-2.5">
@@ -144,7 +144,7 @@ const CashVisual = () => (
 );
 
 const WebVisual = () => (
-  <div className="w-[320px] overflow-hidden rounded-xl bg-white shadow-xl">
+  <div className="w-full max-w-[340px] overflow-hidden rounded-xl bg-white shadow-xl">
     {/* browser chrome */}
     <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-3 py-2">
       <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
@@ -152,8 +152,8 @@ const WebVisual = () => (
       <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
       <span className="ml-2 flex-1 truncate rounded-md bg-white px-2 py-1 text-[10px] text-slate-400">glowapp.app/cristina-munoz</span>
     </div>
-    <div className="h-[280px] overflow-hidden">
-      <TenantLandingMockup />
+    <div className="aspect-[16/9] overflow-hidden">
+      <TenantLandingMockup variant="desktop" />
     </div>
   </div>
 );
