@@ -67,13 +67,6 @@ export function HeroStory() {
           </p>
         </div>
 
-        {/* ───────── Remate ───────── */}
-        <div className="ch-beat ch-beat-remate ch-story-layer pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-          <h2 className="ch-remate relative font-serif text-4xl italic leading-[1.08] tracking-tight text-foreground md:text-6xl lg:text-7xl">
-            Tú, a hacer brillar el salón.
-            <span className="ch-shine pointer-events-none absolute inset-0" aria-hidden />
-          </h2>
-        </div>
       </div>
     </div>
   );

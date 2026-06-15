@@ -139,10 +139,11 @@ export const CinematicHero = () => {
   const stageRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
 
-  // Parallax de ratón sobre el escenario 3D + sheen de la tarjeta
+  // Parallax de ratón sobre el escenario 3D + sheen de la tarjeta (solo desktop)
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return;
+    const isMobile = window.innerWidth < 768;
+    if (reduce || isMobile) return;
     const onMove = (e: MouseEvent) => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
@@ -159,14 +160,17 @@ export const CinematicHero = () => {
     return () => { window.removeEventListener("mousemove", onMove); cancelAnimationFrame(rafRef.current); };
   }, []);
 
-  // Timeline cinemático (pin híbrido)
+  // Timeline cinemático (pin único). En móvil NO se pinea: el hero se
+  // renderiza como bloque estático (ver markup más abajo) para que el usuario
+  // alcance el CTA sin tener que scrollear 6 pantallas.
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const isMobile = window.innerWidth < 768;
+    if (isMobile) return; // Plan 2: sin pin en móvil
 
-    const zIn = isMobile ? -320 : -520;
-    const zOut = isMobile ? 200 : 320;
-    const scatter = isMobile ? 55 : 90;
+    const zIn = -520;
+    const zOut = 320;
+    const scatter = 90;
 
     const ctx = gsap.context(() => {
       gsap.set(".ch-reveal", { visibility: "visible" });
@@ -286,14 +290,7 @@ export const CinematicHero = () => {
         .to({}, { duration: 1.2 })
         .to(".ch-beat-slogan", { autoAlpha: 0, scale: 1.06, filter: "blur(10px)", ease: "power2.in", duration: 1 });
 
-      // ── Remate: entra + barrido de luz cruzando el texto
-      tl
-        .set(".ch-shine", { xPercent: -130 })
-        .fromTo(".ch-beat-remate",
-          { autoAlpha: 0, scale: 0.92, filter: "blur(12px)" },
-          { autoAlpha: 1, scale: 1, filter: "blur(0px)", ease: "expo.out", duration: 1.3 })
-        .to(".ch-shine", { xPercent: 130, ease: "power2.inOut", duration: 1.4 }, "<0.35")
-        .to({}, { duration: 0.8 });
+      // (Remate eliminado — el slogan cierra el acto antes del CTA)
 
       // ── CTA: el escenario se contrae y aparece la llamada a la acción
       tl
@@ -309,15 +306,49 @@ export const CinematicHero = () => {
   return (
     <section
       ref={containerRef}
-      className="relative flex h-screen w-full items-center justify-center overflow-hidden bg-background text-foreground"
+      className="relative flex min-h-[100svh] w-full items-center justify-center overflow-hidden bg-background text-foreground md:h-screen md:min-h-0"
       style={{ perspective: "1500px" }}
     >
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
       <div className="ch-grain" aria-hidden />
       <div className="ch-grid pointer-events-none absolute inset-0 z-0" aria-hidden />
 
+      {/* ───────── MOBILE: hero estático (Plan 2 — sin pin) ───────── */}
+      <div className="relative z-30 flex w-full flex-col items-center justify-center px-5 py-20 text-center md:hidden">
+        <h1 className="ch-text-matte mb-1 font-sans text-5xl font-bold leading-[1.05] tracking-tight">
+          El salón que sueñas,
+        </h1>
+        <h1 className="ch-text-gradient font-serif text-5xl italic leading-[1.05] tracking-tight">
+          gestionado solo.
+        </h1>
+        <p className="mx-auto mt-6 max-w-md text-base font-light text-muted-foreground">
+          Reservas, agenda, caja y tu propia web. Todo en{" "}
+          <span className="font-ashing">Glowapp</span>,{" "}
+          <span className="font-medium text-foreground">gratis</span>.
+        </p>
+        <div className="mt-8 flex w-full flex-col gap-3">
+          <button
+            onClick={() => navigate("/onboarding")}
+            className="ch-btn-primary group inline-flex w-full items-center justify-center gap-2 rounded-2xl px-8 py-4 text-base font-semibold"
+          >
+            Crea tu salón gratis
+            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+          </button>
+          <button
+            onClick={() => document.getElementById("producto")?.scrollIntoView({ behavior: "smooth" })}
+            className="ch-btn-ghost inline-flex w-full items-center justify-center rounded-2xl px-7 py-4 text-base font-medium"
+          >
+            Ver el producto
+          </button>
+        </div>
+        <p className="mt-6 text-xs text-muted-foreground">
+          Sin permanencia · 5 minutos
+        </p>
+      </div>
+
+      {/* ───────── DESKTOP: experiencia cinemática (pin + scrub) ───────── */}
       {/* Texto editorial de fondo */}
-      <div className="ch-hero-text absolute z-10 flex w-screen flex-col items-center justify-center px-4 text-center">
+      <div className="ch-hero-text absolute z-10 hidden w-screen flex-col items-center justify-center px-4 text-center md:flex">
         <h1 className="ch-track ch-reveal ch-text-matte mb-1 font-sans text-5xl font-bold tracking-tight md:text-7xl lg:text-[5.5rem]">
           El salón que sueñas,
         </h1>
@@ -330,12 +361,12 @@ export const CinematicHero = () => {
       </div>
 
       {/* CTA final (aparece al final del acto) */}
-      <div className="ch-cta ch-reveal pointer-events-auto absolute z-10 flex w-screen flex-col items-center justify-center px-4 text-center">
+      <div className="ch-cta ch-reveal pointer-events-auto absolute z-10 hidden w-screen flex-col items-center justify-center px-4 text-center md:flex">
         <h2 className="ch-text-gradient mb-4 font-serif text-4xl italic tracking-tight md:text-6xl">
           Empieza hoy.
         </h2>
         <p className="mx-auto mb-9 max-w-md text-base font-light text-muted-foreground md:text-lg">
-          Crea tu salón en <span className="font-ashing">Glowapp</span> en 5 minutos. Sin tarjeta, sin permanencia.
+          Crea tu salón en <span className="font-ashing">Glowapp</span> en 5 minutos. Sin permanencia.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row">
           <button onClick={() => navigate("/onboarding")} className="ch-btn-primary group inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-4 text-base font-semibold">
@@ -351,11 +382,11 @@ export const CinematicHero = () => {
         </div>
       </div>
 
-      {/* Tarjeta física → escenario del relato */}
-      <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ perspective: "1500px" }}>
+      {/* Tarjeta física → escenario del relato (solo desktop) */}
+      <div className="absolute inset-0 z-20 hidden items-center justify-center md:flex" style={{ perspective: "1500px" }}>
         <div
           ref={cardRef}
-          className="ch-card ch-reveal relative flex h-[92vh] w-[92vw] items-center justify-center overflow-hidden rounded-[28px] md:h-[82vh] md:w-[84vw] md:rounded-[36px]"
+          className="ch-card ch-reveal relative flex h-[82vh] w-[84vw] items-center justify-center overflow-hidden rounded-[36px]"
           style={{ perspective: "1400px" }}
         >
           <div className="ch-sheen" aria-hidden />
