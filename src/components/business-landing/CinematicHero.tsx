@@ -125,9 +125,12 @@ const INJECTED_STYLES = `
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .ch-reveal { visibility: visible !important; }
+    .ch-reveal,
+    .ch-story,
+    .ch-cta { opacity: 1 !important; visibility: visible !important; }
   }
 `;
+
 
 export const CinematicHero = () => {
   const navigate = useNavigate();
