@@ -62,13 +62,13 @@ const INJECTED_STYLES = `
     filter: drop-shadow(0 10px 24px hsl(var(--accent) / 0.18));
   }
 
-  /* Texto plateado dentro de la tarjeta oscura */
+  /* Texto plateado dentro de la tarjeta clara */
   .ch-card-silver {
-    background: linear-gradient(180deg, #ffffff 0%, #b9c0d6 100%);
+    background: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
     -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent; color: transparent;
     transform: translateZ(0);
-    filter: drop-shadow(0 12px 24px rgba(0,0,0,0.6)) drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+    filter: drop-shadow(0 8px 16px hsl(var(--accent) / 0.25));
   }
 
   /* Tarjeta física profunda — fondo claro */
