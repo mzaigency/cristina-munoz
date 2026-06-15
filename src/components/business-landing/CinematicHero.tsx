@@ -115,13 +115,13 @@ const INJECTED_STYLES = `
   .ch-btn-ghost:active { transform: translateY(1px) scale(0.99); }
 
   /* ── Relato parallax (acto 2) ── */
-  /* Dolor: gris-azulado frío y desaturado. */
-  .ch-story-pain { color: hsl(220 16% 72%); text-shadow: 0 12px 40px rgba(0,0,0,0.5); }
-  .ch-story-pain .ch-char { color: #fff; }
+  /* Dolor: gris oscuro sobre fondo claro. */
+  .ch-story-pain { color: hsl(var(--muted-foreground)); text-shadow: none; }
+  .ch-story-pain .ch-char { color: hsl(var(--foreground)); }
   /* Barrido de luz sobre el remate (banda diagonal que cruza, scrubbeada). */
   .ch-shine {
-    background: linear-gradient(100deg, transparent 38%, rgba(255,255,255,0.6) 50%, transparent 62%);
-    mix-blend-mode: screen;
+    background: linear-gradient(100deg, transparent 38%, rgba(255,255,255,0.85) 50%, transparent 62%);
+    mix-blend-mode: overlay;
   }
 
   @media (prefers-reduced-motion: reduce) {
