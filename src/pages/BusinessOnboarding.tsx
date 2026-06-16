@@ -448,7 +448,10 @@ export default function BusinessOnboarding() {
                 ))}
               </div>
             ) : (
-              <div className="mx-auto grid max-w-5xl items-stretch gap-6 md:grid-cols-3">
+              <div
+                className="mx-auto grid max-w-5xl items-stretch gap-6 md:grid-cols-3"
+                style={{ perspective: 1400 }}
+              >
                 {plans.map((plan, index) => {
                   const meta = PLAN_ICONS[plan.slug] || PLAN_ICONS.starter;
                   const Icon = meta.Icon;
