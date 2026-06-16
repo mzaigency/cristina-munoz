@@ -9,7 +9,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { motion, type DynamicAnimationOptions } from "motion/react";
+import { motion, type AnimationOptions } from "motion/react";
+
+type DynamicAnimationOptions = AnimationOptions & { delay?: number };
 import { cn } from "@/lib/utils";
 
 interface TextProps {
