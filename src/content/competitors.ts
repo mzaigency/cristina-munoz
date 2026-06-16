@@ -15,6 +15,57 @@ export interface CompetitorData {
 }
 
 export const COMPETITORS: Record<string, CompetitorData> = {
+  booksy: {
+    slug: "booksy",
+    name: "Booksy",
+    tagline: "La alternativa a Booksy para salones que quieren ser dueños de su cliente",
+    intro:
+      "Booksy te da visibilidad en su marketplace, pero cobra comisión por cita nueva y la web de tu salón vive dentro de su plataforma. Glowapp es la alternativa española: tu propia web profesional, sin comisiones por reserva y con el primer mes gratis.",
+    whyChange: [
+      "Sin comisión por reservas conseguidas en tu propia web.",
+      "Tu marca, tu dominio, tu cliente — no compartido con la competencia.",
+      "Plan plano en euros, sin sorpresas por cita o por SMS.",
+      "Agenda multiprofesional, caja, CRM y recordatorios WhatsApp incluidos.",
+      "Soporte humano en español por WhatsApp.",
+    ],
+    comparison: [
+      { feature: "Comisión por reserva nueva del marketplace", glow: "0%", other: "Comisión por cita nueva", winner: "glow" },
+      { feature: "Página web con tu dominio", glow: "Incluida y editable", other: "Perfil dentro de Booksy", winner: "glow" },
+      { feature: "Primer mes", glow: "Gratis, sin permanencia", other: "Periodo de prueba con condiciones", winner: "glow" },
+      { feature: "Recordatorios WhatsApp", glow: "Incluidos", other: "Coste extra por SMS", winner: "glow" },
+      { feature: "Agenda multiprofesional", glow: "Sí, sin coste extra", other: "Sí", winner: "tie" },
+      { feature: "Marketplace de descubrimiento", glow: "Feed social en España", other: "Marketplace internacional", winner: "tie" },
+      { feature: "Soporte en español", glow: "WhatsApp humano", other: "Chat / email", winner: "glow" },
+    ],
+    faq: [
+      {
+        question: "¿Glowapp es realmente una alternativa a Booksy?",
+        answer:
+          "Sí. Glowapp combina marketplace de descubrimiento, web propia con tu dominio, agenda multiprofesional, caja y CRM en un solo plan. Sin comisión por cita nueva.",
+      },
+      {
+        question: "¿Cuánto puedo ahorrar respecto a Booksy?",
+        answer:
+          "Depende de tu volumen, pero un salón con 80 reservas/mes desde marketplace suele ahorrar entre 100 y 200€/mes en comisiones evitadas más SMS.",
+      },
+      {
+        question: "¿Puedo importar mis servicios, horarios y clientes?",
+        answer:
+          "Sí. Te ayudamos con migración guiada gratuita en menos de 24h.",
+      },
+      {
+        question: "¿Y las reseñas que tengo en Booksy?",
+        answer:
+          "Las reseñas son propiedad de Booksy, pero te ayudamos a pedir reseñas a tus clientes habituales por WhatsApp o QR para reconstruir tu reputación rápidamente.",
+      },
+    ],
+    migration: [
+      "Te registras en Glowapp en 5 minutos.",
+      "Importamos tu catálogo, horarios y clientes (gratis).",
+      "Te damos un nuevo enlace y QR con tu marca.",
+      "Mantienes Booksy en paralelo durante el primer mes para no perder visibilidad.",
+    ],
+  },
   treatwell: {
     slug: "treatwell",
     name: "Treatwell",
