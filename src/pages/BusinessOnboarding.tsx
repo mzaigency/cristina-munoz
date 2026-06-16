@@ -283,29 +283,51 @@ export default function BusinessOnboarding() {
       </div>
 
       <div className="pb-24">
-        {/* ===== HERO ===== */}
-        <section className="container mx-auto px-4 pt-10 pb-12 text-center md:pt-20 md:pb-16">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600">
+        {/* ===== HERO (parallax 3D por capas) ===== */}
+        <section
+          ref={heroRef}
+          className="relative container mx-auto px-4 pt-10 pb-12 text-center md:pt-20 md:pb-16"
+          style={{ perspective: 1200 }}
+        >
+          {/* Halos de fondo con parallax */}
+          <motion.div
+            aria-hidden
+            style={{ y: blobAY, rotate: blobARot }}
+            className="pointer-events-none absolute -top-10 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full opacity-50 blur-3xl"
+          >
+            <div className="h-full w-full rounded-full" style={{ background: gradientBg }} />
+          </motion.div>
+
+          <motion.div style={{ opacity: heroOpacity }} className="relative">
+            <motion.span
+              style={{ y: heroBadgeY }}
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600"
+            >
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
               30 días gratis
-            </span>
+            </motion.span>
 
-            <h1 className="mx-auto max-w-2xl text-balance text-[34px] font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-6xl">
+            <motion.h1
+              style={{ y: heroTitleY }}
+              className="mx-auto max-w-2xl text-balance text-[34px] font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-6xl"
+            >
               Deja de perder clientes{" "}
               <span className="font-serif italic" style={gradientText}>
                 por no estar online
               </span>
-            </h1>
+            </motion.h1>
 
-            <p className="mx-auto mt-5 max-w-md text-base text-muted-foreground sm:text-lg">
+            <motion.p
+              style={{ y: heroSubY }}
+              className="mx-auto mt-5 max-w-md text-base text-muted-foreground sm:text-lg"
+            >
               Tu web profesional con reservas 24/7 lista en 5 minutos. Sin saber programar.
-            </p>
+            </motion.p>
 
-            <div className="mt-7 flex flex-col items-center gap-3">
+            <motion.div style={{ y: heroCtaY }} className="mt-7 flex flex-col items-center gap-3">
               <Button
                 onClick={scrollToPricing}
-                className="h-12 rounded-2xl gradient-primary px-8 text-base font-semibold text-white shadow-xl shadow-primary/25"
+                className="h-12 rounded-2xl gradient-primary px-8 text-base font-semibold text-white shadow-xl shadow-primary/25 transition-transform hover:-translate-y-0.5"
               >
                 Crear mi salón gratis
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -314,10 +336,13 @@ export default function BusinessOnboarding() {
                 <Shield className="h-3 w-3" />
                 Cancela cuando quieras · Sin compromisos
               </p>
-            </div>
+            </motion.div>
 
             {/* Trust points (honestos, sin métricas inventadas) */}
-            <div className="mx-auto mt-10 flex max-w-md flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-2xl border border-border/60 bg-card/60 px-6 py-4 backdrop-blur-sm">
+            <motion.div
+              style={{ y: heroTrustY }}
+              className="mx-auto mt-10 flex max-w-md flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-2xl border border-border/60 bg-card/60 px-6 py-4 backdrop-blur-sm"
+            >
               {TRUST_POINTS.map(({ Icon, label }) => (
                 <div key={label} className="flex items-center gap-2">
                   <span
@@ -329,9 +354,10 @@ export default function BusinessOnboarding() {
                   <span className="text-xs font-medium text-foreground">{label}</span>
                 </div>
               ))}
-            </div>
+            </motion.div>
           </motion.div>
         </section>
+
 
 
         {/* ===== PRICING ===== */}
