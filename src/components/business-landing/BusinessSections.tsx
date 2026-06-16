@@ -362,7 +362,7 @@ export const ClosingCTA = () => {
                 <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </button>
             </div>
-            <p className="mt-5 text-sm text-white/45">Listo en 5 minutos · Sin tarjeta · Cancela cuando quieras</p>
+            <p className="mt-5 text-sm text-white/45">Listo en 5 minutos · 1er mes gratis · Cancela cuando quieras</p>
           </div>
         </motion.div>
       </div>
