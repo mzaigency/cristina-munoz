@@ -11,7 +11,6 @@ import {
   FAQSection,
   ClosingCTA,
   Footer,
-  AutoScrollPresenter,
 } from "@/components/business-landing";
 import { Preloader } from "@/components/ui/preloader";
 import { LandingBackground } from "@/components/ui/landing-background";
@@ -67,7 +66,6 @@ export default function ForBusiness() {
         <FAQSection />
         <ClosingCTA />
         <Footer />
-        <AutoScrollPresenter />
       </div>
     </>
   );
