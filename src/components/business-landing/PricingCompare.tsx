@@ -79,7 +79,7 @@ export const PricingCompare = () => {
               <h3 className="mt-5 font-ashing text-4xl text-white">Glowapp</h3>
               <div className="mt-3 flex items-end gap-2">
                 <span
-                  className="text-6xl font-bold tracking-tight"
+                  className="text-4xl sm:text-5xl font-bold tracking-tight"
                   style={{ background: "linear-gradient(180deg, #ffffff 0%, #b9c0d6 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
                 >
                   1er mes gratis
