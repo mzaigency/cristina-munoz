@@ -84,6 +84,19 @@ Cada categoría tiene además sub-rutas por ciudad: `/{categoria}/{ciudad}` (ej:
 - [Cristina Muñoz](/cristina-munoz)
 - [Montserrat Faig](/montserratfaig)
 
+## Comparativas con la competencia
+
+- [Alternativa a Booksy](/alternativa-a-booksy)
+- [Alternativa a Treatwell](/alternativa-a-treatwell)
+- [Alternativa a Fresha](/alternativa-a-fresha)
+
+## Blog y recursos
+
+- [Blog Glowapp](/blog)
+- [Cómo digitalizar tu peluquería en 2026](/blog/como-digitalizar-tu-peluqueria-en-2026)
+- [Mejor software de reservas para salones en España](/blog/mejor-software-reservas-salon-belleza-espana)
+- [Cómo reducir ausencias en tu salón](/blog/como-reducir-ausencias-citas-salon)
+
 ## Legal
 
 - [Política de privacidad](/privacidad)
