@@ -43,7 +43,7 @@ export const FloatingMobileCTA = () => {
             </Button>
             <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
               <ShieldCheck className="w-3 h-3 text-primary" />
-              Gratis · Sin tarjeta · Pagos seguros con Stripe
+              1er mes gratis · Sin permanencia · Pagos seguros con Stripe
             </p>
           </div>
         </motion.div>
