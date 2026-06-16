@@ -1,4 +1,4 @@
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useLocation, Link, Navigate } from "react-router-dom";
 import { Check, X, Minus, ArrowRight, ShieldCheck } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,8 @@ import { COMPETITORS } from "@/content/competitors";
 import { StickyHeader, Footer } from "@/components/business-landing";
 
 export default function CompetitorAlternative() {
-  const { competitor } = useParams<{ competitor: string }>();
+  const { pathname } = useLocation();
+  const competitor = pathname.replace("/alternativa-a-", "").replace(/\/$/, "");
   const data = competitor ? COMPETITORS[competitor] : null;
 
   if (!data) return <Navigate to="/negocios" replace />;

@@ -241,7 +241,9 @@ const App = () => (
                         <Route path="/fisioterapia/:city" element={<DirectoryLanding />} />
 
                         {/* SEO conversion pages */}
-                        <Route path="/alternativa-a-:competitor" element={<CompetitorAlternative />} />
+                        <Route path="/alternativa-a-booksy" element={<CompetitorAlternative />} />
+                        <Route path="/alternativa-a-treatwell" element={<CompetitorAlternative />} />
+                        <Route path="/alternativa-a-fresha" element={<CompetitorAlternative />} />
                         <Route path="/blog" element={<Blog />} />
                         <Route path="/blog/:slug" element={<BlogPost />} />
 
