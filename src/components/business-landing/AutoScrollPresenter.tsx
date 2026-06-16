@@ -10,9 +10,9 @@ export function AutoScrollPresenter() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<Speed>(() => {
-    if (typeof window === "undefined") return 40;
+    if (typeof window === "undefined") return 300;
     const s = Number(localStorage.getItem(STORAGE_KEY));
-    return (SPEEDS as readonly number[]).includes(s) ? (s as Speed) : 40;
+    return (SPEEDS as readonly number[]).includes(s) ? (s as Speed) : 300;
   });
   const speedRef = useRef(speed);
   const rafRef = useRef<number | null>(null);
