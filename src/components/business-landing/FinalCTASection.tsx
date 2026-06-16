@@ -47,7 +47,7 @@ export const FinalCTASection = () => {
               <Clock className="h-4 w-4" /> Listo en 5 minutos
             </span>
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4" /> Sin tarjeta · Cancela cuando quieras
+              <ShieldCheck className="h-4 w-4" /> 1er mes gratis · Cancela cuando quieras
             </span>
           </div>
         </motion.div>
