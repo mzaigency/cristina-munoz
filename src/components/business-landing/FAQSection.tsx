@@ -6,7 +6,7 @@ import { SectionEyebrow } from "./SectionEyebrow";
 const faqs = [
   {
     question: "¿De verdad es gratis? ¿Dónde está la trampa?",
-    answer: "No hay trampa. Creas tu salón, montas tu web y abres reservas sin pagar nada y sin meter tarjeta. Empezamos siendo gratis para que cualquier negocio pueda digitalizarse. Si en el futuro lanzamos funciones avanzadas de pago, te lo diremos claro y tú decides — lo que tienes hoy se queda.",
+    answer: "El primer mes es gratis y sin compromiso. Stripe te pedirá una tarjeta solo para verificar tu cuenta, pero no te cobramos nada durante ese mes. Puedes cancelar cuando quieras antes de que termine y no pagarás ni un euro. Empezamos siendo accesibles para que cualquier negocio pueda digitalizarse sin barreras.",
   },
   {
     question: "¿Mis datos y los de mis clientes están seguros?",
