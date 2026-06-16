@@ -64,6 +64,9 @@ const ForgotPassword = lazyWithReload(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazyWithReload(() => import("./pages/ResetPassword"));
 const VerifyEmail = lazyWithReload(() => import("./pages/VerifyEmail"));
 const NotificationSettingsPage = lazyWithReload(() => import("./pages/NotificationSettings"));
+const CompetitorAlternative = lazyWithReload(() => import("./pages/CompetitorAlternative"));
+const Blog = lazyWithReload(() => import("./pages/Blog"));
+const BlogPost = lazyWithReload(() => import("./pages/BlogPost"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -236,6 +239,11 @@ const App = () => (
                         <Route path="/salones-belleza/:city" element={<DirectoryLanding />} />
                         <Route path="/fisioterapia" element={<DirectoryLanding />} />
                         <Route path="/fisioterapia/:city" element={<DirectoryLanding />} />
+
+                        {/* SEO conversion pages */}
+                        <Route path="/alternativa-a-:competitor" element={<CompetitorAlternative />} />
+                        <Route path="/blog" element={<Blog />} />
+                        <Route path="/blog/:slug" element={<BlogPost />} />
 
                         <Route path="/404" element={<NotFound />} />
 
