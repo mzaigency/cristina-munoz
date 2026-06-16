@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Play, Pause, Gauge } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const SPEEDS = [20, 40, 60, 100] as const;
+const SPEEDS = [200, 300, 400] as const;
 type Speed = typeof SPEEDS[number];
 const STORAGE_KEY = "autoscroll_speed_v1";
 
@@ -10,9 +10,9 @@ export function AutoScrollPresenter() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<Speed>(() => {
-    if (typeof window === "undefined") return 40;
+    if (typeof window === "undefined") return 300;
     const s = Number(localStorage.getItem(STORAGE_KEY));
-    return (SPEEDS as readonly number[]).includes(s) ? (s as Speed) : 40;
+    return (SPEEDS as readonly number[]).includes(s) ? (s as Speed) : 300;
   });
   const speedRef = useRef(speed);
   const rafRef = useRef<number | null>(null);
