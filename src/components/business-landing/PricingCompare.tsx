@@ -82,11 +82,12 @@ export const PricingCompare = () => {
                   className="text-6xl font-bold tracking-tight"
                   style={{ background: "linear-gradient(180deg, #ffffff 0%, #b9c0d6 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
                 >
-                  Gratis
+                  1er mes gratis
                 </span>
-                <span className="mb-2 text-sm text-blue-100/60">para empezar</span>
+                <span className="mb-2 text-sm text-blue-100/60">sin compromiso</span>
               </div>
-              <p className="mt-1 text-sm text-blue-100/55">Sin tarjeta · sin permanencia · cancela cuando quieras</p>
+              <p className="mt-1 text-sm text-blue-100/55">Pides tarjeta solo para verificar · cancela cuando quieras antes de que termine el mes</p>
+
 
               <ul className="mt-7 grid gap-3 sm:grid-cols-2">
                 {GLOW_FEATURES.map((f) => (
