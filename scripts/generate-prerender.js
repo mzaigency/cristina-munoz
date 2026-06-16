@@ -339,6 +339,85 @@ async function main() {
   }
   console.log(`[prerender] ${CATEGORIES.length} category root pages`);
 
+  // 1b. Static SEO landings (competitor comparisons + blog)
+  const STATIC_LANDINGS = [
+    {
+      path: "alternativa-a-booksy",
+      title: "Alternativa a Booksy en España | Glowapp",
+      description: "Glowapp es la alternativa a Booksy para salones que quieren ser dueños de su cliente: sin comisión por reserva, primer mes gratis y soporte en español.",
+      type: "WebPage",
+    },
+    {
+      path: "alternativa-a-treatwell",
+      title: "Alternativa a Treatwell en España | Glowapp",
+      description: "Cambia Treatwell por Glowapp: 0% de comisión por reserva, tu web profesional con dominio propio y soporte humano en español. Primer mes gratis.",
+      type: "WebPage",
+    },
+    {
+      path: "alternativa-a-fresha",
+      title: "Alternativa a Fresha en España | Glowapp",
+      description: "Glowapp es la alternativa transparente a Fresha: precio plano en euros, sin comisiones por cobro, web propia y soporte en español. Primer mes gratis.",
+      type: "WebPage",
+    },
+    {
+      path: "blog",
+      title: "Blog Glowapp | Recursos para salones de belleza",
+      description: "Guías, comparativas y consejos prácticos para digitalizar tu peluquería, barbería o centro de estética en España.",
+      type: "Blog",
+    },
+    {
+      path: "blog/como-digitalizar-tu-peluqueria-en-2026",
+      title: "Cómo digitalizar tu peluquería en 2026 | Blog Glowapp",
+      description: "Guía completa para digitalizar una peluquería en España: reservas online, agenda, caja, fichas de cliente y marketing en WhatsApp. Sin tecnicismos.",
+      type: "Article",
+      datePublished: "2026-06-10",
+    },
+    {
+      path: "blog/mejor-software-reservas-salon-belleza-espana",
+      title: "Mejor software de reservas para salones en España (2026) | Glowapp",
+      description: "Comparativa honesta de plataformas de reservas para salones en España: Booksy, Treatwell, Fresha y Glowapp. Precios reales, comisiones y casos de uso.",
+      type: "Article",
+      datePublished: "2026-06-08",
+    },
+    {
+      path: "blog/como-reducir-ausencias-citas-salon",
+      title: "Cómo reducir las ausencias en tu salón de belleza | Glowapp",
+      description: "5 tácticas probadas para reducir las ausencias y citas perdidas en tu salón: recordatorios por WhatsApp, depósitos, lista de espera y políticas claras.",
+      type: "Article",
+      datePublished: "2026-06-05",
+    },
+  ];
+
+  for (const page of STATIC_LANDINGS) {
+    const url = `${SITE_URL}/${page.path}`;
+    const ldJson = {
+      "@context": "https://schema.org",
+      "@type": page.type,
+      name: page.title,
+      headline: page.title,
+      description: page.description,
+      url,
+      ...(page.datePublished && {
+        datePublished: page.datePublished,
+        dateModified: page.datePublished,
+        author: { "@type": "Organization", name: "Glowapp" },
+      }),
+      publisher: { "@type": "Organization", name: "Glowapp", url: SITE_URL },
+    };
+    const meta = {
+      title: page.title,
+      description: page.description,
+      image: `${SITE_URL}/og-image.png`,
+      url,
+      ldJson,
+    };
+    const body = `<h1>${escapeHtml(page.title)}</h1><p>${escapeHtml(page.description)}</p>`;
+    const html = injectMeta(baseHtml, meta, body);
+    writePage(path.join(DIST, ...page.path.split("/"), "index.html"), html);
+    total++;
+  }
+  console.log(`[prerender] ${STATIC_LANDINGS.length} static SEO landings (competitors + blog)`);
+
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     console.warn("[prerender] Supabase env missing — skipping tenant + city pages");
     console.log(`[prerender] total: ${total} pages`);
