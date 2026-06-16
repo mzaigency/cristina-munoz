@@ -71,6 +71,48 @@ const TRUST_POINTS = [
   { Icon: Wallet, label: "Sin permanencia" },
 ];
 
+/** Tarjeta con tilt 3D al mover el puntero. Mobile-safe (no aplica en touch). */
+function Tilt3DCard({
+  children,
+  className,
+  enabled = true,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  enabled?: boolean;
+}) {
+  const rx = useMotionValue(0);
+  const ry = useMotionValue(0);
+  const sx = useSpring(rx, { stiffness: 220, damping: 22, mass: 0.4 });
+  const sy = useSpring(ry, { stiffness: 220, damping: 22, mass: 0.4 });
+
+  const handleMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!enabled || e.pointerType === "touch") return;
+    const el = e.currentTarget;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    ry.set(px * 10); // rotateY
+    rx.set(-py * 10); // rotateX
+  };
+  const reset = () => {
+    rx.set(0);
+    ry.set(0);
+  };
+
+  return (
+    <motion.div
+      onPointerMove={handleMove}
+      onPointerLeave={reset}
+      style={{ rotateX: sx, rotateY: sy, transformStyle: "preserve-3d" }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+
 const OBJECTIONS = [
   { q: "¿Y si no me convence?", a: "30 días gratis sin compromiso. Cancelas con un clic antes de que termine el periodo y no se cobra nada." },
   { q: "¿Es difícil de configurar?", a: "Un asistente te guía paso a paso. En 5 minutos tienes tu web lista con servicios, horarios y equipo." },
