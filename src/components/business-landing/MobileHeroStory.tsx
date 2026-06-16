@@ -66,7 +66,7 @@ export const MobileHeroStory = () => {
               <span className="grid h-7 w-7 place-items-center rounded-full bg-foreground/5">
                 <beat.icon className="h-3.5 w-3.5" />
               </span>
-              Beat 0{i + 1}
+              {i === 0 ? "DOLOR 1" : `DOLOR 0${i + 1}`}
             </div>
 
             <h3 className="font-sans text-2xl font-bold leading-tight tracking-tight text-foreground/85">
