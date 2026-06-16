@@ -66,29 +66,11 @@ const FEATURE_LABELS: Record<string, string> = {
 const CRISTINA_LOGO =
   "https://lyeyzdbplrgqsvyxpfek.supabase.co/storage/v1/object/public/tenant-assets/a1b2c3d4-e5f6-7890-abcd-ef1234567890/logo-1766948799579.png";
 
-const TESTIMONIALS = [
-  {
-    initials: "CM",
-    name: "Cristina Muñoz",
-    sector: "Peluquería · Santpedor",
-    Icon: Scissors,
-    logo: CRISTINA_LOGO as string | null,
-    quote:
-      "Antes vivía pegada al teléfono. Ahora las clientas reservan solas, hasta de madrugada, y yo abro la app y veo el día ya montado.",
-    metric: "Reservas mientras duermo",
-    metricLabel: "la agenda se llena sin coger el teléfono",
-  },
-  {
-    initials: "MF",
-    name: "Montserrat Faig",
-    sector: "Fisioterapia · Manresa",
-    Icon: HeartPulse,
-    logo: null as string | null,
-    quote:
-      "Los pacientes que faltaban sin avisar eran mi pesadilla. Con los recordatorios automáticos los plantones casi han desaparecido.",
-    metric: "Plantones bajo control",
-    metricLabel: "los recordatorios hacen el trabajo",
-  },
+// Beneficios concretos y verificables (sin métricas inventadas).
+const TRUST_POINTS = [
+  { Icon: Clock, label: "Listo en 5 min" },
+  { Icon: CreditCard, label: "Sin tarjeta" },
+  { Icon: Wallet, label: "Sin permanencia" },
 ];
 
 const OBJECTIONS = [
