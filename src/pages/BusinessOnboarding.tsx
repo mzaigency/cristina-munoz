@@ -632,7 +632,7 @@ export default function BusinessOnboarding() {
                           30 días · sin tarjeta
                         </p>
                       </div>
-                      </div>
+                      </Tilt3DCard>
                     </motion.div>
                   );
                 })}
