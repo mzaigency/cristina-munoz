@@ -15,7 +15,7 @@ import {
   Shield, ChevronDown, Lock, Sparkles, Clock, CreditCard, Wallet,
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion, useMotionValue, useSpring } from "motion/react";
 import { SupportButton } from "@/components/common/SupportButton";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { SectionHeader, gradientText, gradientBg, brandCard, EASE } from "@/components/business-landing/_landingShared";
