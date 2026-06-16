@@ -521,13 +521,14 @@ export default function BusinessOnboarding() {
                   return (
                     <motion.div
                       key={plan.id}
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, y: 60, rotateX: prefersReducedMotion ? 0 : -14 }}
+                      whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
                       viewport={{ once: true, margin: "-60px" }}
-                      transition={{ delay: index * 0.08, duration: 0.6, ease: EASE }}
+                      transition={{ delay: index * 0.1, duration: 0.75, ease: EASE }}
                       className={`relative ${
                         isPopular ? "md:-mt-4 md:mb-0 md:scale-[1.03]" : ""
                       }`}
+                      style={{ transformStyle: "preserve-3d", transformOrigin: "center bottom" }}
                     >
                       {isPopular && (
                         <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
@@ -539,12 +540,15 @@ export default function BusinessOnboarding() {
                           </span>
                         </div>
                       )}
-                      <div
-                        className={`relative flex h-full flex-col overflow-hidden rounded-3xl p-7 ${
-                          isPopular ? "" : "border border-border/70"
+                      <Tilt3DCard
+                        enabled={!prefersReducedMotion}
+                        className={`relative flex h-full flex-col overflow-hidden rounded-3xl p-7 transition-shadow duration-500 will-change-transform ${
+                          isPopular
+                            ? "shadow-[0_50px_100px_-30px_rgba(20,22,48,.55)]"
+                            : "border border-border/70 shadow-[0_20px_50px_-20px_rgba(20,22,48,.18)] hover:shadow-[0_30px_60px_-25px_rgba(20,22,48,.28)]"
                         }`}
-                        style={cardStyle}
                       >
+                        <div className="absolute inset-0 rounded-3xl" style={cardStyle} aria-hidden />
                         {isPopular && (
                           <div
                             aria-hidden
@@ -552,6 +556,7 @@ export default function BusinessOnboarding() {
                             style={{ background: gradientBg }}
                           />
                         )}
+
 
                       <div className="relative mb-6">
                         <div
