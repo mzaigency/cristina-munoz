@@ -15,7 +15,7 @@
   font-style: normal;
   font-display: swap;
 }
-.font-ashing { font-family: "Ashing", "Playfair Display", Georgia, serif; letter-spacing: 0.05em; }
+.font-ashing { font-family: "Ashing", "Playfair Display", Georgia, serif; letter-spacing: 0.02em; }
 
 /* ── Editorial typography utilities (used on tenant landing) ── */
 .font-editorial { font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-weight: 500; }
