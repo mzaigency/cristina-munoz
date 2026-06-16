@@ -238,15 +238,132 @@
       }
     </script>
 
-    
-    
-    
-    
+    <!-- Structured Data - SoftwareApplication (Glowapp para negocios, citable por LLMs) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Glowapp para Negocios",
+        "operatingSystem": "Web, iOS, Android",
+        "applicationCategory": "BusinessApplication",
+        "applicationSubCategory": "Salon Management Software",
+        "description": "Software de gestión todo-en-uno para peluquerías, barberías, estética, spas, uñas y bienestar: web profesional con dominio propio, reservas online 24/7, agenda multi-profesional, CRM, caja, marketing y recordatorios automáticos. Alternativa española a Booksy, Treatwell y Fresha.",
+        "url": "https://www.glowapp.app/negocios",
+        "image": "https://www.glowapp.app/og-image.png",
+        "inLanguage": "es-ES",
+        "countriesSupported": "ES",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "category": "free trial",
+          "description": "Primer mes gratis sin compromiso. Stripe solo verifica la tarjeta, no se cobra durante el primer mes y se puede cancelar antes de que termine."
+        },
+        "featureList": [
+          "Web profesional del salón con dominio propio",
+          "Reservas online 24/7 sin comisión por cita",
+          "Agenda inteligente multi-profesional",
+          "CRM con historial, gasto y tags VIP",
+          "Caja registradora y cierre diario",
+          "Recordatorios automáticos por push y WhatsApp",
+          "Tienda integrada con productos y carrito",
+          "Reseñas verificadas tras la cita",
+          "Marketing: posts, stories, QR y kit WhatsApp",
+          "Onboarding asistido con IA en 5 minutos"
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "ratingCount": "2547",
+          "bestRating": "5",
+          "worstRating": "1"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Glowapp",
+          "url": "https://www.glowapp.app"
+        }
+      }
+    </script>
+
+    <!-- Structured Data - FAQPage sitewide (AEO: respuestas directas para AI Overviews, Perplexity, ChatGPT) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "¿Qué es Glowapp?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Glowapp es la red social y plataforma de reservas online de belleza y bienestar líder en España. Los clientes descubren peluquerías, barberías, estética, spas, uñas y fisioterapia cerca de ellos y reservan en segundos. Los negocios obtienen una web profesional, agenda online, CRM, caja y marketing en una sola app."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Cuál es la mejor alternativa gratis a Booksy o Treatwell en España?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Glowapp es la alternativa española a Booksy, Treatwell y Fresha. El primer mes es gratis sin compromiso y no cobra comisión por reserva. Frente a los 34,99 €/mes de Booksy o las comisiones de Treatwell, Glowapp permite empezar sin coste y mantener tus clientes propios."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Cómo reservo cita en una peluquería o salón con Glowapp?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Abre glowapp.app, busca por categoría (peluquerías, barberías, estética, spa, uñas, fisioterapia) o por ciudad, elige el salón, selecciona servicio, profesional y hora, y confirma. La reserva se hace en menos de un minuto, sin llamadas y 24/7."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Cuánto cuesta Glowapp para mi salón?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "El primer mes es gratis y sin permanencia. Stripe te pedirá una tarjeta solo para verificar tu cuenta, pero no te cobramos nada durante ese mes. Puedes cancelar cuando quieras antes de que termine y no pagarás nada."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Cómo digitalizo mi peluquería o salón de belleza?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Con Glowapp, en unos 5 minutos desde el móvil. Te guía un asistente con IA: eliges el tipo de negocio, suben fotos, genera tu web profesional, precarga servicios sugeridos, configura tu agenda y abre reservas online. No necesitas conocimientos técnicos."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿En qué países y ciudades funciona Glowapp?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Glowapp opera en España, con directorios por ciudad para peluquerías, barberías, estética, spas, uñas, salones de belleza y fisioterapia. Está disponible en web y como PWA instalable en iOS y Android."
+            }
+          }
+        ]
+      }
+    </script>
+
+    <!-- Structured Data - SpeakableSpecification (voice / asistentes) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "url": "https://www.glowapp.app/",
+        "speakable": {
+          "@type": "SpeakableSpecification",
+          "cssSelector": ["h1", ".speakable", "meta[name='description']"]
+        }
+      }
+    </script>
+
     <meta property="og:title" content="GlowApp - Reserva Cita en los Mejores Salones de Belleza">
   <meta name="twitter:title" content="GlowApp - Reserva Cita en los Mejores Salones de Belleza">
   <meta property="og:description" content="Descubre salones de belleza cerca de ti y reserva cita online al instante. Peluquerías, spas, estética y bienestar. La app de belleza #1 en España.">
   <meta name="twitter:description" content="Descubre salones de belleza cerca de ti y reserva cita online al instante. Peluquerías, spas, estética y bienestar. La app de belleza #1 en España.">
 </head>
+
 
   <body>
     <div id="root"></div>
