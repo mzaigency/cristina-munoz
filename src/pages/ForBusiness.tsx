@@ -2,6 +2,7 @@ import { SEO } from "@/components/SEO";
 import {
   StickyHeader,
   CinematicHero,
+  MobileHeroStory,
   SocialProofStrip,
   PanelShowcase,
   SalonTestimonials,
@@ -56,6 +57,7 @@ export default function ForBusiness() {
         <Preloader logoUrl={glowappLogo} logoVariant="bare" />
         <StickyHeader />
         <CinematicHero />
+        <MobileHeroStory />
         <SocialProofStrip />
         <PanelShowcase />
         <SalonTestimonials />

@@ -1,5 +1,6 @@
 export { HeroSection } from './HeroSection';
 export { CinematicHero } from './CinematicHero';
+export { MobileHeroStory } from './MobileHeroStory';
 export { SocialProofStrip } from './SocialProofStrip';
 export { ProblemAgitation } from './ProblemAgitation';
 export { PanelShowcase } from './PanelShowcase';
