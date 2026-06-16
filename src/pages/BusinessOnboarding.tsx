@@ -294,108 +294,23 @@ export default function BusinessOnboarding() {
               </p>
             </div>
 
-            {/* Social proof strip */}
-            <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-6 rounded-2xl border border-border/60 bg-card/60 px-6 py-4 backdrop-blur-sm">
-              <div className="text-center">
-                <p className="text-xl font-bold text-foreground">500+</p>
-                <p className="text-[10px] text-muted-foreground">Salones</p>
-              </div>
-              <div className="h-8 w-px bg-border" />
-              <div className="text-center">
-                <p className="text-xl font-bold text-foreground">50K+</p>
-                <p className="text-[10px] text-muted-foreground">Reservas/mes</p>
-              </div>
-              <div className="h-8 w-px bg-border" />
-              <div className="flex flex-col items-center">
-                <div className="flex gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  ))}
+            {/* Trust points (honestos, sin métricas inventadas) */}
+            <div className="mx-auto mt-10 flex max-w-md flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-2xl border border-border/60 bg-card/60 px-6 py-4 backdrop-blur-sm">
+              {TRUST_POINTS.map(({ Icon, label }) => (
+                <div key={label} className="flex items-center gap-2">
+                  <span
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-white shadow-sm"
+                    style={{ backgroundImage: gradientBg }}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="text-xs font-medium text-foreground">{label}</span>
                 </div>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">4.9</p>
-              </div>
+              ))}
             </div>
           </motion.div>
         </section>
 
-        {/* ===== TESTIMONIALS (real salones) ===== */}
-        <section className="container mx-auto px-4 py-14 md:py-20">
-          <SectionHeader
-            eyebrow="Salones reales"
-            title={
-              <>
-                No te lo decimos nosotros.{" "}
-                <span className="font-serif italic" style={gradientText}>
-                  Te lo dicen ellas.
-                </span>
-              </>
-            }
-            subtitle="Negocios que cambiaron la libreta por Glowapp y no han vuelto atrás."
-            className="mb-10"
-          />
-
-          <motion.div
-            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.16 } } }}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-80px" }}
-            className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2"
-          >
-            {TESTIMONIALS.map((t) => (
-              <motion.figure
-                key={t.name}
-                variants={{
-                  hidden: { opacity: 0, y: 30, scale: 0.96 },
-                  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", duration: 0.8, bounce: 0.2 } },
-                }}
-                className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/60 bg-card/85 p-6 shadow-sm backdrop-blur-sm transition-shadow duration-300 hover:shadow-[0_24px_50px_-16px_rgba(20,22,48,0.16)] sm:p-8"
-              >
-                <Quote className="absolute right-6 top-6 h-10 w-10 text-primary/10" />
-
-                <div className="mb-4 flex gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-
-                <blockquote className="font-serif text-lg italic leading-relaxed text-foreground sm:text-xl">
-                  «{t.quote}»
-                </blockquote>
-
-                <div className="mt-5 inline-flex w-fit flex-col rounded-2xl bg-primary/[0.06] px-4 py-3">
-                  <span className="text-base font-bold tracking-tight sm:text-lg" style={gradientText}>
-                    {t.metric}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{t.metricLabel}</span>
-                </div>
-
-                <figcaption className="mt-6 flex items-center gap-3 border-t border-border/60 pt-5">
-                  {t.logo ? (
-                    <img
-                      src={t.logo}
-                      alt={`Logo de ${t.name}`}
-                      loading="lazy"
-                      className="h-11 w-11 flex-none rounded-2xl border border-border/60 object-cover shadow-md"
-                    />
-                  ) : (
-                    <span
-                      className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl text-sm font-bold text-white shadow-md"
-                      style={{ backgroundImage: gradientBg }}
-                    >
-                      {t.initials}
-                    </span>
-                  )}
-                  <div>
-                    <p className="font-semibold text-foreground">{t.name}</p>
-                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <t.Icon className="h-3 w-3" /> {t.sector}
-                    </p>
-                  </div>
-                </figcaption>
-              </motion.figure>
-            ))}
-          </motion.div>
-        </section>
 
         {/* ===== PRICING ===== */}
         <section ref={pricingRef} className="scroll-mt-20 bg-secondary/50 py-14 md:py-20">
