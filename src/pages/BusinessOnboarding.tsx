@@ -374,6 +374,18 @@ export default function BusinessOnboarding() {
                 "radial-gradient(60% 50% at 50% 0%, hsl(var(--primary) / 0.10), transparent 70%), radial-gradient(50% 40% at 80% 100%, hsl(var(--accent) / 0.10), transparent 70%)",
             }}
           />
+          {/* Blobs con parallax al scroll */}
+          <motion.div
+            aria-hidden
+            style={{ y: blobAY }}
+            className="pointer-events-none absolute -left-24 top-24 -z-10 h-64 w-64 rounded-full bg-primary/20 blur-3xl"
+          />
+          <motion.div
+            aria-hidden
+            style={{ y: blobBY }}
+            className="pointer-events-none absolute -right-24 bottom-12 -z-10 h-72 w-72 rounded-full bg-accent/20 blur-3xl"
+          />
+
 
           <div className="container mx-auto px-4">
             <motion.div
