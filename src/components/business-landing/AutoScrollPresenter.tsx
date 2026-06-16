@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Play, Pause, Gauge } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const SPEEDS = [20, 40, 60, 100] as const;
+const SPEEDS = [200, 300, 400] as const;
 type Speed = typeof SPEEDS[number];
 const STORAGE_KEY = "autoscroll_speed_v1";
 
