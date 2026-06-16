@@ -4,21 +4,22 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import {
-  Loader2, ArrowLeft, ArrowRight, Zap, Crown, Check, Building2, Star, Quote,
-  Shield, ChevronDown, Lock, Scissors, HeartPulse, Sparkles,
+  Loader2, ArrowLeft, ArrowRight, Zap, Crown, Check, Building2,
+  Shield, ChevronDown, Lock, Sparkles, Clock, CreditCard, Wallet,
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { motion, AnimatePresence } from "motion/react";
 import { SupportButton } from "@/components/common/SupportButton";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
-import { SectionHeader, gradientText, gradientBg } from "@/components/business-landing/_landingShared";
+import { SectionHeader, gradientText, gradientBg, brandCard, EASE } from "@/components/business-landing/_landingShared";
+import { VerticalCutReveal } from "@/components/ui/vertical-cut-reveal";
 
 const businessSchema = z.object({
   businessName: z.string().trim().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
@@ -62,32 +63,12 @@ const FEATURE_LABELS: Record<string, string> = {
   whatsapp_reminders: "Recordatorios por WhatsApp",
 };
 
-const CRISTINA_LOGO =
-  "https://lyeyzdbplrgqsvyxpfek.supabase.co/storage/v1/object/public/tenant-assets/a1b2c3d4-e5f6-7890-abcd-ef1234567890/logo-1766948799579.png";
 
-const TESTIMONIALS = [
-  {
-    initials: "CM",
-    name: "Cristina Muñoz",
-    sector: "Peluquería · Santpedor",
-    Icon: Scissors,
-    logo: CRISTINA_LOGO as string | null,
-    quote:
-      "Antes vivía pegada al teléfono. Ahora las clientas reservan solas, hasta de madrugada, y yo abro la app y veo el día ya montado.",
-    metric: "Reservas mientras duermo",
-    metricLabel: "la agenda se llena sin coger el teléfono",
-  },
-  {
-    initials: "MF",
-    name: "Montserrat Faig",
-    sector: "Fisioterapia · Manresa",
-    Icon: HeartPulse,
-    logo: null as string | null,
-    quote:
-      "Los pacientes que faltaban sin avisar eran mi pesadilla. Con los recordatorios automáticos los plantones casi han desaparecido.",
-    metric: "Plantones bajo control",
-    metricLabel: "los recordatorios hacen el trabajo",
-  },
+// Beneficios concretos y verificables (sin métricas inventadas).
+const TRUST_POINTS = [
+  { Icon: Clock, label: "Listo en 5 min" },
+  { Icon: CreditCard, label: "Sin tarjeta" },
+  { Icon: Wallet, label: "Sin permanencia" },
 ];
 
 const OBJECTIONS = [
@@ -248,7 +229,7 @@ export default function BusinessOnboarding() {
     <AppLayout hideNavigation>
       <SEO
         title="Digitaliza tu Salón - Glowapp | Reservas Online en 5 Minutos"
-        description="Crea tu web profesional y recibe reservas 24/7. 30 días gratis. Más de 500 salones ya confían en Glowapp."
+        description="Crea tu web profesional y recibe reservas 24/7. 30 días gratis, sin tarjeta. Lista en 5 minutos."
         canonicalUrl="/onboarding"
         faq={OBJECTIONS.map((o) => ({ question: o.q, answer: o.a }))}
       />
@@ -311,148 +292,101 @@ export default function BusinessOnboarding() {
               </p>
             </div>
 
-            {/* Social proof strip */}
-            <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-6 rounded-2xl border border-border/60 bg-card/60 px-6 py-4 backdrop-blur-sm">
-              <div className="text-center">
-                <p className="text-xl font-bold text-foreground">500+</p>
-                <p className="text-[10px] text-muted-foreground">Salones</p>
-              </div>
-              <div className="h-8 w-px bg-border" />
-              <div className="text-center">
-                <p className="text-xl font-bold text-foreground">50K+</p>
-                <p className="text-[10px] text-muted-foreground">Reservas/mes</p>
-              </div>
-              <div className="h-8 w-px bg-border" />
-              <div className="flex flex-col items-center">
-                <div className="flex gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  ))}
+            {/* Trust points (honestos, sin métricas inventadas) */}
+            <div className="mx-auto mt-10 flex max-w-md flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-2xl border border-border/60 bg-card/60 px-6 py-4 backdrop-blur-sm">
+              {TRUST_POINTS.map(({ Icon, label }) => (
+                <div key={label} className="flex items-center gap-2">
+                  <span
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-white shadow-sm"
+                    style={{ backgroundImage: gradientBg }}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="text-xs font-medium text-foreground">{label}</span>
                 </div>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">4.9</p>
-              </div>
+              ))}
             </div>
           </motion.div>
         </section>
 
-        {/* ===== TESTIMONIALS (real salones) ===== */}
-        <section className="container mx-auto px-4 py-14 md:py-20">
-          <SectionHeader
-            eyebrow="Salones reales"
-            title={
-              <>
-                No te lo decimos nosotros.{" "}
-                <span className="font-serif italic" style={gradientText}>
-                  Te lo dicen ellas.
-                </span>
-              </>
-            }
-            subtitle="Negocios que cambiaron la libreta por Glowapp y no han vuelto atrás."
-            className="mb-10"
-          />
-
-          <motion.div
-            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.16 } } }}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-80px" }}
-            className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2"
-          >
-            {TESTIMONIALS.map((t) => (
-              <motion.figure
-                key={t.name}
-                variants={{
-                  hidden: { opacity: 0, y: 30, scale: 0.96 },
-                  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", duration: 0.8, bounce: 0.2 } },
-                }}
-                className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/60 bg-card/85 p-6 shadow-sm backdrop-blur-sm transition-shadow duration-300 hover:shadow-[0_24px_50px_-16px_rgba(20,22,48,0.16)] sm:p-8"
-              >
-                <Quote className="absolute right-6 top-6 h-10 w-10 text-primary/10" />
-
-                <div className="mb-4 flex gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-
-                <blockquote className="font-serif text-lg italic leading-relaxed text-foreground sm:text-xl">
-                  «{t.quote}»
-                </blockquote>
-
-                <div className="mt-5 inline-flex w-fit flex-col rounded-2xl bg-primary/[0.06] px-4 py-3">
-                  <span className="text-base font-bold tracking-tight sm:text-lg" style={gradientText}>
-                    {t.metric}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{t.metricLabel}</span>
-                </div>
-
-                <figcaption className="mt-6 flex items-center gap-3 border-t border-border/60 pt-5">
-                  {t.logo ? (
-                    <img
-                      src={t.logo}
-                      alt={`Logo de ${t.name}`}
-                      loading="lazy"
-                      className="h-11 w-11 flex-none rounded-2xl border border-border/60 object-cover shadow-md"
-                    />
-                  ) : (
-                    <span
-                      className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl text-sm font-bold text-white shadow-md"
-                      style={{ backgroundImage: gradientBg }}
-                    >
-                      {t.initials}
-                    </span>
-                  )}
-                  <div>
-                    <p className="font-semibold text-foreground">{t.name}</p>
-                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <t.Icon className="h-3 w-3" /> {t.sector}
-                    </p>
-                  </div>
-                </figcaption>
-              </motion.figure>
-            ))}
-          </motion.div>
-        </section>
 
         {/* ===== PRICING ===== */}
-        <section ref={pricingRef} className="scroll-mt-20 bg-secondary/50 py-14 md:py-20">
-          <div className="container mx-auto px-4">
-            <SectionHeader
-              eyebrow="Precios transparentes"
-              title="Elige tu plan"
-              subtitle="Todos los planes incluyen 30 días de prueba gratis. Cancela cuando quieras."
-              className="mb-8"
-            />
+        <section
+          ref={pricingRef}
+          className="relative scroll-mt-20 overflow-hidden py-16 md:py-24"
+        >
+          {/* Fondo aurora suave de marca */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10"
+            style={{
+              background:
+                "radial-gradient(60% 50% at 50% 0%, hsl(var(--primary) / 0.10), transparent 70%), radial-gradient(50% 40% at 80% 100%, hsl(var(--accent) / 0.10), transparent 70%)",
+            }}
+          />
 
-            <div className="mb-10 flex justify-center">
-              <div className="inline-flex items-center gap-3 rounded-full border border-border bg-background p-1">
-                <span
-                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
-                    !isAnnual ? "bg-primary/10 font-medium text-foreground" : "text-muted-foreground"
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.6, ease: EASE }}
+              className="mx-auto max-w-2xl text-center"
+            >
+              <span className="mb-3 inline-block text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+                Precios transparentes
+              </span>
+              <h2 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
+                <VerticalCutReveal
+                  splitBy="words"
+                  staggerDuration={0.08}
+                  staggerFrom="first"
+                  transition={{ type: "spring", stiffness: 220, damping: 26, delay: 0.05 }}
+                  containerClassName="justify-center"
+                >
+                  Empieza gratis 30 días
+                </VerticalCutReveal>
+              </h2>
+              <p className="mx-auto mt-4 max-w-lg text-base text-muted-foreground sm:text-lg">
+                Sin tarjeta. Sin permanencia. Cancela con un clic antes de que termine.
+              </p>
+            </motion.div>
+
+            {/* Toggle mensual/anual */}
+            <div className="mb-10 mt-8 flex justify-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 p-1 shadow-sm backdrop-blur-sm">
+                <button
+                  type="button"
+                  onClick={() => setIsAnnual(false)}
+                  className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
+                    !isAnnual ? "bg-primary/10 font-semibold text-foreground" : "text-muted-foreground"
                   }`}
                 >
                   Mensual
-                </span>
-                <Switch checked={isAnnual} onCheckedChange={setIsAnnual} />
-                <span
-                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
-                    isAnnual ? "bg-primary/10 font-medium text-foreground" : "text-muted-foreground"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAnnual(true)}
+                  className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm transition-colors ${
+                    isAnnual ? "bg-primary/10 font-semibold text-foreground" : "text-muted-foreground"
                   }`}
                 >
                   Anual
-                  <span className="ml-1 text-xs font-medium text-emerald-600">−20%</span>
-                </span>
+                  <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600">
+                    −20%
+                  </span>
+                </button>
               </div>
             </div>
 
             {plansLoading ? (
               <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-96 animate-pulse rounded-2xl bg-muted" />
+                  <div key={i} className="h-[460px] animate-pulse rounded-3xl bg-muted" />
                 ))}
               </div>
             ) : (
-              <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+              <div className="mx-auto grid max-w-5xl items-stretch gap-6 md:grid-cols-3">
                 {plans.map((plan, index) => {
                   const meta = PLAN_ICONS[plan.slug] || PLAN_ICONS.starter;
                   const Icon = meta.Icon;
@@ -461,85 +395,139 @@ export default function BusinessOnboarding() {
                   const annualMonthly = Math.round(annualPrice / 12);
                   const annualSavings = plan.monthly_price * 12 - annualPrice;
                   const features = buildFeatureList(plan);
-                  const isSelected = selectedPlan === plan.slug && showForm;
+
+                  // Diferenciación visual: el popular usa la tarjeta navy de marca.
+                  const cardStyle: React.CSSProperties = isPopular
+                    ? brandCard
+                    : {
+                        background:
+                          "linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card)) 100%)",
+                      };
+
+                  const titleClass = isPopular ? "text-white" : "text-foreground";
+                  const subtitleClass = isPopular ? "text-white/70" : "text-muted-foreground";
+                  const priceClass = isPopular ? "text-white" : "text-foreground";
+                  const featureClass = isPopular ? "text-white/85" : "text-muted-foreground";
+                  const checkBg = isPopular ? "bg-white/10" : "bg-secondary";
+                  const checkColor = isPopular ? "text-white" : "text-primary";
 
                   return (
                     <motion.div
                       key={plan.id}
                       initial={{ opacity: 0, y: 30 }}
                       whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 }}
-                      className={`relative rounded-2xl p-6 transition-all ${
-                        isPopular
-                          ? "border-2 border-primary bg-background shadow-xl shadow-primary/10"
-                          : isSelected
-                          ? "border-2 border-primary/60 bg-background"
-                          : "border border-border bg-background"
+                      viewport={{ once: true, margin: "-60px" }}
+                      transition={{ delay: index * 0.08, duration: 0.6, ease: EASE }}
+                      className={`relative ${
+                        isPopular ? "md:-mt-4 md:mb-0 md:scale-[1.03]" : ""
                       }`}
                     >
                       {isPopular && (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                          <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-lg">
-                            Más popular
+                        <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold text-white shadow-lg shadow-primary/30"
+                            style={{ backgroundImage: gradientBg }}
+                          >
+                            <Sparkles className="h-3 w-3" /> El más elegido
                           </span>
                         </div>
                       )}
+                      <div
+                        className={`relative flex h-full flex-col overflow-hidden rounded-3xl p-7 ${
+                          isPopular ? "" : "border border-border/70"
+                        }`}
+                        style={cardStyle}
+                      >
+                        {isPopular && (
+                          <div
+                            aria-hidden
+                            className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full opacity-50 blur-3xl"
+                            style={{ background: gradientBg }}
+                          />
+                        )}
 
-                      <div className="mb-6">
+                      <div className="relative mb-6">
                         <div
-                          className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl gradient-primary shadow-lg shadow-primary/20 ${meta.opacity}`}
+                          className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg ${meta.opacity}`}
+                          style={{
+                            backgroundImage: isPopular
+                              ? "linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.05))"
+                              : gradientBg,
+                            boxShadow: isPopular
+                              ? "inset 0 1px 0 rgba(255,255,255,.18)"
+                              : "0 10px 24px -10px hsl(var(--primary) / 0.45)",
+                          }}
                         >
                           <Icon className="h-5 w-5 text-white" />
                         </div>
-                        <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">{PLAN_SUBTITLES[plan.slug] || ""}</p>
-                      </div>
-
-                      <div className="mb-6">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-bold text-foreground">
-                            {isAnnual ? annualMonthly : plan.monthly_price}€
-                          </span>
-                          <span className="text-sm text-muted-foreground">/mes</span>
-                        </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {annualPrice}€/año {annualSavings > 0 && <>(ahorras {annualSavings}€)</>}
+                        <h3 className={`text-xl font-bold ${titleClass}`}>{plan.name}</h3>
+                        <p className={`mt-1 text-sm ${subtitleClass}`}>
+                          {PLAN_SUBTITLES[plan.slug] || ""}
                         </p>
                       </div>
 
-                      <ul className="mb-6 space-y-3">
+                      <div className="relative mb-6">
+                        <div className="flex items-baseline gap-1">
+                          <span className={`text-5xl font-bold tracking-tight ${priceClass}`}>
+                            {isAnnual ? annualMonthly : plan.monthly_price}€
+                          </span>
+                          <span className={`text-sm ${subtitleClass}`}>/mes</span>
+                        </div>
+                        <p className={`mt-1.5 text-xs ${subtitleClass}`}>
+                          {isAnnual ? (
+                            <>
+                              {annualPrice}€ facturados al año
+                              {annualSavings > 0 && (
+                                <span className="ml-1 font-semibold text-emerald-400">
+                                  · ahorras {annualSavings}€
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <>Facturación mensual · cancela cuando quieras</>
+                          )}
+                        </p>
+                      </div>
+
+                      <ul className="relative mb-7 space-y-3">
                         {features.map((feature, i) => (
                           <li key={i} className="flex items-start gap-3">
-                            <div
-                              className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full ${
-                                isPopular ? "bg-primary/15" : "bg-secondary"
-                              }`}
+                            <span
+                              className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full ${checkBg}`}
                             >
-                              <Check className="h-3 w-3 text-primary" />
-                            </div>
-                            <span className="text-sm text-muted-foreground">{feature}</span>
+                              <Check className={`h-3 w-3 ${checkColor}`} />
+                            </span>
+                            <span className={`text-sm leading-snug ${featureClass}`}>
+                              {feature}
+                            </span>
                           </li>
                         ))}
                       </ul>
 
-                      <Button
-                        onClick={() => handlePlanSelect(plan.slug as PlanSlug)}
-                        className={`h-12 w-full rounded-xl font-medium ${
-                          isPopular
-                            ? "gradient-primary border-0 text-white"
-                            : "border border-border bg-secondary text-foreground hover:bg-secondary/80"
-                        }`}
-                      >
-                        Empezar gratis
-                      </Button>
+                      <div className="relative mt-auto">
+                        <Button
+                          onClick={() => handlePlanSelect(plan.slug as PlanSlug)}
+                          className={`h-12 w-full rounded-2xl font-semibold ${
+                            isPopular
+                              ? "bg-white text-[hsl(223_55%_17%)] hover:bg-white/90"
+                              : "gradient-primary border-0 text-white shadow-lg shadow-primary/25"
+                          }`}
+                        >
+                          Empezar gratis
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                        <p className={`mt-2 text-center text-[11px] ${subtitleClass}`}>
+                          30 días · sin tarjeta
+                        </p>
+                      </div>
+                      </div>
                     </motion.div>
                   );
                 })}
               </div>
             )}
 
-            <div className="mt-10 flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+            <div className="mt-12 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" /> 30 días gratis
               </span>
@@ -549,9 +537,13 @@ export default function BusinessOnboarding() {
               <span className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" /> Sin permanencia
               </span>
+              <span className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-primary" /> Soporte humano en español
+              </span>
             </div>
           </div>
         </section>
+
 
         {/* ===== FORM ===== */}
         <AnimatePresence>
