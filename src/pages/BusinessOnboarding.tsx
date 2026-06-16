@@ -15,7 +15,7 @@ import {
   Shield, ChevronDown, Lock, Sparkles, Clock, CreditCard, Wallet,
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion, useMotionValue, useSpring } from "motion/react";
 import { SupportButton } from "@/components/common/SupportButton";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { SectionHeader, gradientText, gradientBg, brandCard, EASE } from "@/components/business-landing/_landingShared";
@@ -71,6 +71,48 @@ const TRUST_POINTS = [
   { Icon: Wallet, label: "Sin permanencia" },
 ];
 
+/** Tarjeta con tilt 3D al mover el puntero. Mobile-safe (no aplica en touch). */
+function Tilt3DCard({
+  children,
+  className,
+  enabled = true,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  enabled?: boolean;
+}) {
+  const rx = useMotionValue(0);
+  const ry = useMotionValue(0);
+  const sx = useSpring(rx, { stiffness: 220, damping: 22, mass: 0.4 });
+  const sy = useSpring(ry, { stiffness: 220, damping: 22, mass: 0.4 });
+
+  const handleMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!enabled || e.pointerType === "touch") return;
+    const el = e.currentTarget;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    ry.set(px * 10); // rotateY
+    rx.set(-py * 10); // rotateX
+  };
+  const reset = () => {
+    rx.set(0);
+    ry.set(0);
+  };
+
+  return (
+    <motion.div
+      onPointerMove={handleMove}
+      onPointerLeave={reset}
+      style={{ rotateX: sx, rotateY: sy, transformStyle: "preserve-3d" }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+
 const OBJECTIONS = [
   { q: "¿Y si no me convence?", a: "30 días gratis sin compromiso. Cancelas con un clic antes de que termine el periodo y no se cobra nada." },
   { q: "¿Es difícil de configurar?", a: "Un asistente te guía paso a paso. En 5 minutos tienes tu web lista con servicios, horarios y equipo." },
@@ -91,6 +133,24 @@ export default function BusinessOnboarding() {
   const formRef = useRef<HTMLDivElement>(null);
   const pricingRef = useRef<HTMLDivElement>(null);
   const { plans, loading: plansLoading } = useSubscriptionPlans();
+
+  // ===== Parallax 3D (window scroll, respeta prefers-reduced-motion) =====
+  const prefersReducedMotion = useReducedMotion();
+  const { scrollY } = useScroll();
+  const pm = prefersReducedMotion ? 0 : 1; // multiplier
+  // Hero: capas a velocidades distintas conforme baja la página
+  const heroBadgeY = useTransform(scrollY, [0, 600], [0, -40 * pm]);
+  const heroTitleY = useTransform(scrollY, [0, 600], [0, -90 * pm]);
+  const heroSubY = useTransform(scrollY, [0, 600], [0, -130 * pm]);
+  const heroCtaY = useTransform(scrollY, [0, 600], [0, -170 * pm]);
+  const heroTrustY = useTransform(scrollY, [0, 600], [0, -210 * pm]);
+  const heroOpacity = useTransform(scrollY, [0, 500], [1, 0.25]);
+  // Blobs en pricing (offset estimado por viewport)
+  const blobAY = useTransform(scrollY, [400, 2200], [80 * pm, -120 * pm]);
+  const blobBY = useTransform(scrollY, [400, 2200], [-60 * pm, 160 * pm]);
+  const blobARot = useTransform(scrollY, [400, 2200], [0, 30 * pm]);
+
+
 
   const handlePlanSelect = (slug: PlanSlug) => {
     setSelectedPlan(slug);
@@ -259,29 +319,50 @@ export default function BusinessOnboarding() {
       </div>
 
       <div className="pb-24">
-        {/* ===== HERO ===== */}
-        <section className="container mx-auto px-4 pt-10 pb-12 text-center md:pt-20 md:pb-16">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600">
+        {/* ===== HERO (parallax 3D por capas) ===== */}
+        <section
+          className="relative container mx-auto px-4 pt-10 pb-12 text-center md:pt-20 md:pb-16"
+          style={{ perspective: 1200 }}
+        >
+          {/* Halos de fondo con parallax */}
+          <motion.div
+            aria-hidden
+            style={{ y: blobAY, rotate: blobARot }}
+            className="pointer-events-none absolute -top-10 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full opacity-50 blur-3xl"
+          >
+            <div className="h-full w-full rounded-full" style={{ background: gradientBg }} />
+          </motion.div>
+
+          <motion.div style={{ opacity: heroOpacity }} className="relative">
+            <motion.span
+              style={{ y: heroBadgeY }}
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600"
+            >
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
               30 días gratis
-            </span>
+            </motion.span>
 
-            <h1 className="mx-auto max-w-2xl text-balance text-[34px] font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-6xl">
+            <motion.h1
+              style={{ y: heroTitleY }}
+              className="mx-auto max-w-2xl text-balance text-[34px] font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-6xl"
+            >
               Deja de perder clientes{" "}
               <span className="font-serif italic" style={gradientText}>
                 por no estar online
               </span>
-            </h1>
+            </motion.h1>
 
-            <p className="mx-auto mt-5 max-w-md text-base text-muted-foreground sm:text-lg">
+            <motion.p
+              style={{ y: heroSubY }}
+              className="mx-auto mt-5 max-w-md text-base text-muted-foreground sm:text-lg"
+            >
               Tu web profesional con reservas 24/7 lista en 5 minutos. Sin saber programar.
-            </p>
+            </motion.p>
 
-            <div className="mt-7 flex flex-col items-center gap-3">
+            <motion.div style={{ y: heroCtaY }} className="mt-7 flex flex-col items-center gap-3">
               <Button
                 onClick={scrollToPricing}
-                className="h-12 rounded-2xl gradient-primary px-8 text-base font-semibold text-white shadow-xl shadow-primary/25"
+                className="h-12 rounded-2xl gradient-primary px-8 text-base font-semibold text-white shadow-xl shadow-primary/25 transition-transform hover:-translate-y-0.5"
               >
                 Crear mi salón gratis
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -290,10 +371,13 @@ export default function BusinessOnboarding() {
                 <Shield className="h-3 w-3" />
                 Cancela cuando quieras · Sin compromisos
               </p>
-            </div>
+            </motion.div>
 
             {/* Trust points (honestos, sin métricas inventadas) */}
-            <div className="mx-auto mt-10 flex max-w-md flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-2xl border border-border/60 bg-card/60 px-6 py-4 backdrop-blur-sm">
+            <motion.div
+              style={{ y: heroTrustY }}
+              className="mx-auto mt-10 flex max-w-md flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-2xl border border-border/60 bg-card/60 px-6 py-4 backdrop-blur-sm"
+            >
               {TRUST_POINTS.map(({ Icon, label }) => (
                 <div key={label} className="flex items-center gap-2">
                   <span
@@ -305,9 +389,10 @@ export default function BusinessOnboarding() {
                   <span className="text-xs font-medium text-foreground">{label}</span>
                 </div>
               ))}
-            </div>
+            </motion.div>
           </motion.div>
         </section>
+
 
 
         {/* ===== PRICING ===== */}
@@ -324,6 +409,18 @@ export default function BusinessOnboarding() {
                 "radial-gradient(60% 50% at 50% 0%, hsl(var(--primary) / 0.10), transparent 70%), radial-gradient(50% 40% at 80% 100%, hsl(var(--accent) / 0.10), transparent 70%)",
             }}
           />
+          {/* Blobs con parallax al scroll */}
+          <motion.div
+            aria-hidden
+            style={{ y: blobAY }}
+            className="pointer-events-none absolute -left-24 top-24 -z-10 h-64 w-64 rounded-full bg-primary/20 blur-3xl"
+          />
+          <motion.div
+            aria-hidden
+            style={{ y: blobBY }}
+            className="pointer-events-none absolute -right-24 bottom-12 -z-10 h-72 w-72 rounded-full bg-accent/20 blur-3xl"
+          />
+
 
           <div className="container mx-auto px-4">
             <motion.div
@@ -386,7 +483,10 @@ export default function BusinessOnboarding() {
                 ))}
               </div>
             ) : (
-              <div className="mx-auto grid max-w-5xl items-stretch gap-6 md:grid-cols-3">
+              <div
+                className="mx-auto grid max-w-5xl items-stretch gap-6 md:grid-cols-3"
+                style={{ perspective: 1400 }}
+              >
                 {plans.map((plan, index) => {
                   const meta = PLAN_ICONS[plan.slug] || PLAN_ICONS.starter;
                   const Icon = meta.Icon;
@@ -414,13 +514,14 @@ export default function BusinessOnboarding() {
                   return (
                     <motion.div
                       key={plan.id}
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, y: 60, rotateX: prefersReducedMotion ? 0 : -14 }}
+                      whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
                       viewport={{ once: true, margin: "-60px" }}
-                      transition={{ delay: index * 0.08, duration: 0.6, ease: EASE }}
+                      transition={{ delay: index * 0.1, duration: 0.75, ease: EASE }}
                       className={`relative ${
                         isPopular ? "md:-mt-4 md:mb-0 md:scale-[1.03]" : ""
                       }`}
+                      style={{ transformStyle: "preserve-3d", transformOrigin: "center bottom" }}
                     >
                       {isPopular && (
                         <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
@@ -432,12 +533,15 @@ export default function BusinessOnboarding() {
                           </span>
                         </div>
                       )}
-                      <div
-                        className={`relative flex h-full flex-col overflow-hidden rounded-3xl p-7 ${
-                          isPopular ? "" : "border border-border/70"
+                      <Tilt3DCard
+                        enabled={!prefersReducedMotion}
+                        className={`relative flex h-full flex-col overflow-hidden rounded-3xl p-7 transition-shadow duration-500 will-change-transform ${
+                          isPopular
+                            ? "shadow-[0_50px_100px_-30px_rgba(20,22,48,.55)]"
+                            : "border border-border/70 shadow-[0_20px_50px_-20px_rgba(20,22,48,.18)] hover:shadow-[0_30px_60px_-25px_rgba(20,22,48,.28)]"
                         }`}
-                        style={cardStyle}
                       >
+                        <div className="absolute inset-0 rounded-3xl" style={cardStyle} aria-hidden />
                         {isPopular && (
                           <div
                             aria-hidden
@@ -445,6 +549,7 @@ export default function BusinessOnboarding() {
                             style={{ background: gradientBg }}
                           />
                         )}
+
 
                       <div className="relative mb-6">
                         <div
@@ -520,7 +625,7 @@ export default function BusinessOnboarding() {
                           30 días · sin tarjeta
                         </p>
                       </div>
-                      </div>
+                      </Tilt3DCard>
                     </motion.div>
                   );
                 })}
