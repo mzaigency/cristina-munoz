@@ -66,8 +66,9 @@ export const VerticalCutReveal = forwardRef<VerticalCutRevealRef, TextProps>(
     const [isAnimating, setIsAnimating] = useState(false);
 
     const splitIntoCharacters = (t: string): string[] => {
-      if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
-        const segmenter = new Intl.Segmenter("es", { granularity: "grapheme" });
+      const SegmenterCtor = (Intl as unknown as { Segmenter?: typeof Intl.Segmenter }).Segmenter;
+      if (typeof SegmenterCtor === "function") {
+        const segmenter = new SegmenterCtor("es", { granularity: "grapheme" });
         return Array.from(segmenter.segment(t), ({ segment }) => segment);
       }
       return Array.from(t);
