@@ -26,9 +26,10 @@ export const FinalCTASection = () => {
           </h2>
 
           <p className="mx-auto mt-6 max-w-xl text-base text-white/65 sm:text-lg">
-            Sin tarjeta, sin permanencia y sin saber de tecnología. Si no te
-            convence, lo dejas cuando quieras.
+            Primer mes gratis, sin permanencia y sin saber de tecnología. Si no
+            te convence, lo dejas cuando quieras.
           </p>
+
 
           <div className="mt-10 flex justify-center">
             <button
