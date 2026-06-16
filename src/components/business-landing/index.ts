@@ -21,3 +21,4 @@ export { FinalCTASection } from './FinalCTASection';
 export { Footer } from './Footer';
 export { FloatingMobileCTA } from './FloatingMobileCTA';
 export { LiveSalonsRow } from './LiveSalonsRow';
+export { AutoScrollPresenter } from './AutoScrollPresenter';
