@@ -63,8 +63,6 @@ const FEATURE_LABELS: Record<string, string> = {
   whatsapp_reminders: "Recordatorios por WhatsApp",
 };
 
-const CRISTINA_LOGO =
-  "https://lyeyzdbplrgqsvyxpfek.supabase.co/storage/v1/object/public/tenant-assets/a1b2c3d4-e5f6-7890-abcd-ef1234567890/logo-1766948799579.png";
 
 // Beneficios concretos y verificables (sin métricas inventadas).
 const TRUST_POINTS = [
