@@ -92,6 +92,30 @@ export default function BusinessOnboarding() {
   const pricingRef = useRef<HTMLDivElement>(null);
   const { plans, loading: plansLoading } = useSubscriptionPlans();
 
+  // ===== Parallax 3D (respeta prefers-reduced-motion) =====
+  const prefersReducedMotion = useReducedMotion();
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress: heroProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const { scrollYProgress: pricingProgress } = useScroll({
+    target: pricingRef,
+    offset: ["start end", "end start"],
+  });
+  // Capas del hero a velocidades distintas
+  const heroBadgeY = useTransform(heroProgress, [0, 1], [0, prefersReducedMotion ? 0 : -40]);
+  const heroTitleY = useTransform(heroProgress, [0, 1], [0, prefersReducedMotion ? 0 : -90]);
+  const heroSubY = useTransform(heroProgress, [0, 1], [0, prefersReducedMotion ? 0 : -130]);
+  const heroCtaY = useTransform(heroProgress, [0, 1], [0, prefersReducedMotion ? 0 : -170]);
+  const heroTrustY = useTransform(heroProgress, [0, 1], [0, prefersReducedMotion ? 0 : -210]);
+  const heroOpacity = useTransform(heroProgress, [0, 0.85], [1, 0.2]);
+  // Blobs parallax en pricing
+  const blobAY = useTransform(pricingProgress, [0, 1], [prefersReducedMotion ? 0 : 60, prefersReducedMotion ? 0 : -60]);
+  const blobBY = useTransform(pricingProgress, [0, 1], [prefersReducedMotion ? 0 : -40, prefersReducedMotion ? 0 : 80]);
+  const blobARot = useTransform(pricingProgress, [0, 1], [0, prefersReducedMotion ? 0 : 25]);
+
+
   const handlePlanSelect = (slug: PlanSlug) => {
     setSelectedPlan(slug);
     setShowForm(true);
