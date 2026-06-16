@@ -26,9 +26,10 @@ export const FinalCTASection = () => {
           </h2>
 
           <p className="mx-auto mt-6 max-w-xl text-base text-white/65 sm:text-lg">
-            Sin tarjeta, sin permanencia y sin saber de tecnología. Si no te
-            convence, lo dejas cuando quieras.
+            Primer mes gratis, sin permanencia y sin saber de tecnología. Si no
+            te convence, lo dejas cuando quieras.
           </p>
+
 
           <div className="mt-10 flex justify-center">
             <button
@@ -46,7 +47,7 @@ export const FinalCTASection = () => {
               <Clock className="h-4 w-4" /> Listo en 5 minutos
             </span>
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4" /> Sin tarjeta · Cancela cuando quieras
+              <ShieldCheck className="h-4 w-4" /> 1er mes gratis · Cancela cuando quieras
             </span>
           </div>
         </motion.div>

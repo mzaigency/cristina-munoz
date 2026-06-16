@@ -259,7 +259,7 @@ export const FeatureSpotlights = () => {
 /* ---------- Cómo funciona (3 pasos) ---------- */
 
 const STEPS = [
-  { n: "01", t: "Crea tu cuenta", d: "Sin tarjeta ni compromiso. En un minuto tienes acceso a tu panel." },
+  { n: "01", t: "Crea tu cuenta", d: "1er mes gratis, sin permanencia. En un minuto tienes acceso a tu panel." },
   { n: "02", t: "Configura tu salón", d: "Servicios, horarios y fotos. Te guiamos paso a paso, sin tecnicismos." },
   { n: "03", t: "Abre reservas", d: "Comparte tu web y empieza a recibir citas hoy mismo." },
 ];
@@ -362,7 +362,7 @@ export const ClosingCTA = () => {
                 <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </button>
             </div>
-            <p className="mt-5 text-sm text-white/45">Listo en 5 minutos · Sin tarjeta · Cancela cuando quieras</p>
+            <p className="mt-5 text-sm text-white/45">Listo en 5 minutos · 1er mes gratis · Cancela cuando quieras</p>
           </div>
         </motion.div>
       </div>
