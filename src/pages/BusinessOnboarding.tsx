@@ -134,28 +134,22 @@ export default function BusinessOnboarding() {
   const pricingRef = useRef<HTMLDivElement>(null);
   const { plans, loading: plansLoading } = useSubscriptionPlans();
 
-  // ===== Parallax 3D (respeta prefers-reduced-motion) =====
+  // ===== Parallax 3D (window scroll, respeta prefers-reduced-motion) =====
   const prefersReducedMotion = useReducedMotion();
-  const heroRef = useRef<HTMLElement>(null);
-  const { scrollYProgress: heroProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-  const { scrollYProgress: pricingProgress } = useScroll({
-    target: pricingRef,
-    offset: ["start end", "end start"],
-  });
-  // Capas del hero a velocidades distintas
-  const heroBadgeY = useTransform(heroProgress, [0, 1], [0, prefersReducedMotion ? 0 : -40]);
-  const heroTitleY = useTransform(heroProgress, [0, 1], [0, prefersReducedMotion ? 0 : -90]);
-  const heroSubY = useTransform(heroProgress, [0, 1], [0, prefersReducedMotion ? 0 : -130]);
-  const heroCtaY = useTransform(heroProgress, [0, 1], [0, prefersReducedMotion ? 0 : -170]);
-  const heroTrustY = useTransform(heroProgress, [0, 1], [0, prefersReducedMotion ? 0 : -210]);
-  const heroOpacity = useTransform(heroProgress, [0, 0.85], [1, 0.2]);
-  // Blobs parallax en pricing
-  const blobAY = useTransform(pricingProgress, [0, 1], [prefersReducedMotion ? 0 : 60, prefersReducedMotion ? 0 : -60]);
-  const blobBY = useTransform(pricingProgress, [0, 1], [prefersReducedMotion ? 0 : -40, prefersReducedMotion ? 0 : 80]);
-  const blobARot = useTransform(pricingProgress, [0, 1], [0, prefersReducedMotion ? 0 : 25]);
+  const { scrollY } = useScroll();
+  const pm = prefersReducedMotion ? 0 : 1; // multiplier
+  // Hero: capas a velocidades distintas conforme baja la página
+  const heroBadgeY = useTransform(scrollY, [0, 600], [0, -40 * pm]);
+  const heroTitleY = useTransform(scrollY, [0, 600], [0, -90 * pm]);
+  const heroSubY = useTransform(scrollY, [0, 600], [0, -130 * pm]);
+  const heroCtaY = useTransform(scrollY, [0, 600], [0, -170 * pm]);
+  const heroTrustY = useTransform(scrollY, [0, 600], [0, -210 * pm]);
+  const heroOpacity = useTransform(scrollY, [0, 500], [1, 0.25]);
+  // Blobs en pricing (offset estimado por viewport)
+  const blobAY = useTransform(scrollY, [400, 2200], [80 * pm, -120 * pm]);
+  const blobBY = useTransform(scrollY, [400, 2200], [-60 * pm, 160 * pm]);
+  const blobARot = useTransform(scrollY, [400, 2200], [0, 30 * pm]);
+
 
 
   const handlePlanSelect = (slug: PlanSlug) => {
