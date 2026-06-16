@@ -46,6 +46,13 @@ const today = new Date().toISOString().split("T")[0];
 const staticPages = [
   { url: "/", priority: "1.0", changefreq: "daily", lastmod: today },
   { url: "/negocios", priority: "0.9", changefreq: "weekly", lastmod: today },
+  { url: "/alternativa-a-booksy", priority: "0.8", changefreq: "monthly", lastmod: today },
+  { url: "/alternativa-a-treatwell", priority: "0.8", changefreq: "monthly", lastmod: today },
+  { url: "/alternativa-a-fresha", priority: "0.8", changefreq: "monthly", lastmod: today },
+  { url: "/blog", priority: "0.8", changefreq: "weekly", lastmod: today },
+  { url: "/blog/como-digitalizar-tu-peluqueria-en-2026", priority: "0.7", changefreq: "monthly", lastmod: today },
+  { url: "/blog/mejor-software-reservas-salon-belleza-espana", priority: "0.7", changefreq: "monthly", lastmod: today },
+  { url: "/blog/como-reducir-ausencias-citas-salon", priority: "0.7", changefreq: "monthly", lastmod: today },
   { url: "/auth", priority: "0.5", changefreq: "monthly" },
   { url: "/privacidad", priority: "0.3", changefreq: "yearly" },
   { url: "/terminos", priority: "0.3", changefreq: "yearly" },
