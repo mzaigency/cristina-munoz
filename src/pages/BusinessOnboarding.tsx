@@ -231,7 +231,7 @@ export default function BusinessOnboarding() {
     <AppLayout hideNavigation>
       <SEO
         title="Digitaliza tu Salón - Glowapp | Reservas Online en 5 Minutos"
-        description="Crea tu web profesional y recibe reservas 24/7. 30 días gratis. Más de 500 salones ya confían en Glowapp."
+        description="Crea tu web profesional y recibe reservas 24/7. 30 días gratis, sin tarjeta. Lista en 5 minutos."
         canonicalUrl="/onboarding"
         faq={OBJECTIONS.map((o) => ({ question: o.q, answer: o.a }))}
       />
