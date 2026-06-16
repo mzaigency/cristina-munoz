@@ -321,7 +321,6 @@ export default function BusinessOnboarding() {
       <div className="pb-24">
         {/* ===== HERO (parallax 3D por capas) ===== */}
         <section
-          ref={heroRef}
           className="relative container mx-auto px-4 pt-10 pb-12 text-center md:pt-20 md:pb-16"
           style={{ perspective: 1200 }}
         >
