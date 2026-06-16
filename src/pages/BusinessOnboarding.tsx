@@ -11,14 +11,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import {
-  Loader2, ArrowLeft, ArrowRight, Zap, Crown, Check, Building2, Star, Quote,
-  Shield, ChevronDown, Lock, Scissors, HeartPulse, Sparkles,
+  Loader2, ArrowLeft, ArrowRight, Zap, Crown, Check, Building2,
+  Shield, ChevronDown, Lock, Sparkles, Clock, CreditCard, Wallet,
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
 import { motion, AnimatePresence } from "motion/react";
 import { SupportButton } from "@/components/common/SupportButton";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
-import { SectionHeader, gradientText, gradientBg } from "@/components/business-landing/_landingShared";
+import { SectionHeader, gradientText, gradientBg, brandCard, EASE } from "@/components/business-landing/_landingShared";
+import { VerticalCutReveal } from "@/components/ui/vertical-cut-reveal";
 
 const businessSchema = z.object({
   businessName: z.string().trim().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
