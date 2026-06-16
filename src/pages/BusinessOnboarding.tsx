@@ -418,31 +418,33 @@ export default function BusinessOnboarding() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true, margin: "-60px" }}
                       transition={{ delay: index * 0.08, duration: 0.6, ease: EASE }}
-                      className={`relative flex flex-col overflow-hidden rounded-3xl p-7 ${
-                        isPopular
-                          ? "md:-mt-4 md:mb-0 md:scale-[1.03]"
-                          : "border border-border/70"
+                      className={`relative ${
+                        isPopular ? "md:-mt-4 md:mb-0 md:scale-[1.03]" : ""
                       }`}
-                      style={cardStyle}
                     >
                       {isPopular && (
-                        <>
-                          {/* Glow interno de marca */}
+                        <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold text-white shadow-lg shadow-primary/30"
+                            style={{ backgroundImage: gradientBg }}
+                          >
+                            <Sparkles className="h-3 w-3" /> El más elegido
+                          </span>
+                        </div>
+                      )}
+                      <div
+                        className={`relative flex h-full flex-col overflow-hidden rounded-3xl p-7 ${
+                          isPopular ? "" : "border border-border/70"
+                        }`}
+                        style={cardStyle}
+                      >
+                        {isPopular && (
                           <div
                             aria-hidden
                             className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full opacity-50 blur-3xl"
                             style={{ background: gradientBg }}
                           />
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                            <span
-                              className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold text-white shadow-lg shadow-primary/30"
-                              style={{ backgroundImage: gradientBg }}
-                            >
-                              <Sparkles className="h-3 w-3" /> El más elegido
-                            </span>
-                          </div>
-                        </>
-                      )}
+                        )}
 
                       <div className="relative mb-6">
                         <div
