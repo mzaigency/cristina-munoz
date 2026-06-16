@@ -8,8 +8,8 @@ export const Footer = () => {
   return (
     <footer className="bg-foreground/[0.03] border-t border-border">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+          <div className="col-span-2">
             <img src={glowappLogo} alt="GlowApp" className="h-8 mb-4" />
             <p className="text-sm text-muted-foreground max-w-sm mb-4">
               La plataforma todo-en-uno para profesionales de la belleza. Reservas, agenda, pagos y marketing en un solo lugar.
@@ -33,27 +33,63 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-foreground">Legal</h4>
+            <h4 className="font-semibold mb-4 text-foreground">Producto</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/privacidad" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Política de privacidad
+                <Link to="/negocios" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Para negocios
                 </Link>
               </li>
               <li>
-                <Link to="/terminos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Términos de uso
+                <Link to="/onboarding" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Empezar gratis
+                </Link>
+              </li>
+              <li>
+                <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Blog
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-foreground">Contacto</h4>
+            <h4 className="font-semibold mb-4 text-foreground">Comparativas</h4>
             <ul className="space-y-2">
               <li>
+                <Link to="/alternativa-a-booksy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Alternativa a Booksy
+                </Link>
+              </li>
+              <li>
+                <Link to="/alternativa-a-treatwell" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Alternativa a Treatwell
+                </Link>
+              </li>
+              <li>
+                <Link to="/alternativa-a-fresha" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Alternativa a Fresha
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-4 text-foreground">Legal</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/privacidad" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Privacidad
+                </Link>
+              </li>
+              <li>
+                <Link to="/terminos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Términos
+                </Link>
+              </li>
+              <li>
                 <a href="mailto:contacto@glowapp.app" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  contacto@glowapp.app
+                  Contacto
                 </a>
               </li>
             </ul>
