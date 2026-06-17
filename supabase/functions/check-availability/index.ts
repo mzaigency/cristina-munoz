@@ -436,6 +436,8 @@ serve(async (req) => {
       finalBookedSlots = bookedSlotsByStylists[stylist] || [];
     }
 
+    const blockedMin = finalBookedSlots.reduce((s: number, b: any) => s + (b.total_duration || 0), 0);
+    console.log(`[diag] tenant=${tenantId} date=${date} stylist=${stylist ?? 'any'} blocked_slots=${finalBookedSlots.length} blocked_min=${blockedMin} stylists_checked=${Object.keys(bookedSlotsByStylists).length}`);
     console.log(`Returning ${finalBookedSlots.length} blocked slots`);
 
     return new Response(
