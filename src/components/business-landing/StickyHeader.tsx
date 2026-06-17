@@ -60,7 +60,7 @@ export const StickyHeader = () => {
               whileTap={{ scale: 0.98 }}
               className="flex items-center gap-2"
             >
-              <img src={glowappLogo} alt="GlowApp" className="h-8 w-auto" />
+              <img src={glowappLogo} alt="GlowApp" width={85} height={32} className="h-8 w-auto" />
             </motion.button>
 
             <nav className="hidden md:flex items-center gap-8">
