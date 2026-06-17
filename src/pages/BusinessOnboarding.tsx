@@ -67,7 +67,7 @@ const FEATURE_LABELS: Record<string, string> = {
 // Beneficios concretos y verificables (sin métricas inventadas).
 const TRUST_POINTS = [
   { Icon: Clock, label: "Listo en 5 min" },
-  { Icon: CreditCard, label: "Sin tarjeta" },
+  { Icon: CreditCard, label: "Tarjeta de verificación" },
   { Icon: Wallet, label: "Sin permanencia" },
 ];
 
