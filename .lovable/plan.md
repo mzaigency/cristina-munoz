@@ -1,24 +1,21 @@
+## Plan aprobado (solo A + C)
 
-# Actualizar iconos cuadrados al nuevo logo
+### A. Política de Storage para avatares ✅ aplicada
+La migración ya se aplicó: nuevas políticas en `storage.objects` que permiten a cualquier usuario autenticado subir/actualizar/borrar archivos solo dentro de `tenant-assets/avatars/{su_id}/...`. Las clientas ya pueden cambiar su foto de perfil.
 
-Solo iconos cuadrados/app icons. **NO se toca** `src/assets/glowapp-logo.png` ni `src/assets/Glowapp Letras.png` (logotipo completo del header, footer y QR).
+### C. Logging diagnóstico en `check-availability`
+Añadir en `supabase/functions/check-availability/index.ts`, justo antes del `return`, una línea de log con:
 
-## Archivos a sustituir desde el zip
+- `tenant_id`, `date`, `stylist`, `duration` solicitada
+- nº de slots bloqueados y minutos bloqueados totales
+- minutos de horario laboral disponibles del/los estilista(s)
+- nº de estilistas chequeados
 
-Desde `/tmp/iconkitchen-extracted/web/` → `public/`:
+Así, si alguna clienta vuelve a reportar "está todo lleno", podemos revisar logs y ver si realmente quedaron 0 minutos libres o si fue un caso edge (servicio compuesto largo, override, etc.).
 
-- `favicon.ico` → `public/favicon.ico`
-- `apple-touch-icon.png` → `public/apple-touch-icon.png`
-- `icon-192.png` → `public/icon-192.png` y `public/pwa-192x192.png`
-- `icon-512.png` → `public/icon-512.png` y `public/pwa-512x512.png`
-- `icon-192-maskable.png` → `public/icon-192-maskable.png`
-- `icon-512-maskable.png` → `public/icon-512-maskable.png`
-- `icon-192.png` → `public/favicon.png` (usado en footer y stats como mini-logo cuadrado)
+### Lo que NO se toca
+- Flujo de reserva (login en paso 1 se mantiene tal cual).
+- Lógica de `check-availability` (algoritmo de huecos).
+- Horarios, overrides, RLS de `bookings`.
 
-Total: 8 archivos en `public/` reemplazados, sin cambios de código.
-
-## Lo que NO se cambia
-
-- `src/assets/glowapp-logo.png` (preloader, NotFound, ForBusiness, etc.)
-- `src/assets/Glowapp Letras.png` (QR generator)
-- Cualquier referencia en código (`index.html`, componentes) — las rutas siguen siendo las mismas.
+Pulsa **Implement plan** para aplicar el cambio C (el A ya está hecho).
