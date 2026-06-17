@@ -166,6 +166,62 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Verify authentication if token is present
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "");
+    let authenticatedUser = null;
+
+    if (token) {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser(token);
+      if (!error) {
+        authenticatedUser = user;
+      }
+    }
+
+    // Check authorization for sensitive fields
+    if (bookingData.user_id) {
+      if (!authenticatedUser) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: Authentication required to set user_id" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (authenticatedUser.id !== bookingData.user_id) {
+        // Check for admin role
+        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", authenticatedUser.id);
+        const isAdmin = roles?.some((r: any) => ["admin", "stylist", "superadmin"].includes(r.role));
+
+        if (!isAdmin) {
+          return new Response(
+            JSON.stringify({ error: "Unauthorized: Cannot create booking for another user" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+    }
+
+    if (bookingData.skipAvailabilityCheck) {
+      if (!authenticatedUser) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", authenticatedUser.id);
+      const isAdmin = roles?.some((r: any) => ["admin", "stylist", "superadmin"].includes(r.role));
+
+      if (!isAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: Only admins can skip availability check" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
