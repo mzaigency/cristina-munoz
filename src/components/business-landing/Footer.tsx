@@ -10,7 +10,7 @@ export const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2">
-            <img src={glowappLogo} alt="GlowApp" className="h-8 mb-4" />
+            <img src={glowappLogo} alt="GlowApp" width={85} height={32} className="h-8 w-auto mb-4" />
             <p className="text-sm text-muted-foreground max-w-sm mb-4">
               La plataforma todo-en-uno para profesionales de la belleza. Reservas, agenda, pagos y marketing en un solo lugar.
             </p>
