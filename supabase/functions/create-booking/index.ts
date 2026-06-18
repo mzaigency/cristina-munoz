@@ -177,6 +177,63 @@ serve(async (req) => {
     }
     console.log("Using tenant_id:", tenantId);
 
+    // Verify authorization if user_id is provided to prevent IDOR
+    if (bookingData.user_id) {
+      const authHeader = req.headers.get("Authorization");
+      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      // Create a scoped client to verify the user from the token
+      const supabaseUserClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader || "" } },
+      });
+
+      const {
+        data: { user },
+      } = await supabaseUserClient.auth.getUser();
+      const authenticatedUserId = user?.id;
+
+      // If the authenticated user is not the one in the booking, check for staff privileges
+      if (authenticatedUserId !== bookingData.user_id) {
+        let isStaff = false;
+
+        if (authenticatedUserId) {
+          // Check if user is admin
+          const { data: admin } = await supabase
+            .from("tenant_admins")
+            .select("user_id")
+            .eq("tenant_id", tenantId)
+            .eq("user_id", authenticatedUserId)
+            .maybeSingle();
+
+          if (admin) isStaff = true;
+
+          // Check if user is stylist
+          if (!isStaff) {
+            const { data: stylist } = await supabase
+              .from("tenant_stylists")
+              .select("user_id")
+              .eq("tenant_id", tenantId)
+              .eq("user_id", authenticatedUserId)
+              .eq("is_active", true)
+              .maybeSingle();
+
+            if (stylist) isStaff = true;
+          }
+        }
+
+        if (!isStaff) {
+          console.error(
+            `Unauthorized booking attempt: User ${authenticatedUserId} tried to book for ${bookingData.user_id}`,
+          );
+          return new Response(
+            JSON.stringify({
+              error: "Unauthorized: You can only create bookings for yourself unless you are a staff member.",
+            }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+    }
+
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
