@@ -166,6 +166,49 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // --- SECURITY FIX: Validate Authorization and User ID ---
+    const authHeader = req.headers.get('Authorization');
+    let authenticatedUser = null;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+      if (!authError && user) {
+        authenticatedUser = user;
+      }
+    }
+
+    if (bookingData.user_id) {
+      // If user_id is provided, we must verify authentication
+      if (!authenticatedUser) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Cannot claim user_id without authentication' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check if user is creating booking for themselves or has admin rights
+      if (bookingData.user_id !== authenticatedUser.id) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', authenticatedUser.id)
+          .maybeSingle();
+
+        const role = roleData?.role;
+        const isAuthorized = role === 'admin' || role === 'stylist' || role === 'superadmin';
+
+        if (!isAuthorized) {
+           return new Response(
+            JSON.stringify({ error: 'Forbidden: You are not authorized to create bookings for other users' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+    // --- END SECURITY FIX ---
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
