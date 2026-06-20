@@ -166,6 +166,46 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // SECURITY: Authorization Check
+    // If a user_id is provided, verify that the request comes from that user or an admin
+    if (bookingData.user_id) {
+      const authHeader = req.headers.get('Authorization');
+      let isAuthorized = false;
+
+      if (authHeader) {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+        if (user && !authError) {
+          if (user.id === bookingData.user_id) {
+            isAuthorized = true;
+          } else {
+            // Check if user has admin/stylist role
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', user.id)
+              .in('role', ['admin', 'stylist', 'superadmin']);
+
+            if (roleData && roleData.length > 0) {
+              isAuthorized = true;
+            }
+          }
+        }
+      }
+
+      if (!isAuthorized) {
+        console.error('Unauthorized booking attempt for user_id:', bookingData.user_id);
+        return new Response(
+          JSON.stringify({
+            error: 'Unauthorized',
+            details: 'You are not authorized to create a booking for this user'
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
