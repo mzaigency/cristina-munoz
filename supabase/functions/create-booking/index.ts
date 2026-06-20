@@ -166,6 +166,42 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Security: Verify user identity if user_id is provided
+    if (bookingData.user_id) {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        throw new Error('Authorization required when user_id is provided');
+      }
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser(
+        authHeader.replace('Bearer ', '')
+      );
+
+      if (authError || !user) {
+        throw new Error('Invalid authorization token');
+      }
+
+      // If user_id provided, must match authenticated user OR be admin/stylist
+      if (user.id !== bookingData.user_id) {
+        const { data: hasRole, error: roleError } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'admin' // Only checking admin for now
+        });
+
+        if (roleError || !hasRole) {
+           // Check if stylist
+           const { data: isStylist, error: stylistError } = await supabase.rpc('has_role', {
+            _user_id: user.id,
+            _role: 'stylist'
+          });
+
+          if (stylistError || !isStylist) {
+             throw new Error('Unauthorized: You can only create bookings for yourself');
+          }
+        }
+      }
+    }
+
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
     if (!tenantId) {
