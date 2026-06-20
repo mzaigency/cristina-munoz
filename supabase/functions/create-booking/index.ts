@@ -177,6 +177,64 @@ serve(async (req) => {
     }
     console.log("Using tenant_id:", tenantId);
 
+    // Security: Authenticate user and check permissions
+    const authHeader = req.headers.get("Authorization");
+    let authenticatedUser = null;
+    let isStaff = false;
+
+    if (authHeader) {
+      const supabaseAuth = createClient(
+        supabaseUrl,
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await supabaseAuth.auth.getUser();
+      authenticatedUser = user;
+    }
+
+    if (authenticatedUser) {
+      // Check if user is admin
+      const { data: admin } = await supabase
+        .from("tenant_admins")
+        .select("user_id")
+        .eq("tenant_id", tenantId)
+        .eq("user_id", authenticatedUser.id)
+        .maybeSingle();
+
+      if (admin) {
+        isStaff = true;
+      } else {
+        // Check if user is active stylist
+        const { data: stylist } = await supabase
+          .from("tenant_stylists")
+          .select("user_id")
+          .eq("tenant_id", tenantId)
+          .eq("user_id", authenticatedUser.id)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (stylist) isStaff = true;
+      }
+    }
+
+    // Security Enforcements
+    if (bookingData.skipAvailabilityCheck && !isStaff) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Only staff can skip availability checks" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (bookingData.user_id) {
+      const isSelfBooking = authenticatedUser && authenticatedUser.id === bookingData.user_id;
+      if (!isSelfBooking && !isStaff) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: You can only create bookings for yourself unless you are staff" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
