@@ -365,7 +365,7 @@ const TenantLanding = () => {
           </script>
         </Helmet>
         
-        <GlowAppBrandFrame tenantName={tenant.name} />
+
 
         <TenantHeader 
           tenant={tenant} 
