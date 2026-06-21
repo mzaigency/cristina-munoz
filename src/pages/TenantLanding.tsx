@@ -21,6 +21,7 @@ import TenantContactSection from "@/components/tenant/TenantContactSection";
 import { TenantShopSection } from "@/components/tenant/TenantShopSection";
 import { HeroImmersive, HeroMinimal, HeroSplit, HeroBold, HeroGlass } from "@/components/tenant/heroes";
 import { getThemeById } from "@/components/onboarding/landing-themes";
+import { GlowAppBrandFrame } from "@/components/tenant/GlowAppBrandFrame";
 
 interface Tenant {
   id: string;
@@ -365,6 +366,8 @@ const TenantLanding = () => {
           </script>
         </Helmet>
         
+        <GlowAppBrandFrame tenantName={tenant.name} />
+
         <TenantHeader 
           tenant={tenant} 
           onNavigate={scrollToSection} 
