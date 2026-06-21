@@ -162,7 +162,7 @@ export const TenantThemeProvider = ({
           background-clip: text;
           color: transparent;
           -webkit-text-fill-color: transparent;
-besties        }
+}
         .tenant-theme-container button:not([data-fixed-radius]),
         .tenant-theme-container [role="button"]:not([data-fixed-radius]) {
           border-radius: var(--tenant-button-radius);
