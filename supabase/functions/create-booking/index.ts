@@ -157,14 +157,54 @@ serve(async (req) => {
     const bookingData: BookingRequest = validationResult.data;
     console.log("Creating booking:", bookingData);
 
-    // Support both date/time and Fecha/Hora formats
-    const bookingDate = bookingData.date || bookingData.Fecha!;
-    const bookingTime = bookingData.time || bookingData.Hora!;
-
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // --- SECURITY CHECK START ---
+    // Verify authentication and authorization
+    const authHeader = req.headers.get('Authorization');
+    let authenticatedUserId: string | null = null;
+    let isStaff = false;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+      if (!authError && user) {
+        authenticatedUserId = user.id;
+
+        // Check if user is staff (admin/stylist/superadmin)
+        const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', authenticatedUserId)
+            .maybeSingle();
+
+        const role = roles?.role;
+        isStaff = role === 'admin' || role === 'stylist' || role === 'superadmin';
+      }
+    }
+
+    // Strict Authorization Logic:
+    // If a user_id is provided in the booking data, ensure the requestor is authorized to use it.
+    if (bookingData.user_id) {
+        if (!authenticatedUserId) {
+             throw new Error('Unauthorized: Authentication required to create a booking for a registered user');
+        }
+
+        // Users can only book for themselves unless they are staff
+        if (bookingData.user_id !== authenticatedUserId && !isStaff) {
+             throw new Error('Unauthorized: You can only create bookings for yourself');
+        }
+    }
+    // Note: Guest bookings (user_id is null) are allowed without authentication
+    // --- SECURITY CHECK END ---
+
+    // Support both date/time and Fecha/Hora formats
+    const bookingDate = bookingData.date || bookingData.Fecha!;
+    const bookingTime = bookingData.time || bookingData.Hora!;
 
     // Determine tenant_id
     let tenantId: string | undefined = bookingData.tenant_id;
