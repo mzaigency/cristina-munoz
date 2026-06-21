@@ -155,6 +155,14 @@ export const TenantThemeProvider = ({
         .tenant-theme-container h6 {
           font-family: var(--tenant-font-heading);
         }
+        /* Editorial italic words inside headings → gradient using salon colors */
+        .tenant-theme-container .font-editorial-italic {
+          background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          -webkit-text-fill-color: transparent;
+}
         .tenant-theme-container button:not([data-fixed-radius]),
         .tenant-theme-container [role="button"]:not([data-fixed-radius]) {
           border-radius: var(--tenant-button-radius);
