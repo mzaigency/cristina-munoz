@@ -177,6 +177,64 @@ serve(async (req) => {
     }
     console.log("Using tenant_id:", tenantId);
 
+    // 🛡️ SECURITY: Authorization Check
+    const authHeader = req.headers.get("Authorization");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    let authenticatedUser = null;
+    let isStaff = false;
+
+    if (authHeader) {
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: { user } } = await authClient.auth.getUser();
+      authenticatedUser = user;
+
+      if (authenticatedUser) {
+         // Check if superadmin
+         const { data: superAdmin } = await supabase.from('user_roles').select('role').eq('user_id', authenticatedUser.id).eq('role', 'superadmin').maybeSingle();
+         if (superAdmin) isStaff = true;
+
+         if (!isStaff) {
+             // Check if tenant admin
+             const { data: admin } = await supabase.from('tenant_admins').select('id').eq('user_id', authenticatedUser.id).eq('tenant_id', tenantId).maybeSingle();
+             if (admin) isStaff = true;
+         }
+
+         if (!isStaff) {
+             // Check if tenant stylist
+             const { data: stylist } = await supabase.from('tenant_stylists').select('id').eq('user_id', authenticatedUser.id).eq('tenant_id', tenantId).eq('is_active', true).maybeSingle();
+             if (stylist) isStaff = true;
+         }
+      }
+    }
+
+    // 1. Verify user_id ownership
+    if (bookingData.user_id) {
+        if (!authenticatedUser) {
+             return new Response(JSON.stringify({ error: "Authentication required for user bookings" }), {
+                status: 401,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              });
+        }
+        if (bookingData.user_id !== authenticatedUser.id && !isStaff) {
+             return new Response(JSON.stringify({ error: "Unauthorized: Cannot create booking for another user" }), {
+                status: 403,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              });
+        }
+    }
+
+    // 2. Verify skipAvailabilityCheck privilege
+    if (bookingData.skipAvailabilityCheck && !isStaff) {
+         return new Response(JSON.stringify({ error: "Unauthorized: Only staff can skip availability checks" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+    }
+
     // Check if tenant subscription is active
     const { data: tenantData, error: tenantError } = await supabase
       .from("tenants")
