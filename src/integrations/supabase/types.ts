@@ -2100,7 +2100,7 @@ export type Database = {
           id: string
           instagram_url: string | null
           is_active: boolean | null
-          language: string | null
+          language: string
           logo_url: string | null
           max_services: number | null
           max_stylists: number | null
@@ -2147,7 +2147,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_active?: boolean | null
-          language?: string | null
+          language?: string
           logo_url?: string | null
           max_services?: number | null
           max_stylists?: number | null
@@ -2194,7 +2194,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_active?: boolean | null
-          language?: string | null
+          language?: string
           logo_url?: string | null
           max_services?: number | null
           max_stylists?: number | null
