@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Building2, Users, BarChart3, Shield, LayoutDashboard,
-  Heart, Activity, FileImage, Moon, Sun, ChevronLeft, Menu, CreditCard, Sparkles
+  Heart, Activity, FileImage, Moon, Sun, ChevronLeft, Menu, CreditCard, Sparkles, Wand2
 } from "lucide-react";
 import { TenantsManager } from "@/components/superadmin/TenantsManager";
 import { UsersManager } from "@/components/superadmin/UsersManager";
@@ -17,6 +17,7 @@ import { ContentManager } from "@/components/superadmin/ContentManager";
 import { MaintenanceToggle } from "@/components/superadmin/MaintenanceToggle";
 import { LeadsManager } from "@/components/superadmin/LeadsManager";
 import { FeedAnalytics } from "@/components/superadmin/FeedAnalytics";
+import { DemoFactory } from "@/components/superadmin/DemoFactory";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "motion/react";
@@ -125,6 +126,10 @@ const SuperAdmin = () => {
     id: "leads",
     label: "Leads B2B",
     icon: Building2
+  }, {
+    id: "demos",
+    label: "Demos",
+    icon: Wand2
   }];
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -279,6 +284,7 @@ const SuperAdmin = () => {
                 {activeTab === "activity" && <ActivityCenter />}
                 {activeTab === "content" && <ContentManager />}
                 {activeTab === "leads" && <LeadsManager />}
+                {activeTab === "demos" && <DemoFactory />}
               </motion.div>
             </AnimatePresence>
           </main>
