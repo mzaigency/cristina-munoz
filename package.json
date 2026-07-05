@@ -9,6 +9,7 @@
     "build:sitemap": "node scripts/generate-sitemap.js",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "test": "vitest run",
     "preview": "vite preview",
     "mobile": "npm install && npm run build && npx cap sync",
     "build:prerender": "node scripts/generate-prerender.js"
@@ -119,6 +120,7 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
-    "vite": "^5.4.19"
+    "vite": "^5.4.19",
+    "vitest": "^4.1.9"
   }
 }

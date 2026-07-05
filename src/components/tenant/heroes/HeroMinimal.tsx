@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { HeroCTA, HeroStats, useHeroStats, EASE_OUT } from "./_shared";
+import { useT } from "@/lib/tenantI18n";
 
 interface Tenant {
   id: string;
@@ -20,6 +21,7 @@ interface HeroMinimalProps {
 
 export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
   const { rating, since, followers } = useHeroStats(tenant.id);
+  const t = useT();
   const displayTagline = tenant.tagline || tenant.description;
   const heroImages = tenant.hero_images as string[] | null;
   const heroImage = heroImages?.[0] || tenant.hero_image_url;
@@ -124,7 +126,7 @@ export function HeroMinimal({ tenant, onBookNow }: HeroMinimalProps) {
             tenantId={tenant.id}
             onBookNow={onBookNow}
             primaryColor={tenant.primary_color}
-            label="Reservar"
+            label={t("hero.bookNow")}
             iconStyle="arrow"
             variant="white"
             className="justify-center"

@@ -14,6 +14,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const now = new Date();
@@ -21,8 +22,78 @@ serve(async (req) => {
       reminders_24h: 0,
       reminders_2h: 0,
       review_requests: 0,
+      emails_sent: 0,
       skipped_by_prefs: 0,
       errors: [] as string[],
+    };
+
+    // ============================================
+    // HELPER: Get user email (from profiles)
+    // ============================================
+    const getUserEmail = async (userId: string): Promise<string | null> => {
+      const { data } = await supabase.from("profiles").select("email").eq("id", userId).single();
+      return data?.email || null;
+    };
+
+    // ============================================
+    // HELPER: Send reminder email via Resend
+    // Falla en silencio (log) — el push nunca se bloquea por el email
+    // ============================================
+    const sendReminderEmail = async (opts: {
+      to: string;
+      customerName: string;
+      tenantName: string;
+      whenLabel: string; // "mañana" | "hoy"
+      date: string;
+      time: string;
+    }): Promise<boolean> => {
+      if (!resendApiKey) return false;
+      const { to, customerName, tenantName, whenLabel, date, time } = opts;
+      const html = `
+        <div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
+          <div style="background:linear-gradient(100deg,#22408C,#98329A);border-radius:16px;padding:28px 24px;text-align:center;">
+            <p style="color:#ffffff;font-size:22px;font-weight:700;margin:0;">Recordatorio de tu cita</p>
+          </div>
+          <div style="padding:24px 8px;color:#131520;font-size:15px;line-height:1.6;">
+            <p>Hola ${customerName},</p>
+            <p>Te recordamos que <strong>${whenLabel}</strong> tienes cita en <strong>${tenantName}</strong>:</p>
+            <div style="background:#f5f6fa;border-radius:12px;padding:16px 20px;margin:16px 0;">
+              <p style="margin:0;font-size:16px;"><strong>📅 ${date}</strong></p>
+              <p style="margin:4px 0 0;font-size:16px;"><strong>🕐 ${time} h</strong></p>
+            </div>
+            <p>Si no puedes venir, reprograma o cancela desde tu cuenta — así liberas el hueco para otra persona.</p>
+            <p style="text-align:center;margin:24px 0;">
+              <a href="https://glowapp.app/mis-citas" style="background:linear-gradient(100deg,#22408C,#98329A);color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:12px;font-weight:600;display:inline-block;">Gestionar mi cita</a>
+            </p>
+            <p style="color:#676B7E;font-size:12px;text-align:center;margin-top:28px;">Enviado por Glowapp en nombre de ${tenantName}.</p>
+          </div>
+        </div>`;
+      try {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${resendApiKey}`,
+          },
+          body: JSON.stringify({
+            from: "Glowapp <contacto@glowapp.app>",
+            reply_to: "gglowapp@gmail.com",
+            to: [to],
+            subject: `📅 Recordatorio: cita ${whenLabel} a las ${time} en ${tenantName}`,
+            html,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          console.error("Resend reminder email failed:", res.status, JSON.stringify(err));
+          return false;
+        }
+        results.emails_sent++;
+        return true;
+      } catch (err) {
+        console.error("Resend reminder email error:", err);
+        return false;
+      }
     };
 
     // ============================================
@@ -123,6 +194,18 @@ serve(async (req) => {
             },
           });
 
+          const email = await getUserEmail(booking.user_id);
+          if (email) {
+            await sendReminderEmail({
+              to: email,
+              customerName: booking.customer_name || "",
+              tenantName,
+              whenLabel: "mañana",
+              date: formatDate(booking["Fecha"]),
+              time: formattedTime,
+            });
+          }
+
           await supabase.from("bookings").update({ reminder_sent: now.toISOString() }).eq("id", booking.id);
 
           results.reminders_24h++;
@@ -192,6 +275,18 @@ serve(async (req) => {
               data: { type: "reminder_2h", booking_id: booking.id },
             },
           });
+
+          const email = await getUserEmail(booking.user_id);
+          if (email) {
+            await sendReminderEmail({
+              to: email,
+              customerName: booking.customer_name || "",
+              tenantName,
+              whenLabel: "hoy",
+              date: formatDate(booking["Fecha"]),
+              time: formattedTime,
+            });
+          }
 
           await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
 

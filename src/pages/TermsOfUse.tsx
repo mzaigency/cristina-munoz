@@ -238,7 +238,7 @@ export default function TermsOfUse() {
               <h2 className="text-xl font-semibold mt-8 mb-4 text-foreground">16. Ley Aplicable, Jurisdicción y Contacto</h2>
               <p>Estos Términos y Condiciones se rigen por la legislación española. Para cualquier controversia derivada del uso de la Plataforma, ambas partes se someten a la jurisdicción de los tribunales competentes de España.</p>
               <p className="mt-4">Si alguna cláusula de estos términos fuera declarada nula o inaplicable, las restantes cláusulas mantendrán su plena vigencia y efecto.</p>
-              <p className="mt-4">Para cualquier consulta sobre estos términos, puedes contactarnos en: <a href="mailto:contacto@glowapp.app" className="text-primary hover:underline">contacto@glowapp.app</a></p>
+              <p className="mt-4">Para cualquier consulta sobre estos términos, puedes contactarnos en: <a href="mailto:gglowapp@gmail.com" className="text-primary hover:underline">gglowapp@gmail.com</a></p>
             </section>
 
           </div>

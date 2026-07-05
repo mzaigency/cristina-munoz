@@ -37,7 +37,7 @@ export default function PrivacyPolicy() {
             {/* 1 */}
             <section>
               <h2 className="text-xl font-semibold mt-8 mb-4 text-foreground">1. Responsable del Tratamiento</h2>
-              <p>El responsable del tratamiento de tus datos personales es <strong>GlowApp</strong>, con domicilio en España. Puedes contactarnos en cualquier momento a través del correo electrónico <a href="mailto:contacto@glowapp.app" className="text-primary hover:underline">contacto@glowapp.app</a>.</p>
+              <p>El responsable del tratamiento de tus datos personales es <strong>GlowApp</strong>, con domicilio en España. Puedes contactarnos en cualquier momento a través del correo electrónico <a href="mailto:gglowapp@gmail.com" className="text-primary hover:underline">gglowapp@gmail.com</a>.</p>
             </section>
 
             {/* 2 */}
@@ -194,7 +194,7 @@ export default function PrivacyPolicy() {
                 <li><strong>Limitación:</strong> solicitar la restricción del tratamiento de tus datos.</li>
                 <li><strong>Retirada del consentimiento:</strong> retirar tu consentimiento en cualquier momento sin que afecte a la licitud del tratamiento previo.</li>
               </ul>
-              <p className="mt-4">Para ejercer estos derechos, contacta con nosotros en <a href="mailto:contacto@glowapp.app" className="text-primary hover:underline">contacto@glowapp.app</a>. Responderemos en un plazo máximo de 30 días.</p>
+              <p className="mt-4">Para ejercer estos derechos, contacta con nosotros en <a href="mailto:gglowapp@gmail.com" className="text-primary hover:underline">gglowapp@gmail.com</a>. Responderemos en un plazo máximo de 30 días.</p>
               <p className="mt-2">También tienes derecho a presentar una reclamación ante la <strong>Agencia Española de Protección de Datos (AEPD)</strong> si consideras que tus derechos no han sido debidamente atendidos.</p>
             </section>
 
@@ -231,7 +231,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-xl font-semibold mt-8 mb-4 text-foreground">14. Contacto y Modificaciones</h2>
               <p>Podemos actualizar esta política de privacidad periódicamente para reflejar cambios en nuestras prácticas o en la legislación aplicable. Te notificaremos sobre cambios significativos a través de la aplicación o por correo electrónico.</p>
-              <p className="mt-4">Para cualquier consulta sobre esta política o sobre el tratamiento de tus datos, contacta con nosotros en: <a href="mailto:contacto@glowapp.app" className="text-primary hover:underline">contacto@glowapp.app</a></p>
+              <p className="mt-4">Para cualquier consulta sobre esta política o sobre el tratamiento de tus datos, contacta con nosotros en: <a href="mailto:gglowapp@gmail.com" className="text-primary hover:underline">gglowapp@gmail.com</a></p>
             </section>
 
           </div>

@@ -30,6 +30,7 @@ interface TenantData {
   show_logo_on_landing: boolean;
   heading_size: string | null;
   theme_id: string | null;
+  language: string | null;
 }
 
 export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) => {
@@ -45,20 +46,30 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
 
   const fetchTenantData = async () => {
     try {
-      const { data, error } = await supabase
+      const BASE_FIELDS =
+        "name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code, show_logo_on_landing, heading_size, theme_id";
+
+      let { data, error } = await supabase
         .from("tenants")
-        .select(
-          "name, tagline, description, logo_url, hero_image_url, primary_color, secondary_color, phone, email, address, city, postal_code, show_logo_on_landing, heading_size, theme_id",
-        )
+        .select(`${BASE_FIELDS}, language`)
         .eq("id", tenantId)
         .single();
 
+      // Fallback: la columna language aún no existe en la BD (migración pendiente)
+      if (error) {
+        const retry = await supabase.from("tenants").select(BASE_FIELDS).eq("id", tenantId).single();
+        data = retry.data as typeof data;
+        error = retry.error;
+      }
+
       if (error) throw error;
+      if (!data) throw new Error("Tenant no encontrado");
       setTenant({
         ...data,
         show_logo_on_landing: data.show_logo_on_landing ?? true,
         heading_size: data.heading_size ?? "xlarge",
         theme_id: data.theme_id ?? "immersive",
+        language: (data as { language?: string }).language ?? "es",
       });
     } catch (error) {
       console.error("Error fetching tenant:", error);
@@ -114,27 +125,36 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
     try {
       setSaving(true);
 
-      const { data, error } = await supabase
+      const basePayload = {
+        name: tenant.name,
+        tagline: tenant.tagline,
+        description: tenant.description,
+        logo_url: tenant.logo_url,
+        hero_image_url: tenant.hero_image_url,
+        primary_color: tenant.primary_color,
+        secondary_color: tenant.secondary_color,
+        phone: tenant.phone,
+        email: tenant.email,
+        address: tenant.address,
+        city: tenant.city,
+        postal_code: tenant.postal_code,
+        show_logo_on_landing: tenant.show_logo_on_landing,
+        heading_size: tenant.heading_size,
+        theme_id: tenant.theme_id,
+      };
+
+      let { data, error } = await supabase
         .from("tenants")
-        .update({
-          name: tenant.name,
-          tagline: tenant.tagline,
-          description: tenant.description,
-          logo_url: tenant.logo_url,
-          hero_image_url: tenant.hero_image_url,
-          primary_color: tenant.primary_color,
-          secondary_color: tenant.secondary_color,
-          phone: tenant.phone,
-          email: tenant.email,
-          address: tenant.address,
-          city: tenant.city,
-          postal_code: tenant.postal_code,
-          show_logo_on_landing: tenant.show_logo_on_landing,
-          heading_size: tenant.heading_size,
-          theme_id: tenant.theme_id,
-        })
+        .update({ ...basePayload, language: tenant.language || "es" })
         .eq("id", tenantId)
         .select("id");
+
+      // Fallback: la columna language aún no existe en la BD (migración pendiente)
+      if (error) {
+        const retry = await supabase.from("tenants").update(basePayload).eq("id", tenantId).select("id");
+        data = retry.data;
+        error = retry.error;
+      }
 
       if (error) throw error;
       if (!data || data.length === 0) {
@@ -244,6 +264,21 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                 rows={3}
                 className="mt-1 resize-none"
               />
+            </div>
+            <div>
+              <Label htmlFor="language">Idioma de tu web pública</Label>
+              <select
+                id="language"
+                value={tenant.language || "es"}
+                onChange={(e) => setTenant({ ...tenant, language: e.target.value })}
+                className="w-full h-10 px-3 mt-1 border rounded-md bg-background text-foreground text-sm sm:max-w-xs"
+              >
+                <option value="es">Español</option>
+                <option value="ca">Català</option>
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Traduce los textos de la web que ven tus clientes (botones, secciones, reserva). Tus servicios y descripciones se muestran tal como los escribas.
+              </p>
             </div>
           </CardContent>
         </Card>

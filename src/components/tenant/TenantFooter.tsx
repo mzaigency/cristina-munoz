@@ -1,5 +1,6 @@
 import { MapPin, Phone, Mail, Clock, Instagram, Facebook } from "lucide-react";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
+import { useT } from "@/lib/tenantI18n";
 
 // TikTok icon component
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -28,8 +29,6 @@ interface TenantFooterProps {
   tenant: Tenant;
 }
 
-const DAYS_SHORT = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
-
 const formatMinutesToTime = (minutes: number) => {
   if (!minutes) return "";
   const hours = Math.floor(minutes / 60);
@@ -40,6 +39,9 @@ const formatMinutesToTime = (minutes: number) => {
 export const TenantFooter = ({ tenant }: TenantFooterProps) => {
   const currentYear = new Date().getFullYear();
   const { businessHours, loading: loadingHours } = useTenantBusinessHours(tenant.id);
+  const t = useT();
+  const daysShort = t("footer.daysShort").split(",");
+  const closedLabel = t("location.closed");
 
   // Agrupar días con el mismo horario
   const getGroupedHours = () => {
@@ -56,7 +58,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
 
       let hoursStr: string;
       if (hours.isClosed) {
-        hoursStr = "Cerrado";
+        hoursStr = closedLabel;
       } else {
         const morning =
           hours.morningStart && hours.morningEnd
@@ -74,7 +76,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
         } else if (afternoon) {
           hoursStr = afternoon;
         } else {
-          hoursStr = "Cerrado";
+          hoursStr = closedLabel;
         }
       }
 
@@ -92,7 +94,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
 
   const formatDaysRange = (days: number[]) => {
     if (days.length === 1) {
-      return DAYS_SHORT[days[0] === 0 ? 6 : days[0] - 1];
+      return daysShort[days[0] === 0 ? 6 : days[0] - 1];
     }
 
     // Verificar si son consecutivos
@@ -112,10 +114,10 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
     if (isConsecutive && days.length > 2) {
       const first = sortedDays[0];
       const last = sortedDays[sortedDays.length - 1];
-      return `${DAYS_SHORT[first === 0 ? 6 : first - 1]}-${DAYS_SHORT[last === 0 ? 6 : last - 1]}`;
+      return `${daysShort[first === 0 ? 6 : first - 1]}-${daysShort[last === 0 ? 6 : last - 1]}`;
     }
 
-    return days.map((d) => DAYS_SHORT[d === 0 ? 6 : d - 1]).join(", ");
+    return days.map((d) => daysShort[d === 0 ? 6 : d - 1]).join(", ");
   };
 
   const groupedHours = getGroupedHours();
@@ -128,12 +130,8 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
           <div className="md:col-span-2">
             <h3 className="text-2xl font-bold mb-4 text-primary">{tenant.name}</h3>
             <p className="text-muted-foreground mb-4">
-              {tenant.description || tenant.tagline || (
-                <>
-                  Tu espacio de confianza {tenant.city && ` en ${tenant.city}`}. Profesionales dedicados a ofrecerte la
-                  mejor experiencia.
-                </>
-              )}
+              {tenant.description || tenant.tagline ||
+                t("footer.defaultAbout", { place: tenant.city ? ` ${t("booking.in")} ${tenant.city}` : "" })}
             </p>
             {/* Social Links */}
             {(tenant.instagram_url || tenant.facebook_url || tenant.tiktok_url) && (
@@ -177,7 +175,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
 
           {/* Contact Info */}
           <div>
-            <h4 className="font-semibold mb-4">Contacto</h4>
+            <h4 className="font-semibold mb-4">{t("nav.contact")}</h4>
             <div className="space-y-3">
               {tenant.address && (
                 <div className="flex items-start gap-3 text-muted-foreground">
@@ -214,21 +212,21 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
 
           {/* Hours */}
           <div>
-            <h4 className="font-semibold mb-4">Horario</h4>
+            <h4 className="font-semibold mb-4">{t("location.hours")}</h4>
             <div className="flex items-start gap-3 text-muted-foreground">
               <Clock className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
               <div className="space-y-1 text-sm">
                 {loadingHours ? (
-                  <p>Cargando horarios...</p>
+                  <p>{t("location.loadingHours")}</p>
                 ) : groupedHours.length > 0 ? (
                   groupedHours.map((group, idx) => (
                     <div key={idx} className="flex justify-between gap-4">
                       <span className="font-medium">{formatDaysRange(group.days)}</span>
-                      <span className={group.hours === "Cerrado" ? "text-muted-foreground/60" : ""}>{group.hours}</span>
+                      <span className={group.hours === closedLabel ? "text-muted-foreground/60" : ""}>{group.hours}</span>
                     </div>
                   ))
                 ) : (
-                  <p>Consulta disponibilidad al reservar</p>
+                  <p>{t("services.priceOnRequest")}</p>
                 )}
               </div>
             </div>
@@ -247,7 +245,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
             >
               <img src="/favicon.png" alt="GlowApp" className="h-5 w-5 rounded-md" />
               <span className="text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                Creado con GlowApp
+                {t("footer.madeWithGlow")}
               </span>
             </a>
 
@@ -255,16 +253,16 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
               <div className="flex items-center gap-6">
                 <a href="/privacidad" className="hover:text-primary transition-colors duration-200 ease-out py-2 touch-manipulation">
-                  Privacidad
+                  {t("footer.privacy")}
                 </a>
                 <a href="/terminos" className="hover:text-primary transition-colors duration-200 ease-out py-2 touch-manipulation">
-                  Términos
+                  {t("footer.terms")}
                 </a>
               </div>
             </div>
 
             <p className="text-center text-xs">
-              © {currentYear} {tenant.name}. Todos los derechos reservados.
+              © {currentYear} {tenant.name}. {t("footer.rights")}.
             </p>
           </div>
         </div>

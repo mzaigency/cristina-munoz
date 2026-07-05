@@ -241,7 +241,8 @@ serve(async (req) => {
               Authorization: `Bearer ${RESEND_API_KEY}`,
             },
             body: JSON.stringify({
-              from: "GlowApp <onboarding@resend.dev>",
+              from: "GlowApp <contacto@glowapp.app>",
+              reply_to: "gglowapp@gmail.com",
               to: [email],
               subject: `¡Bienvenido a ${tenantName}! - Tu cuenta de administrador`,
               html: `

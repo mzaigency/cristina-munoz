@@ -497,6 +497,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const emailResponse = await resend.emails.send({
       from: FROM_EMAIL,
+      reply_to: "gglowapp@gmail.com",
       to: [to],
       subject,
       html,

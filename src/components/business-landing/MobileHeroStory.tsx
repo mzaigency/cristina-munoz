@@ -103,7 +103,7 @@ export const MobileHeroStory = () => {
             El software de salón
           </p>
           <p className="font-serif text-3xl italic leading-tight">
-            que no te cuesta nada.
+            que se paga solo.
           </p>
           <button
             onClick={() => navigate("/onboarding")}

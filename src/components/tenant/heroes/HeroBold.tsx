@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { HeroCTA, HeroStats, useHeroStats, EASE_OUT } from "./_shared";
+import { useT } from "@/lib/tenantI18n";
 
 interface Tenant {
   id: string;
@@ -25,7 +26,8 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
   const heroImages = tenant.hero_images as string[] | null;
   const heroImage = heroImages?.[0] || tenant.hero_image_url;
 
-  const displayTagline = tenant.tagline || tenant.description || "Tu espacio de belleza y bienestar";
+  const t = useT();
+  const displayTagline = tenant.tagline || tenant.description || t("hero.defaultTagline");
   const primaryColor = tenant.primary_color || "#F97316";
   const secondaryColor = tenant.secondary_color || "#EAB308";
 
@@ -135,7 +137,7 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
           tenantId={tenant.id}
           onBookNow={onBookNow}
           primaryColor={tenant.primary_color}
-          label="Reservar"
+          label={t("hero.bookNow")}
           iconStyle="arrow"
           variant="white"
           className="justify-center"

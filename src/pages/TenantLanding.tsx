@@ -21,6 +21,7 @@ import TenantContactSection from "@/components/tenant/TenantContactSection";
 import { TenantShopSection } from "@/components/tenant/TenantShopSection";
 import { HeroImmersive, HeroMinimal, HeroSplit, HeroBold, HeroGlass } from "@/components/tenant/heroes";
 import { getThemeById } from "@/components/onboarding/landing-themes";
+import { TenantLocaleProvider } from "@/lib/tenantI18n";
 
 interface Tenant {
   id: string;
@@ -51,6 +52,7 @@ interface Tenant {
   average_price?: number | null;
   show_logo_on_landing?: boolean | null;
   theme_id?: string | null;
+  language?: string | null;
   features?: {
     business_type?: string;
     business_type_label?: string;
@@ -281,8 +283,9 @@ const TenantLanding = () => {
   const primaryColor = tenant.primary_color || "#8B5CF6";
 
   return (
-    <TenantThemeProvider 
-      primaryColor={primaryColor} 
+    <TenantLocaleProvider lang={tenant.language}>
+    <TenantThemeProvider
+      primaryColor={primaryColor}
       secondaryColor={tenant.secondary_color || "#D946EF"}
       fontHeading={tenant.font_heading}
       fontBody={tenant.font_body}
@@ -487,6 +490,7 @@ const TenantLanding = () => {
         )}
       </div>
     </TenantThemeProvider>
+    </TenantLocaleProvider>
   );
 };
 

@@ -137,7 +137,7 @@ export function SubscriptionExpiredScreen({
               ¿Necesitas ayuda o tienes preguntas?
             </p>
             <Button variant="link" size="sm" asChild className="gap-1">
-              <a href="mailto:contacto@glowapp.app">
+              <a href="mailto:gglowapp@gmail.com">
                 <Mail className="h-3 w-3" />
                 Contactar soporte
               </a>

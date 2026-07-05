@@ -4,9 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { EASE, SectionHeader, brandCard } from "./_landingShared";
 
 /**
- * Comparativa de precio — el arma de Glowapp: gratis frente a Booksy (≈35 €/mes)
- * y Treatwell (comisión por reserva). La tarjeta de Glowapp va destacada en navy
- * de marca; las otras dos, en gris apagado.
+ * Comparativa de precio — datos verificados 2026. Booksy: 34,99 €+IVA/mes,
+ * +8 €/mes por profesional extra, Boost opcional 30% primera visita de clientes
+ * nuevos del marketplace (NO cobra comisión por reserva normal). Treatwell:
+ * cuota anual + comisión solo por clientes nuevos del marketplace. El arma de
+ * Glowapp NO es "más barato": es precio plano + web propia + ser dueña del
+ * cliente + 0% comisiones de captación. La tarjeta de Glowapp va destacada en
+ * navy de marca; las otras dos, en gris apagado.
  */
 
 const GLOW_FEATURES = [
@@ -22,16 +26,23 @@ const RIVALS = [
   {
     name: "Booksy",
     price: "34,99 €",
-    period: "/mes",
-    note: "+8 €/mes por cada profesional extra · ≈ 420 €/año",
-    cons: ["Cuota fija todos los meses", "Pagas más según crece tu equipo"],
+    period: "/mes + IVA",
+    note: "+8 €/mes por cada profesional extra que gestione su agenda",
+    cons: [
+      "La cuota crece con cada silla de tu equipo",
+      "Con Boost, el 30% de la primera visita de cada cliente nuevo es para ellos",
+      "Tu salón vive en su marketplace, no en tu web",
+    ],
   },
   {
     name: "Treatwell",
-    price: "Comisión",
-    period: "por reserva",
-    note: "Te cobran un % por cada cliente que entra por su marketplace",
-    cons: ["Comisión sobre tus ingresos", "Tus clientes son suyos, no tuyos"],
+    price: "Cuota anual",
+    period: "+ comisión",
+    note: "Pagas comisión por cada cliente nuevo que llega desde su marketplace",
+    cons: [
+      "Pagas por captar: comisión sobre clientes nuevos",
+      "El cliente reserva en su plataforma, no en tu web",
+    ],
   },
 ];
 
@@ -45,16 +56,16 @@ export const PricingCompare = () => {
           eyebrow="Precio"
           title={
             <>
-              Lo que otros te cobran,{" "}
+              Un precio plano que conoces hoy,{" "}
               <span
                 className="font-serif italic"
                 style={{ background: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
               >
-                aquí es gratis.
+                sin sorpresas a fin de mes.
               </span>
             </>
           }
-          subtitle="Mismo trabajo hecho, sin cuota mensual ni comisiones que se comen tu caja."
+          subtitle="Primer mes gratis para probarlo todo. Después, desde 29 €/mes — sin comisiones por reserva ni por captar clientes."
           className="mb-16"
         />
 
@@ -84,9 +95,9 @@ export const PricingCompare = () => {
                 >
                   1er mes gratis
                 </span>
-                <span className="mb-2 text-sm text-blue-100/60">sin compromiso</span>
+                <span className="mb-2 text-sm text-blue-100/60">después, desde 29 €/mes</span>
               </div>
-              <p className="mt-1 text-sm text-blue-100/55">Pides tarjeta solo para verificar · cancela cuando quieras antes de que termine el mes</p>
+              <p className="mt-1 text-sm text-blue-100/55">Sin permanencia · el precio no sube por reserva ni por cliente nuevo · cancela cuando quieras</p>
 
 
               <ul className="mt-7 grid gap-3 sm:grid-cols-2">

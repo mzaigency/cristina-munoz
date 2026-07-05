@@ -115,7 +115,7 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleContact = () => {
-    window.location.href = "mailto:contacto@glowapp.app?subject=Error en la app";
+    window.location.href = "mailto:gglowapp@gmail.com?subject=Error en la app";
   };
 
   public render() {

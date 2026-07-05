@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Service, Stylist, BookingData, Promotion, ServicePackage } from "@/types/booking";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/tenantI18n";
 
 interface TenantBookingFlowProps {
   tenantId: string;
@@ -41,6 +42,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   };
   const haptic = useHaptic();
   const { user } = useAuth();
+  const t = useT();
   const [bookingData, setBookingData] = useState<BookingData>({
     services: [],
     stylist: "any" as Stylist,
@@ -90,7 +92,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
         console.error('Error loading services:', error);
         toast({
           title: "Error",
-          description: "No se pudieron cargar los servicios",
+          description: t("services.error"),
           variant: "destructive",
         });
       } finally {
@@ -197,8 +199,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     <section ref={bookingRef} className={cn("py-16 md:py-20 relative overflow-hidden", bookingData.services.length > 0 && "pb-36 lg:pb-20")}>
       <ClientCoachmark
         storageKey="booking-flow-intro"
-        title="Reserva en 3 pasos"
-        description="Elige servicio, fecha y confirma. Sin compromiso."
+        title={t("booking.title")}
+        description={t("booking.subtitle")}
         icon={CalendarCheck}
         delay={1600}
       />
@@ -211,12 +213,12 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
         <div className="mb-8 md:mb-12 text-center">
           <SmoothTitle>
             <h2 className="mb-3 text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-              Reserva tu Cita
+              {t("booking.reserveTitle")}
             </h2>
           </SmoothTitle>
           <div className="line-accent mx-auto mb-4" />
           <p className="text-sm sm:text-base lg:text-lg text-muted-foreground px-2">
-            Sigue los pasos para reservar tu cita{tenantName ? ` en ${tenantName}` : ''} de forma rápida y sencilla
+            {t("booking.followSteps", { place: tenantName ? ` ${t("booking.in")} ${tenantName}` : "" })}
           </p>
         </div>
 
@@ -224,9 +226,9 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           {/* Enhanced Progress Bar */}
           <div ref={progressRef} className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto scroll-mt-4">
             <div className="flex justify-between items-center text-xs sm:text-sm text-muted-foreground px-1">
-              <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
-              <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Fecha y hora</span>
-              <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Confirmar</span>
+              <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>{t("nav.services")}</span>
+              <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>{t("booking.dateTime")}</span>
+              <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>{t("booking.confirm")}</span>
             </div>
             <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
               <div 
@@ -236,7 +238,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
             </div>
             <div className="text-center">
               <span className="text-xs text-muted-foreground">
-                Paso {step} de 3
+                {t("booking.stepOf", { step })}
               </span>
             </div>
           </div>
@@ -246,26 +248,26 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
             <Card className="border-none card-elevated glass">
               <CardHeader>
                 <CardTitle className="animate-fade-in">
-                  {step === 1 && "Selecciona tus servicios"}
-                  {step === 2 && "Selecciona fecha y hora"}
-                  {step === 3 && "Confirma tu reserva"}
+                  {step === 1 && t("booking.stepServices")}
+                  {step === 2 && t("booking.stepDateTime")}
+                  {step === 3 && t("booking.stepConfirm")}
                 </CardTitle>
                 <CardDescription>
                   {step === 1 && (
                     <>
-                      <span>Puedes seleccionar varios servicios</span>
+                      <span>{t("services.multiHint")}</span>
                       {!user && (
                         <span className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2 animate-fade-in">
                           <User className="h-4 w-4" />
                           <span className="text-sm">
-                            Debes <Link to="/auth" className="underline hover:text-amber-700 dark:hover:text-amber-400 transition-colors">iniciar sesión</Link> para continuar
+                            {t("booking.mustSignInPre")}<Link to="/auth" className="underline hover:text-amber-700 dark:hover:text-amber-400 transition-colors">{t("booking.signInLink")}</Link>{t("booking.mustSignInPost")}
                           </span>
                         </span>
                       )}
                     </>
                   )}
-                  {step === 2 && `Duración total: ${totalDuration} minutos`}
-                  {step === 3 && "Últimos detalles para completar tu reserva"}
+                  {step === 2 && `${t("booking.totalDurationLabel")}: ${totalDuration} ${t("booking.minutes")}`}
+                  {step === 3 && t("booking.finalDetails")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="overflow-hidden">
@@ -295,7 +297,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       className="text-center py-8 text-muted-foreground"
                     >
                       <div className="inline-block w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                      <p>Cargando servicios...</p>
+                      <p>{t("services.loading")}</p>
                     </motion.div>
                   )}
                   {step === 2 && (
@@ -356,7 +358,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       <SuccessCelebration
                         bookingDate={bookingData.date}
                         bookingTime={bookingData.time || ""}
-                        stylistName={bookingData.stylist || "Cualquier profesional"}
+                        stylistName={bookingData.stylist || t("booking.anyPro")}
                         services={bookingData.services}
                         totalDuration={totalDuration}
                         salonName={tenantName}
@@ -393,8 +395,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           setPendingServices(null);
         }}
         onSuccess={handleAuthSuccess}
-        title="Inicia sesión"
-        subtitle="Accede para continuar con tu reserva"
+        title={t("nav.signIn")}
+        subtitle={t("booking.signInToContinue")}
       />
     </section>
   );

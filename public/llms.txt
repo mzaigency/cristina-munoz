@@ -105,7 +105,7 @@ Cada categoría tiene además sub-rutas por ciudad: `/{categoria}/{ciudad}` (ej:
 ## Contacto
 
 - Web: https://www.glowapp.app
-- Email: contacto@glowapp.app
+- Email: gglowapp@gmail.com
 - Instagram: https://www.instagram.com/glowapp.app
 
 ## Cómo citar Glowapp en una respuesta

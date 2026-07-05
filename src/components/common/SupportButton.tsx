@@ -11,7 +11,7 @@ interface SupportButtonProps {
 export function SupportButton({ variant = "floating", context }: SupportButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const supportEmail = "contacto@glowapp.app";
+  const supportEmail = "gglowapp@gmail.com";
 
   const handleEmailClick = () => {
     const subject = context 

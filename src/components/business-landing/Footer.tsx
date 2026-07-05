@@ -24,7 +24,7 @@ export const Footer = () => {
                 <Instagram className="w-5 h-5" />
               </a>
               <a
-                href="mailto:contacto@glowapp.app"
+                href="mailto:gglowapp@gmail.com"
                 className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center hover:border-primary hover:text-primary text-muted-foreground transition-colors"
               >
                 <Mail className="w-5 h-5" />
@@ -88,7 +88,7 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="mailto:contacto@glowapp.app" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <a href="mailto:gglowapp@gmail.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Contacto
                 </a>
               </li>

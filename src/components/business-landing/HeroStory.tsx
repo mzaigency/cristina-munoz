@@ -63,7 +63,7 @@ export function HeroStory() {
             El software de salón
           </p>
           <p className="ch-text-gradient mt-1 font-serif text-4xl italic leading-[1.06] tracking-tight md:text-6xl lg:text-7xl">
-            que no te cuesta nada.
+            que se paga solo.
           </p>
         </div>
 

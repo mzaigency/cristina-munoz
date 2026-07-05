@@ -219,7 +219,8 @@ const handler = async (req: Request): Promise<Response> => {
         "Authorization": `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: `${tenant.name} <onboarding@resend.dev>`,
+        from: `${tenant.name} <contacto@glowapp.app>`,
+        reply_to: tenant.email || "gglowapp@gmail.com",
         to: [ticketData.customerEmail],
         subject: `${documentTitle} de ${tenant.name} - ${ticketData.date}`,
         html: emailHtml,

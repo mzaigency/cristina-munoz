@@ -1,5 +1,6 @@
 import { MapPin, Phone, Mail, Instagram, Facebook, ExternalLink } from "lucide-react";
 import { SectionHeader } from "./_shared/SectionHeader";
+import { useT } from "@/lib/tenantI18n";
 
 const TikTokIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -34,6 +35,7 @@ export const TenantLocationSection = ({
   googleMapsUrl,
   primaryColor,
 }: TenantLocationSectionProps) => {
+  const t = useT();
   const fullAddress = [address, city, postalCode].filter(Boolean).join(", ");
   const mapsSearchUrl =
     googleMapsUrl ||
@@ -45,13 +47,13 @@ export const TenantLocationSection = ({
     <section id="ubicacion" className="py-20 md:py-28 bg-white">
       <div className="container mx-auto px-5 md:px-8 max-w-6xl">
         <SectionHeader
-          eyebrow="Visítanos"
+          eyebrow={t("location.title")}
           title={
             <>
-              Te <span className="font-editorial-italic">esperamos</span>
+              {t("location.titlePre")}<span className="font-editorial-italic">{t("location.titleAccent")}</span>
             </>
           }
-          description="Pasa por el estudio o escríbenos por el canal que prefieras."
+          description={t("contact.subtitle")}
           accentColor={primaryColor}
         />
 
@@ -72,7 +74,7 @@ export const TenantLocationSection = ({
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10.5px] font-bold uppercase tracking-[0.18em] mb-1 font-body" style={{ color: accent }}>
-                      Dirección
+                      {t("location.address")}
                     </p>
                     <p className="font-editorial text-lg text-neutral-900 leading-snug">{fullAddress}</p>
                     {mapsSearchUrl && (
@@ -83,7 +85,7 @@ export const TenantLocationSection = ({
                         className="mt-2 inline-flex items-center gap-1.5 text-xs font-body font-semibold underline-offset-4 hover:underline"
                         style={{ color: accent }}
                       >
-                        Ver en Google Maps
+                        {t("location.viewOnMaps")}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     )}
@@ -139,7 +141,7 @@ export const TenantLocationSection = ({
             {(instagramUrl || facebookUrl || tiktokUrl) && (
               <div className="mt-10 pt-8 border-t border-neutral-200">
                 <p className="text-[10.5px] font-bold uppercase tracking-[0.18em] mb-4 font-body text-neutral-500">
-                  Síguenos
+                  {t("location.follow")}
                 </p>
                 <div className="flex gap-2">
                   {instagramUrl && (

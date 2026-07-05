@@ -4,8 +4,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { es } from "date-fns/locale";
+import { es, ca } from "date-fns/locale";
 import { format } from "date-fns";
+import { useT, useTenantLang } from "@/lib/tenantI18n";
 import { Service, TimeRange } from "@/types/booking";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
 import { Loader2, Clock, Bell, User } from "lucide-react";
@@ -112,6 +113,9 @@ export const TenantDateTimeSelection = ({
   const [userLoading, setUserLoading] = useState(true);
 
   const { toast } = useToast();
+  const t = useT();
+  const tenantLang = useTenantLang();
+  const dfLocale = tenantLang === "ca" ? ca : es;
 
   const {
     businessHours,
@@ -405,7 +409,7 @@ export const TenantDateTimeSelection = ({
     if (!currentUser || !date) {
       toast({
         title: "Error",
-        description: "Debes iniciar sesión para unirte a la lista de espera",
+        description: t("booking.waitlistLoginRequired"),
         variant: "destructive",
       });
       return;
@@ -469,16 +473,15 @@ export const TenantDateTimeSelection = ({
       }
 
       toast({
-        title: "¡Te avisaremos! 🔔",
-        description:
-          "Estás en la lista de espera. Si surge un hueco, te llegará un aviso para confirmarlo con un toque.",
+        title: t("booking.waitlistSuccessTitle"),
+        description: t("booking.waitlistSuccessDesc"),
       });
 
       setShowWaitlistDialog(false);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "No se pudo añadir a la lista de espera",
+        description: error.message || t("booking.waitlistError"),
         variant: "destructive",
       });
     } finally {
@@ -505,33 +508,33 @@ export const TenantDateTimeSelection = ({
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2">
         <div>
-          <h3 className="mb-4 font-semibold text-foreground">Selecciona una fecha</h3>
+          <h3 className="mb-4 font-semibold text-foreground">{t("booking.selectDate")}</h3>
           <Calendar
             mode="single"
             selected={date}
             onSelect={setDate}
             disabled={disabledDays}
             weekStartsOn={1}
-            locale={es}
+            locale={dfLocale}
             className={cn("rounded-md border pointer-events-auto")}
           />
         </div>
 
         <div>
-          <h3 className="mb-4 font-semibold text-foreground">Selecciona una hora</h3>
+          <h3 className="mb-4 font-semibold text-foreground">{t("booking.selectTime")}</h3>
           {!date ? (
-            <p className="text-sm text-muted-foreground">Primero selecciona una fecha</p>
+            <p className="text-sm text-muted-foreground">{t("booking.firstSelectDate")}</p>
           ) : loading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Cargando horarios disponibles...
+              {t("booking.loadingAvailable")}
             </div>
           ) : timeSlots.length === 0 ? (
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-border/50">
                 <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
                 <p className="text-sm text-muted-foreground">
-                  No hay horarios disponibles para este día. Todos los slots están reservados.
+                  {t("booking.noSlotsDay")}
                 </p>
               </div>
 
@@ -541,7 +544,7 @@ export const TenantDateTimeSelection = ({
                 onClick={() => setShowWaitlistDialog(true)}
               >
                 <Bell className="h-4 w-4" />
-                Añadirme a la lista de espera
+                {t("booking.addMeWaitlist")}
               </Button>
             </div>
           ) : (
@@ -565,7 +568,7 @@ export const TenantDateTimeSelection = ({
                   {morningSlots.length > 0 && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-2 font-medium">
-                        ☀️ Mañana ({minutesToTimeString(hours.morningStart)} - {minutesToTimeString(hours.morningEnd)})
+                        ☀️ {t("booking.morning")} ({minutesToTimeString(hours.morningStart)} - {minutesToTimeString(hours.morningEnd)})
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {morningSlots.map((slot) => {
@@ -606,7 +609,7 @@ export const TenantDateTimeSelection = ({
                     <div className="flex items-center gap-2 py-1">
                       <div className="flex-1 h-px bg-border" />
                       <span className="text-xs text-muted-foreground px-2">
-                        Descanso ({minutesToTimeString(hours.morningEnd)} - {minutesToTimeString(hours.afternoonStart)})
+                        {t("booking.breakLabel")} ({minutesToTimeString(hours.morningEnd)} - {minutesToTimeString(hours.afternoonStart)})
                       </span>
                       <div className="flex-1 h-px bg-border" />
                     </div>
@@ -615,7 +618,7 @@ export const TenantDateTimeSelection = ({
                   {afternoonSlots.length > 0 && hasAfternoon && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-2 font-medium">
-                        🌙 Tarde ({minutesToTimeString(hours.afternoonStart)} -{" "}
+                        🌙 {t("booking.afternoon")} ({minutesToTimeString(hours.afternoonStart)} -{" "}
                         {minutesToTimeString(hours.afternoonEnd)})
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -659,7 +662,7 @@ export const TenantDateTimeSelection = ({
           {/* Stylist picker when multiple are available for selected slot */}
           {stylist === "any" && time && (slotToStylists[time]?.length || 0) > 1 && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm font-medium text-foreground">¿Con quién prefieres?</p>
+              <p className="text-sm font-medium text-foreground">{t("booking.whoPrefer")}</p>
               <div className="grid grid-cols-2 gap-2">
                 {slotToStylists[time].map((s) => (
                   <Card
@@ -687,8 +690,7 @@ export const TenantDateTimeSelection = ({
           )}
           {date && time && (
             <p className="mt-4 text-xs text-muted-foreground">
-              Duración estimada: {totalDuration} minutos (finaliza a las{" "}
-              {minutesToTimeString(timeStringToMinutes(time) + totalDuration)})
+              {t("booking.estimatedDuration", { min: totalDuration, end: minutesToTimeString(timeStringToMinutes(time) + totalDuration) })}
             </p>
           )}
         </div>
@@ -696,14 +698,14 @@ export const TenantDateTimeSelection = ({
 
       <div className="flex justify-between pt-4">
         <Button variant="outline" onClick={onBack} className="transition-transform duration-200 hover:scale-105">
-          Volver
+          {t("booking.back")}
         </Button>
         <Button
           onClick={handleNext}
           disabled={!date || !time || (stylist === "any" && time && (slotToStylists[time]?.length || 0) > 1 && !selectedSlotStylist)}
           className="transition-transform duration-200 hover:scale-105 disabled:scale-100"
         >
-          Continuar
+          {t("booking.continue")}
         </Button>
       </div>
 
@@ -713,44 +715,43 @@ export const TenantDateTimeSelection = ({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-primary" />
-              Lista de espera
+              {t("booking.waitlistTitle")}
             </DialogTitle>
             <DialogDescription>
-              Te notificaremos dentro de la app cuando haya disponibilidad para{" "}
-              {date ? format(date, "d 'de' MMMM", { locale: es }) : "esta fecha"}.
+              {t("booking.waitlistNotify", { date: date ? format(date, "d 'de' MMMM", { locale: dfLocale }) : t("booking.thisDate") })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {currentUser ? (
               <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                <p className="text-sm font-medium text-foreground mb-1">Te añadiremos como:</p>
+                <p className="text-sm font-medium text-foreground mb-1">{t("booking.addYouAs")}</p>
                 <p className="text-sm text-muted-foreground">{currentUser.name}</p>
               </div>
             ) : (
               <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
-                <p className="text-sm text-destructive">Debes iniciar sesión para unirte a la lista de espera</p>
+                <p className="text-sm text-destructive">{t("booking.waitlistLoginRequired")}</p>
               </div>
             )}
 
             <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-              <p className="font-medium mb-1">Servicios solicitados:</p>
+              <p className="font-medium mb-1">{t("booking.requestedServices")}</p>
               <p>{services.map((s) => s.name).join(", ")}</p>
             </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowWaitlistDialog(false)} disabled={waitlistSubmitting}>
-              Cancelar
+              {t("booking.cancel")}
             </Button>
             <Button onClick={handleWaitlistSubmit} disabled={waitlistSubmitting || !currentUser}>
               {waitlistSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Añadiendo...
+                  {t("booking.adding")}
                 </>
               ) : (
-                "Añadir a lista de espera"
+                t("booking.waitlistAdd")
               )}
             </Button>
           </DialogFooter>

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useT } from "@/lib/tenantI18n";
 
 interface Tenant {
   id: string;
@@ -37,6 +38,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
   const navigate = useNavigate();
   const { unreadCount } = useUnreadMessages();
   const { user } = useAuth();
+  const t = useT();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -67,11 +69,11 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
   };
 
   const navItems = [
-    { id: "inicio", label: "Inicio" },
-    { id: "servicios", label: "Servicios" },
-    { id: "reserva", label: "Reservar" },
-    { id: "resenas", label: "Reseñas" },
-    { id: "contacto", label: "Contacto" },
+    { id: "inicio", label: t("nav.home") },
+    { id: "servicios", label: t("nav.services") },
+    { id: "reserva", label: t("nav.booking") },
+    { id: "resenas", label: t("nav.reviews") },
+    { id: "contacto", label: t("nav.contact") },
   ];
 
   const handleNavClick = (sectionId: string) => {
@@ -138,7 +140,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 </Link>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Volver a GlowApp</p>
+                <p>{t("nav.backToGlow")}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -233,7 +235,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                   align="end"
                   className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-border z-[100]"
                 >
-                  <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t("nav.myAccount")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleProfileClick}>
                     <User className="h-4 w-4 mr-2" />
@@ -241,7 +243,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleMyBookingsClick}>
                     <Calendar className="h-4 w-4 mr-2" />
-                    Tus Citas
+                    {t("nav.myBookings")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleMessagesClick} className="relative">
                     <MessageCircle className="h-4 w-4 mr-2" />
@@ -264,7 +266,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="h-4 w-4 mr-2" />
-                    Cerrar Sesión
+                    {t("nav.signOut")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -307,7 +309,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Home className="h-4 w-4" />
-                Volver a GlowApp
+                {t("nav.backToGlow")}
               </Link>
               <div className="border-t my-2" />
               {navItems.map((item) => (

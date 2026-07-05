@@ -15,7 +15,7 @@ if (typeof window !== "undefined") {
  *   2. Relato parallax 3D (`HeroStory`): 3 beats dolor→solución con tipografía
  *      cinética — la palabra-dolor se desintegra char a char y resuelve en
  *      gradiente de marca (WhatsApps, contabilidad a mano, agenda caótica).
- *   3. Slogan "El software de salón que no te cuesta nada" + remate con barrido
+ *   3. Slogan "El software de salón que se paga solo" + remate con barrido
  *      de luz "Tú, a hacer brillar el salón." → CTA. Suelta el scroll abajo.
  *
  * Identidad Glowapp: gradiente azul→morado de marca, Plus Jakarta Sans +

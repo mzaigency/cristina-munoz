@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import { HeroCTA, HeroStats, useHeroStats, EASE_OUT } from "./_shared";
+import { useT } from "@/lib/tenantI18n";
 
 interface Tenant {
   id: string;
@@ -28,7 +29,8 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
   const heroImages = tenant.hero_images as string[] | null;
   const heroImage = heroImages?.[0] || tenant.hero_image_url;
 
-  const displayTagline = tenant.tagline || tenant.description || "Tu espacio de belleza y bienestar";
+  const t = useT();
+  const displayTagline = tenant.tagline || tenant.description || t("hero.defaultTagline");
   const location = [tenant.city, tenant.address].filter(Boolean).join(" · ");
   const accent = tenant.primary_color || "#0EA5E9";
   const secondary = tenant.secondary_color || "#06B6D4";
@@ -113,7 +115,7 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
             tenantId={tenant.id}
             onBookNow={onBookNow}
             primaryColor={accent}
-            label="Reservar cita"
+            label={t("hero.bookNow")}
             iconStyle="icon"
             variant="solid"
             layout="stack"
@@ -237,7 +239,7 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
               tenantId={tenant.id}
               onBookNow={onBookNow}
               primaryColor={accent}
-              label="Reservar cita"
+              label={t("hero.bookNow")}
               iconStyle="arrow"
               variant="solid"
             />

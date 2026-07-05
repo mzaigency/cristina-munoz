@@ -7,8 +7,10 @@ import { AnimatedNumber, EASE, brandCard, Eyebrow } from "./_landingShared";
 /**
  * Calculadora ROI interactiva. La dueña mueve tres sliders (citas/día, precio
  * medio, días abiertos) y ve EN VIVO lo que pasa por su caja, lo que recupera en
- * plantones, las horas que se ahorra y cuánto se ahorra frente a Booksy (que
- * cobra ~35 €/mes). Traduce el producto a dinero — el lenguaje del salón.
+ * plantones, las horas que se ahorra y lo que costaría captar clientes nuevos
+ * con Boost de Booksy (30% de la primera visita — dato verificado 2026).
+ * Traduce el producto a dinero — el lenguaje del salón. Nada de "Glowapp es
+ * gratis": el producto cuesta desde 29 €/mes y se dice.
  */
 
 const lightGradient = "linear-gradient(90deg, #93b4ff, #d9a7ff)";
@@ -92,7 +94,8 @@ export const RoiCalculator = () => {
   const ingresosMes = citasMes * precio;
   const plantonesEur = Math.round(citasMes * 0.18 * 0.3 * precio); // 18% no-show base, recordatorios recuperan ~30%
   const horasMes = Math.round((citasMes * 4) / 60); // ~4 min de gestión ahorrados por cita
-  const ahorroBooksy = 420; // 34,99 €/mes ≈ 420 €/año
+  // 10 clientes nuevos/mes captados vía Boost de Booksy = 30% de su primera visita
+  const costeBoost10 = Math.round(10 * precio * 0.3);
 
   return (
     <section id="calculadora" className="relative scroll-mt-20 py-24 md:py-32">
@@ -200,9 +203,9 @@ export const RoiCalculator = () => {
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-white">
-                    <AnimatedNumber value={ahorroBooksy} format={eur} />/año que Booksy te cobraría
+                    <AnimatedNumber value={costeBoost10} format={eur} />/mes por captar 10 clientes con Boost de Booksy
                   </p>
-                  <p className="text-[11px] text-emerald-200/70">En <span className="font-ashing">Glowapp</span> es gratis. Te lo quedas tú.</p>
+                  <p className="text-[11px] text-emerald-200/70">Captarlos por tu web y tu QR con <span className="font-ashing">Glowapp</span>: 0 € de comisión. Te lo quedas tú.</p>
                 </div>
               </div>
 
@@ -218,7 +221,7 @@ export const RoiCalculator = () => {
           </div>
 
           <p className="relative mt-7 text-center text-[11px] text-blue-100/40">
-            Estimación orientativa a partir de tus datos. Plantones evitados según recordatorios automáticos; ahorro frente a la tarifa pública de Booksy (34,99 €/mes).
+            Estimación orientativa a partir de tus datos. Plantones evitados según recordatorios automáticos; coste de captación calculado con la tarifa pública de Boost de Booksy (30% de la primera visita de un cliente nuevo del marketplace, servicio opcional).
           </p>
         </motion.div>
       </div>

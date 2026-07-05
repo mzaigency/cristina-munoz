@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SectionHeader } from "./_shared/SectionHeader";
+import { useT } from "@/lib/tenantI18n";
 
 interface Service {
   id: string;
@@ -42,6 +43,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
   const [services, setServices] = useState<Service[]>([]);
   const [categoryImages, setCategoryImages] = useState<CategoryImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useT();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,7 +79,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
   };
 
   const groupedServices = services.reduce((acc, service) => {
-    const category = service.category || "Otros";
+    const category = service.category || t("services.otherCategory");
     if (!acc[category]) acc[category] = [];
     acc[category].push(service);
     return acc;
@@ -107,16 +109,16 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
     <section id="servicios" className="py-20 md:py-28 bg-[#fafaf7]">
       <div className="container mx-auto px-5 md:px-8 max-w-6xl">
         <SectionHeader
-          eyebrow="Servicios"
+          eyebrow={t("services.title")}
           title={
             <>
-              La carta de <span className="font-editorial-italic">belleza</span>
+              {t("services.titlePre")} <span className="font-editorial-italic">{t("services.titleAccent")}</span>
             </>
           }
           description={
             tenantName
-              ? `Descubre la propuesta cuidada de ${tenantName}. Tratamientos pensados para realzar lo que ya eres.`
-              : "Tratamientos pensados para realzar lo que ya eres."
+              ? `${t("services.discoverPre")} ${tenantName}. ${t("services.subtitle")}`
+              : t("services.subtitle")
           }
           accentColor={primaryColor}
         />
@@ -142,7 +144,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
                       className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                     />
                     <div className="absolute top-4 left-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-[10.5px] font-bold tracking-[0.18em] uppercase text-neutral-700">
-                      {String(categoryServices.length).padStart(2, "0")} servicios
+                      {String(categoryServices.length).padStart(2, "0")} {t("services.countLabel")}
                     </div>
                   </div>
                 )}
@@ -158,7 +160,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
                     </h3>
                     {!hasImage && (
                       <span className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-neutral-500 font-body whitespace-nowrap">
-                        {String(categoryServices.length).padStart(2, "0")} servicios
+                        {String(categoryServices.length).padStart(2, "0")} {t("services.countLabel")}
                       </span>
                     )}
                   </div>

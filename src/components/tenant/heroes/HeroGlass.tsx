@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Sparkles, MapPin } from "lucide-react";
 import { HeroCTA, HeroStats, useHeroStats, EASE_OUT, formatFollowers } from "./_shared";
+import { useT } from "@/lib/tenantI18n";
 
 interface Tenant {
   id: string;
@@ -26,7 +27,8 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
   const heroImages = (tenant.hero_images as string[] | null) || [];
   const mainImage = heroImages[0] || tenant.hero_image_url;
   const mosaicImages = heroImages.slice(1, 4);
-  const displayTagline = tenant.tagline || tenant.description || "Tu espacio de belleza y bienestar";
+  const t = useT();
+  const displayTagline = tenant.tagline || tenant.description || t("hero.defaultTagline");
   const accent = tenant.primary_color || "#8B5CF6";
 
   return (
@@ -161,7 +163,7 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
                 className="inline-flex items-center gap-2 text-[10.5px] font-bold tracking-[0.22em] uppercase mb-3 text-white/70"
               >
                 <span className="inline-block w-5 h-px bg-white/60" />
-                Reserva online
+                {t("hero.bookOnline")}
               </div>
               <h1
                 className="font-editorial text-white mb-4 tracking-[-0.025em] drop-shadow-[0_6px_30px_rgba(0,0,0,.4)]"
@@ -226,7 +228,7 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
               tenantId={tenant.id}
               onBookNow={onBookNow}
               primaryColor={tenant.primary_color}
-              label="Reservar cita"
+              label={t("hero.bookNow")}
               iconStyle="arrow"
               variant="glass"
               layout="stack"

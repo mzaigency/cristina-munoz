@@ -78,9 +78,9 @@ GSAP solo existe en `src/components/business-landing/CinematicHero.tsx`. No aña
 
 - Mujer 28–45, propietaria/autónoma de peluquería, barbería, estética, spa, uñas. 1–6 profesionales.
 - **Dolores**: teléfono sonando mientras atiende, pierde reservas fuera de horario, agenda en libreta/WhatsApp, no-shows sin control, caja a mano, sin tiempo para marketing.
-- **Frustración competencia**: Booksy cobra comisión + cuota; Treatwell cobra por cita; Fresha tiene comisiones ocultas; soporte en inglés.
+- **Frustración competencia** (datos verificados jul 2026): Booksy cuesta 34,99€+IVA/mes y suma 8€/mes por profesional extra, Boost opcional se queda 30% de la primera visita de clientes nuevos del marketplace (NO cobra comisión por reserva normal — no afirmar lo contrario); Treatwell cobra cuota anual + comisión solo por clientes nuevos del marketplace; Fresha es gratis de base pero cobra 20% de la primera cita de clientes nuevos del marketplace y 2,19%+0,20€ por cobro online; soporte en inglés.
 - **Disparador de compra**: "perdí otra clienta porque llamó con las manos en un tinte".
-- **Cómo decide**: prueba gratis antes de pagar, necesita ver que se monta rápido desde el móvil, le convence el ahorro vs Booksy (≈420€/año) y "ser dueña de su cliente".
+- **Cómo decide**: prueba gratis antes de pagar, necesita ver que se monta rápido desde el móvil, le convence el precio plano (no paga por silla ni por captar) y "ser dueña de su cliente". OJO: Glowapp NO es más barato que Booksy en todos los casos (a 5+ profesionales Booksy puede salir más barato que Business) — vender propiedad + producto completo, no "ahorro".
 - **Dónde se informa**: Instagram, TikTok, grupos de WhatsApp de profesionales.
 
 ---
@@ -134,14 +134,18 @@ Modelo: suscripción plana en euros. Cobros online solo comisión Stripe. Sin co
 
 ## Diferenciadores vs competencia
 
-| | Booksy | Treatwell | Fresha | **Glowapp** |
+| (verificado jul 2026) | Booksy | Treatwell | Fresha | **Glowapp** |
 |---|---|---|---|---|
-| Comisión por reserva | Sí (+ cuota ≈35€/mes) | Hasta 2,5€+IVA/cita | Comisiones al cobrar/marketing | **0%** |
+| Cuota | 34,99€+IVA/mes **+8€/profesional extra** | Cuota anual (~230€/año) | 0€/mes | **Plana por plan: 29/49/89€** |
+| Comisión reservas propias | 0% | 0% | 0% | **0%** |
+| Comisión clientes nuevos marketplace | Boost opcional: 30% 1ª visita | Sí, solo nuevos | 20% de la 1ª cita | **Sin marketplace de pago: 0%** |
+| Pagos online | 2% + 0,15€ | 2% + IVA | 2,19% + 0,20€ | **Solo comisión Stripe** |
 | Web propia con dominio | No (perfil en su web) | No (listado marketplace) | No | **Sí** |
 | Capa social (feed/stories) | No | No | No | **Sí** |
 | Soporte en español | Chat/email | Email genérico | Chat en inglés | **WhatsApp humano** |
-| RGPD/facturación ES | Adaptado | Adaptado | Adaptado | **Nativo** |
-| Primer mes | Con condiciones | Setup fee + comisiones | Base gratis + comisiones | **Gratis sin cargo** |
+| Primer mes | Cuota desde el inicio | Cuota anual | Base gratis | **Gratis sin cargo** |
+
+**Regla de oro claims**: nunca afirmar que Booksy/Treatwell/Fresha cobran "comisión por reserva" a secas — es falso en 2026 y es riesgo legal (publicidad comparativa, art. 10 LCD). El ángulo ganador: precio plano + web/cliente propios + 0% captación + soporte local.
 
 ---
 
@@ -167,7 +171,7 @@ Orden de secciones:
   - Beat 1: "Todo el día respondiendo **WhatsApps**." → desintegración char a char → "Glowapp responde por ti."
   - Beat 2: "La contabilidad, **a mano**, cada noche." → "La caja se cuadra sola."
   - Beat 3: "La agenda, siempre un **caos**." → "Cada cita, en su sitio."
-  - Slogan bloom: "El software de salón / que no te cuesta nada."
+  - Slogan bloom: "El software de salón / que se paga solo." (antes decía "que no te cuesta nada" — retirado por falso: el producto cuesta desde 29€/mes)
   - Remate con shine sweep: "Tú, a hacer brillar el salón."
 - **CTA**: pullback → "Empieza hoy." + botones → `/onboarding` / scroll a `#producto`
 

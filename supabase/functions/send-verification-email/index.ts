@@ -315,6 +315,7 @@ serve(async (req: Request): Promise<Response> => {
     // Send email via Resend
     const emailResponse = await resend.emails.send({
       from: FROM_EMAIL,
+      reply_to: 'gglowapp@gmail.com',
       to: [email],
       subject: '✨ Verifica tu cuenta de GlowApp',
       html: emailTemplate(userName || 'amante de la belleza', verificationUrl),

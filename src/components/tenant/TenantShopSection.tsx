@@ -6,6 +6,7 @@ import { ProductDetailDialog, ShopProductDetail } from "./ProductDetailDialog";
 import { ShopCart } from "./ShopCart";
 import { cn } from "@/lib/utils";
 import { supabaseImage } from "@/lib/supabaseImage";
+import { useT } from "@/lib/tenantI18n";
 
 interface TenantShopSectionProps {
   tenantId: string;
@@ -13,6 +14,7 @@ interface TenantShopSectionProps {
 }
 
 export const TenantShopSection = ({ tenantId, tenantSlug }: TenantShopSectionProps) => {
+  const t = useT();
   const [products, setProducts] = useState<ShopProductDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ShopProductDetail | null>(null);

@@ -355,7 +355,7 @@ function ServicesStep({ onNext, onPrev, tenantId, tenantName, loading, setLoadin
     const body = encodeURIComponent(
       `Hola equipo de GlowApp,\n\nSoy ${tenantName || "[nombre del negocio]"} y me gustaría que me configuréis los servicios.\nAdjunto foto de mi lista de precios.\n\nGracias!`,
     );
-    window.location.href = `mailto:contacto@glowapp.app?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:gglowapp@gmail.com?subject=${subject}&body=${body}`;
   };
 
   const removeService = (index: number) => {
@@ -1182,7 +1182,7 @@ export default function OnboardingSetup() {
                 <button
                   onClick={() => {
                     const subject = encodeURIComponent("Ayuda con: Configuración de salón");
-                    window.location.href = `mailto:contacto@glowapp.app?subject=${subject}`;
+                    window.location.href = `mailto:gglowapp@gmail.com?subject=${subject}`;
                   }}
                   className="p-1.5 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
                   aria-label="Ayuda"

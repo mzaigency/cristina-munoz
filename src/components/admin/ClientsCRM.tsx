@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnimatePresence } from "framer-motion";
-import { Search, UserPlus, Users, Download } from "lucide-react";
+import { Search, UserPlus, Users, Download, Upload } from "lucide-react";
 
 import type { Client, FilterOption, SortOption } from "./clients/types";
 import { ClientStats } from "./clients/ClientStats";
@@ -14,6 +14,7 @@ import { ClientFilters } from "./clients/ClientFilters";
 import { ClientCard } from "./clients/ClientCard";
 import { ClientDetail } from "./clients/ClientDetail";
 import { ClientForm } from "./clients/ClientForm";
+import { ClientsImporter } from "./clients/ClientsImporter";
 import { exportClientsCsv } from "./clients/exportCsv";
 
 interface ClientsCRMProps {
@@ -31,6 +32,7 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterOption>("all");
   const [sortBy, setSortBy] = useState<SortOption>("last_visit");
+  const [isImporterOpen, setIsImporterOpen] = useState(false);
 
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -186,6 +188,9 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
           <p>{clients.length} registrados</p>
         </div>
         <div className="gp-page-actions">
+          <button className="gp-btn sm" onClick={() => setIsImporterOpen(true)} aria-label="Importar clientes desde CSV">
+            <Upload style={{ width: 14, height: 14 }} />
+          </button>
           <button className="gp-btn sm" onClick={() => exportClientsCsv(clients)} aria-label="Exportar clientes a CSV">
             <Download style={{ width: 14, height: 14 }} />
           </button>
@@ -283,6 +288,15 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Importador CSV (Booksy/Fresha/genérico) */}
+      <ClientsImporter
+        tenantId={tenantId}
+        existingClients={clients}
+        open={isImporterOpen}
+        onOpenChange={setIsImporterOpen}
+        onImported={fetchClients}
+      />
 
       {/* Form */}
       {isMobile ? (

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SectionHeader } from "./_shared/SectionHeader";
+import { useT } from "@/lib/tenantI18n";
 
 interface Review {
   id: string;
@@ -70,6 +71,7 @@ const getInitials = (fullName: string | null | undefined, reviewId: string): str
 };
 
 export const TenantReviewsSection = ({ tenantId, primaryColor }: TenantReviewsSectionProps) => {
+  const t = useT();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [averageRating, setAverageRating] = useState(0);
@@ -130,10 +132,10 @@ export const TenantReviewsSection = ({ tenantId, primaryColor }: TenantReviewsSe
         <div className="container mx-auto px-5 md:px-8 max-w-6xl">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 md:mb-16">
             <SectionHeader
-              eyebrow="Testimonios"
+              eyebrow={t("reviews.eyebrow")}
               title={
                 <>
-                  En las palabras de quienes <span className="font-editorial-italic">nos visitan</span>
+                  {t("reviews.titlePre")}<span className="font-editorial-italic">{t("reviews.titleAccent")}</span>
                 </>
               }
               accentColor={primaryColor}
