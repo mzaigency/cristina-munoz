@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.submit-sitemap-gsc]
 verify_jwt = false
+
+[functions.process-email-queue]
+verify_jwt = true
