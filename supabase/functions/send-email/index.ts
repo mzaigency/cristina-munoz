@@ -503,9 +503,17 @@ serve(async (req: Request): Promise<Response> => {
       html,
     });
 
-    console.log(`Email sent successfully: ${type} to ${to}`, emailResponse);
+    if (emailResponse.error) {
+      console.error(`Resend rejected email (${type} to ${to}):`, emailResponse.error);
+      return new Response(
+        JSON.stringify({ error: emailResponse.error.message ?? "Resend error", details: emailResponse.error }),
+        { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+    }
 
-    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
+    console.log(`Email sent successfully: ${type} to ${to}`, emailResponse.data);
+
+    return new Response(JSON.stringify({ success: true, data: emailResponse.data }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
