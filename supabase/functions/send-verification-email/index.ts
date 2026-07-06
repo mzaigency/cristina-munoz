@@ -321,7 +321,15 @@ serve(async (req: Request): Promise<Response> => {
       html: emailTemplate(userName || 'amante de la belleza', verificationUrl),
     })
 
-    console.log(`Verification email sent to ${email}`, emailResponse)
+    if (emailResponse.error) {
+      console.error(`Resend rejected verification email to ${email}:`, emailResponse.error)
+      return new Response(
+        JSON.stringify({ error: emailResponse.error.message ?? 'Resend error', details: emailResponse.error }),
+        { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      )
+    }
+
+    console.log(`Verification email sent to ${email}`, emailResponse.data)
 
     return new Response(
       JSON.stringify({ success: true }),
