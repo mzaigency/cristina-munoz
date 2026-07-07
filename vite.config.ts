@@ -4,7 +4,6 @@ import path from "path";
 import fs from "fs";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
-import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
 
 function versionJsonPlugin(): Plugin {
   return {
@@ -40,7 +39,6 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mcpPlugin(),
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",

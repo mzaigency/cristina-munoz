@@ -1,0 +1,2 @@
+# Cloudflare Pages redirects (equivalente al redirect de vercel.json)
+/salon/* /:splat 301
