@@ -104,9 +104,9 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
           .eq("tenant_id", tenantId)
           .gte("Fecha", monthStartDate)
           .lte("Fecha", monthEndDate),
-        (supabase
-          .from("reviews") as any)
-          .select("rating, stylist_id")
+        supabase
+          .from("reviews")
+          .select("rating")
           .eq("tenant_id", tenantId)
           .eq("approved", true),
         supabase
