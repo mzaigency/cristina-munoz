@@ -188,11 +188,8 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
           .eq("stylist", name)
           .gte("Fecha", format(monthStart, "yyyy-MM-dd"))
           .lte("Fecha", format(monthEnd, "yyyy-MM-dd")),
-        (supabase.from("reviews") as any)
-          .select("rating")
-          .eq("tenant_id", tenantId)
-          .eq("stylist_id", stylistId)
-          .eq("approved", true),
+        // Per-stylist reviews not tracked (reviews table has no stylist_id column)
+        Promise.resolve({ data: [] as Array<{ rating: number }> }),
         supabase
           .from("bookings")
           .select("id, Fecha, Hora, customer_name, services")

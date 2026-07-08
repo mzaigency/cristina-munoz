@@ -104,9 +104,9 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
           .eq("tenant_id", tenantId)
           .gte("Fecha", monthStartDate)
           .lte("Fecha", monthEndDate),
-        (supabase
-          .from("reviews") as any)
-          .select("rating, stylist_id")
+        supabase
+          .from("reviews")
+          .select("rating")
           .eq("tenant_id", tenantId)
           .eq("approved", true),
         supabase
@@ -141,14 +141,14 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
       }>;
       const monthBookings = bookingsRes.count ?? bookings.length;
 
-      const reviews = (reviewsRes.data ?? []) as Array<{ rating: number; stylist_id: string | null }>;
+      const reviews = (reviewsRes.data ?? []) as Array<{ rating: number }>;
       const avgRating =
         reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
 
-      // Leaderboard
-      const byStylist = new Map<string, { revenue: number; bookings: number; ratingSum: number; ratingCount: number }>();
+      // Leaderboard (per-stylist ratings not available — reviews table has no stylist_id)
+      const byStylist = new Map<string, { revenue: number; bookings: number }>();
       stylists.forEach((s) => {
-        byStylist.set(s.id, { revenue: 0, bookings: 0, ratingSum: 0, ratingCount: 0 });
+        byStylist.set(s.id, { revenue: 0, bookings: 0 });
       });
       txs.forEach((t) => {
         if (!t.stylist_id) return;
@@ -164,14 +164,6 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
         const entry = byStylist.get(id);
         if (entry) entry.bookings += 1;
       });
-      reviews.forEach((r) => {
-        if (!r.stylist_id) return;
-        const entry = byStylist.get(r.stylist_id);
-        if (entry) {
-          entry.ratingSum += r.rating;
-          entry.ratingCount += 1;
-        }
-      });
       const leaders: StylistLeader[] = stylists
         .map((s) => {
           const entry = byStylist.get(s.id);
@@ -182,7 +174,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
             color: s.color,
             revenue: entry?.revenue ?? 0,
             bookings: entry?.bookings ?? 0,
-            rating: entry && entry.ratingCount > 0 ? entry.ratingSum / entry.ratingCount : 0,
+            rating: 0,
           };
         })
         .sort((a, b) => b.revenue - a.revenue)
