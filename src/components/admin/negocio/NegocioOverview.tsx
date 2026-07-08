@@ -174,7 +174,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
             color: s.color,
             revenue: entry?.revenue ?? 0,
             bookings: entry?.bookings ?? 0,
-            rating: entry && entry.ratingCount > 0 ? entry.ratingSum / entry.ratingCount : 0,
+            rating: 0,
           };
         })
         .sort((a, b) => b.revenue - a.revenue)
