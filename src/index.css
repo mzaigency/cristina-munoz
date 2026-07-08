@@ -1342,6 +1342,39 @@
   border-radius: 7px; padding: 2px 6px; z-index: 4;
   box-shadow: 0 3px 10px -2px rgba(239,68,68,.6);
 }
+/* Hint de día sin citas: enseña el gesto en vez de dejar el grid mudo.
+   Vive a nivel de .ag-gridcard para no desplazarse con el scroll horizontal. */
+.ag-free-hint {
+  position: absolute; top: 76px; left: 50%; transform: translateX(-50%);
+  z-index: 7; pointer-events: none; text-align: center;
+  max-width: calc(100% - 32px); width: max-content;
+  font-size: 12px; font-weight: 700; color: var(--ag-ink2);
+  background: var(--ag-chip); border: 1px dashed var(--ag-line);
+  border-radius: 999px; padding: 7px 14px;
+}
+
+/* Transición al cambiar de día */
+@media (prefers-reduced-motion: no-preference) {
+  .ag-day-in { animation: agDayIn .18s cubic-bezier(.3,.9,.3,1); }
+}
+@keyframes agDayIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Skeleton del grid mientras cargan las citas */
+.ag-skel { padding: 0 0 6px; }
+.ag-skel-head { display: flex; gap: 14px; padding: 15px 16px; border-bottom: 1px solid var(--ag-line2); }
+.ag-skel-row { display: flex; gap: 14px; padding: 17px 16px 5px; align-items: flex-start; }
+.ag-skel-pill, .ag-skel-block { display: block; border-radius: 8px; background: var(--ag-chip); height: 14px; flex: none; }
+.ag-skel-block { height: 34px; border-radius: 11px; flex: initial; }
+@media (prefers-reduced-motion: no-preference) {
+  .ag-skel-pill, .ag-skel-block { animation: agSkelPulse 1.3s ease-in-out infinite; }
+}
+@keyframes agSkelPulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+
+/* Grip de bottom-sheet (detalle de cita / cobro) */
+.ag-sheet-grip {
+  width: 40px; height: 5px; border-radius: 999px; background: var(--ag-line);
+  margin: 10px auto 2px;
+}
 
 /* ── Columns ── */
 .ag-col { border-right: 1px solid var(--ag-line2); }
@@ -2820,6 +2853,14 @@ body.msg-chat-open { overflow: hidden; }
   /* Hide OccRing on small screens */
   .gp-next-ring { display: none; }
   .gp-next-inner { padding: 14px; }
+  .gp-next-time { font-size: 34px; }
+  /* Atajos: fila de 4 iconos verticales, patrón app en vez de tarjetas 2x2 */
+  .gp-quick-grid { grid-template-columns: repeat(4, 1fr); }
+  .gp-quick-btn { flex-direction: column; align-items: center; gap: 8px; padding: 14px 4px 12px; text-align: center; }
+  .gp-quick-ic { width: 42px; height: 42px; border-radius: 13px; }
+  .gp-quick-lbl { font-size: 11px; font-weight: 700; line-height: 1.15; }
+  /* Bottom-sheets de agenda respetan el home indicator */
+  .ag-detail-sheet { padding-bottom: calc(env(safe-area-inset-bottom) + 14px); }
   .gp-kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .gp-kpi { padding: 13px 14px; border-radius: 16px; }
   .gp-kpi-val { font-size: 22px; }

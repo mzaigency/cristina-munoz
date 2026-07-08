@@ -19,8 +19,28 @@ export function useSwipeNavigation({
   const touchStartY = useRef<number | null>(null);
   const isSwiping = useRef(false);
 
+  // Si el gesto empieza dentro de un elemento con scroll horizontal propio
+  // (grid de agenda, filas de chips/pills, tiras de KPIs), ese scroll gana:
+  // cambiar de sección a la vez que se panea contenido es un misfire.
+  const startedInHorizontalScroller = (target: EventTarget | null, boundary: HTMLElement): boolean => {
+    let el = target instanceof HTMLElement ? target : null;
+    while (el && el !== boundary) {
+      if (el.scrollWidth > el.clientWidth + 1) {
+        const ox = getComputedStyle(el).overflowX;
+        if (ox === "auto" || ox === "scroll") return true;
+      }
+      el = el.parentElement;
+    }
+    return false;
+  };
+
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!enabled) return;
+    if (startedInHorizontalScroller(e.target, e.currentTarget as HTMLElement)) {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      return;
+    }
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isSwiping.current = false;

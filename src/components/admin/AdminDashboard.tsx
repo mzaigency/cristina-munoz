@@ -440,12 +440,13 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
           <h2>Resumen del día</h2>
           <p>{format(new Date(), "EEEE d 'de' MMMM · yyyy", { locale: es })}</p>
         </div>
-        <div className="gp-page-actions">
+        <div className="gp-page-actions gp-hide-sm">
           <button className="gp-btn gp-hide-sm" onClick={() => onNavigate("negocio")}>
             <TrendingUp style={{ width: 14, height: 14 }} />
             Informes
           </button>
-          <button className="gp-btn primary" onClick={() => onQuickAction("new-booking")}>
+          {/* En móvil la acción vive en el FAB; el botón duplicado solo metía ruido */}
+          <button className="gp-btn primary gp-hide-sm" onClick={() => onQuickAction("new-booking")}>
             <Plus style={{ width: 14, height: 14 }} />
             Nueva cita
           </button>
@@ -461,7 +462,15 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
             <div className="gp-next-text">
               <span className="gp-badge accent" style={{ marginBottom: 8, display: "inline-flex" }}>
                 <Clock style={{ width: 12, height: 12 }} />
-                Próxima cita
+                {(() => {
+                  if (!stats.nextBookingTime) return "Próxima cita";
+                  const [h, m] = stats.nextBookingTime.split(":").map(Number);
+                  const mins = h * 60 + m - (new Date().getHours() * 60 + new Date().getMinutes());
+                  if (mins <= 0) return "Próxima cita · ahora";
+                  if (mins < 60) return `Próxima cita · en ${mins} min`;
+                  const hh = Math.floor(mins / 60);
+                  return `Próxima cita · en ${hh} h ${mins % 60 > 0 ? `${mins % 60} min` : ""}`.trim();
+                })()}
               </span>
               {stats.nextBookingTime ? (
                 <div className="gp-next-row">

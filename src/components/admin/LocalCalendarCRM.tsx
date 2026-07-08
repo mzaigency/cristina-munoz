@@ -107,6 +107,7 @@ interface LocalCalendarCRMProps {
 const PIXELS_PER_MINUTE = 2;
 
 export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelectClient, topLeftSlot }: LocalCalendarCRMProps) => {
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const [bookings, setBookings] = useState<LocalBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -248,6 +249,35 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     }, 60000);
     return () => clearInterval(timerId);
   }, []);
+
+  // Al abrir (o volver a hoy), el grid arranca en la hora actual, no a las 09:00.
+  // Reintenta unos frames: el scroller no es desplazable hasta que el grid pinta completo.
+  useEffect(() => {
+    if (loading) return;
+    let attempts = 0;
+    let id = 0;
+    const tryScroll = () => {
+      const scroller = scrollerRef.current;
+      const line = scroller?.querySelector<HTMLElement>("[data-now-line]");
+      if (scroller && line && scroller.scrollHeight > scroller.clientHeight) {
+        const offset =
+          line.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+        scroller.scrollTop = Math.max(0, offset - 150);
+        return;
+      }
+      if (!line && attempts > 3) return; // día sin línea de "ahora" (no es hoy / fuera de horario)
+      if (attempts++ < 24) id = requestAnimationFrame(tryScroll);
+    };
+    id = requestAnimationFrame(tryScroll);
+    return () => cancelAnimationFrame(id);
+  }, [loading, activeTab]);
+
+  // El día seleccionado de la tira semanal se mantiene a la vista (móvil: scroll horizontal)
+  useEffect(() => {
+    document
+      .querySelector(".wk-days .wk-on")
+      ?.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
+  }, [activeTab, weekStart]);
 
   useEffect(() => {
     fetchBookings();
@@ -1487,8 +1517,18 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
       {/* ── CALENDAR GRID ─────────────────────────────────────── */}
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "80px 0" }}>
-          <Loader2 style={{ width: 32, height: 32, color: "#4361ee" }} className="animate-spin" />
+        <div className="ag-gridcard ag-skel" aria-hidden>
+          <div className="ag-skel-head">
+            <span className="ag-skel-pill" style={{ width: 42 }} />
+            <span className="ag-skel-pill" style={{ width: 130 }} />
+            <span className="ag-skel-pill" style={{ width: 130 }} />
+          </div>
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="ag-skel-row">
+              <span className="ag-skel-pill" style={{ width: 34 }} />
+              <span className="ag-skel-block" style={{ width: `${[62, 38, 74, 30, 52, 44][i]}%`, marginLeft: i % 2 ? "18%" : 0 }} />
+            </div>
+          ))}
         </div>
       ) : (
         (() => {
@@ -1581,16 +1621,23 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
               )}
 
               <div
-                className="ag-gridcard"
+                className="ag-gridcard ag-day-in"
+                key={activeKey}
                 style={{
                   borderRadius: "20px",
                   overflow: "hidden",
                   border: "1px solid oklch(0.925 0.007 265)",
                   boxShadow: "0 10px 40px -16px rgba(20, 22, 40, 0.08)",
                   background: "#ffffff",
+                  position: "relative",
                 }}
               >
-                <div className="ag-scroller">
+                {dayBkgs.length === 0 && (
+                  <div className="ag-free-hint">
+                    {isToday ? "Hoy lo tienes libre" : "Día sin citas"} — toca un hueco para apuntar una
+                  </div>
+                )}
+                <div className="ag-scroller" ref={scrollerRef}>
                   <div className="ag-grid" style={{ minWidth: "100%" }}>
                     {/* ── Sticky column headers ── */}
                     <div
@@ -2302,6 +2349,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         {/* Current time red line */}
                         {nowTopPx !== null && (
                           <div
+                            data-now-line
                             style={{
                               position: "absolute",
                               left: 0,
@@ -2646,6 +2694,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           return (
             <div className="ag-detail-wrap" onClick={() => setDetailBooking(null)}>
               <div className="ag-detail-sheet" onClick={(e) => e.stopPropagation()}>
+                <div className="ag-sheet-grip" aria-hidden />
                 <div className="ag-detail-grip" />
                 <button className="ag-detail-close" onClick={() => setDetailBooking(null)} aria-label="Cerrar">
                   <X style={{ width: 16, height: 16 }} />
@@ -2989,6 +3038,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           return (
             <div className="ag-detail-wrap" onClick={() => !paying && setPaySheetBooking(null)}>
               <div className="ag-detail-sheet" onClick={(e) => e.stopPropagation()}>
+                <div className="ag-sheet-grip" aria-hidden />
                 <div className="ag-detail-grip" />
                 <button
                   className="ag-detail-close"
