@@ -92,22 +92,29 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
       )}
 
       {activeTab === "dia" && (
-        <div data-tour-target="agenda-calendar" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <Sheet>
-            <SheetTrigger asChild>
-              <button className="gp-btn sm" style={{ alignSelf: "flex-start" }}>
-                <Sparkles style={{ width: 13, height: 13 }} />
-                Importar citas con IA
-              </button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-2xl">
-              <SheetHeader className="text-left mb-2">
-                <SheetTitle>Importar citas</SheetTitle>
-              </SheetHeader>
-              <AgendaImporter tenantId={tenantId} defaultMode="bookings" />
-            </SheetContent>
-          </Sheet>
-          <LocalCalendarCRM tenantId={tenantId} stylists={stylists} onSelectClient={onSelectClient} />
+        <div data-tour-target="agenda-calendar">
+          <LocalCalendarCRM
+            tenantId={tenantId}
+            stylists={stylists}
+            onSelectClient={onSelectClient}
+            topLeftSlot={
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="gp-btn sm">
+                    <Sparkles style={{ width: 13, height: 13 }} />
+                    <span className="gp-hide-sm">Importar citas con IA</span>
+                    <span className="gp-show-sm">Importar</span>
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-2xl">
+                  <SheetHeader className="text-left mb-2">
+                    <SheetTitle>Importar citas</SheetTitle>
+                  </SheetHeader>
+                  <AgendaImporter tenantId={tenantId} defaultMode="bookings" />
+                </SheetContent>
+              </Sheet>
+            }
+          />
         </div>
       )}
 

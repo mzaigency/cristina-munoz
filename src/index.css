@@ -1253,11 +1253,19 @@
 }
 
 /* ── Grid card ── */
-.ag-gridcard { background: var(--ag-card); border: 1px solid var(--ag-line); border-radius: 20px; overflow: visible; box-shadow: var(--ag-shadow); }
-.ag-scroller { overflow-x: auto; overflow-y: visible; position: relative; scrollbar-width: thin; }
+.ag-gridcard { background: var(--ag-card); border: 1px solid var(--ag-line); border-radius: 20px; overflow: hidden; box-shadow: var(--ag-shadow); }
+/* Scroll propio (vertical + horizontal): así la fila de estilistas (.ag-head)
+   y la columna de horas (.ag-gutter) quedan fijas mientras se recorre el día.
+   Un sticky vertical respecto a la página no funciona a través de un scroller
+   horizontal, por eso el grid gestiona su propio scroll. */
+.ag-scroller {
+  overflow: auto; position: relative; scrollbar-width: thin;
+  max-height: calc(100dvh - 140px);
+  overscroll-behavior: contain;
+}
 
 /* ── Column headers ── */
-.ag-head { position: sticky; top: var(--gp-topbar-h, 64px); z-index: 6; background: var(--ag-card); border-bottom: 1px solid var(--ag-line); }
+.ag-head { position: sticky; top: 0; z-index: 6; background: var(--ag-card); border-bottom: 1px solid var(--ag-line); }
 .ag-corner {
   position: sticky; left: 0; z-index: 2; background: var(--ag-card);
   display: flex; align-items: center; padding: 0 0 0 16px;
@@ -1453,8 +1461,12 @@
   .ag-root .ag-btn { padding: 8px 10px; }
 }
 @media (max-width: 560px) {
-  .ag-root .gh-next { min-width: 0; flex: 1; }
+  /* La tarjeta "Próxima cita" pasa a fila completa: apretada junto a fecha+anillo
+     se quedaba sin sitio y el texto salía cortado por el borde de la tarjeta */
+  .ag-root .gh-next { min-width: 0; flex: 1 1 100%; margin-left: 0; }
+  .ag-root .gh-next-client { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ag-root .gh-ringwrap { gap: 8px; }
+  .ag-root .gh { gap: 10px 14px; }
 }
 
 /* ============================================================
@@ -1673,6 +1685,9 @@
 /* Sub-nav bar: visible on mobile only (desktop uses sidebar sub-items) */
 .gp-subnav-bar { display: none; }
 
+/* Contrapartida de .gp-hide-sm: solo visible en móvil (≤920px) */
+.gp-show-sm { display: none; }
+
 /* ── Content ── */
 .gp-content { flex: 1; padding: 26px; }
 
@@ -1687,9 +1702,11 @@
   .gp-top-crumb { font-size: 9.5px; }
   .gp-new-cita-btn { padding: 9px 13px; font-size: 13px; border-radius: 12px; }
   .gp-subnav-bar { display: block; position: sticky; top: calc(env(safe-area-inset-top) + 56px); z-index: 18; }
-  .ag-head { top: calc(env(safe-area-inset-top) + 56px + 58px); }
+  /* Grid de agenda: en móvil descuenta topbar + subnav + bottom-nav */
+  .ag-scroller { max-height: calc(100dvh - 210px - env(safe-area-inset-bottom) - env(safe-area-inset-top)); }
   .gp-content { padding: 14px 12px; }
   .gp-hide-sm { display: none !important; }
+  .gp-show-sm { display: inline !important; }
   .gp-topbar-account-mobile { display: flex; }
   .gp-bottom {
     display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
@@ -1725,7 +1742,6 @@
   .gp-topbar-account-mobile { display: none !important; }
 }
 @media (max-width: 380px) {
-  .gp-top-crumb { display: none; }
   .gp-new-cita-btn { padding: 9px 11px; }
   .gp-bottom-item { font-size: 10px; }
   .gp-content { padding: 12px 10px; }

@@ -98,18 +98,18 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         <div className="gp-page-actions">
           <button className="gp-btn sm" onClick={onRefresh}>
             <RefreshCw style={{ width: 13, height: 13 }} />
-            <span className="gp-hide-sm">Actualizar</span>
+            <span>Actualizar</span>
           </button>
           {!summary.isClosed && summary.transactionCount > 0 && (
             <button className="gp-btn primary sm" onClick={() => setShowCloseDialog(true)}>
               <Lock style={{ width: 13, height: 13 }} />
-              <span className="gp-hide-sm">Cerrar</span>
+              <span>Cerrar caja</span>
             </button>
           )}
           {summary.isClosed && (
             <button className="gp-btn sm" onClick={() => setShowReopenDialog(true)}>
               <LockOpen style={{ width: 13, height: 13 }} />
-              <span className="gp-hide-sm">Reabrir</span>
+              <span>Reabrir</span>
             </button>
           )}
         </div>

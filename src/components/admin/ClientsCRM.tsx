@@ -189,10 +189,10 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
         </div>
         <div className="gp-page-actions">
           <button className="gp-btn sm" onClick={() => setIsImporterOpen(true)} aria-label="Importar clientes desde CSV">
-            <Upload style={{ width: 14, height: 14 }} />
+            <Upload style={{ width: 14, height: 14 }} /> Importar
           </button>
           <button className="gp-btn sm" onClick={() => exportClientsCsv(clients)} aria-label="Exportar clientes a CSV">
-            <Download style={{ width: 14, height: 14 }} />
+            <Download style={{ width: 14, height: 14 }} /> Exportar
           </button>
           <button className="gp-btn primary sm" onClick={handleNewClient}>
             <UserPlus style={{ width: 14, height: 14 }} /> Nuevo

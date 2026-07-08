@@ -53,7 +53,7 @@ export function AdminAccountMenu({
         align="end"
         side="top"
         sideOffset={8}
-        className="relative w-72 p-0 rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 bg-white/55 dark:bg-zinc-900/55 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_18px_50px_-16px_rgba(20,22,40,.34),0_0_0_1px_rgba(255,255,255,0.55)_inset] dark:shadow-[0_18px_50px_-16px_rgba(0,0,0,.55),0_0_0_1px_rgba(255,255,255,0.08)_inset]"
+        className="relative w-72 p-0 rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 bg-white supports-[backdrop-filter]:bg-white/80 dark:bg-zinc-900 dark:supports-[backdrop-filter]:bg-zinc-900/80 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_18px_50px_-16px_rgba(20,22,40,.34),0_0_0_1px_rgba(255,255,255,0.55)_inset] dark:shadow-[0_18px_50px_-16px_rgba(0,0,0,.55),0_0_0_1px_rgba(255,255,255,0.08)_inset]"
       >
         {/* Liquid glass refraction layers */}
         <div

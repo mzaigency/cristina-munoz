@@ -99,12 +99,14 @@ interface LocalCalendarCRMProps {
   stylists: Array<{ slug: string; name: string; color: string }>;
   onNavigateToCash?: () => void;
   onSelectClient?: (clientId: string) => void;
+  /** Contenido opcional alineado a la izquierda de la fila de acciones (p. ej. botón de importar) */
+  topLeftSlot?: React.ReactNode;
 }
 
 // Constante para escala visual - 2px por minuto = 120px por hora
 const PIXELS_PER_MINUTE = 2;
 
-export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelectClient }: LocalCalendarCRMProps) => {
+export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelectClient, topLeftSlot }: LocalCalendarCRMProps) => {
   const [bookings, setBookings] = useState<LocalBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -1102,7 +1104,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   return (
     <div className="ag-root">
       {/* ── TOP BAR ─────────────────────────────────────────── */}
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+        {topLeftSlot && <div style={{ marginRight: "auto", minWidth: 0 }}>{topLeftSlot}</div>}
         <button className="ag-btn ag-btn-ghost" onClick={() => setIsBlockDialogOpen(true)}>
           <Ban style={{ width: 14, height: 14 }} />
           <span className="ag-btn-tx">Bloquear</span>

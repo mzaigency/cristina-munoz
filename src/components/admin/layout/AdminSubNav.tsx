@@ -25,6 +25,7 @@ import {
   Megaphone,
   type LucideIcon,
 } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { NotifBadge } from "./NotifBadge";
@@ -117,11 +118,20 @@ export function AdminSubNav({
   const { hasFeature } = usePlanLimits(tenantId);
   const items = ADMIN_SUB_NAV[section] || [];
   const current = activeSubTab || getDefaultSubTab(section);
+  const navRef = useRef<HTMLElement>(null);
+
+  // La fila hace scroll horizontal: al entrar por enlace directo (p. ej.
+  // negocio/estadisticas) la pill activa puede quedar fuera de vista.
+  useEffect(() => {
+    const active = navRef.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+    active?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [section, current]);
 
   if (items.length <= 1) return null;
 
   return (
     <nav
+      ref={navRef}
       role="tablist"
       aria-label={`Sub-navegación ${section}`}
       className="border-b"
