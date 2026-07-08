@@ -141,14 +141,14 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
       }>;
       const monthBookings = bookingsRes.count ?? bookings.length;
 
-      const reviews = (reviewsRes.data ?? []) as Array<{ rating: number; stylist_id: string | null }>;
+      const reviews = (reviewsRes.data ?? []) as Array<{ rating: number }>;
       const avgRating =
         reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
 
-      // Leaderboard
-      const byStylist = new Map<string, { revenue: number; bookings: number; ratingSum: number; ratingCount: number }>();
+      // Leaderboard (per-stylist ratings not available — reviews table has no stylist_id)
+      const byStylist = new Map<string, { revenue: number; bookings: number }>();
       stylists.forEach((s) => {
-        byStylist.set(s.id, { revenue: 0, bookings: 0, ratingSum: 0, ratingCount: 0 });
+        byStylist.set(s.id, { revenue: 0, bookings: 0 });
       });
       txs.forEach((t) => {
         if (!t.stylist_id) return;
@@ -163,14 +163,6 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
         if (!id) return;
         const entry = byStylist.get(id);
         if (entry) entry.bookings += 1;
-      });
-      reviews.forEach((r) => {
-        if (!r.stylist_id) return;
-        const entry = byStylist.get(r.stylist_id);
-        if (entry) {
-          entry.ratingSum += r.rating;
-          entry.ratingCount += 1;
-        }
       });
       const leaders: StylistLeader[] = stylists
         .map((s) => {
