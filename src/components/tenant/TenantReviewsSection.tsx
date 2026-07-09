@@ -110,7 +110,7 @@ export const TenantReviewsSection = ({ tenantId, primaryColor }: TenantReviewsSe
 
   if (loading) {
     return (
-      <section className="py-20 md:py-28 bg-[#fafaf7]">
+      <section className="py-20 md:py-28 bg-[#f5f6fb]">
         <div className="container mx-auto px-5 md:px-8 max-w-6xl">
           <Skeleton className="h-12 w-72 mb-4" />
           <Skeleton className="h-px w-16 mb-12" />
@@ -128,7 +128,7 @@ export const TenantReviewsSection = ({ tenantId, primaryColor }: TenantReviewsSe
 
   return (
     <>
-      <section id="resenas" className="py-20 md:py-28 bg-[#fafaf7]">
+      <section id="resenas" className="py-20 md:py-28 bg-[#f5f6fb]">
         <div className="container mx-auto px-5 md:px-8 max-w-6xl">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 md:mb-16">
             <SectionHeader
@@ -262,7 +262,7 @@ export const TenantReviewsSection = ({ tenantId, primaryColor }: TenantReviewsSe
             <DialogTitle>Reseña completa</DialogTitle>
           </DialogHeader>
           {selectedReview && (
-            <div className="p-8 flex flex-col items-center text-center bg-[#fafaf7]">
+            <div className="p-8 flex flex-col items-center text-center bg-[#f5f6fb]">
               {selectedReview.reviewer_avatar ? (
                 <img
                   src={selectedReview.reviewer_avatar}

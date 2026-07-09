@@ -14,7 +14,6 @@ import { TenantReviewForm } from "@/components/tenant/TenantReviewForm";
 import { TenantGallerySection } from "@/components/tenant/TenantGallerySection";
 import { TenantLocationSection } from "@/components/tenant/TenantLocationSection";
 import { TenantThemeProvider } from "@/components/tenant/TenantThemeProvider";
-import { vibeForBusinessType } from "@/components/tenant/vibes";
 import { TenantAdminBar } from "@/components/tenant/TenantAdminBar";
 import { TenantEditPanel } from "@/components/tenant/TenantEditPanel";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
@@ -292,7 +291,6 @@ const TenantLanding = () => {
       fontBody={tenant.font_body}
       headingSize={tenant.heading_size}
       buttonStyle={tenant.button_style}
-      vibe={vibeForBusinessType(businessTypeId)}
     >
       <div className="min-h-screen bg-background overflow-x-hidden">
         <Preloader

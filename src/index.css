@@ -5644,32 +5644,73 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
 }
 
 /* ============================================================
-   Tenant vibes — dirección de arte por tipo de negocio (tv-*)
-   El color lo pone el salón (--primary); el vibe decide la voz:
-   tipografía, peso, ritmo. Aplicado por TenantThemeProvider.
+   Firma Glowapp — web pública del salón (una sola plantilla)
+   Materiales de marca: escenario navy, gradiente firma azul→púrpura,
+   Playfair editorial con palabra en itálica-gradiente, glass iOS.
+   El color del salón (--primary/--accent) entra como acento.
    ============================================================ */
 
-/* Dentro del contenedor de tenant, las utilidades editoriales heredan la
-   fuente del tema (antes clavaban Playfair, el default-IA que retiramos) */
+/* Tokens de la firma, disponibles dentro del contenedor de tenant */
+.tenant-theme-container {
+  /* Escenario navy: la tarjeta insignia de Glowapp */
+  --tv-navy: linear-gradient(157deg, hsl(223 55% 16%) 0%, hsl(248 48% 11%) 55%, hsl(258 50% 8%) 100%);
+  --tv-navy-solid: hsl(240 46% 10%);
+  /* Gradiente firma Glowapp (fijo, azul→púrpura de marca) */
+  --tv-brand-grad: linear-gradient(100deg, #22408c, #98329a);
+  /* Gradiente del salón (sus colores) para titulares editoriales */
+  --tv-salon-grad: linear-gradient(120deg, hsl(var(--primary)), hsl(var(--accent)));
+  --tv-ease: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Las utilidades editoriales heredan la fuente del tema (antes clavaban
+   Playfair; ahora respeta la elección del salón, con Playfair por defecto) */
 .tenant-theme-container .font-editorial,
 .tenant-theme-container .font-editorial-italic {
   font-family: var(--tenant-font-heading);
 }
 
-/* ── Atelier: peluquería/estética. Didone con aplomo, hairlines, calma cara ── */
-.tv-atelier .tv-hero-title { font-weight: 500; letter-spacing: 0; }
-.tv-atelier .tv-section-title { font-weight: 500; letter-spacing: .005em; }
-.tv-atelier .tv-section-eyebrow { letter-spacing: .02em; font-style: italic; }
-.tv-atelier { --tenant-button-radius: 999px; }
+/* La palabra en itálica de los titulares: gradiente del salón, no gris.
+   (Refuerza el .font-editorial-italic ya existente en el sitio.) */
+.tenant-theme-container .font-editorial-italic {
+  font-style: italic;
+  background-image: var(--tv-salon-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
 
-/* ── Calm: fisio/salud/spa. Marcellus sereno, aire, nada grita ── */
-.tv-calm .tv-hero-title { font-weight: 400; letter-spacing: .01em; }
-.tv-calm .tv-section-title { font-weight: 400; letter-spacing: .01em; font-size: clamp(1.8rem, 3.6vw, 2.7rem) !important; }
-.tv-calm .tv-section-eyebrow { letter-spacing: .04em; }
-.tv-calm .tv-section-header { margin-bottom: 3.5rem; }
+/* Titular del hero sobre el escenario navy */
+.tv-hero-title { font-weight: 600; letter-spacing: -0.02em; }
 
-/* ── Pop: uñas/pestañas/makeup. Display rotundo, color sin miedo ── */
-.tv-pop .tv-hero-title { font-weight: 600; letter-spacing: -.01em; font-size: clamp(2.1rem, 6.5vw, 4.2rem) !important; line-height: 1.06 !important; }
-.tv-pop .tv-section-title { font-weight: 600; letter-spacing: -.005em; font-size: clamp(1.6rem, 3.4vw, 2.5rem) !important; }
-.tv-pop .tv-section-eyebrow { font-weight: 800; }
-.tv-pop .tv-section-divider { height: 3px !important; width: 44px !important; border-radius: 99px; }
+/* Píldora firma "Reserva online" en gradiente de marca Glowapp */
+.tv-brand-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 14px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.01em; color: #fff;
+  background: var(--tv-brand-grad);
+  box-shadow: 0 8px 22px -10px rgba(84, 52, 160, 0.7);
+}
+
+/* Marco glass del retrato del salón */
+.tv-frame {
+  position: relative; overflow: hidden; border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7),
+              inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+/* Órbitas de glow (float) */
+@media (prefers-reduced-motion: no-preference) {
+  .tv-orb { animation: tvFloat 16s ease-in-out infinite; }
+  .tv-orb-2 { animation: tvFloat 20s ease-in-out infinite 3s; }
+}
+@keyframes tvFloat {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(18px, -26px); }
+}
+
+/* Entrada escalonada de elementos del hero */
+@media (prefers-reduced-motion: reduce) {
+  .tv-reveal { opacity: 1 !important; transform: none !important; }
+}

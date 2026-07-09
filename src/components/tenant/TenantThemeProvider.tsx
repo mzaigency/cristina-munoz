@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { VIBES, type TenantVibe } from "./vibes";
 
 interface TenantThemeProviderProps {
   primaryColor: string;
@@ -8,10 +7,13 @@ interface TenantThemeProviderProps {
   fontBody?: string | null;
   headingSize?: string | null;
   buttonStyle?: string | null;
-  /** Dirección de arte por tipo de negocio; aporta las fuentes por defecto y la clase tv-* */
-  vibe?: TenantVibe;
   children: React.ReactNode;
 }
+
+// Firma tipográfica Glowapp para la web pública: Playfair editorial en
+// titulares, Plus Jakarta Sans en UI. El salón puede cambiarlas en su panel.
+const DEFAULT_HEADING = "Playfair Display";
+const DEFAULT_BODY = "Plus Jakarta Sans";
 
 // Convert hex to HSL values for CSS variables
 function hexToHsl(hex: string): { h: number; s: number; l: number } {
@@ -57,15 +59,11 @@ function adjustLightness(h: number, s: number, l: number, amount: number): strin
 }
 
 // Load Google Fonts dynamically.
-// css2 devuelve 400 si se piden ejes/pesos que la familia no tiene, así que
-// las fuentes de vibe llevan su spec exacta; el resto usa la genérica de siempre.
+// Playfair necesita itálica (la palabra en gradiente de los titulares); css2
+// devuelve solo 400 si se pide un eje que la familia no tiene, así que el
+// heading lleva su spec con ital y el resto usa la genérica de pesos.
 const FONT_AXES: Record<string, string> = {
-  "Bodoni Moda": "ital,opsz,wght@0,6..96,400..800;1,6..96,400..700",
-  "Hanken Grotesk": "ital,wght@0,400..800;1,400..700",
-  "Marcellus": "wght@400",
-  "Karla": "ital,wght@0,400..800;1,400..700",
-  "Unbounded": "wght@400..800",
-  "Schibsted Grotesk": "ital,wght@0,400..900;1,400..700",
+  "Playfair Display": "ital,wght@0,400..800;1,400..700",
 };
 
 function loadGoogleFont(fontFamily: string) {
@@ -74,7 +72,7 @@ function loadGoogleFont(fontFamily: string) {
 
   if (document.getElementById(linkId)) return;
 
-  const axes = FONT_AXES[fontFamily] || "wght@400;500;600;700";
+  const axes = FONT_AXES[fontFamily] || "ital,wght@0,400;0,500;0,600;0,700;1,400;1,600";
   const link = document.createElement('link');
   link.id = linkId;
   link.rel = 'stylesheet';
@@ -89,17 +87,13 @@ export const TenantThemeProvider = ({
   fontBody,
   headingSize,
   buttonStyle = "rounded",
-  vibe = "atelier",
   children
 }: TenantThemeProviderProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const vibeDef = VIBES[vibe];
-  // Las fuentes elegidas por el salón en su panel ganan al vibe.
-  // Playfair/Inter eran los defaults antiguos guardados en muchos tenants: se
-  // tratan como "sin elección" para que el vibe pueda actuar.
-  const isLegacyDefault = (f?: string | null) => !f || f === "Playfair Display" || f === "Inter";
-  const effHeading = isLegacyDefault(fontHeading) ? vibeDef.fontHeading : (fontHeading as string);
-  const effBody = isLegacyDefault(fontBody) ? vibeDef.fontBody : (fontBody as string);
+  // Inter era el body por defecto antiguo guardado en tenants viejos; se trata
+  // como "sin elección" para que la firma Glowapp (Jakarta) actúe.
+  const effHeading = fontHeading || DEFAULT_HEADING;
+  const effBody = !fontBody || fontBody === "Inter" ? DEFAULT_BODY : fontBody;
   
   useEffect(() => {
     const root = document.documentElement;
@@ -155,7 +149,7 @@ export const TenantThemeProvider = ({
   return (
     <div
       ref={containerRef}
-      className={`tenant-theme-container tv-${vibe}`}
+      className="tenant-theme-container"
       style={{
         '--tenant-font-heading': `"${effHeading}", serif`,
         '--tenant-font-body': `"${effBody}", sans-serif`,

@@ -89,7 +89,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
 
   if (loading) {
     return (
-      <section className="py-20 md:py-28 bg-[#fafaf7]">
+      <section className="py-20 md:py-28 bg-[#f5f6fb]">
         <div className="container mx-auto px-5 md:px-8 max-w-6xl">
           <Skeleton className="h-12 w-80 mb-4" />
           <Skeleton className="h-px w-16 mb-12" />
@@ -106,7 +106,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
   if (categories.length === 0) return null;
 
   return (
-    <section id="servicios" className="py-20 md:py-28 bg-[#fafaf7]">
+    <section id="servicios" className="py-20 md:py-28 bg-[#f5f6fb]">
       <div className="container mx-auto px-5 md:px-8 max-w-6xl">
         <SectionHeader
           eyebrow={t("services.title")}
@@ -143,8 +143,11 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
                       loading="lazy"
                       className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                     />
-                    <div className="absolute top-4 left-4 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-[10.5px] font-bold tracking-[0.18em] uppercase text-neutral-700">
-                      {String(categoryServices.length).padStart(2, "0")} {t("services.countLabel")}
+                    <div
+                      className="absolute top-4 left-4 px-3.5 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-[12px] font-semibold font-body"
+                      style={{ color: "hsl(var(--primary))" }}
+                    >
+                      {categoryServices.length} {t("services.countLabel")}
                     </div>
                   </div>
                 )}
@@ -159,12 +162,18 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
                       {category}
                     </h3>
                     {!hasImage && (
-                      <span className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-neutral-500 font-body whitespace-nowrap">
-                        {String(categoryServices.length).padStart(2, "0")} {t("services.countLabel")}
+                      <span
+                        className="text-[13px] font-semibold font-body whitespace-nowrap"
+                        style={{ color: "hsl(var(--primary))" }}
+                      >
+                        {categoryServices.length} {t("services.countLabel")}
                       </span>
                     )}
                   </div>
-                  <div className="h-px w-10 bg-neutral-300 mb-6 mt-3" />
+                  <div
+                    className="h-px w-10 mb-6 mt-3"
+                    style={{ background: "color-mix(in oklab, hsl(var(--primary)), transparent 55%)" }}
+                  />
 
                   <ul className="divide-y divide-neutral-200/80">
                     {categoryServices.map((service) => {
@@ -177,23 +186,16 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
                       return (
                         <li
                           key={service.id}
-                          className="flex items-baseline gap-4 py-4 group"
+                          className="flex items-baseline gap-3 sm:gap-5 py-4 group transition-colors"
                         >
                           <span className="flex-1 font-body text-[15.5px] md:text-base font-medium text-neutral-800 leading-snug">
                             {service.name}
                           </span>
-                          {/* Editorial dotted leader */}
-                          <span
-                            className="flex-1 border-b border-dotted border-neutral-300 mb-1 mx-1 hidden sm:block opacity-60"
-                            aria-hidden
-                          />
-                          <span className="text-xs text-neutral-500 tabular-nums whitespace-nowrap font-body">
+                          <span className="text-xs text-neutral-400 tabular-nums whitespace-nowrap font-body">
                             {formatDuration(totalDuration)}
                           </span>
                           {formattedPrice && (
-                            <span
-                              className="font-editorial text-[17px] md:text-lg tabular-nums whitespace-nowrap text-neutral-900 ml-1"
-                            >
+                            <span className="font-editorial text-[18px] md:text-xl tabular-nums whitespace-nowrap text-neutral-900 ml-1">
                               {formattedPrice}
                             </span>
                           )}
