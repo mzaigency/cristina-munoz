@@ -10,7 +10,7 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
-import { User, CalendarCheck } from "lucide-react";
+import { User, CalendarCheck, CalendarPlus } from "lucide-react";
 import { ClientCoachmark } from "@/components/coachmark/ClientCoachmark";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
@@ -37,9 +37,24 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
+  const flowRef = useRef<HTMLDivElement>(null);
+  const [flowOpen, setFlowOpen] = useState(false);
   const scrollToProgress = () => {
     progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+  // El flujo aparece al pulsar "Reserva ara" (o cualquier CTA de reserva de la
+  // web, vía el evento global): se despliega y hace scroll automático hasta él.
+  const openFlow = () => {
+    setFlowOpen(true);
+    requestAnimationFrame(() =>
+      setTimeout(() => flowRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80),
+    );
+  };
+  useEffect(() => {
+    const handler = () => openFlow();
+    window.addEventListener("glow:open-booking", handler);
+    return () => window.removeEventListener("glow:open-booking", handler);
+  }, []);
   const haptic = useHaptic();
   const { user } = useAuth();
   const t = useT();
@@ -219,9 +234,16 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           <p className="mt-2 text-[15px] sm:text-base text-neutral-600 font-body">
             {t("booking.oneMinSub")}
           </p>
+          {!flowOpen && (
+            <button className="tv-cta mt-5" onClick={openFlow}>
+              <CalendarPlus className="h-4 w-4" />
+              {t("hero.bookNow")}
+            </button>
+          )}
         </div>
 
-        <div className="mx-auto max-w-5xl">
+        {flowOpen && (
+        <div ref={flowRef} className="mx-auto max-w-5xl scroll-mt-4">
           {/* Enhanced Progress Bar */}
           <div ref={progressRef} className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto scroll-mt-4">
             <div className="flex justify-between items-center text-xs sm:text-sm text-muted-foreground px-1">
@@ -384,6 +406,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
             )}
           </AnimatePresence>
         </div>
+        )}
       </div>
 
       {/* Auth Modal for in-situ login */}

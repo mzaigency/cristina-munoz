@@ -1,7 +1,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { ChevronDown } from "lucide-react";
-import { HeroCTA, HeroStats, useHeroStats, EASE_OUT } from "./_shared";
+import { Star } from "lucide-react";
+import { HeroCTA, useHeroStats, EASE_OUT } from "./_shared";
 import { useT } from "@/lib/tenantI18n";
 
 interface Tenant {
@@ -22,166 +22,115 @@ interface HeroImmersiveProps {
   onBookNow: () => void;
 }
 
+/**
+ * Hero rectangular: banner de foto (más bajo en móvil, alto en desktop) con
+ * el nombre del salón y la valoración anclados abajo a la izquierda, sobre un
+ * degradado. Limpio, editorial, sin ocupar toda la pantalla en móvil.
+ */
 export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.09]);
 
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "32%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
-
-  const { rating, since, followers } = useHeroStats(tenant.id);
+  const { rating } = useHeroStats(tenant.id);
+  const t = useT();
 
   const heroImages = tenant.hero_images as string[] | null;
   const heroImage = heroImages?.[0] || tenant.hero_image_url;
-
-  const t = useT();
-  const displayTagline = tenant.tagline || tenant.description || t("hero.defaultTagline");
+  const tagline = tenant.tagline || tenant.description || t("hero.defaultTagline");
   const accent = tenant.primary_color || "#8B5CF6";
   const secondary = tenant.secondary_color || "#D946EF";
 
   return (
-    <div ref={containerRef} className="relative h-screen w-full overflow-hidden bg-black">
-      {/* Background with parallax */}
-      <motion.div style={{ y, scale }} className="absolute inset-0 will-change-transform">
+    <div
+      ref={containerRef}
+      className="relative w-full overflow-hidden h-[60vh] min-h-[420px] lg:h-[86vh] bg-neutral-900"
+    >
+      {/* Imagen con leve parallax */}
+      <motion.div style={{ scale }} className="absolute inset-0 will-change-transform">
         {heroImage ? (
           <img src={heroImage} alt={tenant.name} className="w-full h-full object-cover" />
         ) : (
-          <>
-            <div
-              className="w-full h-full"
-              style={{
-                background: `radial-gradient(120% 100% at 10% 0%, ${accent} 0%, ${secondary} 50%, color-mix(in oklab, ${accent}, #000 28%) 100%)`,
-              }}
-            />
-            {/* Depth orbs for no-image state */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <motion.div
-                animate={{ y: [0, -32, 0], x: [0, 20, 0] }}
-                transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-32 -right-20 w-[520px] h-[520px] rounded-full blur-3xl opacity-40"
-                style={{ backgroundColor: "white" }}
-              />
-              <motion.div
-                animate={{ y: [0, 30, 0], x: [0, -16, 0] }}
-                transition={{ duration: 17, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
-                className="absolute -bottom-40 -left-20 w-[440px] h-[440px] rounded-full blur-3xl opacity-30"
-                style={{ backgroundColor: secondary }}
-              />
-            </div>
-          </>
+          <div
+            className="w-full h-full"
+            style={{ background: `linear-gradient(150deg, ${accent}, ${secondary})` }}
+          />
         )}
-
-        {/* Layered gradients — cinematic feel */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/85" />
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            background: `radial-gradient(80% 50% at 50% 35%, ${accent}33, transparent 70%)`,
-          }}
-        />
-        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black to-transparent" />
       </motion.div>
 
-      {/* Grain */}
+      {/* Degradado inferior para legibilidad */}
       <div
-        className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(to top, rgba(10,12,22,.85) 0%, rgba(10,12,22,.35) 42%, rgba(10,12,22,.08) 68%, transparent 100%)",
+        }}
+      />
+
+      {/* Grain sutil */}
+      <div
+        className="absolute inset-0 opacity-[0.05] mix-blend-overlay pointer-events-none"
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
         }}
       />
 
-      {/* Content */}
-      <motion.div
-        style={{ opacity }}
-        className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center will-change-transform"
-      >
-        {tenant.show_logo_on_landing && tenant.logo_url && (
-          <motion.img
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
+      {/* Contenido abajo-izquierda */}
+      <div className="absolute inset-x-0 bottom-0 z-10 px-6 lg:px-12 pb-8 lg:pb-14">
+        <div className="mx-auto max-w-6xl">
+          <motion.h1
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.15, ease: EASE_OUT }}
-            src={tenant.logo_url}
-            alt={`${tenant.name} logo`}
-            className="w-20 h-20 md:w-[88px] md:h-[88px] object-contain mb-7 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-2 shadow-2xl"
-          />
-        )}
+            className="font-heading text-white"
+            style={{
+              fontSize: "clamp(2.3rem, 9vw, 5rem)",
+              lineHeight: 1.02,
+              letterSpacing: "-0.02em",
+              textShadow: "0 8px 40px rgba(0,0,0,.45)",
+            }}
+          >
+            {tenant.name}
+          </motion.h1>
 
-        <motion.span
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.25, ease: EASE_OUT }}
-          className="inline-flex items-center gap-2 mb-5 text-[10.5px] font-bold tracking-[0.22em] uppercase text-white/65"
-        >
-          <span className="inline-block w-5 h-px bg-white/55" />
-          Belleza & Bienestar
-          <span className="inline-block w-5 h-px bg-white/55" />
-        </motion.span>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.32, ease: EASE_OUT }}
+            className="mt-2.5 flex items-center gap-2 text-white/85 font-body text-[15px] md:text-lg"
+          >
+            {rating > 0 && (
+              <span className="inline-flex items-center gap-1.5 shrink-0">
+                <Star className="h-4 w-4" style={{ color: "#e0a35f", fill: "#e0a35f" }} />
+                <span className="tabular-nums font-medium">{rating.toLocaleString("es-ES")}</span>
+                <span className="text-white/50">·</span>
+              </span>
+            )}
+            <span className="line-clamp-2">{tagline}</span>
+          </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.85, delay: 0.32, ease: EASE_OUT }}
-          className="font-heading font-bold text-white mb-5 tracking-[-0.03em]"
-          style={{
-            fontSize: "clamp(2.8rem, 8vw, 5.5rem)",
-            lineHeight: 0.98,
-            textShadow: "0 8px 40px rgba(0,0,0,.45)",
-          }}
-        >
-          {tenant.name}
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.5, ease: EASE_OUT }}
-          className="text-lg md:text-xl text-white/85 mb-8 max-w-lg font-body font-light leading-relaxed"
-        >
-          {displayTagline}
-        </motion.p>
-
-        <HeroStats
-          followers={followers}
-          rating={rating}
-          since={since}
-          variant="glass"
-          delay={0.6}
-          className="mb-9"
-        />
-
-        <HeroCTA
-          tenantId={tenant.id}
-          onBookNow={onBookNow}
-          primaryColor={accent}
-          label={t("hero.bookNow")}
-          iconStyle="arrow"
-          variant="white"
-          className="justify-center"
-        />
-      </motion.div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
-        style={{ opacity }}
-        className="absolute bottom-7 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
-      >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-2"
-        >
-          <span className="text-white/55 text-[10px] font-bold tracking-[0.22em] uppercase">Descubre más</span>
-          <ChevronDown className="w-5 h-5 text-white/55" strokeWidth={2.2} />
-        </motion.div>
-      </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.45, ease: EASE_OUT }}
+            className="hidden lg:block mt-7"
+          >
+            <HeroCTA
+              tenantId={tenant.id}
+              onBookNow={onBookNow}
+              primaryColor={accent}
+              label={t("hero.bookNow")}
+              iconStyle="arrow"
+              variant="solid"
+              showFollow={false}
+            />
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

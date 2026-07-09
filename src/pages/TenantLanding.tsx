@@ -213,7 +213,9 @@ const TenantLanding = () => {
   };
 
   const handleBookNow = () => {
-    scrollToSection("reserva");
+    setActiveSection("reserva");
+    // Abre y despliega el flujo de reserva (hace su propio scroll automático)
+    window.dispatchEvent(new CustomEvent("glow:open-booking"));
   };
 
   if (loading) {
