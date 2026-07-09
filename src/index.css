@@ -5703,6 +5703,15 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
 .tv-cta:hover { filter: brightness(1.07); }
 .tv-cta:active { transform: scale(0.97); }
 
+/* Banda "Reserva en un minuto": tarjeta clara con tinte del gradiente */
+.tv-book-band {
+  text-align: center;
+  border-radius: 20px;
+  padding: 26px 22px;
+  background: linear-gradient(120deg, #eef1fb, #f7eef8);
+  border: 1px solid #e7e3f2;
+}
+
 /* Barra de reserva fija (móvil) */
 .tv-bookbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;

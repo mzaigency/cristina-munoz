@@ -210,15 +210,14 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
       <div className="absolute bottom-10 left-10 w-56 h-56 bg-accent/5 rounded-full blur-3xl" />
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="mb-8 md:mb-12 text-center">
+        <div className="tv-book-band mx-auto max-w-3xl mb-8 md:mb-12">
           <SmoothTitle>
-            <h2 className="mb-3 text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-              {t("booking.reserveTitle")}
+            <h2 className="font-body text-neutral-900 font-bold" style={{ fontSize: "clamp(1.6rem, 4.4vw, 2.2rem)" }}>
+              {t("booking.oneMinTitlePre")} <span className="font-editorial-italic">{t("booking.oneMinAccent")}</span>
             </h2>
           </SmoothTitle>
-          <div className="line-accent mx-auto mb-4" />
-          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground px-2">
-            {t("booking.followSteps", { place: tenantName ? ` ${t("booking.in")} ${tenantName}` : "" })}
+          <p className="mt-2 text-[15px] sm:text-base text-neutral-600 font-body">
+            {t("booking.oneMinSub")}
           </p>
         </div>
 
@@ -231,9 +230,9 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
               <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>{t("booking.confirm")}</span>
             </div>
             <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
-              <div 
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out shadow-glow"
-                style={{ width: `${(step / 3) * 100}%` }}
+              <div
+                className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${(step / 3) * 100}%`, background: "linear-gradient(100deg, #22408c, #98329a)" }}
               />
             </div>
             <div className="text-center">

@@ -35,6 +35,13 @@ const es = {
   "trust.openToday": "Abierto hoy",
   "trust.reviews": "reseñas",
   "bookbar.sub": "Reserva cuando quieras",
+  "services.menuKicker": "La carta",
+  "services.menuTitle": "Servicios y precios",
+  "services.seeFullMenu": "Ver toda la carta",
+  "services.seeLess": "Ver menos",
+  "booking.oneMinTitlePre": "Reserva en",
+  "booking.oneMinAccent": "un minuto",
+  "booking.oneMinSub": "Elige servicio, día y hora. Sin llamar.",
 
   // Servicios
   "services.title": "Servicios",
@@ -184,6 +191,13 @@ const ca: Record<keyof typeof es, string> = {
   "trust.openToday": "Obert avui",
   "trust.reviews": "ressenyes",
   "bookbar.sub": "Reserva quan vulguis",
+  "services.menuKicker": "La carta",
+  "services.menuTitle": "Serveis i preus",
+  "services.seeFullMenu": "Veure tota la carta",
+  "services.seeLess": "Veure menys",
+  "booking.oneMinTitlePre": "Reserva en",
+  "booking.oneMinAccent": "un minut",
+  "booking.oneMinSub": "Tria servei, dia i hora. Sense trucar.",
 
   "services.title": "Serveis",
   "services.titlePre": "La carta de",
