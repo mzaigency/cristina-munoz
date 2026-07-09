@@ -123,27 +123,13 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
   const groupedHours = getGroupedHours();
 
   return (
-    <footer
-      className="tv-footer relative overflow-hidden py-16 text-white"
-      style={{ background: "var(--tv-navy, hsl(240 46% 10%))", paddingBottom: "calc(4rem + env(safe-area-inset-bottom))" }}
-    >
-      {/* Glow del color del salón, muy sutil */}
-      <div
-        className="absolute -top-24 -right-16 w-[420px] max-w-[70vw] aspect-square rounded-full blur-[100px] opacity-25 pointer-events-none"
-        style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }}
-      />
-      <div className="container mx-auto px-4 relative">
+    <footer className="py-16 bg-primary/5" style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom))" }}>
+      <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="md:col-span-2">
-            <h3 className="font-heading text-3xl mb-4 text-white">
-              {(() => {
-                const w = tenant.name.trim().split(/\s+/);
-                const last = w.length > 1 ? w.pop() : null;
-                return last ? (<>{w.join(" ")} <span className="font-editorial-italic">{last}</span></>) : tenant.name;
-              })()}
-            </h3>
-            <p className="text-white/65 mb-4 leading-relaxed max-w-md">
+            <h3 className="text-2xl font-bold mb-4 text-primary">{tenant.name}</h3>
+            <p className="text-muted-foreground mb-4">
               {tenant.description || tenant.tagline ||
                 t("footer.defaultAbout", { place: tenant.city ? ` ${t("booking.in")} ${tenant.city}` : "" })}
             </p>
@@ -192,8 +178,8 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
             <h4 className="font-semibold mb-4">{t("nav.contact")}</h4>
             <div className="space-y-3">
               {tenant.address && (
-                <div className="flex items-start gap-3 text-white/65">
-                  <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0 text-white/75" />
+                <div className="flex items-start gap-3 text-muted-foreground">
+                  <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
                   <span>
                     {tenant.address}
                     {tenant.city && <>, {tenant.city}</>}
@@ -205,9 +191,9 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
               {tenant.phone && (
                 <a
                   href={`tel:${tenant.phone}`}
-                  className="flex items-center gap-3 text-white/65 hover:text-white transition-colors duration-200 ease-out"
+                  className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors duration-200 ease-out"
                 >
-                  <Phone className="h-5 w-5 flex-shrink-0 text-white/75" />
+                  <Phone className="h-5 w-5 flex-shrink-0 text-primary" />
                   <span>{tenant.phone}</span>
                 </a>
               )}
@@ -215,9 +201,9 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
               {tenant.email && (
                 <a
                   href={`mailto:${tenant.email}`}
-                  className="flex items-center gap-3 text-white/65 hover:text-white transition-colors duration-200 ease-out"
+                  className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors duration-200 ease-out"
                 >
-                  <Mail className="h-5 w-5 flex-shrink-0 text-white/75" />
+                  <Mail className="h-5 w-5 flex-shrink-0 text-primary" />
                   <span>{tenant.email}</span>
                 </a>
               )}
@@ -227,8 +213,8 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
           {/* Hours */}
           <div>
             <h4 className="font-semibold mb-4">{t("location.hours")}</h4>
-            <div className="flex items-start gap-3 text-white/65">
-              <Clock className="h-5 w-5 mt-0.5 flex-shrink-0 text-white/75" />
+            <div className="flex items-start gap-3 text-muted-foreground">
+              <Clock className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
               <div className="space-y-1 text-sm">
                 {loadingHours ? (
                   <p>{t("location.loadingHours")}</p>
@@ -236,7 +222,7 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
                   groupedHours.map((group, idx) => (
                     <div key={idx} className="flex justify-between gap-4">
                       <span className="font-medium">{formatDaysRange(group.days)}</span>
-                      <span className={group.hours === closedLabel ? "text-white/40" : ""}>{group.hours}</span>
+                      <span className={group.hours === closedLabel ? "text-muted-foreground/60" : ""}>{group.hours}</span>
                     </div>
                   ))
                 ) : (
@@ -248,15 +234,14 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
         </div>
 
         {/* Bottom */}
-        <div className="border-t border-white/12 pt-8">
-          <div className="flex flex-col items-center gap-4 text-sm text-white/65">
-            {/* Sello Glowapp — cierre firma en el gradiente de marca */}
+        <div className="border-t border-primary/20 pt-8">
+          <div className="flex flex-col items-center gap-4 text-sm text-muted-foreground">
+            {/* Sello Glowapp — gradiente de marca sólido (cada web = anuncio) */}
             <a
               href="https://www.glowapp.app"
               target="_blank"
               rel="noopener noreferrer"
               className="tv-brand-pill hover:brightness-110 transition-all duration-200 ease-out active:scale-[0.97] touch-manipulation"
-              style={{ padding: "8px 16px" }}
             >
               <img src="/favicon.png" alt="Glowapp" className="h-[18px] w-[18px] rounded-[5px]" />
               <span className="text-[13px] font-semibold">{t("footer.madeWithGlow")}</span>
@@ -265,10 +250,10 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
             {/* Links and Copyright */}
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
               <div className="flex items-center gap-6">
-                <a href="/privacidad" className="hover:text-white/75 transition-colors duration-200 ease-out py-2 touch-manipulation">
+                <a href="/privacidad" className="hover:text-primary transition-colors duration-200 ease-out py-2 touch-manipulation">
                   {t("footer.privacy")}
                 </a>
-                <a href="/terminos" className="hover:text-white/75 transition-colors duration-200 ease-out py-2 touch-manipulation">
+                <a href="/terminos" className="hover:text-primary transition-colors duration-200 ease-out py-2 touch-manipulation">
                   {t("footer.terms")}
                 </a>
               </div>

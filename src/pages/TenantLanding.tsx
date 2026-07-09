@@ -14,6 +14,8 @@ import { TenantReviewForm } from "@/components/tenant/TenantReviewForm";
 import { TenantGallerySection } from "@/components/tenant/TenantGallerySection";
 import { TenantLocationSection } from "@/components/tenant/TenantLocationSection";
 import { TenantThemeProvider } from "@/components/tenant/TenantThemeProvider";
+import { TenantTrustStrip } from "@/components/tenant/TenantTrustStrip";
+import { TenantBookBar } from "@/components/tenant/TenantBookBar";
 import { TenantAdminBar } from "@/components/tenant/TenantAdminBar";
 import { TenantEditPanel } from "@/components/tenant/TenantEditPanel";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
@@ -399,6 +401,9 @@ const TenantLanding = () => {
             })()}
           </div>
 
+          {/* Franja de confianza — bajo el hero */}
+          <TenantTrustStrip tenantId={tenant.id} city={tenant.city} />
+
           {/* Services Section - Tenant specific */}
           <div id="servicios">
             <TenantServicesSection 
@@ -469,6 +474,9 @@ const TenantLanding = () => {
             <TenantFooter tenant={tenant} />
           </div>
         </main>
+
+        {/* Barra de reserva fija (móvil, solo visitantes) */}
+        {!hasAccess && <TenantBookBar onBookNow={handleBookNow} />}
 
         {/* Admin Bar - Visible for admins and stylists */}
         {hasAccess && (

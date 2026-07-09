@@ -160,22 +160,20 @@ export const TenantThemeProvider = ({
         .tenant-theme-container {
           font-family: var(--tenant-font-body);
         }
+        /* Una sola tipografía en las secciones: los títulos usan la del cuerpo.
+           El hero conserva su fuente porque marca .font-heading explícitamente
+           (mayor especificidad) y no se ve afectado. */
         .tenant-theme-container h1,
         .tenant-theme-container h2,
         .tenant-theme-container h3,
         .tenant-theme-container h4,
         .tenant-theme-container h5,
         .tenant-theme-container h6 {
+          font-family: var(--tenant-font-body);
+        }
+        .tenant-theme-container .font-heading {
           font-family: var(--tenant-font-heading);
         }
-        /* Editorial italic words inside headings → gradient using salon colors */
-        .tenant-theme-container .font-editorial-italic {
-          background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          -webkit-text-fill-color: transparent;
-}
         .tenant-theme-container button:not([data-fixed-radius]),
         .tenant-theme-container [role="button"]:not([data-fixed-radius]) {
           border-radius: var(--tenant-button-radius);

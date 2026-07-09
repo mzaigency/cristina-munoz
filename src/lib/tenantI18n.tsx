@@ -29,6 +29,13 @@ const es = {
   "hero.bookOnline": "Reserva online",
   "hero.defaultTagline": "Tu espacio de belleza y bienestar",
 
+  // Barra de confianza + barra de reserva
+  "trust.online": "Reserva 24/7",
+  "trust.noCalls": "Sin llamadas",
+  "trust.openToday": "Abierto hoy",
+  "trust.reviews": "reseñas",
+  "bookbar.sub": "Reserva cuando quieras",
+
   // Servicios
   "services.title": "Servicios",
   "services.titlePre": "La carta de",
@@ -49,6 +56,7 @@ const es = {
   "booking.reserveTitle": "Reserva tu Cita",
   "booking.followSteps": "Sigue los pasos para reservar tu cita{place} de forma rápida y sencilla",
   "booking.in": "en",
+  "booking.from": "desde",
   "booking.stepOf": "Paso {step} de 3",
   "booking.mustSignInPre": "Debes ",
   "booking.signInLink": "iniciar sesión",
@@ -171,6 +179,12 @@ const ca: Record<keyof typeof es, string> = {
   "hero.bookOnline": "Reserva en línia",
   "hero.defaultTagline": "El teu espai de bellesa i benestar",
 
+  "trust.online": "Reserva 24/7",
+  "trust.noCalls": "Sense trucades",
+  "trust.openToday": "Obert avui",
+  "trust.reviews": "ressenyes",
+  "bookbar.sub": "Reserva quan vulguis",
+
   "services.title": "Serveis",
   "services.titlePre": "La carta de",
   "services.titleAccent": "bellesa",
@@ -189,6 +203,7 @@ const ca: Record<keyof typeof es, string> = {
   "booking.reserveTitle": "Reserva la teva cita",
   "booking.followSteps": "Segueix els passos per reservar la teva cita{place} de manera ràpida i senzilla",
   "booking.in": "a",
+  "booking.from": "des de",
   "booking.stepOf": "Pas {step} de 3",
   "booking.mustSignInPre": "Has d'",
   "booking.signInLink": "iniciar sessió",

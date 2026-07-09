@@ -5644,73 +5644,76 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
 }
 
 /* ============================================================
-   Firma Glowapp — web pública del salón (una sola plantilla)
-   Materiales de marca: escenario navy, gradiente firma azul→púrpura,
-   Playfair editorial con palabra en itálica-gradiente, glass iOS.
-   El color del salón (--primary/--accent) entra como acento.
+   Firma Glowapp — web pública del salón (una sola plantilla, CLARA)
+   Identidad: gradiente de marca azul→púrpura + tarjetas limpias iOS,
+   una sola tipografía (la del cuerpo). El hero NO se toca aquí.
+   El color del salón (--primary) entra como acento puntual.
    ============================================================ */
 
-/* Tokens de la firma, disponibles dentro del contenedor de tenant */
 .tenant-theme-container {
-  /* Escenario navy: la tarjeta insignia de Glowapp */
-  --tv-navy: linear-gradient(157deg, hsl(223 55% 16%) 0%, hsl(248 48% 11%) 55%, hsl(258 50% 8%) 100%);
-  --tv-navy-solid: hsl(240 46% 10%);
-  /* Gradiente firma Glowapp (fijo, azul→púrpura de marca) */
   --tv-brand-grad: linear-gradient(100deg, #22408c, #98329a);
-  /* Gradiente del salón (sus colores) para titulares editoriales */
-  --tv-salon-grad: linear-gradient(120deg, hsl(var(--primary)), hsl(var(--accent)));
   --tv-ease: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-/* Las utilidades editoriales heredan la fuente del tema (antes clavaban
-   Playfair; ahora respeta la elección del salón, con Playfair por defecto) */
-.tenant-theme-container .font-editorial,
-.tenant-theme-container .font-editorial-italic {
-  font-family: var(--tenant-font-heading);
+/* Una sola fuente en las secciones (fuera la combinación editorial de
+   plantilla): los titulares y precios usan la tipografía del cuerpo.
+   El hero usa font-heading por su cuenta y no se ve afectado. */
+.tenant-theme-container .font-editorial {
+  font-family: var(--tenant-font-body);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
-
-/* La palabra en itálica de los titulares: gradiente del salón, no gris.
-   (Refuerza el .font-editorial-italic ya existente en el sitio.) */
+/* La "palabra acento" de los titulares: misma fuente, con el gradiente
+   de marca como único realce (sin serif, sin itálica). */
 .tenant-theme-container .font-editorial-italic {
-  font-style: italic;
-  background-image: var(--tv-salon-grad);
+  font-family: var(--tenant-font-body);
+  font-style: normal;
+  font-weight: 700;
+  background-image: var(--tv-brand-grad);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
 }
 
-/* Titular del hero sobre el escenario navy */
-.tv-hero-title { font-weight: 600; letter-spacing: -0.02em; }
+/* Rótulo de sección: azul de marca, pequeño, sin mayúsculas tracked */
+.tv-kicker {
+  font-size: 12.5px; font-weight: 700; letter-spacing: 0.01em; color: #22408c;
+}
 
-/* Píldora firma "Reserva online" en gradiente de marca Glowapp */
+/* Píldora en gradiente de marca (sello "Hecho con Glowapp", chips) */
 .tv-brand-pill {
   display: inline-flex; align-items: center; gap: 7px;
-  padding: 6px 14px; border-radius: 999px;
-  font-size: 12px; font-weight: 600; letter-spacing: 0.01em; color: #fff;
+  padding: 8px 15px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.01em; color: #fff;
   background: var(--tv-brand-grad);
-  box-shadow: 0 8px 22px -10px rgba(84, 52, 160, 0.7);
+  box-shadow: 0 10px 24px -12px rgba(84, 52, 160, 0.55);
 }
 
-/* Marco glass del retrato del salón */
-.tv-frame {
-  position: relative; overflow: hidden; border-radius: 1.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7),
-              inset 0 1px 0 rgba(255, 255, 255, 0.16);
+/* CTA en gradiente de marca */
+.tv-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-weight: 700; color: #fff; border: none; cursor: pointer;
+  background: var(--tv-brand-grad);
+  border-radius: 14px; padding: 13px 22px; font-size: 14px;
+  box-shadow: 0 14px 30px -14px rgba(84, 52, 160, 0.5);
+  transition: filter .18s var(--tv-ease), transform .18s var(--tv-ease);
+  -webkit-tap-highlight-color: transparent;
 }
+.tv-cta:hover { filter: brightness(1.07); }
+.tv-cta:active { transform: scale(0.97); }
 
-/* Órbitas de glow (float) */
-@media (prefers-reduced-motion: no-preference) {
-  .tv-orb { animation: tvFloat 16s ease-in-out infinite; }
-  .tv-orb-2 { animation: tvFloat 20s ease-in-out infinite 3s; }
+/* Barra de reserva fija (móvil) */
+.tv-bookbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid oklch(0.925 0.007 265);
 }
-@keyframes tvFloat {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(18px, -26px); }
-}
-
-/* Entrada escalonada de elementos del hero */
-@media (prefers-reduced-motion: reduce) {
-  .tv-reveal { opacity: 1 !important; transform: none !important; }
+@media (min-width: 1024px) { .tv-bookbar { display: none; } }
+/* El footer deja hueco para que la barra no tape el sello Glowapp */
+@media (max-width: 1023px) {
+  .tenant-theme-container footer { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
 }
