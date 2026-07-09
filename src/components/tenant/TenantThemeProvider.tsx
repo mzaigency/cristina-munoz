@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { VIBES, type TenantVibe } from "./vibes";
 
 interface TenantThemeProviderProps {
   primaryColor: string;
@@ -7,6 +8,8 @@ interface TenantThemeProviderProps {
   fontBody?: string | null;
   headingSize?: string | null;
   buttonStyle?: string | null;
+  /** Dirección de arte por tipo de negocio; aporta las fuentes por defecto y la clase tv-* */
+  vibe?: TenantVibe;
   children: React.ReactNode;
 }
 
@@ -53,30 +56,50 @@ function adjustLightness(h: number, s: number, l: number, amount: number): strin
   return `${h} ${s}% ${newL}%`;
 }
 
-// Load Google Fonts dynamically
+// Load Google Fonts dynamically.
+// css2 devuelve 400 si se piden ejes/pesos que la familia no tiene, así que
+// las fuentes de vibe llevan su spec exacta; el resto usa la genérica de siempre.
+const FONT_AXES: Record<string, string> = {
+  "Bodoni Moda": "ital,opsz,wght@0,6..96,400..800;1,6..96,400..700",
+  "Hanken Grotesk": "ital,wght@0,400..800;1,400..700",
+  "Marcellus": "wght@400",
+  "Karla": "ital,wght@0,400..800;1,400..700",
+  "Unbounded": "wght@400..800",
+  "Schibsted Grotesk": "ital,wght@0,400..900;1,400..700",
+};
+
 function loadGoogleFont(fontFamily: string) {
   const formattedFont = fontFamily.replace(/ /g, '+');
   const linkId = `font-${formattedFont}`;
-  
+
   if (document.getElementById(linkId)) return;
-  
+
+  const axes = FONT_AXES[fontFamily] || "wght@400;500;600;700";
   const link = document.createElement('link');
   link.id = linkId;
   link.rel = 'stylesheet';
-  link.href = `https://fonts.googleapis.com/css2?family=${formattedFont}:wght@400;500;600;700&display=swap`;
+  link.href = `https://fonts.googleapis.com/css2?family=${formattedFont}:${axes}&display=swap`;
   document.head.appendChild(link);
 }
 
-export const TenantThemeProvider = ({ 
-  primaryColor, 
+export const TenantThemeProvider = ({
+  primaryColor,
   secondaryColor,
-  fontHeading = "Playfair Display",
-  fontBody = "Inter",
+  fontHeading,
+  fontBody,
   headingSize,
   buttonStyle = "rounded",
-  children 
+  vibe = "atelier",
+  children
 }: TenantThemeProviderProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const vibeDef = VIBES[vibe];
+  // Las fuentes elegidas por el salón en su panel ganan al vibe.
+  // Playfair/Inter eran los defaults antiguos guardados en muchos tenants: se
+  // tratan como "sin elección" para que el vibe pueda actuar.
+  const isLegacyDefault = (f?: string | null) => !f || f === "Playfair Display" || f === "Inter";
+  const effHeading = isLegacyDefault(fontHeading) ? vibeDef.fontHeading : (fontHeading as string);
+  const effBody = isLegacyDefault(fontBody) ? vibeDef.fontBody : (fontBody as string);
   
   useEffect(() => {
     const root = document.documentElement;
@@ -101,12 +124,8 @@ export const TenantThemeProvider = ({
     root.style.setProperty('--salon-pink-dark', adjustLightness(primary.h, primary.s, primary.l, -15));
     
     // Load fonts (they need to be available globally for the container to use them)
-    if (fontHeading) {
-      loadGoogleFont(fontHeading);
-    }
-    if (fontBody) {
-      loadGoogleFont(fontBody);
-    }
+    loadGoogleFont(effHeading);
+    loadGoogleFont(effBody);
     
     // Cleanup function - restore original colors
     return () => {
@@ -119,7 +138,7 @@ export const TenantThemeProvider = ({
       root.style.removeProperty('--salon-pink-light');
       root.style.removeProperty('--salon-pink-dark');
     };
-  }, [primaryColor, secondaryColor, fontHeading, fontBody]);
+  }, [primaryColor, secondaryColor, effHeading, effBody]);
 
   // Calculate styles for the container
   // NOTE: We intentionally do NOT globally scale heading sizes here.
@@ -134,12 +153,12 @@ export const TenantThemeProvider = ({
   const radius = buttonRadius[buttonStyle as keyof typeof buttonRadius] || '0.5rem';
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className="tenant-theme-container"
+      className={`tenant-theme-container tv-${vibe}`}
       style={{
-        '--tenant-font-heading': fontHeading ? `"${fontHeading}", serif` : '"Playfair Display", serif',
-        '--tenant-font-body': fontBody ? `"${fontBody}", sans-serif` : '"Inter", sans-serif',
+        '--tenant-font-heading': `"${effHeading}", serif`,
+        '--tenant-font-body': `"${effBody}", sans-serif`,
         '--tenant-button-radius': radius,
       } as React.CSSProperties}
     >

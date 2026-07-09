@@ -5642,3 +5642,34 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
   transform-origin: top left;
   transform: scale(calc(100cqw / var(--stage-w, 900)));
 }
+
+/* ============================================================
+   Tenant vibes — dirección de arte por tipo de negocio (tv-*)
+   El color lo pone el salón (--primary); el vibe decide la voz:
+   tipografía, peso, ritmo. Aplicado por TenantThemeProvider.
+   ============================================================ */
+
+/* Dentro del contenedor de tenant, las utilidades editoriales heredan la
+   fuente del tema (antes clavaban Playfair, el default-IA que retiramos) */
+.tenant-theme-container .font-editorial,
+.tenant-theme-container .font-editorial-italic {
+  font-family: var(--tenant-font-heading);
+}
+
+/* ── Atelier: peluquería/estética. Didone con aplomo, hairlines, calma cara ── */
+.tv-atelier .tv-hero-title { font-weight: 500; letter-spacing: 0; }
+.tv-atelier .tv-section-title { font-weight: 500; letter-spacing: .005em; }
+.tv-atelier .tv-section-eyebrow { letter-spacing: .02em; font-style: italic; }
+.tv-atelier { --tenant-button-radius: 999px; }
+
+/* ── Calm: fisio/salud/spa. Marcellus sereno, aire, nada grita ── */
+.tv-calm .tv-hero-title { font-weight: 400; letter-spacing: .01em; }
+.tv-calm .tv-section-title { font-weight: 400; letter-spacing: .01em; font-size: clamp(1.8rem, 3.6vw, 2.7rem) !important; }
+.tv-calm .tv-section-eyebrow { letter-spacing: .04em; }
+.tv-calm .tv-section-header { margin-bottom: 3.5rem; }
+
+/* ── Pop: uñas/pestañas/makeup. Display rotundo, color sin miedo ── */
+.tv-pop .tv-hero-title { font-weight: 600; letter-spacing: -.01em; font-size: clamp(2.1rem, 6.5vw, 4.2rem) !important; line-height: 1.06 !important; }
+.tv-pop .tv-section-title { font-weight: 600; letter-spacing: -.005em; font-size: clamp(1.6rem, 3.4vw, 2.5rem) !important; }
+.tv-pop .tv-section-eyebrow { font-weight: 800; }
+.tv-pop .tv-section-divider { height: 3px !important; width: 44px !important; border-radius: 99px; }

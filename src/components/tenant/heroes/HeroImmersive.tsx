@@ -1,7 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { ChevronDown } from "lucide-react";
-import { HeroCTA, HeroStats, useHeroStats, EASE_OUT } from "./_shared";
+import { HeroCTA, useHeroStats, EASE_OUT } from "./_shared";
 import { useT } from "@/lib/tenantI18n";
 
 interface Tenant {
@@ -33,7 +32,7 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
   const opacity = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
 
-  const { rating, since, followers } = useHeroStats(tenant.id);
+  const { rating } = useHeroStats(tenant.id);
 
   const heroImages = tenant.hero_images as string[] | null;
   const heroImage = heroImages?.[0] || tenant.hero_image_url;
@@ -111,25 +110,14 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
           />
         )}
 
-        <motion.span
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.25, ease: EASE_OUT }}
-          className="inline-flex items-center gap-2 mb-5 text-[10.5px] font-bold tracking-[0.22em] uppercase text-white/65"
-        >
-          <span className="inline-block w-5 h-px bg-white/55" />
-          Belleza & Bienestar
-          <span className="inline-block w-5 h-px bg-white/55" />
-        </motion.span>
-
         <motion.h1
           initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.85, delay: 0.32, ease: EASE_OUT }}
-          className="font-heading font-bold text-white mb-5 tracking-[-0.03em]"
+          transition={{ duration: 0.85, delay: 0.25, ease: EASE_OUT }}
+          className="tv-hero-title font-heading text-white mb-5"
           style={{
             fontSize: "clamp(2.8rem, 8vw, 5.5rem)",
-            lineHeight: 0.98,
+            lineHeight: 1.02,
             textShadow: "0 8px 40px rgba(0,0,0,.45)",
           }}
         >
@@ -139,20 +127,25 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
         <motion.p
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.5, ease: EASE_OUT }}
-          className="text-lg md:text-xl text-white/85 mb-8 max-w-lg font-body font-light leading-relaxed"
+          transition={{ duration: 0.7, delay: 0.45, ease: EASE_OUT }}
+          className="text-lg md:text-xl text-white/85 mb-4 max-w-lg font-body font-light leading-relaxed"
         >
           {displayTagline}
         </motion.p>
 
-        <HeroStats
-          followers={followers}
-          rating={rating}
-          since={since}
-          variant="glass"
-          delay={0.6}
-          className="mb-9"
-        />
+        {/* Prueba social en prosa, no en píldoras de métricas */}
+        {rating > 0 ? (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.6, ease: EASE_OUT }}
+            className="mb-9 text-[14px] font-body text-white/75 tabular-nums"
+          >
+            ★ {rating.toLocaleString("es-ES")}
+          </motion.p>
+        ) : (
+          <span className="mb-9" />
+        )}
 
         <HeroCTA
           tenantId={tenant.id}
@@ -165,22 +158,20 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
         />
       </motion.div>
 
-      {/* Scroll indicator */}
+      {/* Cue de scroll: línea fina que respira, sin rótulo */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}
         style={{ opacity }}
-        className="absolute bottom-7 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+        aria-hidden
       >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-2"
-        >
-          <span className="text-white/55 text-[10px] font-bold tracking-[0.22em] uppercase">Descubre más</span>
-          <ChevronDown className="w-5 h-5 text-white/55" strokeWidth={2.2} />
-        </motion.div>
+        <motion.span
+          animate={{ scaleY: [1, 0.35, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="block w-px h-9 bg-white/45 origin-top"
+        />
       </motion.div>
     </div>
   );
