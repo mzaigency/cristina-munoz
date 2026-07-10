@@ -15,7 +15,7 @@ import { createPortal } from "react-dom";
 import { ClientCoachmark } from "@/components/coachmark/ClientCoachmark";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { Service, Stylist, BookingData, Promotion, ServicePackage } from "@/types/booking";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,6 +60,16 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
       document.body.style.overflow = prev;
     };
   }, [flowOpen]);
+  // Autoscroll: cada paso arranca desde arriba del overlay, acompañando al
+  // usuario hasta confirmar.
+  useEffect(() => {
+    if (!flowOpen) return;
+    const id = setTimeout(
+      () => document.querySelector(".tv-book-scroll")?.scrollTo({ top: 0, behavior: "smooth" }),
+      60,
+    );
+    return () => clearTimeout(id);
+  }, [step, bookingConfirmed, flowOpen]);
   const haptic = useHaptic();
   const { user } = useAuth();
   const t = useT();
@@ -293,7 +303,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
           {/* Main Form - Centered */}
           <div className="max-w-3xl mx-auto w-full">
-            <Card className="border-none card-elevated glass">
+            <Card className="border-none shadow-none bg-transparent">
               <CardHeader>
                 <CardTitle className="animate-fade-in">
                   {step === 1 && t("booking.stepServices")}
@@ -319,43 +329,27 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                 </CardDescription>
               </CardHeader>
               <CardContent className="overflow-hidden">
-                <AnimatePresence mode="wait">
-                  {step === 1 && !loading && (
-                    <motion.div
-                      key="step-1"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                    >
+                {/* Sin AnimatePresence mode="wait": el paso nuevo monta al
+                    instante (no se congela si la pestaña pasa a segundo plano
+                    a media transición); cada paso anima su entrada. */}
+                {step === 1 && !loading && (
+                    <div key="step-1" className="tv-step-in">
                       <ServiceSelection
                         services={services}
                         selectedServices={bookingData.services}
                         onNext={handleServicesSelect}
                         tenantId={tenantId}
                       />
-                    </motion.div>
+                    </div>
                   )}
                   {step === 1 && loading && (
-                    <motion.div
-                      key="loading"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-center py-8 text-muted-foreground"
-                    >
+                    <div key="loading" className="text-center py-8 text-muted-foreground tv-step-in">
                       <div className="inline-block w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
                       <p>{t("services.loading")}</p>
-                    </motion.div>
+                    </div>
                   )}
                   {step === 2 && (
-                    <motion.div
-                      key="step-2"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                    >
+                    <div key="step-2" className="tv-step-in">
                       <TenantDateTimeSelection
                         tenantId={tenantId}
                         selectedDate={bookingData.date}
@@ -366,17 +360,10 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                         onNext={handleDateTimeSelect}
                         onBack={handleBack}
                       />
-                    </motion.div>
+                    </div>
                   )}
                   {step === 3 && !bookingConfirmed && (
-                    <motion.div
-                      key="step-3"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="space-y-6"
-                    >
+                    <div key="step-3" className="tv-step-in space-y-6">
                       {/* Promo Code Input */}
                       <PromoCodeInput
                         tenantId={tenantId}
@@ -394,15 +381,10 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                         totalPrice={totalPrice}
                         discountedPrice={discountedPrice}
                       />
-                    </motion.div>
+                    </div>
                   )}
                   {step === 3 && bookingConfirmed && bookingData.date && (
-                    <motion.div
-                      key="step-success"
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.4, ease: "easeOut" }}
-                    >
+                    <div key="step-success" className="tv-step-in">
                       <SuccessCelebration
                         bookingDate={bookingData.date}
                         bookingTime={bookingData.time || ""}
@@ -412,9 +394,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                         salonName={tenantName}
                         onViewBookings={() => navigate("/mis-citas")}
                       />
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
               </CardContent>
             </Card>
           </div>

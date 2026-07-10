@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card } from "@/components/ui/card";
@@ -96,6 +96,8 @@ export const TenantDateTimeSelection = ({
 }: TenantDateTimeSelectionProps) => {
   const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
   const [time, setTime] = useState<string | null>(selectedTime);
+  const timesRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
   const [stylists, setStylists] = useState<TenantStylist[]>([]);
   const [bookedRanges, setBookedRanges] = useState<TimeRange[]>([]);
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
@@ -382,12 +384,24 @@ export const TenantDateTimeSelection = ({
   const handleTimeSelect = (slot: string) => {
     setTime(slot);
     setSelectedSlotStylist(null);
-    
+
     // If "any" and only 1 stylist available at this slot, auto-assign
     if (stylist === "any" && slotToStylists[slot]?.length === 1) {
       setSelectedSlotStylist(slotToStylists[slot][0].slug);
     }
+    // Autoscroll: al elegir hora, lleva al usuario al botón de continuar
+    setTimeout(() => footerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 90);
   };
+
+  // Autoscroll: al elegir fecha, lleva a las horas disponibles
+  useEffect(() => {
+    if (!date) return;
+    const id = setTimeout(
+      () => timesRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+      140,
+    );
+    return () => clearTimeout(id);
+  }, [date]);
 
   const handleNext = async () => {
     if (!date || !time) return;
@@ -520,7 +534,7 @@ export const TenantDateTimeSelection = ({
           />
         </div>
 
-        <div>
+        <div ref={timesRef} className="scroll-mt-4">
           <h3 className="mb-4 font-semibold text-foreground">{t("booking.selectTime")}</h3>
           {!date ? (
             <p className="text-sm text-muted-foreground">{t("booking.firstSelectDate")}</p>
@@ -696,7 +710,7 @@ export const TenantDateTimeSelection = ({
         </div>
       </div>
 
-      <div className="flex justify-between pt-4">
+      <div ref={footerRef} className="flex justify-between pt-4 scroll-mt-4">
         <Button variant="outline" onClick={onBack} className="transition-transform duration-200 hover:scale-105">
           {t("booking.back")}
         </Button>
