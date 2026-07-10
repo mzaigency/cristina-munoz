@@ -10,7 +10,8 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
-import { User, CalendarCheck, CalendarPlus } from "lucide-react";
+import { User, CalendarCheck, CalendarPlus, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { ClientCoachmark } from "@/components/coachmark/ClientCoachmark";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
@@ -37,24 +38,28 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
-  const flowRef = useRef<HTMLDivElement>(null);
   const [flowOpen, setFlowOpen] = useState(false);
   const scrollToProgress = () => {
     progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-  // El flujo aparece al pulsar "Reserva ara" (o cualquier CTA de reserva de la
-  // web, vía el evento global): se despliega y hace scroll automático hasta él.
-  const openFlow = () => {
-    setFlowOpen(true);
-    requestAnimationFrame(() =>
-      setTimeout(() => flowRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80),
-    );
-  };
+  // El flujo de reserva vive en un overlay aparte. Se abre al pulsar "Reserva
+  // ara" o cualquier CTA de reserva de la web (vía el evento global).
+  const openFlow = () => setFlowOpen(true);
+  const closeFlow = () => setFlowOpen(false);
   useEffect(() => {
-    const handler = () => openFlow();
+    const handler = () => setFlowOpen(true);
     window.addEventListener("glow:open-booking", handler);
     return () => window.removeEventListener("glow:open-booking", handler);
   }, []);
+  // Bloquea el scroll del fondo mientras el overlay está abierto
+  useEffect(() => {
+    if (!flowOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [flowOpen]);
   const haptic = useHaptic();
   const { user } = useAuth();
   const t = useT();
@@ -211,7 +216,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   };
 
   return (
-    <section ref={bookingRef} className={cn("py-16 md:py-20 relative overflow-hidden", bookingData.services.length > 0 && "pb-36 lg:pb-20")}>
+    <section ref={bookingRef} className="py-16 md:py-20 relative overflow-hidden">
       <ClientCoachmark
         storageKey="booking-flow-intro"
         title={t("booking.title")}
@@ -234,16 +239,38 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           <p className="mt-2 text-[15px] sm:text-base text-neutral-600 font-body">
             {t("booking.oneMinSub")}
           </p>
-          {!flowOpen && (
-            <button className="tv-cta mt-5" onClick={openFlow}>
-              <CalendarPlus className="h-4 w-4" />
-              {t("hero.bookNow")}
-            </button>
-          )}
+          <button className="tv-cta mt-5" onClick={openFlow}>
+            <CalendarPlus className="h-4 w-4" />
+            {t("hero.bookNow")}
+          </button>
         </div>
 
-        {flowOpen && (
-        <div ref={flowRef} className="mx-auto max-w-5xl scroll-mt-4">
+        {flowOpen &&
+          createPortal(
+            <div className="tv-book-modal fixed inset-0 z-[80] flex items-stretch justify-center lg:items-center lg:p-6">
+              <div
+                className="absolute inset-0"
+                style={{ background: "rgba(12,14,24,.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
+                onClick={closeFlow}
+              />
+              <div className="tv-book-panel relative z-10 flex w-full flex-col overflow-hidden bg-white shadow-2xl max-h-[100dvh] lg:h-auto lg:max-h-[90vh] lg:w-full lg:max-w-2xl lg:rounded-[24px]">
+                <header
+                  className="flex items-center justify-between px-5 py-4 border-b border-neutral-200 shrink-0"
+                  style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+                >
+                  <span className="font-body text-[16px] font-bold text-neutral-900">{t("booking.reserveTitle")}</span>
+                  <button
+                    onClick={closeFlow}
+                    aria-label="Cerrar"
+                    className="grid h-9 w-9 place-items-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-100"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </header>
+                <div
+                  className="tv-book-scroll flex-1 overflow-y-auto px-5 py-6"
+                  style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
+                >
           {/* Enhanced Progress Bar */}
           <div ref={progressRef} className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto scroll-mt-4">
             <div className="flex justify-between items-center text-xs sm:text-sm text-muted-foreground px-1">
@@ -405,8 +432,11 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
               />
             )}
           </AnimatePresence>
-        </div>
-        )}
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )}
       </div>
 
       {/* Auth Modal for in-situ login */}
