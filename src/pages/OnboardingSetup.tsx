@@ -31,7 +31,7 @@ import {
   Camera,
 } from "lucide-react";
 import { AppLayout } from "@/components/navigation/AppLayout";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import confetti from "canvas-confetti";
@@ -1219,17 +1219,11 @@ export default function OnboardingSetup() {
 
       <div className="px-4 py-6 pb-24">
         <div className="max-w-lg mx-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-            >
-              <GuidedStep isActive={true}>{renderStep()}</GuidedStep>
-            </motion.div>
-          </AnimatePresence>
+          {/* Entrada por CSS (no mode="wait"): el paso no se congela si el
+              usuario cambia de app a media configuración y vuelve. */}
+          <div key={step} className="tv-step-in">
+            <GuidedStep isActive={true}>{renderStep()}</GuidedStep>
+          </div>
         </div>
 
         {step < totalSteps && (

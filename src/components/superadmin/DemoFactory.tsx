@@ -97,6 +97,18 @@ export function DemoFactory() {
         </div>
       </div>
 
+      {/* Preview del asistente de alta (crea un "Salón Demo" desechable) */}
+      <a
+        href="/onboarding/setup?demo=true"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/5 hover:bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors"
+      >
+        <Wand2 className="h-4 w-4" />
+        Ver el asistente de onboarding
+        <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+      </a>
+
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
