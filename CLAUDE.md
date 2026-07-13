@@ -15,14 +15,14 @@ Disponible como web ([glowapp.app](https://glowapp.app)) y **PWA instalable** en
 ## Stack técnico
 
 - **Frontend**: Vite + React + TypeScript + Tailwind CSS + shadcn-ui
-- **Animaciones**: GSAP (ScrollTrigger) + Framer Motion
+- **Animaciones**: Framer Motion (`motion`). GSAP retirado en jul 2026 (se eliminó el hero cinemático)
 - **Backend**: Supabase (DB + Edge Functions Deno) + Stripe
 - **Auth/pagos**: Supabase Auth + Stripe Checkout/Webhooks
 - **PWA**: instalable, push notifications, modo offline básico
 - **Multi-tenant**: cada negocio = un tenant con web, tema y datos aislados
 
 ### Regla GSAP
-GSAP solo existe en `src/components/business-landing/CinematicHero.tsx`. No añadir en otros archivos.
+GSAP ya no se usa en el proyecto (el hero cinemático `CinematicHero` se eliminó en jul 2026). No reintroducir GSAP; usar Framer Motion.
 
 ---
 
@@ -48,11 +48,12 @@ GSAP solo existe en `src/components/business-landing/CinematicHero.tsx`. No aña
 
 | Familia | Clase Tailwind | Uso |
 |---|---|---|
-| **Plus Jakarta Sans** | `font-sans` | UI, cuerpo, botones, títulos de producto |
-| **Playfair Display** | `font-serif` | Titulares editoriales, hero, landing |
-| **Ashing** *(solo logo)* | `font-ashing` | Wordmark "Glowapp" — toda instancia del texto "Glowapp" lleva `font-ashing` + `letter-spacing: 0.05em` (ya en `.font-ashing` CSS) |
+| **Plus Jakarta Sans** | `font-sans` | UI del producto, cuerpo, botones, panel |
+| **Poppins** | `font-poppins` | **Landing `/negocios`**: toda la página (scope en el root de `ForBusiness`). Titulares bold geométricos |
+| **Playfair Display** | `font-serif` | Titulares editoriales de la web pública del tenant (NO en `/negocios`) |
+| **Ashing** *(solo logo)* | `font-ashing` | Wordmark "Glowapp" en el producto/tenant. NO se usa en `/negocios` (allí "Glowapp" va en Poppins) |
 
-**Regla**: en marketing/hero, Playfair italic para el titular con carácter. En UI, Jakarta Sans. Ashing SOLO para la palabra "Glowapp".
+**Regla**: en `/negocios` todo es Poppins, sin serif italic ni font-ashing (decisión Hugo jul 2026 — "sin manuscritas"). En la web del salón (tenant), Playfair italic para titulares con carácter. Ashing solo para el wordmark en producto/tenant.
 
 ### Estética UI
 - iOS-inspired + glassmorphism: tarjetas con blur, `--radius: 1rem`, sombras suaves elevadas
@@ -151,37 +152,27 @@ Modelo: suscripción plana en euros. Cobros online solo comisión Stripe. Sin co
 
 ## Estructura de la página /negocios (ForBusiness.tsx)
 
-Orden de secciones:
-1. `StickyHeader`
-2. `CinematicHero` — hero pinned GSAP con scrollytelling kinético
-3. `MobileHeroStory` — variante móvil del relato
-4. `SocialProofStrip` — métricas count-up + salones reales (Cristina Muñoz, Montserrat Faig)
+Rediseñada jul 2026 hacia un registro **bold/plantilla** (inspirada en zentroestudio.es) con firma Glowapp: **Poppins**, blanco con washes sutiles de marca, sin eyebrows, texto en gradiente de marca como acento. Root con `font-poppins`. Orden:
+
+1. `StickyHeader` — nav píldora flotante (logo + links + CTA gradiente)
+2. `HeroSection` — hero editorial bold estático (Poppins, SIN GSAP). Titular "El único sistema que hace crecer tu salón **de verdad.**" (cierre en gradiente). Entrada blur+fade+stagger con Framer Motion. Sin phone mockup
+3. `SocialProofStrip` — métricas count-up + salones reales (Cristina Muñoz, Montserrat Faig)
+4. `PainPointsSection` — el problema: grid 2×2 con iconos (sin emoji, sin eyebrow), sobre wash
 5. `PanelShowcase` — screenshots reales del panel (tabs: Inicio/Agenda/Caja/Negocio)
-6. `SalonTestimonials`
-7. `HowItWorks`
-8. `PricingCompare` — tabla comparativa vs Booksy/Treatwell/Fresha
-9. `FAQSection`
-10. `ClosingCTA`
-11. `Footer`
+6. `FeatureGrid` — "Un sistema entero. No una función suelta." 6 módulos en un contenedor único con divisores internos (matriz, no tarjetas sueltas)
+7. `ComparisonTable` — "Ellos alquilan tus clientas. Glowapp te las da." Tabla limpia vs Booksy/Fresha (sección propia, fuera del precio). Claims verificados (ver regla de oro)
+8. `SalonTestimonials` — reseñas de salones reales
+9. `HowItWorks` — "De cero a reservas en 3 pasos."
+10. `PricingSection` — tabla de precios real (3 planes del DB vía `useSubscriptionPlans`, medio destacado "Más popular", toggle mensual/anual)
+11. `FAQSection` — lista con divisores (sin card por pregunta)
+12. `ClosingCTA` — tarjeta navy de marca (único bloque oscuro), CTA a `/onboarding`
+13. `Footer`
 
-### CinematicHero — arquitectura del scrollytelling
-- Pin único GSAP extendido (`end: "+=4800"`), scrub:1
-- **Acto 1**: texto editorial "El salón que sueñas, / gestionado solo." sobre fondo claro con grid
-- **Acto 2** (relato en `HeroStory.tsx`): tarjeta navy sube → expande a fullscreen → 3 beats dolor→solución:
-  - Beat 1: "Todo el día respondiendo **WhatsApps**." → desintegración char a char → "Glowapp responde por ti."
-  - Beat 2: "La contabilidad, **a mano**, cada noche." → "La caja se cuadra sola."
-  - Beat 3: "La agenda, siempre un **caos**." → "Cada cita, en su sitio."
-  - Slogan bloom: "El software de salón / que se paga solo." (antes decía "que no te cuesta nada" — retirado por falso: el producto cuesta desde 29€/mes)
-  - Remate con shine sweep: "Tú, a hacer brillar el salón."
-- **CTA**: pullback → "Empieza hoy." + botones → `/onboarding` / scroll a `#producto`
-
-### Reglas de diseño del hero
-- Dolor: texto gris-azulado frío (`hsl(220 16% 72%)`), keyword en blanco
-- Solución: gradiente de marca (`.ch-text-gradient`)
-- Blobs glow a distintos `translateZ` para parallax 3D real
-- Mouse tilt sobre el escenario (`stageRef`)
-- `prefers-reduced-motion`: hero estático, relato oculto
-- `ProblemAgitation`: archivo existe pero NO se renderiza (redundante con el relato)
+### Notas de diseño de la landing
+- Helper `washBg` en `_landingShared.tsx` (degradado radial sutil de marca sobre blanco); fondo global en `LandingBackground` (rejilla + glow)
+- Reveals unificados a **blur+fade** suave (`filter: blur(10px)` → `blur(0)`), `EASE` de marca. OJO: son `whileInView` (gating de visibilidad) → en preview con tab oculto se congelan; en navegador real animan bien
+- `SectionHeader` (en `_landingShared.tsx`): `eyebrow` es opcional; en `/negocios` no se usa
+- `FeatureSpotlights`, `ProblemAgitation`, `PricingCompare` (eliminado), `MobileHeroStory`/`HeroStory`/`CinematicHero` (eliminados): no renderizar / ya no existen
 
 ---
 
@@ -189,11 +180,13 @@ Orden de secciones:
 
 | Archivo | Qué es |
 |---|---|
-| `src/components/business-landing/CinematicHero.tsx` | Hero pinned GSAP, todo el timeline del scrollytelling |
-| `src/components/business-landing/HeroStory.tsx` | Markup presentacional del relato (solo JSX, sin lógica) |
-| `src/components/business-landing/_landingShared.tsx` | `EASE`, `AnimatedNumber`, `gradientText`, `Eyebrow` |
+| `src/pages/ForBusiness.tsx` | Página `/negocios`; compone las secciones (root `font-poppins`) |
+| `src/components/business-landing/HeroSection.tsx` | Hero bold estático (Poppins, Framer Motion, sin GSAP) |
+| `src/components/business-landing/FeatureGrid.tsx` | Matriz de 6 módulos con divisores internos |
+| `src/components/business-landing/ComparisonTable.tsx` | Tabla vs Booksy/Fresha (sección propia, fuera del precio) |
+| `src/components/business-landing/PricingSection.tsx` | Tabla de precios (3 planes del DB, medio destacado) |
+| `src/components/business-landing/_landingShared.tsx` | `EASE`, `AnimatedNumber`, `gradientText`, `Eyebrow` (opcional), `washBg` |
 | `src/components/business-landing/PanelShowcase.tsx` | Tabs con screenshots reales del panel (panel-*.png) |
-| `src/components/business-landing/PricingCompare.tsx` | Comparativa Glowapp vs Booksy/Treatwell/Fresha |
 | `src/components/business-landing/RoiCalculator.tsx` | Calculadora de ahorro vs competencia |
 | `src/index.css` | Design tokens: colores HSL, font-ashing (letter-spacing: 0.05em), fuentes |
 | `src/content/competitors.ts` | Copy completo de páginas alternativa-a-* |
@@ -205,8 +198,9 @@ Orden de secciones:
 ## Convenciones de este repo
 
 - **Caveman mode activo** — respuestas cortas, sin filler, fragmentos OK
-- **Toda instancia del texto "Glowapp"** en JSX → `<span className="font-ashing">Glowapp</span>`
+- **"Glowapp" con `font-ashing`** en el producto/tenant. EXCEPCIÓN: en `/negocios` va en Poppins (sin manuscritas)
 - **No cards genéricas** en el hero (decisión firme del usuario)
-- **GSAP solo en CinematicHero.tsx**
-- **`ProblemAgitation`**: no renderizar en ForBusiness (archivo conservado)
+- **GSAP eliminado** — no reintroducir; usar Framer Motion
+- **`ProblemAgitation`, `FeatureSpotlights`, `PricingCompare`**: no usar en `/negocios` (los dos primeros conservados sin renderizar; `PricingCompare` eliminado)
+- **Diseño de UI: maquetar antes de construir** — Hugo quiere ver maqueta (`mcp__visualize__show_widget`) y validar antes de tocar código
 - Assets de screenshots reales: `src/assets/panel-*.png` (desktop) y `mobile-*.png`
