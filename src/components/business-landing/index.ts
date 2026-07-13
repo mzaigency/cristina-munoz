@@ -1,13 +1,12 @@
 export { HeroSection } from './HeroSection';
-export { CinematicHero } from './CinematicHero';
-export { MobileHeroStory } from './MobileHeroStory';
 export { SocialProofStrip } from './SocialProofStrip';
 export { ProblemAgitation } from './ProblemAgitation';
 export { PanelShowcase } from './PanelShowcase';
+export { FeatureGrid } from './FeatureGrid';
+export { ComparisonTable } from './ComparisonTable';
 export { FeatureSpotlights, HowItWorks, ClosingCTA } from './BusinessSections';
 export { RoiCalculator } from './RoiCalculator';
 export { SalonTestimonials } from './SalonTestimonials';
-export { PricingCompare } from './PricingCompare';
 export { StickyHeader } from './StickyHeader';
 export { ValueProps } from './ValueProps';
 export { PainPointsSection } from './PainPointsSection';

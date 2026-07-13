@@ -41,12 +41,10 @@ export const SalonTestimonials = () => {
     <section className="relative scroll-mt-20 py-24 md:py-32">
       <div className="container mx-auto px-4">
         <SectionHeader
-          eyebrow="Salones reales"
           title={
             <>
               No te lo decimos nosotros.{" "}
               <span
-                className="font-serif italic"
                 style={{ background: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}
               >
                 Te lo dicen ellas.
@@ -84,7 +82,7 @@ export const SalonTestimonials = () => {
               </div>
 
               {/* Cita */}
-              <blockquote className="font-serif text-xl italic leading-relaxed text-foreground sm:text-2xl">
+              <blockquote className="text-xl font-medium leading-relaxed text-foreground sm:text-2xl">
                 «{t.quote}»
               </blockquote>
 

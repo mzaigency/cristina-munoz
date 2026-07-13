@@ -1,13 +1,15 @@
 import { SEO } from "@/components/SEO";
 import {
   StickyHeader,
-  CinematicHero,
-  MobileHeroStory,
+  HeroSection,
+  PainPointsSection,
   SocialProofStrip,
   PanelShowcase,
+  FeatureGrid,
+  ComparisonTable,
   SalonTestimonials,
   HowItWorks,
-  PricingCompare,
+  PricingSection,
   FAQSection,
   ClosingCTA,
   Footer,
@@ -52,17 +54,19 @@ export default function ForBusiness() {
         ]}
       />
 
-      <div className="relative min-h-screen">
+      <div className="relative min-h-screen font-poppins">
         <LandingBackground />
         <Preloader logoUrl={glowappLogo} logoVariant="bare" />
         <StickyHeader />
-        <CinematicHero />
-        <MobileHeroStory />
+        <HeroSection />
         <SocialProofStrip />
+        <PainPointsSection />
         <PanelShowcase />
+        <FeatureGrid />
+        <ComparisonTable />
         <SalonTestimonials />
         <HowItWorks />
-        <PricingCompare />
+        <PricingSection />
         <FAQSection />
         <ClosingCTA />
         <Footer />

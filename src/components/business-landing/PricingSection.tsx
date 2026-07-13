@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Zap, Crown, Building2, Sparkles } from "lucide-react";
+import { Check, Zap, Crown, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
-import { SectionEyebrow } from "./SectionEyebrow";
 
 // Todos los planes usan el gradiente de marca (primary → accent).
 // La diferenciación entre tiers se hace con el icono y la opacidad.
@@ -68,7 +67,7 @@ export const PricingSection = () => {
 
   if (loading) {
     return (
-      <section id="pricing" className="py-20 bg-secondary/50">
+      <section id="precio" className="scroll-mt-20 py-24 md:py-32 bg-secondary/40">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {[1, 2, 3].map((i) => (
@@ -81,18 +80,30 @@ export const PricingSection = () => {
   }
 
   return (
-    <section id="pricing" className="py-20 bg-secondary/50">
+    <section id="precio" className="scroll-mt-20 py-24 md:py-32 bg-secondary/40">
       <div className="container mx-auto px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
+          initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7 }}
+          className="text-center mb-14"
         >
-          <SectionEyebrow icon={Sparkles} label="Precios transparentes" />
-          <h2 className="text-3xl sm:text-4xl font-bold mt-3 mb-4 text-foreground">Elige tu plan</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-            Todos los planes incluyen 30 días de prueba gratis. Cancela cuando quieras.
+          <h2 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
+            Precio plano.{" "}
+            <span
+              style={{
+                background: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              Sin sorpresas.
+            </span>
+          </h2>
+          <p className="text-muted-foreground max-w-lg mx-auto mt-4 mb-8 sm:text-lg">
+            Primer mes gratis en todos los planes. Sin comisión por reserva. Cancela cuando quieras.
           </p>
 
           <div className="inline-flex items-center gap-3 p-1 rounded-full bg-background border border-border">

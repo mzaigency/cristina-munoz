@@ -72,6 +72,7 @@ export default {
         'sans': ['Plus Jakarta Sans', 'DM Sans', 'system-ui', 'sans-serif'],
         'display': ['Plus Jakarta Sans', 'sans-serif'],
         'serif': ['"Playfair Display"', 'Georgia', 'serif'],
+        'poppins': ['Poppins', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",

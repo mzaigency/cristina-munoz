@@ -21,6 +21,12 @@ export const gradientText: React.CSSProperties = {
 
 export const gradientBg = "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))";
 
+/** Wash sutil de marca sobre fondo blanco — sustituye al crema plano. */
+export const washBg: React.CSSProperties = {
+  backgroundImage:
+    "radial-gradient(circle at 15% 0%, hsl(var(--primary) / 0.06), transparent 55%), radial-gradient(circle at 85% 100%, hsl(var(--accent) / 0.05), transparent 55%)",
+};
+
 /* ---------- Eyebrow / cabecera de sección ---------- */
 
 export function Eyebrow({ children }: { children: ReactNode }) {
@@ -32,7 +38,7 @@ export function Eyebrow({ children }: { children: ReactNode }) {
 }
 
 interface SectionHeaderProps {
-  eyebrow: string;
+  eyebrow?: string;
   title: ReactNode;
   subtitle?: ReactNode;
   className?: string;
@@ -40,13 +46,13 @@ interface SectionHeaderProps {
 export function SectionHeader({ eyebrow, title, subtitle, className = "" }: SectionHeaderProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6, ease: EASE }}
+      transition={{ duration: 0.7, ease: EASE }}
       className={`mx-auto max-w-2xl text-center ${className}`}
     >
-      <Eyebrow>{eyebrow}</Eyebrow>
+      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
       <h2 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
         {title}
       </h2>

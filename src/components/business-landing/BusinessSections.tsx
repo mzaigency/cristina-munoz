@@ -269,17 +269,16 @@ export const HowItWorks = () => {
     <section id="como-funciona" className="relative scroll-mt-20 py-24 md:py-32">
       <div className="container mx-auto px-4">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6, ease: EASE }}
+          transition={{ duration: 0.7, ease: EASE }}
           className="mx-auto mb-16 max-w-2xl text-center"
         >
-          <Eyebrow>Empezar es fácil</Eyebrow>
           <h2 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
-            Tu salón online{" "}
-            <span className="font-serif italic" style={{ background: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
-              en tres pasos
+            De cero a reservas{" "}
+            <span style={{ background: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+              en 3 pasos.
             </span>
           </h2>
         </motion.div>
@@ -308,7 +307,7 @@ export const HowItWorks = () => {
               className="group relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 p-7 shadow-sm backdrop-blur-sm transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:-translate-y-1 hover:shadow-[0_24px_50px_-16px_rgba(20,22,48,0.18)]"
             >
               <span
-                className="relative z-10 inline-flex h-12 w-12 items-center justify-center rounded-2xl font-serif text-2xl italic text-white shadow-lg shadow-primary/25"
+                className="relative z-10 inline-flex h-12 w-12 items-center justify-center rounded-2xl text-xl font-extrabold text-white shadow-lg shadow-primary/25"
                 style={{ backgroundImage: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))" }}
               >
                 {s.n}
@@ -344,13 +343,13 @@ export const ClosingCTA = () => {
           />
           <div className="relative">
             <h2 className="mx-auto max-w-2xl text-balance text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl">
-              Tu salón merece dejar de funcionar{" "}
-              <span className="font-serif italic" style={{ background: "linear-gradient(100deg, #93b4ff, #d9a7ff)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+              Deja de gestionar tu salón{" "}
+              <span style={{ background: "linear-gradient(100deg, #93b4ff, #d9a7ff)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
                 con una libreta.
               </span>
             </h2>
             <p className="mx-auto mt-6 max-w-md text-base text-white/65 sm:text-lg">
-              Monta <span className="font-ashing">Glowapp</span> en 5 minutos. Gratis el primer mes, sin permanencia.
+              Monta Glowapp en 5 minutos. Gratis el primer mes, sin permanencia.
             </p>
             <div className="mt-10 flex justify-center">
               <button

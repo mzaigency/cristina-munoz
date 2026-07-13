@@ -75,7 +75,7 @@ export const SocialProofStrip = () => {
           className="mx-auto mt-10 flex max-w-3xl flex-col items-center gap-5 sm:flex-row sm:justify-center sm:gap-10"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Negocios reales que ya funcionan con <span className="font-ashing">Glowapp</span>
+            Negocios reales que ya funcionan con Glowapp
           </p>
           <div className="flex items-center gap-6">
             {SALONS.map(({ name, sector, Icon, logo }) => (

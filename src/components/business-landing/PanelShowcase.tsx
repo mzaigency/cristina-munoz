@@ -56,19 +56,15 @@ export const PanelShowcase = () => {
 
       <div className="container relative mx-auto px-4">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6, ease: EASE }}
+          transition={{ duration: 0.7, ease: EASE }}
           className="mx-auto mb-12 max-w-2xl text-center"
         >
-          <span className="mb-3 inline-block text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-            El panel
-          </span>
           <h2 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
             Tu negocio entero,{" "}
             <span
-              className="font-serif italic"
               style={{
                 background: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))",
                 WebkitBackgroundClip: "text",

@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, HelpCircle } from "lucide-react";
-import { SectionEyebrow } from "./SectionEyebrow";
+import { Plus } from "lucide-react";
 
 const faqs = [
   {
     question: "¿De verdad es gratis? ¿Dónde está la trampa?",
     answer: "El primer mes es gratis y sin compromiso. Stripe te pedirá una tarjeta solo para verificar tu cuenta, pero no te cobramos nada durante ese mes. Puedes cancelar cuando quieras antes de que termine y no pagarás ni un euro. Empezamos siendo accesibles para que cualquier negocio pueda digitalizarse sin barreras.",
+  },
+  {
+    question: "¿Cobráis comisión por reserva o por cliente?",
+    answer: "Nunca. Precio plano por plan, sin comisión por reserva ni por captar clientas. Solo pagas la comisión de Stripe cuando cobras online, igual que cualquier pago con tarjeta.",
   },
   {
     question: "¿Mis datos y los de mis clientes están seguros?",
@@ -25,16 +28,12 @@ const faqs = [
     answer: "Para nada. Glowapp está diseñado para usarse desde el móvil sin ningún conocimiento técnico. Si sabes usar WhatsApp, sabes usar Glowapp.",
   },
   {
-    question: "¿Mis clientes tienen que instalar algo?",
-    answer: "No. Tus clientes acceden a tu página web y reservan desde el navegador del móvil. Si quieren, pueden añadir Glowapp a la pantalla de inicio como una app — es opcional, pero más cómodo.",
-  },
-  {
     question: "¿Funciona con mi equipo de profesionales?",
     answer: "Sí. Puedes añadir varios profesionales, cada uno con su propio horario y calendario. Los clientes eligen con quién quieren reservar.",
   },
   {
     question: "¿Qué pasa si tengo problemas o dudas?",
-    answer: "Tienes soporte en español por chat y email incluido. Respondemos en menos de 24 horas (normalmente mucho antes). También tienes tutoriales y guías en la app.",
+    answer: "Tienes soporte en español por WhatsApp y email incluido. Respondemos en menos de 24 horas (normalmente mucho antes). También tienes tutoriales y guías en la app.",
   },
 ];
 
@@ -42,63 +41,66 @@ export const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="scroll-mt-20 py-20">
+    <section id="faq" className="scroll-mt-20 py-24 md:py-32">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="mx-auto mb-14 max-w-2xl text-balance text-center text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl"
         >
-          <SectionEyebrow icon={HelpCircle} label="Preguntas frecuentes" />
-          <h2 className="text-3xl sm:text-4xl font-bold mt-3 mb-4 text-foreground">¿Tienes dudas?</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Aquí respondemos las preguntas más comunes. Si no encuentras lo que buscas, escríbenos y te ayudamos.
-          </p>
-        </motion.div>
+          Lo que preguntáis{" "}
+          <span
+            style={{
+              background: "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+            }}
+          >
+            antes de empezar.
+          </span>
+        </motion.h2>
 
-        <div className="max-w-3xl mx-auto">
-          <div className="space-y-3">
-            {faqs.map((faq, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-              >
+        <div className="mx-auto max-w-3xl">
+          {faqs.map((faq, index) => {
+            const open = openIndex === index;
+            return (
+              <div key={index} className="border-b border-border">
                 <button
-                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className={`w-full text-left p-5 rounded-2xl transition-all ${
-                    openIndex === index
-                      ? "bg-primary/5 shadow-sm border border-primary/20"
-                      : "bg-secondary/50 border border-border hover:border-primary/20"
-                  }`}
+                  onClick={() => setOpenIndex(open ? null : index)}
+                  className="flex w-full items-center justify-between gap-4 py-5 text-left"
+                  aria-expanded={open}
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="font-medium text-foreground">{faq.question}</span>
-                    <motion.div animate={{ rotate: openIndex === index ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                      <ChevronDown className={`w-5 h-5 flex-shrink-0 ${openIndex === index ? "text-primary" : "text-muted-foreground"}`} />
-                    </motion.div>
-                  </div>
-
-                  <AnimatePresence>
-                    {openIndex === index && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
-                      >
-                        <p className="mt-4 text-muted-foreground text-sm leading-relaxed">{faq.answer}</p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <span className="text-base font-semibold text-foreground">{faq.question}</span>
+                  <motion.span
+                    animate={{ rotate: open ? 45 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={`flex-shrink-0 ${open ? "text-primary" : "text-muted-foreground"}`}
+                  >
+                    <Plus className="h-5 w-5" />
+                  </motion.span>
                 </button>
-              </motion.div>
-            ))}
-          </div>
+
+                <AnimatePresence initial={false}>
+                  {open && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <p className="pb-5 text-sm leading-relaxed text-muted-foreground">
+                        {faq.answer}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

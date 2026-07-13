@@ -1,75 +1,77 @@
 import { motion } from "framer-motion";
-import { SectionEyebrow } from "./SectionEyebrow";
+import { Notebook, MessageCircle, Star, Store } from "lucide-react";
+import { EASE, washBg } from "./_landingShared";
 
-const points = [
+/**
+ * El problema. Cuatro dolores reales del salón antes de la solución. Grid 2×2
+ * uniforme con tarjetas bordered (sin bento asimétrico, sin eyebrow, sin emoji),
+ * sobre wash sutil de marca. Iconos lucide en azul de marca.
+ */
+
+const POINTS = [
   {
-    emoji: "📓",
-    title: "La libreta tiene la última palabra",
-    desc: "Y a veces miente. Cuando un cliente pregunta «¿tienes hueco?», ya has perdido 30 segundos buscando.",
-    big: true,
+    Icon: Notebook,
+    title: "La agenda en una libreta",
+    desc: "O en notas del móvil. Un borrón y pierdes el hueco.",
   },
-  { emoji: "📵", title: "WhatsApp a las 23:47", desc: "«Perdona, ¿mañana?». Y mañana ya está lleno." },
-  { emoji: "🤷", title: "Doble reserva", desc: "Dos clientas a la misma hora. Una se va. Una no vuelve." },
-  { emoji: "🧾", title: "Cierre de caja a ojo", desc: "¿Cuánto facturé hoy? Mañana lo miro." },
-  { emoji: "📞", title: "Llamada con tijeras", desc: "O cuelgas a la clienta. O cuelgas el corte." },
+  {
+    Icon: MessageCircle,
+    title: "Las clientas por WhatsApp",
+    desc: "Todo el día respondiendo «¿tenéis hueco?» mientras atiendes.",
+  },
+  {
+    Icon: Star,
+    title: "Las reseñas son de Booksy",
+    desc: "No tuyas. Estás perdiendo clientas nuevas por ello.",
+  },
+  {
+    Icon: Store,
+    title: "Y tu marca es la de Booksy",
+    desc: "Tus clientas son de su plataforma, no tuyas.",
+  },
 ];
 
 export const PainPointsSection = () => {
   return (
-    <section className="py-16 md:py-20 bg-secondary/50 relative overflow-hidden">
+    <section className="relative scroll-mt-20 py-24 md:py-32" style={washBg}>
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-10 md:mb-12 max-w-2xl mx-auto"
+        <motion.h2
+          initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: EASE }}
+          className="mx-auto mb-14 max-w-2xl text-balance text-center text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl"
         >
-          <SectionEyebrow label="¿Te suena?" tone="destructive" />
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mt-3 mb-3 text-foreground">
-            El día a día sin software
-          </h2>
-          <p className="text-muted-foreground">
-            Si gestionas tu salón con libreta y WhatsApp, no es que trabajes mal.
-            Es que el sistema está roto.
-          </p>
-        </motion.div>
+          Tu salón vive en seis sitios{" "}
+          <span className="text-muted-foreground">y en tu cabeza.</span>
+        </motion.h2>
 
-        {/* Bento grid: mobile stack, md+ asymmetric */}
-        <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-3 md:gap-4 max-w-5xl mx-auto">
-          {points.map((p, i) => (
+        <motion.div
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-2"
+        >
+          {POINTS.map(({ Icon, title, desc }) => (
             <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.07 }}
-              className={`group relative rounded-3xl bg-background border border-border p-6 hover:border-destructive/30 hover:shadow-lg transition-all duration-300 overflow-hidden ${
-                p.big ? "md:col-span-2 md:row-span-2 md:p-8" : ""
-              }`}
+              key={title}
+              variants={{
+                hidden: { opacity: 0, y: 24, filter: "blur(8px)" },
+                show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.55, ease: EASE } },
+              }}
+              className="group rounded-3xl border border-border bg-card/80 p-7 backdrop-blur-sm transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-20px_rgba(20,22,48,0.18)]"
             >
-              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-destructive/5 blur-2xl group-hover:bg-destructive/10 transition-colors" />
-              <div className="relative">
-                <div className={`mb-4 ${p.big ? "text-6xl md:text-7xl" : "text-4xl"}`}>
-                  {p.emoji}
-                </div>
-                <h3
-                  className={`font-bold text-foreground mb-2 ${
-                    p.big ? "text-xl md:text-2xl" : "text-base"
-                  }`}
-                >
-                  {p.title}
-                </h3>
-                <p
-                  className={`text-muted-foreground leading-relaxed ${
-                    p.big ? "text-base" : "text-sm"
-                  }`}
-                >
-                  {p.desc}
-                </p>
-              </div>
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Icon className="h-5 w-5" />
+              </span>
+              <h3 className="mb-1.5 mt-5 text-lg font-bold tracking-tight text-foreground">
+                {title}
+              </h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
