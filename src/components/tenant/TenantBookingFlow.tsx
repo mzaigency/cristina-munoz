@@ -279,7 +279,14 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                 </header>
                 <div
                   className="tv-book-scroll flex-1 overflow-y-auto px-5 py-6"
-                  style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
+                  style={{
+                    // Cuando la barra-resumen móvil (fixed) está visible, deja
+                    // hueco extra para que el botón Continuar no quede tapado.
+                    paddingBottom:
+                      bookingData.services.length > 0 && !bookingConfirmed
+                        ? "calc(6rem + env(safe-area-inset-bottom))"
+                        : "calc(1.5rem + env(safe-area-inset-bottom))",
+                  }}
                 >
           {/* Enhanced Progress Bar */}
           <div ref={progressRef} className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto scroll-mt-4">

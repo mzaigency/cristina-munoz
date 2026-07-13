@@ -1,6 +1,7 @@
 import { Star, MapPin, Clock, Calendar } from "lucide-react";
 import { useHeroStats } from "./heroes/_shared";
 import { useT } from "@/lib/tenantI18n";
+import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
 
 interface TenantTrustStripProps {
   tenantId: string;
@@ -8,13 +9,23 @@ interface TenantTrustStripProps {
 }
 
 /**
- * Franja de confianza bajo el hero: valoración, ciudad, "reserva 24/7" y
- * "sin llamadas". Datos prácticos + credibilidad de un vistazo. Clara,
- * con el color de marca en los iconos.
+ * Franja de confianza bajo el hero: valoración, ciudad, estado real de apertura
+ * (abierto/cerrado ahora según horarios y overrides) y "reserva 24/7". Datos
+ * prácticos + credibilidad de un vistazo, con el color de marca en los iconos.
  */
 export function TenantTrustStrip({ tenantId, city }: TenantTrustStripProps) {
   const { rating, reviewCount } = useHeroStats(tenantId);
+  const { getBusinessHoursForDay, loading: hoursLoading } = useTenantBusinessHours(tenantId);
   const t = useT();
+
+  // Estado real de apertura: hoy, según horarios y overrides estacionales.
+  const now = new Date();
+  const today = getBusinessHoursForDay(now.getDay(), now);
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const openNow =
+    !today.isClosed &&
+    ((today.morningEnd > 0 && minutes >= today.morningStart && minutes < today.morningEnd) ||
+      (today.afternoonEnd > 0 && minutes >= today.afternoonStart && minutes < today.afternoonEnd));
 
   const items: { icon: JSX.Element; label: string }[] = [];
   if (rating > 0) {
@@ -26,7 +37,12 @@ export function TenantTrustStrip({ tenantId, city }: TenantTrustStripProps) {
   if (city) {
     items.push({ icon: <MapPin className="h-4 w-4" style={{ color: "#22408c" }} />, label: city });
   }
-  items.push({ icon: <Clock className="h-4 w-4" style={{ color: "#22408c" }} />, label: t("trust.openToday") });
+  if (!hoursLoading) {
+    items.push({
+      icon: <Clock className="h-4 w-4" style={{ color: openNow ? "#16a249" : "#98329a" }} />,
+      label: openNow ? t("trust.openNow") : today.isClosed ? t("trust.closedToday") : t("trust.closedNow"),
+    });
+  }
   items.push({ icon: <Calendar className="h-4 w-4" style={{ color: "#98329a" }} />, label: t("trust.online") });
 
   return (

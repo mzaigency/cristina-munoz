@@ -47,8 +47,8 @@ export const BookingSummaryMobile = ({
       animate={{ y: 0 }}
       exit={{ y: 100 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed bottom-0 left-0 right-0 z-[9999]"
-      style={{ 
+      className="fixed bottom-0 left-0 right-0 z-[9999] lg:hidden"
+      style={{
         isolation: 'isolate',
         paddingBottom: 'env(safe-area-inset-bottom)'
       }}
