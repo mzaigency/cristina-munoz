@@ -19,7 +19,7 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
 
   const handleSave = async () => {
     if (!selectedType || !tenantName.trim()) {
-      toast.error("Por favor, completa todos los campos");
+      toast.error("Añade el nombre y elige un tipo de negocio");
       return;
     }
 
@@ -44,7 +44,7 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
 
       if (error) throw error;
 
-      toast.success("¡Perfecto! Vamos al siguiente paso");
+      toast.success("Listo, vamos al siguiente paso");
       onNext();
     } catch (error) {
       console.error("Error saving business type:", error);
@@ -56,13 +56,12 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
 
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <div className="text-4xl mb-2">👋</div>
-        <h2 className="text-2xl font-bold text-foreground">¿Qué tipo de negocio tienes?</h2>
-        <p className="text-sm text-muted-foreground">Personalizaremos todo para tu tipo de negocio</p>
+      <div className="space-y-1.5">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">¿Qué tipo de negocio tienes?</h2>
+        <p className="text-sm text-muted-foreground">Personalizamos tu web y tu catálogo según tu tipo de negocio.</p>
       </div>
 
-      {/* Business Name */}
+      {/* Nombre del negocio */}
       <div className="space-y-2">
         <Label htmlFor="businessName" className="text-sm font-medium">
           Nombre de tu negocio
@@ -71,50 +70,61 @@ export function BusinessTypeStep({ tenantId, onNext, tenantName, setTenantName }
           id="businessName"
           value={tenantName}
           onChange={(e) => setTenantName(e.target.value)}
-          placeholder="Ej: Salón María, Barbería El Clásico..."
+          placeholder="Ej: Salón María, Barbería El Clásico…"
           className="h-12 rounded-xl text-base"
         />
-        <p className="text-[11px] text-muted-foreground">Este nombre aparecerá en tu página web</p>
+        <p className="text-[11px] text-muted-foreground">Aparecerá en tu página web.</p>
       </div>
 
-      {/* Business Type Grid */}
-      <div className="grid grid-cols-2 gap-2.5">
-        {BUSINESS_TYPES.map((type) => {
-          const isSelected = selectedType === type.id;
+      {/* Tipo de negocio */}
+      <div className="space-y-2.5">
+        <Label className="text-sm font-medium">Tipo de negocio</Label>
+        <div className="grid grid-cols-2 gap-2.5">
+          {BUSINESS_TYPES.map((type) => {
+            const Icon = type.icon;
+            const isSelected = selectedType === type.id;
 
-          return (
-            <button
-              key={type.id}
-              type="button"
-              className={`relative p-4 rounded-2xl border-2 transition-all text-left ${
-                isSelected
-                  ? `${type.borderActive} bg-gradient-to-br ${type.color} shadow-sm`
-                  : "border-border hover:border-primary/30 bg-card"
-              }`}
-              onClick={() => setSelectedType(type.id)}
-            >
-              {isSelected && (
-                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                  <Check className="w-3 h-3 text-primary-foreground" />
-                </div>
-              )}
-              <div className="text-2xl mb-2">{type.emoji}</div>
-              <p className="font-semibold text-sm text-foreground leading-tight">{type.label}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{type.description}</p>
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={type.id}
+                type="button"
+                onClick={() => setSelectedType(type.id)}
+                aria-pressed={isSelected}
+                className={`group relative flex flex-col rounded-2xl border p-4 text-left transition-all ${
+                  isSelected
+                    ? "border-primary bg-primary/[0.04] shadow-sm ring-1 ring-primary/20"
+                    : "border-border bg-card hover:border-primary/40"
+                }`}
+              >
+                {isSelected && (
+                  <span className="absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                    <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
+                  </span>
+                )}
+                <span
+                  className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+                    isSelected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground group-hover:text-primary"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <p className="text-sm font-semibold leading-tight text-foreground">{type.label}</p>
+                <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{type.description}</p>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <Button
         onClick={handleSave}
         disabled={saving || !selectedType || !tenantName.trim()}
-        className="w-full h-12 rounded-xl"
+        className="h-12 w-full rounded-xl"
         size="lg"
         data-guided-cta="true"
       >
-        {saving ? "Guardando..." : "Continuar"}
-        <ArrowRight className="h-4 w-4 ml-2" />
+        {saving ? "Guardando…" : "Continuar"}
+        <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
     </div>
   );

@@ -240,7 +240,7 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
             {day.is_open && (
               <div className="space-y-3">
                 <div className="bg-secondary/30 rounded-lg p-3">
-                  <Label className="text-xs text-muted-foreground font-medium mb-2 block">🌅 Turno mañana</Label>
+                  <Label className="text-xs text-muted-foreground font-medium mb-2 block">Turno mañana</Label>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs text-muted-foreground">Entrada</Label>
@@ -270,7 +270,7 @@ function HoursStep({ onNext, onPrev, tenantId, loading, setLoading }: StepProps)
 
                 {day.has_afternoon && (
                   <div className="bg-secondary/30 rounded-lg p-3">
-                    <Label className="text-xs text-muted-foreground font-medium mb-2 block">🌇 Turno tarde</Label>
+                    <Label className="text-xs text-muted-foreground font-medium mb-2 block">Turno tarde</Label>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs text-muted-foreground">Entrada</Label>
@@ -881,7 +881,7 @@ function SuccessStep({ tenantSlug }: { tenantSlug: string }) {
         <Button
           variant="outline"
           onClick={() => navigate(`/admin/${tenantSlug}`)}
-          className="w-full h-12 rounded-2xl bg-white/5 backdrop-blur-sm border-white/10"
+          className="w-full h-12 rounded-2xl border-border"
         >
           Ir al panel de administración
         </Button>
@@ -892,11 +892,11 @@ function SuccessStep({ tenantSlug }: { tenantSlug: string }) {
 
 // Microcopy motivacional por paso
 const stepMicrocopy = [
-  "Empecemos con lo básico 💪",
+  "Empecemos con lo básico",
   "Para que tus clientes te encuentren",
   "Logo, fotos y tu equipo",
   "¿Qué ofreces y cuándo?",
-  "Dale personalidad a tu página ✨",
+  "Dale personalidad a tu página",
   "La IA creará tu contenido",
 ];
 
@@ -1135,7 +1135,7 @@ export default function OnboardingSetup() {
 
       {/* Compact Header */}
       <div
-        className="sticky top-0 z-40 bg-background/80 backdrop-blur-2xl border-b border-white/10"
+        className="font-poppins sticky top-0 z-40 bg-background/80 backdrop-blur-2xl border-b border-border"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="px-4 py-3">
@@ -1147,7 +1147,7 @@ export default function OnboardingSetup() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setStep(step - 1)}
-                  className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
+                  className="h-8 w-8 rounded-full shrink-0 bg-muted hover:bg-muted/70"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -1156,7 +1156,7 @@ export default function OnboardingSetup() {
                   variant="ghost"
                   size="icon"
                   onClick={() => navigate("/")}
-                  className="h-8 w-8 rounded-full shrink-0 bg-white/5 hover:bg-white/10"
+                  className="h-8 w-8 rounded-full shrink-0 bg-muted hover:bg-muted/70"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -1202,11 +1202,11 @@ export default function OnboardingSetup() {
           </div>
 
           {step < totalSteps && (
-            <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden">
+            <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
               <motion.div
                 className="absolute inset-y-0 left-0 rounded-full"
                 style={{
-                  background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))",
+                  background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))",
                 }}
                 initial={{ width: 0 }}
                 animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
@@ -1217,7 +1217,7 @@ export default function OnboardingSetup() {
         </div>
       </div>
 
-      <div className="px-4 py-6 pb-24">
+      <div className="font-poppins px-4 py-6 pb-24">
         <div className="max-w-lg mx-auto">
           {/* Entrada por CSS (no mode="wait"): el paso no se congela si el
               usuario cambia de app a media configuración y vuelve. */}
@@ -1228,12 +1228,12 @@ export default function OnboardingSetup() {
 
         {step < totalSteps && (
           <div
-            className="fixed bottom-0 left-0 right-0 z-40 px-4 py-2.5 bg-background/90 backdrop-blur-xl border-t border-white/10 flex items-center gap-2"
+            className="font-poppins fixed bottom-0 left-0 right-0 z-40 px-4 py-2.5 bg-background/90 backdrop-blur-xl border-t border-border flex items-center gap-2"
             style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}
             role="status"
             aria-live="polite"
           >
-            <span className="text-base shrink-0" aria-hidden>👉</span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-primary" aria-hidden />
             <p className="text-xs sm:text-sm text-foreground/90 leading-snug">
               {step === totalSteps - 1
                 ? <>Último paso. Pulsa <span className="font-semibold text-primary">Generar</span> para terminar.</>

@@ -6,8 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+type BrandingField = "tagline" | "description" | "faqs" | "seo";
+
 interface BrandingRequest {
   tenantId: string;
+  /** Si se indica, regenera SOLO ese campo (no guarda, devuelve parcial). */
+  only?: BrandingField;
+  /** Fuerza una alternativa distinta (más variedad). */
+  regenerate?: boolean;
 }
 
 interface BrandingOutput {
@@ -27,7 +33,8 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const body = (await req.json()) as BrandingRequest;
-    const { tenantId } = body;
+    const { tenantId, only, regenerate } = body;
+    const isPartial = Boolean(only);
 
     if (!tenantId) {
       return new Response(
@@ -124,13 +131,44 @@ serve(async (req) => {
           .join("; ")
       : "No especificados";
 
-    console.log("Generating branding for:", name, "Type:", businessType);
+    console.log("Generating branding for:", name, "Type:", businessType, only ? `(solo: ${only})` : "");
 
-    const prompt = `Eres un experto en marketing y copywriting para negocios de belleza en España.
+    // Esquema de salida por campo (para regeneración parcial).
+    const FIELD_SCHEMAS: Record<BrandingField, string> = {
+      tagline: `{"tagline": "eslogan corto y memorable, en minúscula sostenida salvo nombres propios (máx 55 caracteres)"}`,
+      description: `{"description": "descripción cálida del negocio mencionando servicios reales y ubicación si existe (2-3 frases, máx 240 caracteres)"}`,
+      faqs: `{"faqs": [
+    {"question": "pregunta sobre horarios o ubicación", "answer": "respuesta con datos reales"},
+    {"question": "pregunta sobre servicios que ofrecen", "answer": "respuesta mencionando servicios reales"},
+    {"question": "pregunta sobre reservas o contacto", "answer": "respuesta con datos de contacto reales si existen"}
+  ]}`,
+      seo: `{"seoTitle": "${name} - ${businessType}${city ? ` en ${city}` : ""} | Reserva Online", "seoDescription": "meta descripción mencionando servicios reales y ciudad (máx 155 caracteres)"}`,
+    };
 
-DATOS REALES DEL NEGOCIO (usa esta información exacta, NO inventes datos):
+    const fullSchema = `{
+  "tagline": ${FIELD_SCHEMAS.tagline.slice(1, -1)},
+  "description": ${FIELD_SCHEMAS.description.slice(1, -1)},
+  "seoTitle": "${name} - ${businessType}${city ? ` en ${city}` : ""} | Reserva Online",
+  "seoDescription": "meta descripción mencionando servicios reales y ciudad (máx 155 caracteres)",
+  "faqs": [
+    {"question": "pregunta sobre horarios o ubicación", "answer": "respuesta con datos reales"},
+    {"question": "pregunta sobre servicios que ofrecen", "answer": "respuesta mencionando servicios reales"},
+    {"question": "pregunta sobre reservas o contacto", "answer": "respuesta con datos de contacto reales si existen"}
+  ],
+  "brandTone": "descripción del tono de marca ideal para este negocio (1 frase)"
+}`;
 
-📍 INFORMACIÓN BÁSICA:
+    const schema = only ? FIELD_SCHEMAS[only] : fullSchema;
+
+    const prompt = `Eres la voz de marca de Glowapp escribiendo el contenido de la web de un negocio de belleza en España.
+
+VOZ GLOWAPP (obligatoria):
+- Cercana, clara y con confianza experta. Tuteo siempre. Femenino como referencia principal (la mayoría son dueñas de salón), sin excluir.
+- Frases cortas, al grano, sin relleno. Español de España.
+- NO uses: emojis, jerga de marketing ("experiencia única", "excelencia", "pasión por"), anglicismos, ni superlativos vacíos.
+- Suena a compañera del sector, no a folleto.
+
+DATOS REALES DEL NEGOCIO (usa solo esto, NO inventes nada):
 - Nombre: ${name}
 - Tipo de negocio: ${businessType}
 - Dirección: ${address || "No especificada"}
@@ -138,44 +176,18 @@ DATOS REALES DEL NEGOCIO (usa esta información exacta, NO inventes datos):
 - Teléfono: ${phone || "No especificado"}
 - WhatsApp: ${whatsapp || "No especificado"}
 - Instagram: ${instagram || "No especificado"}
+- Servicios: ${servicesInfo}
+- Equipo: ${stylistsNames}
+- Horarios: ${hoursInfo}
 
-✂️ SERVICIOS QUE OFRECEN:
-${servicesInfo}
-
-👥 EQUIPO:
-${stylistsNames}
-
-🕐 HORARIOS:
-${hoursInfo}
-
----
-
-GENERA contenido de marca BASÁNDOTE ÚNICAMENTE en los datos reales proporcionados arriba.
-NO inventes servicios, horarios, o información que no se haya proporcionado.
-Si algún dato no está especificado, NO lo menciones en las FAQs o descripción.
-
-Devuelve JSON válido (sin markdown) con esta estructura:
-{
-  "tagline": "eslogan corto y memorable que refleje la esencia del negocio (máx 60 caracteres)",
-  "description": "descripción atractiva del salón mencionando servicios reales y ubicación si está disponible (2-3 frases, máx 250 caracteres)",
-  "seoTitle": "${name} - ${businessType}${city ? ` en ${city}` : ""} | Reserva Online",
-  "seoDescription": "meta descripción SEO mencionando servicios reales y ciudad (máx 155 caracteres)",
-  "faqs": [
-    {"question": "pregunta sobre horarios o ubicación REAL", "answer": "respuesta con datos REALES"},
-    {"question": "pregunta sobre servicios que REALMENTE ofrecen", "answer": "respuesta mencionando servicios REALES"},
-    {"question": "pregunta sobre reservas o contacto", "answer": "respuesta con datos de contacto REALES si están disponibles"}
-  ],
-  "brandTone": "descripción del tono de marca ideal para este tipo de negocio"
-}
-
-REGLAS CRÍTICAS:
-1. Solo menciona servicios que aparezcan en la lista de servicios real
-2. Solo menciona horarios si están especificados
-3. Solo menciona ciudad/dirección si están especificadas
-4. Las FAQs deben responder con información REAL, no inventada
-5. Si faltan datos, haz las FAQs más genéricas sobre reservas y experiencia
-6. El contenido debe ser en español de España
-7. Adapta el tono al tipo de negocio (${businessType})`;
+REGLAS:
+1. Solo menciona servicios, horarios, ciudad o dirección si aparecen arriba. Si falta un dato, no lo menciones ni lo inventes.
+2. Las FAQs deben responder con información real; si faltan datos, hazlas genéricas sobre reservas y experiencia.
+3. Adapta el tono al tipo de negocio (${businessType}) sin caer en tópicos.
+${regenerate || only ? "4. Da una alternativa CLARAMENTE distinta a lo típico; evita fórmulas manidas.\n" : ""}
+${only ? `GENERA SOLO el campo solicitado.` : "GENERA todo el contenido de marca."}
+Devuelve únicamente JSON válido (sin markdown, sin texto extra) con esta estructura exacta:
+${schema}`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -185,6 +197,8 @@ REGLAS CRÍTICAS:
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
+        temperature: regenerate || only ? 0.95 : 0.7,
+        response_format: { type: "json_object" },
         messages: [
           { role: "user", content: prompt }
         ],
@@ -240,6 +254,15 @@ REGLAS CRÍTICAS:
       return new Response(
         JSON.stringify({ success: false, error: "Error al procesar respuesta de IA" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Regeneración parcial: no guardar ni sobrescribir el tenant, solo devolver.
+    if (isPartial) {
+      console.log("Partial regeneration returned:", only);
+      return new Response(
+        JSON.stringify({ success: true, branding, model: "google/gemini-2.5-flash" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

@@ -174,7 +174,7 @@ export function StylistsStep({
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        {validStylistsCount} / {maxStylists} profesionales • 💡 El color ayuda a diferenciar las citas
+        {validStylistsCount} / {maxStylists} profesionales · el color ayuda a diferenciar las citas
       </p>
 
       <div className="flex gap-3">

@@ -130,7 +130,7 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-foreground mb-1">
-          📸 Imágenes de tu negocio
+          Imágenes de tu negocio
         </h3>
         <p className="text-sm text-muted-foreground">
           Añade tu logo y una foto de tu salón
@@ -251,7 +251,7 @@ export function ImagesStep({ onNext, onPrev, tenantId, loading, setLoading }: St
       </div>
 
       <p className="text-[11px] text-muted-foreground text-center bg-secondary/30 rounded-xl py-2.5 px-4">
-        💡 Puedes saltar este paso y añadir imágenes después desde tu panel
+        Puedes saltar este paso y añadir imágenes después desde tu panel
       </p>
 
       <div className="flex gap-3">
