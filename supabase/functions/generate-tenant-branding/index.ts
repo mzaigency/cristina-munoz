@@ -46,7 +46,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    
+
     if (!LOVABLE_API_KEY) {
       return new Response(
         JSON.stringify({ success: false, error: "API de IA no configurada" }),
@@ -58,7 +58,6 @@ serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Fetch ALL real data from the tenant
     const { data: tenant, error: tenantError } = await adminClient
       .from("tenants")
       .select("*")
@@ -73,31 +72,26 @@ serve(async (req) => {
       );
     }
 
-    // Fetch services
     const { data: services } = await adminClient
       .from("services")
       .select("name, price, category, type")
       .eq("tenant_id", tenantId);
 
-    // Fetch stylists
     const { data: stylists } = await adminClient
       .from("tenant_stylists")
       .select("name")
       .eq("tenant_id", tenantId)
       .eq("is_active", true);
 
-    // Fetch business hours
     const { data: businessHours } = await adminClient
       .from("tenant_business_hours")
       .select("day_of_week, is_open, open_time, close_time, break_start, break_end")
       .eq("tenant_id", tenantId)
       .order("day_of_week");
 
-    // Extract business type from features
     const features = tenant.features as { business_type?: string; business_type_label?: string } | null;
     const businessType = features?.business_type_label || "Salón de belleza";
 
-    // Build rich context for AI
     const name = tenant.name;
     const city = tenant.city || "";
     const address = tenant.address || "";
@@ -105,11 +99,11 @@ serve(async (req) => {
     const whatsapp = tenant.whatsapp_number || "";
     const instagram = tenant.instagram_url || "";
 
-    const servicesInfo = services?.length 
+    const servicesInfo = services?.length
       ? services.map(s => `${s.name} (${s.category || s.type})${s.price ? ` - ${s.price}€` : ""}`).join(", ")
       : "No especificados";
 
-    const stylistsNames = stylists?.length 
+    const stylistsNames = stylists?.length
       ? stylists.map(s => s.name).join(", ")
       : "No especificados";
 
@@ -133,7 +127,6 @@ serve(async (req) => {
 
     console.log("Generating branding for:", name, "Type:", businessType, only ? `(solo: ${only})` : "");
 
-    // Esquema de salida por campo (para regeneración parcial).
     const FIELD_SCHEMAS: Record<BrandingField, string> = {
       tagline: `{"tagline": "eslogan corto y memorable, en minúscula sostenida salvo nombres propios (máx 55 caracteres)"}`,
       description: `{"description": "descripción cálida del negocio mencionando servicios reales y ubicación si existe (2-3 frases, máx 240 caracteres)"}`,
@@ -208,7 +201,7 @@ ${schema}`;
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error("AI API error:", aiResponse.status, errorText);
-      
+
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ success: false, error: "Demasiadas solicitudes. Intenta de nuevo en unos segundos." }),
@@ -221,7 +214,7 @@ ${schema}`;
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
+
       return new Response(
         JSON.stringify({ success: false, error: "Error al generar contenido con IA" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -238,7 +231,6 @@ ${schema}`;
       );
     }
 
-    // Parse AI response - clean up if wrapped in markdown
     let cleanContent = content.trim();
     if (cleanContent.startsWith("```json")) {
       cleanContent = cleanContent.replace(/^```json\s*/, "").replace(/\s*```$/, "");
@@ -257,7 +249,6 @@ ${schema}`;
       );
     }
 
-    // Regeneración parcial: no guardar ni sobrescribir el tenant, solo devolver.
     if (isPartial) {
       console.log("Partial regeneration returned:", only);
       return new Response(
@@ -266,9 +257,7 @@ ${schema}`;
       );
     }
 
-    // Save generation to audit table
     try {
-      // Get user from auth header
       const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader } },
@@ -276,7 +265,6 @@ ${schema}`;
       });
       const { data: { user } } = await userClient.auth.getUser();
 
-      // Mark previous generations as inactive
       await adminClient
         .from("tenant_ai_generations")
         .update({ is_active: false })
@@ -293,7 +281,6 @@ ${schema}`;
         is_active: true,
       });
 
-      // Update tenant with generated content
       await adminClient
         .from("tenants")
         .update({
@@ -305,7 +292,6 @@ ${schema}`;
       console.log("Saved AI generation and updated tenant");
     } catch (saveError) {
       console.error("Error saving generation:", saveError);
-      // Don't fail the request if save fails
     }
 
     console.log("Generated branding successfully");
