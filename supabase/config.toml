@@ -1,91 +1,65 @@
 project_id = "lyeyzdbplrgqsvyxpfek"
 
-[functions.webhook-valoracion]
-verify_jwt = false
-
-[functions.reset-password]
-verify_jwt = false
-
-[functions.request-password-reset]
-verify_jwt = false
-
-[functions.get-reviews]
-verify_jwt = false
-
-[functions.list-calendar-events]
-verify_jwt = false
-
-[functions.create-calendar-event]
-verify_jwt = false
-
-[functions.update-calendar-event]
-verify_jwt = false
-
-[functions.delete-calendar-event]
-verify_jwt = false
-
-[functions.submit-review]
-verify_jwt = false
-
-[functions.whatsapp-conversation]
-verify_jwt = false
-
-[functions.send-manual-whatsapp-message]
-verify_jwt = true
-
-[functions.send-tenant-welcome]
-verify_jwt = false
-
-[functions.provision-tenant-admin]
-verify_jwt = true
-
-[functions.generate-tenant-branding]
-verify_jwt = true
-
-[functions.get-tenant-config]
-verify_jwt = false
-
-[functions.get-whatsapp-credentials]
-verify_jwt = false
-
-[functions.send-whatsapp-notification]
-verify_jwt = false
-
-[functions.send-daily-reminders]
-verify_jwt = false
-
-[functions.create-business-checkout]
-verify_jwt = true
-
-[functions.provision-business]
-verify_jwt = true
-
-[functions.check-subscription]
-verify_jwt = true
-
-[functions.customer-portal]
-verify_jwt = true
-
-[functions.send-ticket]
-verify_jwt = true
-
-[functions.get-recommendations]
-verify_jwt = true
-
-[functions.send-verification-email]
-verify_jwt = false
-
-[functions.verify-email]
-verify_jwt = false
-
-[functions.delete-account]
-verify_jwt = true
-
-[functions.stripe-webhook]
-verify_jwt = false
-
-[functions.submit-sitemap-gsc]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = true
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.check-subscription]
+    verify_jwt = true
+  [functions.create-business-checkout]
+    verify_jwt = true
+  [functions.create-calendar-event]
+    verify_jwt = false
+  [functions.customer-portal]
+    verify_jwt = true
+  [functions.delete-account]
+    verify_jwt = true
+  [functions.delete-calendar-event]
+    verify_jwt = false
+  [functions.generate-tenant-branding]
+    verify_jwt = true
+  [functions.get-recommendations]
+    verify_jwt = true
+  [functions.get-reviews]
+    verify_jwt = false
+  [functions.get-tenant-config]
+    verify_jwt = false
+  [functions.get-whatsapp-credentials]
+    verify_jwt = false
+  [functions.list-calendar-events]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.provision-business]
+    verify_jwt = true
+  [functions.provision-tenant-admin]
+    verify_jwt = true
+  [functions.request-password-reset]
+    verify_jwt = false
+  [functions.reset-password]
+    verify_jwt = false
+  [functions.send-daily-reminders]
+    verify_jwt = false
+  [functions.send-manual-whatsapp-message]
+    verify_jwt = true
+  [functions.send-tenant-welcome]
+    verify_jwt = false
+  [functions.send-ticket]
+    verify_jwt = true
+  [functions.send-verification-email]
+    verify_jwt = false
+  [functions.send-whatsapp-notification]
+    verify_jwt = false
+  [functions.stripe-webhook]
+    verify_jwt = false
+  [functions.submit-review]
+    verify_jwt = false
+  [functions.submit-sitemap-gsc]
+    verify_jwt = false
+  [functions.update-calendar-event]
+    verify_jwt = false
+  [functions.verify-email]
+    verify_jwt = false
+  [functions.webhook-valoracion]
+    verify_jwt = false
+  [functions.whatsapp-conversation]
+    verify_jwt = false
