@@ -1,33 +1,34 @@
 /// <reference types="npm:@types/react@18.3.1" />
 
 import * as React from 'npm:react@18.3.1'
-
 import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Text,
+  Body, Container, Head, Heading, Html, Img, Link, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
 
-interface ReauthenticationEmailProps {
+interface Props {
   token: string
 }
 
-export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
-  <Html lang="en" dir="ltr">
+export const ReauthenticationEmail = ({ token }: Props) => (
+  <Html lang="es" dir="ltr">
     <Head />
-    <Preview>Your verification code</Preview>
+    <Preview>Tu código de verificación de Glowapp</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm reauthentication</Heading>
-        <Text style={text}>Use the code below to confirm your identity:</Text>
-        <Text style={codeStyle}>{token}</Text>
-        <Text style={footer}>
-          This code will expire shortly. If you didn't request this, you can
-          safely ignore this email.
+        <Section style={logoWrap}>
+          <Img src={LOGO} width="140" height="auto" alt="Glowapp" style={{ display: 'block', margin: '0 auto' }} />
+        </Section>
+        <Section style={card}>
+          <Text style={badge}>Verificación</Text>
+          <Heading style={h1}>Tu código de verificación</Heading>
+          <Text style={text}>Introduce este código para confirmar tu identidad:</Text>
+          <Text style={code}>{token}</Text>
+          <Text style={footer}>
+            El código caduca en unos minutos. Si no has pedido esto, ignora el email.
+          </Text>
+        </Section>
+        <Text style={copyright}>
+          © {new Date().getFullYear()} Glowapp · <Link href="https://glowapp.app" style={footerLink}>glowapp.app</Link>
         </Text>
       </Container>
     </Body>
@@ -36,25 +37,18 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
 
 export default ReauthenticationEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const codeStyle = {
-  fontFamily: 'Courier, monospace',
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 30px',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const LOGO = 'https://www.glowapp.app/email-assets/glowapp-logo.png'
+const PRIMARY = '#22408B'
+const ACCENT = '#98329A'
+const GRADIENT = `linear-gradient(100deg, ${PRIMARY}, ${ACCENT})`
+const main = { backgroundColor: '#ffffff', fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif", margin: 0, padding: 0 }
+const container = { maxWidth: '520px', margin: '0 auto', padding: '32px 20px' }
+const logoWrap = { textAlign: 'center' as const, marginBottom: '24px' }
+const card = { backgroundColor: '#ffffff', border: '1px solid #eceef3', borderRadius: '16px', padding: '32px 28px', boxShadow: '0 4px 20px -8px rgba(34,64,139,0.08)' }
+const badge = { display: 'inline-block', background: GRADIENT, color: '#ffffff', fontSize: '11px', fontWeight: 700 as const, letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '6px 14px', borderRadius: '999px', margin: '0 0 16px' }
+const h1 = { fontSize: '26px', fontWeight: 800 as const, color: '#131520', letterSpacing: '-0.02em', margin: '0 0 16px', lineHeight: 1.2 }
+const text = { fontSize: '15px', color: '#4a4d5c', lineHeight: 1.6, margin: '0 0 20px' }
+const code = { fontFamily: "'Courier New', monospace", fontSize: '32px', fontWeight: 800 as const, color: PRIMARY, letterSpacing: '0.2em', textAlign: 'center' as const, background: '#f5f6fa', borderRadius: '12px', padding: '18px', margin: '0 0 24px' }
+const footer = { fontSize: '12px', color: '#9098a8', margin: '20px 0 0', lineHeight: 1.5 }
+const copyright = { fontSize: '12px', color: '#9098a8', textAlign: 'center' as const, margin: '24px 0 0' }
+const footerLink = { color: PRIMARY, textDecoration: 'none', fontWeight: 600 as const }
