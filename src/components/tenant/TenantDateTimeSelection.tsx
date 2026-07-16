@@ -104,6 +104,8 @@ export const TenantDateTimeSelection = ({
   const [slotToStylists, setSlotToStylists] = useState<Record<string, TenantStylist[]>>({});
   const [selectedSlotStylist, setSelectedSlotStylist] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [retryTick, setRetryTick] = useState(0);
   const [stylistsLoading, setStylistsLoading] = useState(true);
 
   // Waitlist state
@@ -255,6 +257,7 @@ export const TenantDateTimeSelection = ({
 
     const fetchBookedSlots = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const dateStr = formatDateToISO(date);
 
@@ -268,16 +271,25 @@ export const TenantDateTimeSelection = ({
             ),
           );
 
+          // Fallar en cerrado: si alguna respuesta falla no podemos fiarnos de
+          // la disponibilidad mostrada. Mejor pedir reintento que ofrecer
+          // huecos que luego el servidor rechazará al confirmar.
+          if (responses.some((r) => r.error || !r.data)) {
+            setFusedAvailableSlots([]);
+            setSlotToStylists({});
+            setBookedRanges([]);
+            setLoadError(true);
+            return;
+          }
+
           // Merge all available slots and track which stylists are available per slot
           const slotsMap: Record<string, TenantStylist[]> = {};
           responses.forEach((response, index) => {
-            if (!response.error && response.data) {
-              const slots = computeAvailableSlotsForStylist(date, response.data);
-              slots.forEach((slot) => {
-                if (!slotsMap[slot]) slotsMap[slot] = [];
-                slotsMap[slot].push(stylists[index]);
-              });
-            }
+            const slots = computeAvailableSlotsForStylist(date, response.data);
+            slots.forEach((slot) => {
+              if (!slotsMap[slot]) slotsMap[slot] = [];
+              slotsMap[slot].push(stylists[index]);
+            });
           });
 
           const mergedSlots = Object.keys(slotsMap).sort();
@@ -290,8 +302,11 @@ export const TenantDateTimeSelection = ({
             body: { date: dateStr, stylist, totalDuration, tenant_id: tenantId },
           });
 
-          if (error) {
+          if (error || !data) {
+            // Fallar en cerrado: sin datos no hay huecos que ofrecer
             setBookedRanges([]);
+            setFusedAvailableSlots([]);
+            setLoadError(true);
             return;
           }
 
@@ -302,13 +317,14 @@ export const TenantDateTimeSelection = ({
       } catch {
         setBookedRanges([]);
         setFusedAvailableSlots([]);
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
     };
 
     fetchBookedSlots();
-  }, [date, stylist, totalDuration, services, stylists, stylistsLoading, hoursLoading, tenantId]);
+  }, [date, stylist, totalDuration, services, stylists, stylistsLoading, hoursLoading, tenantId, retryTick]);
 
   // Generate available time slots for specific stylist
   const getAvailableTimeSlots = (selectedDate: Date | undefined): string[] => {
@@ -379,7 +395,9 @@ export const TenantDateTimeSelection = ({
     });
   };
 
-  const timeSlots = stylist === "any" ? fusedAvailableSlots : getAvailableTimeSlots(date);
+  // Con error de carga nunca ofrecer huecos: bookedRanges vacío haría parecer
+  // el día entero libre (fallo en abierto).
+  const timeSlots = loadError ? [] : stylist === "any" ? fusedAvailableSlots : getAvailableTimeSlots(date);
 
   const handleTimeSelect = (slot: string) => {
     setTime(slot);
@@ -542,6 +560,16 @@ export const TenantDateTimeSelection = ({
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               {t("booking.loadingAvailable")}
+            </div>
+          ) : loadError ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                <Clock className="h-5 w-5 text-destructive shrink-0" />
+                <p className="text-sm text-destructive">{t("booking.loadError")}</p>
+              </div>
+              <Button variant="outline" className="w-full" onClick={() => setRetryTick((n) => n + 1)}>
+                {t("booking.retry")}
+              </Button>
             </div>
           ) : timeSlots.length === 0 ? (
             <div className="space-y-4">

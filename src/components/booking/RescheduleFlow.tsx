@@ -37,6 +37,7 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -54,13 +55,29 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
     return h * 60 + m;
   };
 
-  const computeAvailableSlots = (bookedSlots: BookedSlot[], date: Date, durationMinutes: number) => {
-    const bookedRanges = bookedSlots
+  // Rangos ocupados a partir de la respuesta de check-availability. Si la
+  // nueva fecha es el mismo día de la cita, se excluye el hueco de la propia
+  // cita (si no, se bloquearía a sí misma al moverla dentro del mismo día).
+  const toBookedRanges = (bookedSlots: BookedSlot[], date: Date) => {
+    const ranges = bookedSlots
       .filter((s) => typeof s?.Hora === 'string' && typeof s?.total_duration === 'number')
       .map((s) => {
         const start = timeToMinutes(s.Hora);
         return { start, end: start + Math.max(0, s.total_duration) };
       });
+
+    if (format(date, 'yyyy-MM-dd') === booking.Fecha) {
+      const ownStart = timeToMinutes(booking.Hora);
+      const ownEnd = ownStart + booking.total_duration;
+      const idx = ranges.findIndex((r) => r.start === ownStart && r.end === ownEnd);
+      if (idx !== -1) ranges.splice(idx, 1);
+    }
+
+    return ranges;
+  };
+
+  const computeAvailableSlots = (bookedSlots: BookedSlot[], date: Date, durationMinutes: number) => {
+    const bookedRanges = toBookedRanges(bookedSlots, date);
 
     const today = new Date();
     const isToday = today.toDateString() === date.toDateString();
@@ -79,16 +96,6 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
     return slots;
   };
 
-  // Generate default time slots (fallback)
-  const generateDefaultSlots = () => {
-    const slots: string[] = [];
-    for (let hour = 9; hour <= 20; hour++) {
-      slots.push(`${hour.toString().padStart(2, '0')}:00`);
-      if (hour < 20) slots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
-    return slots;
-  };
-
   // Fetch available slots when date changes
   useEffect(() => {
     if (selectedDate) {
@@ -100,32 +107,37 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
     if (!selectedDate) return;
 
     setLoading(true);
+    setLoadError(false);
     try {
-      // If we have tenant_id, fetch real availability (blocked slots) and compute available ones
-      if (booking.tenant_id) {
-        const { data, error } = await supabase.functions.invoke('check-availability', {
-          body: {
-            tenant_id: booking.tenant_id,
-            date: format(selectedDate, 'yyyy-MM-dd'),
-            stylist: booking.stylist,
-            totalDuration: booking.total_duration,
-          },
-        });
-
-        const bookedSlots = (data?.bookedSlots || []) as BookedSlot[];
-
-        if (!error && Array.isArray(bookedSlots)) {
-          const computed = computeAvailableSlots(bookedSlots, selectedDate, booking.total_duration);
-          setAvailableSlots(computed);
-          return;
-        }
+      // Fallar en cerrado: sin tenant_id o sin datos reales no se pueden
+      // ofrecer huecos (una parrilla genérica enseñaría horas ya ocupadas).
+      if (!booking.tenant_id) {
+        setAvailableSlots([]);
+        setLoadError(true);
+        return;
       }
 
-      // Fallback to default slots
-      setAvailableSlots(generateDefaultSlots());
+      const { data, error } = await supabase.functions.invoke('check-availability', {
+        body: {
+          tenant_id: booking.tenant_id,
+          date: format(selectedDate, 'yyyy-MM-dd'),
+          stylist: booking.stylist,
+          totalDuration: booking.total_duration,
+        },
+      });
+
+      if (error || !Array.isArray(data?.bookedSlots)) {
+        setAvailableSlots([]);
+        setLoadError(true);
+        return;
+      }
+
+      const computed = computeAvailableSlots(data.bookedSlots as BookedSlot[], selectedDate, booking.total_duration);
+      setAvailableSlots(computed);
     } catch (error) {
       console.error('Error fetching slots:', error);
-      setAvailableSlots(generateDefaultSlots());
+      setAvailableSlots([]);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -154,6 +166,44 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
       const startMinutes = timeToMinutes(horaToSave);
       const endMinutes = (startMinutes + booking.total_duration) % (24 * 60);
       const endTimeToSave = `${minutesToTime(endMinutes)}:00`;
+
+      // Revalidar disponibilidad justo antes de guardar: la agenda puede
+      // haber cambiado desde que se cargaron los huecos, y el UPDATE directo
+      // no pasa por la validación de create-booking.
+      const { data: availData, error: availError } = await supabase.functions.invoke('check-availability', {
+        body: {
+          tenant_id: booking.tenant_id,
+          date: format(selectedDate, 'yyyy-MM-dd'),
+          stylist: booking.stylist,
+          totalDuration: booking.total_duration,
+        },
+      });
+
+      if (availError || !Array.isArray(availData?.bookedSlots)) {
+        toast({
+          title: "No se pudo comprobar la disponibilidad",
+          description: "Inténtalo de nuevo en unos segundos.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const endMinutesReal = startMinutes + booking.total_duration;
+      const conflict = toBookedRanges(availData.bookedSlots as BookedSlot[], selectedDate).some(
+        (r) => startMinutes < r.end && endMinutesReal > r.start,
+      );
+
+      if (conflict) {
+        toast({
+          title: "Esa hora ya no está disponible",
+          description: "Alguien la ha ocupado mientras tanto. Elige otra hora.",
+          variant: "destructive",
+        });
+        setSelectedTime(null);
+        setStep("time");
+        fetchAvailableSlots();
+        return;
+      }
 
       const { error } = await supabase
         .from('bookings')
@@ -297,6 +347,14 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
                   <div className="flex flex-col items-center justify-center py-12 gap-3">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     <p className="text-sm text-muted-foreground">Cargando horarios...</p>
+                  </div>
+                ) : loadError ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
+                    <p className="text-sm font-medium text-foreground">No se pudieron cargar los horarios</p>
+                    <p className="text-xs text-muted-foreground">Comprueba tu conexión e inténtalo de nuevo.</p>
+                    <Button variant="outline" size="sm" onClick={fetchAvailableSlots}>
+                      Reintentar
+                    </Button>
                   </div>
                 ) : availableSlots.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">

@@ -266,7 +266,13 @@ serve(async (req) => {
 
       if (error) {
         console.error(`Error fetching bookings for ${s.slug}:`, error);
-        continue;
+        // Fallar en cerrado: sin las reservas reales no se puede afirmar que
+        // un hueco esté libre. Devolver 500 para que el front muestre error
+        // en vez de tratar al estilista como disponible todo el día.
+        return new Response(
+          JSON.stringify({ error: `Could not fetch bookings for stylist ${s.slug}` }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
       }
 
       const slots: Array<{ Hora: string; total_duration: number }> = [];

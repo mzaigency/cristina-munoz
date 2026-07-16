@@ -113,6 +113,8 @@ const es = {
   "booking.waitlistSuccessTitle": "¡Te avisaremos! 🔔",
   "booking.waitlistSuccessDesc": "Estás en la lista de espera. Si surge un hueco, te llegará un aviso para confirmarlo con un toque.",
   "booking.loadingAvailable": "Cargando horarios disponibles...",
+  "booking.loadError": "No se pudieron cargar los horarios disponibles. Comprueba tu conexión e inténtalo de nuevo.",
+  "booking.retry": "Reintentar",
 
   // Galería
   "gallery.title": "Galería",
@@ -270,6 +272,8 @@ const ca: Record<keyof typeof es, string> = {
   "booking.waitlistSuccessTitle": "T'avisarem! 🔔",
   "booking.waitlistSuccessDesc": "Ets a la llista d'espera. Si queda una hora lliure, t'arribarà un avís per confirmar-la amb un toc.",
   "booking.loadingAvailable": "Carregant horaris disponibles...",
+  "booking.loadError": "No s'han pogut carregar els horaris disponibles. Comprova la connexió i torna-ho a provar.",
+  "booking.retry": "Torna-ho a provar",
 
   "gallery.title": "Galeria",
   "gallery.eyebrow": "l'espai",

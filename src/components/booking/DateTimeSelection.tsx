@@ -72,6 +72,8 @@ export const DateTimeSelection = ({
   const [slotToStylists, setSlotToStylists] = useState<Record<string, Array<{ slug: string; id: string; name: string; color?: string | null; avatar_url?: string | null }>>>({});
   const [selectedSlotStylist, setSelectedSlotStylist] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [retryTick, setRetryTick] = useState(0);
   const [stylists, setStylists] = useState<Array<{ slug: string; id: string; name: string; color?: string | null; avatar_url?: string | null }>>([]);
 
   // Waitlist state
@@ -186,6 +188,7 @@ export const DateTimeSelection = ({
 
     const fetchBookedSlots = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const dateStr = formatDateToISO(date);
 
@@ -199,16 +202,24 @@ export const DateTimeSelection = ({
             ),
           );
 
+          // Fallar en cerrado: si alguna respuesta falla no podemos fiarnos
+          // de la disponibilidad mostrada.
+          if (responses.some((r) => r.error || !r.data)) {
+            setFusedAvailableSlots([]);
+            setSlotToStylists({});
+            setBookedRanges([]);
+            setLoadError(true);
+            return;
+          }
+
           // Merge all available slots and track which stylists are available per slot
           const slotsMap: Record<string, Array<{ slug: string; id: string; name: string; color?: string | null; avatar_url?: string | null }>> = {};
           responses.forEach((response, idx) => {
-            if (!response.error && response.data) {
-              const slots = computeAvailableSlotsForStylist(date, response.data);
-              slots.forEach((slot) => {
-                if (!slotsMap[slot]) slotsMap[slot] = [];
-                slotsMap[slot].push(stylists[idx]);
-              });
-            }
+            const slots = computeAvailableSlotsForStylist(date, response.data);
+            slots.forEach((slot) => {
+              if (!slotsMap[slot]) slotsMap[slot] = [];
+              slotsMap[slot].push(stylists[idx]);
+            });
           });
 
           const mergedSlots = Object.keys(slotsMap).sort();
@@ -221,8 +232,11 @@ export const DateTimeSelection = ({
             body: { date: dateStr, stylist, totalDuration, tenant_id: tenantId },
           });
 
-          if (error) {
+          if (error || !data) {
+            // Fallar en cerrado: con bookedRanges vacío el día entero parecería libre
             setBookedRanges([]);
+            setFusedAvailableSlots([]);
+            setLoadError(true);
             return;
           }
 
@@ -233,13 +247,14 @@ export const DateTimeSelection = ({
       } catch {
         setBookedRanges([]);
         setFusedAvailableSlots([]);
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
     };
 
     fetchBookedSlots();
-  }, [date, stylist, totalDuration, services, stylists, hoursLoading, tenantId]);
+  }, [date, stylist, totalDuration, services, stylists, hoursLoading, tenantId, retryTick]);
 
   // Generate available time slots for specific stylist
   const getAvailableTimeSlots = (selectedDate: Date | undefined): string[] => {
@@ -252,7 +267,8 @@ export const DateTimeSelection = ({
     });
   };
 
-  const timeSlots = stylist === "any" ? fusedAvailableSlots : getAvailableTimeSlots(date);
+  // Con error de carga nunca ofrecer huecos (bookedRanges vacío = día entero "libre")
+  const timeSlots = loadError ? [] : stylist === "any" ? fusedAvailableSlots : getAvailableTimeSlots(date);
 
   // Update time when custom hour or minute changes
   useEffect(() => {
@@ -438,7 +454,19 @@ export const DateTimeSelection = ({
                 </div>
               )}
 
-              {timeSlots.length === 0 ? (
+              {loadError ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                    <Clock className="h-5 w-5 text-destructive shrink-0" />
+                    <p className="text-sm text-destructive">
+                      No se pudieron cargar los horarios disponibles. Comprueba tu conexión e inténtalo de nuevo.
+                    </p>
+                  </div>
+                  <Button variant="outline" className="w-full" onClick={() => setRetryTick((n) => n + 1)}>
+                    Reintentar
+                  </Button>
+                </div>
+              ) : timeSlots.length === 0 ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-border/50">
                     <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
