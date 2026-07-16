@@ -32,14 +32,11 @@ export default function ForgotPassword() {
   const handleSubmit = async (values: ForgotPasswordFormValues) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('request-password-reset', {
-        body: { email: values.email.toLowerCase() }
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        values.email.toLowerCase(),
+        { redirectTo: `${window.location.origin}/nueva-contrasena` }
+      );
       if (error) throw error;
-      if (data?.error) {
-        toast({ title: "Error", description: data.error, variant: "destructive" });
-        return;
-      }
       setEmailSent(true);
     } catch (error: any) {
       console.error('Error requesting password reset:', error);

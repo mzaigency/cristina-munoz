@@ -471,6 +471,7 @@ export default function Auth() {
         email: v.email,
         password: v.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: `${v.firstName} ${v.lastName}`,
             username: v.username.toLowerCase(),
@@ -497,18 +498,6 @@ export default function Auth() {
         setEmailSent(true);
 
         await supabase.auth.signOut();
-
-        try {
-          await supabase.functions.invoke("send-verification-email", {
-            body: {
-              userId: data.user.id,
-              email: v.email,
-              userName: v.firstName,
-            },
-          });
-        } catch {
-          // Still show confirmation
-        }
 
         setLoading(false);
         return;

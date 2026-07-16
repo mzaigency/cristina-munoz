@@ -17,12 +17,12 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  signup: '✨ Confirma tu cuenta de Glowapp',
+  invite: 'Te han invitado a Glowapp',
+  magiclink: 'Tu enlace para acceder a Glowapp',
+  recovery: '🔐 Recupera tu contraseña de Glowapp',
+  email_change: 'Confirma tu nuevo email en Glowapp',
+  reauthentication: 'Tu código de verificación de Glowapp',
 }
 
 // Template mapping
@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "cristina-munoz"
+const SITE_NAME = "Glowapp"
 const SENDER_DOMAIN = "notify.glowapp.app"
 const ROOT_DOMAIN = "glowapp.app"
 const FROM_DOMAIN = "glowapp.app" // Domain shown in From address (may be root or sender subdomain)

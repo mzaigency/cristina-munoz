@@ -1,6 +1,6 @@
 import { SEO } from "@/components/SEO";
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,38 +26,56 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [invalidToken, setInvalidToken] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  useEffect(() => { if (!token) setInvalidToken(true); }, [token]);
+  // Supabase auth places a recovery session in the URL hash. Detect it before
+  // deciding whether the link is valid.
+  useEffect(() => {
+    let mounted = true;
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        setInvalidToken(false);
+        setCheckingSession(false);
+      }
+    });
+
+    // Grace period for detectSessionInUrl to hydrate
+    const t = setTimeout(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      if (!data.session) setInvalidToken(true);
+      setCheckingSession(false);
+    }, 800);
+
+    return () => {
+      mounted = false;
+      clearTimeout(t);
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   const handleSubmit = async (values: ResetPasswordFormValues) => {
-    if (!token) { setInvalidToken(true); return; }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('reset-password', {
-        body: { token, newPassword: values.password }
-      });
+      const { error } = await supabase.auth.updateUser({ password: values.password });
       if (error) throw error;
-      if (data?.error) {
-        if (data.error.includes('expirado') || data.error.includes('válido')) setInvalidToken(true);
-        else toast({ title: "Error", description: data.error, variant: "destructive" });
-        return;
-      }
       setSuccess(true);
+      await supabase.auth.signOut();
       toast({ title: "¡Contraseña actualizada!", description: "Ya puedes iniciar sesión con tu nueva contraseña." });
     } catch (error: any) {
       console.error('Error resetting password:', error);
-      toast({ title: "Error", description: "Ha ocurrido un error. Inténtalo de nuevo más tarde.", variant: "destructive" });
+      toast({ title: "Error", description: error?.message || "Ha ocurrido un error. Inténtalo de nuevo más tarde.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -78,7 +96,11 @@ export default function ResetPassword() {
 
       <div className="px-5 py-8">
         <div className="max-w-md mx-auto">
-          {success ? (
+          {checkingSession ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : success ? (
             <div className="rounded-2xl bg-card/60 backdrop-blur-lg border border-border/30 p-6 shadow-sm text-center space-y-5">
               <div className="mx-auto w-14 h-14 rounded-full bg-[hsl(142,76%,36%)]/10 flex items-center justify-center">
                 <CheckCircle className="h-7 w-7 text-[hsl(142,76%,36%)]" />

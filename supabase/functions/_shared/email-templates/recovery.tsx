@@ -1,43 +1,39 @@
 /// <reference types="npm:@types/react@18.3.1" />
 
 import * as React from 'npm:react@18.3.1'
-
 import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Text,
+  Body, Button, Container, Head, Heading, Html, Img, Link, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
 
-interface RecoveryEmailProps {
+interface Props {
   siteName: string
   confirmationUrl: string
 }
 
-export const RecoveryEmail = ({
-  siteName,
-  confirmationUrl,
-}: RecoveryEmailProps) => (
-  <Html lang="en" dir="ltr">
+export const RecoveryEmail = ({ siteName, confirmationUrl }: Props) => (
+  <Html lang="es" dir="ltr">
     <Head />
-    <Preview>Reset your password for {siteName}</Preview>
+    <Preview>Restablece tu contraseña de Glowapp</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Reset your password</Heading>
-        <Text style={text}>
-          We received a request to reset your password for {siteName}. Click
-          the button below to choose a new password.
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Reset Password
-        </Button>
-        <Text style={footer}>
-          If you didn't request a password reset, you can safely ignore this
-          email. Your password will not be changed.
+        <Section style={logoWrap}>
+          <Img src={LOGO} width="140" height="auto" alt="Glowapp" style={{ display: 'block', margin: '0 auto' }} />
+        </Section>
+        <Section style={card}>
+          <Text style={badge}>Recuperar contraseña</Text>
+          <Heading style={h1}>Restablece tu contraseña</Heading>
+          <Text style={text}>
+            Hemos recibido una solicitud para cambiar la contraseña de tu cuenta en{' '}
+            <strong style={brand}>{siteName}</strong>. Pulsa el botón para crear una nueva.
+          </Text>
+          <Button style={button} href={confirmationUrl}>Crear nueva contraseña</Button>
+          <Text style={muted}>El enlace expira en 1 hora.</Text>
+          <Text style={footer}>
+            Si no has solicitado este cambio, ignora este email. Tu contraseña actual sigue activa.
+          </Text>
+        </Section>
+        <Text style={copyright}>
+          © {new Date().getFullYear()} Glowapp · <Link href="https://glowapp.app" style={footerLink}>glowapp.app</Link>
         </Text>
       </Container>
     </Body>
@@ -46,26 +42,20 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const LOGO = 'https://www.glowapp.app/email-assets/glowapp-logo.png'
+const PRIMARY = '#22408B'
+const ACCENT = '#98329A'
+const GRADIENT = `linear-gradient(100deg, ${PRIMARY}, ${ACCENT})`
+const main = { backgroundColor: '#ffffff', fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif", margin: 0, padding: 0 }
+const container = { maxWidth: '520px', margin: '0 auto', padding: '32px 20px' }
+const logoWrap = { textAlign: 'center' as const, marginBottom: '24px' }
+const card = { backgroundColor: '#ffffff', border: '1px solid #eceef3', borderRadius: '16px', padding: '32px 28px', boxShadow: '0 4px 20px -8px rgba(34,64,139,0.08)' }
+const badge = { display: 'inline-block', background: GRADIENT, color: '#ffffff', fontSize: '11px', fontWeight: 700 as const, letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '6px 14px', borderRadius: '999px', margin: '0 0 16px' }
+const h1 = { fontSize: '26px', fontWeight: 800 as const, color: '#131520', letterSpacing: '-0.02em', margin: '0 0 16px', lineHeight: 1.2 }
+const text = { fontSize: '15px', color: '#4a4d5c', lineHeight: 1.6, margin: '0 0 24px' }
+const brand = { color: PRIMARY, fontWeight: 700 as const }
+const button = { background: GRADIENT, color: '#ffffff', fontSize: '15px', fontWeight: 700 as const, borderRadius: '12px', padding: '14px 28px', textDecoration: 'none', display: 'inline-block' }
+const muted = { fontSize: '13px', color: '#676B7E', margin: '20px 0 0' }
+const footer = { fontSize: '12px', color: '#9098a8', margin: '24px 0 0', lineHeight: 1.5 }
+const copyright = { fontSize: '12px', color: '#9098a8', textAlign: 'center' as const, margin: '24px 0 0' }
+const footerLink = { color: PRIMARY, textDecoration: 'none', fontWeight: 600 as const }
