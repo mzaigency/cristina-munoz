@@ -22,7 +22,7 @@ interface Props {
 const PRIMARY = '#22408B'
 const ACCENT = '#98329A'
 const GRADIENT = `linear-gradient(100deg, ${PRIMARY}, ${ACCENT})`
-const GLOWAPP_LOGO = 'https://www.glowapp.app/email-assets/glowapp-logo.png'
+const GLOWAPP_LOGO = 'https://cristina-munoz.lovable.app/email-assets/glowapp-logo.png'
 
 const Email = ({
   customerName = 'Hola',
@@ -112,7 +112,7 @@ export const template = {
   previewData: {
     customerName: 'Laura',
     tenantName: 'Cristina Muñoz Perruqueria',
-    tenantLogoUrl: 'https://www.glowapp.app/email-assets/glowapp-logo.png',
+    tenantLogoUrl: 'https://cristina-munoz.lovable.app/email-assets/glowapp-logo.png',
     tenantAddress: 'C/ Major 12',
     tenantCity: 'Barcelona',
     tenantPhone: '+34 600 000 000',
