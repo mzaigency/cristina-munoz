@@ -308,6 +308,13 @@ async function processSubscriptionChange(
 
   logStep("Tenant synced", { tenantId, newPlanSlug, expiresAt, status: subscription.status });
 
+  // Send tenant welcome email on first activation (idempotent via email_send_log check)
+  try {
+    await maybeSendTenantWelcome(supabase, tenantId);
+  } catch (e) {
+    logStep("welcome email dispatch failed", { error: String(e) });
+  }
+
   if (userId && (deactivatedStylists > 0 || deactivatedServices > 0)) {
     await createNotification(
       supabase,
@@ -316,6 +323,72 @@ async function processSubscriptionChange(
       "Plan actualizado",
       `Tu plan ha cambiado a ${newPlanSlug}. Se han desactivado ${deactivatedStylists} profesional(es) y ${deactivatedServices} servicio(s) para ajustarse a los nuevos límites.`
     );
+  }
+}
+
+async function maybeSendTenantWelcome(supabase: any, tenantId: string) {
+  const { data: tenant } = await supabase
+    .from("tenants")
+    .select("id, name, slug, email, logo_url")
+    .eq("id", tenantId)
+    .maybeSingle();
+
+  if (!tenant?.email) {
+    logStep("welcome: tenant has no email, skipping", { tenantId });
+    return;
+  }
+
+  // Idempotency: only send once per tenant email
+  const { data: prior } = await supabase
+    .from("email_send_log")
+    .select("id")
+    .eq("template_name", "tenant-welcome")
+    .eq("recipient_email", tenant.email)
+    .limit(1)
+    .maybeSingle();
+
+  if (prior) {
+    logStep("welcome: already sent, skipping", { tenantId });
+    return;
+  }
+
+  // Try to fetch owner name from profile
+  let ownerName = tenant.name || "Hola";
+  const { data: adminRow } = await supabase
+    .from("tenant_admins")
+    .select("user_id")
+    .eq("tenant_id", tenantId)
+    .eq("is_owner", true)
+    .maybeSingle();
+  if (adminRow?.user_id) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, first_name")
+      .eq("id", adminRow.user_id)
+      .maybeSingle();
+    ownerName = profile?.first_name || (profile?.full_name || "").split(" ")[0] || ownerName;
+  }
+
+  const { error: invokeError } = await supabase.functions.invoke("send-transactional-email", {
+    body: {
+      templateName: "tenant-welcome",
+      recipientEmail: tenant.email,
+      idempotencyKey: `tenant-welcome-${tenantId}`,
+      templateData: {
+        ownerName,
+        tenantName: tenant.name,
+        tenantSlug: tenant.slug,
+        tenantLogoUrl: tenant.logo_url || null,
+        adminUrl: "https://glowapp.app/admin",
+        publicUrl: tenant.slug ? `https://glowapp.app/${tenant.slug}` : undefined,
+      },
+    },
+  });
+
+  if (invokeError) {
+    logStep("welcome: invoke error", { error: invokeError.message });
+  } else {
+    logStep("welcome email queued", { tenantId, email: tenant.email });
   }
 }
 
