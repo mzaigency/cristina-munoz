@@ -665,6 +665,7 @@ serve(async (req) => {
           notes: null,
           color: stylistColor,
           canal: bookingData.canal || "web",
+          source: bookingData.source || null,
           recurrence_group_id: recurrenceGroupId,
           recurrence_pattern: recurrencePattern,
         };
@@ -708,6 +709,7 @@ serve(async (req) => {
           notes: null,
           color: stylistColor,
           canal: bookingData.canal || "web",
+          source: bookingData.source || null,
           recurrence_group_id: recurrenceGroupId,
           recurrence_pattern: recurrencePattern,
         };
@@ -750,6 +752,7 @@ serve(async (req) => {
             notes: null,
             color: stylistColor,
             canal: bookingData.canal || "web",
+          source: bookingData.source || null,
             recurrence_group_id: recurrenceGroupId,
             recurrence_pattern: recurrencePattern,
           };
