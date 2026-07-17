@@ -102,6 +102,26 @@ const TenantLanding = () => {
     }
   }, [editParam, isAdmin, isEditMode]);
 
+  // Track QR scans (once per session per tenant)
+  useEffect(() => {
+    if (!isQrScan || !tenant?.id) return;
+    const key = `glowapp_qr_tracked_${tenant.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    void trackEvent({
+      event_type: "qr_scan",
+      section_id: "qr_scan",
+      tenant_id: tenant.id,
+      metadata: {
+        utm_source: searchParams.get("utm_source"),
+        utm_medium: searchParams.get("utm_medium"),
+        utm_campaign: searchParams.get("utm_campaign"),
+        referrer: document.referrer || null,
+      },
+    });
+  }, [isQrScan, tenant?.id, searchParams]);
+
+
   const handleReviewSubmitted = useCallback(() => {
     // Refresh reviews section
     setReviewsKey(prev => prev + 1);
