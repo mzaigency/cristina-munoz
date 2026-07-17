@@ -224,6 +224,7 @@ const App = () => (
                         <Route path="/verify-email" element={<VerifyEmail />} />
                         <Route path="/privacidad" element={<PrivacyPolicy />} />
                         <Route path="/terminos" element={<TermsOfUse />} />
+                        <Route path="/unsubscribe" element={<Unsubscribe />} />
 
                         {/* SEO Directory routes - category and category/city */}
                         <Route path="/peluquerias" element={<DirectoryLanding />} />
