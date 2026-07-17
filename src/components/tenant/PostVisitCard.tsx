@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Star, Heart, CalendarPlus, X } from "lucide-react";
+import { Star, Heart, CalendarPlus, X, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRecentBooking } from "@/hooks/useRecentBooking";
+import { useFollows } from "@/hooks/useFollows";
 
 interface PostVisitCardProps {
   tenantId: string;
