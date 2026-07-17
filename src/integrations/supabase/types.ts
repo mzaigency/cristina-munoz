@@ -119,6 +119,7 @@ export type Database = {
           review_request_sent: string | null
           services: Json
           skip_availability_check: boolean
+          source: string | null
           status: string
           stylist: string
           Telefono: string
@@ -152,6 +153,7 @@ export type Database = {
           review_request_sent?: string | null
           services: Json
           skip_availability_check?: boolean
+          source?: string | null
           status?: string
           stylist: string
           Telefono: string
@@ -185,6 +187,7 @@ export type Database = {
           review_request_sent?: string | null
           services?: Json
           skip_availability_check?: boolean
+          source?: string | null
           status?: string
           stylist?: string
           Telefono?: string
@@ -861,6 +864,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      otp_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          tenant_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          tenant_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          tenant_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "otp_codes_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"

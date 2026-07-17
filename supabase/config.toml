@@ -11,6 +11,10 @@ project_id = "lyeyzdbplrgqsvyxpfek"
     verify_jwt = false
   [functions.auth-email-hook]
     verify_jwt = false
+  [functions.send-otp]
+    verify_jwt = false
+  [functions.verify-otp-and-book]
+    verify_jwt = false
   [functions.check-subscription]
     verify_jwt = true
   [functions.create-business-checkout]
