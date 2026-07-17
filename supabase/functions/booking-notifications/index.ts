@@ -156,7 +156,8 @@ serve(async (req) => {
         "Fecha",
         "Hora",
         tenant_id,
-        tenants!inner(name)
+        services,
+        tenants!inner(name, logo_url, address, city, phone, google_maps_url)
       `,
       )
       .eq("Fecha", tomorrowDate)
@@ -181,7 +182,8 @@ serve(async (req) => {
           continue;
         }
 
-        const tenantName = (booking.tenants as any)?.name || "el salón";
+        const tenant = booking.tenants as any;
+        const tenantName = tenant?.name || "el salón";
         const formattedTime = formatTime(booking["Hora"]);
 
         try {
@@ -196,14 +198,34 @@ serve(async (req) => {
 
           const email = await getUserEmail(booking.user_id);
           if (email) {
-            await sendReminderEmail({
-              to: email,
-              customerName: booking.customer_name || "",
-              tenantName,
-              whenLabel: "mañana",
-              date: formatDate(booking["Fecha"]),
-              time: formattedTime,
-            });
+            try {
+              const servicesText = Array.isArray(booking.services)
+                ? booking.services.map((s: any) => s?.name).filter(Boolean).join(", ")
+                : "";
+              await supabase.functions.invoke("send-transactional-email", {
+                body: {
+                  templateName: "booking-reminder-24h",
+                  recipientEmail: email,
+                  idempotencyKey: `booking-reminder-24h-${booking.id}`,
+                  templateData: {
+                    customerName: booking.customer_name || "",
+                    tenantName,
+                    tenantLogoUrl: tenant?.logo_url ?? null,
+                    tenantAddress: tenant?.address ?? null,
+                    tenantCity: tenant?.city ?? null,
+                    tenantPhone: tenant?.phone ?? null,
+                    mapsUrl: tenant?.google_maps_url ?? null,
+                    date: formatDate(booking["Fecha"]),
+                    time: formattedTime,
+                    services: servicesText,
+                    manageUrl: "https://glowapp.app/mis-citas",
+                  },
+                },
+              });
+              results.emails_sent++;
+            } catch (emailErr) {
+              console.error("Error sending 24h reminder email:", emailErr);
+            }
           }
 
           await supabase.from("bookings").update({ reminder_sent: now.toISOString() }).eq("id", booking.id);

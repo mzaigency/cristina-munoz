@@ -837,8 +837,12 @@ serve(async (req) => {
       // Notify the user who made the booking
       if (bookingData.user_id) {
         try {
-          // Get tenant name for the notification
-          const { data: tenantData } = await supabase.from("tenants").select("name").eq("id", tenantId).single();
+          // Get tenant details for the email + push
+          const { data: tenantData } = await supabase
+            .from("tenants")
+            .select("name, logo_url, address, city, phone, google_maps_url")
+            .eq("id", tenantId)
+            .single();
 
           const tenantName = tenantData?.name || "el salón";
 
@@ -855,6 +859,34 @@ serve(async (req) => {
             },
           });
           console.log("Booking confirmation sent to user:", bookingData.user_id);
+
+          // Send confirmation email (only for first booking of a recurrence)
+          if (customer_email) {
+            try {
+              await supabase.functions.invoke("send-transactional-email", {
+                body: {
+                  templateName: "booking-confirmation",
+                  recipientEmail: customer_email,
+                  idempotencyKey: `booking-confirm-${createdBookings[0]?.id}`,
+                  templateData: {
+                    customerName: customer_name,
+                    tenantName,
+                    tenantLogoUrl: tenantData?.logo_url ?? null,
+                    tenantAddress: tenantData?.address ?? null,
+                    tenantCity: tenantData?.city ?? null,
+                    tenantPhone: tenantData?.phone ?? null,
+                    mapsUrl: tenantData?.google_maps_url ?? null,
+                    date: formattedDate,
+                    time: bookingTime.slice(0, 5),
+                    services: bookingData.services.map((s) => s.name).join(", "),
+                    manageUrl: "https://glowapp.app/mis-citas",
+                  },
+                },
+              });
+            } catch (emailErr) {
+              console.error("Error sending confirmation email:", emailErr);
+            }
+          }
         } catch (userPushError) {
           console.error("Error sending user booking confirmation:", userPushError);
         }
