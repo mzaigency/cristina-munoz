@@ -58,6 +58,7 @@ const bookingRequestSchema = z
     skipAvailabilityCheck: z.boolean().optional(),
     tenant_id: z.string().uuid().optional(),
     canal: z.enum(["web", "crm", "whatsapp"]).optional(),
+    source: z.string().max(30).optional(),
     recurrence: recurrenceSchema,
   })
   .refine((data) => (data.Fecha || data.date) && (data.Hora || data.time), {
