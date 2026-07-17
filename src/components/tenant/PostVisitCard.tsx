@@ -17,6 +17,7 @@ interface PostVisitCardProps {
 export const PostVisitCard = ({ tenantId, tenantSlug }: PostVisitCardProps) => {
   const booking = useRecentBooking(tenantId);
   const [show, setShow] = useState(false);
+  const { isFollowing, toggleFollow } = useFollows();
   const navigate = useNavigate();
 
   useEffect(() => {
