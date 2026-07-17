@@ -92,6 +92,7 @@ interface BookingRequest {
   skipAvailabilityCheck?: boolean;
   tenant_id?: string;
   canal?: "web" | "crm" | "whatsapp";
+  source?: string;
   recurrence?: RecurrenceConfig | null;
 }
 
