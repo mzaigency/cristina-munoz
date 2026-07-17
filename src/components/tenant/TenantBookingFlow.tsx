@@ -341,17 +341,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                 </CardTitle>
                 <CardDescription>
                   {step === 1 && (
-                    <>
-                      <span>{t("services.multiHint")}</span>
-                      {!user && (
-                        <span className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2 animate-fade-in">
-                          <User className="h-4 w-4" />
-                          <span className="text-sm">
-                            {t("booking.mustSignInPre")}<Link to="/auth" className="underline hover:text-amber-700 dark:hover:text-amber-400 transition-colors">{t("booking.signInLink")}</Link>{t("booking.mustSignInPost")}
-                          </span>
-                        </span>
-                      )}
-                    </>
+                    <span>{t("services.multiHint")}</span>
                   )}
                   {step === 2 && `${t("booking.totalDurationLabel")}: ${totalDuration} ${t("booking.minutes")}`}
                   {step === 3 && t("booking.finalDetails")}
