@@ -113,7 +113,7 @@ export const template = {
   previewData: {
     customerName: 'Laura',
     tenantName: 'Cristina Muñoz Perruqueria',
-    tenantLogoUrl: 'https://cristina-munoz.lovable.app/email-assets/glowapp-logo.png',
+    tenantLogoUrl: 'https://lyeyzdbplrgqsvyxpfek.supabase.co/storage/v1/object/public/tenant-assets/a1b2c3d4-e5f6-7890-abcd-ef1234567890/logo-1766948799579.png',
     tenantAddress: 'C/ Major 12',
     tenantCity: 'Barcelona',
     tenantPhone: '+34 600 000 000',
