@@ -504,6 +504,13 @@ const TenantLanding = () => {
         {/* Barra de reserva fija (móvil, solo visitantes) */}
         {!hasAccess && <TenantBookBar onBookNow={handleBookNow} />}
 
+        {/* Banner de bienvenida cuando el visitante llega escaneando un QR */}
+        {isQrScan && !hasAccess && <QrWelcomeBanner tenantName={tenant.name} />}
+
+        {/* Tarjeta post-visita (cita reciente < 6h) */}
+        {!hasAccess && <PostVisitCard tenantId={tenant.id} tenantSlug={tenant.slug} />}
+
+
         {/* Admin Bar - Visible for admins and stylists */}
         {hasAccess && (
           <TenantAdminBar
