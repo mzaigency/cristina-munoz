@@ -45,7 +45,7 @@ export function useRecentBooking(tenantId: string | undefined) {
         if (bookingDateTime < sixHoursAgo) return;
 
         // ¿Ya dejó reseña?
-        const { data: reviewData } = await supabase
+        const { data: reviewData } = await (supabase as any)
           .from("reviews")
           .select("id")
           .eq("booking_id", b.id)
