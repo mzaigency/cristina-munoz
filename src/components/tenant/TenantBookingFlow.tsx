@@ -165,39 +165,61 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     return { totalPrice: total, discountedPrice: discounted };
   }, [bookingData.services, bookingData.packageId, bookingData.appliedPromotion, packages]);
 
+  const STORAGE_KEY = `glowapp_pending_booking_${tenantId}`;
+
+  // Persist selection so Google/email redirect doesn't lose progress
+  useEffect(() => {
+    if (bookingData.services.length === 0 && !bookingData.date) return;
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        serviceIds: bookingData.services.map(s => s.id),
+        packageId: bookingData.packageId,
+        stylist: bookingData.stylist,
+        date: bookingData.date?.toISOString() ?? null,
+        time: bookingData.time,
+        step,
+      }));
+    } catch { /* ignore */ }
+  }, [bookingData, step]);
+
+  // Restore after auth redirect (Google)
+  useEffect(() => {
+    if (!user || services.length === 0) return;
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      const restoredServices = services.filter(s => saved.serviceIds?.includes(s.id));
+      if (restoredServices.length === 0) return;
+      setBookingData(prev => ({
+        ...prev,
+        services: restoredServices,
+        packageId: saved.packageId ?? null,
+        stylist: saved.stylist ?? "any",
+        date: saved.date ? new Date(saved.date) : null,
+        time: saved.time ?? null,
+      }));
+      if (saved.step) setStep(saved.step);
+      setFlowOpen(true);
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch { /* ignore */ }
+  }, [user, services]);
+
   const handleServicesSelect = (selectedServices: Service[], packageId?: string) => {
-    // Check if user is logged in before proceeding
-    if (!user) {
-      // Save pending services and show auth modal instead of redirecting
-      setPendingServices({ services: selectedServices, packageId });
-      setShowAuthModal(true);
-      haptic.warning();
-      return;
-    }
-    
+    // No auth gate here — login is deferred to step 3 (confirmation)
     haptic.selection();
     setBookingData({ ...bookingData, services: selectedServices, packageId: packageId || null });
     setStep(2);
     scrollToProgress();
   };
 
-  // Handle successful authentication
+  // Handle successful authentication (from step-3 gate)
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     haptic.success();
-    
-    // If there were pending services, continue the flow
-    if (pendingServices && pendingServices.services.length > 0) {
-      setBookingData({ 
-        ...bookingData, 
-        services: pendingServices.services, 
-        packageId: pendingServices.packageId || null 
-      });
-      setPendingServices(null);
-      setStep(2);
-      scrollToProgress();
-    }
+    // User is now logged in; BookingConfirmation will re-fetch profile automatically
   };
+
 
   const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: string) => {
     const finalStylist = resolvedStylist || bookingData.stylist;
@@ -319,17 +341,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                 </CardTitle>
                 <CardDescription>
                   {step === 1 && (
-                    <>
-                      <span>{t("services.multiHint")}</span>
-                      {!user && (
-                        <span className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mt-2 animate-fade-in">
-                          <User className="h-4 w-4" />
-                          <span className="text-sm">
-                            {t("booking.mustSignInPre")}<Link to="/auth" className="underline hover:text-amber-700 dark:hover:text-amber-400 transition-colors">{t("booking.signInLink")}</Link>{t("booking.mustSignInPost")}
-                          </span>
-                        </span>
-                      )}
-                    </>
+                    <span>{t("services.multiHint")}</span>
                   )}
                   {step === 2 && `${t("booking.totalDurationLabel")}: ${totalDuration} ${t("booking.minutes")}`}
                   {step === 3 && t("booking.finalDetails")}
@@ -369,7 +381,33 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       />
                     </div>
                   )}
-                  {step === 3 && !bookingConfirmed && (
+                  {step === 3 && !bookingConfirmed && !user && (
+                    <div key="step-3-auth" className="tv-step-in space-y-5 text-center py-4">
+                      <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-7 w-7 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-lg font-bold text-foreground">Último paso: identifícate</h3>
+                        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                          Necesitamos tu nombre y contacto para confirmar la cita. Tarda 10 segundos.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => { haptic.selection(); setShowAuthModal(true); }}
+                        className="w-full h-12 rounded-xl text-white font-medium"
+                        style={{ background: "linear-gradient(100deg, #22408c, #98329a)" }}
+                      >
+                        Continuar para confirmar
+                      </button>
+                      <button
+                        onClick={handleBack}
+                        className="text-sm text-muted-foreground underline"
+                      >
+                        Volver
+                      </button>
+                    </div>
+                  )}
+                  {step === 3 && !bookingConfirmed && user && (
                     <div key="step-3" className="tv-step-in space-y-6">
                       {/* Promo Code Input */}
                       <PromoCodeInput
