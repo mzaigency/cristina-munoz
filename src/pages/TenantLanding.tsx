@@ -21,9 +21,12 @@ import { TenantEditPanel } from "@/components/tenant/TenantEditPanel";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
 import TenantContactSection from "@/components/tenant/TenantContactSection";
 import { TenantShopSection } from "@/components/tenant/TenantShopSection";
+import { QrWelcomeBanner } from "@/components/tenant/QrWelcomeBanner";
+import { PostVisitCard } from "@/components/tenant/PostVisitCard";
 import { HeroImmersive, HeroMinimal, HeroSplit, HeroBold, HeroGlass } from "@/components/tenant/heroes";
 import { getThemeById } from "@/components/onboarding/landing-themes";
 import { TenantLocaleProvider } from "@/lib/tenantI18n";
+import { trackEvent } from "@/lib/telemetry";
 
 interface Tenant {
   id: string;
@@ -90,6 +93,7 @@ const TenantLanding = () => {
   const previewToken = searchParams.get("preview");
   const reviewParam = searchParams.get("review");
   const editParam = searchParams.get("edit");
+  const isQrScan = searchParams.get("src") === "qr";
 
   // Auto-open visual editor when navigating with ?edit=1 (e.g. from Settings shortcut)
   useEffect(() => {
@@ -97,6 +101,26 @@ const TenantLanding = () => {
       setIsEditMode(true);
     }
   }, [editParam, isAdmin, isEditMode]);
+
+  // Track QR scans (once per session per tenant)
+  useEffect(() => {
+    if (!isQrScan || !tenant?.id) return;
+    const key = `glowapp_qr_tracked_${tenant.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    void trackEvent({
+      event_type: "qr_scan",
+      section_id: "qr_scan",
+      tenant_id: tenant.id,
+      metadata: {
+        utm_source: searchParams.get("utm_source"),
+        utm_medium: searchParams.get("utm_medium"),
+        utm_campaign: searchParams.get("utm_campaign"),
+        referrer: document.referrer || null,
+      },
+    });
+  }, [isQrScan, tenant?.id, searchParams]);
+
 
   const handleReviewSubmitted = useCallback(() => {
     // Refresh reviews section
@@ -479,6 +503,13 @@ const TenantLanding = () => {
 
         {/* Barra de reserva fija (móvil, solo visitantes) */}
         {!hasAccess && <TenantBookBar onBookNow={handleBookNow} />}
+
+        {/* Banner de bienvenida cuando el visitante llega escaneando un QR */}
+        {isQrScan && !hasAccess && <QrWelcomeBanner tenantName={tenant.name} />}
+
+        {/* Tarjeta post-visita (cita reciente < 6h) */}
+        {!hasAccess && <PostVisitCard tenantId={tenant.id} tenantSlug={tenant.slug} />}
+
 
         {/* Admin Bar - Visible for admins and stylists */}
         {hasAccess && (
