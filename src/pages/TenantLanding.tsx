@@ -21,9 +21,12 @@ import { TenantEditPanel } from "@/components/tenant/TenantEditPanel";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
 import TenantContactSection from "@/components/tenant/TenantContactSection";
 import { TenantShopSection } from "@/components/tenant/TenantShopSection";
+import { QrWelcomeBanner } from "@/components/tenant/QrWelcomeBanner";
+import { PostVisitCard } from "@/components/tenant/PostVisitCard";
 import { HeroImmersive, HeroMinimal, HeroSplit, HeroBold, HeroGlass } from "@/components/tenant/heroes";
 import { getThemeById } from "@/components/onboarding/landing-themes";
 import { TenantLocaleProvider } from "@/lib/tenantI18n";
+import { trackEvent } from "@/lib/telemetry";
 
 interface Tenant {
   id: string;
