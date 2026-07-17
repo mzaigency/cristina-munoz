@@ -6,7 +6,7 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type FeedEventType = "impression" | "click" | "conversion";
+export type FeedEventType = "impression" | "click" | "conversion" | "qr_scan";
 export type FeedSectionId =
   | "favorites"
   | "foryou"
