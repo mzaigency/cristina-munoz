@@ -97,11 +97,11 @@ export const PostVisitCard = ({ tenantId, tenantSlug }: PostVisitCardProps) => {
                   Repetir
                 </button>
                 <button
-                  onClick={dismiss}
+                  onClick={() => toggleFollow(tenantId)}
                   className="h-11 rounded-xl text-[13px] font-semibold text-neutral-800 bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center gap-1.5 active:scale-[0.98] transition"
                 >
-                  <Heart className="h-3.5 w-3.5" />
-                  Seguir salón
+                  {isFollowing(tenantId) ? <Check className="h-3.5 w-3.5" /> : <Heart className="h-3.5 w-3.5" />}
+                  {isFollowing(tenantId) ? "Siguiendo" : "Seguir salón"}
                 </button>
               </div>
             </div>
