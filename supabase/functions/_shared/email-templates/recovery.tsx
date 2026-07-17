@@ -42,7 +42,7 @@ export const RecoveryEmail = ({ siteName, confirmationUrl }: Props) => (
 
 export default RecoveryEmail
 
-const LOGO = 'https://www.glowapp.app/email-assets/glowapp-logo.png'
+const LOGO = 'https://cristina-munoz.lovable.app/email-assets/glowapp-logo.png'
 const PRIMARY = '#22408B'
 const ACCENT = '#98329A'
 const GRADIENT = `linear-gradient(100deg, ${PRIMARY}, ${ACCENT})`

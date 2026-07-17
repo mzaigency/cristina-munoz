@@ -43,7 +43,7 @@ export const InviteEmail = ({ siteName, siteUrl, confirmationUrl }: Props) => (
 
 export default InviteEmail
 
-const LOGO = 'https://www.glowapp.app/email-assets/glowapp-logo.png'
+const LOGO = 'https://cristina-munoz.lovable.app/email-assets/glowapp-logo.png'
 const PRIMARY = '#22408B'
 const ACCENT = '#98329A'
 const GRADIENT = `linear-gradient(100deg, ${PRIMARY}, ${ACCENT})`
