@@ -90,6 +90,7 @@ const TenantLanding = () => {
   const previewToken = searchParams.get("preview");
   const reviewParam = searchParams.get("review");
   const editParam = searchParams.get("edit");
+  const isQrScan = searchParams.get("src") === "qr";
 
   // Auto-open visual editor when navigating with ?edit=1 (e.g. from Settings shortcut)
   useEffect(() => {
