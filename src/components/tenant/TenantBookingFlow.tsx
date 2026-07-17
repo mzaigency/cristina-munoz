@@ -165,39 +165,61 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     return { totalPrice: total, discountedPrice: discounted };
   }, [bookingData.services, bookingData.packageId, bookingData.appliedPromotion, packages]);
 
+  const STORAGE_KEY = `glowapp_pending_booking_${tenantId}`;
+
+  // Persist selection so Google/email redirect doesn't lose progress
+  useEffect(() => {
+    if (bookingData.services.length === 0 && !bookingData.date) return;
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        serviceIds: bookingData.services.map(s => s.id),
+        packageId: bookingData.packageId,
+        stylist: bookingData.stylist,
+        date: bookingData.date?.toISOString() ?? null,
+        time: bookingData.time,
+        step,
+      }));
+    } catch { /* ignore */ }
+  }, [bookingData, step]);
+
+  // Restore after auth redirect (Google)
+  useEffect(() => {
+    if (!user || services.length === 0) return;
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      const restoredServices = services.filter(s => saved.serviceIds?.includes(s.id));
+      if (restoredServices.length === 0) return;
+      setBookingData(prev => ({
+        ...prev,
+        services: restoredServices,
+        packageId: saved.packageId ?? null,
+        stylist: saved.stylist ?? "any",
+        date: saved.date ? new Date(saved.date) : null,
+        time: saved.time ?? null,
+      }));
+      if (saved.step) setStep(saved.step);
+      setFlowOpen(true);
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch { /* ignore */ }
+  }, [user, services]);
+
   const handleServicesSelect = (selectedServices: Service[], packageId?: string) => {
-    // Check if user is logged in before proceeding
-    if (!user) {
-      // Save pending services and show auth modal instead of redirecting
-      setPendingServices({ services: selectedServices, packageId });
-      setShowAuthModal(true);
-      haptic.warning();
-      return;
-    }
-    
+    // No auth gate here — login is deferred to step 3 (confirmation)
     haptic.selection();
     setBookingData({ ...bookingData, services: selectedServices, packageId: packageId || null });
     setStep(2);
     scrollToProgress();
   };
 
-  // Handle successful authentication
+  // Handle successful authentication (from step-3 gate)
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     haptic.success();
-    
-    // If there were pending services, continue the flow
-    if (pendingServices && pendingServices.services.length > 0) {
-      setBookingData({ 
-        ...bookingData, 
-        services: pendingServices.services, 
-        packageId: pendingServices.packageId || null 
-      });
-      setPendingServices(null);
-      setStep(2);
-      scrollToProgress();
-    }
+    // User is now logged in; BookingConfirmation will re-fetch profile automatically
   };
+
 
   const handleDateTimeSelect = (date: Date, time: string, resolvedStylist?: string) => {
     const finalStylist = resolvedStylist || bookingData.stylist;
