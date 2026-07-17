@@ -381,7 +381,33 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                       />
                     </div>
                   )}
-                  {step === 3 && !bookingConfirmed && (
+                  {step === 3 && !bookingConfirmed && !user && (
+                    <div key="step-3-auth" className="tv-step-in space-y-5 text-center py-4">
+                      <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-7 w-7 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-lg font-bold text-foreground">Último paso: identifícate</h3>
+                        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                          Necesitamos tu nombre y contacto para confirmar la cita. Tarda 10 segundos.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => { haptic.selection(); setShowAuthModal(true); }}
+                        className="w-full h-12 rounded-xl text-white font-medium"
+                        style={{ background: "linear-gradient(100deg, #22408c, #98329a)" }}
+                      >
+                        Continuar para confirmar
+                      </button>
+                      <button
+                        onClick={handleBack}
+                        className="text-sm text-muted-foreground underline"
+                      >
+                        Volver
+                      </button>
+                    </div>
+                  )}
+                  {step === 3 && !bookingConfirmed && user && (
                     <div key="step-3" className="tv-step-in space-y-6">
                       {/* Promo Code Input */}
                       <PromoCodeInput
