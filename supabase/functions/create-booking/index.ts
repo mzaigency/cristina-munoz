@@ -58,6 +58,7 @@ const bookingRequestSchema = z
     skipAvailabilityCheck: z.boolean().optional(),
     tenant_id: z.string().uuid().optional(),
     canal: z.enum(["web", "crm", "whatsapp"]).optional(),
+    source: z.string().max(30).optional(),
     recurrence: recurrenceSchema,
   })
   .refine((data) => (data.Fecha || data.date) && (data.Hora || data.time), {
@@ -91,6 +92,7 @@ interface BookingRequest {
   skipAvailabilityCheck?: boolean;
   tenant_id?: string;
   canal?: "web" | "crm" | "whatsapp";
+  source?: string;
   recurrence?: RecurrenceConfig | null;
 }
 
@@ -663,6 +665,7 @@ serve(async (req) => {
           notes: null,
           color: stylistColor,
           canal: bookingData.canal || "web",
+          source: bookingData.source || null,
           recurrence_group_id: recurrenceGroupId,
           recurrence_pattern: recurrencePattern,
         };
@@ -706,6 +709,7 @@ serve(async (req) => {
           notes: null,
           color: stylistColor,
           canal: bookingData.canal || "web",
+          source: bookingData.source || null,
           recurrence_group_id: recurrenceGroupId,
           recurrence_pattern: recurrencePattern,
         };
@@ -748,6 +752,7 @@ serve(async (req) => {
             notes: null,
             color: stylistColor,
             canal: bookingData.canal || "web",
+          source: bookingData.source || null,
             recurrence_group_id: recurrenceGroupId,
             recurrence_pattern: recurrencePattern,
           };

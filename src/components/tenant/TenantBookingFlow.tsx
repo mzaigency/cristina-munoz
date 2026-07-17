@@ -7,6 +7,7 @@ import { BookingSummaryMobile } from "@/components/booking/BookingSummaryMobile"
 import { PromoCodeInput } from "@/components/booking/PromoCodeInput";
 import { SuccessCelebration } from "@/components/booking/SuccessCelebration";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { GuestBookingForm } from "@/components/booking/GuestBookingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
@@ -382,29 +383,22 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                     </div>
                   )}
                   {step === 3 && !bookingConfirmed && !user && (
-                    <div key="step-3-auth" className="tv-step-in space-y-5 text-center py-4">
-                      <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-7 w-7 text-primary" />
-                      </div>
-                      <div className="space-y-1">
-                        <h3 className="text-lg font-bold text-foreground">Último paso: identifícate</h3>
-                        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                          Necesitamos tu nombre y contacto para confirmar la cita. Tarda 10 segundos.
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => { haptic.selection(); setShowAuthModal(true); }}
-                        className="w-full h-12 rounded-xl text-white font-medium"
-                        style={{ background: "linear-gradient(100deg, #22408c, #98329a)" }}
-                      >
-                        Continuar para confirmar
-                      </button>
-                      <button
-                        onClick={handleBack}
-                        className="text-sm text-muted-foreground underline"
-                      >
-                        Volver
-                      </button>
+                    <div key="step-3-auth" className="tv-step-in">
+                      <GuestBookingForm
+                        bookingData={bookingData}
+                        totalDuration={totalDuration}
+                        totalPrice={totalPrice}
+                        discountedPrice={bookingData.appliedPromotion ? discountedPrice : undefined}
+                        tenantId={tenantId}
+                        tenantName={tenantName}
+                        onSuccess={(name, phone) => {
+                          setBookingData({ ...bookingData, name, phone });
+                          setBookingConfirmed(true);
+                          haptic.success();
+                        }}
+                        onSwitchToLogin={() => { haptic.selection(); setShowAuthModal(true); }}
+                        onBack={handleBack}
+                      />
                     </div>
                   )}
                   {step === 3 && !bookingConfirmed && user && (
