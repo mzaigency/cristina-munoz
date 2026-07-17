@@ -63,6 +63,7 @@ const ForBusiness = lazyWithReload(() => import("./pages/ForBusiness"));
 const ForgotPassword = lazyWithReload(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazyWithReload(() => import("./pages/ResetPassword"));
 const VerifyEmail = lazyWithReload(() => import("./pages/VerifyEmail"));
+const Unsubscribe = lazyWithReload(() => import("./pages/Unsubscribe"));
 const NotificationSettingsPage = lazyWithReload(() => import("./pages/NotificationSettings"));
 const CompetitorAlternative = lazyWithReload(() => import("./pages/CompetitorAlternative"));
 const Blog = lazyWithReload(() => import("./pages/Blog"));
