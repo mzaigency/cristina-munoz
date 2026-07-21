@@ -280,7 +280,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
         {flowOpen &&
           createPortal(
-            <div className="tv-book-modal fixed inset-0 z-[80] flex items-stretch justify-center lg:items-center lg:p-6">
+            <div data-booking-flow role="dialog" aria-modal="true" aria-label={t("booking.reserveTitle")} className="tv-book-modal fixed inset-0 z-[80] flex items-stretch justify-center lg:items-center lg:p-6">
               <div
                 className="absolute inset-0"
                 style={{ background: "rgba(12,14,24,.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
