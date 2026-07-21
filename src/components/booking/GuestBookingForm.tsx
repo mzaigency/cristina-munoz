@@ -109,9 +109,14 @@ export function GuestBookingForm({
         },
       });
       if (error) throw error;
-      if (data?.action_link) {
-        // Auto sign-in in background so the user lands logged-in on /mis-citas
-        try { window.localStorage.setItem("glow_magic_link", data.action_link); } catch { /* ignore */ }
+      // Establish a real client session so /mis-citas works and the user isn't bounced to /auth.
+      const tokenHash = (data as any)?.token_hash;
+      if (tokenHash) {
+        try {
+          await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" });
+        } catch (e) {
+          console.warn("auto sign-in failed", e);
+        }
       }
       haptic.success();
       onSuccess(name.trim(), phone.trim());
