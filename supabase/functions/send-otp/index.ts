@@ -83,15 +83,20 @@ serve(async (req) => {
     const salt = emailLower;
     const code_hash = await hashCode(code, salt);
 
-    const { error: insertErr } = await supabase.from("otp_codes").insert({
-      email: emailLower,
-      code_hash,
-      tenant_id: tenant_id ?? null,
-    });
+    const { data: otp, error: insertErr } = await supabase
+      .from("otp_codes")
+      .insert({
+        email: emailLower,
+        code_hash,
+        tenant_id: tenant_id ?? null,
+      })
+      .select("id")
+      .single();
     if (insertErr) {
       console.error("insert otp error", insertErr);
       throw new Error("Failed to store OTP");
     }
+    if (!otp?.id) throw new Error("Failed to store OTP");
 
     const messageId = crypto.randomUUID();
     const subject = `${code} es tu código de Glowapp`;
