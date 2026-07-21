@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
-import { CheckCircle2, Loader2, Tag, Package } from "lucide-react";
+import { CheckCircle2, Loader2, Tag, Package, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
@@ -10,6 +12,7 @@ import { BookingData } from "@/types/booking";
 import { PushPermissionPrompt } from "@/components/notifications/PushPermissionPrompt";
 import { SelectedAddon } from "./BookingProductsAddon";
 import { consumeSectionClickFor, trackEvent } from "@/lib/telemetry";
+import { phoneSchema, cleanPhoneNumber } from "@/lib/phoneValidation";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
