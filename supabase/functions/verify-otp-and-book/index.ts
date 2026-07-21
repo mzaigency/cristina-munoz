@@ -122,11 +122,15 @@ serve(async (req) => {
     const bookingJson = await bookingResp.json();
     if (!bookingResp.ok) {
       console.error("create-booking failed", bookingResp.status, bookingJson);
+      // OTP is still valid — user can retry (e.g. pick another slot) without a new code.
       return new Response(JSON.stringify({ error: "booking_failed", details: bookingJson }), {
         status: bookingResp.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Booking succeeded — now consume the OTP.
+    await admin.from("otp_codes").update({ verified_at: new Date().toISOString() }).eq("id", otp.id);
 
     // Generate magic link so client can auto sign-in via verifyOtp(token_hash)
     const { data: linkData } = await admin.auth.admin.generateLink({
