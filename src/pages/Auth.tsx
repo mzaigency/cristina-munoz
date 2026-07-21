@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { loadSpanishCities, loadSpanishProvinces, type SpanishProvince } from "@/lib/spanishLocations";
 import { motion, AnimatePresence } from "motion/react";
 import { Progress } from "@/components/ui/progress";
+import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
