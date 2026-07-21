@@ -25,6 +25,12 @@ async function hashCode(code: string, salt: string): Promise<string> {
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function generateToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function otpEmail(code: string, tenantName?: string) {
   const title = tenantName ? `Confirma tu reserva en ${tenantName}` : "Confirma tu reserva";
   return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -101,6 +107,42 @@ serve(async (req) => {
     const messageId = crypto.randomUUID();
     const subject = `${code} es tu código de Glowapp`;
 
+    const { data: existingToken, error: tokenLookupError } = await supabase
+      .from("email_unsubscribe_tokens")
+      .select("token")
+      .eq("email", emailLower)
+      .maybeSingle();
+
+    if (tokenLookupError) {
+      console.error("otp unsubscribe token lookup error", tokenLookupError);
+      throw new Error("Failed to prepare email");
+    }
+
+    let unsubscribeToken = existingToken?.token;
+    if (!unsubscribeToken) {
+      unsubscribeToken = generateToken();
+      const { error: tokenInsertError } = await supabase
+        .from("email_unsubscribe_tokens")
+        .upsert({ token: unsubscribeToken, email: emailLower }, { onConflict: "email", ignoreDuplicates: true });
+
+      if (tokenInsertError) {
+        console.error("otp unsubscribe token insert error", tokenInsertError);
+        throw new Error("Failed to prepare email");
+      }
+
+      const { data: storedToken, error: tokenReadError } = await supabase
+        .from("email_unsubscribe_tokens")
+        .select("token")
+        .eq("email", emailLower)
+        .maybeSingle();
+
+      if (tokenReadError || !storedToken?.token) {
+        console.error("otp unsubscribe token read error", tokenReadError);
+        throw new Error("Failed to prepare email");
+      }
+      unsubscribeToken = storedToken.token;
+    }
+
     await supabase.from("email_send_log").insert({
       message_id: messageId,
       template_name: "booking-otp",
@@ -120,6 +162,7 @@ serve(async (req) => {
         text: `Tu código de Glowapp es ${code}. Caduca en 10 minutos.`,
         purpose: "transactional",
         label: "booking-otp",
+        unsubscribe_token: unsubscribeToken,
         idempotency_key: `booking-otp-${otp.id}`,
         queued_at: new Date().toISOString(),
       },
