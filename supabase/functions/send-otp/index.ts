@@ -69,14 +69,15 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } },
     );
 
-    // Rate limit: max 3 OTPs per email per 15 min
+    // Rate limit: max 6 OTPs per email per 15 min. Keep it protective, but
+    // avoid blocking a client after a couple of resend taps or transient send errors.
     const since = new Date(Date.now() - 15 * 60_000).toISOString();
     const { count } = await supabase
       .from("otp_codes")
       .select("id", { count: "exact", head: true })
       .eq("email", emailLower)
       .gte("created_at", since);
-    if ((count ?? 0) >= 3) {
+    if ((count ?? 0) >= 6) {
       return new Response(JSON.stringify({ error: "rate_limited", message: "Demasiados intentos. Espera unos minutos." }), {
         status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -170,6 +171,7 @@ serve(async (req) => {
 
     if (enqueueError) {
       console.error("enqueue otp email error", enqueueError);
+      await supabase.from("otp_codes").delete().eq("id", otp.id);
       await supabase.from("email_send_log").insert({
         message_id: messageId,
         template_name: "booking-otp",
