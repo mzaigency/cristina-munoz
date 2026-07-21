@@ -533,7 +533,7 @@ export const DateTimeSelection = ({
                                       );
                                     }}
                                     className={cn(
-                                      "h-auto min-h-[2.5rem] transition-[box-shadow,transform,background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-md active:scale-[0.97] flex-col gap-0.5 py-1.5",
+                                      "h-auto min-h-[52px] text-[15px] sm:text-sm font-semibold transition-[box-shadow,transform,background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-md active:scale-[0.97] flex-col gap-0.5 py-2",
                                       time === slot && !customHour && !customMinute && "shadow-glow",
                                     )}
                                   >
@@ -594,7 +594,7 @@ export const DateTimeSelection = ({
                                       );
                                     }}
                                     className={cn(
-                                      "h-auto min-h-[2.5rem] transition-[box-shadow,transform,background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-md active:scale-[0.97] flex-col gap-0.5 py-1.5",
+                                      "h-auto min-h-[52px] text-[15px] sm:text-sm font-semibold transition-[box-shadow,transform,background-color,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-md active:scale-[0.97] flex-col gap-0.5 py-2",
                                       time === slot && !customHour && !customMinute && "shadow-glow",
                                     )}
                                   >
