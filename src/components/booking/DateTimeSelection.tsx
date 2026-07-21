@@ -514,7 +514,7 @@ export const DateTimeSelection = ({
                               ☀️ Mañana ({minutesToTimeString(hours.morningStart)} -{" "}
                               {minutesToTimeString(hours.morningEnd)})
                             </p>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                               {morningSlots.map((slot) => {
                                 const available = stylist === "any" ? slotToStylists[slot] || [] : [];
                                 return (
@@ -575,7 +575,7 @@ export const DateTimeSelection = ({
                               🌙 Tarde ({minutesToTimeString(hours.afternoonStart)} -{" "}
                               {minutesToTimeString(hours.afternoonEnd)})
                             </p>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                               {afternoonSlots.map((slot) => {
                                 const available = stylist === "any" ? slotToStylists[slot] || [] : [];
                                 return (
