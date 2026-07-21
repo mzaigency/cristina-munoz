@@ -49,6 +49,9 @@ export const BookingConfirmation = ({
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showPushPrompt, setShowPushPrompt] = useState(false);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [savingPhone, setSavingPhone] = useState(false);
   const { toast } = useToast();
   const confettiRef = useRef<ConfettiRef>(null);
 
