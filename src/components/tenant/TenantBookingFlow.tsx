@@ -303,11 +303,11 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                 <div
                   className="tv-book-scroll flex-1 overflow-y-auto px-5 py-6"
                   style={{
-                    // Cuando la barra-resumen móvil (fixed) está visible, deja
-                    // hueco extra para que el botón Continuar no quede tapado.
+                    // La barra-resumen (52px) solo aparece desde el paso 2.
+                    // Reservamos hueco solo cuando toca, para no dejar aire muerto.
                     paddingBottom:
-                      bookingData.services.length > 0 && !bookingConfirmed
-                        ? "calc(6rem + env(safe-area-inset-bottom))"
+                      bookingData.services.length > 0 && !bookingConfirmed && step >= 2
+                        ? "calc(4.5rem + env(safe-area-inset-bottom))"
                         : "calc(1.5rem + env(safe-area-inset-bottom))",
                   }}
                 >
