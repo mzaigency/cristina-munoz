@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
-import { CheckCircle2, Loader2, Tag, Package } from "lucide-react";
+import { CheckCircle2, Loader2, Tag, Package, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
@@ -10,6 +12,7 @@ import { BookingData } from "@/types/booking";
 import { PushPermissionPrompt } from "@/components/notifications/PushPermissionPrompt";
 import { SelectedAddon } from "./BookingProductsAddon";
 import { consumeSectionClickFor, trackEvent } from "@/lib/telemetry";
+import { phoneSchema, cleanPhoneNumber } from "@/lib/phoneValidation";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
@@ -46,6 +49,9 @@ export const BookingConfirmation = ({
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showPushPrompt, setShowPushPrompt] = useState(false);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [savingPhone, setSavingPhone] = useState(false);
   const { toast } = useToast();
   const confettiRef = useRef<ConfettiRef>(null);
 
@@ -244,17 +250,101 @@ export const BookingConfirmation = ({
   }
 
   if (!userProfile.phone) {
+    const handleSavePhone = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setPhoneError(null);
+      const result = phoneSchema.safeParse(phoneInput);
+      if (!result.success) {
+        setPhoneError(result.error.issues[0]?.message ?? "Teléfono inválido");
+        return;
+      }
+      const clean = cleanPhoneNumber(phoneInput);
+      try {
+        setSavingPhone(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) throw new Error("no-session");
+        const { error } = await supabase
+          .from("profiles")
+          .update({ phone: clean })
+          .eq("id", session.user.id);
+        if (error) throw error;
+        setUserProfile({ ...userProfile, phone: clean });
+        toast({ title: "Teléfono guardado", description: "Ya puedes confirmar tu reserva." });
+      } catch (err) {
+        console.error("Error saving phone:", err);
+        toast({
+          title: "Error",
+          description: "No se pudo guardar el teléfono. Intenta de nuevo.",
+          variant: "destructive",
+        });
+      } finally {
+        setSavingPhone(false);
+      }
+    };
+
     return (
-      <div className="text-center py-8 space-y-4">
-        <p className="text-destructive font-semibold">
-          Necesitas un teléfono en tu perfil para hacer una reserva
-        </p>
-        <p className="text-muted-foreground">
-          Por favor, completa tu perfil con un número de teléfono válido antes de continuar.
-        </p>
-        <Button onClick={onBack} variant="outline">
-          Volver
-        </Button>
+      <div className="space-y-5 py-2">
+        <div className="text-center space-y-2">
+          <div className="flex justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <Phone className="h-6 w-6 text-primary" />
+            </div>
+          </div>
+          <h3 className="text-lg sm:text-xl font-semibold text-foreground">
+            Solo falta tu teléfono
+          </h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Lo necesitamos para que el salón pueda contactarte si hay cualquier cambio en tu cita.
+          </p>
+        </div>
+
+        <form onSubmit={handleSavePhone} className="space-y-3 max-w-sm mx-auto">
+          <div className="space-y-1.5">
+            <Label htmlFor="phone-input" className="text-sm">Teléfono móvil</Label>
+            <Input
+              id="phone-input"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="600 000 000"
+              value={phoneInput}
+              onChange={(e) => {
+                setPhoneInput(e.target.value);
+                if (phoneError) setPhoneError(null);
+              }}
+              disabled={savingPhone}
+              className="h-11"
+            />
+            {phoneError && (
+              <p className="text-xs text-destructive">{phoneError}</p>
+            )}
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onBack}
+              disabled={savingPhone}
+              className="w-full sm:w-auto h-11"
+            >
+              Volver
+            </Button>
+            <Button
+              type="submit"
+              disabled={savingPhone}
+              className="w-full sm:flex-1 h-11"
+            >
+              {savingPhone ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                "Guardar y continuar"
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
     );
   }
