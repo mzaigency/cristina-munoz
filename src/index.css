@@ -1735,8 +1735,35 @@
   .gp-top-crumb { font-size: 9.5px; }
   .gp-new-cita-btn { padding: 9px 13px; font-size: 13px; border-radius: 12px; }
   .gp-subnav-bar { display: block; position: sticky; top: calc(env(safe-area-inset-top) + 56px); z-index: 18; }
-  /* Grid de agenda: en móvil descuenta topbar + subnav + bottom-nav */
-  .ag-scroller { max-height: calc(100dvh - 210px - env(safe-area-inset-bottom) - env(safe-area-inset-top)); }
+  /* Agenda en móvil: un único scroll (el de la página) en vertical,
+     y scroll horizontal con snap entre profesionales activos.
+     Se elimina el scroller interno vertical que creaba el "doble scroll". */
+  .ag-gridcard { overflow: visible; }
+  .ag-scroller {
+    max-height: none;
+    overflow-y: visible;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .ag-scroller::-webkit-scrollbar { display: none; }
+  /* Cabecera de columnas queda por debajo del topbar (56px) + subnav sticky (~44px) */
+  .ag-head { top: calc(env(safe-area-inset-top) + 100px) !important; }
+  /* Cada columna de estilista ocupa casi toda la pantalla (snap card) */
+  .ag-col { min-width: 82vw !important; scroll-snap-align: start; }
+}
+
+/* ── Accesibilidad global del flujo de reserva ── */
+[data-booking-flow] :where(button, a, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 3px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+[data-booking-flow] .text-muted-foreground { color: hsl(230 12% 38%); }
+[data-booking-flow] ::placeholder { color: hsl(230 12% 42%); opacity: 1; }
+@media (max-width: 920px) {
+  [data-booking-flow] button, [data-booking-flow] [role="button"], [data-booking-flow] a.btn { min-height: 44px; }
   .gp-content { padding: 14px 12px; }
   .gp-hide-sm { display: none !important; }
   .gp-show-sm { display: inline !important; }
