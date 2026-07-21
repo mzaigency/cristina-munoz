@@ -127,7 +127,7 @@ serve(async (req) => {
       });
     }
 
-    // Generate magic link so client can auto sign-in
+    // Generate magic link so client can auto sign-in via verifyOtp(token_hash)
     const { data: linkData } = await admin.auth.admin.generateLink({
       type: "magiclink",
       email: emailLower,
@@ -139,7 +139,9 @@ serve(async (req) => {
         success: true,
         booking: bookingJson,
         user_id: userId,
+        email: emailLower,
         action_link: linkData?.properties?.action_link ?? null,
+        token_hash: (linkData?.properties as any)?.hashed_token ?? null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
