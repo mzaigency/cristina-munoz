@@ -209,33 +209,50 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    console.log("Sending email to:", ticketData.customerEmail);
+    console.log("Enqueueing email to:", ticketData.customerEmail);
 
-    // Send email using Resend API
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${resendApiKey}`,
-      },
-      body: JSON.stringify({
-        from: `${tenant.name} <contacto@glowapp.app>`,
-        reply_to: tenant.email || "gglowapp@gmail.com",
-        to: [ticketData.customerEmail],
-        subject: `${documentTitle} de ${tenant.name} - ${ticketData.date}`,
-        html: emailHtml,
-      }),
+    // Enqueue through Lovable Emails queue (uses verified notify.glowapp.app).
+    const messageId = crypto.randomUUID();
+    const idempotencyKey = `ticket-${ticketData.transactionId || messageId}`;
+    const subject = `${documentTitle} de ${tenant.name} - ${ticketData.date}`;
+
+    await supabase.from("email_send_log").insert({
+      message_id: messageId,
+      template_name: "ticket",
+      recipient_email: ticketData.customerEmail,
+      status: "pending",
     });
 
-    const emailResult = await emailResponse.json();
-    console.log("Resend API response status:", emailResponse.status);
-    console.log("Resend API response:", JSON.stringify(emailResult, null, 2));
+    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload: {
+        message_id: messageId,
+        to: ticketData.customerEmail,
+        from: `${tenant.name} <noreply@glowapp.app>`,
+        sender_domain: "notify.glowapp.app",
+        subject,
+        html: emailHtml,
+        text: subject,
+        purpose: "transactional",
+        label: "ticket",
+        idempotency_key: idempotencyKey,
+        queued_at: new Date().toISOString(),
+      },
+    });
 
-    if (!emailResponse.ok) {
-      throw new Error(emailResult.message || emailResult.error?.message || "Failed to send email");
+    if (enqueueError) {
+      console.error("Failed to enqueue ticket email", enqueueError);
+      await supabase.from("email_send_log").insert({
+        message_id: messageId,
+        template_name: "ticket",
+        recipient_email: ticketData.customerEmail,
+        status: "failed",
+        error_message: enqueueError.message,
+      });
+      throw new Error("Failed to enqueue email");
     }
 
-    return new Response(JSON.stringify({ success: true, emailId: emailResult.id }), {
+    return new Response(JSON.stringify({ success: true, queued: true, messageId }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
