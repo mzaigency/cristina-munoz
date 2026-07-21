@@ -436,7 +436,7 @@ export const BookingConfirmation = ({
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Tu cita</p>
             <p className="text-[20px] sm:text-2xl font-bold text-foreground leading-tight mt-0.5">
-              {bookingData.date && format(bookingData.date, "EEE d MMM", { locale: undefined })} · {bookingData.time}
+              {bookingData.date && format(bookingData.date, "EEE d MMM", { locale: es })} · {bookingData.time}
             </p>
           </div>
           <div className="text-right shrink-0">
