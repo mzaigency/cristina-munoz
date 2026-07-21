@@ -1738,7 +1738,7 @@
   /* Agenda en móvil: un único scroll (el de la página) en vertical,
      y scroll horizontal con snap entre profesionales activos.
      Se elimina el scroller interno vertical que creaba el "doble scroll". */
-  .ag-gridcard { overflow: visible; }
+  .ag-gridcard { overflow: visible !important; }
   .ag-scroller {
     max-height: none;
     overflow-y: visible;
