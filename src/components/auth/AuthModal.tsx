@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { useToast } from "@/hooks/use-toast";
 import { useHaptic } from "@/hooks/useHaptic";
 
