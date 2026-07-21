@@ -146,6 +146,40 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
       {activeTab === "espera" && (
         <WaitlistManager tenantId={tenantId} />
       )}
+
+      {/* FAB "Nueva cita" — solo móvil, solo en Día */}
+      {activeTab === "dia" && (
+        <button
+          onClick={() => setFabOpen(true)}
+          aria-label="Nueva cita"
+          className="md:hidden fixed z-40 flex items-center justify-center rounded-full text-white shadow-lg active:scale-95 transition-transform"
+          style={{
+            right: "calc(1rem + env(safe-area-inset-right))",
+            bottom: "calc(5rem + env(safe-area-inset-bottom))",
+            width: 56,
+            height: 56,
+            background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))",
+            boxShadow: "0 8px 24px -6px hsl(var(--primary) / 0.45)",
+          }}
+        >
+          <Plus className="h-6 w-6" strokeWidth={2.5} />
+        </button>
+      )}
+
+      <QuickBookingSheet
+        key={refreshKey}
+        open={fabOpen}
+        onOpenChange={setFabOpen}
+        tenantId={tenantId}
+        initialDate={new Date()}
+        initialTime={nextQuarterSlot()}
+        initialStylistSlug={stylists[0]?.slug || "any"}
+        stylists={stylists}
+        onCreated={() => {
+          setFabOpen(false);
+          setRefreshKey((k) => k + 1);
+        }}
+      />
     </div>
   );
 };
