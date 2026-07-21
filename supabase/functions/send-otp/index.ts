@@ -1,10 +1,7 @@
 // Send a 6-digit OTP code via email for guest bookings
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
 import { z } from "https://esm.sh/zod@3.22.4";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +9,8 @@ const corsHeaders = {
 };
 
 const APP_URL = "https://www.glowapp.app";
-const FROM_EMAIL = "GlowApp <contacto@glowapp.app>";
+const FROM_EMAIL = "Glowapp <noreply@glowapp.app>";
+const SENDER_DOMAIN = "notify.glowapp.app";
 const LOGO_ICON = `${APP_URL}/email-assets/glowapp-icon.png`;
 
 const BodySchema = z.object({
@@ -95,15 +93,43 @@ serve(async (req) => {
       throw new Error("Failed to store OTP");
     }
 
-    const emailResp = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: [emailLower],
-      subject: `${code} es tu código de Glowapp`,
-      html: otpEmail(code, tenant_name),
+    const messageId = crypto.randomUUID();
+    const subject = `${code} es tu código de Glowapp`;
+
+    await supabase.from("email_send_log").insert({
+      message_id: messageId,
+      template_name: "booking-otp",
+      recipient_email: emailLower,
+      status: "pending",
     });
-    if (emailResp.error) {
-      console.error("resend error", emailResp.error);
-      return new Response(JSON.stringify({ error: "email_failed", details: emailResp.error }), {
+
+    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload: {
+        message_id: messageId,
+        to: emailLower,
+        from: FROM_EMAIL,
+        sender_domain: SENDER_DOMAIN,
+        subject,
+        html: otpEmail(code, tenant_name),
+        text: `Tu código de Glowapp es ${code}. Caduca en 10 minutos.`,
+        purpose: "transactional",
+        label: "booking-otp",
+        idempotency_key: `booking-otp-${otp.id}`,
+        queued_at: new Date().toISOString(),
+      },
+    });
+
+    if (enqueueError) {
+      console.error("enqueue otp email error", enqueueError);
+      await supabase.from("email_send_log").insert({
+        message_id: messageId,
+        template_name: "booking-otp",
+        recipient_email: emailLower,
+        status: "failed",
+        error_message: enqueueError.message,
+      });
+      return new Response(JSON.stringify({ error: "email_failed" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
