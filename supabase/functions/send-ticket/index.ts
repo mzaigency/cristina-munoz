@@ -43,11 +43,9 @@ const handler = async (req: Request): Promise<Response> => {
     const ticketData: TicketRequest = await req.json();
     console.log("Ticket data received:", JSON.stringify(ticketData, null, 2));
 
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      console.error("RESEND_API_KEY not found in environment");
-      throw new Error("RESEND_API_KEY not configured");
-    }
+    // Ticket emails go through the Lovable Emails queue (verified notify.glowapp.app)
+    // instead of Resend directly, which would fail on unverified glowapp.app.
+
 
     // Get tenant info for branding
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
