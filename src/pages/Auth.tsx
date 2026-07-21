@@ -606,6 +606,11 @@ export default function Auth() {
                 <p className="text-sm text-muted-foreground mt-1">Accede con tu email y contraseña</p>
               </div>
               <div className="rounded-2xl bg-card/60 backdrop-blur-lg border border-border/30 p-5 shadow-sm">
+                <SocialAuthButtons redirectUri={window.location.origin + "/"} className="mb-4" />
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+                  <div className="relative flex justify-center text-xs"><span className="bg-card px-2 text-muted-foreground">o con email</span></div>
+                </div>
                 <Form {...signInForm}>
                   <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
                     <FormField
