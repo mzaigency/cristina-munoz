@@ -280,7 +280,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
         {flowOpen &&
           createPortal(
-            <div className="tv-book-modal fixed inset-0 z-[80] flex items-stretch justify-center lg:items-center lg:p-6">
+            <div data-booking-flow role="dialog" aria-modal="true" aria-label={t("booking.reserveTitle")} className="tv-book-modal fixed inset-0 z-[80] flex items-stretch justify-center lg:items-center lg:p-6">
               <div
                 className="absolute inset-0"
                 style={{ background: "rgba(12,14,24,.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
@@ -318,18 +318,26 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
               <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>{t("booking.dateTime")}</span>
               <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>{t("booking.confirm")}</span>
             </div>
-            <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
+            <div
+              className="relative h-2 w-full bg-muted rounded-full overflow-hidden"
+              role="progressbar"
+              aria-valuemin={1}
+              aria-valuemax={3}
+              aria-valuenow={step}
+              aria-label={t("booking.stepOf", { step })}
+            >
               <div
                 className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
                 style={{ width: `${(step / 3) * 100}%`, background: "linear-gradient(100deg, #22408c, #98329a)" }}
               />
             </div>
-            <div className="text-center">
+            <div className="text-center" aria-live="polite" aria-atomic="true">
               <span className="text-xs text-muted-foreground">
                 {t("booking.stepOf", { step })}
               </span>
             </div>
           </div>
+
 
           {/* Main Form - Centered */}
           <div className="max-w-3xl mx-auto w-full">
