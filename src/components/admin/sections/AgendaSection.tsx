@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Plus } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
 import { WaitlistManager } from "../WaitlistManager";
 import { AgendaImporter } from "../import/AgendaImporter";
+import { QuickBookingSheet } from "../QuickBookingSheet";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AgendaSectionProps {
