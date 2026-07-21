@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Plus } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
 import { WaitlistManager } from "../WaitlistManager";
 import { AgendaImporter } from "../import/AgendaImporter";
+import { QuickBookingSheet } from "../QuickBookingSheet";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AgendaSectionProps {
@@ -25,6 +26,16 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
   };
   const [stylists, setStylists] = useState<Array<{ slug: string; name: string; color: string }>>([]);
   const [waitlistCount, setWaitlistCount] = useState(0);
+  const [fabOpen, setFabOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const nextQuarterSlot = () => {
+    const d = new Date();
+    const m = d.getMinutes();
+    const add = 15 - (m % 15 || 15);
+    d.setMinutes(m + add, 0, 0);
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  };
 
   useEffect(() => {
     if (subTab) return;
@@ -135,6 +146,40 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
       {activeTab === "espera" && (
         <WaitlistManager tenantId={tenantId} />
       )}
+
+      {/* FAB "Nueva cita" — solo móvil, solo en Día */}
+      {activeTab === "dia" && (
+        <button
+          onClick={() => setFabOpen(true)}
+          aria-label="Nueva cita"
+          className="md:hidden fixed z-40 flex items-center justify-center rounded-full text-white shadow-lg active:scale-95 transition-transform"
+          style={{
+            right: "calc(1rem + env(safe-area-inset-right))",
+            bottom: "calc(5rem + env(safe-area-inset-bottom))",
+            width: 56,
+            height: 56,
+            background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))",
+            boxShadow: "0 8px 24px -6px hsl(var(--primary) / 0.45)",
+          }}
+        >
+          <Plus className="h-6 w-6" strokeWidth={2.5} />
+        </button>
+      )}
+
+      <QuickBookingSheet
+        key={refreshKey}
+        open={fabOpen}
+        onOpenChange={setFabOpen}
+        tenantId={tenantId}
+        initialDate={new Date()}
+        initialTime={nextQuarterSlot()}
+        initialStylistSlug={stylists[0]?.slug || "any"}
+        stylists={stylists}
+        onCreated={() => {
+          setFabOpen(false);
+          setRefreshKey((k) => k + 1);
+        }}
+      />
     </div>
   );
 };
