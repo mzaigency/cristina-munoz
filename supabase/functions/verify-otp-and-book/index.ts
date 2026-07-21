@@ -71,7 +71,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    await admin.from("otp_codes").update({ verified_at: new Date().toISOString() }).eq("id", otp.id);
+    // NOTE: don't mark verified_at yet — only after the booking succeeds, so a
+    // failed create-booking (slot taken, validation error) doesn't burn the OTP.
 
     // Find or create auth user. Look up by profiles.email first (indexed, O(1))
     // to avoid the 200-user pagination limit of admin.listUsers.
