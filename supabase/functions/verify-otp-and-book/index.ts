@@ -73,23 +73,37 @@ serve(async (req) => {
     }
     await admin.from("otp_codes").update({ verified_at: new Date().toISOString() }).eq("id", otp.id);
 
-    // Find or create auth user
+    // Find or create auth user. Look up by profiles.email first (indexed, O(1))
+    // to avoid the 200-user pagination limit of admin.listUsers.
     let userId: string | null = null;
-    const { data: existing } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const found = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === emailLower);
-    if (found) {
-      userId = found.id;
+    const { data: profileRow } = await admin
+      .from("profiles")
+      .select("id")
+      .ilike("email", emailLower)
+      .maybeSingle();
+    if (profileRow?.id) {
+      userId = profileRow.id;
     } else {
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email: emailLower,
         email_confirm: true,
         user_metadata: { full_name, phone },
       });
-      if (createErr || !created?.user) {
-        console.error("createUser error", createErr);
-        throw new Error("No se pudo crear la cuenta");
+      if (created?.user) {
+        userId = created.user.id;
+      } else {
+        // Fallback: user already exists in auth but no profile row yet — recover via listUsers with email filter.
+        const msg = (createErr?.message ?? "").toLowerCase();
+        if (msg.includes("already") || msg.includes("registered") || msg.includes("exists")) {
+          const { data: byEmail } = await admin.auth.admin.listUsers({ page: 1, perPage: 1, filter: `email.eq.${emailLower}` } as any);
+          const u = byEmail?.users?.[0];
+          if (u) userId = u.id;
+        }
+        if (!userId) {
+          console.error("createUser error", createErr);
+          throw new Error("No se pudo crear la cuenta");
+        }
       }
-      userId = created.user.id;
     }
 
     // Upsert profile phone/name if empty
