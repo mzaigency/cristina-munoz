@@ -26,6 +26,16 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
   };
   const [stylists, setStylists] = useState<Array<{ slug: string; name: string; color: string }>>([]);
   const [waitlistCount, setWaitlistCount] = useState(0);
+  const [fabOpen, setFabOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const nextQuarterSlot = () => {
+    const d = new Date();
+    const m = d.getMinutes();
+    const add = 15 - (m % 15 || 15);
+    d.setMinutes(m + add, 0, 0);
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  };
 
   useEffect(() => {
     if (subTab) return;
