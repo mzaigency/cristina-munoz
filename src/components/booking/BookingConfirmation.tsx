@@ -427,95 +427,98 @@ export const BookingConfirmation = ({
   }
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <div className="rounded-xl bg-salon-pink-light p-4 sm:p-6 border border-primary/20 shadow-md transition-shadow duration-300 hover:shadow-lg">
-        <h4 className="mb-3 font-semibold text-foreground text-sm sm:text-base">Resumen de tu reserva:</h4>
-        <div className="space-y-2 text-xs sm:text-sm">
-          <p className="flex flex-wrap gap-1">
-            <span className="font-medium">Nombre:</span> 
-            <span className="break-all">{userProfile.full_name}</span>
-          </p>
-          <p className="flex flex-wrap gap-1">
-            <span className="font-medium">Email:</span> 
-            <span className="break-all">{userProfile.email}</span>
-          </p>
-          <p className="flex flex-wrap gap-1">
-            <span className="font-medium">Teléfono:</span> 
-            <span>{userProfile.phone}</span>
-          </p>
-          <p className="flex flex-wrap gap-1">
-            <span className="font-medium">Fecha:</span>{" "}
-            <span>{bookingData.date && format(bookingData.date, "dd-MM-yyyy")}</span>
-          </p>
-          <p className="flex flex-wrap gap-1">
-            <span className="font-medium">Hora:</span> 
-            <span>{bookingData.time}</span>
-          </p>
-          <p className="flex flex-wrap gap-1">
-            <span className="font-medium">Profesional:</span>{" "}
-            <span>{bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}</span>
-          </p>
-          <div className="flex flex-wrap gap-1 items-center">
-            <span className="font-medium">Servicios:</span>{" "}
-            <span>{bookingData.services.map((s) => s.name).join(", ")}</span>
-            {bookingData.packageId && (
-              <Badge variant="secondary" className="ml-1 text-xs">
-                <Package className="h-3 w-3 mr-1" />
-                Pack
-              </Badge>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Resumen compacto */}
+      <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 sm:p-6 shadow-sm">
+        {/* Fecha + hora destacadas */}
+        <div className="flex items-baseline justify-between gap-2 pb-3 border-b border-border/40">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Tu cita</p>
+            <p className="text-[20px] sm:text-2xl font-bold text-foreground leading-tight mt-0.5">
+              {bookingData.date && format(bookingData.date, "EEE d MMM", { locale: undefined })} · {bookingData.time}
+            </p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total</p>
+            {finalPrice > 0 ? (
+              hasDiscount ? (
+                <div className="flex items-baseline gap-1.5 justify-end">
+                  <span className="text-[12px] text-muted-foreground line-through tabular-nums">{formatPrice(totalPrice)}</span>
+                  <span className="text-[18px] font-bold text-green-600 tabular-nums">{formatPrice(discountedPrice!)}</span>
+                </div>
+              ) : (
+                <p className="text-[18px] font-bold text-primary tabular-nums">{formatPrice(totalPrice)}</p>
+              )
+            ) : (
+              <p className="text-[14px] text-muted-foreground">{totalDuration} min</p>
             )}
           </div>
-          <p className="flex flex-wrap gap-1">
-            <span className="font-medium">Duración total:</span> 
-            <span>{totalDuration} minutos</span>
-          </p>
-          
-          {/* Price Section */}
-          {totalPrice > 0 && (
-            <div className="pt-3 mt-3 border-t border-primary/20">
-              {bookingData.appliedPromotion && (
-                <div className="flex items-center justify-between text-xs mb-2 bg-green-100 dark:bg-green-900/30 rounded-lg px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-green-600" />
-                    <span className="text-green-700 dark:text-green-400">{bookingData.appliedPromotion.name}</span>
-                  </div>
-                  <Badge variant="secondary" className="font-mono text-xs">
-                    {bookingData.appliedPromotion.code}
-                  </Badge>
-                </div>
+        </div>
+
+        {/* Servicios + profesional en una línea */}
+        <div className="pt-3 space-y-2 text-[13px] sm:text-sm">
+          <div className="flex items-start gap-2">
+            <span className="text-muted-foreground shrink-0 min-w-[80px]">Servicios</span>
+            <span className="text-foreground font-medium flex-1">
+              {bookingData.services.map((s) => s.name).join(" · ")}
+              {bookingData.packageId && (
+                <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
+                  <Package className="h-2.5 w-2.5 mr-0.5" />
+                  Pack
+                </Badge>
               )}
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-base">Total a pagar:</span>
-                <div className="text-right">
-                  {hasDiscount ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground line-through text-sm">{formatPrice(totalPrice)}</span>
-                      <span className="font-bold text-xl text-green-600">{formatPrice(discountedPrice!)}</span>
-                    </div>
-                  ) : (
-                    <span className="font-bold text-xl text-primary">{formatPrice(totalPrice)}</span>
-                  )}
-                </div>
-              </div>
+            </span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-muted-foreground shrink-0 min-w-[80px]">Profesional</span>
+            <span className="text-foreground font-medium">
+              {bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}
+            </span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-muted-foreground shrink-0 min-w-[80px]">Duración</span>
+            <span className="text-foreground font-medium tabular-nums">{totalDuration} min</span>
+          </div>
+        </div>
+
+        {bookingData.appliedPromotion && (
+          <div className="mt-3 flex items-center justify-between text-[12px] bg-green-500/10 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Tag className="h-3.5 w-3.5 text-green-600 shrink-0" />
+              <span className="text-green-700 truncate">{bookingData.appliedPromotion.name}</span>
             </div>
-          )}
+            <Badge variant="secondary" className="font-mono text-[10px] shrink-0">
+              {bookingData.appliedPromotion.code}
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      {/* Datos del cliente — compacto */}
+      <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">A nombre de</p>
+        <div className="space-y-1 text-[14px]">
+          <p className="font-semibold text-foreground">{userProfile.full_name}</p>
+          <p className="text-muted-foreground break-all text-[13px]">{userProfile.email}</p>
+          <p className="text-muted-foreground text-[13px]">{userProfile.phone}</p>
         </div>
       </div>
 
-      <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onBack} 
-          disabled={loading} 
-          className="w-full sm:w-auto h-11 transition-transform duration-200 hover:scale-105 touch-manipulation"
+      {/* CTA */}
+      <div className="flex flex-col-reverse sm:flex-row justify-between gap-2 sm:gap-3 pt-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onBack}
+          disabled={loading}
+          className="w-full sm:w-auto h-12 sm:h-11 text-[15px] touch-manipulation"
         >
           Volver
         </Button>
-        <Button 
-          onClick={handleConfirm} 
-          disabled={loading} 
-          className="w-full sm:w-auto h-11 transition-transform duration-200 hover:scale-105 touch-manipulation"
+        <Button
+          onClick={handleConfirm}
+          disabled={loading}
+          className="w-full sm:flex-1 h-12 sm:h-11 text-[15px] font-semibold touch-manipulation"
           data-guided-cta="true"
         >
           {loading ? (
@@ -524,7 +527,7 @@ export const BookingConfirmation = ({
               Confirmando...
             </>
           ) : (
-            "Confirmar Reserva"
+            "Confirmar reserva"
           )}
         </Button>
       </div>
