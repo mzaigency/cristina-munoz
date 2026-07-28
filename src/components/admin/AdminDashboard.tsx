@@ -8,19 +8,14 @@ import {
   Wallet,
   TrendingUp,
   Clock,
-  Plus,
-  Users,
   UserPlus,
   MessageCircle,
   ShoppingCart,
-  Sparkles,
   Star,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Loader2,
-  Globe,
-  Building2,
-  CheckCircle2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -85,45 +80,13 @@ const computeDelta = (current: number, previous: number): number => {
   return Math.round(((current - previous) / previous) * 100);
 };
 
-function OccRing({ pct }: { pct: number }) {
-  const size = 116,
-    stroke = 12,
-    r = (size - stroke) / 2,
-    c = 2 * Math.PI * r;
-  return (
-    <div style={{ position: "relative", width: size, height: size, flex: "none" }}>
-      <svg width={size} height={size}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--gp-chip)" strokeWidth={stroke} />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="var(--gp-accent)"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={c * (1 - pct)}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          style={{ transition: "stroke-dashoffset .7s cubic-bezier(.4,0,.2,1)" }}
-        />
-      </svg>
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <span style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-.03em" }}>{Math.round(pct * 100)}%</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--gp-muted-c)" }}>ocupación</span>
-      </div>
-    </div>
-  );
-}
+const initialsOf = (name?: string | null): string => {
+  if (!name) return "·";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "·";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+};
 
 const ACTIVITY_TONE: Record<ActivityKind, { color: string; icon: JSX.Element }> = {
   booking: { color: "var(--gp-info)", icon: <Calendar style={{ width: 16, height: 16 }} /> },
@@ -152,6 +115,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
   });
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [upNext, setUpNext] = useState<{ time: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenantAge, setTenantAge] = useState<number>(999);
   const [trainingOpen, setTrainingOpen] = useState(true);
@@ -199,6 +163,10 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       const todayBookingsList = bookings || [];
       const upcoming = todayBookingsList.filter((b: any) => b.Hora >= now);
       const nextBooking: any = upcoming[0];
+      const upNextList = upcoming.slice(1, 4).map((b: any) => ({
+        time: String(b.Hora).slice(0, 5),
+        name: (b.customer_name || "").trim().split(/\s+/)[0] || "Cita",
+      }));
       const todayBookingsWeb = todayBookingsList.filter((b: any) => b.canal !== "crm").length;
       const todayBookingsCrm = todayBookingsList.filter((b: any) => b.canal === "crm").length;
 
@@ -345,6 +313,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
       setTeam(teamList);
       setActivity(activityItems.slice(0, 12));
+      setUpNext(upNextList);
       setStats({
         todayBookings: todayBookingsList.length,
         todayBookingsWeb,
@@ -413,55 +382,38 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
     },
   ];
 
-  const renderDelta = (value: number) => {
-    if (value === 0) return null;
-    return (
-      <span className={`gp-kpi-delta ${value >= 0 ? "up" : "down"}`}>
-        <TrendingUp style={{ width: 11, height: 11, transform: value >= 0 ? undefined : "scaleY(-1)" }} />
-        {value >= 0 ? "+" : ""}
-        {value}%
-      </span>
-    );
-  };
 
-  const handleRegisterArrival = async () => {
-    if (!stats.nextBookingId) return;
-    await supabase.from("bookings").update({ status: "arrived" }).eq("id", stats.nextBookingId);
-    fetchDashboardStats();
-  };
 
   return (
     <div className="gp-fade" data-tour-target="inicio-stats" style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
       <OnboardingChecklist tenantId={tenantId} onNavigate={onNavigate} />
 
-      {/* Page header */}
-      <div className="gp-page-h">
-        <div>
-          <h2>Resumen del día</h2>
-          <p>{format(new Date(), "EEEE d 'de' MMMM · yyyy", { locale: es })}</p>
-        </div>
-        <div className="gp-page-actions gp-hide-sm">
-          <button className="gp-btn gp-hide-sm" onClick={() => onNavigate("negocio")}>
-            <TrendingUp style={{ width: 14, height: 14 }} />
-            Informes
-          </button>
-          {/* En móvil la acción vive en el FAB; el botón duplicado solo metía ruido */}
-          <button className="gp-btn primary gp-hide-sm" onClick={() => onQuickAction("new-booking")}>
-            <Plus style={{ width: 14, height: 14 }} />
-            Nueva cita
-          </button>
-        </div>
-      </div>
+      {/* ── Dashboard rediseñado (import Stitch tal cual, datos reales) ── */}
+      <div className="flex flex-col gap-6 font-body text-on-background">
 
-      {/* Dashboard grid — mobile-first, reorganized per breakpoint */}
-      <div className="gp-dash">
-        {/* PRÓXIMA CITA */}
-        <div className="gp-dash-next gp-card" style={{ overflow: "hidden", position: "relative" }}>
-          <div className="gp-next-bg" />
-          <div className="gp-next-inner">
-            <div className="gp-next-text">
-              <span className="gp-badge accent" style={{ marginBottom: 8, display: "inline-flex" }}>
-                <Clock style={{ width: 12, height: 12 }} />
+        {/* Título */}
+        <div className="flex flex-col gap-1 pt-1">
+          <h2 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-on-background">
+            Resumen <span className="text-gradient">del día</span>
+          </h2>
+          <p className="text-sm sm:text-base text-outline font-medium">
+            {format(new Date(), "EEEE d 'de' MMMM · yyyy", { locale: es })}
+          </p>
+        </div>
+
+        {/* PRÓXIMA CITA — tarjeta limpia, color solo como acento */}
+        <div
+          onClick={() => onNavigate("agenda")}
+          className="relative bg-surface-container-lowest rounded-[1.25rem] shadow-ambient overflow-hidden cursor-pointer active:scale-[.99] transition-transform duration-200"
+        >
+          <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-gradient" />
+          <div className="p-4 pl-5">
+            <div className="flex items-center justify-between mb-4">
+              <span className="inline-flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-primary min-w-0">
+                <span
+                  className="w-2 h-2 rounded-full flex-none bg-[#16A249]"
+                  style={{ boxShadow: "0 0 0 3px rgba(22,162,73,.18)" }}
+                />
                 {(() => {
                   if (!stats.nextBookingTime) return "Próxima cita";
                   const [h, m] = stats.nextBookingTime.split(":").map(Number);
@@ -472,215 +424,217 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
                   return `Próxima cita · en ${hh} h ${mins % 60 > 0 ? `${mins % 60} min` : ""}`.trim();
                 })()}
               </span>
-              {stats.nextBookingTime ? (
-                <div className="gp-next-row">
-                  <span className="gp-next-time">{stats.nextBookingTime}</span>
-                  <div className="gp-next-meta">
-                    <div className="gp-next-name">{stats.nextBookingName}</div>
-                    <div className="gp-next-sub">
+              <ChevronRight className="w-[18px] h-[18px] text-outline flex-none" />
+            </div>
+            {stats.nextBookingTime ? (
+              <>
+                <div className="flex items-center gap-4">
+                  <span className="w-12 h-12 rounded-full flex items-center justify-center flex-none font-display text-base font-bold text-white bg-brand-gradient">
+                    {initialsOf(stats.nextBookingName)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline gap-2.5 min-w-0">
+                      <span className="font-display text-3xl font-extrabold tracking-tight text-on-background leading-none flex-none">
+                        {stats.nextBookingTime}
+                      </span>
+                      <span className="font-display text-lg font-bold text-on-background truncate">
+                        {stats.nextBookingName}
+                      </span>
+                    </div>
+                    <p className="text-sm text-outline font-medium mt-0.5 truncate">
                       {stats.nextBookingService
                         ? `${stats.nextBookingService}${
-                            stats.nextBookingStylist ? ` · ${stats.nextBookingStylist}` : ""
+                            stats.nextBookingStylist ? ` · con ${stats.nextBookingStylist}` : ""
                           }`
                         : `${stats.todayBookings} citas hoy`}
-                    </div>
+                    </p>
                   </div>
                 </div>
-              ) : (
-                <div className="gp-next-empty">Sin más citas hoy</div>
-              )}
-              <div className="gp-next-actions">
-                {stats.nextBookingId ? (
-                  <button className="gp-btn primary sm" onClick={handleRegisterArrival}>
-                    <CheckCircle2 style={{ width: 13, height: 13 }} />
-                    <span className="gp-hide-xs">Registrar llegada</span>
-                    <span className="gp-show-xs">Llegada</span>
-                  </button>
-                ) : (
-                  <button className="gp-btn primary sm" onClick={() => onQuickAction("new-booking")}>
-                    <Sparkles style={{ width: 13, height: 13 }} />
-                    Nueva cita
-                  </button>
+                {upNext.length > 0 && (
+                  <div className="mt-4 pt-3 border-t border-outline-variant/40 flex items-center gap-2 flex-wrap text-xs text-outline">
+                    <span className="font-bold text-on-surface-variant">Luego</span>
+                    {upNext.map((u, i) => (
+                      <span key={i} className="inline-flex items-center gap-2 whitespace-nowrap">
+                        {i > 0 && <span className="opacity-40">·</span>}
+                        {u.time} {u.name}
+                      </span>
+                    ))}
+                  </div>
                 )}
-                <button className="gp-btn sm" onClick={() => onNavigate("agenda")}>
-                  <Calendar style={{ width: 13, height: 13 }} />
-                  <span className="gp-hide-xs">Ver agenda</span>
-                </button>
-              </div>
-            </div>
-            <div className="gp-next-ring">
-              <OccRing pct={stats.occupancy} />
-            </div>
+              </>
+            ) : (
+              <div className="text-sm font-semibold text-outline py-1">Sin más citas hoy</div>
+            )}
           </div>
         </div>
 
-        {/* KPIs */}
-        <div className="gp-dash-kpis">
-          <div className="gp-kpi">
-            <div className="gp-kpi-top">
-              <span className="gp-kpi-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
-                <Wallet style={{ width: 16, height: 16 }} />
+        {/* KPIs 2x2 */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Ingresos */}
+          <div className="bg-surface-container-lowest rounded-[1rem] p-4 shadow-ambient flex flex-col justify-between">
+            <div className="flex justify-between items-start mb-3">
+              <span className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent">
+                <Wallet className="w-[18px] h-[18px]" />
               </span>
-              {renderDelta(stats.revenueGrowth)}
-            </div>
-            <div className="gp-kpi-val">{formatCurrency(stats.todayRevenue)}</div>
-            <div className="gp-kpi-lbl">Ingresos de hoy</div>
-          </div>
-          <div className="gp-kpi" style={{ cursor: "pointer" }} onClick={() => onNavigate("agenda")}>
-            <div className="gp-kpi-top">
-              <span className="gp-kpi-ic" style={{ background: "var(--gp-info-soft)", color: "var(--gp-info)" }}>
-                <Calendar style={{ width: 16, height: 16 }} />
-              </span>
-              {renderDelta(stats.bookingsGrowth)}
-            </div>
-            <div className="gp-kpi-val">{stats.todayBookings}</div>
-            <div className="gp-kpi-lbl">Citas de hoy</div>
-            <div className="gp-kpi-tags">
-              <span
-                className="gp-badge"
-                style={{ background: "color-mix(in oklab, var(--gp-info), white 88%)", color: "var(--gp-info)" }}
-              >
-                <Globe style={{ width: 10, height: 10 }} />
-                {stats.todayBookingsWeb} web
-              </span>
-              <span
-                className="gp-badge"
-                style={{ background: "color-mix(in oklab, var(--gp-accent), white 88%)", color: "var(--gp-accent)" }}
-              >
-                <Building2 style={{ width: 10, height: 10 }} />
-                {stats.todayBookingsCrm} CRM
-              </span>
-            </div>
-          </div>
-          <div className="gp-kpi">
-            <div className="gp-kpi-top">
-              <span className="gp-kpi-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
-                <UserPlus style={{ width: 16, height: 16 }} />
-              </span>
-              {renderDelta(stats.newClientsGrowth)}
-            </div>
-            <div className="gp-kpi-val">{stats.newClientsToday}</div>
-            <div className="gp-kpi-lbl">Clientes nuevos</div>
-          </div>
-          <div className="gp-kpi">
-            <div className="gp-kpi-top">
-              <span className="gp-kpi-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
-                <TrendingUp style={{ width: 16, height: 16 }} />
-              </span>
-              {stats.occupancyDelta !== 0 && (
-                <span className={`gp-kpi-delta ${stats.occupancyDelta >= 0 ? "up" : "down"}`}>
-                  <TrendingUp
-                    style={{
-                      width: 11,
-                      height: 11,
-                      transform: stats.occupancyDelta >= 0 ? undefined : "scaleY(-1)",
-                    }}
-                  />
-                  {stats.occupancyDelta >= 0 ? "+" : ""}
-                  {stats.occupancyDelta}pp
+              {stats.revenueGrowth !== 0 && (
+                <span className="bg-[#E7F6EC] text-[#16A249] text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" style={{ transform: stats.revenueGrowth >= 0 ? undefined : "scaleY(-1)" }} />
+                  {stats.revenueGrowth >= 0 ? "+" : ""}{stats.revenueGrowth}%
                 </span>
               )}
             </div>
-            <div className="gp-kpi-val">{Math.round(stats.occupancy * 100)}%</div>
-            <div className="gp-kpi-lbl">Ocupación</div>
+            <div>
+              <p className="text-sm text-outline mb-0.5">Ingresos hoy</p>
+              <p className="font-display text-2xl font-extrabold text-on-background">{formatCurrency(stats.todayRevenue)}</p>
+            </div>
+          </div>
+          {/* Citas */}
+          <div
+            onClick={() => onNavigate("agenda")}
+            className="bg-surface-container-lowest rounded-[1rem] p-4 shadow-ambient flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex justify-between items-start mb-3">
+              <span className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Calendar className="w-[18px] h-[18px]" />
+              </span>
+              <div className="flex flex-col gap-1 items-end">
+                <span className="bg-surface-container-high text-on-surface-variant text-xs font-semibold px-2 py-0.5 rounded-full">{stats.todayBookingsWeb} web</span>
+                <span className="bg-surface-container-high text-on-surface-variant text-xs font-semibold px-2 py-0.5 rounded-full">{stats.todayBookingsCrm} CRM</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-outline mb-0.5">Citas hoy</p>
+              <p className="font-display text-2xl font-extrabold text-on-background">{stats.todayBookings}</p>
+            </div>
+          </div>
+          {/* Clientes nuevos */}
+          <div className="bg-surface-container-lowest rounded-[1rem] p-4 shadow-ambient flex flex-col justify-between">
+            <div className="flex justify-between items-start mb-3">
+              <span className="w-10 h-10 rounded-full bg-[#E7F6EC] flex items-center justify-center text-[#16A249]">
+                <UserPlus className="w-[18px] h-[18px]" />
+              </span>
+              {stats.newClientsGrowth !== 0 && (
+                <span className="bg-[#E7F6EC] text-[#16A249] text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" style={{ transform: stats.newClientsGrowth >= 0 ? undefined : "scaleY(-1)" }} />
+                  {stats.newClientsGrowth >= 0 ? "+" : ""}{stats.newClientsGrowth}%
+                </span>
+              )}
+            </div>
+            <div>
+              <p className="text-sm text-outline mb-0.5">Clientes nuevos</p>
+              <p className="font-display text-2xl font-extrabold text-on-background">{stats.newClientsToday}</p>
+            </div>
+          </div>
+          {/* Ocupación */}
+          <div className="bg-surface-container-lowest rounded-[1rem] p-4 shadow-ambient flex flex-col justify-between">
+            <div className="flex justify-between items-start mb-3">
+              <span className="w-10 h-10 rounded-full bg-[#FEF3E0] flex items-center justify-center text-[#F59E0B]">
+                <TrendingUp className="w-[18px] h-[18px]" />
+              </span>
+              {stats.occupancyDelta !== 0 && (
+                <span className={`text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1 ${stats.occupancyDelta >= 0 ? "bg-[#E7F6EC] text-[#16A249]" : "bg-[#FDEAEA] text-[#EF4343]"}`}>
+                  <TrendingUp className="w-3 h-3" style={{ transform: stats.occupancyDelta >= 0 ? undefined : "scaleY(-1)" }} />
+                  {stats.occupancyDelta >= 0 ? "+" : ""}{stats.occupancyDelta}pp
+                </span>
+              )}
+            </div>
+            <div>
+              <p className="text-sm text-outline mb-0.5">Ocupación</p>
+              <p className="font-display text-2xl font-extrabold text-on-background">{Math.round(stats.occupancy * 100)}%</p>
+            </div>
           </div>
         </div>
 
         {/* ATAJOS RÁPIDOS */}
-        <div className="gp-dash-shortcuts gp-card" style={{ overflow: "hidden" }}>
-          <div className="gp-card-h">
-            <h3>Atajos rápidos</h3>
-          </div>
-          <div className="gp-quick-grid">
+        <div>
+          <h3 className="font-headline text-lg font-bold text-on-background mb-3">Atajos rápidos</h3>
+          <div className="grid grid-cols-4 gap-3">
             {quickActions.map((a) => (
-              <button
-                key={a.label}
-                onClick={a.onClick}
-                className="gp-quick-btn"
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gp-surface-2)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gp-surface)")}
-              >
-                <span
-                  className="gp-quick-ic"
-                  style={{ background: `color-mix(in oklab, ${a.color}, white 86%)`, color: a.color }}
-                >
-                  {a.icon}
+              <button key={a.label} onClick={a.onClick} className="flex flex-col items-center gap-2 active:scale-95 transition-transform">
+                <span className="w-full aspect-square rounded-[1.25rem] bg-surface-container-lowest shadow-ambient flex items-center justify-center">
+                  <span
+                    className="w-11 h-11 rounded-full flex items-center justify-center"
+                    style={{ background: `color-mix(in oklab, ${a.color}, white 86%)`, color: a.color }}
+                  >
+                    {a.icon}
+                  </span>
                 </span>
-                <span className="gp-quick-lbl">{a.label}</span>
+                <span className="text-xs font-semibold text-on-surface-variant text-center leading-tight">{a.label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* ACTIVIDAD RECIENTE */}
-        <div className="gp-dash-activity gp-card" style={{ overflow: "hidden" }}>
-          <div className="gp-card-h" style={{ justifyContent: "space-between" }}>
-            <h3>Actividad reciente</h3>
-            <button className="gp-btn ghost sm" onClick={navActivity} style={{ fontSize: 12 }}>
-              Ver todo
-            </button>
+        {/* ACTIVIDAD + EQUIPO */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Actividad reciente */}
+          <div className="lg:col-span-2 bg-surface-container-lowest rounded-[1.25rem] p-5 shadow-ambient">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="font-headline text-lg font-bold text-on-background">Actividad reciente</h3>
+              <button onClick={navActivity} className="text-primary font-semibold text-sm hover:underline">Ver todo</button>
+            </div>
+            {activity.length > 0 ? (
+              <ul className="flex flex-col gap-5">
+                {activity.slice(0, 6).map((item) => {
+                  const tone = ACTIVITY_TONE[item.kind];
+                  return (
+                    <li key={item.id} className="flex items-start gap-4">
+                      <span
+                        className="w-10 h-10 rounded-full flex-none flex items-center justify-center mt-0.5"
+                        style={{ background: `color-mix(in oklab, ${tone.color}, white 88%)`, color: tone.color }}
+                      >
+                        {tone.icon}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-on-background" dangerouslySetInnerHTML={{ __html: item.text }} />
+                        <p className="text-xs text-outline mt-0.5">{item.meta}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-outline py-2">Sin actividad reciente</p>
+            )}
           </div>
-          {activity.length > 0 ? (
-            <div className="gp-list">
-              {activity.slice(0, 6).map((item) => {
-                const tone = ACTIVITY_TONE[item.kind];
-                return (
-                  <div className="gp-row" key={item.id}>
-                    <span
-                      className="gp-act-ic"
-                      style={{
-                        background: `color-mix(in oklab, ${tone.color}, white 88%)`,
-                        color: tone.color,
-                      }}
-                    >
-                      {tone.icon}
-                    </span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        className="gp-act-text"
-                        dangerouslySetInnerHTML={{ __html: item.text }}
-                      />
-                      <div className="gp-act-meta">{item.meta}</div>
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Equipo hoy */}
+          <div className="bg-surface-container-lowest rounded-[1.25rem] p-5 shadow-ambient">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="font-headline text-lg font-bold text-on-background">Equipo hoy</h3>
+              {team.length > 0 && (
+                <span className="bg-surface-container-low text-primary text-xs font-bold px-2.5 py-1 rounded-full">{team.length} activos</span>
+              )}
             </div>
-          ) : (
-            <div style={{ padding: "20px 18px", fontSize: 13, color: "var(--gp-muted-c)" }}>
-              Sin actividad reciente
-            </div>
-          )}
-        </div>
-
-        {/* EQUIPO HOY */}
-        <div className="gp-dash-team gp-card">
-          <div className="gp-card-h">
-            <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Users style={{ width: 15, height: 15 }} />
-              Equipo hoy
-            </h3>
+            {team.length > 0 ? (
+              <>
+                <ul className="flex flex-col gap-5">
+                  {team.map((member) => (
+                    <li key={member.id} className="flex items-center gap-3">
+                      <span
+                        className="w-11 h-11 rounded-full flex items-center justify-center font-display font-bold text-base flex-none text-white"
+                        style={{ background: member.color }}
+                      >
+                        {member.name.charAt(0).toUpperCase()}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-semibold text-on-background truncate">{member.name.split(" ")[0]}</p>
+                        <p className="text-sm text-outline truncate">{member.today} citas hoy</p>
+                      </div>
+                      <span className="bg-surface-container-high text-on-surface-variant text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">{member.week}/sem</span>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => onNavigate("negocio")}
+                  className="w-full mt-5 py-3 border border-outline-variant/50 rounded-full text-primary font-semibold hover:bg-surface-container-low transition-colors"
+                >
+                  Gestionar turnos
+                </button>
+              </>
+            ) : (
+              <p className="text-sm text-outline py-2">Sin equipo configurado</p>
+            )}
           </div>
-          {team.length > 0 ? (
-            <div className="gp-team-list">
-              {team.map((member) => (
-                <div key={member.id} className="gp-team-row">
-                  <span className="gp-team-avatar" style={{ background: member.color }}>
-                    {member.name.charAt(0).toUpperCase()}
-                  </span>
-                  <div className="gp-team-info">
-                    <div className="gp-team-name">{member.name.split(" ")[0]}</div>
-                    <div className="gp-team-sub">{member.today} citas hoy</div>
-                  </div>
-                  <span className="gp-badge neutral">{member.week}/sem</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ padding: "16px 18px", fontSize: 13, color: "var(--gp-muted-c)" }}>
-              Sin equipo configurado
-            </div>
-          )}
         </div>
       </div>
 

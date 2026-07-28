@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import {
   Plus,
   Settings,
   Lock,
+  Search,
+  Bell,
 } from "lucide-react";
 import { AdminHelpMenu } from "@/components/admin/layout/AdminHelpMenu";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -165,6 +167,30 @@ export default function TenantAdmin() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [moreOpen, setMoreOpen] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
+  const [chromeHidden, setChromeHidden] = useState(false);
+  const mainWrapRef = useRef<HTMLDivElement>(null);
+
+  // Header + tabs: ocultar al scrollear hacia abajo, mostrar al subir (móvil)
+  useEffect(() => {
+    const el = mainWrapRef.current;
+    if (!el) return;
+    let last = el.scrollTop;
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = el.scrollTop;
+        if (y < 8) setChromeHidden(false);
+        else if (y > last + 6) setChromeHidden(true);
+        else if (y < last - 6) setChromeHidden(false);
+        last = y;
+        ticking = false;
+      });
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   const navigate = useNavigate();
   const { adminSlug: slug, section: sectionParam, subTab: subTabParam } =
@@ -630,16 +656,47 @@ export default function TenantAdmin() {
       </aside>
 
       {/* ── Main Column ── */}
-      <div className="gp-main-wrap">
+      <div className="gp-main-wrap" ref={mainWrapRef}>
+
+        {/* Chrome sticky (header + tabs se ocultan/muestran juntos al scrollear) */}
+        <div className={`gp-chrome${chromeHidden ? " gp-chrome--hidden" : ""}`}>
 
         {/* Topbar */}
         <header className="gp-topbar" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+          {/* Brand — solo móvil (desktop usa sidebar) */}
+          <div className="gp-topbar-brand">
+            {tenant.logo_url ? (
+              <img src={tenant.logo_url} alt={tenant.name} className="gp-topbar-brand-logo" />
+            ) : (
+              <span className="gp-topbar-brand-logo">{tenant.name.charAt(0).toUpperCase()}</span>
+            )}
+            <span className="gp-topbar-brand-name">{tenant.name}</span>
+          </div>
+          {/* Título — solo desktop */}
           <div className="gp-top-titlewrap">
             <span className="gp-top-crumb">{activeSectionLabel}</span>
             <span className="gp-top-title">{activeSubLabel}</span>
           </div>
           <div className="gp-top-spacer" />
-          <AdminHelpMenu tenantId={tenant.id} onTourTabChange={handleNavigate} />
+          {/* Iconos móvil: buscar (paleta) + notificaciones */}
+          <button
+            className="gp-topbar-icon"
+            aria-label="Buscar"
+            onClick={() => window.dispatchEvent(new Event("admin:open-command"))}
+          >
+            <Search className="h-5 w-5" />
+          </button>
+          <button
+            className="gp-topbar-icon"
+            aria-label="Notificaciones"
+            onClick={() => goToSection("clientes", "mensajes")}
+          >
+            <Bell className="h-5 w-5" />
+            {notificationCounts.messages > 0 && <span className="gp-topbar-icon-dot" />}
+          </button>
+          <span className="gp-hide-sm">
+            <AdminHelpMenu tenantId={tenant.id} onTourTabChange={handleNavigate} />
+          </span>
           {/* Account menu: visible on mobile where sidebar is hidden */}
           <span className="gp-topbar-account-mobile">
             <AdminAccountMenu
@@ -683,6 +740,8 @@ export default function TenantAdmin() {
             onSelect={(t) => goToSection(activeSection, t)}
           />
         </div>
+        </div>
+        {/* /gp-chrome */}
 
         {/* Content */}
         <main

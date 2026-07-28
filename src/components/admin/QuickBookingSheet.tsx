@@ -25,10 +25,12 @@ import {
   Search,
   CalendarIcon,
   Clock,
-  Scissors,
   Sparkles,
   Plus,
   ChevronRight,
+  Phone,
+  Check,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -98,6 +100,7 @@ export const QuickBookingSheet = ({
   const [serviceFilter, setServiceFilter] = useState("");
 
   const [clientQuery, setClientQuery] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
   const [clientResults, setClientResults] = useState<ClientRow[]>([]);
   const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
   const [clientSearching, setClientSearching] = useState(false);
@@ -115,6 +118,7 @@ export const QuickBookingSheet = ({
       setSelectedServiceIds(new Set());
       setSelectedClient(null);
       setClientQuery("");
+      setClientPhone("");
       setServiceFilter("");
     }
   }, [open, initialDate, initialTime, initialStylistSlug]);
@@ -225,6 +229,7 @@ export const QuickBookingSheet = ({
     try {
       const payload = {
         customer_name: selectedClient?.name || clientQuery.trim(),
+        phone: clientPhone.trim() || selectedClient?.phone?.trim() || undefined,
         username: null,
         user_id: null,
         services: selectedServices.map((s) => ({
@@ -291,22 +296,25 @@ export const QuickBookingSheet = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-[92vh] flex flex-col p-0 rounded-t-3xl border-t bg-background/95 backdrop-blur-xl"
+        className="h-[92vh] flex flex-col p-0 rounded-t-[28px] border-t-0 bg-background/95 backdrop-blur-xl"
+        style={{ boxShadow: "0 -8px 40px -12px rgba(20,22,40,.28)" }}
       >
         {/* Drag handle + header */}
-        <div className="shrink-0 pt-2 px-5 pb-3 border-b border-border/40">
-          <div className="mx-auto h-1.5 w-10 rounded-full bg-muted-foreground/30 mb-3" />
-          <SheetHeader className="text-left space-y-1">
-            <SheetTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="h-5 w-5 text-primary" />
+        <div className="shrink-0 pt-2.5 px-5 pb-4 border-b border-line">
+          <div className="mx-auto h-1.5 w-10 rounded-full bg-outline/25 mb-4" />
+          <SheetHeader className="text-left space-y-3">
+            <SheetTitle className="flex items-center gap-2.5 text-[20px] font-bold tracking-[-0.02em] text-ink-2">
+              <span className="w-9 h-9 rounded-full bg-gradient-brand flex items-center justify-center flex-none">
+                <Sparkles className="h-[18px] w-[18px] text-white" />
+              </span>
               Cita rápida
             </SheetTitle>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {/* Date chip */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-medium hover:bg-primary/15 transition">
-                    <CalendarIcon className="h-3.5 w-3.5" />
+                  <button className="inline-flex items-center gap-1.5 rounded-full bg-chip text-ink-2 px-3.5 py-2 text-[13px] font-semibold active:scale-95 transition">
+                    <CalendarIcon className="h-4 w-4 text-primary" />
                     {format(date, "EEE d MMM", { locale: es })}
                   </button>
                 </PopoverTrigger>
@@ -324,14 +332,10 @@ export const QuickBookingSheet = ({
               {/* Time chip */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-medium hover:bg-primary/15 transition">
-                    <Clock className="h-3.5 w-3.5" />
+                  <button className="inline-flex items-center gap-1.5 rounded-full bg-chip text-ink-2 px-3.5 py-2 text-[13px] font-semibold tabular-nums active:scale-95 transition">
+                    <Clock className="h-4 w-4 text-primary" />
                     {time}
-                    {endTime && (
-                      <span className="text-primary/60">
-                        – {format(endTime, "HH:mm")}
-                      </span>
-                    )}
+                    {endTime && <span className="text-outline">– {format(endTime, "HH:mm")}</span>}
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-40 p-1 max-h-72 overflow-y-auto" align="start">
@@ -357,13 +361,16 @@ export const QuickBookingSheet = ({
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition"
+                      className="inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold active:scale-95 transition"
                       style={{
                         backgroundColor: `${currentStylist?.color || "#6366f1"}15`,
                         color: currentStylist?.color || "#6366f1",
                       }}
                     >
-                      <UserCircle className="h-3.5 w-3.5" />
+                      <span
+                        className="w-2 h-2 rounded-full flex-none"
+                        style={{ background: currentStylist?.color || "#6366f1" }}
+                      />
                       {currentStylist?.name || "Profesional"}
                     </button>
                   </PopoverTrigger>
@@ -396,7 +403,7 @@ export const QuickBookingSheet = ({
           {/* Cliente */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <label className="text-[13px] font-semibold text-ink-2">
                 Cliente
               </label>
               {selectedClient && (
@@ -405,7 +412,7 @@ export const QuickBookingSheet = ({
                     setSelectedClient(null);
                     setClientQuery("");
                   }}
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  className="text-[13px] font-medium text-primary active:opacity-60"
                 >
                   Cambiar
                 </button>
@@ -413,115 +420,166 @@ export const QuickBookingSheet = ({
             </div>
 
             {selectedClient ? (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
-                <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center text-primary font-semibold">
-                  {selectedClient.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{selectedClient.name}</p>
-                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <span>{selectedClient.total_visits || 0} visitas</span>
-                    <span>·</span>
-                    <span>{(selectedClient.total_spent || 0).toFixed(0)}€</span>
-                    {selectedClient.tags?.slice(0, 1).map((t) => (
-                      <Badge key={t} variant="outline" className="text-[9px] px-1 py-0">
-                        {t}
-                      </Badge>
-                    ))}
+              <div className="rounded-2xl bg-surface border border-line overflow-hidden">
+                <div className="flex items-center gap-3 p-3.5">
+                  <div className="h-11 w-11 rounded-full bg-gradient-brand flex items-center justify-center text-white font-bold flex-none">
+                    {selectedClient.name.charAt(0).toUpperCase()}
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[15px] text-ink-2 truncate tracking-[-0.01em]">
+                      {selectedClient.name}
+                    </p>
+                    <div className="flex items-center gap-1.5 text-[12px] text-outline">
+                      <span>{selectedClient.total_visits || 0} visitas</span>
+                      <span>·</span>
+                      <span>{(selectedClient.total_spent || 0).toFixed(0)}€</span>
+                      {selectedClient.tags?.slice(0, 1).map((t) => (
+                        <Badge key={t} variant="outline" className="text-[9px] px-1 py-0">
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {/* Teléfono del cliente ya existente */}
+                <div className="flex items-center gap-2.5 px-3.5 py-3 border-t border-line">
+                  <Phone className="h-4 w-4 text-outline flex-none" />
+                  <input
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.target.value)}
+                    inputMode="tel"
+                    placeholder="Añadir teléfono"
+                    className="flex-1 min-w-0 bg-transparent text-[15px] text-ink-2 placeholder:text-outline/70 outline-none tabular-nums"
+                  />
                 </div>
               </div>
             ) : (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={clientQuery}
-                  onChange={(e) => setClientQuery(e.target.value)}
-                  onFocus={() => clientResults.length > 0 && setShowClientResults(true)}
-                  placeholder="Buscar cliente o escribir nombre nuevo..."
-                  className="pl-9 h-11 rounded-xl"
-                />
-                {clientSearching && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                )}
+              <div className="rounded-2xl bg-surface border border-line overflow-hidden">
+                {/* Nombre */}
+                <div className="relative flex items-center gap-2.5 px-3.5 py-3">
+                  <Search className="h-4 w-4 text-outline flex-none" />
+                  <input
+                    value={clientQuery}
+                    onChange={(e) => setClientQuery(e.target.value)}
+                    onFocus={() => clientResults.length > 0 && setShowClientResults(true)}
+                    placeholder="Buscar o escribir nombre"
+                    className="flex-1 min-w-0 bg-transparent text-[15px] text-ink-2 placeholder:text-outline/70 outline-none"
+                  />
+                  {clientSearching && <Loader2 className="h-4 w-4 animate-spin text-outline flex-none" />}
 
-                {showClientResults && clientResults.length > 0 && (
-                  <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-card border rounded-xl shadow-lg max-h-64 overflow-y-auto">
-                    {clientResults.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => {
-                          setSelectedClient(c);
-                          setClientQuery(c.name);
-                          setShowClientResults(false);
-                        }}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-muted text-left border-b last:border-b-0 transition"
-                      >
-                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-medium shrink-0">
-                          {c.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{c.name}</p>
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                            {c.phone && <span className="truncate">{c.phone}</span>}
-                            <span>·</span>
-                            <span>{c.total_visits || 0} visitas</span>
+                  {showClientResults && clientResults.length > 0 && (
+                    <div className="absolute z-30 top-full left-0 right-0 mt-2 bg-surface border border-line rounded-2xl shadow-soft max-h-64 overflow-y-auto">
+                      {clientResults.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => {
+                            setSelectedClient(c);
+                            setClientQuery(c.name);
+                            setClientPhone(c.phone || "");
+                            setShowClientResults(false);
+                          }}
+                          className="w-full flex items-center gap-3 p-3 active:bg-chip text-left border-b border-line last:border-b-0 transition"
+                        >
+                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold shrink-0">
+                            {c.name.charAt(0).toUpperCase()}
                           </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {clientQuery.trim().length >= 2 &&
-                  !clientSearching &&
-                  clientResults.length === 0 && (
-                    <p className="text-xs text-muted-foreground mt-1.5 pl-1">
-                      Nuevo cliente: <span className="font-medium text-foreground">{clientQuery}</span>
-                    </p>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[15px] font-medium text-ink-2 truncate">{c.name}</p>
+                            <div className="flex items-center gap-1.5 text-[12px] text-outline">
+                              {c.phone && <span className="truncate tabular-nums">{c.phone}</span>}
+                              {c.phone && <span>·</span>}
+                              <span>{c.total_visits || 0} visitas</span>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   )}
+                </div>
+
+                {/* Teléfono */}
+                <div className="flex items-center gap-2.5 px-3.5 py-3 border-t border-line">
+                  <Phone className="h-4 w-4 text-outline flex-none" />
+                  <input
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.target.value)}
+                    inputMode="tel"
+                    placeholder="Teléfono (opcional)"
+                    className="flex-1 min-w-0 bg-transparent text-[15px] text-ink-2 placeholder:text-outline/70 outline-none tabular-nums"
+                  />
+                </div>
               </div>
             )}
+
+            {!selectedClient &&
+              clientQuery.trim().length >= 2 &&
+              !clientSearching &&
+              clientResults.length === 0 && (
+                <p className="text-[12px] text-outline pl-1">
+                  Se creará como cliente nuevo:{" "}
+                  <span className="font-semibold text-ink-2">{clientQuery}</span>
+                </p>
+              )}
           </section>
 
           {/* Servicios */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <label className="text-[13px] font-semibold text-ink-2">
                 Servicios
               </label>
               {selectedServices.length > 0 && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[12px] font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full tabular-nums">
                   {totalDuration} min · {totalPrice.toFixed(0)}€
                 </span>
               )}
             </div>
 
-            {services.length > 8 && (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  value={serviceFilter}
-                  onChange={(e) => setServiceFilter(e.target.value)}
-                  placeholder="Filtrar servicios..."
-                  className="pl-8 h-9 rounded-lg text-sm"
-                />
+            {/* Seleccionados arriba, para no perderlos de vista */}
+            {selectedServices.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedServices.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => toggleService(s.id)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-gradient-brand text-white px-3 py-1.5 text-[13px] font-semibold active:scale-95 transition"
+                  >
+                    {s.name}
+                    <X className="h-3.5 w-3.5 opacity-80" />
+                  </button>
+                ))}
               </div>
             )}
 
-            <div className="space-y-3">
+            {services.length > 8 && (
+              <div className="flex items-center gap-2.5 rounded-2xl bg-surface border border-line px-3.5 py-3">
+                <Search className="h-4 w-4 text-outline flex-none" />
+                <input
+                  value={serviceFilter}
+                  onChange={(e) => setServiceFilter(e.target.value)}
+                  placeholder="Buscar servicio"
+                  className="flex-1 min-w-0 bg-transparent text-[15px] text-ink-2 placeholder:text-outline/70 outline-none"
+                />
+                {serviceFilter && (
+                  <button onClick={() => setServiceFilter("")} className="flex-none text-outline">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-4">
               {groupedServices.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
+                <p className="text-[14px] text-outline text-center py-6">
                   Sin servicios. Crea uno en el catálogo.
                 </p>
               )}
               {groupedServices.map(([cat, items]) => (
                 <div key={cat} className="space-y-1.5">
-                  <p className="text-[11px] font-medium text-muted-foreground/80 uppercase tracking-wide px-0.5">
-                    {cat}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {items.map((s) => {
+                  <p className="text-[12px] font-semibold text-outline px-1">{cat}</p>
+                  {/* Lista agrupada estilo iOS */}
+                  <div className="rounded-2xl bg-surface border border-line overflow-hidden">
+                    {items.map((s, i) => {
                       const dur =
                         s.duration_part1_active + s.duration_exposure_pause + s.duration_part2_active;
                       const active = selectedServiceIds.has(s.id);
@@ -530,16 +588,35 @@ export const QuickBookingSheet = ({
                           key={s.id}
                           onClick={() => toggleService(s.id)}
                           className={cn(
-                            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition-all",
-                            active
-                              ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                              : "bg-card hover:bg-muted border-border/60",
+                            "w-full flex items-center gap-3 px-3.5 py-3 text-left transition active:bg-chip",
+                            i > 0 && "border-t border-line",
+                            active && "bg-primary/5",
                           )}
                         >
-                          <Scissors className="h-3 w-3" />
-                          <span>{s.name}</span>
-                          <span className={cn("text-[10px]", active ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                            {dur}m
+                          {/* check circular iOS */}
+                          <span
+                            className={cn(
+                              "w-[22px] h-[22px] rounded-full flex-none flex items-center justify-center transition",
+                              active ? "bg-gradient-brand" : "border-[1.5px] border-outline/40",
+                            )}
+                          >
+                            {active && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />}
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span
+                              className={cn(
+                                "block text-[15px] truncate tracking-[-0.01em]",
+                                active ? "font-semibold text-ink-2" : "font-medium text-ink-2",
+                              )}
+                            >
+                              {s.name}
+                            </span>
+                          </span>
+                          <span className="flex-none flex items-center gap-2 text-[13px] tabular-nums">
+                            <span className="text-outline">{dur}m</span>
+                            {s.price != null && (
+                              <span className="font-semibold text-ink-2">{s.price}€</span>
+                            )}
                           </span>
                         </button>
                       );
@@ -553,14 +630,14 @@ export const QuickBookingSheet = ({
 
         {/* Sticky footer */}
         <div
-          className="shrink-0 border-t border-border/40 px-5 pt-3 bg-background/95 backdrop-blur-xl"
+          className="shrink-0 border-t border-line px-5 pt-3.5 bg-background/95 backdrop-blur-xl"
           style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
         >
           <div className="flex gap-2">
             {onMoreOptions && (
               <Button
                 variant="outline"
-                className="shrink-0"
+                className="shrink-0 h-12 rounded-full border-line bg-chip text-ink-2 text-[14px] font-semibold active:scale-95"
                 onClick={() =>
                   onMoreOptions({
                     date,
@@ -576,7 +653,8 @@ export const QuickBookingSheet = ({
               </Button>
             )}
             <Button
-              className="flex-1 h-11 rounded-xl text-sm font-semibold"
+              className="flex-1 h-12 rounded-full text-[15px] font-semibold bg-gradient-brand text-white border-0 hover:opacity-95 active:scale-[.98] transition disabled:opacity-40"
+              style={{ boxShadow: "0 8px 22px -10px rgba(34,64,140,.6)" }}
               disabled={!canSubmit}
               onClick={handleCreate}
             >
@@ -584,7 +662,7 @@ export const QuickBookingSheet = ({
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="h-[18px] w-[18px] mr-1.5" />
                   Crear cita
                 </>
               )}

@@ -1618,8 +1618,11 @@
 .gp-main-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
 
 /* ── Topbar ── */
+/* Chrome wrapper: header + subnav se ocultan/muestran juntos al scrollear */
+.gp-chrome { position: sticky; top: 0; z-index: 20; transition: transform .28s var(--gp-ease); }
+
 .gp-topbar {
-  flex: none; position: sticky; top: 0; z-index: 20;
+  flex: none;
   min-height: var(--gp-topbar-h);
   display: flex; align-items: center; gap: 12px; padding: 0 26px;
   background: color-mix(in oklab, var(--gp-bg), white 30%); backdrop-filter: blur(12px);
@@ -1629,6 +1632,40 @@
 .gp-top-crumb { font-size: 10.5px; font-weight: 800; color: var(--gp-muted-c); letter-spacing: .1em; text-transform: uppercase; }
 .gp-top-title { font-size: 18px; font-weight: 800; letter-spacing: -.02em; color: var(--gp-ink); }
 .gp-top-spacer { flex: 1; }
+
+/* Topbar brand (solo móvil) + iconos nativos */
+.gp-topbar-brand { display: none; align-items: center; gap: 9px; min-width: 0; }
+.gp-topbar-brand-logo {
+  width: 30px; height: 30px; border-radius: 9px; flex: none; object-fit: cover;
+  background: linear-gradient(135deg, var(--gp-accent), var(--gp-purple));
+  color: #fff; font-weight: 800; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+.gp-topbar-brand-name {
+  font-weight: 800; font-size: 16px; letter-spacing: -.01em; color: var(--gp-ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gp-topbar-icon {
+  display: none; width: 40px; height: 40px; border-radius: 999px; flex: none;
+  border: none; background: transparent; color: var(--gp-ink2);
+  align-items: center; justify-content: center; cursor: pointer; position: relative;
+  transition: .15s var(--gp-ease); -webkit-tap-highlight-color: transparent;
+}
+.gp-topbar-icon:active { transform: scale(.9); background: var(--gp-chip); }
+.gp-topbar-icon-dot {
+  position: absolute; top: 9px; right: 10px; width: 7px; height: 7px; border-radius: 999px;
+  background: var(--gp-danger); border: 1.5px solid var(--gp-surface);
+}
+@media (max-width: 920px) {
+  .gp-topbar { position: relative; gap: 4px; }
+  .gp-topbar-brand { display: flex; }
+  .gp-topbar-icon { display: flex; }
+  .gp-topbar .gp-top-titlewrap { display: none; }
+  .gp-topbar::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: linear-gradient(100deg, var(--gp-accent), var(--gp-purple)); opacity: .45;
+  }
+}
 
 /* Topbar action group (desktop only — FAB handles mobile) */
 .gp-topbar-actions { display: flex; gap: 8px; align-items: center; }
@@ -1734,7 +1771,8 @@
   .gp-top-title { font-size: 16px; }
   .gp-top-crumb { font-size: 9.5px; }
   .gp-new-cita-btn { padding: 9px 13px; font-size: 13px; border-radius: 12px; }
-  .gp-subnav-bar { display: block; position: sticky; top: calc(env(safe-area-inset-top) + 56px); z-index: 18; }
+  .gp-subnav-bar { display: block; }
+  .gp-chrome--hidden { transform: translateY(-100%); }
   /* Agenda en móvil: un único scroll (el de la página) en vertical,
      y scroll horizontal con snap entre profesionales activos.
      Se elimina el scroller interno vertical que creaba el "doble scroll". */
@@ -1789,7 +1827,8 @@
   .gp-bottom-item.on { color: var(--gp-accent); font-weight: 800; }
   .gp-bottom-item.on::before {
     content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 28px; height: 3px; border-radius: 0 0 99px 99px; background: var(--gp-accent);
+    width: 28px; height: 3px; border-radius: 0 0 99px 99px;
+    background: linear-gradient(100deg, var(--gp-accent), var(--gp-purple));
   }
   .gp-bottom-item.on .gp-bottom-ic { background: var(--gp-accent-soft); transform: scale(1.02); }
   .gp-bottom-ic {
@@ -1834,7 +1873,8 @@
 .gp-subtab:active { transform: scale(.96); }
 .gp-subtab:hover { background: var(--gp-chip); }
 .gp-subtab.on {
-  background: var(--gp-accent); border-color: transparent; color: #fff;
+  background: linear-gradient(100deg, var(--gp-accent), var(--gp-purple));
+  border-color: transparent; color: #fff;
   box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--gp-accent), transparent 40%);
 }
 .gp-subtab-count { font-size: 11px; font-weight: 800; background: color-mix(in oklab, currentColor, transparent 85%); padding: 1px 6px; border-radius: 99px; }
@@ -2808,6 +2848,46 @@ body.msg-chat-open { overflow: hidden; }
 .gp-next-empty { font-size: 13px; font-weight: 600; color: var(--gp-muted-c); padding: 6px 0; }
 .gp-next-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .gp-next-ring { flex: none; }
+
+/* Próxima cita v2 — tarjeta limpia (color solo como acento) */
+.gp-next2 { padding: 0; }
+.gp-next2-accent {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+  background: linear-gradient(180deg, var(--gp-accent), var(--gp-purple));
+}
+.gp-next2-body { padding: 16px 16px 16px 20px; }
+.gp-next2-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.gp-next2-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--gp-accent); min-width: 0;
+}
+.gp-live-dot {
+  width: 8px; height: 8px; border-radius: 999px; flex: none;
+  background: var(--gp-ok);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--gp-ok), transparent 82%);
+}
+.gp-next2-main { display: flex; align-items: center; gap: 14px; }
+.gp-next2-avatar {
+  width: 48px; height: 48px; border-radius: 999px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 15px; color: #fff;
+  background: linear-gradient(135deg, var(--gp-accent), var(--gp-purple));
+}
+.gp-next2-info { min-width: 0; flex: 1; }
+.gp-next2-line { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.gp-next2-time { font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: var(--gp-ink); line-height: 1; flex: none; }
+.gp-next2-name { font-size: 17px; font-weight: 700; color: var(--gp-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gp-next2-sub { font-size: 13.5px; color: var(--gp-muted-c); font-weight: 500; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gp-next2-later {
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--gp-line);
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  font-size: 12.5px; color: var(--gp-muted-c);
+}
+.gp-next2-later-lbl { font-weight: 700; color: var(--gp-ink2); }
+.gp-next2-later-item { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.gp-next2-dot { opacity: .4; }
+.gp-next2-empty { font-size: 14px; font-weight: 600; color: var(--gp-muted-c); padding: 4px 0 2px; }
 
 /* KPI extra: tags row inside Citas card */
 .gp-kpi-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
@@ -5779,4 +5859,21 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
 /* El footer deja hueco para que la barra no tape el sello Glowapp */
 @media (max-width: 1023px) {
   .tenant-theme-container footer { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+}
+
+/* ── Stitch-imported utilities (dashboard móvil nativo) ── */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Agenda móvil: menos chrome sobre el timeline ──
+   El hero (ocupación + próxima cita) duplica el resumen del propio timeline
+   y empujaba la agenda fuera de pantalla. Solo desktop. */
+@media (max-width: 920px) {
+  .ag-root .gh { display: none; }
+  .ag-root .ag-search { margin-bottom: 10px; }
 }

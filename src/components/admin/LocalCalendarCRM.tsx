@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AgendaDayTimeline } from "./AgendaDayTimeline";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -149,6 +150,12 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const [blockStylist, setBlockStylist] = useState<string>("all");
   const [blockStartTime, setBlockStartTime] = useState<string>("09:00");
   const [blockEndTime, setBlockEndTime] = useState<string>("19:00");
+
+  // Quitar bloqueo (día completo o franja de horas)
+  const [unblockTarget, setUnblockTarget] = useState<LocalBooking | null>(null);
+  /** cuántos bloqueos quedan del mismo grupo (de hoy en adelante) */
+  const [unblockGroupCount, setUnblockGroupCount] = useState(1);
+  const [unblocking, setUnblocking] = useState(false);
 
   // Series cancellation dialog
   const [seriesCancelDialogOpen, setSeriesCancelDialogOpen] = useState(false);
@@ -658,6 +665,68 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     }
   };
 
+  // Quitar bloqueo: abre el diálogo y mira cuántos hermanos quedan del mismo grupo
+  const openUnblock = async (booking: LocalBooking) => {
+    setUnblockTarget(booking);
+    setUnblockGroupCount(1);
+    if (!booking.recurrence_group_id) return;
+    const { count, error } = await supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("recurrence_group_id", booking.recurrence_group_id)
+      .gte("Fecha", format(new Date(), "yyyy-MM-dd"));
+    if (!error && count) setUnblockGroupCount(count);
+  };
+
+  const performUnblock = async (whole: boolean) => {
+    const booking = unblockTarget;
+    if (!booking) return;
+    setUnblocking(true);
+
+    const groupId = booking.recurrence_group_id;
+    // Pintado optimista: el bloqueo desaparece del calendario al instante
+    setBookings((prev) =>
+      prev.filter((b) =>
+        whole && groupId ? b.recurrence_group_id !== groupId : b.id !== booking.id,
+      ),
+    );
+
+    try {
+      // Los bloqueos son filas de `bookings` sin cliente: se borran directamente,
+      // sin pasar por `cancel-booking` (que es para citas reales con avisos).
+      const query = supabase.from("bookings").delete().eq("tenant_id", tenantId);
+      const { error } =
+        whole && groupId
+          ? await query
+              .eq("recurrence_group_id", groupId)
+              .gte("Fecha", format(new Date(), "yyyy-MM-dd"))
+          : await query.eq("id", booking.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Bloqueo quitado",
+        description:
+          whole && groupId
+            ? `Se han liberado ${unblockGroupCount} bloqueo${unblockGroupCount === 1 ? "" : "s"}`
+            : isFullDayBlocked(booking)
+              ? `${format(parseISO(booking.Fecha), "d 'de' MMMM", { locale: es })} liberado`
+              : `${booking.Hora?.slice(0, 5)}–${booking.end_time?.slice(0, 5)} liberado`,
+      });
+      fetchBookings(true);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo quitar el bloqueo",
+        variant: "destructive",
+      });
+      fetchBookings(true);
+    } finally {
+      setUnblocking(false);
+      setUnblockTarget(null);
+    }
+  };
+
   const handleBlockPeriod = async () => {
     if (!blockStartDate) {
       toast({
@@ -1028,6 +1097,83 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     setDragOverTime(null);
   };
 
+  // Timeline (móvil + escritorio): mover cita arrastrando
+  const handleTimelineMove = async (
+    booking: LocalBooking,
+    targetStylist: string,
+    newTime: string,
+  ) => {
+    const [h, m] = newTime.split(":").map(Number);
+    const endMinutes = h * 60 + m + (booking.total_duration || 30);
+    const newEndTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
+
+    // Pintado optimista para que el gesto se sienta instantáneo
+    setBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? { ...b, stylist: targetStylist, Hora: newTime, end_time: newEndTime }
+          : b,
+      ),
+    );
+
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ stylist: targetStylist, Hora: newTime, end_time: newEndTime })
+        .eq("id", booking.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Cita movida",
+        description: `${booking.customer_name} → ${stylists.find((s) => s.slug === targetStylist)?.name || targetStylist} a las ${newTime}`,
+      });
+      fetchBookings(true);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo mover la cita",
+        variant: "destructive",
+      });
+      fetchBookings(true);
+    }
+  };
+
+  // Timeline: cambiar duración estirando el borde inferior
+  const handleTimelineResize = async (booking: LocalBooking, newDuration: number) => {
+    const [h, m] = booking.Hora.split(":").map(Number);
+    const endMinutes = h * 60 + m + newDuration;
+    const newEndTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
+
+    setBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id ? { ...b, total_duration: newDuration, end_time: newEndTime } : b,
+      ),
+    );
+
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ total_duration: newDuration, end_time: newEndTime })
+        .eq("id", booking.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Duración actualizada",
+        description: `${booking.customer_name}: ${newDuration} minutos`,
+      });
+      fetchBookings(true);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar",
+        variant: "destructive",
+      });
+      fetchBookings(true);
+    }
+  };
+
   // Resize handlers
   const handleResizeStart = (e: React.MouseEvent, booking: LocalBooking) => {
     e.preventDefault();
@@ -1342,10 +1488,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   style={
                     isOn
                       ? {
-                          background: "linear-gradient(160deg, #4361ee, #2b3fd4)",
+                          background: "linear-gradient(100deg, #22408C, #98329A)",
                           color: "#fff",
                           borderColor: "transparent",
-                          boxShadow: "0 12px 28px -10px rgba(67,97,238,.45)",
+                          boxShadow: "0 12px 28px -10px rgba(34,64,140,.45)",
                           transform: "translateY(-2px)",
                         }
                       : undefined
@@ -1396,11 +1542,23 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
               <button
                 className={`ag-proftab${isAllOn ? " ag-proftab-on" : ""}`}
                 onClick={() => setSelectedStylistFilter("all")}
-                style={isAllOn ? { borderColor: "#4361ee", background: "#4361ee15", color: "#4361ee" } : undefined}
+                style={
+                  isAllOn
+                    ? {
+                        borderColor: "transparent",
+                        background: "linear-gradient(100deg, #22408C, #98329A)",
+                        color: "#fff",
+                        boxShadow: "0 6px 14px -6px rgba(34,64,140,.5)",
+                      }
+                    : undefined
+                }
               >
-                <span className="ag-proftab-dot" style={{ background: "#4361ee" }} />
-                Todos
-                <span className="ag-proftab-count" style={isAllOn ? { color: "#4361ee" } : undefined}>
+                {!isAllOn && <span className="ag-proftab-dot" style={{ background: "#22408C" }} />}
+                Todas
+                <span
+                  className="ag-proftab-count"
+                  style={isAllOn ? { color: "#fff", background: "rgba(255,255,255,.25)" } : undefined}
+                >
                   {allCount}
                 </span>
               </button>
@@ -1620,6 +1778,34 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 </div>
               )}
 
+              {/* Agenda (móvil y desktop): raíles por profesional, suelta sobre el fondo.
+                  `isolate` crea stacking context: lo sticky de dentro no puede taparse con el chrome. */}
+              <div className="-mx-3 min-[920px]:mx-0 relative z-0 isolate">
+                  <AgendaDayTimeline
+                      bookings={dayBkgs}
+                      stylists={filteredStylists}
+                      startHour={schedule.startHour}
+                      endHour={schedule.endHour}
+                      isToday={isToday}
+                      nowMinutes={nowHour * 60 + nowMinutes}
+                      onSelect={(b) => setDetailBooking(b as LocalBooking)}
+                      isBlocked={(b) => isBlockedBooking(b as LocalBooking)}
+                      isFullDayBlocked={(b) => isFullDayBlocked(b as LocalBooking)}
+                      breakStart={schedule.breakStartMinutes}
+                      breakEnd={schedule.breakEndMinutes}
+                      onQuickCreate={(stylistSlug, time) =>
+                        setQuickBooking({ date: activeDay, time, stylistSlug })
+                      }
+                      onMove={(b, stylistSlug, time) =>
+                        handleTimelineMove(b as LocalBooking, stylistSlug, time)
+                      }
+                      onResize={(b, duration) =>
+                        handleTimelineResize(b as LocalBooking, duration)
+                      }
+                      onUnblock={(b) => openUnblock(b as LocalBooking)}
+                />
+              </div>
+
               <div
                 className="ag-gridcard ag-day-in"
                 key={activeKey}
@@ -1630,6 +1816,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   boxShadow: "0 10px 40px -16px rgba(20, 22, 40, 0.08)",
                   background: "#ffffff",
                   position: "relative",
+                  display: "none", // grid clásico retirado: la agenda usa el timeline en todos los tamaños
                 }}
               >
                 {dayBkgs.length === 0 && (
@@ -3361,6 +3548,63 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
               }}
             >
               Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Quitar bloqueo desde la agenda */}
+      <AlertDialog
+        open={!!unblockTarget}
+        onOpenChange={(open) => {
+          if (!open && !unblocking) setUnblockTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quitar bloqueo</AlertDialogTitle>
+            <AlertDialogDescription>
+              {unblockTarget && (
+                <>
+                  {isFullDayBlocked(unblockTarget)
+                    ? `Día completo · ${format(parseISO(unblockTarget.Fecha), "EEEE d 'de' MMMM", { locale: es })}`
+                    : `${unblockTarget.Hora?.slice(0, 5)}–${unblockTarget.end_time?.slice(0, 5)} · ${format(parseISO(unblockTarget.Fecha), "EEEE d 'de' MMMM", { locale: es })}`}
+                  {" · "}
+                  {stylists.find((s) => s.slug === unblockTarget.stylist)?.name ||
+                    unblockTarget.stylist}
+                  {unblockGroupCount > 1 && (
+                    <>
+                      <br />
+                      Este bloqueo forma parte de un grupo de {unblockGroupCount} (otros días o
+                      profesionales).
+                    </>
+                  )}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unblocking}>Cancelar</AlertDialogCancel>
+            {unblockGroupCount > 1 && (
+              <AlertDialogAction
+                disabled={unblocking}
+                className="bg-chip text-ink-2 hover:bg-surface-container-high"
+                onClick={(e) => {
+                  e.preventDefault();
+                  performUnblock(true);
+                }}
+              >
+                Todo el bloqueo ({unblockGroupCount})
+              </AlertDialogAction>
+            )}
+            <AlertDialogAction
+              disabled={unblocking}
+              onClick={(e) => {
+                e.preventDefault();
+                performUnblock(false);
+              }}
+            >
+              {unblockGroupCount > 1 ? "Solo este" : "Quitar bloqueo"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -61,8 +61,13 @@ export function AdminCommandPalette({
         setOpen((o) => !o);
       }
     };
+    const onOpen = () => setOpen(true);
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    window.addEventListener("admin:open-command", onOpen);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("admin:open-command", onOpen);
+    };
   }, []);
 
   const go = (path: string) => {
