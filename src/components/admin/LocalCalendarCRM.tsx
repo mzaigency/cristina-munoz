@@ -5,6 +5,7 @@ import { AgendaDayTimeline } from "./AgendaDayTimeline";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import {
   Loader2,
   Plus,
@@ -665,6 +666,62 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     }
   };
 
+  // ── Deshacer (Ctrl/⌘+Z y botón en el aviso) ──────────────────────────────
+  // Pila de acciones reversibles de la agenda: mover, redimensionar y quitar
+  // bloqueos. Cada entrada sabe cómo volver al estado anterior.
+  const undoStack = useRef<Array<{ label: string; run: () => Promise<void> }>>([]);
+
+  const pushUndo = (entry: { label: string; run: () => Promise<void> }) => {
+    undoStack.current.push(entry);
+    if (undoStack.current.length > 25) undoStack.current.shift();
+  };
+
+  const runUndo = async () => {
+    const entry = undoStack.current.pop();
+    if (!entry) {
+      toast({ title: "Nada que deshacer" });
+      return;
+    }
+    try {
+      await entry.run();
+      toast({ title: "Deshecho", description: entry.label });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.message || "No se pudo deshacer",
+        variant: "destructive",
+      });
+      fetchBookings(true);
+    }
+  };
+
+  // El listener de teclado vive con [] pero necesita la versión actual
+  const runUndoRef = useRef(runUndo);
+  runUndoRef.current = runUndo;
+
+  const undoToastAction = () => (
+    <ToastAction altText="Deshacer" onClick={() => runUndoRef.current()}>
+      Deshacer
+    </ToastAction>
+  );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.key.toLowerCase() !== "z") return;
+      const el = e.target as HTMLElement | null;
+      // No secuestrar el deshacer nativo mientras se escribe
+      if (
+        el &&
+        (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)
+      )
+        return;
+      e.preventDefault();
+      runUndoRef.current();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   // Quitar bloqueo: abre el diálogo y mira cuántos hermanos quedan del mismo grupo
   const openUnblock = async (booking: LocalBooking) => {
     setUnblockTarget(booking);
@@ -692,17 +749,37 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     );
 
     try {
+      const today = format(new Date(), "yyyy-MM-dd");
+
+      // Guardamos las filas antes de borrarlas para poder deshacer
+      const selectQuery = supabase.from("bookings").select("*").eq("tenant_id", tenantId);
+      const { data: removedRows } =
+        whole && groupId
+          ? await selectQuery.eq("recurrence_group_id", groupId).gte("Fecha", today)
+          : await selectQuery.eq("id", booking.id);
+
       // Los bloqueos son filas de `bookings` sin cliente: se borran directamente,
       // sin pasar por `cancel-booking` (que es para citas reales con avisos).
       const query = supabase.from("bookings").delete().eq("tenant_id", tenantId);
       const { error } =
         whole && groupId
-          ? await query
-              .eq("recurrence_group_id", groupId)
-              .gte("Fecha", format(new Date(), "yyyy-MM-dd"))
+          ? await query.eq("recurrence_group_id", groupId).gte("Fecha", today)
           : await query.eq("id", booking.id);
 
       if (error) throw error;
+
+      if (removedRows?.length) {
+        pushUndo({
+          label: `${removedRows.length} bloqueo${removedRows.length === 1 ? "" : "s"} restaurado${removedRows.length === 1 ? "" : "s"}`,
+          run: async () => {
+            const { error: insertError } = await supabase
+              .from("bookings")
+              .insert(removedRows as any);
+            if (insertError) throw insertError;
+            fetchBookings(true);
+          },
+        });
+      }
 
       toast({
         title: "Bloqueo quitado",
@@ -712,6 +789,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
             : isFullDayBlocked(booking)
               ? `${format(parseISO(booking.Fecha), "d 'de' MMMM", { locale: es })} liberado`
               : `${booking.Hora?.slice(0, 5)}–${booking.end_time?.slice(0, 5)} liberado`,
+        duration: 6000,
+        action: undoToastAction(),
       });
       fetchBookings(true);
     } catch (error: any) {
@@ -1097,6 +1176,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     setDragOverTime(null);
   };
 
+  // Actualiza una cita con pintado optimista (la agenda no parpadea)
+  const applyBookingUpdate = async (bookingId: string, fields: Record<string, any>) => {
+    setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, ...fields } : b)));
+    const { error } = await supabase.from("bookings").update(fields).eq("id", bookingId);
+    if (error) throw error;
+    fetchBookings(true);
+  };
+
   // Timeline (móvil + escritorio): mover cita arrastrando
   const handleTimelineMove = async (
     booking: LocalBooking,
@@ -1107,28 +1194,30 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     const endMinutes = h * 60 + m + (booking.total_duration || 30);
     const newEndTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
 
-    // Pintado optimista para que el gesto se sienta instantáneo
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === booking.id
-          ? { ...b, stylist: targetStylist, Hora: newTime, end_time: newEndTime }
-          : b,
-      ),
-    );
+    const before = {
+      stylist: booking.stylist,
+      Hora: booking.Hora,
+      end_time: booking.end_time,
+    };
 
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ stylist: targetStylist, Hora: newTime, end_time: newEndTime })
-        .eq("id", booking.id);
+      await applyBookingUpdate(booking.id, {
+        stylist: targetStylist,
+        Hora: newTime,
+        end_time: newEndTime,
+      });
 
-      if (error) throw error;
+      pushUndo({
+        label: `${booking.customer_name} vuelve a las ${before.Hora?.slice(0, 5)}`,
+        run: () => applyBookingUpdate(booking.id, before),
+      });
 
       toast({
         title: "Cita movida",
         description: `${booking.customer_name} → ${stylists.find((s) => s.slug === targetStylist)?.name || targetStylist} a las ${newTime}`,
+        duration: 6000,
+        action: undoToastAction(),
       });
-      fetchBookings(true);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -1145,25 +1234,28 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     const endMinutes = h * 60 + m + newDuration;
     const newEndTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
 
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === booking.id ? { ...b, total_duration: newDuration, end_time: newEndTime } : b,
-      ),
-    );
+    const before = {
+      total_duration: booking.total_duration,
+      end_time: booking.end_time,
+    };
 
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ total_duration: newDuration, end_time: newEndTime })
-        .eq("id", booking.id);
+      await applyBookingUpdate(booking.id, {
+        total_duration: newDuration,
+        end_time: newEndTime,
+      });
 
-      if (error) throw error;
+      pushUndo({
+        label: `${booking.customer_name} vuelve a ${before.total_duration} min`,
+        run: () => applyBookingUpdate(booking.id, before),
+      });
 
       toast({
         title: "Duración actualizada",
         description: `${booking.customer_name}: ${newDuration} minutos`,
+        duration: 6000,
+        action: undoToastAction(),
       });
-      fetchBookings(true);
     } catch (error: any) {
       toast({
         title: "Error",

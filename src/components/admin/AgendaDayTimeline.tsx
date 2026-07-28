@@ -48,6 +48,25 @@ const SNAP = 15;
 /** Pulsación larga (táctil) antes de levantar la tarjeta */
 const LONG_PRESS_MS = 320;
 
+/**
+ * Vibración corta al agarrar/soltar. Android la soporta; iOS Safari NO tiene
+ * Vibration API, ahí el aviso es el salto visual de la tarjeta al levantarse.
+ */
+const haptic = (pattern: number | number[] = 12) => {
+  try {
+    navigator.vibrate?.(pattern);
+  } catch {
+    /* navegador sin Vibration API */
+  }
+};
+
+/** Bloquea selección de texto y menú contextual al mantener pulsado (iOS) */
+const NO_SELECT = {
+  WebkitUserSelect: "none",
+  userSelect: "none",
+  WebkitTouchCallout: "none",
+} as const;
+
 const toMinutes = (hhmm: string): number => {
   const [h, m] = (hhmm || "0:0").split(":").map(Number);
   return (h || 0) * 60 + (m || 0);
@@ -154,7 +173,7 @@ function CardBody({
       />
       <span
         className="relative flex-1 min-w-0 flex flex-col justify-center"
-        style={{ padding: size === "sm" ? "0 8px 0 7px" : "7px 9px 7px 8px" }}
+        style={{ padding: size === "sm" ? "0 8px 3px 7px" : "7px 9px 7px 8px" }}
       >
         {size === "sm" ? (
           /* Corta: nombre · servicio en una línea + punto de estado */
@@ -317,13 +336,15 @@ export function AgendaDayTimeline({
       };
       setDragState(next);
 
+      if (mode === "resize" && e.pointerType !== "mouse") haptic(10);
+
       if (mode === "move" && e.pointerType !== "mouse") {
         clearLongPress();
         longPress.current = window.setTimeout(() => {
           const cur = dragRef.current;
           if (!cur || cur.active) return;
           setDragState({ ...cur, active: true });
-          navigator.vibrate?.(8);
+          haptic(14);
         }, LONG_PRESS_MS);
       }
     },
@@ -346,8 +367,12 @@ export function AgendaDayTimeline({
       }, 250);
       if (!commit) return;
       if (cur.mode === "resize") {
-        if (cur.dur !== cur.originDur) onResize?.(cur.b, cur.dur);
+        if (cur.dur !== cur.originDur) {
+          if (cur.pointerType !== "mouse") haptic(8);
+          onResize?.(cur.b, cur.dur);
+        }
       } else if (cur.start !== cur.originStart || cur.stylist !== cur.originStylist) {
+        if (cur.pointerType !== "mouse") haptic(8);
         onMove?.(cur.b, cur.stylist, fromMinutes(cur.start));
       }
     };
@@ -525,7 +550,12 @@ export function AgendaDayTimeline({
       </div>
 
       <div className="overflow-x-auto no-scrollbar pt-6">
-        <div className="flex min-w-max min-[920px]:min-w-0 px-5 gap-6 pb-12 relative">
+        {/* select-none en todo el lienzo: mantener pulsado nunca selecciona texto
+            ni abre el menú contextual de iOS, solo levanta la cita */}
+        <div
+          className="flex min-w-max min-[920px]:min-w-0 px-5 gap-6 pb-12 relative select-none"
+          style={NO_SELECT}
+        >
           {/* Etiquetas de hora, fijas a la izquierda */}
           <div
             className="w-11 flex-shrink-0 sticky left-0 z-30 bg-background/80 backdrop-blur-sm"
@@ -783,7 +813,7 @@ export function AgendaDayTimeline({
                       onPointerDown={(e) =>
                         beginDrag(e, b, "move", { start, dur: end - start, col, cols })
                       }
-                      className={`absolute z-10 text-left rounded-2xl flex overflow-hidden active:scale-[.98] transition-transform ease-brand group/card min-[920px]:hover:-translate-y-px min-[920px]:hover:outline min-[920px]:hover:outline-1 min-[920px]:hover:outline-primary/25 ${
+                      className={`absolute z-10 text-left rounded-2xl flex overflow-hidden select-none active:scale-[.98] transition-transform ease-brand group/card min-[920px]:hover:-translate-y-px min-[920px]:hover:outline min-[920px]:hover:outline-1 min-[920px]:hover:outline-primary/25 ${
                         canDrag ? "cursor-grab active:cursor-grabbing" : ""
                       }`}
                       style={{
@@ -794,6 +824,7 @@ export function AgendaDayTimeline({
                         background: done ? COMPLETED_BG : "#fff",
                         boxShadow: size === "sm" ? SHADOW_SM : IOS_SHADOW,
                         opacity: done ? 0.9 : 1,
+                        ...NO_SELECT,
                       }}
                     >
                       <CardBody
@@ -805,8 +836,9 @@ export function AgendaDayTimeline({
                         endMin={end}
                       />
 
-                      {/* Tirador de duración (borde inferior) */}
-                      {onResize && height >= H_SM && (
+                      {/* Tirador de duración (borde inferior). También en las citas
+                          cortas: son justo las que más falta hace poder estirar. */}
+                      {onResize && (
                         <span
                           role="separator"
                           aria-label={`Cambiar duración de la cita de ${b.customer_name}`}
@@ -815,10 +847,16 @@ export function AgendaDayTimeline({
                             beginDrag(e, b, "resize", { start, dur: end - start, col, cols });
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="absolute bottom-0 left-0 right-0 h-3.5 flex items-end justify-center pb-0.5 cursor-ns-resize opacity-45 min-[920px]:opacity-0 min-[920px]:group-hover/card:opacity-100 transition-opacity"
-                          style={{ touchAction: "none" }}
+                          className={`absolute bottom-0 left-0 right-0 flex items-end justify-center pb-0.5 cursor-ns-resize opacity-45 min-[920px]:opacity-0 min-[920px]:group-hover/card:opacity-100 transition-opacity ${
+                            size === "sm" ? "h-2.5" : "h-3.5"
+                          }`}
+                          style={{ touchAction: "none", ...NO_SELECT }}
                         >
-                          <span className="w-7 h-[3px] rounded-full bg-outline/40" />
+                          <span
+                            className={`h-[3px] rounded-full bg-outline/40 ${
+                              size === "sm" ? "w-5" : "w-7"
+                            }`}
+                          />
                         </span>
                       )}
                     </div>
