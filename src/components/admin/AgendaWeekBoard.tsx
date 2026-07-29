@@ -586,7 +586,7 @@ export function AgendaWeekBoard({
                                   return (
                                     <div
                                       key={b.id}
-                                      className="absolute z-[6] overflow-hidden rounded-lg border border-line"
+                                      className="absolute z-[6] overflow-hidden rounded-lg border border-line pointer-events-none"
                                       style={{ left, width, top, height, background: STRIPES }}
                                     >
                                       {onMove && (
