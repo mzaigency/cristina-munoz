@@ -419,7 +419,7 @@ export function AgendaDayTimeline({
                           if (suppressClick.current) return;
                           onQuickCreate(stylist.slug, time);
                         }}
-                        className="absolute left-0 right-0 group flex items-center justify-center"
+                        className="absolute left-0 right-0 group flex items-center justify-center z-[7]"
                         style={{
                           top: i * 30 * PPM,
                           height: 30 * PPM,
