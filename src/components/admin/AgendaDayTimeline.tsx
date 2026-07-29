@@ -520,7 +520,7 @@ export function AgendaDayTimeline({
                     return (
                       <div
                         key={b.id}
-                        className="absolute z-[6] overflow-hidden rounded-lg border border-line"
+                        className="absolute z-[6] overflow-hidden rounded-lg border border-line pointer-events-none"
                         style={{ left: cLeft, width: cWidth, top, height }}
                       >
                         <span className="absolute inset-0 bg-striped-gray opacity-60" />
