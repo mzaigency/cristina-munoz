@@ -603,7 +603,7 @@ export function AgendaWeekBoard({
                                               colId: lane.id,
                                             });
                                           }}
-                                          className="absolute left-0 top-0 bottom-0 w-3.5 flex items-center justify-center z-[2] cursor-grab active:cursor-grabbing"
+                                          className="pointer-events-auto absolute left-0 top-0 bottom-0 w-3.5 flex items-center justify-center z-[2] cursor-grab active:cursor-grabbing"
                                           style={{ touchAction: "none", ...NO_SELECT }}
                                         >
                                           <span
