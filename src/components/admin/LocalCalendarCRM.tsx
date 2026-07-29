@@ -2714,7 +2714,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
                                     {/* Unblock button */}
                                     {isBlocked && (
-                                      <div className="absolute top-0.5 right-0.5 z-20">
+                                      <div className="absolute top-0.5 right-0.5 z-20" style={{ pointerEvents: "auto" }}>
                                         <button
                                           onClick={(e) => {
                                             e.stopPropagation();
