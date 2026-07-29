@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HelpCircle, Sparkles, BookOpen, Keyboard } from "lucide-react";
-import { AdminTour, tourHasBeenSeen } from "@/components/admin/help/AdminTour";
+import { AdminTour } from "@/components/admin/help/AdminTour";
 import { HelpCenter } from "@/components/admin/help/HelpCenter";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 
@@ -13,7 +13,7 @@ interface AdminHelpMenuProps {
 
 /**
  * "?" entrypoint — launches SpotlightTour or opens HelpCenter.
- * Auto-launches tour on first visit (localStorage flag).
+ * El tour NO se lanza solo: siempre a petición del usuario.
  */
 export function AdminHelpMenu({ tenantId, onTourTabChange }: AdminHelpMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -21,12 +21,7 @@ export function AdminHelpMenu({ tenantId, onTourTabChange }: AdminHelpMenuProps)
   const [helpOpen, setHelpOpen] = useState(false);
   const { hasFeature } = usePlanLimits(tenantId);
 
-  // Auto-launch tour for first-time users
-  useEffect(() => {
-    if (tourHasBeenSeen()) return;
-    const t = setTimeout(() => setTourOpen(true), 1200);
-    return () => clearTimeout(t);
-  }, []);
+
 
   return (
     <>
