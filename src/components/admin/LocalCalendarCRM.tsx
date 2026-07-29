@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AgendaDayTimeline } from "./AgendaDayTimeline";
+import { AgendaWeekBoard, type WeekBooking, type WeekDay } from "./AgendaWeekBoard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -103,12 +104,14 @@ interface LocalCalendarCRMProps {
   onSelectClient?: (clientId: string) => void;
   /** Contenido opcional alineado a la izquierda de la fila de acciones (p. ej. botón de importar) */
   topLeftSlot?: React.ReactNode;
+  /** "dia" = timeline de un día; "semana" = tablero de 7 columnas */
+  view?: "dia" | "semana";
 }
 
 // Constante para escala visual - 2px por minuto = 120px por hora
 const PIXELS_PER_MINUTE = 2;
 
-export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelectClient, topLeftSlot }: LocalCalendarCRMProps) => {
+export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelectClient, topLeftSlot, view = "dia" }: LocalCalendarCRMProps) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [bookings, setBookings] = useState<LocalBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1228,6 +1231,54 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     }
   };
 
+  // Tablero semanal: mover cita a otro día y/u hora
+  const handleWeekMove = async (
+    booking: LocalBooking,
+    dateKey: string,
+    newTime: string,
+    stylistSlug?: string,
+  ) => {
+    const [h, m] = newTime.split(":").map(Number);
+    const endMinutes = h * 60 + m + (booking.total_duration || 30);
+    const newEndTime = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
+
+    const before = {
+      Fecha: booking.Fecha,
+      Hora: booking.Hora,
+      end_time: booking.end_time,
+      stylist: booking.stylist,
+    };
+
+    try {
+      await applyBookingUpdate(booking.id, {
+        Fecha: dateKey,
+        Hora: newTime,
+        end_time: newEndTime,
+        // en "Todas" cada día se parte en calles: arrastrar de calle cambia de profesional
+        stylist: stylistSlug || booking.stylist,
+      });
+
+      pushUndo({
+        label: `${booking.customer_name} vuelve al ${format(parseISO(before.Fecha), "d MMM", { locale: es })} a las ${before.Hora?.slice(0, 5)}`,
+        run: () => applyBookingUpdate(booking.id, before),
+      });
+
+      toast({
+        title: "Cita movida",
+        description: `${booking.customer_name} → ${format(parseISO(dateKey), "EEEE d", { locale: es })} a las ${newTime}`,
+        duration: 6000,
+        action: undoToastAction(),
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo mover la cita",
+        variant: "destructive",
+      });
+      fetchBookings(true);
+    }
+  };
+
   // Timeline: cambiar duración estirando el borde inferior
   const handleTimelineResize = async (booking: LocalBooking, newDuration: number) => {
     const [h, m] = booking.Hora.split(":").map(Number);
@@ -1399,7 +1450,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       </div>
 
       {/* ── HERO DAY ─────────────────────────────────────────── */}
-      {(() => {
+      {view === "dia" && (() => {
+
         const activeKey =
           activeTab || format(weekDays.find((d) => isSameDay(d, new Date())) || weekDays[0], "yyyy-MM-dd");
         const heroDay = weekDays.find((d) => format(d, "yyyy-MM-dd") === activeKey) || weekDays[0];
@@ -1535,6 +1587,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       })()}
 
       {/* ── WEEK SELECTOR ─────────────────────────────────────── */}
+      {view === "dia" && (
       <div className="wk">
         <div className="wk-top">
           <span className="wk-month">{format(weekStart, "MMMM yyyy", { locale: es })}</span>
@@ -1621,6 +1674,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           </button>
         </div>
       </div>
+      )}
 
       {/* ── PROFESSIONAL TABS ─────────────────────────────────── */}
       {stylists.length > 1 && (
@@ -1765,8 +1819,105 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         </div>
       )}
 
-      {/* ── CALENDAR GRID ─────────────────────────────────────── */}
-      {loading ? (
+      {/* ── WEEK NAV (vista semana) ───────────────────────────── */}
+      {view === "semana" && (
+        <div className="wk">
+          <div className="wk-row">
+            <button className="wk-arrow" onClick={() => setWeekStart(addDays(weekStart, -7))} disabled={loading}>
+              <ChevronLeft style={{ width: 20, height: 20 }} />
+            </button>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+              <span className="wk-month">
+                {format(weekStart, "d MMM", { locale: es })} – {format(addDays(weekStart, 6), "d MMM", { locale: es })}
+              </span>
+              <button
+                className="wk-today"
+                style={{ color: "#22408C" }}
+                onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+              >
+                <span className="wk-today-dot" style={{ background: "#22408C" }} />
+                Hoy
+              </button>
+            </div>
+            <button className="wk-arrow" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading}>
+              <ChevronRight style={{ width: 20, height: 20 }} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── WEEK BOARD ────────────────────────────────────────── */}
+      {view === "semana" && !loading && (() => {
+        const weekDaysMeta: WeekDay[] = weekDays.map((d) => {
+          const key = format(d, "yyyy-MM-dd");
+          const sch = getScheduleForDay(d);
+          return {
+            key,
+            label: format(d, "EEE", { locale: es }).toUpperCase(),
+            dayNum: format(d, "d"),
+            isToday: isSameDay(d, new Date()),
+            closed: sch.isClosed,
+            startMin: sch.startHour * 60,
+            endMin: sch.endHour * 60,
+            breakStart: sch.breakStartMinutes,
+            breakEnd: sch.breakEndMinutes,
+          };
+        });
+
+        const open = weekDaysMeta.filter((d) => !d.closed);
+        if (open.length === 0) {
+          return (
+            <div className="ag-empty">
+              <p style={{ fontWeight: 700, fontSize: 15 }}>Salón cerrado toda la semana</p>
+            </div>
+          );
+        }
+        const startHour = Math.min(...open.map((d) => d.startMin)) / 60;
+        const endHour = Math.max(...open.map((d) => d.endMin)) / 60;
+
+        const weekBookings = bookings.filter(
+          (b) => selectedStylistFilter === "all" || b.stylist === selectedStylistFilter,
+        ) as unknown as WeekBooking[];
+
+        return (
+          <div className="-mx-3 min-[920px]:mx-0 relative z-0 isolate">
+            <AgendaWeekBoard
+              bookings={weekBookings}
+              days={weekDaysMeta}
+              stylists={stylists}
+              splitByStylist={selectedStylistFilter === "all"}
+              startHour={startHour}
+              endHour={endHour}
+              nowMinutes={currentTime.getHours() * 60 + currentTime.getMinutes()}
+              onSelect={(b) => setDetailBooking(b as unknown as LocalBooking)}
+              isBlocked={(b) => isBlockedBooking(b as unknown as LocalBooking)}
+              isFullDayBlocked={(b) => isFullDayBlocked(b as unknown as LocalBooking)}
+              onQuickCreate={(dateKey, time, stylistSlug) =>
+                setQuickBooking({
+                  date: parseISO(dateKey),
+                  time,
+                  stylistSlug:
+                    stylistSlug ||
+                    (selectedStylistFilter !== "all"
+                      ? selectedStylistFilter
+                      : stylists[0]?.slug || "any"),
+                })
+              }
+              onMove={(b, dateKey, time, stylistSlug) =>
+                handleWeekMove(b as unknown as LocalBooking, dateKey, time, stylistSlug)
+              }
+              onResize={(b, duration) =>
+                handleTimelineResize(b as unknown as LocalBooking, duration)
+              }
+              onUnblock={(b) => openUnblock(b as unknown as LocalBooking)}
+            />
+          </div>
+        );
+      })()}
+
+      {/* ── CALENDAR GRID (vista día) ─────────────────────────── */}
+      {view === "dia" && (
+        loading ? (
         <div className="ag-gridcard ag-skel" aria-hidden>
           <div className="ag-skel-head">
             <span className="ag-skel-pill" style={{ width: 42 }} />
@@ -2679,6 +2830,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
             </>
           );
         })()
+        )
       )}
 
       {/* Create Dialog */}

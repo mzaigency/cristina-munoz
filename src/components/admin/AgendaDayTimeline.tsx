@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { Lock, LockOpen, Check, Plus, X } from "lucide-react";
+import { NO_SELECT, useTimelineDrag } from "@/hooks/useTimelineDrag";
 
 export interface TimelineBooking {
   id: string;
@@ -43,30 +44,6 @@ const HOUR_PX = 110;
 const PPM = HOUR_PX / 60;
 /** Cabecera del profesional */
 const HEAD_PX = 56;
-/** Los arrastres encajan en pasos de 15 min */
-const SNAP = 15;
-/** Pulsación larga (táctil) antes de levantar la tarjeta */
-const LONG_PRESS_MS = 320;
-
-/**
- * Vibración corta al agarrar/soltar. Android la soporta; iOS Safari NO tiene
- * Vibration API, ahí el aviso es el salto visual de la tarjeta al levantarse.
- */
-const haptic = (pattern: number | number[] = 12) => {
-  try {
-    navigator.vibrate?.(pattern);
-  } catch {
-    /* navegador sin Vibration API */
-  }
-};
-
-/** Bloquea selección de texto y menú contextual al mantener pulsado (iOS) */
-const NO_SELECT = {
-  WebkitUserSelect: "none",
-  userSelect: "none",
-  WebkitTouchCallout: "none",
-} as const;
-
 const toMinutes = (hhmm: string): number => {
   const [h, m] = (hhmm || "0:0").split(":").map(Number);
   return (h || 0) * 60 + (m || 0);
@@ -168,7 +145,7 @@ function CardBody({
     <>
       {/* barra de color redondeada (iOS) */}
       <span
-        className="my-1 ml-1 w-1 rounded-full flex-none"
+        className="my-1 ml-1 w-1.5 rounded-full flex-none"
         style={{ background: done ? COMPLETED_COLOR : color }}
       />
       <span
@@ -238,28 +215,6 @@ function CardBody({
   );
 }
 
-type DragState = {
-  b: TimelineBooking;
-  mode: "move" | "resize";
-  pointerType: string;
-  startX: number;
-  startY: number;
-  originStart: number;
-  originDur: number;
-  originStylist: string;
-  col: number;
-  cols: number;
-  /** true cuando el gesto ya cuenta como arrastre (umbral o pulsación larga) */
-  active: boolean;
-  /** destino que se guardará: encajado a 15 min */
-  start: number;
-  dur: number;
-  stylist: string;
-  /** posición libre bajo el dedo/ratón: el holograma va aquí (movimiento suave) */
-  rawStart: number;
-  rawDur: number;
-};
-
 export function AgendaDayTimeline({
   bookings,
   stylists,
@@ -282,219 +237,20 @@ export function AgendaDayTimeline({
   const workMinutes = Math.max(1, dayEnd - dayStart);
   const railHeight = workMinutes * PPM;
 
-  const [drag, setDrag] = useState<DragState | null>(null);
-  const dragRef = useRef<DragState | null>(null);
   const railRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const longPress = useRef<number | null>(null);
-  /** tras un arrastre, ignora el click sintético que dispara el navegador */
-  const suppressClick = useRef(false);
-  const rafId = useRef<number | null>(null);
-  const pendingPoint = useRef<{ x: number; y: number } | null>(null);
+  const columnIds = useMemo(() => stylists.map((s) => s.slug), [stylists]);
 
-  const setDragState = useCallback((d: DragState | null) => {
-    dragRef.current = d;
-    setDrag(d);
-  }, []);
+  const { drag, dragActive, beginDrag, suppressClick } = useTimelineDrag<TimelineBooking>({
+    dayStart,
+    dayEnd,
+    ppm: PPM,
+    columnIds,
+    railRefs,
+    onMove: onMove ? (b, slug, startMin) => onMove(b, slug, fromMinutes(startMin)) : undefined,
+    onResize,
+  });
 
-  const clearLongPress = () => {
-    if (longPress.current != null) {
-      window.clearTimeout(longPress.current);
-      longPress.current = null;
-    }
-  };
-
-  const beginDrag = useCallback(
-    (
-      e: React.PointerEvent,
-      b: TimelineBooking,
-      mode: "move" | "resize",
-      meta: { start: number; dur: number; col: number; cols: number },
-    ) => {
-      if (mode === "move" && !onMove) return;
-      if (mode === "resize" && !onResize) return;
-      if (e.pointerType === "mouse" && e.button !== 0) return;
-      if (mode === "resize") e.preventDefault();
-
-      const next: DragState = {
-        b,
-        mode,
-        pointerType: e.pointerType,
-        startX: e.clientX,
-        startY: e.clientY,
-        originStart: meta.start,
-        originDur: meta.dur,
-        originStylist: b.stylist,
-        col: meta.col,
-        cols: meta.cols,
-        // resize arranca al instante; mover espera umbral (ratón) o pulsación larga (táctil)
-        active: mode === "resize",
-        start: meta.start,
-        dur: meta.dur,
-        stylist: b.stylist,
-        rawStart: meta.start,
-        rawDur: meta.dur,
-      };
-      setDragState(next);
-
-      if (mode === "resize" && e.pointerType !== "mouse") haptic(10);
-
-      if (mode === "move" && e.pointerType !== "mouse") {
-        clearLongPress();
-        longPress.current = window.setTimeout(() => {
-          const cur = dragRef.current;
-          if (!cur || cur.active) return;
-          setDragState({ ...cur, active: true });
-          haptic(14);
-        }, LONG_PRESS_MS);
-      }
-    },
-    [onMove, onResize, setDragState],
-  );
-
-  // Gesto en curso: seguimiento global para no perderlo al salir de la tarjeta
-  const dragging = drag !== null;
-  useEffect(() => {
-    if (!dragging) return;
-
-    const finish = (commit: boolean) => {
-      clearLongPress();
-      const cur = dragRef.current;
-      setDragState(null);
-      if (!cur || !cur.active) return;
-      suppressClick.current = true;
-      window.setTimeout(() => {
-        suppressClick.current = false;
-      }, 250);
-      if (!commit) return;
-      if (cur.mode === "resize") {
-        if (cur.dur !== cur.originDur) {
-          if (cur.pointerType !== "mouse") haptic(8);
-          onResize?.(cur.b, cur.dur);
-        }
-      } else if (cur.start !== cur.originStart || cur.stylist !== cur.originStylist) {
-        if (cur.pointerType !== "mouse") haptic(8);
-        onMove?.(cur.b, cur.stylist, fromMinutes(cur.start));
-      }
-    };
-
-    // El holograma va en la posición LIBRE (rawStart/rawDur) y la guía punteada
-    // en la encajada (start/dur): así el arrastre se siente suave pero se ve
-    // exactamente dónde va a caer.
-    const apply = (clientX: number, clientY: number) => {
-      const cur = dragRef.current;
-      if (!cur) return;
-      const dx = clientX - cur.startX;
-      const dy = clientY - cur.startY;
-
-      let active = cur.active;
-      if (!active) {
-        if (cur.pointerType !== "mouse") {
-          // aún no es pulsación larga: si se mueve, el usuario está haciendo scroll
-          if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-            clearLongPress();
-            setDragState(null);
-          }
-          return;
-        }
-        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
-        active = true;
-      }
-
-      if (cur.mode === "resize") {
-        const maxDur = dayEnd - cur.originStart;
-        const raw = cur.originDur + dy / PPM;
-        const rawDur = Math.max(SNAP, Math.min(raw, maxDur));
-        const dur = Math.max(SNAP, Math.min(Math.round(raw / SNAP) * SNAP, maxDur));
-        setDragState({ ...cur, active, dur, rawDur });
-        return;
-      }
-
-      const raw = cur.originStart + dy / PPM;
-      const maxStart = dayEnd - cur.dur;
-      const rawStart = Math.max(dayStart, Math.min(raw, maxStart));
-      const start = Math.max(dayStart, Math.min(Math.round(raw / SNAP) * SNAP, maxStart));
-
-      let stylist = cur.stylist;
-      for (const s of stylists) {
-        const el = railRefs.current[s.slug];
-        if (!el) continue;
-        const r = el.getBoundingClientRect();
-        if (clientX >= r.left && clientX <= r.right) {
-          stylist = s.slug;
-          break;
-        }
-      }
-      setDragState({ ...cur, active, start, rawStart, stylist });
-    };
-
-    // Un repintado por frame como mucho: el gesto no va a tirones
-    const onPointerMove = (e: PointerEvent) => {
-      pendingPoint.current = { x: e.clientX, y: e.clientY };
-      if (rafId.current != null) return;
-      rafId.current = requestAnimationFrame(() => {
-        rafId.current = null;
-        const p = pendingPoint.current;
-        if (p) apply(p.x, p.y);
-      });
-    };
-
-    const flushPending = () => {
-      if (rafId.current != null) {
-        cancelAnimationFrame(rafId.current);
-        rafId.current = null;
-        const p = pendingPoint.current;
-        if (p) apply(p.x, p.y);
-      }
-      pendingPoint.current = null;
-    };
-
-    const onUp = () => {
-      flushPending();
-      finish(true);
-    };
-    const onCancel = () => {
-      flushPending();
-      finish(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") finish(false);
-    };
-
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onCancel);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onCancel);
-      window.removeEventListener("keydown", onKey);
-      if (rafId.current != null) {
-        cancelAnimationFrame(rafId.current);
-        rafId.current = null;
-      }
-      pendingPoint.current = null;
-    };
-  }, [dragging, dayStart, dayEnd, stylists, onMove, onResize, setDragState]);
-
-  // Mientras se arrastra: bloquea el scroll táctil y la selección de texto
-  const dragActive = !!drag?.active;
-  useEffect(() => {
-    if (!dragActive) return;
-    const stop = (e: TouchEvent) => e.preventDefault();
-    document.addEventListener("touchmove", stop, { passive: false });
-    const prevSelect = document.body.style.userSelect;
-    const prevCursor = document.body.style.cursor;
-    document.body.style.userSelect = "none";
-    document.body.style.cursor = drag?.mode === "resize" ? "ns-resize" : "grabbing";
-    return () => {
-      document.removeEventListener("touchmove", stop);
-      document.body.style.userSelect = prevSelect;
-      document.body.style.cursor = prevCursor;
-    };
-  }, [dragActive, drag?.mode]);
-
-  useEffect(() => () => clearLongPress(), []);
+  const canDrag = !!onMove;
 
   const hourCells = useMemo(
     () => Array.from({ length: endHour - startHour }, (_, i) => startHour + i),
@@ -510,15 +266,17 @@ export function AgendaDayTimeline({
           const end = b.end_time ? toMinutes(b.end_time) : start + (b.total_duration || 30);
           return { b, start, end: Math.max(end, start + 15) };
         });
-      // Los bloqueos son fondo (ancho completo, como en desktop): NO entran en el
-      // reparto de solapes, así que nunca parten una cita por la mitad.
-      const blocks = raw.filter((it) => isBlocked(it.b));
-      const items = layout(raw.filter((it) => !isBlocked(it.b)));
-      const busy = items.reduce((sum, it) => sum + (it.end - it.start), 0);
+      // El bloqueo de DÍA COMPLETO es fondo y no entra en el reparto (taparía todo).
+      // Los de horas concretas SÍ entran: comparten el hueco con las citas.
+      const isFull = (b: TimelineBooking) => isBlocked(b) && !!isFullDayBlocked?.(b);
+      const fullBlocks = raw.filter((it) => isFull(it.b));
+      const items = layout(raw.filter((it) => !isFull(it.b)));
+      const appts = items.filter((it) => !isBlocked(it.b));
+      const busy = appts.reduce((sum, it) => sum + (it.end - it.start), 0);
       const occupancy = Math.min(100, Math.round((busy / workMinutes) * 100));
-      return { stylist: s, blocks, items, realCount: items.length, occupancy, busy };
+      return { stylist: s, fullBlocks, items, realCount: appts.length, occupancy, busy };
     });
-  }, [bookings, stylists, workMinutes, isBlocked]);
+  }, [bookings, stylists, workMinutes, isBlocked, isFullDayBlocked]);
 
   const summary = useMemo(() => {
     const totalCitas = sections.reduce((n, s) => n + s.realCount, 0);
@@ -571,9 +329,10 @@ export function AgendaDayTimeline({
           </div>
 
           {/* Un raíl por profesional */}
-          {sections.map(({ stylist, blocks, items, realCount, occupancy }) => {
-            const ghost = drag?.active && drag.stylist === stylist.slug ? drag : null;
-            const isDropTarget = !!ghost && drag!.mode === "move" && drag!.originStylist !== stylist.slug;
+          {sections.map(({ stylist, fullBlocks, items, realCount, occupancy }) => {
+            const ghost = drag?.active && drag.colId === stylist.slug ? drag : null;
+            const blockCount = fullBlocks.length + items.filter((it) => isBlocked(it.b)).length;
+            const isDropTarget = !!ghost && drag!.mode === "move" && drag!.originColId !== stylist.slug;
 
             return (
             <div key={stylist.slug} className="w-64 flex-shrink-0 min-[920px]:flex-1 min-[920px]:w-auto min-[920px]:min-w-[210px]">
@@ -591,13 +350,13 @@ export function AgendaDayTimeline({
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-[15px] text-ink-2 truncate flex items-center gap-1.5">
                     <span className="truncate">{stylist.name}</span>
-                    {blocks.length > 0 && (
+                    {blockCount > 0 && (
                       <span
-                        title={`${blocks.length} bloqueo${blocks.length > 1 ? "s" : ""}`}
+                        title={`${blockCount} bloqueo${blockCount > 1 ? "s" : ""}`}
                         className="inline-flex items-center gap-0.5 flex-none rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-outline"
                       >
                         <Lock className="w-2.5 h-2.5" />
-                        {blocks.length > 1 ? blocks.length : ""}
+                        {blockCount > 1 ? blockCount : ""}
                       </span>
                     )}
                   </h4>
@@ -680,77 +439,42 @@ export function AgendaDayTimeline({
                     );
                   })}
 
-                {items.length === 0 && blocks.length === 0 && (
+                {items.length === 0 && fullBlocks.length === 0 && (
                   <p className="absolute left-2 right-2 top-4 text-xs text-outline text-center pointer-events-none">
                     Sin citas · día libre
                   </p>
                 )}
 
-                {/* Capa 1 — bloqueos: fondo a ancho completo con pestaña arriba (como desktop) */}
-                {blocks.map(({ b, start, end }) => {
-                  const fullDay = !!isFullDayBlocked?.(b);
-                  const topRaw = fullDay ? 0 : Math.max(0, (start - dayStart) * PPM);
-                  const bottomRaw = fullDay
-                    ? railHeight
-                    : Math.min(railHeight, (end - dayStart) * PPM);
-                  if (!fullDay && bottomRaw <= 0) return null;
-                  const height = fullDay ? railHeight : Math.max(22, bottomRaw - topRaw);
+                {/* Bloqueo de DÍA COMPLETO: fondo que cubre el raíl entero */}
+                {fullBlocks.map(({ b }) => {
                   const label = b.title || "Bloqueado";
-
-                  if (fullDay) {
-                    return (
-                      <div
-                        key={b.id}
-                        className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 flex flex-col items-center justify-center gap-2 px-3 text-center overflow-hidden"
-                        style={{ left: 0, width: "100%", top: 0, height }}
-                      >
-                        <Lock className="w-5 h-5 text-outline" />
-                        <span className="text-[13px] font-semibold text-outline">{label}</span>
-                        <span className="text-[11px] text-outline/70">No hay citas este día</span>
-                        {onUnblock && (
-                          <button
-                            type="button"
-                            onClick={() => onUnblock(b)}
-                            className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
-                          >
-                            <LockOpen className="w-3.5 h-3.5" />
-                            Quitar bloqueo
-                          </button>
-                        )}
-                      </div>
-                    );
-                  }
-
                   return (
                     <div
                       key={b.id}
-                      className="absolute z-[1] overflow-hidden rounded-lg border border-line"
-                      style={{ left: 0, width: "100%", top: topRaw, height }}
+                      className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 flex flex-col items-center justify-center gap-2 px-3 text-center overflow-hidden"
+                      style={{ left: 0, width: "100%", top: 0, height: railHeight }}
                     >
-                      <span className="absolute inset-0 bg-striped-gray opacity-60" />
-                      {/* pestaña superior */}
-                      <span className="absolute top-1 left-1.5 inline-flex items-center gap-1 rounded-full bg-slate-200 pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline max-w-[calc(100%-12px)]">
-                        <Lock className="w-2.5 h-2.5 flex-none" />
-                        <span className="truncate">{label}</span>
-                        {onUnblock && (
-                          <button
-                            type="button"
-                            aria-label={`Quitar bloqueo de ${fromMinutes(start)} a ${fromMinutes(end)}`}
-                            title="Quitar bloqueo"
-                            onClick={() => onUnblock(b)}
-                            className="flex-none w-4 h-4 -mr-0.5 rounded-full flex items-center justify-center bg-white/70 text-outline active:scale-90 transition-transform min-[920px]:hover:bg-white min-[920px]:hover:text-destructive"
-                          >
-                            <X className="w-2.5 h-2.5" strokeWidth={3} />
-                          </button>
-                        )}
-                      </span>
+                      <Lock className="w-5 h-5 text-outline" />
+                      <span className="text-[13px] font-semibold text-outline">{label}</span>
+                      <span className="text-[11px] text-outline/70">No hay citas este día</span>
+                      {onUnblock && (
+                        <button
+                          type="button"
+                          onClick={() => onUnblock(b)}
+                          className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
+                        >
+                          <LockOpen className="w-3.5 h-3.5" />
+                          Quitar bloqueo
+                        </button>
+                      )}
                     </div>
                   );
                 })}
 
-                {/* Capa 2 — citas (estilo iOS): reparto de solapes solo entre ellas */}
+                {/* Capa 2 — citas y bloqueos de horas, repartiéndose el hueco */}
                 {items.map(({ b, start, end, col, cols }) => {
                   const dragged = drag?.active && drag.b.id === b.id;
+                  const blocked = isBlocked(b);
                   // Al mover, en su sitio original queda el hueco marcado
                   if (dragged && drag!.mode === "move") {
                     const hTop = Math.max(0, (start - dayStart) * PPM);
@@ -786,6 +510,103 @@ export function AgendaDayTimeline({
                   if (bottomRaw <= 0) return null;
                   const top = topRaw;
                   const height = Math.max(24, bottomRaw - topRaw);
+                  const cLeft = `calc(4px + (100% - 8px) * ${col / cols})`;
+                  const cWidth = `calc((100% - 8px) / ${cols} - ${cols > 1 ? 3 : 0}px)`;
+
+                  // ── Bloqueo de horas concretas: ocupa su hueco como una cita más
+                  if (blocked) {
+                    const label = b.title || "Bloqueado";
+                    const roomy = cols === 1;
+                    return (
+                      <div
+                        key={b.id}
+                        className="absolute z-[6] overflow-hidden rounded-lg border border-line"
+                        style={{ left: cLeft, width: cWidth, top, height }}
+                      >
+                        <span className="absolute inset-0 bg-striped-gray opacity-60" />
+
+                        {canDrag && (
+                          <span
+                            role="separator"
+                            aria-label={`Mover el bloqueo de ${fromMinutes(start)} a ${fromMinutes(end)}`}
+                            onPointerDown={(e) => {
+                              e.stopPropagation();
+                              beginDrag(e, b, "move", {
+                                start,
+                                dur: end - start,
+                                col,
+                                cols,
+                                colId: stylist.slug,
+                              });
+                            }}
+                            className="absolute left-0 top-0 bottom-0 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing"
+                            style={{ touchAction: "none", ...NO_SELECT }}
+                          >
+                            <span
+                              className="flex flex-col gap-[3px] rounded-full bg-white px-[3px] py-1"
+                              style={{ boxShadow: "0 0 0 1px rgba(20,22,40,.06)" }}
+                            >
+                              {[0, 1, 2].map((i) => (
+                                <span key={i} className="w-[3px] h-[3px] rounded-full bg-outline/70" />
+                              ))}
+                            </span>
+                          </span>
+                        )}
+
+                        <span
+                          className="absolute top-1 inline-flex items-center gap-1 rounded-full bg-slate-200 pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
+                          style={{
+                            left: canDrag ? 22 : 6,
+                            maxWidth: `calc(100% - ${canDrag ? 28 : 12}px)`,
+                          }}
+                        >
+                          <Lock className="w-2.5 h-2.5 flex-none" />
+                          <span className="truncate">{roomy ? label : fromMinutes(start)}</span>
+                          {onUnblock && (
+                            <button
+                              type="button"
+                              aria-label={`Quitar bloqueo de ${fromMinutes(start)} a ${fromMinutes(end)}`}
+                              title="Quitar bloqueo"
+                              onClick={() => onUnblock(b)}
+                              className="flex-none w-4 h-4 -mr-0.5 rounded-full flex items-center justify-center bg-white/70 text-outline active:scale-90 transition-transform min-[920px]:hover:bg-white min-[920px]:hover:text-destructive"
+                            >
+                              <X className="w-2.5 h-2.5" strokeWidth={3} />
+                            </button>
+                          )}
+                        </span>
+
+                        {height >= 40 && (
+                          <span
+                            className="absolute left-0 right-0 text-center text-[10px] font-bold text-outline/80 tabular-nums"
+                            style={{ top: 22 }}
+                          >
+                            {fromMinutes(start)} – {fromMinutes(end)}
+                          </span>
+                        )}
+
+                        {onResize && (
+                          <span
+                            role="separator"
+                            aria-label="Cambiar las horas bloqueadas"
+                            onPointerDown={(e) => {
+                              e.stopPropagation();
+                              beginDrag(e, b, "resize", {
+                                start,
+                                dur: end - start,
+                                col,
+                                cols,
+                                colId: stylist.slug,
+                              });
+                            }}
+                            className="absolute bottom-0 left-0 right-0 h-3 flex items-end justify-center cursor-ns-resize"
+                            style={{ touchAction: "none", ...NO_SELECT }}
+                          >
+                            <span className="h-[3px] w-7 rounded-full bg-outline/45" />
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }
                   const done = isCompleted(b);
                   const size: "sm" | "md" | "lg" =
                     height < H_SM ? "sm" : height < H_LG ? "md" : "lg";
@@ -793,7 +614,6 @@ export function AgendaDayTimeline({
                   const left = `calc(4px + (100% - 8px) * ${col / cols})`;
                   const width = `calc((100% - 8px) / ${cols} - ${cols > 1 ? 3 : 0}px)`;
                   const narrow = cols > 1;
-                  const canDrag = !!onMove;
 
                   return (
                     <div
@@ -810,9 +630,18 @@ export function AgendaDayTimeline({
                           onSelect(b);
                         }
                       }}
-                      onPointerDown={(e) =>
-                        beginDrag(e, b, "move", { start, dur: end - start, col, cols })
-                      }
+                      onPointerDown={(e) => {
+                        // Con el dedo solo se arrastra desde el tirador: si no, un
+                        // scroll que empieza sobre la tarjeta acabaría moviéndola.
+                        if (e.pointerType !== "mouse") return;
+                        beginDrag(e, b, "move", {
+                          start,
+                          dur: end - start,
+                          col,
+                          cols,
+                          colId: stylist.slug,
+                        });
+                      }}
                       className={`absolute z-10 text-left rounded-2xl flex overflow-hidden select-none active:scale-[.98] transition-transform ease-brand group/card min-[920px]:hover:-translate-y-px min-[920px]:hover:outline min-[920px]:hover:outline-1 min-[920px]:hover:outline-primary/25 ${
                         canDrag ? "cursor-grab active:cursor-grabbing" : ""
                       }`}
@@ -836,6 +665,34 @@ export function AgendaDayTimeline({
                         endMin={end}
                       />
 
+                      {/* Tirador de MOVER: los puntos del borde izquierdo. En táctil
+                          es el único sitio desde el que se puede arrastrar. */}
+                      {canDrag && (
+                        <span
+                          role="separator"
+                          aria-label={`Mover la cita de ${b.customer_name}`}
+                          onPointerDown={(e) => {
+                            e.stopPropagation();
+                            beginDrag(e, b, "move", {
+                              start,
+                              dur: end - start,
+                              col,
+                              cols,
+                              colId: stylist.slug,
+                            });
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="absolute left-0 top-0 bottom-0 w-5 flex items-center cursor-grab active:cursor-grabbing"
+                          style={{ touchAction: "none", paddingLeft: 5.5, ...NO_SELECT }}
+                        >
+                          <span className="flex flex-col gap-[3px]">
+                            {[0, 1, 2].map((i) => (
+                              <span key={i} className="w-[3px] h-[3px] rounded-full bg-white/75" />
+                            ))}
+                          </span>
+                        </span>
+                      )}
+
                       {/* Tirador de duración (borde inferior). También en las citas
                           cortas: son justo las que más falta hace poder estirar. */}
                       {onResize && (
@@ -844,7 +701,7 @@ export function AgendaDayTimeline({
                           aria-label={`Cambiar duración de la cita de ${b.customer_name}`}
                           onPointerDown={(e) => {
                             e.stopPropagation();
-                            beginDrag(e, b, "resize", { start, dur: end - start, col, cols });
+                            beginDrag(e, b, "resize", { start, dur: end - start, col, cols, colId: stylist.slug });
                           }}
                           onClick={(e) => e.stopPropagation()}
                           className={`absolute bottom-0 left-0 right-0 flex items-end justify-center pb-0.5 cursor-ns-resize opacity-45 min-[920px]:opacity-0 min-[920px]:group-hover/card:opacity-100 transition-opacity ${
@@ -866,6 +723,7 @@ export function AgendaDayTimeline({
                 {/* Arrastre: guía de encaje (dónde cae) + holograma (dónde está el dedo) */}
                 {ghost &&
                   (() => {
+                    const ghostBlock = isBlocked(ghost.b);
                     const gCols = ghost.mode === "resize" ? ghost.cols : 1;
                     const gCol = ghost.mode === "resize" ? ghost.col : 0;
                     const left = `calc(4px + (100% - 8px) * ${gCol / gCols})`;
@@ -920,14 +778,24 @@ export function AgendaDayTimeline({
                             boxShadow: `${SHADOW_DRAG}, 0 0 0 1.5px hsl(var(--primary) / 0.35)`,
                           }}
                         >
-                          <CardBody
-                            b={ghost.b}
-                            color={stylist.color}
-                            height={rawH}
-                            narrow={ghost.mode === "resize" && ghost.cols > 1}
-                            startMin={ghost.start}
-                            endMin={ghost.start + ghost.dur}
-                          />
+                          {ghostBlock ? (
+                            <span className="relative flex-1 flex items-center justify-center overflow-hidden">
+                              <span className="absolute inset-0 bg-striped-gray opacity-60" />
+                              <span className="relative inline-flex items-center gap-1 text-[11px] font-bold text-outline">
+                                <Lock className="w-3 h-3" />
+                                {ghost.b.title || "Bloqueado"}
+                              </span>
+                            </span>
+                          ) : (
+                            <CardBody
+                              b={ghost.b}
+                              color={stylist.color}
+                              height={rawH}
+                              narrow={ghost.mode === "resize" && ghost.cols > 1}
+                              startMin={ghost.start}
+                              endMin={ghost.start + ghost.dur}
+                            />
+                          )}
                         </div>
                         {/* Hora en vivo: fuera de la tarjeta para que no la recorte */}
                         <span
