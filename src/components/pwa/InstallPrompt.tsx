@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { X, Share, Plus, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import glowAppLogo from "@/assets/glowapp-logo.png";
+const glowAppLogo = "/icon-192.png";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
