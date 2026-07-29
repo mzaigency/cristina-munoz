@@ -520,10 +520,10 @@ export function AgendaWeekBoard({
                                 return (
                                   <div
                                     key={b.id}
-                                    className="absolute left-0 right-0 z-[1] overflow-hidden rounded-lg border border-line"
-                                    style={{ top: 0, height: railHeight, background: STRIPES }}
-                                  >
-                                    <span className="absolute top-0.5 left-1 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline max-w-[calc(100%-8px)]">
+                                    className="absolute left-0 right-0 z-[1] overflow-hidden rounded-lg border border-line pointer-events-none"
+                                     style={{ top: 0, height: railHeight, background: STRIPES }}
+                                   >
+                                     <span className="pointer-events-auto absolute top-0.5 left-1 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline max-w-[calc(100%-8px)]">
                                       <Lock className="w-2 h-2 flex-none" />
                                       <span className="truncate">{label}</span>
                                       {onUnblock && (
@@ -542,7 +542,7 @@ export function AgendaWeekBoard({
                                       <button
                                         type="button"
                                         onClick={() => onUnblock(b)}
-                                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full bg-white border border-line px-2 py-1 text-[11px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
+                                        className="pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full bg-white border border-line px-2 py-1 text-[11px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
                                       >
                                         <LockOpen className="w-3 h-3" />
                                         Quitar
@@ -586,7 +586,7 @@ export function AgendaWeekBoard({
                                   return (
                                     <div
                                       key={b.id}
-                                      className="absolute z-[6] overflow-hidden rounded-lg border border-line"
+                                      className="absolute z-[6] overflow-hidden rounded-lg border border-line pointer-events-none"
                                       style={{ left, width, top, height, background: STRIPES }}
                                     >
                                       {onMove && (
@@ -603,7 +603,7 @@ export function AgendaWeekBoard({
                                               colId: lane.id,
                                             });
                                           }}
-                                          className="absolute left-0 top-0 bottom-0 w-3.5 flex items-center justify-center z-[2] cursor-grab active:cursor-grabbing"
+                                          className="pointer-events-auto absolute left-0 top-0 bottom-0 w-3.5 flex items-center justify-center z-[2] cursor-grab active:cursor-grabbing"
                                           style={{ touchAction: "none", ...NO_SELECT }}
                                         >
                                           <span
@@ -621,7 +621,7 @@ export function AgendaWeekBoard({
                                       )}
 
                                       <span
-                                        className="absolute top-0.5 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline"
+                                        className="pointer-events-auto absolute top-0.5 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline"
                                         style={{
                                           left: onMove ? 15 : 4,
                                           maxWidth: `calc(100% - ${onMove ? 19 : 8}px)`,

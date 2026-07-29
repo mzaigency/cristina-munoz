@@ -2454,6 +2454,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                         : `0 1px 2px rgba(20,22,40,.05)`,
                                       transition: "transform .13s, box-shadow .13s",
                                       outline: isResizing2 ? `2px solid #4361ee` : undefined,
+                                      // Los bloqueos dejan pasar hover/click a los slots de cita rápida
+                                      pointerEvents: isBlocked ? "none" : undefined,
                                     }}
                                     onClick={(e) => {
                                       if (!isBlocked && !isResizing2) {
@@ -2712,7 +2714,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
                                     {/* Unblock button */}
                                     {isBlocked && (
-                                      <div className="absolute top-0.5 right-0.5 z-20">
+                                      <div className="absolute top-0.5 right-0.5 z-20" style={{ pointerEvents: "auto" }}>
                                         <button
                                           onClick={(e) => {
                                             e.stopPropagation();

@@ -451,7 +451,7 @@ export function AgendaDayTimeline({
                   return (
                     <div
                       key={b.id}
-                      className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 flex flex-col items-center justify-center gap-2 px-3 text-center overflow-hidden"
+                      className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 flex flex-col items-center justify-center gap-2 px-3 text-center overflow-hidden pointer-events-none"
                       style={{ left: 0, width: "100%", top: 0, height: railHeight }}
                     >
                       <Lock className="w-5 h-5 text-outline" />
@@ -461,7 +461,7 @@ export function AgendaDayTimeline({
                         <button
                           type="button"
                           onClick={() => onUnblock(b)}
-                          className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
+                          className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
                         >
                           <LockOpen className="w-3.5 h-3.5" />
                           Quitar bloqueo
@@ -520,7 +520,7 @@ export function AgendaDayTimeline({
                     return (
                       <div
                         key={b.id}
-                        className="absolute z-[6] overflow-hidden rounded-lg border border-line"
+                        className="absolute z-[6] overflow-hidden rounded-lg border border-line pointer-events-none"
                         style={{ left: cLeft, width: cWidth, top, height }}
                       >
                         <span className="absolute inset-0 bg-striped-gray opacity-60" />
@@ -539,7 +539,7 @@ export function AgendaDayTimeline({
                                 colId: stylist.slug,
                               });
                             }}
-                            className="absolute left-0 top-0 bottom-0 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing"
+                            className="pointer-events-auto absolute left-0 top-0 bottom-0 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing"
                             style={{ touchAction: "none", ...NO_SELECT }}
                           >
                             <span
@@ -554,7 +554,7 @@ export function AgendaDayTimeline({
                         )}
 
                         <span
-                          className="absolute top-1 inline-flex items-center gap-1 rounded-full bg-slate-200 pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
+                          className="pointer-events-auto absolute top-1 inline-flex items-center gap-1 rounded-full bg-slate-200 pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
                           style={{
                             left: canDrag ? 22 : 6,
                             maxWidth: `calc(100% - ${canDrag ? 28 : 12}px)`,
@@ -598,7 +598,7 @@ export function AgendaDayTimeline({
                                 colId: stylist.slug,
                               });
                             }}
-                            className="absolute bottom-0 left-0 right-0 h-3 flex items-end justify-center cursor-ns-resize"
+                            className="pointer-events-auto absolute bottom-0 left-0 right-0 h-3 flex items-end justify-center cursor-ns-resize"
                             style={{ touchAction: "none", ...NO_SELECT }}
                           >
                             <span className="h-[3px] w-7 rounded-full bg-outline/45" />
