@@ -554,7 +554,7 @@ export function AgendaDayTimeline({
                         )}
 
                         <span
-                          className="absolute top-1 inline-flex items-center gap-1 rounded-full bg-slate-200 pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
+                          className="pointer-events-auto absolute top-1 inline-flex items-center gap-1 rounded-full bg-slate-200 pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
                           style={{
                             left: canDrag ? 22 : 6,
                             maxWidth: `calc(100% - ${canDrag ? 28 : 12}px)`,
