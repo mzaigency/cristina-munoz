@@ -2454,6 +2454,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                         : `0 1px 2px rgba(20,22,40,.05)`,
                                       transition: "transform .13s, box-shadow .13s",
                                       outline: isResizing2 ? `2px solid #4361ee` : undefined,
+                                      // Los bloqueos dejan pasar hover/click a los slots de cita rápida
+                                      pointerEvents: isBlocked ? "none" : undefined,
                                     }}
                                     onClick={(e) => {
                                       if (!isBlocked && !isResizing2) {
