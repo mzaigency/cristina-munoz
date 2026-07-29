@@ -542,7 +542,7 @@ export function AgendaWeekBoard({
                                       <button
                                         type="button"
                                         onClick={() => onUnblock(b)}
-                                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full bg-white border border-line px-2 py-1 text-[11px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
+                                        className="pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full bg-white border border-line px-2 py-1 text-[11px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
                                       >
                                         <LockOpen className="w-3 h-3" />
                                         Quitar
