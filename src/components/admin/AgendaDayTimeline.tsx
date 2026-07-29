@@ -419,7 +419,7 @@ export function AgendaDayTimeline({
                           if (suppressClick.current) return;
                           onQuickCreate(stylist.slug, time);
                         }}
-                        className="absolute left-0 right-0 group flex items-center justify-center"
+                        className="absolute left-0 right-0 group flex items-center justify-center z-[7]"
                         style={{
                           top: i * 30 * PPM,
                           height: 30 * PPM,
@@ -429,7 +429,7 @@ export function AgendaDayTimeline({
                         {/* Hueco resaltado: ratón (hover) o toque sostenido (active).
                             CSS puro: sin estado, así mover el ratón no repinta la agenda.
                             Durante un arrastre la capa va con pointer-events:none → sin hover. */}
-                        <span className="pointer-events-none absolute inset-x-1 inset-y-[2px] rounded-xl border border-dashed border-primary/45 bg-primary/[0.06] flex items-center justify-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-active:opacity-100">
+                        <span className="pointer-events-none absolute inset-x-1 inset-y-[2px] rounded-xl border border-dashed border-primary/45 bg-background/90 flex items-center justify-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-active:opacity-100">
                           <Plus className="w-3 h-3 text-primary" strokeWidth={2.5} />
                           <span className="text-[11px] font-semibold text-primary tabular-nums">
                             {time}

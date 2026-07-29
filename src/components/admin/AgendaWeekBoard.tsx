@@ -497,14 +497,14 @@ export function AgendaWeekBoard({
                                         if (suppressClick.current) return;
                                         onQuickCreate(day.key, time, lane.stylist?.slug);
                                       }}
-                                      className="absolute left-0 right-0 group flex items-center justify-center"
+                                      className="absolute left-0 right-0 group flex items-center justify-center z-[7]"
                                       style={{
                                         top: i * 30 * PPM,
                                         height: 30 * PPM,
                                         pointerEvents: dragActive ? "none" : undefined,
                                       }}
                                     >
-                                      <span className="pointer-events-none absolute inset-x-0.5 inset-y-[1px] rounded-lg border border-dashed border-primary/45 bg-primary/[0.06] flex items-center justify-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-active:opacity-100">
+                                      <span className="pointer-events-none absolute inset-x-0.5 inset-y-[1px] rounded-lg border border-dashed border-primary/45 bg-background/90 flex items-center justify-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-active:opacity-100">
                                         <Plus className="w-2.5 h-2.5 text-primary" strokeWidth={2.5} />
                                         <span className="text-[11px] font-semibold text-primary tabular-nums">
                                           {time}
