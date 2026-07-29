@@ -497,7 +497,7 @@ export function AgendaWeekBoard({
                                         if (suppressClick.current) return;
                                         onQuickCreate(day.key, time, lane.stylist?.slug);
                                       }}
-                                      className="absolute left-0 right-0 group flex items-center justify-center"
+                                      className="absolute left-0 right-0 group flex items-center justify-center z-[7]"
                                       style={{
                                         top: i * 30 * PPM,
                                         height: 30 * PPM,
