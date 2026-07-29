@@ -504,7 +504,7 @@ export function AgendaWeekBoard({
                                         pointerEvents: dragActive ? "none" : undefined,
                                       }}
                                     >
-                                      <span className="pointer-events-none absolute inset-x-0.5 inset-y-[1px] rounded-lg border border-dashed border-primary/45 bg-primary/[0.06] flex items-center justify-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-active:opacity-100">
+                                      <span className="pointer-events-none absolute inset-x-0.5 inset-y-[1px] rounded-lg border border-dashed border-primary/45 bg-background/90 flex items-center justify-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-active:opacity-100">
                                         <Plus className="w-2.5 h-2.5 text-primary" strokeWidth={2.5} />
                                         <span className="text-[11px] font-semibold text-primary tabular-nums">
                                           {time}
