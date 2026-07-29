@@ -539,7 +539,7 @@ export function AgendaDayTimeline({
                                 colId: stylist.slug,
                               });
                             }}
-                            className="absolute left-0 top-0 bottom-0 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing"
+                            className="pointer-events-auto absolute left-0 top-0 bottom-0 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing"
                             style={{ touchAction: "none", ...NO_SELECT }}
                           >
                             <span
