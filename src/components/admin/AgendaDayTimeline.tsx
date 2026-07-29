@@ -451,7 +451,7 @@ export function AgendaDayTimeline({
                   return (
                     <div
                       key={b.id}
-                      className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 flex flex-col items-center justify-center gap-2 px-3 text-center overflow-hidden"
+                      className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 flex flex-col items-center justify-center gap-2 px-3 text-center overflow-hidden pointer-events-none"
                       style={{ left: 0, width: "100%", top: 0, height: railHeight }}
                     >
                       <Lock className="w-5 h-5 text-outline" />
@@ -461,7 +461,7 @@ export function AgendaDayTimeline({
                         <button
                           type="button"
                           onClick={() => onUnblock(b)}
-                          className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
+                          className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
                         >
                           <LockOpen className="w-3.5 h-3.5" />
                           Quitar bloqueo
