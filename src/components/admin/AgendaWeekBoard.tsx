@@ -621,7 +621,7 @@ export function AgendaWeekBoard({
                                       )}
 
                                       <span
-                                        className="absolute top-0.5 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline"
+                                        className="pointer-events-auto absolute top-0.5 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline"
                                         style={{
                                           left: onMove ? 15 : 4,
                                           maxWidth: `calc(100% - ${onMove ? 19 : 8}px)`,
