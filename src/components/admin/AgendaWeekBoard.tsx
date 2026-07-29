@@ -520,10 +520,10 @@ export function AgendaWeekBoard({
                                 return (
                                   <div
                                     key={b.id}
-                                    className="absolute left-0 right-0 z-[1] overflow-hidden rounded-lg border border-line"
-                                    style={{ top: 0, height: railHeight, background: STRIPES }}
-                                  >
-                                    <span className="absolute top-0.5 left-1 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline max-w-[calc(100%-8px)]">
+                                    className="absolute left-0 right-0 z-[1] overflow-hidden rounded-lg border border-line pointer-events-none"
+                                     style={{ top: 0, height: railHeight, background: STRIPES }}
+                                   >
+                                     <span className="pointer-events-auto absolute top-0.5 left-1 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline max-w-[calc(100%-8px)]">
                                       <Lock className="w-2 h-2 flex-none" />
                                       <span className="truncate">{label}</span>
                                       {onUnblock && (
