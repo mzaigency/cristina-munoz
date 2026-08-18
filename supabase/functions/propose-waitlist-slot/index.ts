@@ -118,7 +118,7 @@ serve(async (req) => {
     // Tenant info
     const { data: tenant } = await supabase
       .from("tenants")
-      .select("name, slug")
+      .select("name, slug, logo_url")
       .eq("id", entry.tenant_id)
       .single();
 
@@ -128,6 +128,10 @@ serve(async (req) => {
     // Update waitlist as proposed (24h to accept)
     const proposedAt = new Date();
     const proposedExpires = new Date(proposedAt.getTime() + 24 * 60 * 60 * 1000);
+    const proposalToken =
+      crypto.randomUUID().replace(/-/g, "") +
+      crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+    const confirmUrl = `https://glowapp.app/lista-espera/${proposalToken}`;
 
     const { error: updErr } = await supabase
       .from("waitlist")
@@ -138,6 +142,7 @@ serve(async (req) => {
         proposed_stylist_id: proposed_stylist_id || null,
         proposed_at: proposedAt.toISOString(),
         proposed_expires_at: proposedExpires.toISOString(),
+        proposal_token: proposalToken,
         notified_at: proposedAt.toISOString(),
       })
       .eq("id", waitlist_id);
@@ -172,7 +177,7 @@ serve(async (req) => {
           conversation_id: conversationId,
           sender_id: entry.tenant_id,
           sender_type: "salon",
-          content: `🎉 ¡Tenemos un hueco para ti!\n\n📅 ${formattedDate} a las ${timeShort}\n\nResponde aquí o entra en "Mis citas" para confirmar antes de 24h.`,
+          content: `🎉 ¡Tenemos un hueco para ti!\n\n📅 ${formattedDate} a las ${timeShort}\n\nConfírmalo en un clic antes de 24h 👉 ${confirmUrl}`,
           message_type: "waitlist_proposal",
           metadata: {
             waitlist_id,
@@ -203,7 +208,7 @@ serve(async (req) => {
           proposed_date,
           proposed_time,
         },
-        action_url: "/mis-citas?tab=waitlist",
+        action_url: `/lista-espera/${proposalToken}`,
       });
 
       // Push notification (via existing function)
@@ -213,7 +218,7 @@ serve(async (req) => {
             user_id: entry.user_id,
             title: "¡Hueco disponible! 🎉",
             body: `${tenantName} te propone el ${formattedDate} a las ${timeShort}`,
-            data: { url: "/mis-citas?tab=waitlist", waitlist_id },
+            data: { url: `/lista-espera/${proposalToken}`, waitlist_id },
           },
         });
       } catch (pushErr) {
@@ -221,9 +226,43 @@ serve(async (req) => {
       }
     }
 
+    // Email con enlace de confirmación en un clic (funcione o no con cuenta)
+    try {
+      let email: string | null = entry.client_email;
+      if (!email && entry.user_id) {
+        const { data: authUser } = await supabase.auth.admin.getUserById(entry.user_id);
+        email = authUser?.user?.email ?? null;
+      }
+      if (email) {
+        const serviceNames = Array.isArray(entry.services)
+          ? entry.services.map((s: any) => s?.name).filter(Boolean).join(", ")
+          : "";
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "waitlist-slot-available",
+            recipientEmail: email,
+            idempotencyKey: `waitlist-proposal-${waitlist_id}-${proposed_date}-${timeShort}`,
+            templateData: {
+              customerName: entry.client_name || "Hola",
+              tenantName,
+              tenantLogoUrl: (tenant as any)?.logo_url ?? null,
+              date: formattedDate,
+              time: timeShort,
+              services: serviceNames,
+              expiresIn: "24 horas",
+              acceptUrl: confirmUrl,
+            },
+          },
+        });
+      }
+    } catch (mailErr) {
+      console.error("propose-waitlist-slot email error:", mailErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
+        confirm_url: confirmUrl,
         has_user: !!entry.user_id,
         client_phone: entry.client_phone,
         tenant_slug: tenantSlug,
