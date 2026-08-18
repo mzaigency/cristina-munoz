@@ -135,13 +135,20 @@ export function useConversations(role: "user" | "salon", tenantId?: string) {
 
       // Batch fetch last messages for ALL conversations in one query
       // Using a subquery approach with DISTINCT ON
-      const lastMessagesMap = new Map<string, { content: string; sender_type: string; created_at: string }>();
+      const lastMessagesMap = new Map<
+        string,
+        { content: string; sender_type: string; created_at: string; message_type?: string }
+      >();
+      const lastHumanMessagesMap = new Map<
+        string,
+        { content: string; sender_type: string; created_at: string }
+      >();
 
       if (conversationIds.length > 0) {
         // Fetch the most recent message per conversation
         const { data: allMessages } = await supabase
           .from("direct_messages")
-          .select("conversation_id, content, sender_type, created_at")
+          .select("conversation_id, content, sender_type, created_at, message_type")
           .in("conversation_id", conversationIds)
           .order("created_at", { ascending: false });
 
@@ -152,6 +159,17 @@ export function useConversations(role: "user" | "salon", tenantId?: string) {
             if (!seenConversations.has(msg.conversation_id)) {
               seenConversations.add(msg.conversation_id);
               lastMessagesMap.set(msg.conversation_id, {
+                content: msg.content,
+                sender_type: msg.sender_type,
+                created_at: msg.created_at,
+                message_type: msg.message_type,
+              });
+            }
+            if (
+              !isAutomaticMessage(msg.message_type) &&
+              !lastHumanMessagesMap.has(msg.conversation_id)
+            ) {
+              lastHumanMessagesMap.set(msg.conversation_id, {
                 content: msg.content,
                 sender_type: msg.sender_type,
                 created_at: msg.created_at,
