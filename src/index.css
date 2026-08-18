@@ -1895,6 +1895,16 @@
   --gp-line2: oklch(0.955 0.004 265);
   --gp-surface-2: oklch(0.985 0.004 265);
   --gp-shadow: 0 1px 2px rgba(20,22,40,.04), 0 10px 30px -16px rgba(20,22,40,.18);
+
+  /* Notification badges: centralized tokens; red solid on desktop, subtle accent on mobile */
+  --gp-notif-badge-bg: color-mix(in oklab, var(--gp-accent), transparent 88%);
+  --gp-notif-badge-fg: var(--gp-accent);
+}
+@media (min-width: 920px) {
+  .gp-shell {
+    --gp-notif-badge-bg: var(--gp-danger);
+    --gp-notif-badge-fg: #fff;
+  }
 }
 
 /* ── Card ── */
