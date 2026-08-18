@@ -39,6 +39,7 @@ import {
   Area,
 } from "recharts";
 import {
+import { GP_CHART, GP_CHART_COLORS } from "@/components/admin/chartPalette";
   TrendingUp,
   TrendingDown,
   Euro,
@@ -69,7 +70,7 @@ interface BusinessStatsProps {
 
 type Period = "week" | "month" | "quarter";
 
-const COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#6366F1", "#14B8A6"];
+const COLORS = GP_CHART_COLORS;
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
@@ -288,9 +289,9 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       returningClients: 0,
     });
     setPaymentMethods([
-      { name: "Efectivo", value: paymentData.cash, color: "#10B981", icon: Banknote },
-      { name: "Tarjeta", value: paymentData.card, color: "#8B5CF6", icon: CreditCard },
-      { name: "Mixto", value: paymentData.mixed, color: "#F59E0B", icon: Wallet },
+      { name: "Efectivo", value: paymentData.cash, color: GP_CHART.ok, icon: Banknote },
+      { name: "Tarjeta", value: paymentData.card, color: GP_CHART.purple, icon: CreditCard },
+      { name: "Mixto", value: paymentData.mixed, color: GP_CHART.warn, icon: Wallet },
     ].filter(d => d.value > 0));
     setStylistStats(Object.values(stylistData).sort((a: any, b: any) => b.revenue - a.revenue));
     setTopServices(Object.values(serviceData).sort((a: any, b: any) => b.revenue - a.revenue).slice(0, 8));

@@ -21,6 +21,7 @@ import {
   Cell,
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GP_CHART, GP_CHART_COLORS } from "@/components/admin/chartPalette";
 
 type Period = "week" | "month" | "quarter";
 
@@ -49,7 +50,7 @@ interface ServiceStats {
   revenue: number;
 }
 
-const COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#6366F1", "#EF4444"];
+const COLORS = GP_CHART_COLORS;
 
 export const CashRegisterStats = () => {
   const [loading, setLoading] = useState(true);
@@ -133,7 +134,7 @@ export const CashRegisterStats = () => {
             stylistData[stylistId] = {
               id: stylistId,
               name: stylist.name,
-              color: stylist.color || "#8B5CF6",
+              color: stylist.color || GP_CHART.purple,
               total: 0,
               transactions: 0,
               avgTicket: 0,
