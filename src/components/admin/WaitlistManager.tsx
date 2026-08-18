@@ -95,6 +95,14 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   const [proposeEntry, setProposeEntry] = useState<WaitlistEntry | null>(null);
   const [activeTab, setActiveTab] = useState<TabValue>("active");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [bookings, setBookings] = useState<{ Fecha: string; Hora: string; total_duration: number | null; stylist: string }[]>([]);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
 
   const [formData, setFormData] = useState({
     client_name: "",
