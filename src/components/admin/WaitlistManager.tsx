@@ -124,6 +124,33 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
     fetchData();
   }, [tenantId]);
 
+  // Tiempo real: refresca cuando otra persona propone, confirma o libera un hueco
+  useEffect(() => {
+    if (!tenantId) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const refresh = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => fetchData(), 400);
+    };
+    const channel = supabase
+      .channel(`waitlist-admin-${tenantId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "waitlist", filter: `tenant_id=eq.${tenantId}` },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `tenant_id=eq.${tenantId}` },
+        refresh,
+      )
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [tenantId]);
+
   const fetchData = async () => {
     try {
       const [waitlistRes, stylistsRes, tenantRes] = await Promise.all([
@@ -133,7 +160,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
           .eq("tenant_id", tenantId)
           .in("status", ["waiting", "notified", "proposed", "booked", "expired", "cancelled"])
           .order("priority", { ascending: false })
-          .order("created_at", { ascending: false }),
+          .order("created_at", { ascending: true }),
         supabase
           .from("tenant_stylists")
           .select("id, name, slug")
@@ -376,9 +403,10 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   const proposedEntries = entries.filter((e) => e.status === "proposed");
   const conflictCount = proposedEntries.filter((e) => hasConflict(e)).length;
   const urgentCount = proposedEntries.filter((e) => getExpiry(e)?.urgent).length;
-  const historyEntries = entries.filter((e) =>
-    ["booked", "cancelled", "expired"].includes(e.status)
-  );
+  const historyEntries = entries
+    .filter((e) => ["booked", "cancelled", "expired"].includes(e.status))
+    .slice()
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const tabEntries =
     activeTab === "active"
@@ -538,6 +566,19 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                         </span>
                       )}
                     </div>
+
+                    {activeTab === "active" && (() => {
+                      const days = Math.max(0, Math.floor((Date.now() - new Date(entry.created_at).getTime()) / 86400000));
+                      const left = entry.preferred_date ? null : Math.max(0, 60 - days);
+                      return (
+                        <p style={{ margin: "6px 0 0", fontSize: 11.5, fontWeight: 600, color: "var(--gp-muted-c)" }}>
+                          {days === 0 ? "Apuntada hoy" : `Esperando ${days} ${days === 1 ? "día" : "días"}`}
+                          {left !== null && ` · caduca en ${left} ${left === 1 ? "día" : "días"}`}
+                        </p>
+                      );
+                    })()}
+
+
 
                     {entry.status === "proposed" && entry.proposed_date && (
                       <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--gp-info), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-ink)" }}>
