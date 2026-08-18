@@ -26,8 +26,30 @@ export interface Conversation {
     content: string;
     sender_type: string;
     created_at: string;
+    message_type?: string;
   };
+  /** true si hay al menos un mensaje escrito por una persona (no automático) */
+  has_human_message?: boolean;
+  /** último mensaje humano (si existe) */
+  last_human_message?: {
+    content: string;
+    sender_type: string;
+    created_at: string;
+  } | null;
 }
+
+export const AUTOMATIC_MESSAGE_TYPES = [
+  "booking_confirmation",
+  "booking_reminder",
+  "booking_cancelled",
+  "booking_cancellation",
+  "review_request",
+  "waitlist_availability",
+  "waitlist_proposal",
+];
+
+export const isAutomaticMessage = (type?: string | null) =>
+  !!type && type !== "text" && type !== "story_reply";
 
 export interface Message {
   id: string;
