@@ -512,8 +512,22 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                       <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--gp-info), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-info-soft)" }}>
                         🎯 Propuesto: {format(new Date(entry.proposed_date), "d MMM", { locale: es })} · {String(entry.proposed_time).slice(0, 5)}
                         {proposedStylistName && ` · ${proposedStylistName}`}
+                        {expiry && (
+                          <span style={{ display: "block", marginTop: 4, fontSize: 11.5, fontWeight: 700, color: expiry.urgent ? "var(--gp-danger)" : "var(--gp-muted-c)" }}>
+                            <Clock style={{ width: 11, height: 11, display: "inline", marginRight: 4, verticalAlign: -1 }} />
+                            {expiry.text}
+                          </span>
+                        )}
                       </div>
                     )}
+
+                    {conflict && (
+                      <div style={{ marginTop: 8, padding: "8px 12px", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-danger)", background: "color-mix(in oklab, var(--gp-danger), white 88%)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <AlertTriangle style={{ width: 13, height: 13, flex: "none" }} />
+                        Conflicto: ese hueco ya tiene una cita confirmada
+                      </div>
+                    )}
+
 
                     {isExpanded && (
                       <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "var(--gp-muted-c)" }}>
