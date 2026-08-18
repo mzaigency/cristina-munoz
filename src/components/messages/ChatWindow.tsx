@@ -73,7 +73,7 @@ const formatDateLabel = (date: Date) => {
 
 export function ChatWindow({
   conversation,
-  messages,
+  messages: allMessages,
   loading,
   onSendMessage,
   role,
@@ -81,11 +81,24 @@ export function ChatWindow({
 }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('');
   const [otherTyping, setOtherTyping] = useState(false);
+  const [showAutomatic, setShowAutomatic] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
+
+  // En el panel del salón ocultamos por defecto los avisos automáticos (recordatorios, etc.)
+  const isAuto = (t: string) => t !== 'text' && t !== 'story_reply';
+  const automaticCount = allMessages.filter((m) => isAuto(m.message_type)).length;
+  const hideAutomatic = role === 'salon' && !showAutomatic && automaticCount > 0;
+  const messages = hideAutomatic
+    ? allMessages.filter((m) => !isAuto(m.message_type))
+    : allMessages;
+
+  useEffect(() => {
+    setShowAutomatic(false);
+  }, [conversation?.id]);
 
   // Autoscroll to bottom on message change
   useEffect(() => {
