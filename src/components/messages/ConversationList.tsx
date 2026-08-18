@@ -25,6 +25,8 @@ export function ConversationList({
   onSelect,
   role,
   showSearch = true,
+  onToggleUnread,
+
 }: ConversationListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [focusedIndex, setFocusedIndex] = useState(-1);
