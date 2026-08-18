@@ -219,6 +219,8 @@ const App = () => (
                         <Route path="/perfil/notificaciones" element={<NotificationSettingsPage />} />
                         <Route path="/valoracion" element={<Review />} />
                         <Route path="/valorar/:token" element={<ReviewToken />} />
+                        <Route path="/lista-espera/:token" element={<WaitlistConfirm />} />
+
                         <Route path="/mensajes" element={<Messages />} />
                         <Route path="/onboarding" element={<BusinessOnboarding />} />
                         <Route path="/onboarding/setup" element={<OnboardingSetup />} />
