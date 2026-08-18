@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Loader2,
   Banknote,
@@ -13,7 +9,6 @@ import {
   CheckCircle2,
   Percent,
   Heart,
-  Scissors,
   User,
   X,
   Plus,
@@ -21,19 +16,18 @@ import {
   Package,
   PenLine,
   Mail,
-  Receipt,
   Sparkles,
-  FileText,
   Download,
   Calendar,
   Clock,
+  Search,
+  ChevronRight,
+  Copy,
+  MessageCircle,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 
 interface TodayBooking {
   id: string;
@@ -116,6 +110,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   const [lastTransaction, setLastTransaction] = useState<any>(null);
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [payOpen, setPayOpen] = useState(false);
 
   // Invoice data state kept for internal logic but UI removed as requested
   const [wantsInvoice, setWantsInvoice] = useState(false);
@@ -134,6 +130,11 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   const [loadingBookings, setLoadingBookings] = useState(false);
 
   const { toast } = useToast();
+
+  // Si se vacía el carrito desde la hoja, no tiene sentido dejarla abierta
+  useEffect(() => {
+    if (payOpen && selectedItems.length === 0) setPayOpen(false);
+  }, [payOpen, selectedItems.length]);
 
   useEffect(() => {
     fetchData();
@@ -344,12 +345,20 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     ]),
   ];
 
-  const filteredItems =
+  const byCategory =
     activeCategory === "all"
       ? [...services, ...products.map((p) => ({ ...p, category: `📦 ${p.category || "Productos"}` }))]
       : activeCategory.startsWith("📦")
         ? products.filter((p) => `📦 ${p.category || "Productos"}` === activeCategory)
         : services.filter((s) => (s.category || "Otros") === activeCategory);
+
+  const query = search.trim().toLowerCase();
+  const filteredItems = query
+    ? byCategory.filter((i) => i.name.toLowerCase().includes(query))
+    : byCategory;
+
+  const itemCount = selectedItems.reduce((n, i) => n + i.quantity, 0);
+  const selectedStylist = stylists.find((s) => s.id === selectedStylistId);
 
   const toggleItem = (item: Service | Product) => {
     const isProduct = "stock" in item;
@@ -480,8 +489,35 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         booking_id: selectedBookingId || null,
       };
 
-      const { error } = await supabase.from("transactions").insert(transactionData as never);
+      const { data: inserted, error } = await supabase
+        .from("transactions")
+        .insert(transactionData as never)
+        .select("id")
+        .single();
       if (error) throw error;
+
+      // Enlace de valoración de un solo uso: la clienta de mostrador no tiene
+      // cuenta, así que el permiso se lo da este token, no una sesión.
+      let reviewUrl: string | null = null;
+      try {
+        // `as any`: los tipos generados de Supabase aún no incluyen la tabla
+        // (se regeneran al aplicar la migración 20260729140000_review_invites)
+        const { data: invite } = await (supabase as any)
+          .from("review_invites")
+          .insert({
+            tenant_id: tenantId,
+            transaction_id: (inserted as any)?.id ?? null,
+            booking_id: selectedBookingId || null,
+            customer_name: customerName.trim() || null,
+            customer_email: customerEmail.trim() || null,
+          })
+          .select("token")
+          .single();
+        if (invite?.token) reviewUrl = `${window.location.origin}/valorar/${invite.token}`;
+      } catch (inviteError) {
+        // Que falle la invitación no puede tumbar el cobro
+        console.error("review invite", inviteError);
+      }
 
       // If this was from a booking, mark it as completed and charged
       if (selectedBookingId) {
@@ -530,8 +566,10 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         customerEmail,
         wantsInvoice,
         invoiceData,
+        reviewUrl,
       });
 
+      setPayOpen(false);
       setShowSuccess(true);
       clearAll();
       onTransactionCreated();
@@ -569,6 +607,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           total: lastTransaction.grandTotal,
           paymentMethod: lastTransaction.payment_method,
           stylistName: lastTransaction.stylistName,
+          reviewUrl: lastTransaction.reviewUrl || undefined,
           date: new Date().toLocaleDateString("es-ES", {
             day: "numeric",
             month: "long",
@@ -778,453 +817,604 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:min-h-[calc(100vh-220px)] lg:items-stretch">
-      {/* Left: Items Grid */}
-      <div className="flex-1 flex flex-col min-h-0 lg:min-w-0">
-        {/* Today's Bookings - Quick Charge */}
-        {todayBookings.length > 0 && (
-          <div className="mb-3 sm:mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Citas de hoy</span>
-              <Badge variant="secondary" className="text-xs">
-                {todayBookings.length}
-              </Badge>
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
-              {todayBookings.map((booking) => {
-                const isSelected = selectedBookingId === booking.id;
-                const servicesText = Array.isArray(booking.services)
-                  ? booking.services.map((s: any) => s.name || s).join(", ")
-                  : "";
-                
-                return (
-                  <button
-                    key={booking.id}
-                    onClick={() => loadBookingData(booking, services, stylists)}
-                    className={cn(
-                      "shrink-0 flex flex-col items-start p-2.5 sm:p-3 rounded-xl border-2 transition-all min-w-[140px] max-w-[180px]",
-                      isSelected
-                        ? "border-primary bg-primary/10 shadow-md"
-                        : "border-muted bg-muted/30 hover:border-primary/50 hover:bg-muted/50"
-                    )}
-                  >
-                    <div className="flex items-center gap-1.5 w-full">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-bold text-sm">{booking.Hora.slice(0, 5)}</span>
-                      {isSelected && <CheckCircle2 className="h-3.5 w-3.5 text-primary ml-auto" />}
-                    </div>
-                    <span className="font-medium text-sm truncate w-full text-left mt-1">
-                      {booking.customer_name}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground truncate w-full text-left">
-                      {servicesText.slice(0, 40)}{servicesText.length > 40 ? "..." : ""}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+    <div className="font-body">
+      {/* ── CATÁLOGO ─────────────────────────────────────────── */}
 
-        {/* Category Pills */}
-        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 sm:pb-3 scrollbar-hide -mx-1 px-1">
-          {categories.map((cat) => (
+      {/* Citas de hoy sin cobrar */}
+      {todayBookings.length > 0 && (
+        <section className="mb-4">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Calendar className="w-3.5 h-3.5 text-primary" />
+            <span className="text-[13px] font-semibold text-ink-2">Citas de hoy sin cobrar</span>
+            <span className="text-[11px] font-bold text-primary bg-primary/10 rounded-full px-1.5">
+              {todayBookings.length}
+            </span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 pb-1">
+            {todayBookings.map((booking) => {
+              const isSelected = selectedBookingId === booking.id;
+              const servicesText = Array.isArray(booking.services)
+                ? booking.services.map((s: any) => s.name || s).join(", ")
+                : "";
+              return (
+                <button
+                  key={booking.id}
+                  onClick={() => loadBookingData(booking, services, stylists)}
+                  className={`shrink-0 w-[150px] text-left rounded-2xl border px-3 py-2.5 transition-colors ${
+                    isSelected
+                      ? "border-primary/50 bg-primary/[0.06]"
+                      : "border-line bg-surface min-[920px]:hover:border-primary/30"
+                  }`}
+                >
+                  <span className="flex items-center gap-1 text-[11px] font-bold text-outline tabular-nums">
+                    <Clock className="w-3 h-3" />
+                    {booking.Hora.slice(0, 5)}
+                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-primary ml-auto" />}
+                  </span>
+                  <span className="block text-[14px] font-semibold text-ink-2 truncate mt-0.5 tracking-[-0.01em]">
+                    {booking.customer_name}
+                  </span>
+                  <span className="block text-[11px] text-outline truncate">{servicesText}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Buscador */}
+      <div className="flex items-center gap-2.5 rounded-2xl bg-chip px-3.5 h-11 mb-3">
+        <Search className="w-4 h-4 text-outline flex-none" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar servicio o producto"
+          className="flex-1 min-w-0 bg-transparent text-[15px] outline-none text-ink-2 placeholder:text-outline/70"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} aria-label="Limpiar búsqueda" className="flex-none">
+            <X className="w-4 h-4 text-outline" />
+          </button>
+        )}
+      </div>
+
+      {/* Categorías */}
+      <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1 pb-3">
+        {categories.map((cat) => {
+          const on = activeCategory === cat;
+          return (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap transition-all shrink-0 ${
-                activeCategory === cat ? "bg-foreground text-background" : "bg-muted/50 hover:bg-muted"
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-semibold whitespace-nowrap transition-colors ${
+                on ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
               }`}
             >
               {cat === "all" ? "Todo" : cat}
             </button>
-          ))}
-        </div>
-
-        {/* Items Grid */}
-        <div className="flex-1 overflow-y-auto max-h-[280px] sm:max-h-[350px] lg:max-h-none lg:flex-1">
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-3">
-            {/* Manual Entry Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowManualInput(true)}
-              className="aspect-square rounded-xl sm:rounded-2xl lg:rounded-2xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1.5 sm:gap-2 hover:border-primary/50 hover:bg-primary/5 transition-all min-h-[80px] sm:min-h-[100px] lg:min-h-[110px]"
-            >
-              <PenLine className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-muted-foreground" />
-              <span className="text-xs sm:text-sm lg:text-sm text-muted-foreground font-medium">Manual</span>
-            </motion.button>
-
-            {filteredItems.map((item) => {
-              const isSelected = selectedItems.some((s) => s.id === item.id);
-              const isProduct = "stock" in item;
-              return (
-                <motion.button
-                  key={item.id}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => toggleItem(item)}
-                  className={`aspect-square rounded-xl sm:rounded-2xl lg:rounded-2xl p-2.5 sm:p-3 lg:p-4 flex flex-col items-center justify-center gap-1 sm:gap-1.5 transition-all relative overflow-hidden min-h-[80px] sm:min-h-[100px] lg:min-h-[110px] ${
-                    isSelected
-                      ? "bg-primary text-primary-foreground shadow-lg ring-2 ring-primary ring-offset-2"
-                      : "bg-muted/50 hover:bg-muted"
-                  }`}
-                >
-                  {isProduct && <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-5 lg:w-5 absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-50" />}
-                  <span className="text-xs sm:text-sm lg:text-sm text-center font-medium line-clamp-2 leading-tight">{item.name}</span>
-                  <span className={`text-sm sm:text-base lg:text-lg font-bold ${isSelected ? "" : "text-primary"}`}>
-                    {item.price ? formatCurrency(item.price) : "—"}
-                  </span>
-                  {isSelected && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5">
-                      <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </motion.div>
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
+          );
+        })}
       </div>
 
-      {/* Right: Cart & Payment */}
-      <div className="w-full lg:w-[420px] xl:w-[480px] 2xl:w-[520px] lg:shrink-0 lg:h-full lg:min-h-0 flex flex-col bg-background rounded-xl sm:rounded-2xl border shadow-sm lg:overflow-hidden">
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto lg:overflow-y-auto scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
-          {/* Cart Items */}
-          <div className="p-2.5 sm:p-4 lg:p-3 space-y-1.5 sm:space-y-2">
-            <AnimatePresence>
-              {selectedItems.map((item) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-muted/30"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium truncate">{item.name}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">{formatCurrency(item.price)}</p>
-                  </div>
-                  <div className="flex items-center gap-0.5 sm:gap-1">
-                    <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => updateQuantity(item.id, -1)}>
-                      <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                    </Button>
-                    <span className="w-4 sm:w-5 text-center text-xs sm:text-sm font-medium">{item.quantity}</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => updateQuantity(item.id, 1)}>
-                      <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                    </Button>
-                  </div>
-                  <span className="text-xs sm:text-sm font-bold w-12 sm:w-16 text-right">{formatCurrency(item.price * item.quantity)}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 sm:h-7 sm:w-7 text-muted-foreground"
-                    onClick={() => removeItem(item.id)}
-                  >
-                    <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                  </Button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+      {/* Rejilla de servicios y productos */}
+      <div className="grid grid-cols-2 min-[560px]:grid-cols-3 min-[920px]:grid-cols-4 gap-2">
+        <button
+          onClick={() => setShowManualInput(true)}
+          className="rounded-2xl border border-dashed border-outline/35 flex flex-col items-center justify-center gap-1 py-4 min-[920px]:hover:border-primary/40 transition-colors"
+        >
+          <PenLine className="w-4 h-4 text-outline" />
+          <span className="text-[12px] font-semibold text-outline">Importe manual</span>
+        </button>
 
-            {selectedItems.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-6 sm:py-8 lg:py-12 text-muted-foreground">
-                <Scissors className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 mb-2 opacity-30" />
-                <p className="text-xs sm:text-sm">Selecciona servicios</p>
-              </div>
-            )}
+        {filteredItems.map((item) => {
+          const picked = selectedItems.find((s) => s.id === item.id);
+          const isProduct = "stock" in item;
+          return (
+            <button
+              key={item.id}
+              onClick={() => toggleItem(item)}
+              className={`relative text-left rounded-2xl border px-3 py-2.5 transition-colors ${
+                picked
+                  ? "border-primary bg-primary/[0.06]"
+                  : "border-line bg-surface min-[920px]:hover:border-primary/30"
+              }`}
+            >
+              {isProduct && (
+                <Package className="w-3 h-3 text-outline/60 absolute top-2 right-2" />
+              )}
+              {picked && (
+                <span className="absolute top-2 right-2 text-[11px] font-bold text-primary tabular-nums">
+                  ×{picked.quantity}
+                </span>
+              )}
+              <span className="block text-[13px] font-semibold text-ink-2 leading-tight line-clamp-2 pr-4">
+                {item.name}
+              </span>
+              <span className="block text-[13px] font-bold text-primary tabular-nums mt-1">
+                {item.price ? formatCurrency(item.price) : "—"}
+              </span>
+            </button>
+          );
+        })}
+
+        {filteredItems.length === 0 && (
+          <p className="col-span-full text-center text-[13px] text-outline py-8">
+            Nada coincide con «{search}»
+          </p>
+        )}
+      </div>
+
+      {/* ── BARRA DE CARRITO ─────────────────────────────────
+          Flota sobre el contenido en móvil (encima de la nav) y
+          en escritorio se queda al final del catálogo. */}
+      {selectedItems.length > 0 && (
+        <>
+          <div className="h-24 min-[920px]:h-0" />
+          <div
+            className="fixed left-0 right-0 z-30 px-3 min-[920px]:static min-[920px]:px-0 min-[920px]:mt-4"
+            style={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}
+          >
+            <div
+              className="flex items-center gap-3 rounded-2xl bg-surface border border-line px-4 py-3"
+              style={{ boxShadow: "0 2px 6px rgba(20,22,40,.08), 0 18px 40px -20px rgba(20,22,40,.5)" }}
+            >
+              <button onClick={clearAll} aria-label="Vaciar carrito" className="flex-none text-outline">
+                <X className="w-4 h-4" />
+              </button>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[18px] font-bold text-ink-2 tabular-nums leading-tight">
+                  {formatCurrency(grandTotal)}
+                </span>
+                <span className="block text-[11px] text-outline truncate">
+                  {itemCount} {itemCount === 1 ? "línea" : "líneas"}
+                  {selectedStylist ? ` · ${selectedStylist.name}` : ""}
+                </span>
+              </span>
+              <button
+                onClick={() => setPayOpen(true)}
+                className="flex-none h-11 rounded-full bg-gradient-brand text-white text-[15px] font-semibold px-5 inline-flex items-center gap-1 active:scale-95 transition-transform"
+                style={{ boxShadow: "0 8px 22px -10px rgba(34,64,140,.6)" }}
+              >
+                Cobrar
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── HOJA DE COBRO ────────────────────────────────────── */}
+      <Sheet open={payOpen} onOpenChange={setPayOpen}>
+        <SheetContent
+          side="bottom"
+          className="h-[92vh] p-0 rounded-t-[28px] border-0 bg-background/95 backdrop-blur-xl flex flex-col"
+        >
+          <div className="shrink-0 pt-2.5 px-5 pb-3 border-b border-line">
+            <div className="mx-auto h-1.5 w-10 rounded-full bg-outline/25 mb-3" />
+            <p className="text-[11px] font-semibold text-outline">Total a cobrar</p>
+            <p className="text-[28px] font-bold text-ink-2 tabular-nums leading-none mt-0.5">
+              {formatCurrency(grandTotal)}
+            </p>
           </div>
 
-          {/* Extras (Discount & Tip) */}
-          {selectedItems.length > 0 && (
-            <div className="px-2.5 sm:px-4 pb-1.5 sm:pb-2 flex gap-1.5 sm:gap-2">
-              <Button
-                variant={showDiscount ? "default" : "outline"}
-                size="sm"
-                className="flex-1 gap-1 h-8 sm:h-9 text-xs sm:text-sm"
-                onClick={() => setShowDiscount(!showDiscount)}
-              >
-                <Percent className="h-3 w-3" />
-                <span className="truncate">{discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : "Dto"}</span>
-              </Button>
-              <Button
-                variant={showTip ? "default" : "outline"}
-                size="sm"
-                className="flex-1 gap-1 h-8 sm:h-9 text-xs sm:text-sm"
-                onClick={() => setShowTip(!showTip)}
-              >
-                <Heart className="h-3 w-3" />
-                <span className="truncate">{tip > 0 ? `+${formatCurrency(tip)}` : "Propina"}</span>
-              </Button>
-            </div>
-          )}
-
-          {showDiscount && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              className="px-2.5 sm:px-4 pb-1.5 sm:pb-2 space-y-1.5 sm:space-y-2"
-            >
-              <div className="flex gap-1.5 sm:gap-2">
-                <Button
-                  variant={discountType === "percentage" ? "default" : "outline"}
-                  size="sm"
-                  className="flex-1 h-8 sm:h-9"
-                  onClick={() => setDiscountType("percentage")}
-                >
-                  %
-                </Button>
-                <Button
-                  variant={discountType === "fixed" ? "default" : "outline"}
-                  size="sm"
-                  className="flex-1 h-8 sm:h-9"
-                  onClick={() => setDiscountType("fixed")}
-                >
-                  €
-                </Button>
-                <Input
-                  type="number"
-                  value={discountValue}
-                  onChange={(e) => setDiscountValue(e.target.value)}
-                  placeholder="0"
-                  className="w-16 sm:w-20 text-center h-8 sm:h-9"
-                />
-              </div>
-            </motion.div>
-          )}
-
-          {showTip && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              className="px-2.5 sm:px-4 pb-1.5 sm:pb-2"
-            >
-              <div className="flex gap-1 sm:gap-2">
-                {[1, 2, 5, 10].map((v) => (
-                  <Button
-                    key={v}
-                    variant={parseFloat(tipAmount) === v ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
-                    onClick={() => setTipAmount(v.toString())}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+            {/* Líneas */}
+            <section className="space-y-2">
+              <label className="text-[13px] font-semibold text-ink-2">Detalle</label>
+              <div className="rounded-2xl bg-surface border border-line overflow-hidden">
+                {selectedItems.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-2 px-3.5 py-2.5 ${idx > 0 ? "border-t border-line" : ""}`}
                   >
-                    {v}€
-                  </Button>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-[14px] font-medium text-ink-2 truncate">
+                        {item.name}
+                      </span>
+                      <span className="block text-[11px] text-outline tabular-nums">
+                        {formatCurrency(item.price)}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1 flex-none">
+                      <button
+                        onClick={() => updateQuantity(item.id, -1)}
+                        aria-label="Quitar uno"
+                        className="w-7 h-7 rounded-full bg-chip flex items-center justify-center text-ink-2 active:scale-90 transition-transform"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="w-5 text-center text-[14px] font-semibold tabular-nums">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => updateQuantity(item.id, 1)}
+                        aria-label="Añadir uno"
+                        className="w-7 h-7 rounded-full bg-chip flex items-center justify-center text-ink-2 active:scale-90 transition-transform"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </span>
+                    <span className="w-16 text-right text-[14px] font-bold text-ink-2 tabular-nums flex-none">
+                      {formatCurrency(item.price * item.quantity)}
+                    </span>
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      aria-label={`Quitar ${item.name}`}
+                      className="flex-none text-outline"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 ))}
               </div>
-            </motion.div>
-          )}
 
-          {/* Totals */}
-          <div className="p-2.5 sm:p-4 lg:p-3 border-t bg-muted/30 space-y-0.5 sm:space-y-1">
-            {discountAmount > 0 && (
-              <div className="flex justify-between text-xs sm:text-sm text-orange-600">
-                <span>Descuento</span>
-                <span>-{formatCurrency(discountAmount)}</span>
-              </div>
-            )}
-            {tip > 0 && (
-              <div className="flex justify-between text-xs sm:text-sm text-pink-600">
-                <span>Propina</span>
-                <span>+{formatCurrency(tip)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-lg sm:text-2xl font-bold pt-0.5 sm:pt-1">
-              <span>Total</span>
-              <span className="text-primary">{formatCurrency(grandTotal)}</span>
-            </div>
-          </div>
-
-          {/* Payment Methods */}
-          <div className="p-2.5 sm:p-4 lg:p-3 border-t space-y-2 sm:space-y-3 lg:space-y-2">
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-              {[
-                { value: "cash" as const, icon: Banknote, label: "Efectivo" },
-                { value: "card" as const, icon: CreditCard, label: "Tarjeta" },
-                { value: "mixed" as const, icon: null, label: "Mixto" },
-              ].map(({ value, icon: Icon, label }) => (
-                <Button
-                  key={value}
-                  variant={paymentMethod === value ? "default" : "outline"}
-                  className="h-10 sm:h-12 lg:h-11 flex-col gap-0.5"
-                  onClick={() => setPaymentMethod(value)}
-                >
-                  {Icon ? (
-                    <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  ) : (
-                    <div className="flex">
-                      <Banknote className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                      <CreditCard className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+              {(discountAmount > 0 || tip > 0) && (
+                <div className="px-1 space-y-1">
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-[13px] font-semibold text-warning">
+                      <span>Descuento</span>
+                      <span className="tabular-nums">-{formatCurrency(discountAmount)}</span>
                     </div>
                   )}
-                  <span className="text-[9px] sm:text-[10px]">{label}</span>
-                </Button>
-              ))}
-            </div>
-
-            {paymentMethod === "mixed" && (
-              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                <div>
-                  <Label className="text-[10px] sm:text-xs text-muted-foreground">Efectivo</Label>
-                  <Input
-                    type="number"
-                    value={cashAmount}
-                    onChange={(e) => setCashAmount(e.target.value)}
-                    placeholder="0"
-                    className="text-center h-8 sm:h-10 lg:h-9"
-                  />
+                  {tip > 0 && (
+                    <div className="flex justify-between text-[13px] font-semibold text-accent">
+                      <span>Propina</span>
+                      <span className="tabular-nums">+{formatCurrency(tip)}</span>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <Label className="text-[10px] sm:text-xs text-muted-foreground">Tarjeta</Label>
-                  <Input
-                    type="number"
-                    value={cardAmount}
-                    onChange={(e) => setCardAmount(e.target.value)}
-                    placeholder="0"
-                    className="text-center h-8 sm:h-10 lg:h-9"
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </section>
 
-            {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
-              <div>
-                <Label className="text-[10px] sm:text-xs text-muted-foreground">Entregado</Label>
-                <Input
-                  type="number"
-                  value={cashGiven}
-                  onChange={(e) => setCashGiven(e.target.value)}
-                  placeholder="0"
-                  className="text-center text-base sm:text-lg font-bold h-9 sm:h-10 lg:h-9"
-                />
-                {getChange() > 0 && (
-                  <p className="text-center text-base sm:text-lg font-bold text-green-600 mt-1">
-                    Cambio: {formatCurrency(getChange())}
-                  </p>
-                )}
+            {/* Descuento y propina */}
+            <section className="space-y-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowDiscount(!showDiscount)}
+                  className={`flex-1 h-10 rounded-full text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 transition-colors ${
+                    showDiscount || discountAmount > 0
+                      ? "bg-gradient-brand text-white"
+                      : "bg-chip text-ink-2"
+                  }`}
+                >
+                  <Percent className="w-3.5 h-3.5" />
+                  {discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : "Descuento"}
+                </button>
+                <button
+                  onClick={() => setShowTip(!showTip)}
+                  className={`flex-1 h-10 rounded-full text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 transition-colors ${
+                    showTip || tip > 0 ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
+                  }`}
+                >
+                  <Heart className="w-3.5 h-3.5" />
+                  {tip > 0 ? `+${formatCurrency(tip)}` : "Propina"}
+                </button>
               </div>
-            )}
 
-            {/* ESTILISTA SELECTION */}
-            <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 lg:pt-1 border-t">
-              <Label className="text-[10px] sm:text-xs text-muted-foreground">Atendido por:</Label>
-              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                {stylists.map((stylist) => (
-                  <motion.button
-                    key={stylist.id}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setSelectedStylistId(stylist.id)}
-                    className={`h-8 sm:h-10 lg:h-9 text-[10px] sm:text-xs font-medium rounded-md flex items-center justify-center gap-1.5 sm:gap-2 transition-all border ${
-                      selectedStylistId === stylist.id
-                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                        : "bg-background hover:bg-muted border-input"
+              {showDiscount && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setDiscountType("percentage")}
+                    className={`w-12 h-10 rounded-2xl text-[14px] font-bold ${
+                      discountType === "percentage" ? "bg-primary text-white" : "bg-chip text-ink-2"
                     }`}
                   >
-                    <div
-                      className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: stylist.color || "#8B5CF6" }}
-                    />
-                    <span className="truncate px-0.5 sm:px-1">{stylist.name}</span>
-                  </motion.button>
-                ))}
+                    %
+                  </button>
+                  <button
+                    onClick={() => setDiscountType("fixed")}
+                    className={`w-12 h-10 rounded-2xl text-[14px] font-bold ${
+                      discountType === "fixed" ? "bg-primary text-white" : "bg-chip text-ink-2"
+                    }`}
+                  >
+                    €
+                  </button>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(e.target.value)}
+                    placeholder="0"
+                    className="flex-1 min-w-0 h-10 rounded-2xl bg-chip px-3 text-[15px] text-center tabular-nums outline-none text-ink-2"
+                  />
+                </div>
+              )}
+
+              {showTip && (
+                <div className="flex gap-2">
+                  {[1, 2, 5, 10].map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setTipAmount(parseFloat(tipAmount) === v ? "" : v.toString())}
+                      className={`flex-1 h-10 rounded-2xl text-[14px] font-semibold tabular-nums ${
+                        parseFloat(tipAmount) === v ? "bg-primary text-white" : "bg-chip text-ink-2"
+                      }`}
+                    >
+                      {v}€
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Método de pago */}
+            <section className="space-y-2">
+              <label className="text-[13px] font-semibold text-ink-2">Cómo paga</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: "cash" as const, icon: Banknote, label: "Efectivo" },
+                  { value: "card" as const, icon: CreditCard, label: "Tarjeta" },
+                  { value: "mixed" as const, icon: Sparkles, label: "Mixto" },
+                ].map(({ value, icon: Icon, label }) => {
+                  const on = paymentMethod === value;
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setPaymentMethod(value)}
+                      className={`h-16 rounded-2xl flex flex-col items-center justify-center gap-1 transition-colors ${
+                        on ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="text-[12px] font-semibold">{label}</span>
+                    </button>
+                  );
+                })}
               </div>
-            </div>
+
+              {paymentMethod === "mixed" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="rounded-2xl bg-surface border border-line px-3.5 py-2">
+                    <span className="block text-[11px] font-semibold text-outline">Efectivo</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={cashAmount}
+                      onChange={(e) => setCashAmount(e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-transparent text-[16px] font-semibold tabular-nums outline-none text-ink-2"
+                    />
+                  </label>
+                  <label className="rounded-2xl bg-surface border border-line px-3.5 py-2">
+                    <span className="block text-[11px] font-semibold text-outline">Tarjeta</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={cardAmount}
+                      onChange={(e) => setCardAmount(e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-transparent text-[16px] font-semibold tabular-nums outline-none text-ink-2"
+                    />
+                  </label>
+                  {getMixedRemaining() > 0.01 && (
+                    <p className="col-span-2 text-[12px] font-semibold text-destructive text-center">
+                      Faltan {formatCurrency(getMixedRemaining())}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
+                <>
+                  <label className="flex items-center justify-between rounded-2xl bg-surface border border-line px-3.5 py-2.5">
+                    <span className="text-[13px] font-semibold text-outline">Entrega</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={cashGiven}
+                      onChange={(e) => setCashGiven(e.target.value)}
+                      placeholder="0"
+                      className="w-28 bg-transparent text-[18px] font-bold tabular-nums text-right outline-none text-ink-2"
+                    />
+                  </label>
+                  {getChange() > 0 && (
+                    <div className="flex items-center justify-between rounded-2xl bg-success-soft px-3.5 py-2.5">
+                      <span className="text-[13px] font-semibold text-success">Cambio</span>
+                      <span className="text-[18px] font-bold text-success tabular-nums">
+                        {formatCurrency(getChange())}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+
+            {/* Estilista */}
+            <section className="space-y-2">
+              <label className="text-[13px] font-semibold text-ink-2">Atendido por</label>
+              <div className="grid grid-cols-2 gap-2">
+                {stylists.map((stylist) => {
+                  const on = selectedStylistId === stylist.id;
+                  return (
+                    <button
+                      key={stylist.id}
+                      onClick={() => setSelectedStylistId(stylist.id)}
+                      className={`h-11 rounded-2xl inline-flex items-center justify-center gap-2 text-[13px] font-semibold transition-colors ${
+                        on ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
+                      }`}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full flex-none"
+                        style={{ background: on ? "#fff" : stylist.color || "#8B5CF6" }}
+                      />
+                      <span className="truncate">{stylist.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Cliente */}
+            <section className="space-y-2">
+              <label className="text-[13px] font-semibold text-ink-2">Cliente (opcional)</label>
+              <div className="rounded-2xl bg-surface border border-line overflow-hidden">
+                <div className="flex items-center gap-2.5 px-3.5 py-3">
+                  <User className="w-4 h-4 text-outline flex-none" />
+                  <input
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Nombre"
+                    className="flex-1 min-w-0 bg-transparent text-[15px] outline-none text-ink-2"
+                  />
+                </div>
+                <div className="flex items-center gap-2.5 px-3.5 py-3 border-t border-line">
+                  <Mail className="w-4 h-4 text-outline flex-none" />
+                  <input
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="Email para el ticket"
+                    className="flex-1 min-w-0 bg-transparent text-[15px] outline-none text-ink-2"
+                  />
+                </div>
+              </div>
+            </section>
           </div>
-        </div>
 
-        {/* Sticky Button - Outside scroll area */}
-        <div className="p-2.5 sm:p-4 lg:p-3 border-t bg-background shrink-0">
-          <Button
-            onClick={handleSubmit}
-            disabled={
-              loading ||
-              selectedItems.length === 0 ||
-              !selectedStylistId ||
-              (wantsInvoice && (!invoiceData.fiscalName || !invoiceData.nif))
-            }
-            className="w-full h-11 sm:h-14 lg:h-12 text-sm sm:text-lg lg:text-base font-bold gap-2"
+          <div
+            className="shrink-0 border-t border-line px-5 pt-3.5 bg-background/95 backdrop-blur-xl"
+            style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
           >
-            {loading ? (
-              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-            ) : (
-              <>
-                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                Cobrar {formatCurrency(grandTotal)}
-              </>
+            <button
+              onClick={handleSubmit}
+              disabled={loading || selectedItems.length === 0 || !selectedStylistId}
+              className="w-full h-12 rounded-full bg-gradient-brand text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[.99] transition-transform"
+              style={{ boxShadow: "0 8px 22px -10px rgba(34,64,140,.6)" }}
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  Confirmar cobro · {formatCurrency(grandTotal)}
+                </>
+              )}
+            </button>
+            {!selectedStylistId && (
+              <p className="text-center text-[11px] text-outline mt-2">
+                Elige quién ha atendido para poder cobrar
+              </p>
             )}
-          </Button>
-        </div>
-      </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-      {/* Manual Input Dialog */}
+      {/* Importe manual */}
       <Dialog open={showManualInput} onOpenChange={setShowManualInput}>
-        <DialogContent className="max-w-xs">
+        <DialogContent className="max-w-xs rounded-3xl">
           <DialogHeader>
-            <DialogTitle>Importe manual</DialogTitle>
+            <DialogTitle className="text-[18px]">Importe manual</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <Input value={manualItemName} onChange={(e) => setManualItemName(e.target.value)} placeholder="Concepto" />
-            <Input
+          <div className="space-y-3">
+            <input
+              value={manualItemName}
+              onChange={(e) => setManualItemName(e.target.value)}
+              placeholder="Concepto"
+              className="w-full h-11 rounded-2xl bg-chip px-3.5 text-[15px] outline-none text-ink-2"
+            />
+            <input
               type="number"
+              inputMode="decimal"
               value={manualItemPrice}
               onChange={(e) => setManualItemPrice(e.target.value)}
-              placeholder="0.00"
-              className="text-center text-2xl font-bold"
+              placeholder="0,00"
+              className="w-full h-14 rounded-2xl bg-chip px-3.5 text-[24px] font-bold text-center tabular-nums outline-none text-ink-2"
             />
-            <Button onClick={addManualItem} className="w-full">
+            <button
+              onClick={addManualItem}
+              className="w-full h-11 rounded-full bg-gradient-brand text-white text-[15px] font-semibold"
+            >
               Añadir
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Success Dialog */}
+      {/* Cobro hecho */}
       <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm rounded-3xl text-center">
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="mx-auto w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4"
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="mx-auto w-16 h-16 rounded-full bg-success-soft flex items-center justify-center"
           >
-            <CheckCircle2 className="h-10 w-10 text-green-600" />
+            <CheckCircle2 className="w-8 h-8 text-success" />
           </motion.div>
-          <DialogHeader className="text-center">
-            <DialogTitle className="text-2xl">¡Cobro realizado!</DialogTitle>
+          <DialogHeader>
+            <DialogTitle className="text-[20px] text-center">Cobro registrado</DialogTitle>
           </DialogHeader>
-          <p className="text-3xl font-bold text-primary text-center">
+          <p className="text-[30px] font-bold text-ink-2 tabular-nums -mt-1">
             {lastTransaction && formatCurrency(lastTransaction.grandTotal)}
           </p>
 
-          <div className="mt-4 space-y-3">
-            {/* Show invoice download button if invoice was requested */}
+          <div className="space-y-2.5 mt-2">
             {lastTransaction?.wantsInvoice && (
-              <Button onClick={downloadInvoicePdf} className="w-full gap-2">
-                <Download className="h-4 w-4" />
+              <button
+                onClick={downloadInvoicePdf}
+                className="w-full h-11 rounded-full bg-chip text-ink-2 text-[14px] font-semibold inline-flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
                 Descargar factura
-              </Button>
+              </button>
+            )}
+            <input
+              type="email"
+              placeholder="Email para el ticket"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
+              className="w-full h-11 rounded-2xl bg-chip px-3.5 text-[14px] text-center outline-none text-ink-2"
+            />
+            {getEmailToUse() && (
+              <button
+                onClick={sendTicketEmail}
+                disabled={sendingEmail}
+                className="w-full h-11 rounded-full bg-chip text-ink-2 text-[14px] font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {sendingEmail ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Mail className="w-4 h-4" />
+                )}
+                Enviar ticket
+              </button>
             )}
 
-            {/* Email ticket option */}
-            <div className="space-y-2">
-              <Input
-                type="email"
-                placeholder="Email para ticket (opcional)"
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                className="text-center text-sm"
-              />
-              {(customerEmail || lastTransaction?.customerEmail) && (
-                <Button onClick={sendTicketEmail} disabled={sendingEmail} variant="outline" className="w-full gap-2">
-                  {sendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                  Enviar ticket por email
-                </Button>
-              )}
-            </div>
+            {/* Si no hay email, el enlace de valoración se puede pasar a mano */}
+            {lastTransaction?.reviewUrl && (
+              <div className="rounded-2xl bg-surface-container-low p-3 space-y-2">
+                <p className="text-[12px] font-semibold text-ink-2">Pídele que te valore</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard?.writeText(lastTransaction.reviewUrl);
+                      toast({ title: "Enlace copiado" });
+                    }}
+                    className="flex-1 h-10 rounded-full bg-chip text-ink-2 text-[13px] font-semibold inline-flex items-center justify-center gap-1.5"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    Copiar enlace
+                  </button>
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(
+                      `¡Gracias por tu visita! ¿Nos dejas tu valoración? ${lastTransaction.reviewUrl}`,
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 h-10 rounded-full bg-chip text-ink-2 text-[13px] font-semibold inline-flex items-center justify-center gap-1.5"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    WhatsApp
+                  </a>
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="w-full h-12 rounded-full bg-gradient-brand text-white text-[15px] font-semibold"
+            >
+              Nuevo cobro
+            </button>
           </div>
-
-          <Button onClick={() => setShowSuccess(false)} variant="outline" className="w-full mt-2">
-            Nuevo cobro
-          </Button>
         </DialogContent>
       </Dialog>
     </div>

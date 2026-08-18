@@ -30,6 +30,8 @@ interface TicketRequest {
   paymentMethod: string;
   stylistName: string;
   date: string;
+  /** Enlace de valoración de un solo uso, creado al cobrar */
+  reviewUrl?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -194,6 +196,18 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
 
           </div>
+
+          ${
+            ticketData.reviewUrl && !isInvoice
+              ? `
+          <!-- Valoración -->
+          <div style="padding: 24px 20px; text-align: center; border-top: 1px solid #eee;">
+            <p style="margin: 0 0 4px; font-size: 16px; font-weight: 600; color: #131520;">¿Qué tal fue?</p>
+            <p style="margin: 0 0 14px; font-size: 13px; color: #676B7E;">Tu opinión ayuda a ${tenant.name} · te lleva 10 segundos</p>
+            <a href="${ticketData.reviewUrl}" style="display: inline-block; padding: 12px 26px; border-radius: 999px; background: linear-gradient(100deg, #22408C, #98329A); color: #fff; font-size: 15px; font-weight: 600; text-decoration: none;">Dejar mi valoración</a>
+          </div>`
+              : ""
+          }
 
           <!-- Footer -->
           <div style="background: #f8f8f8; padding: 20px; text-align: center;">

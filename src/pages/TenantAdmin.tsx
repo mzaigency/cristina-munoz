@@ -16,7 +16,6 @@ import {
   Sparkles,
   Briefcase,
   ChevronDown,
-  Plus,
   Settings,
   Lock,
   Search,
@@ -105,6 +104,7 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   cobros: { section: "caja", subTab: "cobros" },
   orders: { section: "caja", subTab: "pedidos" },
   pedidos: { section: "caja", subTab: "pedidos" },
+  historial: { section: "caja", subTab: "historial" },
   cierre: { section: "caja", subTab: "cierre" },
   // Clientes
   clients: { section: "clientes", subTab: "directorio" },
@@ -166,7 +166,6 @@ export default function TenantAdmin() {
   const [tenantLoading, setTenantLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [fabOpen, setFabOpen] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
   const mainWrapRef = useRef<HTMLDivElement>(null);
 
@@ -762,34 +761,6 @@ export default function TenantAdmin() {
           </AnimatePresence>
         </main>
       </div>
-
-      {/* ── Mobile FAB Speed-dial ── */}
-      {fabOpen && <div className="gp-fab-backdrop" onClick={() => setFabOpen(false)} />}
-      <div className={`gp-fab-dial${fabOpen ? " open" : ""}`} aria-hidden={!fabOpen}>
-        <button
-          className="gp-fab-action"
-          onClick={() => { setFabOpen(false); goToSection("caja", "cobros"); }}
-          tabIndex={fabOpen ? 0 : -1}
-        >
-          <span className="gp-fab-action-label">Cobrar</span>
-          <span className="gp-fab-action-ic"><Wallet style={{ width: 18, height: 18 }} /></span>
-        </button>
-        <button
-          className="gp-fab-action"
-          onClick={() => { setFabOpen(false); goToSection("agenda", "dia"); }}
-          tabIndex={fabOpen ? 0 : -1}
-        >
-          <span className="gp-fab-action-label">Nueva cita</span>
-          <span className="gp-fab-action-ic"><Sparkles style={{ width: 18, height: 18 }} /></span>
-        </button>
-      </div>
-      <button
-        className={`gp-fab${fabOpen ? " open" : ""}`}
-        onClick={() => setFabOpen(v => !v)}
-        aria-label={fabOpen ? "Cerrar acciones" : "Acciones rápidas"}
-      >
-        <Plus className="gp-fab-ic" />
-      </button>
 
       {/* ── Mobile Bottom Nav ── */}
       <nav className="gp-bottom" data-tour-target="mobile-bottom-nav">

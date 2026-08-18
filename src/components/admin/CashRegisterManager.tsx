@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Receipt, History, Lock, Download } from "lucide-react";
+import { Loader2, Lock, Banknote, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { QuickPayment } from "./cash-register/QuickPayment";
@@ -48,9 +48,11 @@ export interface DaySummary {
 
 interface CashRegisterManagerProps {
   tenantId: string;
+  /** Qué pantalla de caja se muestra; la fila de pestañas vive en CajaSection */
+  view?: "cobrar" | "historial" | "cierre";
 }
 
-export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
+export const CashRegisterManager = ({ tenantId, view = "cobrar" }: CashRegisterManagerProps) => {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [daySummary, setDaySummary] = useState<DaySummary>({
@@ -61,7 +63,6 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
     transactionCount: 0,
     isClosed: false,
   });
-  const [activeTab, setActiveTab] = useState("payment");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -192,42 +193,59 @@ export const CashRegisterManager = ({ tenantId }: CashRegisterManagerProps) => {
     );
   }
 
-  return (
-    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <DailySummary summary={daySummary} onRefresh={fetchTodayData} />
+  const fmtEur = (n: number) =>
+    new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
 
-      <div className="gp-card" style={{ overflow: "hidden" }}>
-        <div className="gp-subtabs" style={{ margin: 0, borderBottom: "1px solid var(--gp-line2)", padding: "0 4px" }}>
-          {[
-            { id: "payment", label: "Cobrar", icon: <Receipt style={{ width: 14, height: 14 }} /> },
-            { id: "history", label: "Historial", icon: <History style={{ width: 14, height: 14 }} /> },
-            { id: "export", label: "Exportar", icon: <Download style={{ width: 14, height: 14 }} /> },
-          ].map(t => (
-            <button key={t.id} className={`gp-subtab${activeTab === t.id ? " on" : ""}`} onClick={() => setActiveTab(t.id)}>
-              {t.icon} {t.label}
-            </button>
-          ))}
-        </div>
-        <div style={{ padding: "16px 20px" }}>
-          {activeTab === "payment" && (
-            daySummary.isClosed ? (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", color: "var(--gp-muted-c)", textAlign: "center" }}>
-                <Lock style={{ width: 48, height: 48, marginBottom: 12 }} />
-                <p style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Caja cerrada</p>
-                <p style={{ fontSize: 13, margin: "4px 0 0" }}>No se pueden registrar más cobros hoy</p>
-              </div>
-            ) : (
-              <QuickPayment onTransactionCreated={handleTransactionCreated} tenantId={tenantId} />
-            )
+  return (
+    <div className="gp-fade font-body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {view === "cobrar" && (
+        <>
+          {/* Resumen compacto: lo de hoy de un vistazo, sin comerse la pantalla */}
+          <div className="flex items-center gap-3 rounded-2xl bg-surface-container-low px-4 py-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-[22px] font-bold text-ink-2 tabular-nums leading-none">
+                {fmtEur(daySummary.totalSales)}
+              </p>
+              <p className="text-[11px] text-outline mt-1">
+                hoy · {daySummary.transactionCount}{" "}
+                {daySummary.transactionCount === 1 ? "cobro" : "cobros"}
+              </p>
+            </div>
+            <div className="text-right text-[11px] text-outline leading-relaxed tabular-nums">
+              <p className="flex items-center justify-end gap-1">
+                <Banknote className="w-3.5 h-3.5 text-success" />
+                {fmtEur(daySummary.cashTotal)}
+              </p>
+              <p className="flex items-center justify-end gap-1">
+                <CreditCard className="w-3.5 h-3.5 text-info" />
+                {fmtEur(daySummary.cardTotal)}
+              </p>
+            </div>
+          </div>
+
+          {daySummary.isClosed ? (
+            <div className="flex flex-col items-center justify-center gap-2 py-14 text-center">
+              <Lock className="w-10 h-10 text-outline/50" />
+              <p className="text-[16px] font-semibold text-ink-2">Caja cerrada</p>
+              <p className="text-[13px] text-outline">
+                No se pueden registrar más cobros hoy. Reábrela desde{" "}
+                <strong className="text-ink-2">Cierre</strong>.
+              </p>
+            </div>
+          ) : (
+            <QuickPayment onTransactionCreated={handleTransactionCreated} tenantId={tenantId} />
           )}
-          {activeTab === "history" && (
-            <TransactionHistory transactions={transactions} onUpdate={fetchTodayData} />
-          )}
-          {activeTab === "export" && (
-            <ExportData tenantId={tenantId} />
-          )}
-        </div>
-      </div>
+        </>
+      )}
+
+      {view === "historial" && (
+        <>
+          <TransactionHistory transactions={transactions} onUpdate={fetchTodayData} />
+          <ExportData tenantId={tenantId} />
+        </>
+      )}
+
+      {view === "cierre" && <DailySummary summary={daySummary} onRefresh={fetchTodayData} />}
     </div>
   );
 };

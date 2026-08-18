@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Wallet, ShoppingCart, Receipt, Lock } from "lucide-react";
+import { Wallet, ShoppingCart, Receipt, Lock, History } from "lucide-react";
 import { CashRegisterManager } from "../CashRegisterManager";
 import { ProductOrdersManager } from "../ProductOrdersManager";
 import { LockedFeature } from "../LockedFeature";
@@ -13,7 +13,7 @@ interface CajaSectionProps {
   hideTabs?: boolean;
 }
 
-type CajaTab = "cobros" | "pedidos" | "cierre";
+type CajaTab = "cobros" | "historial" | "pedidos" | "cierre";
 
 const CajaSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CajaSectionProps) => {
   const [internalTab, setInternalTab] = useState<CajaTab>("cobros");
@@ -38,12 +38,14 @@ const CajaSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CajaSection
   }, [hasFeature, subTab]);
 
   const handleTabChange = (t: CajaTab) => {
-    if ((t === "cobros" || t === "cierre") && cashLocked) return;
+    if (t !== "pedidos" && cashLocked) return;
     setActiveTab(t);
   };
 
+  // Una sola fila: antes había estas 3 más otras 3 dentro de CashRegisterManager
   const tabs = [
-    { id: "cobros" as CajaTab, label: "Cobros", icon: Wallet, badge: 0, locked: cashLocked },
+    { id: "cobros" as CajaTab, label: "Cobrar", icon: Wallet, badge: 0, locked: cashLocked },
+    { id: "historial" as CajaTab, label: "Historial", icon: History, badge: 0, locked: cashLocked },
     { id: "pedidos" as CajaTab, label: "Pedidos", icon: ShoppingCart, badge: unseenOrders, locked: false },
     { id: "cierre" as CajaTab, label: "Cierre", icon: Receipt, badge: 0, locked: cashLocked },
   ];
@@ -68,31 +70,26 @@ const CajaSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CajaSection
         </div>
       )}
 
-      {activeTab === "cobros" && (
-        cashLocked ? (
-          <LockedFeature featureName="Caja Registradora" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
+      {(activeTab === "cobros" || activeTab === "historial" || activeTab === "cierre") &&
+        (cashLocked ? (
+          <LockedFeature
+            featureName={activeTab === "cierre" ? "Cierre de caja" : "Caja registradora"}
+            currentPlan={planSlug}
+            requiredPlan="pro"
+            tenantId={tenantId}
+            variant="inline"
+          />
         ) : (
-          <CashRegisterManager tenantId={tenantId} />
-        )
-      )}
+          <CashRegisterManager
+            tenantId={tenantId}
+            view={
+              activeTab === "cobros" ? "cobrar" : activeTab === "historial" ? "historial" : "cierre"
+            }
+          />
+        ))}
 
-      {activeTab === "pedidos" && (
-        <ProductOrdersManager tenantId={tenantId} />
-      )}
+      {activeTab === "pedidos" && <ProductOrdersManager tenantId={tenantId} />}
 
-      {activeTab === "cierre" && (
-        cashLocked ? (
-          <LockedFeature featureName="Cierre de caja" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
-        ) : (
-          <div className="gp-card">
-            <div className="gp-empty">
-              <div className="gp-empty-ic"><Receipt style={{ width: 24, height: 24 }} /></div>
-              <h4>Cierre del día</h4>
-              <p>Próximamente: arqueo automático con resumen por método de pago, descuadres y exportación a PDF. Mientras tanto, revisa el detalle en <strong>Cobros</strong>.</p>
-            </div>
-          </div>
-        )
-      )}
     </div>
   );
 };
