@@ -12,7 +12,6 @@ import {
   Star,
   Camera,
   ArrowLeft,
-  Bell,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Message, Conversation } from '@/hooks/useConversations';
