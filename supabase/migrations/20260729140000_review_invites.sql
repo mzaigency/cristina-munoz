@@ -28,16 +28,14 @@ DROP POLICY IF EXISTS "Tenant staff can create review invites" ON public.review_
 CREATE POLICY "Tenant staff can create review invites"
 ON public.review_invites FOR INSERT
 WITH CHECK (
-  tenant_id = get_user_tenant_id()
-  AND (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'stylist'))
+  public.user_belongs_to_tenant(auth.uid(), tenant_id)
 );
 
 DROP POLICY IF EXISTS "Tenant staff can view their review invites" ON public.review_invites;
 CREATE POLICY "Tenant staff can view their review invites"
 ON public.review_invites FOR SELECT
 USING (
-  tenant_id = get_user_tenant_id()
-  AND (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'stylist'))
+  public.user_belongs_to_tenant(auth.uid(), tenant_id)
 );
 
 -- Datos que faltaban en reviews para mostrar quién valoró y si está verificada
