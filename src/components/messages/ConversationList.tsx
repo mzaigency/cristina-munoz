@@ -15,6 +15,8 @@ interface ConversationListProps {
   role: 'user' | 'salon';
   showSearch?: boolean;
   onToggleUnread?: (conversation: Conversation, markUnread: boolean) => void;
+  /** Muestra como vista previa el último mensaje humano en vez del automático */
+  preferHumanPreview?: boolean;
 }
 
 
@@ -26,6 +28,7 @@ export function ConversationList({
   role,
   showSearch = true,
   onToggleUnread,
+  preferHumanPreview = false,
 
 }: ConversationListProps) {
   const [searchTerm, setSearchTerm] = useState('');
