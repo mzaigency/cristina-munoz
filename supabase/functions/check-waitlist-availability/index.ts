@@ -272,6 +272,7 @@ serve(async (req) => {
           if (!hasConflict) {
             foundSlot = true;
             availableSlotTime = minutesToTimeString(slotStart);
+            availableStylistId = stylist.id;
             break;
           }
         }
@@ -282,15 +283,30 @@ serve(async (req) => {
       // If we found a slot, notify the client
       if (foundSlot) {
         console.log(`Found slot for ${entry.client_name} at ${availableSlotTime}`);
-        
-        // Update waitlist entry status
+
+        // Reservamos el hueco para esta clienta durante 2h con un enlace único:
+        // así el botón del email confirma de verdad en un clic.
+        const proposalToken =
+          crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+        const proposedExpires = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+
         await supabase
           .from("waitlist")
-          .update({ 
-            status: "notified", 
-            notified_at: new Date().toISOString() 
+          .update({
+            status: "proposed",
+            proposed_date: date,
+            proposed_time: availableSlotTime,
+            proposed_stylist_id: availableStylistId,
+            proposed_at: new Date().toISOString(),
+            proposed_expires_at: proposedExpires,
+            proposal_token: proposalToken,
+            notified_at: new Date().toISOString(),
           })
           .eq("id", entry.id);
+
+        const confirmUrl = `https://glowapp.app/lista-espera/${proposalToken}`;
+
+
 
         // If user has an account, send direct message
         if (entry.user_id) {
