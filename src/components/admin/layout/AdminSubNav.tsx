@@ -1,4 +1,5 @@
 import {
+  History,
   LayoutDashboard,
   Calendar,
   CalendarDays,
