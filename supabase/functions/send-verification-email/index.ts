@@ -54,221 +54,39 @@ const emailTemplate = (userName: string, verificationUrl: string) => `
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
-  <title>Verifica tu cuenta - GlowApp</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    
-    * { box-sizing: border-box; }
-    
-    body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-  </style>
+  <meta name="color-scheme" content="light only">
+  <title>Verifica tu cuenta · Glowapp</title>
 </head>
-<body style="
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: linear-gradient(180deg, ${BRAND.bgGradientStart} 0%, ${BRAND.bgGradientEnd} 50%, ${BRAND.bgGradientStart} 100%);
-  margin: 0;
-  padding: 0;
-  -webkit-font-smoothing: antialiased;
-">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="min-height: 100vh;">
-    <tr>
-      <td align="center" style="padding: 40px 16px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px;">
-          <tr>
-            <td style="
-              background: ${BRAND.bgCard};
-              border-radius: 28px;
-              padding: 48px 40px;
-              box-shadow: 
-                0 0 0 1px rgba(124, 58, 237, 0.05),
-                0 4px 6px -1px rgba(124, 58, 237, 0.05),
-                0 20px 40px -8px rgba(124, 58, 237, 0.12);
-            ">
-              <!-- Logo Header -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding-bottom: 32px;">
-                    <table role="presentation" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td align="center">
-                          <img 
-                            src="${LOGO_ICON_URL}" 
-                            width="56" 
-                            height="56" 
-                            alt="GlowApp" 
-                            style="display: block; border-radius: 14px; margin-bottom: 12px;"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td align="center">
-                          <img 
-                            src="${LOGO_TEXT_URL}" 
-                            width="130" 
-                            height="auto" 
-                            alt="GlowApp" 
-                            style="display: block;"
-                          />
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-              
-              <!-- Badge -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
-                <tr>
-                  <td align="center">
-                    <span style="
-                      display: inline-block;
-                      background: linear-gradient(135deg, ${BRAND.primaryStart} 0%, ${BRAND.primaryEnd} 100%);
-                      color: ${BRAND.white};
-                      padding: 10px 24px;
-                      border-radius: 100px;
-                      font-weight: 700;
-                      font-size: 13px;
-                      letter-spacing: 0.02em;
-                      text-transform: uppercase;
-                    ">
-                      ✉️ VERIFICA TU EMAIL
-                    </span>
-                  </td>
-                </tr>
-              </table>
-              
-              <!-- Title -->
-              <h1 style="
-                color: ${BRAND.textPrimary};
-                font-size: 28px;
-                text-align: center;
-                margin: 0 0 20px;
-                font-weight: 800;
-                letter-spacing: -0.02em;
-                line-height: 1.2;
-              ">
-                ¡Ya casi estás!
-              </h1>
-              
-              <!-- Greeting -->
-              <p style="color: ${BRAND.textSecondary}; font-size: 16px; text-align: center; margin: 0 0 8px; line-height: 1.6;">
-                Hola <strong style="color: ${BRAND.textPrimary}; font-weight: 600;">${userName}</strong>,
-              </p>
-              <p style="color: ${BRAND.textSecondary}; font-size: 16px; line-height: 1.7; text-align: center; margin: 0;">
-                Gracias por unirte a <strong style="color: ${BRAND.primary};">GlowApp</strong>. Para activar tu cuenta, solo necesitas verificar tu email haciendo clic en el botón:
-              </p>
-              
-              <!-- CTA Button -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
-                <tr>
-                  <td align="center">
-                    <a href="${verificationUrl}" target="_blank" style="
-                      display: inline-block;
-                      background: linear-gradient(135deg, ${BRAND.primaryStart} 0%, ${BRAND.primaryEnd} 100%);
-                      color: ${BRAND.white};
-                      padding: 16px 44px;
-                      border-radius: 14px;
-                      text-decoration: none;
-                      font-weight: 700;
-                      font-size: 15px;
-                      letter-spacing: -0.01em;
-                      box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.35);
-                    ">
-                      Verificar mi cuenta
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-              <!-- Info Box -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 28px 0;">
-                <tr>
-                  <td style="
-                    background: ${BRAND.bgSoft};
-                    border-radius: 18px;
-                    padding: 28px;
-                    border: 1px solid ${BRAND.borderSoft};
-                  ">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td align="center">
-                          <p style="color: ${BRAND.textPrimary}; font-weight: 700; margin: 0 0 10px; font-size: 16px;">¿Qué sigue después?</p>
-                          <p style="color: ${BRAND.textSecondary}; font-size: 14px; margin: 0; line-height: 1.6;">
-                            Una vez verificado, podrás descubrir salones, reservar citas y conectar con profesionales de belleza cerca de ti.
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Warning Box -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
-                <tr>
-                  <td style="
-                    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-                    border-radius: 16px;
-                    padding: 22px;
-                    border: 1px solid #FCD34D;
-                  ">
-                    <p style="color: #92400E; font-weight: 700; margin: 0 0 12px; font-size: 14px; letter-spacing: -0.01em;">⏰ Este enlace expira en 24 horas</p>
-                    <p style="color: #92400E; font-size: 13px; margin: 4px 0; line-height: 1.5;">• Si no creaste una cuenta en GlowApp, puedes ignorar este email</p>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Fallback Link -->
-              <p style="color: ${BRAND.textLight}; font-size: 12px; text-align: center; line-height: 1.6; margin: 24px 0 0;">
-                Si el botón no funciona, copia y pega este enlace:<br />
-                <a href="${verificationUrl}" style="color: ${BRAND.primary}; word-break: break-all; font-size: 11px; font-weight: 500;">
-                  ${verificationUrl}
-                </a>
-              </p>
-              
-              <!-- Footer -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 36px;">
-                <tr>
-                  <td style="padding-top: 28px; border-top: 1px solid ${BRAND.border};">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td align="center" style="padding-bottom: 16px;">
-                          <img 
-                            src="${LOGO_ICON_URL}" 
-                            width="32" 
-                            height="32" 
-                            alt="GlowApp" 
-                            style="display: block; border-radius: 8px; opacity: 0.8;"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td align="center">
-                          <p style="color: ${BRAND.textLight}; font-size: 13px; margin: 0 0 8px; line-height: 1.5;">
-                            © ${new Date().getFullYear()} GlowApp. Todos los derechos reservados.
-                          </p>
-                          <p style="color: ${BRAND.textLight}; font-size: 12px; margin: 0; line-height: 1.5;">
-                            Enviado con 💜 desde 
-                            <a href="${APP_URL}" style="color: ${BRAND.primary}; text-decoration: none; font-weight: 500;">glowapp.app</a>
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F7FB;padding:28px 12px"><tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background:#ffffff;border-radius:22px;overflow:hidden;border:1px solid #ECEDF3">
+    <tr><td style="height:5px;line-height:5px;font-size:0;background:#22408B;background-image:linear-gradient(100deg,#22408B,#98329A)">&nbsp;</td></tr>
+    <tr><td align="center" style="padding:26px 28px 0">
+      <img src="${LOGO_TEXT_URL}" width="128" alt="Glowapp" style="display:block">
+    </td></tr>
+    <tr><td align="center" style="padding:18px 28px 0">
+      <span style="display:inline-block;padding:5px 14px;border-radius:999px;background:#EEF1FA;color:#22408B;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Verifica tu email</span>
+      <h1 style="color:#131520;font-size:24px;font-weight:800;margin:14px 0 8px;letter-spacing:-.02em;line-height:1.25">¡Ya casi estás!</h1>
+      <p style="color:#4a4d5c;font-size:15px;margin:0;line-height:1.6">Hola <strong style="color:#131520">${userName}</strong>, confirma tu email para activar tu cuenta de Glowapp.</p>
+    </td></tr>
+    <tr><td align="center" style="padding:24px 28px 0">
+      <a href="${verificationUrl}" target="_blank" style="display:inline-block;background:#22408B;background-image:linear-gradient(100deg,#22408B,#98329A);color:#ffffff;padding:13px 30px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px">Verificar mi cuenta</a>
+    </td></tr>
+    <tr><td style="padding:22px 28px 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F6F7FB;border-radius:16px"><tr><td style="padding:18px 20px">
+        <p style="margin:0 0 6px;color:#131520;font-size:14px;font-weight:700">¿Qué sigue después?</p>
+        <p style="margin:0;color:#4a4d5c;font-size:13px;line-height:1.6">Descubre salones cerca de ti, reserva en segundos y guarda tu historial de citas.</p>
+      </td></tr></table>
+    </td></tr>
+    <tr><td align="center" style="padding:18px 28px 26px">
+      <p style="color:#8A8FA3;font-size:12px;margin:0 0 10px;line-height:1.6">El enlace caduca en 24 horas. Si no creaste una cuenta, ignora este email.</p>
+      <p style="color:#A2A6B6;font-size:11px;margin:0;word-break:break-all">${verificationUrl}</p>
+    </td></tr>
+    <tr><td style="padding:16px 28px 22px;background:#FBFBFD;border-top:1px solid #ECEDF3;text-align:center">
+      <p style="margin:0;font-size:11px;color:#A2A6B6">Enviado con <a href="${APP_URL}" style="color:#22408B;font-weight:700;text-decoration:none">Glowapp</a> · reservas y gestión para tu salón</p>
+    </td></tr>
   </table>
+</td></tr></table>
 </body>
 </html>
 `
