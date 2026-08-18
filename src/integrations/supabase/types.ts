@@ -2692,6 +2692,8 @@ export type Database = {
           preferred_time_end: string | null
           preferred_time_start: string | null
           priority: number | null
+          proposal_responded_at: string | null
+          proposal_token: string | null
           proposed_at: string | null
           proposed_date: string | null
           proposed_expires_at: string | null
@@ -2716,6 +2718,8 @@ export type Database = {
           preferred_time_end?: string | null
           preferred_time_start?: string | null
           priority?: number | null
+          proposal_responded_at?: string | null
+          proposal_token?: string | null
           proposed_at?: string | null
           proposed_date?: string | null
           proposed_expires_at?: string | null
@@ -2740,6 +2744,8 @@ export type Database = {
           preferred_time_end?: string | null
           preferred_time_start?: string | null
           priority?: number | null
+          proposal_responded_at?: string | null
+          proposal_token?: string | null
           proposed_at?: string | null
           proposed_date?: string | null
           proposed_expires_at?: string | null

@@ -5,6 +5,9 @@ project_id = "lyeyzdbplrgqsvyxpfek"
     verify_jwt = true
   [functions.review-token]
     verify_jwt = false
+  [functions.waitlist-token]
+    verify_jwt = false
+
   [functions.preview-transactional-email]
     verify_jwt = false
   [functions.handle-email-unsubscribe]

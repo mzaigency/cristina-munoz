@@ -51,6 +51,8 @@ const MyBookings = lazyWithReload(() => import("./pages/MyBookings"));
 const Profile = lazyWithReload(() => import("./pages/Profile"));
 const Review = lazyWithReload(() => import("./pages/Review"));
 const ReviewToken = lazyWithReload(() => import("./pages/ReviewToken"));
+const WaitlistConfirm = lazyWithReload(() => import("./pages/WaitlistConfirm"));
+
 const TenantLanding = lazyWithReload(() => import("./pages/TenantLanding"));
 const Messages = lazyWithReload(() => import("./pages/Messages"));
 const PrivacyPolicy = lazyWithReload(() => import("./pages/PrivacyPolicy"));
@@ -217,6 +219,8 @@ const App = () => (
                         <Route path="/perfil/notificaciones" element={<NotificationSettingsPage />} />
                         <Route path="/valoracion" element={<Review />} />
                         <Route path="/valorar/:token" element={<ReviewToken />} />
+                        <Route path="/lista-espera/:token" element={<WaitlistConfirm />} />
+
                         <Route path="/mensajes" element={<Messages />} />
                         <Route path="/onboarding" element={<BusinessOnboarding />} />
                         <Route path="/onboarding/setup" element={<OnboardingSetup />} />

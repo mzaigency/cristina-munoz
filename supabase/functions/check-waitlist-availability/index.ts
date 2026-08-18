@@ -236,6 +236,8 @@ serve(async (req) => {
 
       let foundSlot = false;
       let availableSlotTime = "";
+      let availableStylistId: string | null = null;
+
 
       for (const stylist of stylistsToCheck) {
         // Get bookings for this stylist
@@ -270,6 +272,7 @@ serve(async (req) => {
           if (!hasConflict) {
             foundSlot = true;
             availableSlotTime = minutesToTimeString(slotStart);
+            availableStylistId = stylist.id;
             break;
           }
         }
@@ -280,15 +283,30 @@ serve(async (req) => {
       // If we found a slot, notify the client
       if (foundSlot) {
         console.log(`Found slot for ${entry.client_name} at ${availableSlotTime}`);
-        
-        // Update waitlist entry status
+
+        // Reservamos el hueco para esta clienta durante 2h con un enlace único:
+        // así el botón del email confirma de verdad en un clic.
+        const proposalToken =
+          crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+        const proposedExpires = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+
         await supabase
           .from("waitlist")
-          .update({ 
-            status: "notified", 
-            notified_at: new Date().toISOString() 
+          .update({
+            status: "proposed",
+            proposed_date: date,
+            proposed_time: availableSlotTime,
+            proposed_stylist_id: availableStylistId,
+            proposed_at: new Date().toISOString(),
+            proposed_expires_at: proposedExpires,
+            proposal_token: proposalToken,
+            notified_at: new Date().toISOString(),
           })
           .eq("id", entry.id);
+
+        const confirmUrl = `https://glowapp.app/lista-espera/${proposalToken}`;
+
+
 
         // If user has an account, send direct message
         if (entry.user_id) {
@@ -296,7 +314,7 @@ serve(async (req) => {
           
           if (conversationId) {
             const formattedDate = formatDateSpanish(date);
-            const message = `📢 ¡Buenas noticias!\n\nHay disponibilidad el ${formattedDate} a las ${availableSlotTime} para tu solicitud en lista de espera.\n\nReserva ahora antes de que otro cliente ocupe el hueco 🗓️`;
+            const message = `📢 ¡Buenas noticias!\n\nHay disponibilidad el ${formattedDate} a las ${availableSlotTime} para tu solicitud en lista de espera.\n\nTe lo guardamos 2 horas: confírmalo aquí 👉 ${confirmUrl}`;
             
             const sent = await sendDirectMessage(supabase, conversationId, tenant_id, message);
             if (sent) {
@@ -317,7 +335,7 @@ serve(async (req) => {
               available_time: availableSlotTime,
               date: date
             },
-            action_url: `/${tenantSlug}`
+            action_url: `/lista-espera/${proposalToken}`
           });
         }
 
@@ -344,7 +362,7 @@ serve(async (req) => {
                   date: formatDateSpanish(date),
                   time: availableSlotTime,
                   services: serviceNames,
-                  acceptUrl: tenantSlug ? `https://glowapp.app/${tenantSlug}` : "https://glowapp.app/mis-citas",
+                  acceptUrl: confirmUrl,
                 },
               },
             });
