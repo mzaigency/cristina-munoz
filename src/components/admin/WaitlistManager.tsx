@@ -568,7 +568,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                     </div>
 
                     {activeTab === "active" && (() => {
-                      const days = Math.floor((now - new Date(entry.created_at).getTime()) / 86400000);
+                      const days = Math.max(0, Math.floor((Date.now() - new Date(entry.created_at).getTime()) / 86400000));
                       const left = entry.preferred_date ? null : Math.max(0, 60 - days);
                       return (
                         <p style={{ margin: "6px 0 0", fontSize: 11.5, fontWeight: 600, color: "var(--gp-muted-c)" }}>
