@@ -70,6 +70,7 @@ interface WaitlistEntry {
   proposed_stylist_id?: string | null;
   proposed_at?: string | null;
   proposed_expires_at?: string | null;
+  proposal_token?: string | null;
 }
 
 interface Stylist {
