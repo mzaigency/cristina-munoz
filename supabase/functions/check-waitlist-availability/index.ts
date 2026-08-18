@@ -236,6 +236,8 @@ serve(async (req) => {
 
       let foundSlot = false;
       let availableSlotTime = "";
+      let availableStylistId: string | null = null;
+
 
       for (const stylist of stylistsToCheck) {
         // Get bookings for this stylist
