@@ -166,6 +166,13 @@ const featureItem = (emoji: string, text: string) => `
   </tr>
 `;
 
+type EmailType = "welcome" | "password-reset" | "email-verification";
+
+interface EmailRequest {
+  type: EmailType;
+  to: string;
+  data: Record<string, unknown>;
+}
 
 const templates = {
   "email-verification": (data: { userName?: string; confirmationUrl: string }) => ({
