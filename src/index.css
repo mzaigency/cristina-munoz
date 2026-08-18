@@ -1507,23 +1507,12 @@
    Variables scoped to .gp-shell to avoid shadcn/Tailwind conflicts
    ============================================================ */
 .gp-shell {
-  --gp-accent: #22408b;
-  --gp-accent-ink: #1a3270;
-  --gp-accent-soft: color-mix(in oklab, var(--gp-accent), white 88%);
-  --gp-accent-softer: color-mix(in oklab, var(--gp-accent), white 94%);
-  --gp-purple: #99329a;
-  --gp-bg: oklch(0.98 0.006 265);
-  --gp-surface: #ffffff;
-  --gp-ink: oklch(0.24 0.02 265);
-  --gp-ink2: oklch(0.45 0.02 265);
-  --gp-muted-c: oklch(0.62 0.015 265);
-  --gp-line: oklch(0.925 0.007 265);
-  --gp-chip: oklch(0.968 0.006 265);
-  --gp-shadow-xs: 0 1px 2px rgba(20,22,40,.05);
-  --gp-shadow-lg: 0 18px 50px -16px rgba(20,22,40,.34);
-  --gp-ease: cubic-bezier(.3,.9,.3,1);
+  /* Los tokens de color/tipografía/espaciado viven en el bloque
+     "GLOWAPP ADMIN — DESIGN TOKENS" más abajo (:root, .gp-shell).
+     Aquí solo la métrica propia del shell. */
   --gp-sidebar-w: 252px;
   --gp-topbar-h: 64px;
+
 
   height: 100vh;
   display: flex;
