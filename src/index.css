@@ -1307,7 +1307,7 @@
 
 @media (hover: hover) {
   .ag-slot-half:hover {
-    background: color-mix(in oklab, var(--stylist-c, #4361ee), transparent 92%);
+    background: color-mix(in oklab, var(--stylist-c, #22408b), transparent 92%);
   }
   .ag-slot-half:hover::before {
     content: "+ " attr(data-time);
@@ -1318,8 +1318,8 @@
     display: inline-flex;
     align-items: center;
     padding: 2px 7px 2px 6px;
-    background: color-mix(in oklab, var(--stylist-c, #4361ee), white 86%);
-    color: color-mix(in oklab, var(--stylist-c, #4361ee), black 22%);
+    background: color-mix(in oklab, var(--stylist-c, #22408b), white 86%);
+    color: color-mix(in oklab, var(--stylist-c, #22408b), black 22%);
     font-size: 10.5px;
     font-weight: 800;
     border-radius: 7px;
@@ -1423,10 +1423,10 @@
 
 .ag-detail-phone-btn {
   width: 38px; height: 38px; border-radius: 11px;
-  background: var(--ag-accent, #4361ee); color: #fff;
+  background: var(--ag-accent, #22408b); color: #fff;
   display: flex; align-items: center; justify-content: center;
   text-decoration: none; transition: .15s cubic-bezier(.3,.9,.3,1);
-  box-shadow: 0 4px 12px -4px color-mix(in oklab, var(--ag-accent, #4361ee), transparent 50%);
+  box-shadow: 0 4px 12px -4px color-mix(in oklab, var(--ag-accent, #22408b), transparent 50%);
 }
 .ag-detail-phone-btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
 .ag-detail-phone-btn.whatsapp { background: #25d366; box-shadow: 0 4px 12px -4px rgba(37,211,102,.5); }
@@ -1445,8 +1445,8 @@
 .ag-detail-action:hover { background: var(--ag-chip, oklch(0.968 0.006 265)); transform: translateY(-1px); }
 .ag-detail-action.primary {
   border-color: transparent; color: #fff;
-  background: linear-gradient(150deg, var(--ag-accent, #4361ee), color-mix(in oklab, var(--ag-accent, #4361ee), #000 18%));
-  box-shadow: 0 6px 16px -6px color-mix(in oklab, var(--ag-accent, #4361ee), transparent 40%);
+  background: linear-gradient(150deg, var(--ag-accent, #22408b), color-mix(in oklab, var(--ag-accent, #22408b), #000 18%));
+  box-shadow: 0 6px 16px -6px color-mix(in oklab, var(--ag-accent, #22408b), transparent 40%);
 }
 .ag-detail-action.primary:hover { filter: brightness(1.07); }
 .ag-detail-action.danger { color: oklch(0.55 0.18 25); }
@@ -1466,10 +1466,10 @@
 .ag-pay-method:hover { background: var(--ag-chip, oklch(0.968 0.006 265)); }
 .ag-pay-method:active { transform: scale(.97); }
 .ag-pay-method.on {
-  border-color: var(--ag-accent, #4361ee);
-  background: color-mix(in oklab, var(--ag-accent, #4361ee), white 92%);
-  color: var(--ag-accent, #4361ee);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ag-accent, #4361ee), transparent 88%);
+  border-color: var(--ag-accent, #22408b);
+  background: color-mix(in oklab, var(--ag-accent, #22408b), white 92%);
+  color: var(--ag-accent, #22408b);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ag-accent, #22408b), transparent 88%);
 }
 .ag-pay-method:disabled { opacity: .55; cursor: not-allowed; transform: none !important; }
 
