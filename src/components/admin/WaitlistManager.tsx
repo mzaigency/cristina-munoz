@@ -441,6 +441,33 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
         </button>
       </div>
 
+      {/* Resumen rápido de propuestas: conflictos y caducidades */}
+      {activeTab === "proposed" && (conflictCount > 0 || urgentCount > 0) && (
+        <div
+          className="gp-card pad"
+          style={{
+            display: "flex",
+            gap: 10,
+            alignItems: "flex-start",
+            background: conflictCount > 0 ? "color-mix(in oklab, var(--gp-danger), white 92%)" : "var(--gp-chip)",
+            borderColor: conflictCount > 0 ? "color-mix(in oklab, var(--gp-danger), white 70%)" : "var(--gp-line)",
+          }}
+        >
+          <span style={{ width: 28, height: 28, borderRadius: 9, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: "color-mix(in oklab, var(--gp-danger), white 82%)", color: "var(--gp-danger)" }}>
+            <AlertTriangle style={{ width: 14, height: 14 }} />
+          </span>
+          <div>
+            <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 800, color: "var(--gp-ink)" }}>Requieren tu atención</p>
+            <p style={{ margin: 0, fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
+              {conflictCount > 0 && <>{conflictCount} con el hueco ya ocupado. </>}
+              {urgentCount > 0 && <>{urgentCount} caducan en menos de 2h.</>}
+            </p>
+          </div>
+        </div>
+      )}
+
+
+
       {/* Empty state */}
       {tabEntries.length === 0 ? (
         <div className="gp-card">
