@@ -140,15 +140,124 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
       ]);
 
       if (waitlistRes.error) throw waitlistRes.error;
-      setEntries((waitlistRes.data || []) as unknown as WaitlistEntry[]);
+      const list = (waitlistRes.data || []) as unknown as WaitlistEntry[];
+      setEntries(list);
       setStylists(stylistsRes.data || []);
       setTenantSlug(tenantRes.data?.slug || "");
+
+      // Citas confirmadas de los días propuestos → para detectar conflictos
+      const dates = Array.from(
+        new Set(list.filter((e) => e.status === "proposed" && e.proposed_date).map((e) => e.proposed_date as string)),
+      );
+      if (dates.length > 0) {
+        const { data: bk } = await supabase
+          .from("bookings")
+          .select("Fecha, Hora, total_duration, stylist")
+          .eq("tenant_id", tenantId)
+          .eq("status", "confirmed")
+          .in("Fecha", dates);
+        setBookings((bk || []) as any);
+      } else {
+        setBookings([]);
+      }
     } catch (error) {
       console.error("Error fetching waitlist:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  const toMin = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + (m || 0);
+  };
+
+  const getDuration = (services: any[]) =>
+    Array.isArray(services) && services.length > 0
+      ? services.reduce((sum: number, s: any) => sum + (s.duration || s.total_duration || s.duration_part1_active || 30), 0)
+      : 60;
+
+  /** Devuelve true si el hueco propuesto choca con una cita confirmada */
+  const hasConflict = (entry: WaitlistEntry) => {
+    if (entry.status !== "proposed" || !entry.proposed_date || !entry.proposed_time) return false;
+    const slug = entry.proposed_stylist_id
+      ? stylists.find((s) => s.id === entry.proposed_stylist_id)?.slug
+      : null;
+    const start = toMin(String(entry.proposed_time).slice(0, 5));
+    const end = start + getDuration(entry.services);
+    return bookings.some((b) => {
+      if (b.Fecha !== entry.proposed_date) return false;
+      if (slug && b.stylist !== slug) return false;
+      const bStart = toMin(String(b.Hora).slice(0, 5));
+      const bEnd = bStart + (b.total_duration || 60);
+      return start < bEnd && end > bStart;
+    });
+  };
+
+  /** Texto de cuenta atrás de la propuesta */
+  const getExpiry = (entry: WaitlistEntry) => {
+    if (!entry.proposed_expires_at) return null;
+    const diff = new Date(entry.proposed_expires_at).getTime() - now;
+    if (diff <= 0) return { text: "Caducada", urgent: true, expired: true };
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return {
+      text: h > 0 ? `Caduca en ${h}h ${m}m` : `Caduca en ${m} min`,
+      urgent: diff < 2 * 3600000,
+      expired: false,
+    };
+  };
+
+  const getProposalLink = (entry: WaitlistEntry) =>
+    entry.proposal_token ? `${window.location.origin}/lista-espera/${entry.proposal_token}` : null;
+
+  const handleCopyLink = async (entry: WaitlistEntry) => {
+    const link = getProposalLink(entry);
+    if (!link) {
+      toast({ title: "Esta propuesta no tiene enlace", variant: "destructive" });
+      return;
+    }
+    await navigator.clipboard.writeText(link);
+    toast({ title: "Enlace copiado" });
+  };
+
+  const handleRemindWhatsApp = (entry: WaitlistEntry) => {
+    if (!entry.client_phone) return;
+    const link = getProposalLink(entry);
+    const phone = entry.client_phone.replace(/\D/g, "");
+    const when =
+      entry.proposed_date && entry.proposed_time
+        ? `${format(new Date(entry.proposed_date), "EEEE d 'de' MMMM", { locale: es })} a las ${String(entry.proposed_time).slice(0, 5)}`
+        : "el hueco que te propusimos";
+    const msg = encodeURIComponent(
+      `¡Hola ${entry.client_name}! Te hemos guardado un hueco para ${when}. Confírmalo aquí 👉 ${link ?? ""}`,
+    );
+    window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+  };
+
+  /** Libera el hueco propuesto y devuelve a la clienta a la cola */
+  const handleReleaseSlot = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("waitlist" as any)
+        .update({
+          status: "waiting",
+          proposed_date: null,
+          proposed_time: null,
+          proposed_stylist_id: null,
+          proposed_at: null,
+          proposed_expires_at: null,
+          proposal_token: null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+      toast({ title: "Hueco liberado", description: "La clienta vuelve a la cola de espera" });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
 
   const handleSave = async () => {
     if (!formData.client_name.trim()) {
