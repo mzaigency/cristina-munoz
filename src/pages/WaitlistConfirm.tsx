@@ -168,11 +168,13 @@ const WaitlistConfirm = () => {
               {proposal.expiresAt && (
                 <p className="flex items-center justify-center gap-1.5 text-[13px] text-outline mt-4">
                   <Clock className="w-3.5 h-3.5" />
-                  Guardado para ti hasta las{" "}
-                  {new Date(proposal.expiresAt).toLocaleTimeString("es-ES", {
+                  Guardado para ti hasta{" "}
+                  {new Date(proposal.expiresAt).toLocaleString("es-ES", {
+                    weekday: "long",
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
+                  h
                 </p>
               )}
 

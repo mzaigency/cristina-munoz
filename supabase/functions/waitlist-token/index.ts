@@ -204,7 +204,8 @@ serve(async (req) => {
         stylist: stylistSlug,
         total_duration: totalDuration,
         status: "confirmed",
-        canal: "waitlist",
+        canal: "web",
+        source: "waitlist",
         notes: "Reserva confirmada desde lista de espera (email)",
         skip_availability_check: true,
       })
