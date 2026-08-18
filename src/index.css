@@ -1564,7 +1564,7 @@
 .gp-navitem.on .gp-navitem-ic { color: var(--gp-accent); }
 .gp-navitem-badge {
   margin-left: auto; font-size: 11px; font-weight: 800; min-width: 20px; height: 20px; padding: 0 6px;
-  border-radius: 99px; background: var(--gp-danger); color: #fff;
+  border-radius: 99px; background: var(--gp-notif-badge-bg); color: var(--gp-notif-badge-fg);
   display: inline-flex; align-items: center; justify-content: center;
 }
 
@@ -1580,7 +1580,12 @@
 .gp-subitem.on .gp-subdot { background: var(--gp-accent); transform: scale(1.4); }
 .gp-subitem.locked { opacity: .55; cursor: not-allowed; }
 .gp-subitem.locked:hover { background: none; color: var(--gp-muted-c); }
-.gp-subitem-badge { margin-left: auto; font-size: 10.5px; font-weight: 800; color: #ef4444; }
+.gp-subitem-badge {
+  margin-left: auto; font-size: 10.5px; font-weight: 800;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px;
+  background: var(--gp-notif-badge-bg); color: var(--gp-notif-badge-fg);
+  display: inline-flex; align-items: center; justify-content: center;
+}
 
 .gp-side-foot { padding: 10px 12px 14px; border-top: 1px solid var(--gp-line); }
 .gp-user-row {
@@ -1877,10 +1882,7 @@
   border-color: transparent; color: #fff;
   box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--gp-accent), transparent 40%);
 }
-.gp-subtab-count { font-size: 11px; font-weight: 800; background: color-mix(in oklab, currentColor, transparent 85%); padding: 1px 6px; border-radius: 99px; }
-@media (min-width: 920px) {
-  .gp-subtab-count { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
-}
+.gp-subtab-count { font-size: 11px; font-weight: 800; background: var(--gp-notif-badge-bg); color: var(--gp-notif-badge-fg); padding: 1px 6px; border-radius: 99px; }
 
 /* ── Semantic color tokens (needed by component classes below) ── */
 .gp-shell {
@@ -1895,6 +1897,16 @@
   --gp-line2: oklch(0.955 0.004 265);
   --gp-surface-2: oklch(0.985 0.004 265);
   --gp-shadow: 0 1px 2px rgba(20,22,40,.04), 0 10px 30px -16px rgba(20,22,40,.18);
+
+  /* Notification badges: centralized tokens; red solid on desktop, subtle accent on mobile */
+  --gp-notif-badge-bg: color-mix(in oklab, var(--gp-accent), transparent 88%);
+  --gp-notif-badge-fg: var(--gp-accent);
+}
+@media (min-width: 920px) {
+  .gp-shell {
+    --gp-notif-badge-bg: var(--gp-danger);
+    --gp-notif-badge-fg: #fff;
+  }
 }
 
 /* ── Card ── */
