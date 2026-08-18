@@ -991,12 +991,12 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
       {/* ── BARRA DE CARRITO ─────────────────────────────────
           Flota sobre el contenido en móvil (encima de la nav) y
-          en escritorio se queda al final del catálogo. */}
+          queda pegada abajo (sticky) en escritorio. */}
       {selectedItems.length > 0 && (
         <>
-          <div className="h-24 min-[920px]:h-0" />
+          <div className="h-24 min-[920px]:h-4" />
           <div
-            className="fixed left-0 right-0 z-30 px-3 min-[920px]:static min-[920px]:px-0 min-[920px]:mt-4"
+            className="fixed left-0 right-0 z-30 px-3 min-[920px]:sticky min-[920px]:left-auto min-[920px]:right-auto min-[920px]:bottom-4 min-[920px]:px-0 min-[920px]:mt-2"
             style={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}
           >
             <div
