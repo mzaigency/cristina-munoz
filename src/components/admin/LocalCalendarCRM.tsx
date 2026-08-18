@@ -1516,7 +1516,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         cy={SIZE / 2}
                         r={R}
                         fill="none"
-                        stroke="var(--gp-accent)"
+                        style={{ stroke: "var(--gp-accent)" }}
                         strokeWidth={SW}
                         strokeLinecap="round"
                         strokeDasharray={circ}
@@ -2273,8 +2273,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                         top: Math.max(0, topDrag),
                                         height: hDrag,
                                         borderRadius: 10,
-                                        background: "var(--gp-accent)20",
-                                        border: "2px dashed var(--gp-accent)80",
+                                        background: "color-mix(in oklab, var(--gp-accent), transparent 88%)",
+                                        border: "2px dashed color-mix(in oklab, var(--gp-accent), transparent 50%)",
                                         pointerEvents: "none",
                                         zIndex: 40,
                                         display: "flex",
