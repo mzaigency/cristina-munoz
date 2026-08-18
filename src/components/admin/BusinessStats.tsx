@@ -38,8 +38,8 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import {
 import { GP_CHART, GP_CHART_COLORS } from "@/components/admin/chartPalette";
+import {
   TrendingUp,
   TrendingDown,
   Euro,

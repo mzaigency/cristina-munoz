@@ -167,7 +167,7 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
                   <XAxis dataKey="name" fontSize={12} />
                   <YAxis fontSize={12} tickFormatter={(v) => `${v}€`} />
                   <Tooltip formatter={(value: number) => [`${value.toFixed(2)}€`, "Ingresos"]} />
-                  <Bar dataKey="value" fill=GP_CHART.purple radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill={GP_CHART.purple} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -240,7 +240,7 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
                   <Line 
                     type="monotone" 
                     dataKey="propinas" 
-                    stroke=GP_CHART.ok 
+                    stroke={GP_CHART.ok} 
                     strokeWidth={2}
                     dot={{ fill: GP_CHART.ok }}
                   />
