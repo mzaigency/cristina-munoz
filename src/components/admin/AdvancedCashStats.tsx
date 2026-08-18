@@ -18,6 +18,7 @@ import {
   LineChart,
   Line
 } from "recharts";
+import { GP_CHART, GP_CHART_COLORS } from "@/components/admin/chartPalette";
 import {
   TrendingUp,
   CreditCard,
@@ -31,7 +32,7 @@ interface AdvancedCashStatsProps {
   tenantId: string;
 }
 
-const COLORS = ["#8B5CF6", "#06B6D4", "#10B981", "#F59E0B", "#EF4444"];
+const COLORS = GP_CHART_COLORS;
 
 export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
   const [loading, setLoading] = useState(true);
@@ -88,9 +89,9 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
       });
 
       setPaymentMethodData([
-        { name: "Efectivo", value: paymentMethods.cash, color: "#10B981" },
-        { name: "Tarjeta", value: paymentMethods.card, color: "#8B5CF6" },
-        { name: "Mixto", value: paymentMethods.mixed || 0, color: "#F59E0B" }
+        { name: "Efectivo", value: paymentMethods.cash, color: GP_CHART.ok },
+        { name: "Tarjeta", value: paymentMethods.card, color: GP_CHART.purple },
+        { name: "Mixto", value: paymentMethods.mixed || 0, color: GP_CHART.warn }
       ].filter(d => d.value > 0));
 
       // Tips trend (daily for this week)
@@ -166,18 +167,18 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
                   <XAxis dataKey="name" fontSize={12} />
                   <YAxis fontSize={12} tickFormatter={(v) => `${v}€`} />
                   <Tooltip formatter={(value: number) => [`${value.toFixed(2)}€`, "Ingresos"]} />
-                  <Bar dataKey="value" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill={GP_CHART.purple} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             {weeklyComparison.length === 2 && (
               <p className="text-xs text-center text-muted-foreground mt-2">
                 {weeklyComparison[1].value > weeklyComparison[0].value ? (
-                  <span className="text-green-600">
+                  <span className="text-[var(--gp-ok-ink)]">
                     ↑ +{((weeklyComparison[1].value - weeklyComparison[0].value) / Math.max(weeklyComparison[0].value, 1) * 100).toFixed(0)}% vs semana anterior
                   </span>
                 ) : weeklyComparison[1].value < weeklyComparison[0].value ? (
-                  <span className="text-red-600">
+                  <span className="text-[var(--gp-danger-ink)]">
                     ↓ {((weeklyComparison[1].value - weeklyComparison[0].value) / Math.max(weeklyComparison[0].value, 1) * 100).toFixed(0)}% vs semana anterior
                   </span>
                 ) : (
@@ -239,9 +240,9 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
                   <Line 
                     type="monotone" 
                     dataKey="propinas" 
-                    stroke="#10B981" 
+                    stroke={GP_CHART.ok} 
                     strokeWidth={2}
-                    dot={{ fill: "#10B981" }}
+                    dot={{ fill: GP_CHART.ok }}
                   />
                 </LineChart>
               </ResponsiveContainer>

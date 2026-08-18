@@ -40,8 +40,8 @@ export const LockedFeature = ({
           onClick={() => setShowUpgrade(true)}
           className={cn(
             "inline-flex items-center gap-1.5 px-2 py-1 rounded-full",
-            "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
-            "text-xs font-medium cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors",
+            "bg-[var(--gp-warn-soft)]  text-[var(--gp-warn-ink)] ",
+            "text-xs font-medium cursor-pointer hover:bg-[var(--gp-warn-soft)]  transition-colors",
             className
           )}
         >
@@ -73,8 +73,8 @@ export const LockedFeature = ({
             className
           )}
         >
-          <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3">
-            <Crown className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          <div className="w-12 h-12 rounded-full bg-[var(--gp-warn-soft)]  flex items-center justify-center mb-3">
+            <Crown className="w-6 h-6 text-[var(--gp-warn-ink)] " />
           </div>
           <h4 className="font-semibold text-foreground mb-1">{featureName}</h4>
           <p className="text-sm text-muted-foreground mb-4">
@@ -118,7 +118,7 @@ export const LockedFeature = ({
           className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg"
         >
           <div className="flex flex-col items-center text-center p-6 max-w-xs">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center mb-4 shadow-lg">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--gp-warn)] to-[var(--gp-warn-ink)] flex items-center justify-center mb-4 shadow-lg">
               <Lock className="w-7 h-7 text-white" />
             </div>
             <h4 className="font-semibold text-lg text-foreground mb-1">

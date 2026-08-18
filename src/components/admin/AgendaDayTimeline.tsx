@@ -353,7 +353,7 @@ export function AgendaDayTimeline({
                     {blockCount > 0 && (
                       <span
                         title={`${blockCount} bloqueo${blockCount > 1 ? "s" : ""}`}
-                        className="inline-flex items-center gap-0.5 flex-none rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-outline"
+                        className="inline-flex items-center gap-0.5 flex-none rounded-full bg-[var(--gp-chip)] px-1.5 py-0.5 text-[10px] font-bold text-outline"
                       >
                         <Lock className="w-2.5 h-2.5" />
                         {blockCount > 1 ? blockCount : ""}
@@ -367,7 +367,7 @@ export function AgendaDayTimeline({
                     >
                       {realCount} {realCount === 1 ? "CITA" : "CITAS"}
                     </span>
-                    <span className="text-[10px] font-bold bg-slate-100 text-outline px-1.5 py-0.5 rounded whitespace-nowrap">
+                    <span className="text-[10px] font-bold bg-[var(--gp-chip)] text-outline px-1.5 py-0.5 rounded whitespace-nowrap">
                       {occupancy}%
                     </span>
                   </div>
@@ -554,7 +554,7 @@ export function AgendaDayTimeline({
                         )}
 
                         <span
-                          className="pointer-events-auto absolute top-1 inline-flex items-center gap-1 rounded-full bg-slate-200 pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
+                          className="pointer-events-auto absolute top-1 inline-flex items-center gap-1 rounded-full bg-[var(--gp-chip)] pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
                           style={{
                             left: canDrag ? 22 : 6,
                             maxWidth: `calc(100% - ${canDrag ? 28 : 12}px)`,

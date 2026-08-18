@@ -1,5 +1,4 @@
 import {
-  History,
   LayoutDashboard,
   Calendar,
   CalendarDays,
@@ -64,7 +63,6 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
   ],
   caja: [
     { value: "cobros", label: "Cobros", icon: Wallet, requiredFeature: "cash_register" },
-    { value: "historial", label: "Historial", icon: History, requiredFeature: "cash_register" },
     { value: "pedidos", label: "Pedidos", icon: ShoppingCart, badgeKey: "orders" },
     { value: "cierre", label: "Cierre", icon: Receipt, requiredFeature: "cash_register" },
   ],
@@ -163,7 +161,7 @@ export function AdminSubNav({
                   <Icon className="h-3.5 w-3.5 shrink-0" />
                   <span>{item.label}</span>
                   {locked && (
-                    <span className="text-[10px] font-semibold text-amber-600">Pro</span>
+                    <span className="text-[10px] font-semibold text-[var(--gp-warn-ink)]">Pro</span>
                   )}
                   {badge > 0 && !isActive && (
                     <span className="gp-subtab-count">{badge}</span>

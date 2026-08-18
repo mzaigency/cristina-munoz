@@ -151,7 +151,7 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
           type="tel"
         />
         {duplicateWarning && (
-          <div className="flex items-center gap-1.5 mt-1.5 text-amber-600 text-xs">
+          <div className="flex items-center gap-1.5 mt-1.5 text-[var(--gp-warn-ink)] text-xs">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
             <span>{duplicateWarning}</span>
           </div>
@@ -185,7 +185,7 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
                 <p className="text-xs text-primary">@{linkedProfile.username}</p>
               )}
             </div>
-            <UserCheck className="h-4 w-4 text-green-500 shrink-0" />
+            <UserCheck className="h-4 w-4 text-[var(--gp-ok)] shrink-0" />
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={unlinkProfile}>
               <X className="h-3.5 w-3.5" />
             </Button>

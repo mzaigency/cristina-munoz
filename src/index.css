@@ -1884,19 +1884,46 @@
 }
 .gp-subtab-count { font-size: 11px; font-weight: 800; background: var(--gp-notif-badge-bg); color: var(--gp-notif-badge-fg); padding: 1px 6px; border-radius: 99px; }
 
-/* ── Semantic color tokens (needed by component classes below) ── */
+/* ── Semantic color tokens (needed by component classes below) ──
+   Also exposed on :root so portals/dialogs rendered outside .gp-shell
+   (sheets, modals) resolve the same palette. */
+:root,
 .gp-shell {
   --gp-ok: oklch(0.62 0.15 150);
   --gp-ok-soft: oklch(0.95 0.04 150);
+  --gp-ok-ink: oklch(0.44 0.13 150);
   --gp-warn: oklch(0.72 0.15 65);
   --gp-warn-soft: oklch(0.96 0.05 75);
+  --gp-warn-ink: oklch(0.48 0.13 65);
   --gp-danger: oklch(0.62 0.2 25);
   --gp-danger-soft: oklch(0.96 0.04 25);
+  --gp-danger-ink: oklch(0.5 0.18 25);
   --gp-info: oklch(0.62 0.13 230);
   --gp-info-soft: oklch(0.95 0.04 230);
+  --gp-info-ink: oklch(0.45 0.13 230);
+  --gp-purple-soft: color-mix(in oklab, #99329a, white 90%);
+  --gp-purple-ink: color-mix(in oklab, #99329a, black 22%);
   --gp-line2: oklch(0.955 0.004 265);
   --gp-surface-2: oklch(0.985 0.004 265);
   --gp-shadow: 0 1px 2px rgba(20,22,40,.04), 0 10px 30px -16px rgba(20,22,40,.18);
+}
+/* Fallbacks para portales (dialogs/sheets) fuera de .gp-shell */
+:root {
+  --gp-accent: #22408b;
+  --gp-accent-ink: #1a3270;
+  --gp-accent-soft: color-mix(in oklab, #22408b, white 88%);
+  --gp-accent-softer: color-mix(in oklab, #22408b, white 94%);
+  --gp-purple: #99329a;
+  --gp-surface: #ffffff;
+  --gp-ink: oklch(0.24 0.02 265);
+  --gp-ink2: oklch(0.45 0.02 265);
+  --gp-muted-c: oklch(0.62 0.015 265);
+  --gp-line: oklch(0.925 0.007 265);
+  --gp-chip: oklch(0.968 0.006 265);
+}
+.gp-shell {
+
+
 
   /* Notification badges: centralized tokens; red solid on desktop, subtle accent on mobile */
   --gp-notif-badge-bg: color-mix(in oklab, var(--gp-accent), transparent 88%);

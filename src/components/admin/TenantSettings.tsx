@@ -191,7 +191,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
   return (
     <div className="space-y-5 pb-28">
       {/* Tip card - direct user to visual editor for landing visuals */}
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-purple-500/5 to-transparent p-4 flex items-start gap-3">
+      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-[var(--gp-purple)] to-transparent p-4 flex items-start gap-3">
         <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
           <Sparkles className="h-4 w-4 text-primary" />
         </div>

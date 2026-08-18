@@ -358,7 +358,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                 <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-amber-500" />
+                  <Star className="h-4 w-4 text-[var(--gp-warn)]" />
                   <div>
                     <p className="text-sm font-medium">Destacar en tienda</p>
                     <p className="text-xs text-muted-foreground">Aparecerá primero y en la reserva</p>
