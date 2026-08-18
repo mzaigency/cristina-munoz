@@ -124,6 +124,33 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
     fetchData();
   }, [tenantId]);
 
+  // Tiempo real: refresca cuando otra persona propone, confirma o libera un hueco
+  useEffect(() => {
+    if (!tenantId) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const refresh = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => fetchData(), 400);
+    };
+    const channel = supabase
+      .channel(`waitlist-admin-${tenantId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "waitlist", filter: `tenant_id=eq.${tenantId}` },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `tenant_id=eq.${tenantId}` },
+        refresh,
+      )
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [tenantId]);
+
   const fetchData = async () => {
     try {
       const [waitlistRes, stylistsRes, tenantRes] = await Promise.all([
