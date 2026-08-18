@@ -891,6 +891,31 @@ serve(async (req) => {
             } catch (emailErr) {
               console.error("Error sending confirmation email:", emailErr);
             }
+
+            // Bienvenida a la clienta si es su primera reserva
+            try {
+              const { count } = await supabase
+                .from("bookings")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", bookingData.user_id);
+
+              if ((count ?? 0) <= createdBookings.length) {
+                await supabase.functions.invoke("send-transactional-email", {
+                  body: {
+                    templateName: "client-welcome",
+                    recipientEmail: customer_email,
+                    idempotencyKey: `client-welcome-${bookingData.user_id}`,
+                    templateData: {
+                      customerName: customer_name,
+                      tenantName,
+                      appUrl: "https://glowapp.app",
+                    },
+                  },
+                });
+              }
+            } catch (welcomeErr) {
+              console.error("Error sending client welcome email:", welcomeErr);
+            }
           }
         } catch (userPushError) {
           console.error("Error sending user booking confirmation:", userPushError);

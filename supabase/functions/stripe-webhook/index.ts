@@ -542,9 +542,77 @@ serve(async (req) => {
               "Pago fallido",
               "No hemos podido cobrar tu suscripción. Por favor, actualiza tu método de pago para no perder acceso."
             );
+
+            try {
+              const { data: owner } = await supabase.auth.admin.getUserById(ctx.userId);
+              const ownerEmail = owner?.user?.email;
+              const { data: tenantRow } = await supabase
+                .from("tenants")
+                .select("name, subscription_plan")
+                .eq("id", ctx.tenantId)
+                .maybeSingle();
+              if (ownerEmail) {
+                await supabase.functions.invoke("send-transactional-email", {
+                  body: {
+                    templateName: "subscription-payment-issue",
+                    recipientEmail: ownerEmail,
+                    idempotencyKey: `sub-payment-failed-${invoice.id}`,
+                    templateData: {
+                      ownerName: owner?.user?.user_metadata?.full_name || tenantRow?.name || "Hola",
+                      tenantName: tenantRow?.name || "tu salón",
+                      planName: tenantRow?.subscription_plan || null,
+                      amount: invoice.amount_due ? `${(invoice.amount_due / 100).toFixed(2)} €` : null,
+                      kind: "payment_failed",
+                      billingUrl: "https://glowapp.app/admin?tab=suscripcion",
+                    },
+                  },
+                });
+              }
+            } catch (mailErr) {
+              logStep("payment_failed email error", { error: String(mailErr) });
+            }
           }
         } catch (e) {
           logStep("invoice.payment_failed handler error", { error: String(e) });
+        }
+        break;
+      }
+
+      // ----- Trial about to end: warn the owner by email -----
+      case "customer.subscription.trial_will_end": {
+        const sub = event.data.object as Stripe.Subscription;
+        try {
+          const ctx = await resolveTenantContext(supabase, stripe, sub);
+          if (ctx.tenantId && ctx.userId) {
+            const { data: owner } = await supabase.auth.admin.getUserById(ctx.userId);
+            const ownerEmail = owner?.user?.email;
+            const { data: tenantRow } = await supabase
+              .from("tenants")
+              .select("name, subscription_plan")
+              .eq("id", ctx.tenantId)
+              .maybeSingle();
+            if (ownerEmail) {
+              await supabase.functions.invoke("send-transactional-email", {
+                body: {
+                  templateName: "subscription-payment-issue",
+                  recipientEmail: ownerEmail,
+                  idempotencyKey: `sub-trial-ending-${sub.id}-${sub.trial_end ?? ""}`,
+                  templateData: {
+                    ownerName: owner?.user?.user_metadata?.full_name || tenantRow?.name || "Hola",
+                    tenantName: tenantRow?.name || "tu salón",
+                    planName: tenantRow?.subscription_plan || null,
+                    date: sub.trial_end
+                      ? new Date(sub.trial_end * 1000).toLocaleDateString("es-ES")
+                      : null,
+                    kind: "trial_ending",
+                    billingUrl: "https://glowapp.app/admin?tab=suscripcion",
+                  },
+                },
+              });
+            }
+          }
+        } catch (e) {
+          logStep("trial_will_end handler error", { error: String(e) });
         }
         break;
       }
