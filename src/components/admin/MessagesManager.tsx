@@ -269,6 +269,8 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
               onSelect={setSelectedConversation}
               role="salon"
               showSearch={false}
+              onToggleUnread={handleToggleUnread}
+
             />
           </div>
         </div>
