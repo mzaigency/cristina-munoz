@@ -37,6 +37,7 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
   const [searchUsername, setSearchUsername] = useState('');
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<ProfileRow[]>([]);
+  const [tab, setTab] = useState<'personas' | 'automaticos'>('personas');
 
   const { conversations, loading: loadingConversations, refetch } = useConversations(
     'salon',
@@ -44,6 +45,31 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
   );
   const { messages, loading: loadingMessages, sendMessage, markAsRead } = useMessages(
     selectedConversation?.id || null
+  );
+
+  const humanConversations = conversations.filter((c) => c.has_human_message);
+  const autoConversations = conversations.filter((c) => !c.has_human_message);
+  const visibleConversations = tab === 'personas' ? humanConversations : autoConversations;
+
+  const filterTabs = (
+    <div className="msg-filter-tabs">
+      <button
+        type="button"
+        onClick={() => setTab('personas')}
+        className={`msg-filter-tab${tab === 'personas' ? ' msg-filter-tab-active' : ''}`}
+      >
+        Conversaciones
+        <span className="msg-filter-count">{humanConversations.length}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setTab('automaticos')}
+        className={`msg-filter-tab${tab === 'automaticos' ? ' msg-filter-tab-active' : ''}`}
+      >
+        Automáticos
+        <span className="msg-filter-count">{autoConversations.length}</span>
+      </button>
+    </div>
   );
 
   useEffect(() => {
@@ -262,15 +288,16 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
             </button>
           </header>
           <div className="msg-sidebar">
+            {filterTabs}
             <ConversationList
-              conversations={conversations}
+              conversations={visibleConversations}
               loading={loadingConversations}
               selectedId={null}
               onSelect={setSelectedConversation}
               role="salon"
               showSearch={false}
               onToggleUnread={handleToggleUnread}
-
+              preferHumanPreview={tab === 'personas'}
             />
           </div>
         </div>
@@ -303,14 +330,15 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
             <Plus className="h-4 w-4" />
           </button>
         </header>
+        {filterTabs}
         <ConversationList
-          conversations={conversations}
+          conversations={visibleConversations}
           loading={loadingConversations}
           selectedId={selectedConversation?.id || null}
           onSelect={setSelectedConversation}
           role="salon"
           onToggleUnread={handleToggleUnread}
-
+          preferHumanPreview={tab === 'personas'}
         />
         <div className="msg-sidebar-hint">
           <span>

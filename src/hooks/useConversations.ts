@@ -26,8 +26,30 @@ export interface Conversation {
     content: string;
     sender_type: string;
     created_at: string;
+    message_type?: string;
   };
+  /** true si hay al menos un mensaje escrito por una persona (no automático) */
+  has_human_message?: boolean;
+  /** último mensaje humano (si existe) */
+  last_human_message?: {
+    content: string;
+    sender_type: string;
+    created_at: string;
+  } | null;
 }
+
+export const AUTOMATIC_MESSAGE_TYPES = [
+  "booking_confirmation",
+  "booking_reminder",
+  "booking_cancelled",
+  "booking_cancellation",
+  "review_request",
+  "waitlist_availability",
+  "waitlist_proposal",
+];
+
+export const isAutomaticMessage = (type?: string | null) =>
+  !!type && type !== "text" && type !== "story_reply";
 
 export interface Message {
   id: string;
@@ -113,13 +135,20 @@ export function useConversations(role: "user" | "salon", tenantId?: string) {
 
       // Batch fetch last messages for ALL conversations in one query
       // Using a subquery approach with DISTINCT ON
-      const lastMessagesMap = new Map<string, { content: string; sender_type: string; created_at: string }>();
+      const lastMessagesMap = new Map<
+        string,
+        { content: string; sender_type: string; created_at: string; message_type?: string }
+      >();
+      const lastHumanMessagesMap = new Map<
+        string,
+        { content: string; sender_type: string; created_at: string }
+      >();
 
       if (conversationIds.length > 0) {
         // Fetch the most recent message per conversation
         const { data: allMessages } = await supabase
           .from("direct_messages")
-          .select("conversation_id, content, sender_type, created_at")
+          .select("conversation_id, content, sender_type, created_at, message_type")
           .in("conversation_id", conversationIds)
           .order("created_at", { ascending: false });
 
@@ -130,6 +159,17 @@ export function useConversations(role: "user" | "salon", tenantId?: string) {
             if (!seenConversations.has(msg.conversation_id)) {
               seenConversations.add(msg.conversation_id);
               lastMessagesMap.set(msg.conversation_id, {
+                content: msg.content,
+                sender_type: msg.sender_type,
+                created_at: msg.created_at,
+                message_type: msg.message_type,
+              });
+            }
+            if (
+              !isAutomaticMessage(msg.message_type) &&
+              !lastHumanMessagesMap.has(msg.conversation_id)
+            ) {
+              lastHumanMessagesMap.set(msg.conversation_id, {
                 content: msg.content,
                 sender_type: msg.sender_type,
                 created_at: msg.created_at,
@@ -163,12 +203,15 @@ export function useConversations(role: "user" | "salon", tenantId?: string) {
         const tenant = conv?.tenant?.name ? conv.tenant : publicTenantById?.get(conv.tenant_id);
         const user = role === "salon" ? userProfilesMap.get(conv.user_id) : undefined;
         const last_message = lastMessagesMap.get(conv.id) || null;
+        const last_human_message = lastHumanMessagesMap.get(conv.id) || null;
 
         return {
           ...conv,
           tenant,
           user,
           last_message,
+          last_human_message,
+          has_human_message: !!last_human_message,
         };
       });
 

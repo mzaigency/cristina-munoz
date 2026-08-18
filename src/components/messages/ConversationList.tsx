@@ -15,6 +15,8 @@ interface ConversationListProps {
   role: 'user' | 'salon';
   showSearch?: boolean;
   onToggleUnread?: (conversation: Conversation, markUnread: boolean) => void;
+  /** Muestra como vista previa el último mensaje humano en vez del automático */
+  preferHumanPreview?: boolean;
 }
 
 
@@ -26,6 +28,7 @@ export function ConversationList({
   role,
   showSearch = true,
   onToggleUnread,
+  preferHumanPreview = false,
 
 }: ConversationListProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -141,7 +144,9 @@ export function ConversationList({
       >
         {filteredConversations.length === 0 ? (
           <div className="msg-list-empty">
-            <p className="msg-list-empty-text">Sin resultados para «{searchTerm}»</p>
+            <p className="msg-list-empty-text">
+              {searchTerm ? `Sin resultados para «${searchTerm}»` : 'No hay conversaciones aquí'}
+            </p>
           </div>
         ) : (
           filteredConversations.map((conv, index) => {
@@ -153,8 +158,10 @@ export function ConversationList({
                 : conv.user?.full_name || conv.user?.email || 'Cliente';
             const avatarUrl = role === 'user' ? conv.tenant?.logo_url : conv.user?.avatar_url;
             const isSelected = selectedId === conv.id;
+            const previewMessage =
+              (preferHumanPreview ? conv.last_human_message : null) || conv.last_message;
             const ownLast =
-              conv.last_message?.sender_type === (role === 'user' ? 'user' : 'salon');
+              previewMessage?.sender_type === (role === 'user' ? 'user' : 'salon');
 
             return (
               <div key={conv.id} className="relative group">
@@ -210,10 +217,10 @@ export function ConversationList({
                         hasUnread && 'msg-item-preview-unread'
                       )}
                     >
-                      {conv.last_message ? (
+                      {previewMessage ? (
                         <>
                           {ownLast && <span className="msg-item-prefix">Tú: </span>}
-                          {conv.last_message.content}
+                          {previewMessage.content}
                         </>
                       ) : (
                         <span className="msg-item-prefix">Sin mensajes</span>
