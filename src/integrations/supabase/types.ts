@@ -1306,35 +1306,143 @@ export type Database = {
         }
         Relationships: []
       }
+      review_invites: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          expires_at: string
+          id: string
+          review_id: string | null
+          tenant_id: string
+          token: string
+          transaction_id: string | null
+          used_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          expires_at?: string
+          id?: string
+          review_id?: string | null
+          tenant_id: string
+          token?: string
+          transaction_id?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          expires_at?: string
+          id?: string
+          review_id?: string | null
+          tenant_id?: string
+          token?: string
+          transaction_id?: string | null
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_invites_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings_decrypted"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_invites_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions_decrypted"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           approved: boolean
           comment: string | null
           created_at: string
+          customer_name: string | null
           id: string
+          invite_id: string | null
           rating: number
           tenant_id: string | null
           user_id: string
+          verified: boolean
         }
         Insert: {
           approved?: boolean
           comment?: string | null
           created_at?: string
+          customer_name?: string | null
           id?: string
+          invite_id?: string | null
           rating: number
           tenant_id?: string | null
           user_id: string
+          verified?: boolean
         }
         Update: {
           approved?: boolean
           comment?: string | null
           created_at?: string
+          customer_name?: string | null
           id?: string
+          invite_id?: string | null
           rating?: number
           tenant_id?: string | null
           user_id?: string
+          verified?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "review_invites"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reviews_tenant_id_fkey"
             columns: ["tenant_id"]
