@@ -143,7 +143,7 @@ serve(async (req) => {
     // Get tenant name for the message
     const { data: tenantData } = await supabase
       .from("tenants")
-      .select("name, slug")
+      .select("name, slug, logo_url")
       .eq("id", tenant_id)
       .single();
 
@@ -319,6 +319,39 @@ serve(async (req) => {
             },
             action_url: `/${tenantSlug}`
           });
+        }
+
+        // Email de hueco disponible
+        try {
+          let email: string | null = entry.client_email;
+          if (!email && entry.user_id) {
+            const { data: authUser } = await supabase.auth.admin.getUserById(entry.user_id);
+            email = authUser?.user?.email ?? null;
+          }
+          if (email) {
+            const serviceNames = Array.isArray(entry.services)
+              ? entry.services.map((s: any) => s.name).filter(Boolean).join(", ")
+              : "";
+            await supabase.functions.invoke("send-transactional-email", {
+              body: {
+                templateName: "waitlist-slot-available",
+                recipientEmail: email,
+                idempotencyKey: `waitlist-slot-${entry.id}-${date}-${availableSlotTime}`,
+                templateData: {
+                  customerName: entry.client_name || "Hola",
+                  tenantName,
+                  tenantLogoUrl: (tenantData as any)?.logo_url ?? null,
+                  date: formatDateSpanish(date),
+                  time: availableSlotTime,
+                  services: serviceNames,
+                  acceptUrl: tenantSlug ? `https://glowapp.app/${tenantSlug}` : "https://glowapp.app/mis-citas",
+                },
+              },
+            });
+            console.log("Waitlist email sent to", email);
+          }
+        } catch (mailErr) {
+          console.error("Error sending waitlist email:", mailErr);
         }
 
         // Create notification for admin
