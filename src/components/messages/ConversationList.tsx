@@ -215,10 +215,10 @@ export function ConversationList({
                         hasUnread && 'msg-item-preview-unread'
                       )}
                     >
-                      {conv.last_message ? (
+                      {previewMessage ? (
                         <>
                           {ownLast && <span className="msg-item-prefix">Tú: </span>}
-                          {conv.last_message.content}
+                          {previewMessage.content}
                         </>
                       ) : (
                         <span className="msg-item-prefix">Sin mensajes</span>
