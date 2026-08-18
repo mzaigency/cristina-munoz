@@ -238,6 +238,22 @@ export function ChatWindow({
 
       {/* Body */}
       <div ref={bodyRef} className="msg-thread-body">
+        {role === 'salon' && automaticCount > 0 && (
+          <div className="msg-auto-toggle-wrap">
+            <button
+              type="button"
+              onClick={() => setShowAutomatic((v) => !v)}
+              className="msg-auto-toggle"
+            >
+              <Bell className="h-3.5 w-3.5" />
+              {showAutomatic
+                ? 'Ocultar avisos automáticos'
+                : `Ver ${automaticCount} aviso${automaticCount > 1 ? 's' : ''} automático${
+                    automaticCount > 1 ? 's' : ''
+                  }`}
+            </button>
+          </div>
+        )}
         {loading && messages.length === 0 ? (
           <div className="msg-thread-loading">
             <p className="msg-thread-empty-text">Cargando mensajes…</p>
