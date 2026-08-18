@@ -464,6 +464,8 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
             const servicesText = getServicesText(entry.services);
             const stylistName = getStylistName(entry.preferred_stylist_id);
             const proposedStylistName = getStylistName(entry.proposed_stylist_id);
+            const expiry = entry.status === "proposed" ? getExpiry(entry) : null;
+            const conflict = hasConflict(entry);
 
             return (
               <div
