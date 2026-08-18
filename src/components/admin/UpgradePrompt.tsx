@@ -62,7 +62,7 @@ export const UpgradePrompt = ({
     const list: string[] = [];
     const ms = plan.max_stylists;
     const sv = plan.max_services;
-    list.push(ms && ms >= 999 ? "Estilistas ilimitados": `${ms || 1} estilista${(ms || 1) > 1 ?"s":""}`);
+    list.push(ms && ms >= 999 ? "Estilistas ilimitados" : `${ms || 1} estilista${(ms || 1) > 1 ? "s" : ""}`);
     list.push(sv && sv >= 999 ? "Servicios ilimitados" : `${sv || 15} servicios`);
     if (plan.features) {
       Object.entries(plan.features).forEach(([key, enabled]) => {
@@ -76,7 +76,11 @@ export const UpgradePrompt = ({
     try {
       setLoading(true);
       const { data, error } = await supabase.functions.invoke("upgrade-subscription", {
-        body: { tenantId, planSlug: targetPlan, billingCycle: "monthly"}, }); if (error) throw error; if (data?.url) { window.open(data.url,"_blank");
+        body: { tenantId, planSlug: targetPlan, billingCycle: "monthly" },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
         onOpenChange(false);
       }
     } catch (error) {
@@ -99,7 +103,7 @@ export const UpgradePrompt = ({
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--gp-warn)] to-[var(--gp-warn-ink)] flex items-center justify-center shadow-lg"
+          className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg"
         >
           <Crown className="w-8 h-8 text-white" />
         </motion.div>
@@ -145,8 +149,8 @@ export const UpgradePrompt = ({
               transition={{ delay: index * 0.05 }}
               className="flex items-center gap-2 text-sm"
             >
-              <div className="w-5 h-5 rounded-full bg-[var(--gp-ok-soft)]  flex items-center justify-center flex-shrink-0">
-                <Check className="w-3 h-3 text-[var(--gp-ok-ink)] " />
+              <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
               </div>
               <span className="text-foreground">{feat}</span>
             </motion.div>

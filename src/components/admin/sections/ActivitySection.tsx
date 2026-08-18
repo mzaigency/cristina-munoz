@@ -14,7 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-type ActivityType = "booking"|"review"|"message"|"order"|"client";
+type ActivityType = "booking" | "review" | "message" | "order" | "client";
 
 interface ActivityItem {
   id: string;
@@ -32,35 +32,47 @@ interface ActivitySectionProps {
 }
 
 const FILTERS: { value: ActivityType | "all"; label: string }[] = [
-  { value: "all", label: "Todo"}, { value:"booking", label: "Reservas"}, { value:"review", label: "Reseñas"}, { value:"message", label: "Mensajes"}, { value:"order", label: "Pedidos"}, { value:"client", label: "Clientes"},
-]; const TYPE_META: Record< ActivityType, { icon: typeof Calendar; bg: string; fg: string; ring: string }
-> = { booking: { icon: Calendar, bg:"bg-primary/10",
+  { value: "all", label: "Todo" },
+  { value: "booking", label: "Reservas" },
+  { value: "review", label: "Reseñas" },
+  { value: "message", label: "Mensajes" },
+  { value: "order", label: "Pedidos" },
+  { value: "client", label: "Clientes" },
+];
+
+const TYPE_META: Record<
+  ActivityType,
+  { icon: typeof Calendar; bg: string; fg: string; ring: string }
+> = {
+  booking: {
+    icon: Calendar,
+    bg: "bg-primary/10",
     fg: "text-primary",
     ring: "ring-primary/20",
   },
   review: {
     icon: Star,
-    bg: "bg-[var(--gp-warn-soft)]",
-    fg: "text-[var(--gp-warn-ink)]",
-    ring: "ring-[var(--gp-warn)]",
+    bg: "bg-amber-500/10",
+    fg: "text-amber-600",
+    ring: "ring-amber-500/20",
   },
   message: {
     icon: MessageCircle,
-    bg: "bg-[var(--gp-info-soft)]",
-    fg: "text-[var(--gp-info-ink)]",
-    ring: "ring-[var(--gp-info)]",
+    bg: "bg-blue-500/10",
+    fg: "text-blue-600",
+    ring: "ring-blue-500/20",
   },
   order: {
     icon: ShoppingCart,
-    bg: "bg-[var(--gp-ok-soft)]",
-    fg: "text-[var(--gp-ok-ink)]",
-    ring: "ring-[var(--gp-ok)]",
+    bg: "bg-emerald-500/10",
+    fg: "text-emerald-600",
+    ring: "ring-emerald-500/20",
   },
   client: {
     icon: UserPlus,
-    bg: "bg-[var(--gp-purple-soft)]",
-    fg: "text-[var(--gp-purple-ink)]",
-    ring: "ring-[var(--gp-purple)]",
+    bg: "bg-purple-500/10",
+    fg: "text-purple-600",
+    ring: "ring-purple-500/20",
   },
 };
 
@@ -168,7 +180,10 @@ const ActivitySection = ({ tenantId, tenantSlug, onNavigate }: ActivitySectionPr
             id: `b-${b.id}`,
             type: "booking",
             title:
-              b.status === "cancelled"? `Reserva cancelada · ${b.customer_name}` : `Nueva reserva · ${b.customer_name}`, subtitle: `${services ||"Servicio"} · ${b.Fecha} ${String(b.Hora).slice(0, 5)}`,
+              b.status === "cancelled"
+                ? `Reserva cancelada · ${b.customer_name}`
+                : `Nueva reserva · ${b.customer_name}`,
+            subtitle: `${services || "Servicio"} · ${b.Fecha} ${String(b.Hora).slice(0, 5)}`,
             createdAt: b.created_at as string,
             actionPath: `/admin/${tenantSlug}/inicio/agenda`,
           });
@@ -302,7 +317,8 @@ const ActivitySection = ({ tenantId, tenantSlug, onNavigate }: ActivitySectionPr
             className={cn(
               "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all border",
               filter === f.value
-                ? "bg-primary text-primary-foreground border-primary shadow-sm":"bg-background/60 backdrop-blur-md border-border/60 text-muted-foreground hover:text-foreground",
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-background/60 backdrop-blur-md border-border/60 text-muted-foreground hover:text-foreground",
             )}
           >
             {f.label}
@@ -340,7 +356,11 @@ const ActivitySection = ({ tenantId, tenantSlug, onNavigate }: ActivitySectionPr
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
                   onClick={() => onNavigate(item.actionPath)}
-                  className="w-full text-left flex items-start gap-3 p-3 rounded-2xl bg-background/70 backdrop-blur-xl border border-border/60 shadow-sm hover:shadow-md hover:border-border transition-all active:scale-[0.99]"> <div className={cn("shrink-0 h-10 w-10 rounded-xl flex items-center justify-center ring-1",
+                  className="w-full text-left flex items-start gap-3 p-3 rounded-2xl bg-background/70 backdrop-blur-xl border border-border/60 shadow-sm hover:shadow-md hover:border-border transition-all active:scale-[0.99]"
+                >
+                  <div
+                    className={cn(
+                      "shrink-0 h-10 w-10 rounded-xl flex items-center justify-center ring-1",
                       meta.bg,
                       meta.ring,
                     )}

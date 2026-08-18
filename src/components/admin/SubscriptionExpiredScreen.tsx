@@ -24,13 +24,18 @@ interface SubscriptionExpiredScreenProps {
   currentPlan?: string;
 }
 
-type PlanSlug = "starter"|"pro"|"business";
+type PlanSlug = "starter" | "pro" | "business";
 
 const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
-  starter: { icon: <Zap className="h-6 w-6"/>, color:"text-[var(--gp-info)]", bgColor: "bg-[var(--gp-info-soft)]" },
-  pro: { icon: <Crown className="h-6 w-6"/>, color:"text-[var(--gp-warn)]", bgColor: "bg-[var(--gp-warn-soft)]" },
-  business: { icon: <Sparkles className="h-6 w-6"/>, color:"text-[var(--gp-purple)]", bgColor: "bg-[var(--gp-purple-soft)]"},
-}; export function SubscriptionExpiredScreen({ tenantId, tenantName, currentPlan ="starter" 
+  starter: { icon: <Zap className="h-6 w-6" />, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+  pro: { icon: <Crown className="h-6 w-6" />, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+  business: { icon: <Sparkles className="h-6 w-6" />, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+};
+
+export function SubscriptionExpiredScreen({ 
+  tenantId, 
+  tenantName,
+  currentPlan = "starter" 
 }: SubscriptionExpiredScreenProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -52,7 +57,9 @@ const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col"style={{ paddingTop:"env(safe-area-inset-top)",
+      className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col"
+      style={{ 
+        paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)" 
       }}
     >
@@ -70,8 +77,8 @@ const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor
         <div className="w-full max-w-md space-y-6">
           {/* Warning Icon */}
           <div className="flex justify-center">
-            <div className="p-4 rounded-full bg-[var(--gp-warn-soft)]">
-              <AlertTriangle className="h-12 w-12 text-[var(--gp-warn)]" />
+            <div className="p-4 rounded-full bg-amber-500/10">
+              <AlertTriangle className="h-12 w-12 text-amber-500" />
             </div>
           </div>
 
@@ -84,7 +91,7 @@ const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor
           </div>
 
           {/* What's affected */}
-          <Card className="border-[var(--gp-warn)] bg-[var(--gp-warn-soft)]">
+          <Card className="border-amber-500/30 bg-amber-500/5">
             <CardContent className="p-4">
               <h3 className="font-medium text-sm mb-2">Sin suscripción activa:</h3>
               <ul className="text-sm text-muted-foreground space-y-1">

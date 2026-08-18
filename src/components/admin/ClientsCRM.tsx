@@ -89,7 +89,25 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
       setClients(enriched);
     } catch (error) {
       console.error("Error fetching clients:", error);
-      toast({ title: "Error", description: "No se pudieron cargar los clientes", variant: "destructive"}); } finally { setLoading(false); } }; const filteredAndSorted = useMemo(() => { const now = new Date(); const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); let result = clients.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.phone?.includes(searchQuery) || c.email?.toLowerCase().includes(searchQuery.toLowerCase()) ); // Apply filter switch (activeFilter) { case"VIP":
+      toast({ title: "Error", description: "No se pudieron cargar los clientes", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredAndSorted = useMemo(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    let result = clients.filter(c =>
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.phone?.includes(searchQuery) ||
+      c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Apply filter
+    switch (activeFilter) {
+      case "VIP":
       case "Frecuente":
       case "Nuevo":
         result = result.filter(c => c.tags?.includes(activeFilter));
@@ -146,7 +164,14 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
       fetchClients();
     } catch (error) {
       console.error("Error deleting client:", error);
-      toast({ title: "Error", description: "No se pudo eliminar el cliente", variant: "destructive"}); } }; const formInitialData = editingClient ? { name: editingClient.name, phone: editingClient.phone ||"",
+      toast({ title: "Error", description: "No se pudo eliminar el cliente", variant: "destructive" });
+    }
+  };
+
+  const formInitialData = editingClient
+    ? {
+        name: editingClient.name,
+        phone: editingClient.phone || "",
         email: editingClient.email || "",
         notes: editingClient.notes || "",
         tags: editingClient.tags || [],
@@ -155,7 +180,7 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
     : { name: "", phone: "", email: "", notes: "", tags: [], birthday: "" };
 
   return (
-    <div className="gp-fade"style={{ display:"flex", flexDirection: "column", gap: 20 }}>
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
       <div className="gp-page-h">
         <div>
@@ -184,18 +209,32 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
         <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar por nombre, teléfono o email..."/> </div> {/* Filters & Sort */} <ClientFilters activeFilter={activeFilter} onFilterChange={setActiveFilter} sortBy={sortBy} onSortChange={setSortBy} /> {/* List */} {loading ? ( <div style={{ display:"flex", flexDirection: "column", gap: 8 }}>
+          placeholder="Buscar por nombre, teléfono o email..."
+        />
+      </div>
+
+      {/* Filters & Sort */}
+      <ClientFilters
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+      />
+
+      {/* List */}
+      {loading ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="gp-card"style={{ height: 72, background:"var(--gp-chip)" }} />
+            <div key={i} className="gp-card" style={{ height: 72, background: "var(--gp-chip)" }} />
           ))}
         </div>
       ) : filteredAndSorted.length === 0 ? (
         <div className="gp-card">
           <div className="gp-empty">
             <div className="gp-empty-ic"><Users style={{ width: 24, height: 24 }} /></div>
-            <h4>{searchQuery || activeFilter !== "all"?"Sin resultados":"Sin clientes"}</h4>
+            <h4>{searchQuery || activeFilter !== "all" ? "Sin resultados" : "Sin clientes"}</h4>
             <p>
-              {searchQuery ? "Prueba con otro término": activeFilter !=="all"?"No hay clientes con este filtro":"Añade tu primer cliente para empezar"}
+              {searchQuery ? "Prueba con otro término" : activeFilter !== "all" ? "No hay clientes con este filtro" : "Añade tu primer cliente para empezar"}
             </p>
             {!searchQuery && activeFilter === "all" && (
               <button className="gp-btn primary sm" style={{ marginTop: 12 }} onClick={handleNewClient}>
@@ -263,7 +302,7 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
       {isMobile ? (
         <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
           <SheetContent side="bottom" className="h-auto max-h-[85vh]">
-            <SheetHeader><SheetTitle>{editingClient ? "Editar cliente":"Nuevo cliente"}</SheetTitle></SheetHeader>
+            <SheetHeader><SheetTitle>{editingClient ? "Editar cliente" : "Nuevo cliente"}</SheetTitle></SheetHeader>
             <ClientForm
               tenantId={tenantId}
               editingClient={editingClient}
@@ -276,7 +315,7 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
       ) : (
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>{editingClient ? "Editar cliente":"Nuevo cliente"}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editingClient ? "Editar cliente" : "Nuevo cliente"}</DialogTitle></DialogHeader>
             <ClientForm
               tenantId={tenantId}
               editingClient={editingClient}

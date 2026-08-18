@@ -32,34 +32,82 @@ interface TenantBranding {
 }
 
 const TEMPLATES = [
-  { id: "salon", label: "Tu Salón", hint: "Colores de tu marca"}, { id:"glow", label: "Glowapp", hint: "Azul y púrpura brand"}, { id:"elegant", label: "Elegante", hint: "Crema y dorado"}, { id:"boho", label: "Boho", hint: "Terracota y arena"}, { id:"minimal", label: "Minimalista", hint: "Blanco y negro"}, { id:"dark", label: "Oscuro", hint: "Negro y dorado" },
+  { id: "salon", label: "Tu Salón", hint: "Colores de tu marca" },
+  { id: "glow", label: "Glowapp", hint: "Azul y púrpura brand" },
+  { id: "elegant", label: "Elegante", hint: "Crema y dorado" },
+  { id: "boho", label: "Boho", hint: "Terracota y arena" },
+  { id: "minimal", label: "Minimalista", hint: "Blanco y negro" },
+  { id: "dark", label: "Oscuro", hint: "Negro y dorado" },
 ] as const;
 
 type TemplateId = typeof TEMPLATES[number]["id"];
-type Format = "card"|"a4";
+type Format = "card" | "a4";
 
 const TEMPLATE_FONTS: Record<TemplateId, { heading: string; body: string }> = {
-  salon: { heading: "", body: ""}, glow: { heading:"Inter", body: "Inter"}, elegant: { heading:"Playfair Display", body: "Cormorant Garamond"}, boho: { heading:"DM Serif Display", body: "Karla"}, minimal: { heading:"Inter", body: "Inter"}, dark: { heading:"Bebas Neue", body: "Raleway"},
-}; function hexToRgba(hex: string, alpha: number): string { const r = parseInt(hex.slice(1, 3), 16); const g = parseInt(hex.slice(3, 5), 16); const b = parseInt(hex.slice(5, 7), 16); return `rgba(${r},${g},${b},${alpha})`;
-} function isLightColor(hex: string): boolean { const r = parseInt(hex.slice(1, 3), 16); const g = parseInt(hex.slice(3, 5), 16); const b = parseInt(hex.slice(5, 7), 16); return (r * 299 + g * 587 + b * 114) / 1000 > 128;
-} interface TemplateStyle { bg: string; text: string; sub: string; accent: string; qrBg: string;
-} function getTemplateStyles(tid: TemplateId, pc: string, sc: string): TemplateStyle { switch (tid) { case"salon":
+  salon: { heading: "", body: "" },
+  glow: { heading: "Inter", body: "Inter" },
+  elegant: { heading: "Playfair Display", body: "Cormorant Garamond" },
+  boho: { heading: "DM Serif Display", body: "Karla" },
+  minimal: { heading: "Inter", body: "Inter" },
+  dark: { heading: "Bebas Neue", body: "Raleway" },
+};
+
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function isLightColor(hex: string): boolean {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+}
+
+interface TemplateStyle {
+  bg: string;
+  text: string;
+  sub: string;
+  accent: string;
+  qrBg: string;
+}
+
+function getTemplateStyles(tid: TemplateId, pc: string, sc: string): TemplateStyle {
+  switch (tid) {
+    case "salon":
       return {
         bg: pc,
-        text: isLightColor(pc) ? "#111827":"#FFFFFF",
-        sub: isLightColor(pc) ? "rgba(0,0,0,0.5)":"rgba(255,255,255,0.6)",
+        text: isLightColor(pc) ? "#111827" : "#FFFFFF",
+        sub: isLightColor(pc) ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.6)",
         accent: sc,
         qrBg: "#FFFFFF",
       };
     case "glow":
-      return { bg: "#22408b", text: "#FFFFFF", sub: "rgba(255,255,255,0.65)", accent: "#E0C8F0", qrBg: "#FFFFFF"}; case"elegant":
-      return { bg: "#FAF7F2", text: "#2C1810", sub: "#8B7355", accent: "#B8860B", qrBg: "#FFFFFF"}; case"boho":
-      return { bg: "#E8DCC8", text: "#5D3A2E", sub: "rgba(93,58,46,0.65)", accent: "#C9764D", qrBg: "#FAF1E6"}; case"minimal":
-      return { bg: "#FFFFFF", text: "#111111", sub: "#888888", accent: "#111111", qrBg: "#F5F5F5"}; case"dark":
-      return { bg: "#0F0F0F", text: "#FFFFFF", sub: "rgba(255,255,255,0.55)", accent: "#E5C07B", qrBg: "#FFFFFF"}; }
-} function getTemplateFonts(tid: TemplateId, branding: TenantBranding) { if (tid ==="salon") {
-    return { heading: branding.font_heading || "Inter", body: branding.font_body || "Inter"}; } return TEMPLATE_FONTS[tid];
-} async function loadImage(src: string): Promise<HTMLImageElement | null> { return new Promise((resolve) => { const img = new Image(); img.crossOrigin ="anonymous";
+      return { bg: "#22408b", text: "#FFFFFF", sub: "rgba(255,255,255,0.65)", accent: "#E0C8F0", qrBg: "#FFFFFF" };
+    case "elegant":
+      return { bg: "#FAF7F2", text: "#2C1810", sub: "#8B7355", accent: "#B8860B", qrBg: "#FFFFFF" };
+    case "boho":
+      return { bg: "#E8DCC8", text: "#5D3A2E", sub: "rgba(93,58,46,0.65)", accent: "#C9764D", qrBg: "#FAF1E6" };
+    case "minimal":
+      return { bg: "#FFFFFF", text: "#111111", sub: "#888888", accent: "#111111", qrBg: "#F5F5F5" };
+    case "dark":
+      return { bg: "#0F0F0F", text: "#FFFFFF", sub: "rgba(255,255,255,0.55)", accent: "#E5C07B", qrBg: "#FFFFFF" };
+  }
+}
+
+function getTemplateFonts(tid: TemplateId, branding: TenantBranding) {
+  if (tid === "salon") {
+    return { heading: branding.font_heading || "Inter", body: branding.font_body || "Inter" };
+  }
+  return TEMPLATE_FONTS[tid];
+}
+
+async function loadImage(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
     img.src = src;
@@ -130,7 +178,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
               await Promise.all(
                 urlMatches.slice(0, 2).map(async (match) => {
                   const fontUrl = match.slice(4, -1);
-                  const weight = css.includes("font-weight: 700") ? "700":"400";
+                  const weight = css.includes("font-weight: 700") ? "700" : "400";
                   const face = new FontFace(fontName, `url(${fontUrl})`, { weight });
                   const loaded = await face.load();
                   document.fonts.add(loaded);
@@ -158,7 +206,12 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
 
   // ── Generate QR ──
   useEffect(() => {
-    const qrSize = format === "a4"? 1400 : 400; QRCode.toDataURL(bookingUrl, { width: qrSize, margin: 2, color: { dark:"#000000", light: "#FFFFFF"}, errorCorrectionLevel:"H",
+    const qrSize = format === "a4" ? 1400 : 400;
+    QRCode.toDataURL(bookingUrl, {
+      width: qrSize,
+      margin: 2,
+      color: { dark: "#000000", light: "#FFFFFF" },
+      errorCorrectionLevel: "H",
     }).then(setQrDataUrl);
   }, [bookingUrl, format]);
 
@@ -322,7 +375,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
 
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-        ctx.fillStyle = template === "minimal"?"#888888":"#666666";
+        ctx.fillStyle = template === "minimal" ? "#888888" : "#666666";
         ctx.font = `20px "${fonts.body}", sans-serif`;
         ctx.textAlign = "center";
         ctx.fillText("Escanea para reservar", qrX + qrSize / 2, qrY + qrSize + 36);
@@ -498,7 +551,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     }
 
     const footerY = h - 240;
-    ctx.strokeStyle = hexToRgba(s.text === "#FFFFFF"?"#FFFFFF":"#000000", 0.1);
+    ctx.strokeStyle = hexToRgba(s.text === "#FFFFFF" ? "#FFFFFF" : "#000000", 0.1);
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(centerX - 400, footerY);
@@ -578,13 +631,13 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     if (!canvas) return;
     await renderToCanvas();
     const link = document.createElement("a");
-    const prefix = format === "a4"?"cartel-A4":"tarjeta";
+    const prefix = format === "a4" ? "cartel-A4" : "tarjeta";
     link.download = `${prefix}-${tenantSlug}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
     toast({
       title: "Descargado",
-      description: format === "a4"?"Cartel A4 listo para imprimir (300 DPI)":"Tarjeta guardada en alta resolución",
+      description: format === "a4" ? "Cartel A4 listo para imprimir (300 DPI)" : "Tarjeta guardada en alta resolución",
     });
   };
 
@@ -594,9 +647,25 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     await renderToCanvas();
     canvas.toBlob(async (blob) => {
       if (!blob) return;
-      const filename = `${format === "a4"?"cartel":"tarjeta"}-${tenantSlug}.png`;
+      const filename = `${format === "a4" ? "cartel" : "tarjeta"}-${tenantSlug}.png`;
       if (navigator.share) {
-        const file = new File([blob], filename, { type: "image/png"}); try { await navigator.share({ files: [file], title: branding.name, text: tagline }); } catch { /* user cancelled */ } } else { await navigator.clipboard.writeText(bookingUrl); toast({ title:"Link copiado", description: "El enlace de reserva se copió al portapapeles"}); } }); }; // ── Template thumbnail bg colors (for visual selector) ── const templatePreviewBgs: Record<TemplateId, string> = { salon: pc, glow:"linear-gradient(135deg, #22408b, #99329a)",
+        const file = new File([blob], filename, { type: "image/png" });
+        try {
+          await navigator.share({ files: [file], title: branding.name, text: tagline });
+        } catch {
+          /* user cancelled */
+        }
+      } else {
+        await navigator.clipboard.writeText(bookingUrl);
+        toast({ title: "Link copiado", description: "El enlace de reserva se copió al portapapeles" });
+      }
+    });
+  };
+
+  // ── Template thumbnail bg colors (for visual selector) ──
+  const templatePreviewBgs: Record<TemplateId, string> = {
+    salon: pc,
+    glow: "linear-gradient(135deg, #22408b, #99329a)",
     elegant: "#FAF7F2",
     boho: "#E8DCC8",
     minimal: "#FFFFFF",
@@ -640,7 +709,8 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
                 )}
                 <canvas
                   ref={canvasRef}
-                  className="qr-gen-canvas"style={{ aspectRatio: format ==="a4"?"210/297":"3/2" }}
+                  className="qr-gen-canvas"
+                  style={{ aspectRatio: format === "a4" ? "210/297" : "3/2" }}
                 />
               </div>
             </div>
@@ -674,7 +744,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
             <div className="qr-gen-seg">
               <button
                 onClick={() => setFormat("card")}
-                className={cn("qr-gen-seg-btn", format === "card"&&"on")}
+                className={cn("qr-gen-seg-btn", format === "card" && "on")}
                 type="button"
               >
                 <ImageIcon className="h-4 w-4" />
@@ -685,7 +755,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
               </button>
               <button
                 onClick={() => setFormat("a4")}
-                className={cn("qr-gen-seg-btn", format === "a4"&&"on")}
+                className={cn("qr-gen-seg-btn", format === "a4" && "on")}
                 type="button"
               >
                 <FileText className="h-4 w-4" />
@@ -723,7 +793,8 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
                         style={{ background: accentColor }}
                       />
                       <span
-                        className="qr-gen-tpl-dots"style={{ color: isLight ?"rgba(0,0,0,.25)":"rgba(255,255,255,.4)" }}
+                        className="qr-gen-tpl-dots"
+                        style={{ color: isLight ? "rgba(0,0,0,.25)" : "rgba(255,255,255,.4)" }}
                       >
                         ▪ ▪ ▪
                       </span>
@@ -764,7 +835,8 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
             </div>
             <Button
               size="sm"
-              variant="ghost"onClick={() => { navigator.clipboard.writeText(bookingUrl); toast({ title:"Copiado" }); }}
+              variant="ghost"
+              onClick={() => { navigator.clipboard.writeText(bookingUrl); toast({ title: "Copiado" }); }}
               className="h-8 px-2.5"
             >
               <Copy className="h-3.5 w-3.5 mr-1" />

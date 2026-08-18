@@ -6,7 +6,7 @@ interface NotifBadgeProps {
   /** If true, renders a small dot only (no number) when count > 0. Used for top-level tabs. */
   dot?: boolean;
   /** Absolute positioning preset. */
-  position?: "top-right"|"inline";
+  position?: "top-right" | "inline";
   className?: string;
 }
 
@@ -19,12 +19,17 @@ export function NotifBadge({ count = 0, dot = false, position = "top-right", cla
   if (!count || count <= 0) return null;
 
   const positionClasses =
-    position === "top-right"?"absolute -top-1 -right-1":"relative";
+    position === "top-right"
+      ? "absolute -top-1 -right-1"
+      : "relative";
 
   if (dot) {
     return (
       <span
-        aria-hidden="true"className={cn( positionClasses,"flex h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background shadow-sm",
+        aria-hidden="true"
+        className={cn(
+          positionClasses,
+          "flex h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background shadow-sm",
           "before:absolute before:inset-0 before:rounded-full before:bg-destructive before:animate-ping before:opacity-60",
           className,
         )}
@@ -32,7 +37,14 @@ export function NotifBadge({ count = 0, dot = false, position = "top-right", cla
     );
   }
 
-  const display = count > 99 ? "99+": String(count); return ( <span aria-label={`${count} pendientes`} className={cn( positionClasses,"inline-flex h-5 min-w-[20px] items-center justify-center rounded-full",
+  const display = count > 99 ? "99+" : String(count);
+
+  return (
+    <span
+      aria-label={`${count} pendientes`}
+      className={cn(
+        positionClasses,
+        "inline-flex h-5 min-w-[20px] items-center justify-center rounded-full",
         "bg-destructive text-destructive-foreground font-bold text-[11px] leading-none px-1.5",
         "ring-2 ring-background shadow-sm",
         className,

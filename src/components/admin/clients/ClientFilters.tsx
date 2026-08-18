@@ -11,7 +11,12 @@ interface ClientFiltersProps {
 }
 
 const FILTERS: { value: FilterOption; label: string }[] = [
-  { value: "all", label: "Todos"}, { value:"VIP", label: "VIP"}, { value:"Frecuente", label: "Frecuente"}, { value:"Nuevo", label: "Nuevo"}, { value:"inactive", label: "Inactivos +30d"}, { value:"top_spenders", label: "Top gastadores" },
+  { value: "all", label: "Todos" },
+  { value: "VIP", label: "VIP" },
+  { value: "Frecuente", label: "Frecuente" },
+  { value: "Nuevo", label: "Nuevo" },
+  { value: "inactive", label: "Inactivos +30d" },
+  { value: "top_spenders", label: "Top gastadores" },
 ];
 
 export function ClientFilters({ activeFilter, onFilterChange, sortBy, onSortChange }: ClientFiltersProps) {
@@ -22,9 +27,12 @@ export function ClientFilters({ activeFilter, onFilterChange, sortBy, onSortChan
           {FILTERS.map(f => (
             <button
               key={f.value}
-              onClick={() => onFilterChange(f.value === activeFilter ? "all": f.value)} className={cn("shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
+              onClick={() => onFilterChange(f.value === activeFilter ? "all" : f.value)}
+              className={cn(
+                "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
                 activeFilter === f.value
-                  ? "bg-primary text-primary-foreground border-primary shadow-sm":"bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
               )}
             >
               {f.label}

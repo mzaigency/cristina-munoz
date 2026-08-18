@@ -200,7 +200,11 @@ export const ImageCropper = ({
           {/* Canvas preview */}
           <div
             ref={containerRef}
-            className="relative mx-auto overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted"style={{ width: 300, height: aspectRatio === 1 ? 300 : 300 / aspectRatio, cursor: isDragging ?"grabbing":"grab"
+            className="relative mx-auto overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted"
+            style={{ 
+              width: 300, 
+              height: aspectRatio === 1 ? 300 : 300 / aspectRatio,
+              cursor: isDragging ? "grabbing" : "grab"
             }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}

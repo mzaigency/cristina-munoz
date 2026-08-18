@@ -278,9 +278,13 @@ export function WhatsAppKit({ tenantSlug, tenantName }: WhatsAppKitProps) {
           return (
             <button
               key={cat.id}
-              type="button"onClick={() => setActiveCategory(cat.id)} className={cn("flex flex-shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+              type="button"
+              onClick={() => setActiveCategory(cat.id)}
+              className={cn(
+                "flex flex-shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                 isActive
-                  ? "border-primary bg-primary text-primary-foreground":"border-border bg-background text-muted-foreground hover:text-foreground"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background text-muted-foreground hover:text-foreground"
               )}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -315,7 +319,8 @@ export function WhatsAppKit({ tenantSlug, tenantName }: WhatsAppKitProps) {
               />
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button
-                  size="sm"variant={copied ?"secondary":"default"}
+                  size="sm"
+                  variant={copied ? "secondary" : "default"}
                   onClick={() => handleCopy(tpl)}
                   className="h-9 gap-1.5 rounded-lg"
                 >

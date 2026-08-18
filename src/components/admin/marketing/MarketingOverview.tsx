@@ -227,7 +227,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
           onClick={() => onNavigate("posts")}
         />
         <KpiTile
-          label="Valoración media"value={stats.avgRating ? stats.avgRating.toFixed(1) :"—"}
+          label="Valoración media"
+          value={stats.avgRating ? stats.avgRating.toFixed(1) : "—"}
           sub={`${stats.reviewsCount} reseñas${stats.pendingReviews ? ` · ${stats.pendingReviews} pend.` : ""}`}
           icon={<Star />}
           tone="warn"
@@ -357,8 +358,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
             <Sparkles style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
           </div>
           <div className="gp-mkt-quick">
-            <div className="gp-mkt-quick-btn"style={{ cursor:"default" }}>
-              <div className="gp-mkt-quick-ic"style={{ background:"var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
                 <Eye />
               </div>
               <div>
@@ -366,8 +367,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
                 <span>Impresiones</span>
               </div>
             </div>
-            <div className="gp-mkt-quick-btn"style={{ cursor:"default" }}>
-              <div className="gp-mkt-quick-ic"style={{ background:"var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
+            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
                 <MousePointerClick />
               </div>
               <div>
@@ -375,8 +376,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
                 <span>Clicks</span>
               </div>
             </div>
-            <div className="gp-mkt-quick-btn"style={{ cursor:"default" }}>
-              <div className="gp-mkt-quick-ic"style={{ background:"var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
+            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
                 <TrendingUp />
               </div>
               <div>
@@ -384,8 +385,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
                 <span>CTR</span>
               </div>
             </div>
-            <div className="gp-mkt-quick-btn"style={{ cursor:"default" }}>
-              <div className="gp-mkt-quick-ic"style={{ background:"color-mix(in oklab, var(--gp-mkt-rose), white 80%)", color: "var(--gp-mkt-rose)" }}>
+            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-mkt-rose), white 80%)", color: "var(--gp-mkt-rose)" }}>
                 <Heart />
               </div>
               <div>
@@ -407,7 +408,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
         </div>
         <div className="gp-mkt-quick">
           <button className="gp-mkt-quick-btn" onClick={() => onNavigate("posts")}>
-            <div className="gp-mkt-quick-ic"style={{ background:"color-mix(in oklab, var(--gp-brand), white 80%)", color: "var(--gp-brand)" }}>
+            <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-brand), white 80%)", color: "var(--gp-brand)" }}>
               <ImagePlus />
             </div>
             <div>
@@ -416,7 +417,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
             </div>
           </button>
           <button className="gp-mkt-quick-btn" onClick={() => onNavigate("promos")}>
-            <div className="gp-mkt-quick-ic"style={{ background:"color-mix(in oklab, var(--gp-accent), white 80%)", color: "var(--gp-accent)" }}>
+            <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-accent), white 80%)", color: "var(--gp-accent)" }}>
               <Ticket />
             </div>
             <div>
@@ -425,7 +426,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
             </div>
           </button>
           <button className="gp-mkt-quick-btn" onClick={() => onNavigate("difusion")}>
-            <div className="gp-mkt-quick-ic"style={{ background:"color-mix(in oklab, var(--gp-ok), white 80%)", color: "var(--gp-ok)" }}>
+            <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-ok), white 80%)", color: "var(--gp-ok)" }}>
               <Users />
             </div>
             <div>
@@ -434,8 +435,28 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
             </div>
           </button>
           <button className="gp-mkt-quick-btn" onClick={() => onNavigate("qr")}>
-            <div className="gp-mkt-quick-ic"style={{ background:"color-mix(in oklab, var(--gp-warn), white 80%)", color: "var(--gp-warn)"}}> <TrendingUp /> </div> <div> <strong>Tarjetas QR</strong> <span>Imprime y reparte</span> </div> </button> </div> </section> <QrAnalytics tenantId={tenantId} /> </div> );
-} interface KpiTileProps { label: string; value: number | string; sub?: string; icon: React.ReactNode; tone:"brand"|"accent"|"warn"|"rose";
+            <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-warn), white 80%)", color: "var(--gp-warn)" }}>
+              <TrendingUp />
+            </div>
+            <div>
+              <strong>Tarjetas QR</strong>
+              <span>Imprime y reparte</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <QrAnalytics tenantId={tenantId} />
+    </div>
+  );
+}
+
+interface KpiTileProps {
+  label: string;
+  value: number | string;
+  sub?: string;
+  icon: React.ReactNode;
+  tone: "brand" | "accent" | "warn" | "rose";
   onClick?: () => void;
 }
 

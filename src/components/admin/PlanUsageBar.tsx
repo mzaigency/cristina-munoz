@@ -27,14 +27,14 @@ export const PlanUsageBar = ({
   const getBarColor = () => {
     if (isUnlimited) return "bg-primary";
     if (isAtLimit) return "bg-destructive";
-    if (isNearLimit) return "bg-[var(--gp-warn)]";
+    if (isNearLimit) return "bg-amber-500";
     return "bg-primary";
   };
 
   const getTextColor = () => {
     if (isUnlimited) return "text-primary";
     if (isAtLimit) return "text-destructive";
-    if (isNearLimit) return "text-[var(--gp-warn-ink)] ";
+    if (isNearLimit) return "text-amber-600 dark:text-amber-400";
     return "text-muted-foreground";
   };
 
@@ -62,7 +62,8 @@ export const PlanUsageBar = ({
       <div className="h-2 bg-muted rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
-          animate={{ width: isUnlimited ? "30%": `${percentage}%` }} transition={{ duration: 0.5, ease:"easeOut" }}
+          animate={{ width: isUnlimited ? "30%" : `${percentage}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           className={cn("h-full rounded-full", getBarColor())}
         />
       </div>

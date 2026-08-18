@@ -14,7 +14,7 @@ interface ClientsSectionProps {
   hideTabs?: boolean;
 }
 
-type ClientsTab = "directory"|"messages";
+type ClientsTab = "directory" | "messages";
 
 /**
  * Clientes section. Reviews moved to Marketing › Reseñas in the new IA;
@@ -22,7 +22,8 @@ type ClientsTab = "directory"|"messages";
  */
 const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange, hideTabs }: ClientsSectionProps) => {
   const [internalTab, setInternalTab] = useState<ClientsTab>("directory");
-  const slugToId: Record<string, ClientsTab> = { directorio: "directory", mensajes: "messages"}; const idToSlug: Record<ClientsTab, string> = { directory:"directorio", messages: "mensajes" };
+  const slugToId: Record<string, ClientsTab> = { directorio: "directory", mensajes: "messages" };
+  const idToSlug: Record<ClientsTab, string> = { directory: "directorio", messages: "mensajes" };
   const activeTab: ClientsTab = (subTab && slugToId[subTab]) || internalTab;
   const setActiveTab = (t: ClientsTab) => {
     if (onSubTabChange) onSubTabChange(idToSlug[t]);
@@ -51,8 +52,8 @@ const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange, hid
   }, [tenantId]);
 
   const tabs = [
-    { id: "directory"as ClientsTab, label:"Directorio", icon: UserCircle, badge: 0 },
-    { id: "messages"as ClientsTab, label:"Mensajes", icon: MessageCircle, badge: unreadMessages },
+    { id: "directory" as ClientsTab, label: "Directorio", icon: UserCircle, badge: 0 },
+    { id: "messages" as ClientsTab, label: "Mensajes", icon: MessageCircle, badge: unreadMessages },
   ];
 
   return (
@@ -71,7 +72,9 @@ const ClientsSection = ({ tenantId, initialClientId, subTab, onSubTabChange, hid
                 {tab.badge > 0 && activeTab !== tab.id && (
                   <Badge
                     variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center text-xs px-1.5"> {tab.badge > 99 ?"99+" : tab.badge}
+                    className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center text-xs px-1.5"
+                  >
+                    {tab.badge > 99 ? "99+" : tab.badge}
                   </Badge>
                 )}
               </TabsTrigger>

@@ -61,7 +61,12 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         transaction_count: summary.transactionCount,
         closed_at: new Date().toISOString(),
         closed_by: user.id,
-      }, { onConflict: "date"}); if (error) throw error; toast({ title:"Caja cerrada"}); onRefresh(); } catch (error: any) { toast({ title:"Error", description: error.message, variant: "destructive" });
+      }, { onConflict: "date" });
+      if (error) throw error;
+      toast({ title: "Caja cerrada" });
+      onRefresh();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsClosing(false);
       setShowCloseDialog(false);
@@ -73,7 +78,10 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
       setIsReopening(true);
       const { error } = await supabase.from("cash_register").update({ closed_at: null, closed_by: null }).eq("date", summary.date);
       if (error) throw error;
-      toast({ title: "Caja reabierta"}); onRefresh(); } catch (error: any) { toast({ title:"Error", description: error.message, variant: "destructive" });
+      toast({ title: "Caja reabierta" });
+      onRefresh();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsReopening(false);
       setShowReopenDialog(false);
@@ -82,7 +90,9 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
 
   return (
     <>
-      <div className="gp-page-h"style={{ marginBottom: 0 }}> <div> <h2>Caja · {format(new Date(summary.date),"d MMM", { locale: es })}</h2>
+      <div className="gp-page-h" style={{ marginBottom: 0 }}>
+        <div>
+          <h2>Caja · {format(new Date(summary.date), "d MMM", { locale: es })}</h2>
           <p>{summary.transactionCount} transacciones</p>
         </div>
         <div className="gp-page-actions">
@@ -108,7 +118,7 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
       <div className="gp-kpis">
         <div className="gp-kpi">
           <div className="gp-kpi-top">
-            <span className="gp-kpi-ic"style={{ background:"var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
               <Banknote style={{ width: 16, height: 16 }} />
             </span>
           </div>
@@ -117,7 +127,7 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         </div>
         <div className="gp-kpi">
           <div className="gp-kpi-top">
-            <span className="gp-kpi-ic"style={{ background:"var(--gp-info-soft)", color: "var(--gp-info)" }}>
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-info-soft)", color: "var(--gp-info)" }}>
               <CreditCard style={{ width: 16, height: 16 }} />
             </span>
           </div>
@@ -126,7 +136,7 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         </div>
         <div className="gp-kpi">
           <div className="gp-kpi-top">
-            <span className="gp-kpi-ic"style={{ background:"var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
               <TrendingUp style={{ width: 16, height: 16 }} />
             </span>
           </div>
@@ -135,7 +145,7 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         </div>
         <div className="gp-kpi">
           <div className="gp-kpi-top">
-            <span className="gp-kpi-ic"style={{ background:"var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
+            <span className="gp-kpi-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
               <Receipt style={{ width: 16, height: 16 }} />
             </span>
           </div>
@@ -158,7 +168,7 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
                   <span>Tarjeta</span><span className="gp-mono">{fmt(summary.cardTotal)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 800, borderTop: "1px solid var(--gp-line2)", paddingTop: 8 }}>
-                  <span>Total</span><span className="gp-mono"style={{ color:"var(--gp-accent)" }}>{fmt(summary.totalSales)}</span>
+                  <span>Total</span><span className="gp-mono" style={{ color: "var(--gp-accent)" }}>{fmt(summary.totalSales)}</span>
                 </div>
               </div>
             </AlertDialogDescription>

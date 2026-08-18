@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { cn } from "@/lib/utils";
 
-type Mode = "bookings"|"services";
+type Mode = "bookings" | "services";
 
 interface BookingRow {
   date: string | null;
@@ -62,7 +62,7 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
   const [mode, setMode] = useState<Mode | null>(defaultMode ?? null);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
-  const [step, setStep] = useState<"upload"|"processing"|"review"|"done">("upload");
+  const [step, setStep] = useState<"upload" | "processing" | "review" | "done">("upload");
   const [rows, setRows] = useState<Row[]>([]);
   const [result, setResult] = useState<{ created: number; clients?: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -103,7 +103,9 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
       if (extracted.length === 0) {
         toast({
           title: "No detectamos datos",
-          description: data?.reason === "not_an_agenda"|| data?.reason ==="not_a_service_list"?"La IA no reconoció una agenda/carta en las fotos. Prueba con fotos más claras.":"Inténtalo con fotos con mejor luz y enfoque.",
+          description: data?.reason === "not_an_agenda" || data?.reason === "not_a_service_list"
+            ? "La IA no reconoció una agenda/carta en las fotos. Prueba con fotos más claras."
+            : "Inténtalo con fotos con mejor luz y enfoque.",
           variant: "destructive",
         });
         setStep("upload");
@@ -127,7 +129,7 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
     const toSend = rows.filter((r) => !r._discarded).map(({ _id, _discarded, ...rest }) => rest);
     setStep("processing");
     try {
-      const fnName = mode === "bookings"?"commit-imported-bookings":"commit-imported-services";
+      const fnName = mode === "bookings" ? "commit-imported-bookings" : "commit-imported-services";
       const { data, error } = await supabase.functions.invoke(fnName, {
         body: { tenant_id: tenantId, rows: toSend },
       });
@@ -139,8 +141,12 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
       setStep("done");
       toast({
         title: "¡Importación completada!",
-        description: `${created} ${mode === "bookings"?"citas":"servicios"} creados${
-          data.created_clients ? ` y ${data.created_clients} clientes` : ""}.`, }); } catch (e: any) { toast({ title:"Error guardando", description: e?.message, variant: "destructive" });
+        description: `${created} ${mode === "bookings" ? "citas" : "servicios"} creados${
+          data.created_clients ? ` y ${data.created_clients} clientes` : ""
+        }.`,
+      });
+    } catch (e: any) {
+      toast({ title: "Error guardando", description: e?.message, variant: "destructive" });
       setStep("review");
     }
   };
@@ -204,7 +210,7 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
               <ul className="space-y-1 mb-3">
                 {guidelines.map((g) => (
                   <li key={g} className="flex items-center gap-2">
-                    <Check className="h-3.5 w-3.5 text-[var(--gp-ok-ink)] flex-shrink-0" /> {g}
+                    <Check className="h-3.5 w-3.5 text-green-600 flex-shrink-0" /> {g}
                   </li>
                 ))}
               </ul>
@@ -239,7 +245,10 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
             disabled={files.length >= MAX_IMAGES}
             className="h-12"
           >
-            <ImageIcon className="h-4 w-4 mr-2"/> Galería </Button> <label className={cn("inline-flex items-center justify-center gap-2 h-12 rounded-md border border-input bg-background hover:bg-accent text-sm font-medium",
+            <ImageIcon className="h-4 w-4 mr-2" /> Galería
+          </Button>
+          <label className={cn(
+            "inline-flex items-center justify-center gap-2 h-12 rounded-md border border-input bg-background hover:bg-accent text-sm font-medium",
             files.length >= MAX_IMAGES && "opacity-50 pointer-events-none"
           )}>
             <Camera className="h-4 w-4" /> Cámara
@@ -263,19 +272,21 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
         />
 
         <Button onClick={startProcessing} disabled={files.length === 0} className="w-full h-12 text-base">
-          <Sparkles className="h-4 w-4 mr-2"/> Procesar {files.length > 0 ? `${files.length} foto${files.length > 1 ?"s":""}` : "fotos"}
+          <Sparkles className="h-4 w-4 mr-2" />
+          Procesar {files.length > 0 ? `${files.length} foto${files.length > 1 ? "s" : ""}` : "fotos"}
         </Button>
 
         {isBusiness && (
-          <Card className="p-4 bg-gradient-to-br from-[var(--gp-warn-soft)] to-[var(--gp-warn-soft)] border-[var(--gp-warn)]">
+          <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-300">
             <div className="flex items-start gap-3">
-              <Crown className="h-5 w-5 text-[var(--gp-warn-ink)] flex-shrink-0 mt-0.5" />
+              <Crown className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-semibold text-sm mb-1">Servicio Guante Blanco (gratis con tu plan Business)</p>
                 <p className="text-xs text-muted-foreground mb-3">
                   ¿Prefieres que lo hagamos por ti? Sube las fotos y nuestro equipo migra todo manualmente en 24h.
                 </p>
-                <Button size="sm" variant="outline"onClick={() => { toast({ title:"Función próximamente", description: "Contacta con soporte por ahora." });
+                <Button size="sm" variant="outline" onClick={() => {
+                  toast({ title: "Función próximamente", description: "Contacta con soporte por ahora." });
                 }}>
                   Solicitar
                 </Button>
@@ -304,12 +315,12 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
   if (step === "done" && result) {
     return (
       <Card className="p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--gp-ok-soft)] flex items-center justify-center">
-          <Check className="h-8 w-8 text-[var(--gp-ok-ink)]" />
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+          <Check className="h-8 w-8 text-green-600" />
         </div>
         <h3 className="text-xl font-bold mb-2">¡Listo!</h3>
         <p className="text-muted-foreground mb-6">
-          Hemos creado <strong>{result.created}</strong> {mode === "bookings"?"citas":"servicios"}
+          Hemos creado <strong>{result.created}</strong> {mode === "bookings" ? "citas" : "servicios"}
           {result.clients ? <> y <strong>{result.clients}</strong> clientes nuevos</> : null}.
         </p>
         <div className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -330,7 +341,7 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold">Revisa antes de guardar</h3>
-        <Badge variant="secondary">{active.length} {mode === "bookings"?"citas":"servicios"}</Badge>
+        <Badge variant="secondary">{active.length} {mode === "bookings" ? "citas" : "servicios"}</Badge>
       </div>
       <p className="text-xs text-muted-foreground">
         Edita lo que necesites. Los campos vacíos se quedan en blanco — la IA no inventa datos.
@@ -348,17 +359,17 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
               className={cn(
                 "p-3 transition-opacity",
                 r._discarded && "opacity-40",
-                lowConf && !r._discarded && "border-[var(--gp-warn)] bg-[var(--gp-warn-soft)]",
+                lowConf && !r._discarded && "border-amber-400 bg-amber-50/30",
               )}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-1.5">
                   {lowConf ? (
-                    <Badge variant="outline" className="text-[10px] border-[var(--gp-warn)] text-[var(--gp-warn-ink)]">
+                    <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-700">
                       <AlertTriangle className="h-3 w-3 mr-1" /> Revisar
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-[10px] border-[var(--gp-ok)] text-[var(--gp-ok-ink)]">
+                    <Badge variant="outline" className="text-[10px] border-green-500 text-green-700">
                       <Check className="h-3 w-3 mr-1" /> OK
                     </Badge>
                   )}
@@ -367,24 +378,26 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
                   size="sm"
                   variant="ghost"
                   onClick={() => updateRow(r._id, { _discarded: !r._discarded } as any)}
-                  className="h-7 px-2 text-xs"> {r._discarded ?"Recuperar":"Descartar"}
+                  className="h-7 px-2 text-xs"
+                >
+                  {r._discarded ? "Recuperar" : "Descartar"}
                 </Button>
               </div>
 
               {isBooking ? (
                 <div className="grid grid-cols-2 gap-2">
-                  <Input type="date"value={b.date ??""} onChange={(e) => updateRow(r._id, { date: e.target.value || null } as any)} className="h-8 text-xs" />
-                  <Input type="time"value={b.time ??""} onChange={(e) => updateRow(r._id, { time: e.target.value || null } as any)} className="h-8 text-xs" />
-                  <Input placeholder="Cliente"value={b.customer_name ??""} onChange={(e) => updateRow(r._id, { customer_name: e.target.value || null } as any)} className="h-8 text-xs col-span-2" />
-                  <Input placeholder="Teléfono"value={b.customer_phone ??""} onChange={(e) => updateRow(r._id, { customer_phone: e.target.value || null } as any)} className="h-8 text-xs" />
-                  <Input placeholder="Servicio"value={b.service_name ??""} onChange={(e) => updateRow(r._id, { service_name: e.target.value || null } as any)} className="h-8 text-xs" />
+                  <Input type="date" value={b.date ?? ""} onChange={(e) => updateRow(r._id, { date: e.target.value || null } as any)} className="h-8 text-xs" />
+                  <Input type="time" value={b.time ?? ""} onChange={(e) => updateRow(r._id, { time: e.target.value || null } as any)} className="h-8 text-xs" />
+                  <Input placeholder="Cliente" value={b.customer_name ?? ""} onChange={(e) => updateRow(r._id, { customer_name: e.target.value || null } as any)} className="h-8 text-xs col-span-2" />
+                  <Input placeholder="Teléfono" value={b.customer_phone ?? ""} onChange={(e) => updateRow(r._id, { customer_phone: e.target.value || null } as any)} className="h-8 text-xs" />
+                  <Input placeholder="Servicio" value={b.service_name ?? ""} onChange={(e) => updateRow(r._id, { service_name: e.target.value || null } as any)} className="h-8 text-xs" />
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  <Input placeholder="Servicio"value={s.name ??""} onChange={(e) => updateRow(r._id, { name: e.target.value } as any)} className="h-8 text-xs col-span-2" />
-                  <Input type="number" placeholder="Precio €"value={s.price ??""} onChange={(e) => updateRow(r._id, { price: e.target.value === "" ? null : Number(e.target.value) } as any)} className="h-8 text-xs" />
-                  <Input type="number" placeholder="Duración min"value={s.duration_minutes ??""} onChange={(e) => updateRow(r._id, { duration_minutes: e.target.value === "" ? null : Number(e.target.value) } as any)} className="h-8 text-xs" />
-                  <Input placeholder="Categoría"value={s.category ??""} onChange={(e) => updateRow(r._id, { category: e.target.value || null } as any)} className="h-8 text-xs col-span-2" />
+                  <Input placeholder="Servicio" value={s.name ?? ""} onChange={(e) => updateRow(r._id, { name: e.target.value } as any)} className="h-8 text-xs col-span-2" />
+                  <Input type="number" placeholder="Precio €" value={s.price ?? ""} onChange={(e) => updateRow(r._id, { price: e.target.value === "" ? null : Number(e.target.value) } as any)} className="h-8 text-xs" />
+                  <Input type="number" placeholder="Duración min" value={s.duration_minutes ?? ""} onChange={(e) => updateRow(r._id, { duration_minutes: e.target.value === "" ? null : Number(e.target.value) } as any)} className="h-8 text-xs" />
+                  <Input placeholder="Categoría" value={s.category ?? ""} onChange={(e) => updateRow(r._id, { category: e.target.value || null } as any)} className="h-8 text-xs col-span-2" />
                 </div>
               )}
             </Card>

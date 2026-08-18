@@ -196,7 +196,21 @@ export function CommissionsManager({ tenantId }: CommissionsManagerProps) {
             .eq("id", (existing as any).id);
         } else {
           await supabase
-            .from("stylist_commissions"as any) .insert({ tenant_id: tenantId, stylist_id: stylistId, commission_percentage: commission.commission_percentage, commission_type: commission.commission_type, commission_fixed: commission.commission_fixed }); } } toast({ title:"Comisiones guardadas"}); calculateEarnings(); } catch (error: any) { toast({ title:"Error", description: error.message, variant: "destructive" });
+            .from("stylist_commissions" as any)
+            .insert({
+              tenant_id: tenantId,
+              stylist_id: stylistId,
+              commission_percentage: commission.commission_percentage,
+              commission_type: commission.commission_type,
+              commission_fixed: commission.commission_fixed
+            });
+        }
+      }
+
+      toast({ title: "Comisiones guardadas" });
+      calculateEarnings();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -271,18 +285,26 @@ export function CommissionsManager({ tenantId }: CommissionsManagerProps) {
                     </SelectContent>
                   </Select>
 
-                  {(commission.commission_type === "percentage"|| commission.commission_type ==="mixed") && (
+                  {(commission.commission_type === "percentage" || commission.commission_type === "mixed") && (
                     <div className="flex items-center gap-1">
                       <Input
                         type="number"
-                        className="w-20"value={commission.commission_percentage} onChange={(e) => updateCommission(stylist.id,"commission_percentage", parseFloat(e.target.value) || 0)}
+                        className="w-20"
+                        value={commission.commission_percentage}
+                        onChange={(e) => updateCommission(stylist.id, "commission_percentage", parseFloat(e.target.value) || 0)}
                       />
-                      <Percent className="h-4 w-4 text-muted-foreground"/> </div> )} {(commission.commission_type ==="fixed"|| commission.commission_type ==="mixed") && (
+                      <Percent className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  )}
+
+                  {(commission.commission_type === "fixed" || commission.commission_type === "mixed") && (
                     <div className="flex items-center gap-1">
                       <Input
                         type="number"
                         step="0.01"
-                        className="w-20"value={commission.commission_fixed} onChange={(e) => updateCommission(stylist.id,"commission_fixed", parseFloat(e.target.value) || 0)}
+                        className="w-20"
+                        value={commission.commission_fixed}
+                        onChange={(e) => updateCommission(stylist.id, "commission_fixed", parseFloat(e.target.value) || 0)}
                       />
                       <Euro className="h-4 w-4 text-muted-foreground" />
                       <span className="text-xs text-muted-foreground">/servicio</span>

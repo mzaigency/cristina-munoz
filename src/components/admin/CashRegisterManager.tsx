@@ -24,7 +24,7 @@ export interface Transaction {
   discount_reason?: string | null;
   total: number;
   tip_amount?: number | null;
-  payment_method: "cash"|"card"|"mixed";
+  payment_method: "cash" | "card" | "mixed";
   payment_details?: Record<string, unknown> | null;
   notes: string | null;
   created_at: string;
@@ -49,10 +49,14 @@ export interface DaySummary {
 interface CashRegisterManagerProps {
   tenantId: string;
   /** Qué pantalla de caja se muestra; la fila de pestañas vive en CajaSection */
-  view?: "cobrar"|"historial"|"cierre";
+  view?: "cobrar" | "historial" | "cierre";
 }
 
-export const CashRegisterManager = ({ tenantId, view = "cobrar"}: CashRegisterManagerProps) => { const [loading, setLoading] = useState(true); const [transactions, setTransactions] = useState<Transaction[]>([]); const [daySummary, setDaySummary] = useState<DaySummary>({ date: format(new Date(),"yyyy-MM-dd"),
+export const CashRegisterManager = ({ tenantId, view = "cobrar" }: CashRegisterManagerProps) => {
+  const [loading, setLoading] = useState(true);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [daySummary, setDaySummary] = useState<DaySummary>({
+    date: format(new Date(), "yyyy-MM-dd"),
     cashTotal: 0,
     cardTotal: 0,
     totalSales: 0,
@@ -193,7 +197,7 @@ export const CashRegisterManager = ({ tenantId, view = "cobrar"}: CashRegisterMa
     new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
 
   return (
-    <div className="gp-fade font-body"style={{ display:"flex", flexDirection: "column", gap: 16 }}>
+    <div className="gp-fade font-body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {view === "cobrar" && (
         <>
           {/* Resumen compacto: lo de hoy de un vistazo, sin comerse la pantalla */}
@@ -204,7 +208,7 @@ export const CashRegisterManager = ({ tenantId, view = "cobrar"}: CashRegisterMa
               </p>
               <p className="text-[11px] text-outline mt-1">
                 hoy · {daySummary.transactionCount}{" "}
-                {daySummary.transactionCount === 1 ? "cobro":"cobros"}
+                {daySummary.transactionCount === 1 ? "cobro" : "cobros"}
               </p>
             </div>
             <div className="text-right text-[11px] text-outline leading-relaxed tabular-nums">
@@ -234,7 +238,14 @@ export const CashRegisterManager = ({ tenantId, view = "cobrar"}: CashRegisterMa
         </>
       )}
 
-      {view === "historial"&& ( <> <TransactionHistory transactions={transactions} onUpdate={fetchTodayData} /> <ExportData tenantId={tenantId} /> </> )} {view ==="cierre" && <DailySummary summary={daySummary} onRefresh={fetchTodayData} />}
+      {view === "historial" && (
+        <>
+          <TransactionHistory transactions={transactions} onUpdate={fetchTodayData} />
+          <ExportData tenantId={tenantId} />
+        </>
+      )}
+
+      {view === "cierre" && <DailySummary summary={daySummary} onRefresh={fetchTodayData} />}
     </div>
   );
 };

@@ -76,7 +76,13 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
 
   const add = async () => {
     if (!range?.from) {
-      toast({ title: "Elige al menos un día", variant: "destructive"}); return; } const from = range.from; const to = range.to ?? range.from; if (to < from) { toast({ title:"La fecha de fin es anterior al inicio", variant: "destructive" });
+      toast({ title: "Elige al menos un día", variant: "destructive" });
+      return;
+    }
+    const from = range.from;
+    const to = range.to ?? range.from;
+    if (to < from) {
+      toast({ title: "La fecha de fin es anterior al inicio", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -90,7 +96,10 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
     });
     setSaving(false);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive"}); return; } toast({ title:"Ausencia añadida", description: "Esos días no se ofrecerán reservas." });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Ausencia añadida", description: "Esos días no se ofrecerán reservas." });
     setAdding(false);
     load();
   };
@@ -98,7 +107,15 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
   const remove = async (id: string) => {
     const { error } = await supabase.from("stylist_hours_overrides").delete().eq("id", id);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive"}); return; } toast({ title:"Ausencia eliminada"}); load(); }; const rangeLabel = (() => { if (!range?.from) return"Selecciona un día o rango de fechas";
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Ausencia eliminada" });
+    load();
+  };
+
+  const rangeLabel = (() => {
+    if (!range?.from) return "Selecciona un día o rango de fechas";
     const f = range.from;
     const t = range.to ?? range.from;
     if (isSameDay(f, t)) return format(f, "EEE d MMM", { locale: es });
@@ -152,7 +169,22 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
                 onClick={() => remove(r.id)}
                 title="Eliminar"
                 aria-label="Eliminar ausencia"
-                type="button"> <X /> </button> </div> ))} </div> )} {adding && ( <div style={{ marginTop: 12, padding: 14, borderRadius: 14, border:"1px solid oklch(0.925 0.007 265)",
+                type="button"
+              >
+                <X />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {adding && (
+        <div
+          style={{
+            marginTop: 12,
+            padding: 14,
+            borderRadius: 14,
+            border: "1px solid oklch(0.925 0.007 265)",
             background: "linear-gradient(180deg, rgba(34,64,139,0.04), rgba(153,50,154,0.03))",
             backdropFilter: "blur(8px)",
             display: "flex",
@@ -164,7 +196,9 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
           <Popover open={calOpen} onOpenChange={setCalOpen}>
             <PopoverTrigger asChild>
               <button
-                type="button"style={{ display:"flex",
+                type="button"
+                style={{
+                  display: "flex",
                   alignItems: "center",
                   gap: 10,
                   padding: "10px 14px",
@@ -176,7 +210,8 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
                   width: "100%",
                 }}
               >
-                <CalendarIcon style={{ width: 16, height: 16, color: "#22408b"}} /> <span style={{ fontSize: 14, fontWeight: 700, color:"#1f2340", flex: 1 }}>{rangeLabel}</span>
+                <CalendarIcon style={{ width: 16, height: 16, color: "#22408b" }} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#1f2340", flex: 1 }}>{rangeLabel}</span>
                 {dayCount > 0 && (
                   <span
                     style={{
@@ -188,7 +223,7 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
                       borderRadius: 999,
                     }}
                   >
-                    {dayCount} {dayCount === 1 ? "día":"días"}
+                    {dayCount} {dayCount === 1 ? "día" : "días"}
                   </span>
                 )}
               </button>
@@ -215,11 +250,16 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
                 return (
                   <button
                     key={r}
-                    type="button"onClick={() => setLabel(r)} style={{ fontSize: 12, fontWeight: 600, padding:"5px 11px",
+                    type="button"
+                    onClick={() => setLabel(r)}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: "5px 11px",
                       borderRadius: 999,
-                      border: on ? "1px solid #99329a":"1px solid oklch(0.92 0.01 265)",
-                      background: on ? "rgba(153,50,154,0.1)":"#fff",
-                      color: on ? "#99329a":"#525673",
+                      border: on ? "1px solid #99329a" : "1px solid oklch(0.92 0.01 265)",
+                      background: on ? "rgba(153,50,154,0.1)" : "#fff",
+                      color: on ? "#99329a" : "#525673",
                       cursor: "pointer",
                     }}
                   >
@@ -231,7 +271,11 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
             <input
               type="text"
               className="gp-absences-form-label"
-              placeholder="O escribe otro motivo…"value={label} onChange={(e) => setLabel(e.target.value)} onKeyDown={(e) => { if (e.key ==="Enter" && !saving) add();
+              placeholder="O escribe otro motivo…"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !saving) add();
               }}
             />
           </div>

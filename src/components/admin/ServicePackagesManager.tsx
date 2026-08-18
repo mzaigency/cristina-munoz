@@ -109,11 +109,32 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
       package_price: 0,
       is_active: true,
       valid_from: "",
-      valid_until: ""}); setIsDialogOpen(true); }; const handleOpenEdit = (pkg: ServicePackage) => { setEditingPackage(pkg); setSelectedServices(pkg.services.map(s => s.service_id)); setFormData({ name: pkg.name, description: pkg.description ||"",
+      valid_until: ""
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEdit = (pkg: ServicePackage) => {
+    setEditingPackage(pkg);
+    setSelectedServices(pkg.services.map(s => s.service_id));
+    setFormData({
+      name: pkg.name,
+      description: pkg.description || "",
       package_price: pkg.package_price,
       is_active: pkg.is_active,
       valid_from: pkg.valid_from ? format(new Date(pkg.valid_from), "yyyy-MM-dd") : "",
-      valid_until: pkg.valid_until ? format(new Date(pkg.valid_until), "yyyy-MM-dd") : ""}); setIsDialogOpen(true); }; const handleSave = async () => { if (!formData.name.trim()) { toast({ title:"Error", description: "El nombre es obligatorio", variant: "destructive"}); return; } if (selectedServices.length < 2) { toast({ title:"Error", description: "Selecciona al menos 2 servicios", variant: "destructive" });
+      valid_until: pkg.valid_until ? format(new Date(pkg.valid_until), "yyyy-MM-dd") : ""
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!formData.name.trim()) {
+      toast({ title: "Error", description: "El nombre es obligatorio", variant: "destructive" });
+      return;
+    }
+    if (selectedServices.length < 2) {
+      toast({ title: "Error", description: "Selecciona al menos 2 servicios", variant: "destructive" });
       return;
     }
 
@@ -146,7 +167,16 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
         toast({ title: "Paquete actualizado" });
       } else {
         const { error } = await supabase
-          .from("service_packages"as any) .insert(packageData); if (error) throw error; toast({ title:"Paquete creado"}); } setIsDialogOpen(false); fetchData(); } catch (error: any) { toast({ title:"Error", description: error.message, variant: "destructive" });
+          .from("service_packages" as any)
+          .insert(packageData);
+        if (error) throw error;
+        toast({ title: "Paquete creado" });
+      }
+
+      setIsDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -161,7 +191,26 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
         .delete()
         .eq("id", id);
       if (error) throw error;
-      toast({ title: "Paquete eliminado"}); fetchData(); } catch (error: any) { toast({ title:"Error", description: error.message, variant: "destructive"}); } }; const toggleService = (serviceId: string) => { setSelectedServices(prev => prev.includes(serviceId) ? prev.filter(id => id !== serviceId) : [...prev, serviceId] ); }; const { originalTotal, discountPercentage } = calculateTotals(); // Group services by category const groupedServices = services.reduce((acc, service) => { const category = service.category ||"Otros";
+      toast({ title: "Paquete eliminado" });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const toggleService = (serviceId: string) => {
+    setSelectedServices(prev => 
+      prev.includes(serviceId)
+        ? prev.filter(id => id !== serviceId)
+        : [...prev, serviceId]
+    );
+  };
+
+  const { originalTotal, discountPercentage } = calculateTotals();
+
+  // Group services by category
+  const groupedServices = services.reduce((acc, service) => {
+    const category = service.category || "Otros";
     if (!acc[category]) acc[category] = [];
     acc[category].push(service);
     return acc;
@@ -176,7 +225,7 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
   }
 
   return (
-    <div className="gp-fade"style={{ display:"flex", flexDirection: "column", gap: 20 }}>
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div className="gp-page-h">
         <div>
           <h2>Paquetes de Servicios</h2>
@@ -195,12 +244,20 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
             <div className="gp-empty-ic"><Package style={{ width: 24, height: 24 }} /></div>
             <h4>Sin paquetes</h4>
             <p>Crea combos de servicios con descuento</p>
-            <button className="gp-btn primary"style={{ marginTop: 12 }} onClick={handleOpenCreate}> <Plus style={{ width: 14, height: 14 }} /> Crear paquete </button> </div> </div> ) : ( <div style={{ display:"flex", flexDirection: "column", gap: 12 }}>
+            <button className="gp-btn primary" style={{ marginTop: 12 }} onClick={handleOpenCreate}>
+              <Plus style={{ width: 14, height: 14 }} /> Crear paquete
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {packages.map(pkg => (
-            <div key={pkg.id} className="gp-card pad"style={!pkg.is_active ? { opacity: 0.55 } : {}}> <div style={{ display:"flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            <div key={pkg.id} className="gp-card pad" style={!pkg.is_active ? { opacity: 0.55 } : {}}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap"}}> <span style={{ fontSize: 15, fontWeight: 700, color:"var(--gp-ink)" }}>{pkg.name}</span>
-                    {!pkg.is_active && <span className="gp-badge neutral"><span className="pip"style={{ background:"currentColor" }} />Inactivo</span>}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: "var(--gp-ink)" }}>{pkg.name}</span>
+                    {!pkg.is_active && <span className="gp-badge neutral"><span className="pip" style={{ background: "currentColor" }} />Inactivo</span>}
                     {pkg.discount_percentage > 0 && (
                       <span className="gp-badge ok">
                         <Percent style={{ width: 11, height: 11 }} />{pkg.discount_percentage.toFixed(0)}% dto
@@ -219,11 +276,14 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ fontSize: 13, color: "var(--gp-muted-c)", textDecoration: "line-through" }}>{pkg.original_total.toFixed(2)} €</span>
-                    <span className="gp-mono"style={{ fontSize: 18, fontWeight: 800, color:"var(--gp-accent)"}}>{pkg.package_price.toFixed(2)} €</span> </div> </div> <div style={{ display:"flex", gap: 6 }}>
+                    <span className="gp-mono" style={{ fontSize: 18, fontWeight: 800, color: "var(--gp-accent)" }}>{pkg.package_price.toFixed(2)} €</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
                   <button className="gp-icon-btn" onClick={() => handleOpenEdit(pkg)}>
                     <Edit style={{ width: 14, height: 14 }} />
                   </button>
-                  <button className="gp-icon-btn"style={{ color:"var(--gp-danger)" }} onClick={() => handleDelete(pkg.id)}>
+                  <button className="gp-icon-btn" style={{ color: "var(--gp-danger)" }} onClick={() => handleDelete(pkg.id)}>
                     <Trash2 style={{ width: 14, height: 14 }} />
                   </button>
                 </div>
@@ -236,7 +296,7 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingPackage ? "Editar Paquete":"Nuevo Paquete"}</DialogTitle>
+            <DialogTitle>{editingPackage ? "Editar Paquete" : "Nuevo Paquete"}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
@@ -301,7 +361,7 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
                 />
               </div>
               {discountPercentage > 0 && (
-                <p className="text-sm text-[var(--gp-ok-ink)] mt-2">
+                <p className="text-sm text-green-600 mt-2">
                   Ahorro: {discountPercentage.toFixed(0)}% ({(originalTotal - formData.package_price).toFixed(2)}€)
                 </p>
               )}
@@ -338,7 +398,8 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
           <DialogFooter>
             <button className="gp-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
             <button className="gp-btn primary" onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="gp-spinner-sm"/>} {editingPackage ?"Guardar":"Crear"}
+              {saving && <Loader2 className="gp-spinner-sm" />}
+              {editingPackage ? "Guardar" : "Crear"}
             </button>
           </DialogFooter>
         </DialogContent>

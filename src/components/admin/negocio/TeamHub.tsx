@@ -57,7 +57,10 @@ const PRESET_COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6", "#
 const hhmm = (t: string | null) => (t ? t.slice(0, 5) : "");
 
 function earningsFor(m: StylistMetrics): number | null {
-  if (m.commissionType === "percentage"&& m.commissionPct != null) { return Math.round((m.revenue * m.commissionPct) / 100); } if (m.commissionType ==="fixed" && m.commissionFixed != null) {
+  if (m.commissionType === "percentage" && m.commissionPct != null) {
+    return Math.round((m.revenue * m.commissionPct) / 100);
+  }
+  if (m.commissionType === "fixed" && m.commissionFixed != null) {
     return Math.round(m.commissionFixed * m.bookings);
   }
   return null;
@@ -240,7 +243,11 @@ export function TeamHub({ tenantId }: TeamHubProps) {
 
   const handleCreate = async () => {
     if (!newName.trim()) {
-      toast({ title: "Ponle un nombre", variant: "destructive"}); return; } setSaving(true); const slug = newName.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g, "");
+      toast({ title: "Ponle un nombre", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    const slug = newName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     const { data, error } = await supabase
       .from("tenant_stylists")
       .insert({
@@ -287,7 +294,8 @@ export function TeamHub({ tenantId }: TeamHubProps) {
     return (
       <button key={s.id} className="gp-team-row" onClick={() => setSelectedId(s.id)} type="button">
         <div
-          className="gp-neg-stylist-avatar gp-team-row-avatar"style={{ background: s.color ||"var(--gp-accent)" }}
+          className="gp-neg-stylist-avatar gp-team-row-avatar"
+          style={{ background: s.color || "var(--gp-accent)" }}
         >
           {s.avatar_url ? <img src={s.avatar_url} alt="" /> : <span>{s.name.charAt(0).toUpperCase()}</span>}
         </div>
@@ -324,7 +332,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
             {Math.round(m.revenue).toLocaleString("es-ES")}
             <small>factura</small>
           </span>
-          <span className={`gp-team-stat${pay != null ? " pay":""}`}>
+          <span className={`gp-team-stat${pay != null ? " pay" : ""}`}>
             <Wallet />
             {pay != null ? `${pay.toLocaleString("es-ES")}€` : "—"}
             <small>a pagar</small>
@@ -344,7 +352,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
           <h2>Equipo</h2>
           <p>Quién trabaja, cuánto produce y cuánto le pagas este mes.</p>
         </div>
-        <div className="gp-page-actions"style={{ display:"flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+        <div className="gp-page-actions" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
           <button className="gp-btn primary sm" onClick={openCreate} type="button">
             <Plus style={{ width: 13, height: 13 }} /> Añadir
           </button>
@@ -387,7 +395,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
           {/* Resumen del mes */}
           <div className="gp-team-kpis">
             <div className="gp-team-kpi">
-              <span>{actives.length === 1 ? "Profesional activo":"Profesionales activos"}</span>
+              <span>{actives.length === 1 ? "Profesional activo" : "Profesionales activos"}</span>
               <strong>{stylists.filter((s) => s.is_active).length}</strong>
             </div>
             <div className="gp-team-kpi">
@@ -402,7 +410,8 @@ export function TeamHub({ tenantId }: TeamHubProps) {
 
           {/* Buscador solo cuando hay equipo grande */}
           {stylists.length > 8 && (
-            <div className="gp-mkt-search"style={{ maxWidth: 280, marginBottom: 12 }}> <Search style={{ width: 14, height: 14, color:"var(--gp-muted-c)" }} />
+            <div className="gp-mkt-search" style={{ maxWidth: 280, marginBottom: 12 }}>
+              <Search style={{ width: 14, height: 14, color: "var(--gp-muted-c)" }} />
               <input
                 type="text"
                 placeholder="Buscar..."
@@ -453,7 +462,11 @@ export function TeamHub({ tenantId }: TeamHubProps) {
             <label>
               <span>Nombre</span>
               <input
-                type="text"value={newName} onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => { if (e.key ==="Enter" && !saving) handleCreate();
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !saving) handleCreate();
                 }}
                 placeholder="Ej: Cristina Muñoz"
                 autoFocus
@@ -465,7 +478,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
                 {PRESET_COLORS.map((c) => (
                   <button
                     key={c}
-                    className={`gp-neg-color-dot${newColor === c ? " on":""}`}
+                    className={`gp-neg-color-dot${newColor === c ? " on" : ""}`}
                     style={{ background: c }}
                     onClick={() => setNewColor(c)}
                     type="button"

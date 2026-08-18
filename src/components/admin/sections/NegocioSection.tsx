@@ -24,7 +24,7 @@ interface NegocioSectionProps {
   hideTabs?: boolean;
 }
 
-type NegocioTab = "resumen"|"equipo"|"horarios"|"estadisticas"|"objetivos";
+type NegocioTab = "resumen" | "equipo" | "horarios" | "estadisticas" | "objetivos";
 
 interface TabConfig {
   id: NegocioTab;
@@ -68,7 +68,8 @@ const NegocioSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: NegocioS
     { id: "resumen", label: "Resumen", icon: LayoutDashboard },
     { id: "equipo", label: "Equipo", icon: Users },
     { id: "horarios", label: "Horarios", icon: Clock },
-    { id: "estadisticas", label: "Estadísticas", icon: BarChart3, requiredFeature: "advanced_analytics", requiredPlan: "pro"}, { id:"objetivos", label: "Objetivos & Reportes", icon: Target, requiredFeature: "monthly_goals", requiredPlan: "business" },
+    { id: "estadisticas", label: "Estadísticas", icon: BarChart3, requiredFeature: "advanced_analytics", requiredPlan: "pro" },
+    { id: "objetivos", label: "Objetivos & Reportes", icon: Target, requiredFeature: "monthly_goals", requiredPlan: "business" },
   ];
 
   const isTabLocked = (tab: TabConfig): boolean => {
@@ -91,7 +92,7 @@ const NegocioSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: NegocioS
             return (
               <button
                 key={tab.id}
-                className={`gp-mkt-tab${activeTab === tab.id ? " on":""}${locked ? " locked":""}`}
+                className={`gp-mkt-tab${activeTab === tab.id ? " on" : ""}${locked ? " locked" : ""}`}
                 onClick={() => handleTabChange(tab.id)}
                 type="button"
               >
@@ -99,7 +100,7 @@ const NegocioSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: NegocioS
                 <span>{tab.label}</span>
                 {locked && (
                   <span className="gp-mkt-tab-pro">
-                    {tab.requiredPlan === "business"?"Business":"Pro"}
+                    {tab.requiredPlan === "business" ? "Business" : "Pro"}
                   </span>
                 )}
               </button>
@@ -109,19 +110,28 @@ const NegocioSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: NegocioS
       )}
 
       <div className="gp-mkt-body">
-        {activeTab === "resumen"&& ( <NegocioOverview tenantId={tenantId} onNavigate={(t) => handleTabChange(t as NegocioTab)} /> )} {activeTab ==="equipo" && (
+        {activeTab === "resumen" && (
+          <NegocioOverview tenantId={tenantId} onNavigate={(t) => handleTabChange(t as NegocioTab)} />
+        )}
+        {activeTab === "equipo" && (
           <div data-tour-target="negocio-equipo">
             <TeamHub tenantId={tenantId} />
           </div>
         )}
-        {activeTab === "horarios"&& <HoursManager tenantId={tenantId} />} {activeTab ==="estadisticas" &&
+        {activeTab === "horarios" && <HoursManager tenantId={tenantId} />}
+        {activeTab === "estadisticas" &&
           (isTabLocked(tabs[3]) ? (
             <LockedFeature
               featureName="Estadísticas"
               currentPlan={planSlug}
               requiredPlan="pro"
               tenantId={tenantId}
-              variant="inline"/> ) : ( <BusinessStats tenantId={tenantId} /> ))} {activeTab ==="objetivos" &&
+              variant="inline"
+            />
+          ) : (
+            <BusinessStats tenantId={tenantId} />
+          ))}
+        {activeTab === "objetivos" &&
           (isTabLocked(tabs[4]) ? (
             <LockedFeature
               featureName="Objetivos"

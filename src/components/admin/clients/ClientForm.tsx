@@ -122,7 +122,9 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
         if (error) throw error;
         toast({ title: "Cliente actualizado" });
       } else {
-        const { error } = await supabase.from("clients"as any).insert({ tenant_id: tenantId, ...payload }); if (error) throw error; toast({ title:"Cliente creado" });
+        const { error } = await supabase.from("clients" as any).insert({ tenant_id: tenantId, ...payload });
+        if (error) throw error;
+        toast({ title: "Cliente creado" });
       }
       onSaved();
     } catch (error) {
@@ -149,7 +151,7 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
           type="tel"
         />
         {duplicateWarning && (
-          <div className="flex items-center gap-1.5 mt-1.5 text-[var(--gp-warn-ink)] text-xs">
+          <div className="flex items-center gap-1.5 mt-1.5 text-amber-600 text-xs">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
             <span>{duplicateWarning}</span>
           </div>
@@ -183,7 +185,7 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
                 <p className="text-xs text-primary">@{linkedProfile.username}</p>
               )}
             </div>
-            <UserCheck className="h-4 w-4 text-[var(--gp-ok)] shrink-0" />
+            <UserCheck className="h-4 w-4 text-green-500 shrink-0" />
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={unlinkProfile}>
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -235,7 +237,8 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
           {TAG_OPTIONS.map(tag => (
             <Badge
               key={tag}
-              variant="outline"className={`cursor-pointer transition-all ${formData.tags.includes(tag) ? TAG_COLORS[tag] :"opacity-50 hover:opacity-75"}`}
+              variant="outline"
+              className={`cursor-pointer transition-all ${formData.tags.includes(tag) ? TAG_COLORS[tag] : "opacity-50 hover:opacity-75"}`}
               onClick={() => toggleTag(tag)}
             >
               {tag}
@@ -250,7 +253,8 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
       </div>
 
       <Button onClick={handleSave} className="w-full" disabled={saving}>
-        {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin"/>} {editingClient ?"Guardar cambios":"Crear cliente"}
+        {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+        {editingClient ? "Guardar cambios" : "Crear cliente"}
       </Button>
     </div>
   );

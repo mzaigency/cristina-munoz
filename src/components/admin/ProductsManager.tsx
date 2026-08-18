@@ -98,7 +98,18 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
       setProducts((data || []) as Product[]);
     } catch (error) {
       console.error("Error:", error);
-      toast({ title: "Error", description: "No se pudieron cargar los productos", variant: "destructive"}); } finally { setLoading(false); } }; const openDialog = (product?: Product) => { if (product) { setSelectedProduct(product); setFormData({ name: product.name, description: product.description ||"",
+      toast({ title: "Error", description: "No se pudieron cargar los productos", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openDialog = (product?: Product) => {
+    if (product) {
+      setSelectedProduct(product);
+      setFormData({
+        name: product.name,
+        description: product.description || "",
         short_description: product.short_description || "",
         image_url: product.image_url || "",
         is_featured: product.is_featured || false,
@@ -146,7 +157,18 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
       if (upErr) throw upErr;
       const { data } = supabase.storage.from("product-images").getPublicUrl(filePath);
       setFormData((f) => ({ ...f, image_url: data.publicUrl }));
-      toast({ title: "Imagen subida"}); } catch (err) { console.error(err); toast({ title:"Error", description: "No se pudo subir la imagen", variant: "destructive"}); } finally { setUploadingImage(false); } }; const openStockDialog = (product: Product) => { setSelectedProduct(product); setStockEntry({ quantity:"", cost: product.cost.toString() });
+      toast({ title: "Imagen subida" });
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Error", description: "No se pudo subir la imagen", variant: "destructive" });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const openStockDialog = (product: Product) => {
+    setSelectedProduct(product);
+    setStockEntry({ quantity: "", cost: product.cost.toString() });
     setStockDialogOpen(true);
   };
 
@@ -190,7 +212,21 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
       fetchProducts();
     } catch (error) {
       console.error("Error:", error);
-      toast({ title: "Error", description: "No se pudo guardar el producto", variant: "destructive"}); } finally { setSaving(false); } }; const handleStockEntry = async () => { if (!selectedProduct || !stockEntry.quantity) { toast({ title:"Error", description: "Introduce la cantidad", variant: "destructive"}); return; } const quantity = parseInt(stockEntry.quantity) || 0; if (quantity <= 0) { toast({ title:"Error", description: "La cantidad debe ser mayor que 0", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo guardar el producto", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStockEntry = async () => {
+    if (!selectedProduct || !stockEntry.quantity) {
+      toast({ title: "Error", description: "Introduce la cantidad", variant: "destructive" });
+      return;
+    }
+
+    const quantity = parseInt(stockEntry.quantity) || 0;
+    if (quantity <= 0) {
+      toast({ title: "Error", description: "La cantidad debe ser mayor que 0", variant: "destructive" });
       return;
     }
 
@@ -262,7 +298,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
   const lowStockProducts = products.filter(p => p.is_active && p.stock <= p.min_stock);
 
   return (
-    <div className="gp-fade"style={{ display:"flex", flexDirection: "column", gap: 20 }}>
+    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div className="gp-page-h">
         <div>
           <h2>Productos</h2>
@@ -277,7 +313,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
             </DialogTrigger>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{selectedProduct ? "Editar producto":"Nuevo producto"}</DialogTitle>
+              <DialogTitle>{selectedProduct ? "Editar producto" : "Nuevo producto"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               {/* Imagen */}
@@ -287,7 +323,8 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                   <div className="relative w-full aspect-square max-w-[200px] rounded-lg overflow-hidden border bg-muted">
                     <img src={formData.image_url} alt="" className="w-full h-full object-cover" />
                     <button
-                      type="button"onClick={() => setFormData({ ...formData, image_url:"" })}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image_url: "" })}
                       className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/90 backdrop-blur flex items-center justify-center shadow-md"
                     >
                       <X className="h-4 w-4" />
@@ -321,7 +358,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                 <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-[var(--gp-warn)]" />
+                  <Star className="h-4 w-4 text-amber-500" />
                   <div>
                     <p className="text-sm font-medium">Destacar en tienda</p>
                     <p className="text-xs text-muted-foreground">Aparecerá primero y en la reserva</p>
@@ -363,7 +400,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                 </div>
               </div>
               <button className="gp-btn primary block" onClick={handleSave} disabled={saving}>
-                {saving ? <><Loader2 className="gp-spinner-sm"/>Guardando...</> :"Guardar producto"}
+                {saving ? <><Loader2 className="gp-spinner-sm" />Guardando...</> : "Guardar producto"}
               </button>
             </div>
           </DialogContent>
@@ -372,9 +409,12 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
       </div>
 
       {lowStockProducts.length > 0 && (
-        <div className="gp-card pad"style={{ borderColor:"color-mix(in oklab, var(--gp-warn), white 40%)", background: "var(--gp-warn-soft)"}}> <div style={{ display:"flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <div className="gp-card pad" style={{ borderColor: "color-mix(in oklab, var(--gp-warn), white 40%)", background: "var(--gp-warn-soft)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <AlertTriangle style={{ width: 16, height: 16, color: "var(--gp-warn)", flexShrink: 0 }} />
-            <span style={{ fontWeight: 700, fontSize: 14, color: "var(--gp-ink)"}}>Stock bajo en {lowStockProducts.length} producto(s)</span> </div> <div style={{ display:"flex", flexWrap: "wrap", gap: 6 }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: "var(--gp-ink)" }}>Stock bajo en {lowStockProducts.length} producto(s)</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {lowStockProducts.map(p => (
               <span key={p.id} className="gp-badge warn">{p.name}: {p.stock} uds</span>
             ))}
@@ -387,17 +427,20 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
           {/* Mobile Card View */}
           <div className="flex flex-col gap-3 md:hidden">
             {products.map(product => (
-              <div key={product.id} className="gp-card pad"style={!product.is_active ? { opacity: 0.55 } : {}}> <div style={{ display:"flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
+              <div key={product.id} className="gp-card pad" style={!product.is_active ? { opacity: 0.55 } : {}}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <p style={{ fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{product.name}</p> {product.barcode && <p style={{ fontSize: 12, color:"var(--gp-muted-c)", margin: "2px 0 0" }}>{product.barcode}</p>}
-                    <span className="gp-badge neutral"style={{ marginTop: 6, display:"inline-flex"}}>{product.category ||"Sin categoría"}</span>
+                    <p style={{ fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{product.name}</p>
+                    {product.barcode && <p style={{ fontSize: 12, color: "var(--gp-muted-c)", margin: "2px 0 0" }}>{product.barcode}</p>}
+                    <span className="gp-badge neutral" style={{ marginTop: 6, display: "inline-flex" }}>{product.category || "Sin categoría"}</span>
                   </div>
                   <button
-                    className={`gp-badge${product.is_active ? " ok":" neutral"}`}
+                    className={`gp-badge${product.is_active ? " ok" : " neutral"}`}
                     style={{ cursor: "pointer", border: "none", fontFamily: "inherit", flexShrink: 0, marginLeft: 8 }}
                     onClick={() => toggleActive(product)}
                   >
-                    <span className="pip"style={{ background:"currentColor"}} /> {product.is_active ?"Activo":"Inactivo"}
+                    <span className="pip" style={{ background: "currentColor" }} />
+                    {product.is_active ? "Activo" : "Inactivo"}
                   </button>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
@@ -408,14 +451,18 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                   ].map(({ label, val, warn }) => (
                     <div key={label}>
                       <p style={{ fontSize: 11.5, color: "var(--gp-muted-c)", margin: 0 }}>{label}</p>
-                      <p style={{ fontSize: 13.5, fontWeight: 600, margin: 0, color: warn ? "var(--gp-warn)":"var(--gp-ink)"}}>{val}</p> </div> ))} </div> <div style={{ display:"flex", gap: 8 }}>
+                      <p style={{ fontSize: 13.5, fontWeight: 600, margin: 0, color: warn ? "var(--gp-warn)" : "var(--gp-ink)" }}>{val}</p>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
                   <button className="gp-btn sm" style={{ flex: 1 }} onClick={() => openStockDialog(product)}>
                     <PackagePlus style={{ width: 13, height: 13 }} /> Stock
                   </button>
                   <button className="gp-icon-btn" onClick={() => openDialog(product)}>
                     <Pencil style={{ width: 14, height: 14 }} />
                   </button>
-                  <button className="gp-icon-btn"style={{ color:"var(--gp-danger)" }} onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
+                  <button className="gp-icon-btn" style={{ color: "var(--gp-danger)" }} onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
                     <Trash2 style={{ width: 14, height: 14 }} />
                   </button>
                 </div>
@@ -424,30 +471,51 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
           </div>
 
           {/* Desktop Table View */}
-          <div className="gp-card hidden md:block"style={{ overflow:"hidden"}}> <table style={{ width:"100%", borderCollapse: "collapse"}}> <thead> <tr style={{ borderBottom:"1px solid var(--gp-line2)" }}>
+          <div className="gp-card hidden md:block" style={{ overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--gp-line2)" }}>
                   {["Producto", "Categoría", "Coste", "Precio", "Stock", "Estado", ""].map(h => (
-                    <th key={h} style={{ textAlign: "left", padding: "10px 14px", fontSize: 12.5, fontWeight: 700, color: "var(--gp-muted-c)"}}>{h}</th> ))} </tr> </thead> <tbody> {products.map(product => ( <tr key={product.id} style={{ borderBottom:"1px solid var(--gp-line2)", opacity: !product.is_active ? 0.55 : 1 }}>
-                    <td style={{ padding: "10px 14px"}}> <p style={{ fontWeight: 600, margin: 0 }}>{product.name}</p> {product.barcode && <p style={{ fontSize: 12, color:"var(--gp-muted-c)", margin: 0 }}>{product.barcode}</p>}
+                    <th key={h} style={{ textAlign: "left", padding: "10px 14px", fontSize: 12.5, fontWeight: 700, color: "var(--gp-muted-c)" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {products.map(product => (
+                  <tr key={product.id} style={{ borderBottom: "1px solid var(--gp-line2)", opacity: !product.is_active ? 0.55 : 1 }}>
+                    <td style={{ padding: "10px 14px" }}>
+                      <p style={{ fontWeight: 600, margin: 0 }}>{product.name}</p>
+                      {product.barcode && <p style={{ fontSize: 12, color: "var(--gp-muted-c)", margin: 0 }}>{product.barcode}</p>}
                     </td>
                     <td style={{ padding: "10px 14px" }}>
                       <span className="gp-badge neutral">{product.category || "Sin categoría"}</span>
                     </td>
-                    <td style={{ padding: "10px 14px", fontSize: 13.5, color: "var(--gp-muted-c)"}}>{formatCurrency(product.cost)}</td> <td style={{ padding:"10px 14px", fontWeight: 600 }}>{formatCurrency(product.price)}</td>
-                    <td style={{ padding: "10px 14px"}}> <span style={{ fontWeight: product.stock <= product.min_stock ? 700 : 400, color: product.stock <= product.min_stock ?"var(--gp-warn)":"var(--gp-ink)"}}> {product.stock} </span> </td> <td style={{ padding:"10px 14px"}}> <button className={`gp-badge${product.is_active ?" ok":" neutral"}`}
+                    <td style={{ padding: "10px 14px", fontSize: 13.5, color: "var(--gp-muted-c)" }}>{formatCurrency(product.cost)}</td>
+                    <td style={{ padding: "10px 14px", fontWeight: 600 }}>{formatCurrency(product.price)}</td>
+                    <td style={{ padding: "10px 14px" }}>
+                      <span style={{ fontWeight: product.stock <= product.min_stock ? 700 : 400, color: product.stock <= product.min_stock ? "var(--gp-warn)" : "var(--gp-ink)" }}>
+                        {product.stock}
+                      </span>
+                    </td>
+                    <td style={{ padding: "10px 14px" }}>
+                      <button
+                        className={`gp-badge${product.is_active ? " ok" : " neutral"}`}
                         style={{ cursor: "pointer", border: "none", fontFamily: "inherit" }}
                         onClick={() => toggleActive(product)}
                       >
-                        <span className="pip"style={{ background:"currentColor"}} /> {product.is_active ?"Activo":"Inactivo"}
+                        <span className="pip" style={{ background: "currentColor" }} />
+                        {product.is_active ? "Activo" : "Inactivo"}
                       </button>
                     </td>
-                    <td style={{ padding: "10px 14px"}}> <div style={{ display:"flex", gap: 4 }}>
+                    <td style={{ padding: "10px 14px" }}>
+                      <div style={{ display: "flex", gap: 4 }}>
                         <button className="gp-icon-btn" onClick={() => openStockDialog(product)} title="Entrada de stock">
                           <PackagePlus style={{ width: 14, height: 14 }} />
                         </button>
                         <button className="gp-icon-btn" onClick={() => openDialog(product)}>
                           <Pencil style={{ width: 14, height: 14 }} />
                         </button>
-                        <button className="gp-icon-btn"style={{ color:"var(--gp-danger)" }} onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
+                        <button className="gp-icon-btn" style={{ color: "var(--gp-danger)" }} onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
                           <Trash2 style={{ width: 14, height: 14 }} />
                         </button>
                       </div>
@@ -505,7 +573,20 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                 <p className="text-xs text-muted-foreground">Se actualizará el coste del producto</p>
               </div>
               <button className="gp-btn primary block" onClick={handleStockEntry} disabled={saving}>
-                {saving ? <Loader2 className="gp-spinner-sm"/> : <PackagePlus style={{ width: 14, height: 14, display:"inline-block", marginRight: 6, verticalAlign: "middle"}} />} Añadir stock </button> </div> )} </DialogContent> </Dialog> <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}> <AlertDialogContent> <AlertDialogHeader> <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle> <AlertDialogDescription> Esta acción no se puede deshacer. Se eliminará permanentemente el producto"{selectedProduct?.name}".
+                {saving ? <Loader2 className="gp-spinner-sm" /> : <PackagePlus style={{ width: 14, height: 14, display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
+                Añadir stock
+              </button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el producto "{selectedProduct?.name}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

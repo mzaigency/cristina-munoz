@@ -33,7 +33,7 @@ interface Client {
   loyalty_points: number | null;
 }
 
-type SegmentId = "all"|"vip"|"lapsed"|"birthday"|"new"|"frequent";
+type SegmentId = "all" | "vip" | "lapsed" | "birthday" | "new" | "frequent";
 
 interface SegmentDef {
   id: SegmentId;
@@ -171,7 +171,33 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
         .order("name", { ascending: true });
       if (cancelled) return;
       if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive"}); } setClients((data ?? []) as Client[]); setLoading(false); }; load(); return () => { cancelled = true; }; }, [tenantId, toast]); const now = new Date(); const segmentCounts = useMemo(() => { const map: Partial<Record<SegmentId, number>> = {}; SEGMENTS.forEach((s) => { map[s.id] = clients.filter((c) => s.filter(c, now)).length; }); return map; }, [clients]); const filtered = useMemo(() => { const segDef = SEGMENTS.find((s) => s.id === segment)!; const term = search.trim().toLowerCase(); return clients .filter((c) => segDef.filter(c, now)) .filter((c) => !term || c.name.toLowerCase().includes(term) || (c.phone ??"").includes(term));
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+      setClients((data ?? []) as Client[]);
+      setLoading(false);
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, toast]);
+
+  const now = new Date();
+
+  const segmentCounts = useMemo(() => {
+    const map: Partial<Record<SegmentId, number>> = {};
+    SEGMENTS.forEach((s) => {
+      map[s.id] = clients.filter((c) => s.filter(c, now)).length;
+    });
+    return map;
+  }, [clients]);
+
+  const filtered = useMemo(() => {
+    const segDef = SEGMENTS.find((s) => s.id === segment)!;
+    const term = search.trim().toLowerCase();
+    return clients
+      .filter((c) => segDef.filter(c, now))
+      .filter((c) => !term || c.name.toLowerCase().includes(term) || (c.phone ?? "").includes(term));
   }, [clients, segment, search]);
 
   const allSelected = filtered.length > 0 && filtered.every((c) => selected.has(c.id));
@@ -202,7 +228,13 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: "Copiado"}); }; const openChats = () => { const selectedClients = clients.filter((c) => selected.has(c.id) && c.phone); if (selectedClients.length === 0) { toast({ title:"Selecciona al menos un contacto", variant: "destructive" });
+    toast({ title: "Copiado" });
+  };
+
+  const openChats = () => {
+    const selectedClients = clients.filter((c) => selected.has(c.id) && c.phone);
+    if (selectedClients.length === 0) {
+      toast({ title: "Selecciona al menos un contacto", variant: "destructive" });
       return;
     }
     selectedClients.forEach((c, idx) => {
@@ -218,7 +250,7 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
     });
     toast({
       title: "Abriendo WhatsApp",
-      description: `${selectedClients.length} chat${selectedClients.length === 1 ? "":"s"}`,
+      description: `${selectedClients.length} chat${selectedClients.length === 1 ? "" : "s"}`,
     });
   };
 
@@ -250,7 +282,7 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
           return (
             <button
               key={s.id}
-              className={`gp-mkt-segment tone-${s.tone}${active ? " on":""}`}
+              className={`gp-mkt-segment tone-${s.tone}${active ? " on" : ""}`}
               onClick={() => setSegment(s.id)}
               type="button"
             >
@@ -274,7 +306,7 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
               <p>{filtered.length} en este segmento · {selected.size} seleccionados</p>
             </div>
             <button className="gp-btn sm" onClick={toggleAll} type="button">
-              {allSelected ? "Quitar todos":"Seleccionar todos"}
+              {allSelected ? "Quitar todos" : "Seleccionar todos"}
             </button>
           </div>
 
@@ -301,7 +333,7 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
                 return (
                   <button
                     key={c.id}
-                    className={`gp-mkt-recipient${isSel ? " on":""}`}
+                    className={`gp-mkt-recipient${isSel ? " on" : ""}`}
                     onClick={() => toggleOne(c.id)}
                     type="button"
                   >

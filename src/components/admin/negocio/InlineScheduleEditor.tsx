@@ -30,7 +30,13 @@ interface DayRow {
 }
 
 const DAYS = [
-  { value: 1, label: "Lunes"}, { value: 2, label:"Martes"}, { value: 3, label:"Miércoles"}, { value: 4, label:"Jueves"}, { value: 5, label:"Viernes"}, { value: 6, label:"Sábado"}, { value: 0, label:"Domingo" },
+  { value: 1, label: "Lunes" },
+  { value: 2, label: "Martes" },
+  { value: 3, label: "Miércoles" },
+  { value: 4, label: "Jueves" },
+  { value: 5, label: "Viernes" },
+  { value: 6, label: "Sábado" },
+  { value: 0, label: "Domingo" },
 ];
 
 const hhmm = (t: string | null | undefined, fallback: string) => (t ? t.substring(0, 5) : fallback);
@@ -135,7 +141,20 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
         break_start: r.break_start || null,
         break_end: r.break_end || null,
       })),
-      { onConflict: "stylist_id,day_of_week"}, ); setSaving(false); if (error) { toast({ title:"Error", description: error.message, variant: "destructive"}); return; } toast({ title:"Horario guardado"}); onSaved(); }; if (rows === null) { return ( <div style={{ display:"flex", justifyContent: "center", padding: 24 }}>
+      { onConflict: "stylist_id,day_of_week" },
+    );
+    setSaving(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Horario guardado" });
+    onSaved();
+  };
+
+  if (rows === null) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
         <Loader2 className="gp-spinner-sm" />
       </div>
     );
@@ -148,9 +167,9 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
           const r = rows.find((x) => x.day_of_week === d.value)!;
           const hasBreak = r.break_start != null || r.break_end != null;
           return (
-            <div key={d.value} className={`gp-sched-edit-row${r.is_working ? "":" off"}`}>
+            <div key={d.value} className={`gp-sched-edit-row${r.is_working ? "" : " off"}`}>
               <div className="gp-sched-edit-head">
-                <span className="gp-neg-sched-day"style={{ width:"auto" }}>
+                <span className="gp-neg-sched-day" style={{ width: "auto" }}>
                   {d.label}
                 </span>
                 <div className="gp-sched-edit-head-actions">
@@ -182,7 +201,8 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
                     <div className="gp-sched-edit-row-actions">
                       {!hasBreak && (
                         <button
-                          className="gp-sched-edit-ic"onClick={() => update(d.value, { break_start:"14:00", break_end: "15:00" })}
+                          className="gp-sched-edit-ic"
+                          onClick={() => update(d.value, { break_start: "14:00", break_end: "15:00" })}
                           title="Añadir descanso"
                           aria-label="Añadir descanso"
                           type="button"
@@ -206,13 +226,15 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
                     <div className="gp-sched-edit-times break">
                       <Coffee className="gp-sched-edit-break-ic" />
                       <input
-                        type="time"value={r.break_start ??""}
+                        type="time"
+                        value={r.break_start ?? ""}
                         onChange={(e) => update(d.value, { break_start: e.target.value || null })}
                         aria-label="Inicio del descanso"
                       />
                       <span>–</span>
                       <input
-                        type="time"value={r.break_end ??""}
+                        type="time"
+                        value={r.break_end ?? ""}
                         onChange={(e) => update(d.value, { break_end: e.target.value || null })}
                         aria-label="Fin del descanso"
                       />
@@ -240,10 +262,11 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
       {(dirty || !hadOwn) && (
         <div className="gp-sched-edit-bar">
           <button className="gp-btn sm" onClick={onDiscard} disabled={saving} type="button">
-            {hadOwn ? "Descartar":"Cancelar"}
+            {hadOwn ? "Descartar" : "Cancelar"}
           </button>
           <button className="gp-btn primary sm" onClick={save} disabled={saving || !rows} type="button">
-            {saving && <Loader2 className="gp-spinner-sm"/>} {hadOwn ?"Guardar cambios":"Crear horario propio"}
+            {saving && <Loader2 className="gp-spinner-sm" />}
+            {hadOwn ? "Guardar cambios" : "Crear horario propio"}
           </button>
         </div>
       )}

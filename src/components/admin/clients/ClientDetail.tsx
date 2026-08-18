@@ -112,7 +112,8 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
             )}
             {client.birthday && (
               <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Gift className="h-3 w-3 text-[var(--gp-purple)]"/> {format(new Date(client.birthday +"T00:00:00"), "d MMMM", { locale: es })}
+                <Gift className="h-3 w-3 text-pink-500" />
+                {format(new Date(client.birthday + "T00:00:00"), "d MMMM", { locale: es })}
               </p>
             )}
           </div>
@@ -121,20 +122,20 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
         {/* Linked profile badge */}
         <div className="mt-3">
           {linkedProfile ? (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-[var(--gp-ok-soft)] border border-[var(--gp-ok)]">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
               <Avatar className="h-6 w-6">
                 {linkedProfile.avatar_url && <AvatarImage src={linkedProfile.avatar_url} />}
-                <AvatarFallback className="text-[10px] bg-[var(--gp-ok-soft)] text-[var(--gp-ok-ink)]">
+                <AvatarFallback className="text-[10px] bg-green-500/20 text-green-700">
                   {(linkedProfile.full_name || linkedProfile.email)?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-medium text-[var(--gp-ok-ink)]">
+                <span className="text-xs font-medium text-green-700">
                   {linkedProfile.username ? `@${linkedProfile.username}` : linkedProfile.full_name || linkedProfile.email}
                 </span>
               </div>
-              <UserCheck className="h-3.5 w-3.5 text-[var(--gp-ok-ink)] shrink-0" />
-              <span className="text-[10px] text-[var(--gp-ok-ink)] font-medium">Vinculado</span>
+              <UserCheck className="h-3.5 w-3.5 text-green-600 shrink-0" />
+              <span className="text-[10px] text-green-600 font-medium">Vinculado</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border">
@@ -147,7 +148,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
         {client.tags && client.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
             {client.tags.map(tag => (
-              <Badge key={tag} variant="outline"className={TAG_COLORS[tag] ||""}>{tag}</Badge>
+              <Badge key={tag} variant="outline" className={TAG_COLORS[tag] || ""}>{tag}</Badge>
             ))}
           </div>
         )}
@@ -158,7 +159,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
             <p className="text-[10px] text-muted-foreground">Visitas</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-background/60">
-            <p className="text-lg font-bold text-[var(--gp-ok-ink)]">{(client.total_spent || 0).toFixed(0)}€</p>
+            <p className="text-lg font-bold text-green-600">{(client.total_spent || 0).toFixed(0)}€</p>
             <p className="text-[10px] text-muted-foreground">Total</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-background/60">
@@ -204,7 +205,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
       {client.notes && (
         <div className="p-4 border-b">
           <div className="flex items-center gap-2 mb-2">
-            <StickyNote className="h-4 w-4 text-[var(--gp-warn)]" />
+            <StickyNote className="h-4 w-4 text-amber-500" />
             <span className="text-sm font-medium">Notas</span>
           </div>
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">{client.notes}</p>
@@ -242,8 +243,10 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
                         {format(new Date(booking.Fecha), "d MMM yyyy", { locale: es })}
                       </span>
                       <Badge
-                        variant={booking.status === "confirmed"?"default":"secondary"}
-                        className="text-[10px]"> {booking.status ==="confirmed"?"Confirmada" : booking.status}
+                        variant={booking.status === "confirmed" ? "default" : "secondary"}
+                        className="text-[10px]"
+                      >
+                        {booking.status === "confirmed" ? "Confirmada" : booking.status}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{booking.Hora} - {booking.stylist}</p>

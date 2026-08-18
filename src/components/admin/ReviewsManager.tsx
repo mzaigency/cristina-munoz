@@ -23,7 +23,7 @@ interface Review {
   approved: boolean;
 }
 
-type FilterType = "all"|"pending"|"month"|"stars";
+type FilterType = "all" | "pending" | "month" | "stars";
 
 interface ReviewsManagerProps {
   tenantId: string;
@@ -114,7 +114,9 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
     let filtered = [...reviews];
     if (filterType === "pending") {
       filtered = filtered.filter((r) => !r.approved);
-    } else if (filterType === "month"&& selectedMonth) { filtered = filtered.filter( (review) => format(new Date(review.created_at),"yyyy-MM") === selectedMonth
+    } else if (filterType === "month" && selectedMonth) {
+      filtered = filtered.filter(
+        (review) => format(new Date(review.created_at), "yyyy-MM") === selectedMonth
       );
     } else if (filterType === "stars" && selectedStars > 0) {
       filtered = filtered.filter((review) => review.rating === selectedStars);
@@ -147,7 +149,17 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
         .update({ approved: true })
         .eq("id", id);
       if (error) throw error;
-      toast({ title: "Reseña aprobada"}); fetchReviews(); } catch (error) { const err = error as Error; toast({ title:"Error", description: err.message, variant: "destructive"}); } }; const shareReview = (r: Review) => { const link = `https://glowapp.app/${tenantSlug}`; const stars ="⭐".repeat(r.rating);
+      toast({ title: "Reseña aprobada" });
+      fetchReviews();
+    } catch (error) {
+      const err = error as Error;
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const shareReview = (r: Review) => {
+    const link = `https://glowapp.app/${tenantSlug}`;
+    const stars = "⭐".repeat(r.rating);
     const text = r.comment
       ? `${stars}\n"${r.comment}"\n— Mira más reseñas y reserva: ${link}`
       : `${stars}\nMira las reseñas y reserva: ${link}`;
@@ -159,7 +171,19 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
     const stars = "⭐".repeat(r.rating);
     const text = r.comment ? `${stars}\n"${r.comment}"` : stars;
     navigator.clipboard.writeText(text);
-    toast({ title: "Copiada al portapapeles"}); }; const renderStars = (rating: number) => ( <span style={{ display:"inline-flex", gap: 2, color: "var(--gp-warn)"}}> {[...Array(5)].map((_, i) => ( <Star key={i} style={{ width: 14, height: 14, opacity: i < rating ? 1 : 0.22, fill:"currentColor",
+    toast({ title: "Copiada al portapapeles" });
+  };
+
+  const renderStars = (rating: number) => (
+    <span style={{ display: "inline-flex", gap: 2, color: "var(--gp-warn)" }}>
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          style={{
+            width: 14,
+            height: 14,
+            opacity: i < rating ? 1 : 0.22,
+            fill: "currentColor",
           }}
         />
       ))}
@@ -201,7 +225,7 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
           <span className="gp-mkt-rating-big">{stats.avg ? stats.avg.toFixed(1) : "—"}</span>
           <span className="gp-mkt-rating-stars">{renderStars(Math.round(stats.avg))}</span>
           <span className="gp-mkt-rating-meta">
-            Sobre {stats.total} reseña{stats.total === 1 ? "":"s"}
+            Sobre {stats.total} reseña{stats.total === 1 ? "" : "s"}
           </span>
         </div>
 
@@ -260,16 +284,25 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
           {(["all", "pending", "month", "stars"] as FilterType[]).map((f) => (
             <button
               key={f}
-              className={`gp-subtab${filterType === f ? " on":""}`}
+              className={`gp-subtab${filterType === f ? " on" : ""}`}
               onClick={() => setFilterType(f)}
             >
-              {f === "all"?"Todas": f ==="pending"? `Pendientes${stats.pending > 0 ? ` (${stats.pending})` :""}`
-                : f === "month"?"Por mes":"Por estrellas"}
+              {f === "all"
+                ? "Todas"
+                : f === "pending"
+                ? `Pendientes${stats.pending > 0 ? ` (${stats.pending})` : ""}`
+                : f === "month"
+                ? "Por mes"
+                : "Por estrellas"}
             </button>
           ))}
         </div>
         {filterType === "month" && (
-          <div className="gp-subtabs"style={{ margin: 0 }}> {getAvailableMonths().map((month) => ( <button key={month} className={`gp-subtab${selectedMonth === month ?" on":""}`}
+          <div className="gp-subtabs" style={{ margin: 0 }}>
+            {getAvailableMonths().map((month) => (
+              <button
+                key={month}
+                className={`gp-subtab${selectedMonth === month ? " on" : ""}`}
                 onClick={() => setSelectedMonth(month)}
               >
                 {getMonthLabel(month)}
@@ -278,12 +311,26 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
           </div>
         )}
         {filterType === "stars" && (
-          <div className="gp-subtabs"style={{ margin: 0 }}> {[5, 4, 3, 2, 1].map((s) => ( <button key={s} className={`gp-subtab${selectedStars === s ?" on":""}`}
+          <div className="gp-subtabs" style={{ margin: 0 }}>
+            {[5, 4, 3, 2, 1].map((s) => (
+              <button
+                key={s}
+                className={`gp-subtab${selectedStars === s ? " on" : ""}`}
                 onClick={() => setSelectedStars(s)}
               >
                 {s}{" "}
                 <Star
-                  style={{ width: 11, height: 11, fill: "currentColor", color: "var(--gp-warn)"}} /> </button> ))} </div> )} </div> {/* Reviews list */} {loading ? ( <div style={{ textAlign:"center", padding: 48, color: "var(--gp-muted-c)" }}>
+                  style={{ width: 11, height: 11, fill: "currentColor", color: "var(--gp-warn)" }}
+                />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Reviews list */}
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 48, color: "var(--gp-muted-c)" }}>
           Cargando...
         </div>
       ) : filteredReviews.length === 0 ? (
@@ -301,7 +348,7 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
           {filteredReviews.map((review) => (
             <div
               key={review.id}
-              className={`gp-card pad gp-mkt-review${!review.approved ? " is-pending":""}`}
+              className={`gp-card pad gp-mkt-review${!review.approved ? " is-pending" : ""}`}
             >
               <div className="gp-mkt-review-h">
                 <div className="gp-mkt-review-stars-wrap">
@@ -310,8 +357,9 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
                     {format(new Date(review.created_at), "d MMM yyyy", { locale: es })}
                   </span>
                 </div>
-                <span className={`gp-badge ${review.approved ? "ok":"warn"}`}>
-                  <span className="pip"style={{ background:"currentColor"}} /> {review.approved ?"Publicada":"Pendiente"}
+                <span className={`gp-badge ${review.approved ? "ok" : "warn"}`}>
+                  <span className="pip" style={{ background: "currentColor" }} />
+                  {review.approved ? "Publicada" : "Pendiente"}
                 </span>
               </div>
               <p className="gp-mkt-review-comment">

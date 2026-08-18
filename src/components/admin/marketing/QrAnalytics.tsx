@@ -85,14 +85,14 @@ export function QrAnalytics({ tenantId, tenantSlug: initialSlug }: QrAnalyticsPr
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-[var(--gp-line)] p-6 space-y-5">
+    <div className="bg-white rounded-2xl border border-neutral-200 p-6 space-y-5">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
           <QrCode className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-[var(--gp-ink)]">Código QR del salón</h3>
-          <p className="text-sm text-[var(--gp-ink2)]">Escaneos y reservas generadas desde el QR</p>
+          <h3 className="text-lg font-bold text-neutral-900">Código QR del salón</h3>
+          <p className="text-sm text-neutral-500">Escaneos y reservas generadas desde el QR</p>
         </div>
       </div>
 
@@ -107,22 +107,23 @@ export function QrAnalytics({ tenantId, tenantSlug: initialSlug }: QrAnalyticsPr
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-[160px_1fr] items-center bg-[var(--gp-chip)] rounded-xl p-4">
+      <div className="grid gap-4 sm:grid-cols-[160px_1fr] items-center bg-neutral-50 rounded-xl p-4">
         <img src={qrImage} alt="QR del salón" className="w-40 h-40 rounded-lg bg-white p-2 mx-auto sm:mx-0" />
         <div className="space-y-3">
           <div>
-            <p className="text-xs font-semibold text-[var(--gp-ink2)] uppercase tracking-wide">Enlace del QR</p>
-            <p className="text-sm text-[var(--gp-ink)] break-all mt-1">{qrUrl}</p>
+            <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Enlace del QR</p>
+            <p className="text-sm text-neutral-800 break-all mt-1">{qrUrl}</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={copyLink} variant="outline" size="sm" className="gap-2">
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4"/>} {copied ?"Copiado":"Copiar enlace"}
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? "Copiado" : "Copiar enlace"}
             </Button>
             <a href={qrImage} download={`qr-${tenantSlug}.png`}>
               <Button variant="outline" size="sm">Descargar QR</Button>
             </a>
           </div>
-          <p className="text-xs text-[var(--gp-ink2)]">
+          <p className="text-xs text-neutral-500">
             Coloca este QR en tu recepción, tarjetas o escaparate. Los clientes escanearán y reservarán sin cuenta.
           </p>
         </div>
@@ -133,12 +134,12 @@ export function QrAnalytics({ tenantId, tenantSlug: initialSlug }: QrAnalyticsPr
 
 function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
   return (
-    <div className="bg-[var(--gp-chip)] rounded-xl p-3">
-      <div className="flex items-center gap-2 text-[var(--gp-ink2)] text-xs font-medium">
+    <div className="bg-neutral-50 rounded-xl p-3">
+      <div className="flex items-center gap-2 text-neutral-500 text-xs font-medium">
         <Icon className="h-4 w-4" />
         {label}
       </div>
-      <div className="text-2xl font-bold text-[var(--gp-ink)] mt-1">{value}</div>
+      <div className="text-2xl font-bold text-neutral-900 mt-1">{value}</div>
     </div>
   );
 }

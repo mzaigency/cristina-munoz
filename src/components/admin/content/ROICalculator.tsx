@@ -97,27 +97,35 @@ export function ROICalculator({ tenantId }: ROICalculatorProps) {
   };
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR"}).format(amount); const roiCards = [ { label:"Ingresos gestionados",
+    new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
+
+  const roiCards = [
+    {
+      label: "Ingresos gestionados",
       value: formatCurrency(stats.totalRevenue),
-      icon: <DollarSign className="h-5 w-5"/>, color:"from-[var(--gp-ok)] to-[var(--gp-ok-ink)]",
+      icon: <DollarSign className="h-5 w-5" />,
+      color: "from-emerald-500 to-green-600",
       subtitle: `${stats.daysActive} días activo`,
     },
     {
       label: "Citas gestionadas",
       value: stats.totalBookings.toString(),
-      icon: <Calendar className="h-5 w-5"/>, color:"from-[var(--gp-purple)] to-[var(--gp-purple-ink)]",
+      icon: <Calendar className="h-5 w-5" />,
+      color: "from-violet-500 to-purple-600",
       subtitle: `Media: ${formatCurrency(stats.avgBookingValue)}/cita`,
     },
     {
       label: "No-shows evitados",
       value: `~${stats.noShowsAvoided}`,
-      icon: <ShieldCheck className="h-5 w-5"/>, color:"from-[var(--gp-warn)] to-[var(--gp-warn-ink)]",
+      icon: <ShieldCheck className="h-5 w-5" />,
+      color: "from-amber-500 to-orange-600",
       subtitle: `Ahorro: ${formatCurrency(stats.noShowsAvoided * stats.avgBookingValue)}`,
     },
     {
       label: "Tiempo ahorrado",
       value: `${stats.estimatedTimeSaved}h`,
-      icon: <Clock className="h-5 w-5"/>, color:"from-[var(--gp-info)] to-[var(--gp-info-ink)]",
+      icon: <Clock className="h-5 w-5" />,
+      color: "from-blue-500 to-cyan-600",
       subtitle: "vs gestión manual (tel/WhatsApp)",
     },
   ];
@@ -173,8 +181,8 @@ export function ROICalculator({ tenantId }: ROICalculatorProps) {
       <Card className="bg-muted/30">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-[var(--gp-ok-soft)]  shrink-0">
-              <TrendingUp className="h-5 w-5 text-[var(--gp-ok-ink)] " />
+            <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 shrink-0">
+              <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">Valor recuperado estimado</p>

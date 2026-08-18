@@ -67,7 +67,9 @@ export function ProposeSlotDialog({
       setTime(
         waitlistEntry.preferred_time_start
           ? waitlistEntry.preferred_time_start.slice(0, 5)
-          : ""); setStylistId(waitlistEntry.preferred_stylist_id ||"");
+          : ""
+      );
+      setStylistId(waitlistEntry.preferred_stylist_id || "");
       setConflictWarn(null);
     }
   }, [open, waitlistEntry]);
@@ -199,7 +201,16 @@ export function ProposeSlotDialog({
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto pb-[max(env(safe-area-inset-bottom),1rem)]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary"/> Proponer hueco </DialogTitle> <DialogDescription> A {waitlistEntry.client_name} {waitlistEntry.user_id ?" (recibirá aviso en la app)": waitlistEntry.client_phone ?" (te abriremos WhatsApp)":" (sin contacto digital)"}
+            <Sparkles className="h-5 w-5 text-primary" />
+            Proponer hueco
+          </DialogTitle>
+          <DialogDescription>
+            A {waitlistEntry.client_name}
+            {waitlistEntry.user_id
+              ? " (recibirá aviso en la app)"
+              : waitlistEntry.client_phone
+                ? " (te abriremos WhatsApp)"
+                : " (sin contacto digital)"}
           </DialogDescription>
         </DialogHeader>
 
@@ -212,7 +223,8 @@ export function ProposeSlotDialog({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="mt-1"min={format(new Date(),"yyyy-MM-dd")}
+              className="mt-1"
+              min={format(new Date(), "yyyy-MM-dd")}
             />
           </div>
 
@@ -232,7 +244,7 @@ export function ProposeSlotDialog({
             <Label className="text-xs">Profesional</Label>
             <Select
               value={stylistId || "none"}
-              onValueChange={(v) => setStylistId(v === "none"?"" : v)}
+              onValueChange={(v) => setStylistId(v === "none" ? "" : v)}
             >
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Sin asignar" />
@@ -249,7 +261,7 @@ export function ProposeSlotDialog({
           </div>
 
           {conflictWarn && (
-            <div className="text-xs text-[var(--gp-warn-ink)] bg-[var(--gp-warn-soft)] border border-[var(--gp-warn-soft)] rounded-lg px-3 py-2">
+            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
               ⚠️ {conflictWarn}
             </div>
           )}

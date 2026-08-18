@@ -82,8 +82,19 @@ const PRESET_COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6", "#
 const COMMISSION_PRESETS = [30, 40, 50, 60];
 /** Lunes primero, como InlineScheduleEditor. */
 const WEEK_DAYS = [
-  { value: 1, label: "Lun"}, { value: 2, label:"Mar"}, { value: 3, label:"Mié"}, { value: 4, label:"Jue"}, { value: 5, label:"Vie"}, { value: 6, label:"Sáb"}, { value: 0, label:"Dom"},
-]; const firstServiceName = (services: unknown): string | null => { if (!Array.isArray(services) || services.length === 0) return null; const s = services[0] as { name?: string } | string; if (typeof s ==="string") return s;
+  { value: 1, label: "Lun" },
+  { value: 2, label: "Mar" },
+  { value: 3, label: "Mié" },
+  { value: 4, label: "Jue" },
+  { value: 5, label: "Vie" },
+  { value: 6, label: "Sáb" },
+  { value: 0, label: "Dom" },
+];
+
+const firstServiceName = (services: unknown): string | null => {
+  if (!Array.isArray(services) || services.length === 0) return null;
+  const s = services[0] as { name?: string } | string;
+  if (typeof s === "string") return s;
   return s?.name ?? null;
 };
 
@@ -260,7 +271,19 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
     } = supabase.storage.from("tenant-assets").getPublicUrl(fileName);
     setUploadingAvatar(false);
     await updateStylist({ avatar_url: publicUrl });
-    toast({ title: "Foto actualizada"}); }; const saveCommission = async () => { setSaving(true); const payload = { tenant_id: tenantId, stylist_id: stylistId, commission_type: commission.commission_type, commission_percentage: commission.commission_type ==="percentage"? commission.commission_percentage : null, commission_fixed: commission.commission_type ==="fixed"? commission.commission_fixed : null, effective_from: format(new Date(),"yyyy-MM-dd"),
+    toast({ title: "Foto actualizada" });
+  };
+
+  const saveCommission = async () => {
+    setSaving(true);
+    const payload = {
+      tenant_id: tenantId,
+      stylist_id: stylistId,
+      commission_type: commission.commission_type,
+      commission_percentage:
+        commission.commission_type === "percentage" ? commission.commission_percentage : null,
+      commission_fixed: commission.commission_type === "fixed" ? commission.commission_fixed : null,
+      effective_from: format(new Date(), "yyyy-MM-dd"),
     };
     if (commission.id) {
       const { error } = await supabase.from("stylist_commissions").update(payload).eq("id", commission.id);
@@ -273,7 +296,13 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       const { data, error } = await supabase.from("stylist_commissions").insert(payload).select("id").single();
       setSaving(false);
       if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive"}); return; } setCommission((c) => ({ ...c, id: (data as { id: string } | null)?.id ?? null })); } setCommissionDirty(false); toast({ title:"Comisión guardada" });
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        return;
+      }
+      setCommission((c) => ({ ...c, id: (data as { id: string } | null)?.id ?? null }));
+    }
+    setCommissionDirty(false);
+    toast({ title: "Comisión guardada" });
     onChanged();
   };
 
@@ -283,7 +312,10 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
     const { error } = await supabase.from("stylist_business_hours").delete().eq("stylist_id", stylistId);
     setSaving(false);
     if (error) {
-      toast({ title: "Error", description: "No se pudo restaurar el horario", variant: "destructive"}); return; } toast({ title:"Horario del salón", description: `${stylist?.name} vuelve a seguir el horario del negocio.` });
+      toast({ title: "Error", description: "No se pudo restaurar el horario", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Horario del salón", description: `${stylist?.name} vuelve a seguir el horario del negocio.` });
     setSchedule(null);
     loadSchedule();
     onChanged();
@@ -306,7 +338,8 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
   if (loading || !stylist) {
     return (
       <div className="gp-neg-drawer-backdrop" onClick={onClose}>
-        <div className="gp-neg-drawer"onClick={(e) => e.stopPropagation()}> <div style={{ display:"flex", justifyContent: "center", padding: 48 }}>
+        <div className="gp-neg-drawer" onClick={(e) => e.stopPropagation()}>
+          <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
             <Loader2 className="gp-spinner" />
           </div>
         </div>
@@ -333,10 +366,11 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
               aria-label="Cambiar foto"
             >
               <div
-                className="gp-neg-stylist-avatar"style={{ background: stylist.color ||"var(--gp-accent)", width: 48, height: 48 }}
+                className="gp-neg-stylist-avatar"
+                style={{ background: stylist.color || "var(--gp-accent)", width: 48, height: 48 }}
               >
                 {uploadingAvatar ? (
-                  <Loader2 className="gp-spinner-sm"style={{ color:"#fff" }} />
+                  <Loader2 className="gp-spinner-sm" style={{ color: "#fff" }} />
                 ) : stylist.avatar_url ? (
                   <img src={stylist.avatar_url} alt={stylist.name} />
                 ) : (
@@ -350,7 +384,8 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"style={{ display:"none" }}
+              accept="image/*"
+              style={{ display: "none" }}
               onChange={(e) => handleAvatarFile(e.target.files?.[0])}
             />
             <div>
@@ -358,7 +393,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
               <span className="gp-neg-drawer-sub">
                 {stylist.is_active ? (
                   <span className="gp-badge ok">
-                    <span className="pip"style={{ background:"currentColor" }} />
+                    <span className="pip" style={{ background: "currentColor" }} />
                     Activo
                   </span>
                 ) : (
@@ -416,7 +451,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
             {/* De dónde sale el horario: del salón o propio */}
             <div className="gp-team-seg" role="radiogroup" aria-label="Origen del horario">
               <button
-                className={`gp-team-seg-opt${usesSalonHours && !editingSchedule ? " on":""}`}
+                className={`gp-team-seg-opt${usesSalonHours && !editingSchedule ? " on" : ""}`}
                 onClick={() => {
                   if (editingSchedule && usesSalonHours) {
                     // Estaba creando uno propio sin guardar: basta con descartar
@@ -427,7 +462,13 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                 }}
                 role="radio"
                 aria-checked={usesSalonHours && !editingSchedule}
-                type="button"> <Store style={{ width: 13, height: 13 }} /> Del salón </button> <button className={`gp-team-seg-opt${!usesSalonHours || editingSchedule ?" on":""}`}
+                type="button"
+              >
+                <Store style={{ width: 13, height: 13 }} />
+                Del salón
+              </button>
+              <button
+                className={`gp-team-seg-opt${!usesSalonHours || editingSchedule ? " on" : ""}`}
                 onClick={() => {
                   if (usesSalonHours && !editingSchedule) setEditingSchedule(true);
                 }}
@@ -455,7 +496,13 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
             ) : (
               <>
                 {usesSalonHours && (
-                  <p className="gp-neg-help"style={{ margin: 0 }}> Sigue el horario del negocio: si cambias el del salón, el suyo cambia también. Toca «Propio» para personalizarlo. </p> )} {schedule === null ? ( <div style={{ display:"flex", justifyContent: "center", padding: 24 }}>
+                  <p className="gp-neg-help" style={{ margin: 0 }}>
+                    Sigue el horario del negocio: si cambias el del salón, el suyo cambia también. Toca
+                    «Propio» para personalizarlo.
+                  </p>
+                )}
+                {schedule === null ? (
+                  <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
                     <Loader2 className="gp-spinner-sm" />
                   </div>
                 ) : (
@@ -463,7 +510,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                     {orderedSchedule.map(({ value, label, row }) => {
                       const working = row?.is_working && row.start_time && row.end_time;
                       return (
-                        <div key={value} className={`gp-neg-sched-row${working ? "":" off"}`}>
+                        <div key={value} className={`gp-neg-sched-row${working ? "" : " off"}`}>
                           <span className="gp-neg-sched-day">{label}</span>
                           {working ? (
                             <span className="gp-neg-sched-hours">
@@ -496,23 +543,35 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
             <div className="gp-neg-form-row">
               <div className="gp-mkt-chip-row">
                 <button
-                  className={`gp-mkt-chip${commission.commission_type === "percentage"?" on":""}`}
+                  className={`gp-mkt-chip${commission.commission_type === "percentage" ? " on" : ""}`}
                   onClick={() => {
                     setCommission({ ...commission, commission_type: "percentage" });
                     setCommissionDirty(true);
                   }}
-                  type="button"> % de lo facturado </button> <button className={`gp-mkt-chip${commission.commission_type ==="fixed"?" on":""}`}
+                  type="button"
+                >
+                  % de lo facturado
+                </button>
+                <button
+                  className={`gp-mkt-chip${commission.commission_type === "fixed" ? " on" : ""}`}
                   onClick={() => {
                     setCommission({ ...commission, commission_type: "fixed" });
                     setCommissionDirty(true);
                   }}
-                  type="button"> € fijo por cita </button> </div> </div> {commission.commission_type ==="percentage" ? (
+                  type="button"
+                >
+                  € fijo por cita
+                </button>
+              </div>
+            </div>
+
+            {commission.commission_type === "percentage" ? (
               <div className="gp-neg-form-row">
                 <div className="gp-mkt-chip-row">
                   {COMMISSION_PRESETS.map((p) => (
                     <button
                       key={p}
-                      className={`gp-mkt-chip${commission.commission_percentage === p ? " on":""}`}
+                      className={`gp-mkt-chip${commission.commission_percentage === p ? " on" : ""}`}
                       onClick={() => {
                         setCommission({ ...commission, commission_percentage: p });
                         setCommissionDirty(true);
@@ -562,7 +621,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
 
             <div className="gp-neg-earn-preview">
               <div>
-                <span>{commission.commission_type === "percentage"?"Facturado este mes":"Citas este mes"}</span>
+                <span>{commission.commission_type === "percentage" ? "Facturado este mes" : "Citas este mes"}</span>
                 <strong>
                   {commission.commission_type === "percentage"
                     ? `${Math.round(revenueMonth).toLocaleString("es-ES")}€`
@@ -646,7 +705,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                 {PRESET_COLORS.map((c) => (
                   <button
                     key={c}
-                    className={`gp-neg-color-dot${stylist.color === c ? " on":""}`}
+                    className={`gp-neg-color-dot${stylist.color === c ? " on" : ""}`}
                     style={{ background: c }}
                     onClick={() => updateStylist({ color: c })}
                     type="button"

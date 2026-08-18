@@ -1,5 +1,4 @@
 import {
-  History,
   LayoutDashboard,
   Calendar,
   CalendarDays,
@@ -33,9 +32,16 @@ import { NotifBadge } from "./NotifBadge";
 import { usePlanLimits, type PlanFeature } from "@/hooks/usePlanLimits";
 
 export type AdminSection =
-  | "inicio"|"agenda"|"caja"|"clientes"|"catalogo"|"marketing"|"negocio"|"ajustes";
+  | "inicio"
+  | "agenda"
+  | "caja"
+  | "clientes"
+  | "catalogo"
+  | "marketing"
+  | "negocio"
+  | "ajustes";
 
-export type BadgeKey = "waitlist"|"orders"|"messages"|"reviews";
+export type BadgeKey = "waitlist" | "orders" | "messages" | "reviews";
 
 export interface AdminSubTabDef {
   value: string;
@@ -53,19 +59,39 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
   agenda: [
     { value: "dia", label: "Día", icon: Calendar },
     { value: "semana", label: "Semana", icon: CalendarDays },
-    { value: "espera", label: "Espera", icon: Clock, badgeKey: "waitlist"}, ], caja: [ { value:"cobros", label: "Cobros", icon: Wallet, requiredFeature: "cash_register"}, { value:"historial", label: "Historial", icon: History, requiredFeature: "cash_register"}, { value:"pedidos", label: "Pedidos", icon: ShoppingCart, badgeKey: "orders"}, { value:"cierre", label: "Cierre", icon: Receipt, requiredFeature: "cash_register"}, ], clientes: [ { value:"directorio", label: "Directorio", icon: UserCircle },
-    { value: "mensajes", label: "Mensajes", icon: MessageCircle, badgeKey: "messages"}, ], catalogo: [ { value:"services", label: "Servicios", icon: Scissors },
+    { value: "espera", label: "Espera", icon: Clock, badgeKey: "waitlist" },
+  ],
+  caja: [
+    { value: "cobros", label: "Cobros", icon: Wallet, requiredFeature: "cash_register" },
+    { value: "pedidos", label: "Pedidos", icon: ShoppingCart, badgeKey: "orders" },
+    { value: "cierre", label: "Cierre", icon: Receipt, requiredFeature: "cash_register" },
+  ],
+  clientes: [
+    { value: "directorio", label: "Directorio", icon: UserCircle },
+    { value: "mensajes", label: "Mensajes", icon: MessageCircle, badgeKey: "messages" },
+  ],
+  catalogo: [
+    { value: "services", label: "Servicios", icon: Scissors },
     { value: "products", label: "Productos", icon: ShoppingBag },
-    { value: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages"}, ], marketing: [ { value:"resumen", label: "Resumen", icon: LayoutDashboard },
+    { value: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages" },
+  ],
+  marketing: [
+    { value: "resumen", label: "Resumen", icon: LayoutDashboard },
     { value: "posts", label: "Posts", icon: ImagePlus },
-    { value: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions"}, { value:"resenas", label: "Reseñas", icon: Star, badgeKey: "reviews"}, { value:"difusion", label: "Difusión", icon: Megaphone },
+    { value: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions" },
+    { value: "resenas", label: "Reseñas", icon: Star, badgeKey: "reviews" },
+    { value: "difusion", label: "Difusión", icon: Megaphone },
     { value: "qr", label: "Tarjetas QR", icon: QrCode },
   ],
   negocio: [
     { value: "resumen", label: "Resumen", icon: LayoutDashboard },
     { value: "equipo", label: "Equipo", icon: Users },
     { value: "horarios", label: "Horarios", icon: Clock },
-    { value: "estadisticas", label: "Estadísticas", icon: BarChart3, requiredFeature: "advanced_analytics"}, { value:"objetivos", label: "Objetivos", icon: Target, requiredFeature: "monthly_goals"}, ], ajustes: [ { value:"general", label: "General", icon: Settings },
+    { value: "estadisticas", label: "Estadísticas", icon: BarChart3, requiredFeature: "advanced_analytics" },
+    { value: "objetivos", label: "Objetivos", icon: Target, requiredFeature: "monthly_goals" },
+  ],
+  ajustes: [
+    { value: "general", label: "General", icon: Settings },
     { value: "plan", label: "Plan", icon: Receipt },
     { value: "alertas", label: "Alertas", icon: Activity },
   ],
@@ -108,7 +134,8 @@ export function AdminSubNav({
       ref={navRef}
       role="tablist"
       aria-label={`Sub-navegación ${section}`}
-      className="border-b"style={{ background:"color-mix(in oklab, var(--gp-bg), white 30%)", backdropFilter: "blur(12px)", borderColor: "var(--gp-line)" }}
+      className="border-b"
+      style={{ background: "color-mix(in oklab, var(--gp-bg), white 30%)", backdropFilter: "blur(12px)", borderColor: "var(--gp-line)" }}
     >
       <div className="mx-auto max-w-7xl px-3 min-[920px]:px-[26px]">
         <ScrollArea className="w-full">
@@ -122,7 +149,9 @@ export function AdminSubNav({
               return (
                 <button
                   key={item.value}
-                  role="tab"aria-selected={isActive} aria-label={`${item.label}${badge > 0 ? `, ${badge} pendientes` :""}${locked ? ", requiere plan Pro":""}`}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-label={`${item.label}${badge > 0 ? `, ${badge} pendientes` : ""}${locked ? ", requiere plan Pro" : ""}`}
                   onClick={() => {
                     if (locked) return;
                     onSelect(item.value);
@@ -132,7 +161,7 @@ export function AdminSubNav({
                   <Icon className="h-3.5 w-3.5 shrink-0" />
                   <span>{item.label}</span>
                   {locked && (
-                    <span className="text-[10px] font-semibold text-[var(--gp-warn-ink)]">Pro</span>
+                    <span className="text-[10px] font-semibold text-amber-600">Pro</span>
                   )}
                   {badge > 0 && !isActive && (
                     <span className="gp-subtab-count">{badge}</span>

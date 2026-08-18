@@ -30,7 +30,7 @@ interface MarketingSectionProps {
   hideTabs?: boolean;
 }
 
-type MarketingTab = "resumen"|"posts"|"promos"|"resenas"|"difusion"|"qr";
+type MarketingTab = "resumen" | "posts" | "promos" | "resenas" | "difusion" | "qr";
 
 interface TabConfig {
   id: MarketingTab;
@@ -41,7 +41,14 @@ interface TabConfig {
 }
 
 const POST_CATEGORIES = [
-  { id: "all", label: "Todas"}, { id:"corte", label: "Corte"}, { id:"color", label: "Color"}, { id:"peinado", label: "Peinado"}, { id:"tratamiento", label: "Tratamiento"}, { id:"uñas", label: "Uñas"}, { id:"maquillaje", label: "Maquillaje"}, { id:"otro", label: "Otro" },
+  { id: "all", label: "Todas" },
+  { id: "corte", label: "Corte" },
+  { id: "color", label: "Color" },
+  { id: "peinado", label: "Peinado" },
+  { id: "tratamiento", label: "Tratamiento" },
+  { id: "uñas", label: "Uñas" },
+  { id: "maquillaje", label: "Maquillaje" },
+  { id: "otro", label: "Otro" },
 ];
 
 const MarketingSection = ({
@@ -67,7 +74,7 @@ const MarketingSection = ({
   const [activePromos, setActivePromos] = useState(0);
   const [tenantName, setTenantName] = useState<string>("");
   const [postFilter, setPostFilter] = useState<string>("all");
-  const [postSort, setPostSort] = useState<"recent"|"popular">("recent");
+  const [postSort, setPostSort] = useState<"recent" | "popular">("recent");
 
   const { tenantPosts, deletePost, refetchTenantPosts } = usePosts(tenantId);
   const { hasFeature, planSlug } = usePlanLimits(tenantId);
@@ -118,7 +125,8 @@ const MarketingSection = ({
   const tabs: TabConfig[] = [
     { id: "resumen", label: "Resumen", icon: LayoutDashboard, badge: 0 },
     { id: "posts", label: "Posts", icon: ImagePlus, badge: 0 },
-    { id: "promos", label: "Promos", icon: Percent, badge: activePromos, requiredFeature: "promotions"}, { id:"resenas", label: "Reseñas", icon: Star, badge: pendingReviews },
+    { id: "promos", label: "Promos", icon: Percent, badge: activePromos, requiredFeature: "promotions" },
+    { id: "resenas", label: "Reseñas", icon: Star, badge: pendingReviews },
     { id: "difusion", label: "Difusión", icon: Megaphone, badge: 0 },
     { id: "qr", label: "Tarjetas QR", icon: QrCode, badge: 0 },
   ];
@@ -136,7 +144,11 @@ const MarketingSection = ({
     if (postFilter !== "all") {
       const f = postFilter;
       const filtered = arr.filter((p) => (p.category ?? "otro") === f);
-      return postSort === "popular"? filtered.sort((a, b) => b.likes_count - a.likes_count) : filtered; } return postSort ==="popular"
+      return postSort === "popular"
+        ? filtered.sort((a, b) => b.likes_count - a.likes_count)
+        : filtered;
+    }
+    return postSort === "popular"
       ? arr.sort((a, b) => b.likes_count - a.likes_count)
       : arr;
   }, [tenantPosts, postFilter, postSort]);
@@ -157,7 +169,7 @@ const MarketingSection = ({
             return (
               <button
                 key={tab.id}
-                className={`gp-mkt-tab${activeTab === tab.id ? " on":""}${locked ? " locked":""}`}
+                className={`gp-mkt-tab${activeTab === tab.id ? " on" : ""}${locked ? " locked" : ""}`}
                 onClick={() => handleTabChange(tab.id)}
                 type="button"
               >
@@ -174,7 +186,11 @@ const MarketingSection = ({
       )}
 
       <div className="gp-mkt-body">
-        {activeTab === "resumen"&& ( <MarketingOverview tenantId={tenantId} onNavigate={(t) => handleTabChange(t as MarketingTab)} /> )} {activeTab ==="posts" && (
+        {activeTab === "resumen" && (
+          <MarketingOverview tenantId={tenantId} onNavigate={(t) => handleTabChange(t as MarketingTab)} />
+        )}
+
+        {activeTab === "posts" && (
           <div className="gp-fade gp-mkt-posts">
             <div className="gp-page-h">
               <div>
@@ -193,7 +209,7 @@ const MarketingSection = ({
                 {POST_CATEGORIES.map((c) => (
                   <button
                     key={c.id}
-                    className={`gp-mkt-chip${postFilter === c.id ? " on":""}`}
+                    className={`gp-mkt-chip${postFilter === c.id ? " on" : ""}`}
                     onClick={() => setPostFilter(c.id)}
                     type="button"
                   >
@@ -202,18 +218,55 @@ const MarketingSection = ({
                 ))}
               </div>
               <div className="gp-mkt-chip-row">
-                <Filter style={{ width: 13, height: 13, color: "var(--gp-muted-c)"}} /> <button className={`gp-mkt-chip${postSort ==="recent"?" on":""}`}
+                <Filter style={{ width: 13, height: 13, color: "var(--gp-muted-c)" }} />
+                <button
+                  className={`gp-mkt-chip${postSort === "recent" ? " on" : ""}`}
                   onClick={() => setPostSort("recent")}
-                  type="button"> Recientes </button> <button className={`gp-mkt-chip${postSort ==="popular"?" on":""}`}
+                  type="button"
+                >
+                  Recientes
+                </button>
+                <button
+                  className={`gp-mkt-chip${postSort === "popular" ? " on" : ""}`}
                   onClick={() => setPostSort("popular")}
-                  type="button"> Más likes </button> </div> </div> <PostGrid posts={sortedPosts} isAdmin onDelete={(postId) => deletePost(postId)} /> <PostCreator isOpen={postCreatorOpen} onClose={() => { setPostCreatorOpen(false); refetchTenantPosts(); }} /> </div> )} {activeTab ==="promos" &&
+                  type="button"
+                >
+                  Más likes
+                </button>
+              </div>
+            </div>
+
+            <PostGrid posts={sortedPosts} isAdmin onDelete={(postId) => deletePost(postId)} />
+            <PostCreator
+              isOpen={postCreatorOpen}
+              onClose={() => {
+                setPostCreatorOpen(false);
+                refetchTenantPosts();
+              }}
+            />
+          </div>
+        )}
+
+        {activeTab === "promos" &&
           (promosLocked ? (
             <LockedFeature
               featureName="Promociones"
               currentPlan={planSlug}
               requiredPlan="pro"
               tenantId={tenantId}
-              variant="inline"/> ) : ( <PromotionsManager tenantId={tenantId} /> ))} {activeTab ==="resenas"&& <ReviewsManager tenantId={tenantId} />} {activeTab ==="difusion"&& ( <MarketingBroadcast tenantId={tenantId} tenantSlug={tenantSlug} tenantName={tenantName} /> )} {activeTab ==="qr" && (
+              variant="inline"
+            />
+          ) : (
+            <PromotionsManager tenantId={tenantId} />
+          ))}
+
+        {activeTab === "resenas" && <ReviewsManager tenantId={tenantId} />}
+
+        {activeTab === "difusion" && (
+          <MarketingBroadcast tenantId={tenantId} tenantSlug={tenantSlug} tenantName={tenantName} />
+        )}
+
+        {activeTab === "qr" && (
           <div data-tour-target="marketing-qr">
             <QRCardGenerator tenantId={tenantId} tenantSlug={tenantSlug} />
           </div>

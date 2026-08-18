@@ -80,7 +80,9 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
   const [bookingData, setBookingData] = useState<AdminBookingData>({
     services: [],
-    stylist: "any"as Stylist, date: null, time:"",
+    stylist: "any" as Stylist,
+    date: null,
+    time: "",
     customerName: "",
     customerUsername: "",
     selectedUser: null,
@@ -217,7 +219,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
     const servicesWithDuration = (data || []).map((service) => ({
       ...service,
-      type: service.type as "Simple"|"Compuesto",
+      type: service.type as "Simple" | "Compuesto",
       duration: service.duration_part1_active + service.duration_exposure_pause + service.duration_part2_active,
     }));
 
@@ -232,7 +234,31 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
   const progressRef = useRef<HTMLDivElement>(null);
   const scrollToProgress = () => {
-    progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start"}); }; const handleServicesSelect = (selectedServices: Service[]) => { setBookingData({ ...bookingData, services: selectedServices }); setStep(2); scrollToProgress(); }; const handleDateTimeSelect = ( date: Date, time: string, resolvedStylist?: Stylist, skipAvailabilityCheck?: boolean, ) => { const finalStylist = resolvedStylist || bookingData.stylist; setBookingData({ ...bookingData, date, time, stylist: finalStylist, skipAvailabilityCheck }); setStep(3); scrollToProgress(); }; const handleConfirmBooking = async () => { if (!bookingData.customerName.trim()) { toast({ title:"Error",
+    progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleServicesSelect = (selectedServices: Service[]) => {
+    setBookingData({ ...bookingData, services: selectedServices });
+    setStep(2);
+    scrollToProgress();
+  };
+
+  const handleDateTimeSelect = (
+    date: Date,
+    time: string,
+    resolvedStylist?: Stylist,
+    skipAvailabilityCheck?: boolean,
+  ) => {
+    const finalStylist = resolvedStylist || bookingData.stylist;
+    setBookingData({ ...bookingData, date, time, stylist: finalStylist, skipAvailabilityCheck });
+    setStep(3);
+    scrollToProgress();
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!bookingData.customerName.trim()) {
+      toast({
+        title: "Error",
         description: "El nombre es requerido",
         variant: "destructive",
       });
@@ -445,7 +471,12 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                 </Label>
                 <Input
                   id="customerUsername"
-                  type="text"value={searchUsername} onChange={(e) => { setSearchUsername(e.target.value); if (bookingData.selectedUser) { setBookingData((prev) => ({ ...prev, selectedUser: null, customerUsername:"" }));
+                  type="text"
+                  value={searchUsername}
+                  onChange={(e) => {
+                    setSearchUsername(e.target.value);
+                    if (bookingData.selectedUser) {
+                      setBookingData((prev) => ({ ...prev, selectedUser: null, customerUsername: "" }));
                     }
                   }}
                   onFocus={() => searchResults.length > 0 && setShowResults(true)}
@@ -455,7 +486,11 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                 <p className="text-xs text-muted-foreground">
                   {bookingData.selectedUser ? (
                     <span className="text-primary flex items-center gap-1">
-                      <Check className="h-3 w-3"/> Vinculado: @{bookingData.selectedUser.username || bookingData.selectedUser.full_name} </span> ) : ("Vincula la cita a un usuario registrado en la app"
+                      <Check className="h-3 w-3" />
+                      Vinculado: @{bookingData.selectedUser.username || bookingData.selectedUser.full_name}
+                    </span>
+                  ) : (
+                    "Vincula la cita a un usuario registrado en la app"
                   )}
                 </p>
 
@@ -501,7 +536,8 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                 </p>
                 <p className="text-sm text-muted-foreground">
                   <strong>Profesional:</strong>{" "}
-                  {bookingData.stylist === "any"?"Siguiente disponible"
+                  {bookingData.stylist === "any"
+                    ? "Siguiente disponible"
                     : tenantStylists.find((s) => s.slug === bookingData.stylist)?.name || bookingData.stylist}
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -514,7 +550,11 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                 {bookingData.recurrence.enabled && (
                   <p className="text-sm text-primary font-medium">
                     <strong>Repetición:</strong> Cada {bookingData.recurrence.intervalValue}{" "}
-                    {bookingData.recurrence.intervalUnit === "days"?"días": bookingData.recurrence.intervalUnit ==="weeks"?"semanas":"meses"}
+                    {bookingData.recurrence.intervalUnit === "days"
+                      ? "días"
+                      : bookingData.recurrence.intervalUnit === "weeks"
+                        ? "semanas"
+                        : "meses"}
                     , {bookingData.recurrence.occurrences} citas en total
                   </p>
                 )}
@@ -528,7 +568,13 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
               <Button onClick={handleConfirmBooking} disabled={loading} data-guided-cta="true">
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/> Creando... </> ) : bookingData.recurrence.enabled ? ( `Crear ${bookingData.recurrence.occurrences} Citas` ) : ("Crear Cita"
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creando...
+                  </>
+                ) : bookingData.recurrence.enabled ? (
+                  `Crear ${bookingData.recurrence.occurrences} Citas`
+                ) : (
+                  "Crear Cita"
                 )}
               </Button>
             </div>
@@ -540,7 +586,8 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
       {/* Guided helper banner — same style as public booking */}
       <div
-        className="sticky bottom-0 left-0 right-0 z-30 px-4 py-2.5 bg-background/90 backdrop-blur-xl border-t border-border flex items-center gap-2 rounded-b-lg"style={{ paddingBottom:"calc(0.625rem + env(safe-area-inset-bottom))" }}
+        className="sticky bottom-0 left-0 right-0 z-30 px-4 py-2.5 bg-background/90 backdrop-blur-xl border-t border-border flex items-center gap-2 rounded-b-lg"
+        style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}
         role="status"
         aria-live="polite"
       >

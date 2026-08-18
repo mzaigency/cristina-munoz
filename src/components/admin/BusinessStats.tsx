@@ -67,7 +67,7 @@ interface BusinessStatsProps {
   tenantId: string;
 }
 
-type Period = "week"|"month"|"quarter";
+type Period = "week" | "month" | "quarter";
 
 const COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#6366F1", "#14B8A6"];
 
@@ -298,7 +298,8 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
 
   const fetchBookingStats = async () => {
     const now = new Date();
-    const startDate = period === "week"? subDays(now, 7) : period ==="month"? startOfMonth(now) : subMonths(now, 3); const previousStart = period ==="week"? subDays(now, 14) : period ==="month" ? subMonths(startOfMonth(now), 1) : subMonths(now, 6);
+    const startDate = period === "week" ? subDays(now, 7) : period === "month" ? startOfMonth(now) : subMonths(now, 3);
+    const previousStart = period === "week" ? subDays(now, 14) : period === "month" ? subMonths(startOfMonth(now), 1) : subMonths(now, 6);
 
     const [{ data: current }, { data: previous }, { data: reviews }] = await Promise.all([
       supabase
@@ -389,7 +390,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
 
   const fetchPeakHours = async () => {
     const now = new Date();
-    const startDate = period === "week"? subDays(now, 7) : period ==="month" ? startOfMonth(now) : subMonths(now, 3);
+    const startDate = period === "week" ? subDays(now, 7) : period === "month" ? startOfMonth(now) : subMonths(now, 3);
 
     const { data: bookings } = await supabase
       .from("bookings")
@@ -473,10 +474,12 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
         {(["week", "month", "quarter"] as Period[]).map((p) => (
           <Button
             key={p}
-            variant={period === p ? "default":"outline"}
+            variant={period === p ? "default" : "outline"}
             size="sm"
             onClick={() => setPeriod(p)}
-            className="shrink-0 h-9"> {p ==="week"?"7 días": p ==="month"?"Este mes":"Trimestre"}
+            className="shrink-0 h-9"
+          >
+            {p === "week" ? "7 días" : p === "month" ? "Este mes" : "Trimestre"}
           </Button>
         ))}
       </div>
@@ -519,15 +522,15 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-[var(--gp-ok-soft)]  flex items-center justify-center">
-                  <Target className="h-5 w-5 text-[var(--gp-ok-ink)] " />
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <Target className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Objetivo {format(new Date(), "MMMM", { locale: es })}</p>
                   <p className="font-semibold">{formatCurrency(monthlyGoal.revenue)} <span className="text-muted-foreground font-normal">/ {formatCurrency(monthlyGoal.goal)}</span></p>
                 </div>
               </div>
-              <Badge variant={monthlyGoal.revenue >= monthlyGoal.goal ? "default":"secondary"} className={monthlyGoal.revenue >= monthlyGoal.goal ? "bg-[var(--gp-ok)]":""}>
+              <Badge variant={monthlyGoal.revenue >= monthlyGoal.goal ? "default" : "secondary"} className={monthlyGoal.revenue >= monthlyGoal.goal ? "bg-emerald-500" : ""}>
                 {Math.round((monthlyGoal.revenue / monthlyGoal.goal) * 100)}%
               </Badge>
             </div>
@@ -535,9 +538,12 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min((monthlyGoal.revenue / monthlyGoal.goal) * 100, 100)}%` }}
-                transition={{ duration: 0.8, ease: "easeOut"}} className={cn("h-full rounded-full",
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className={cn(
+                  "h-full rounded-full",
                   monthlyGoal.revenue >= monthlyGoal.goal
-                    ? "bg-gradient-to-r from-[var(--gp-ok)] to-[var(--gp-ok)]":"bg-gradient-to-r from-primary to-[var(--gp-purple)]"
+                    ? "bg-gradient-to-r from-emerald-500 to-green-400"
+                    : "bg-gradient-to-r from-primary to-violet-400"
                 )}
               />
             </div>
@@ -552,7 +558,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       )}
 
       {/* Citas nuevas hoy — destacado */}
-      <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-[var(--gp-purple)]">
+      <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-violet-500/5">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -565,8 +571,9 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
               </div>
             </div>
             {newToday.previous > 0 && (
-              <Badge variant="outline"className={cn("text-[10px]",
-                newToday.total >= newToday.previous ? "text-[var(--gp-ok-ink)] border-[var(--gp-ok-soft)]":"text-[var(--gp-danger-ink)] border-[var(--gp-danger-soft)]"
+              <Badge variant="outline" className={cn(
+                "text-[10px]",
+                newToday.total >= newToday.previous ? "text-green-600 border-green-200" : "text-red-600 border-red-200"
               )}>
                 {newToday.total >= newToday.previous ? <ArrowUpRight className="h-3 w-3 mr-0.5" /> : <ArrowDownRight className="h-3 w-3 mr-0.5" />}
                 vs ayer ({newToday.previous})
@@ -576,12 +583,12 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
           {newToday.total > 0 ? (
             <>
               <div className="flex h-2 rounded-full overflow-hidden bg-muted">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.crm / newToday.total) * 100}%` }} transition={{ duration: 0.6 }} className="bg-[var(--gp-info)]" />
-                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.web / newToday.total) * 100}%` }} transition={{ duration: 0.6, delay: 0.1 }} className="bg-[var(--gp-warn)]" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.crm / newToday.total) * 100}%` }} transition={{ duration: 0.6 }} className="bg-cyan-500" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.web / newToday.total) * 100}%` }} transition={{ duration: 0.6, delay: 0.1 }} className="bg-orange-500" />
               </div>
               <div className="flex justify-between text-xs mt-2">
-                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[var(--gp-info)]" /> Admin (CRM) · <strong>{newToday.crm}</strong></span>
-                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[var(--gp-warn)]" /> Web · <strong>{newToday.web}</strong></span>
+                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-cyan-500" /> Admin (CRM) · <strong>{newToday.crm}</strong></span>
+                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-500" /> Web · <strong>{newToday.web}</strong></span>
               </div>
             </>
           ) : (
@@ -598,7 +605,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
               <span className="text-muted-foreground">Tasa de cancelación</span>
               <span className={cn(
                 "font-semibold",
-                bookingStats.cancelled / bookingStats.total > 0.15 ? "text-[var(--gp-danger)]":"text-[var(--gp-ok-ink)]"
+                bookingStats.cancelled / bookingStats.total > 0.15 ? "text-red-500" : "text-emerald-600"
               )}>
                 {((bookingStats.cancelled / bookingStats.total) * 100).toFixed(1)}%
                 <span className="text-xs text-muted-foreground font-normal ml-1">({bookingStats.cancelled}/{bookingStats.total})</span>
@@ -610,8 +617,8 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                 <span>{bookingStats.channels.web} web · {bookingStats.channels.crm} crm</span>
               </div>
               <div className="flex h-2 rounded-full overflow-hidden bg-muted">
-                <div className="bg-[var(--gp-info)]" style={{ width: `${(bookingStats.channels.crm / bookingStats.total) * 100}%` }} />
-                <div className="bg-[var(--gp-warn)]" style={{ width: `${(bookingStats.channels.web / bookingStats.total) * 100}%` }} />
+                <div className="bg-cyan-500" style={{ width: `${(bookingStats.channels.crm / bookingStats.total) * 100}%` }} />
+                <div className="bg-orange-500" style={{ width: `${(bookingStats.channels.web / bookingStats.total) * 100}%` }} />
               </div>
             </div>
           </CardContent>
@@ -638,7 +645,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                  <XAxis dataKey="date"tickFormatter={(d) => format(new Date(d),"d MMM", { locale: es })} fontSize={10} tickLine={false} />
+                  <XAxis dataKey="date" tickFormatter={(d) => format(new Date(d), "d MMM", { locale: es })} fontSize={10} tickLine={false} />
                   <YAxis tickFormatter={(v) => formatCompact(v)} fontSize={10} tickLine={false} axisLine={false} width={50} />
                   <Tooltip content={({ active, payload, label }) =>
                     active && payload?.length ? (
@@ -696,21 +703,21 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-[var(--gp-purple-soft)] ">
-                <div className="flex items-center gap-2 mb-1"><Gift className="h-4 w-4 text-[var(--gp-purple)]" /><span className="text-xs text-muted-foreground">Propinas</span></div>
-                <p className="font-bold text-[var(--gp-purple-ink)] ">{formatCurrency(totals.tips)}</p>
+              <div className="p-3 rounded-xl bg-pink-50 dark:bg-pink-900/20">
+                <div className="flex items-center gap-2 mb-1"><Gift className="h-4 w-4 text-pink-500" /><span className="text-xs text-muted-foreground">Propinas</span></div>
+                <p className="font-bold text-pink-600 dark:text-pink-400">{formatCurrency(totals.tips)}</p>
               </div>
-              <div className="p-3 rounded-xl bg-[var(--gp-warn-soft)] ">
-                <div className="flex items-center gap-2 mb-1"><TrendingDown className="h-4 w-4 text-[var(--gp-warn)]" /><span className="text-xs text-muted-foreground">Descuentos</span></div>
-                <p className="font-bold text-[var(--gp-warn-ink)] ">-{formatCurrency(totals.discounts)}</p>
+              <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20">
+                <div className="flex items-center gap-2 mb-1"><TrendingDown className="h-4 w-4 text-orange-500" /><span className="text-xs text-muted-foreground">Descuentos</span></div>
+                <p className="font-bold text-orange-600 dark:text-orange-400">-{formatCurrency(totals.discounts)}</p>
               </div>
-              <div className="p-3 rounded-xl bg-[var(--gp-info-soft)] ">
-                <div className="flex items-center gap-2 mb-1"><Repeat className="h-4 w-4 text-[var(--gp-info)]" /><span className="text-xs text-muted-foreground">Transacciones</span></div>
-                <p className="font-bold text-[var(--gp-info-ink)] ">{totals.transactions}</p>
+              <div className="p-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20">
+                <div className="flex items-center gap-2 mb-1"><Repeat className="h-4 w-4 text-cyan-500" /><span className="text-xs text-muted-foreground">Transacciones</span></div>
+                <p className="font-bold text-cyan-600 dark:text-cyan-400">{totals.transactions}</p>
               </div>
-              <div className="p-3 rounded-xl bg-[var(--gp-purple-soft)] ">
-                <div className="flex items-center gap-2 mb-1"><Activity className="h-4 w-4 text-[var(--gp-purple)]" /><span className="text-xs text-muted-foreground">Media/día</span></div>
-                <p className="font-bold text-[var(--gp-purple-ink)] ">{formatCurrency(revenueData.length > 0 ? totals.revenue / revenueData.length : 0)}</p>
+              <div className="p-3 rounded-xl bg-violet-50 dark:bg-violet-900/20">
+                <div className="flex items-center gap-2 mb-1"><Activity className="h-4 w-4 text-violet-500" /><span className="text-xs text-muted-foreground">Media/día</span></div>
+                <p className="font-bold text-violet-600 dark:text-violet-400">{formatCurrency(revenueData.length > 0 ? totals.revenue / revenueData.length : 0)}</p>
               </div>
             </div>
           </CardContent>
@@ -721,7 +728,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       {stylistStats.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><Users className="h-4 w-4 text-[var(--gp-purple)]" /> Equipo · ingresos por estilista</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2"><Users className="h-4 w-4 text-violet-500" /> Equipo · ingresos por estilista</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col md:flex-row items-center gap-4">
@@ -760,7 +767,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                   return (
                     <div key={s.id} className="flex items-center justify-between p-2.5 rounded-xl bg-muted/40">
                       <div className="flex items-center gap-2.5">
-                        <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs", i === 0 && "ring-2 ring-[var(--gp-warn)] ring-offset-1")} style={{ backgroundColor: s.color || COLORS[i % COLORS.length] }}>
+                        <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs", i === 0 && "ring-2 ring-amber-400 ring-offset-1")} style={{ backgroundColor: s.color || COLORS[i % COLORS.length] }}>
                           {i + 1}
                         </div>
                         <div>
@@ -824,10 +831,10 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <MiniKPI icon={Users} label="Totales" value={clientMetrics.total.toString()} color="text-[var(--gp-info-ink)]" bg="bg-[var(--gp-info-soft)] " />
-            <MiniKPI icon={UserPlus} label="Nuevos este mes" value={clientMetrics.new.toString()} color="text-[var(--gp-ok-ink)]" bg="bg-[var(--gp-ok-soft)] " />
-            <MiniKPI icon={Repeat} label="Recurrentes" value={clientMetrics.returning.toString()} color="text-[var(--gp-purple-ink)]" bg="bg-[var(--gp-purple-soft)] " />
-            <MiniKPI icon={TrendingUp} label="Retención" value={`${clientMetrics.retentionRate.toFixed(0)}%`} color="text-[var(--gp-warn-ink)]" bg="bg-[var(--gp-warn-soft)] " />
+            <MiniKPI icon={Users} label="Totales" value={clientMetrics.total.toString()} color="text-blue-600" bg="bg-blue-50 dark:bg-blue-900/20" />
+            <MiniKPI icon={UserPlus} label="Nuevos este mes" value={clientMetrics.new.toString()} color="text-green-600" bg="bg-green-50 dark:bg-green-900/20" />
+            <MiniKPI icon={Repeat} label="Recurrentes" value={clientMetrics.returning.toString()} color="text-violet-600" bg="bg-violet-50 dark:bg-violet-900/20" />
+            <MiniKPI icon={TrendingUp} label="Retención" value={`${clientMetrics.retentionRate.toFixed(0)}%`} color="text-amber-600" bg="bg-amber-50 dark:bg-amber-900/20" />
           </div>
         </CardContent>
       </Card>
@@ -840,11 +847,11 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {(insights.bestDay || insights.bestHour) && (
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-primary/10 to-[var(--gp-purple)] text-xs">
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-primary/10 to-violet-500/10 text-xs">
                 <Sparkles className="h-4 w-4 text-primary shrink-0" />
                 <span>
                   {insights.bestDay && <>Tu mejor día: <strong className="capitalize">{insights.bestDay}</strong></>}
-                  {insights.bestDay && insights.bestHour && "·"}
+                  {insights.bestDay && insights.bestHour && " · "}
                   {insights.bestHour && <>Hora estrella: <strong>{insights.bestHour}</strong></>}
                 </span>
               </div>
@@ -862,18 +869,40 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                       </div>
                     ) : null
                   } />
-                  <Bar dataKey="bookings" fill="hsl(var(--primary))"radius={[4, 4, 0, 0]} /> </BarChart> </ResponsiveContainer> </div> </CardContent> </Card> )} </div> );
-} // Metric Card Component
-function MetricCard({ title, value, change, suffix, icon: Icon, color,
-}: { title: string; value: string; change?: number; suffix?: string; icon: React.ElementType; color:"primary"|"violet"|"blue"|"amber"|"green"|"pink";
+                  <Bar dataKey="bookings" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// Metric Card Component
+function MetricCard({
+  title,
+  value,
+  change,
+  suffix,
+  icon: Icon,
+  color,
+}: {
+  title: string;
+  value: string;
+  change?: number;
+  suffix?: string;
+  icon: React.ElementType;
+  color: "primary" | "violet" | "blue" | "amber" | "green" | "pink";
 }) {
   const colorClasses = {
     primary: "bg-primary/10 text-primary",
-    violet: "bg-[var(--gp-purple-soft)]  text-[var(--gp-purple-ink)] ",
-    blue: "bg-[var(--gp-info-soft)]  text-[var(--gp-info-ink)] ",
-    amber: "bg-[var(--gp-warn-soft)]  text-[var(--gp-warn-ink)] ",
-    green: "bg-[var(--gp-ok-soft)]  text-[var(--gp-ok-ink)] ",
-    pink: "bg-[var(--gp-purple-soft)]  text-[var(--gp-purple-ink)] ",
+    violet: "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400",
+    blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+    amber: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
+    green: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+    pink: "bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400",
   };
 
   return (
@@ -884,7 +913,7 @@ function MetricCard({ title, value, change, suffix, icon: Icon, color,
             <Icon className="h-4.5 w-4.5" />
           </div>
           {change !== undefined && change !== 0 && (
-            <Badge variant="outline" className={cn("text-[10px] px-1.5", change > 0 ? "text-[var(--gp-ok-ink)] border-[var(--gp-ok-soft)]":"text-[var(--gp-danger-ink)] border-[var(--gp-danger-soft)]")}>
+            <Badge variant="outline" className={cn("text-[10px] px-1.5", change > 0 ? "text-green-600 border-green-200" : "text-red-600 border-red-200")}>
               {change > 0 ? <ArrowUpRight className="h-3 w-3 mr-0.5" /> : <ArrowDownRight className="h-3 w-3 mr-0.5" />}
               {Math.abs(change)}%
             </Badge>

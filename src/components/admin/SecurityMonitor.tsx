@@ -45,7 +45,7 @@ interface SecurityMonitorProps {
   tenantId?: string;
 }
 
-type PeriodTab = "daily"|"weekly"|"monthly";
+type PeriodTab = "daily" | "weekly" | "monthly";
 
 export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
   const { toast } = useToast();
@@ -239,10 +239,11 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
               className={cn(
                 "flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200",
                 activeTab === tab
-                  ? "bg-primary text-primary-foreground shadow-sm":"text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
               )}
             >
-              {tab === "daily"?"Día": tab ==="weekly"?"Semana":"Mes"}
+              {tab === "daily" ? "Día" : tab === "weekly" ? "Semana" : "Mes"}
             </button>
           ))}
         </div>
@@ -267,10 +268,12 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
                 className={cn(
                   "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold",
                   bookingsChange > 0
-                    ? "bg-[var(--gp-ok-soft)] text-[var(--gp-ok-ink)]  ":"bg-[var(--gp-danger-soft)] text-[var(--gp-danger-ink)]  ",
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
                 )}
               >
-                {bookingsChange > 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5"/>} {bookingsChange > 0 ?"+":""}
+                {bookingsChange > 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                {bookingsChange > 0 ? "+" : ""}
                 {bookingsChange}%
               </div>
             )}
@@ -280,8 +283,8 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
         {/* Clientes Activos */}
         <div className="ios-card p-4">
           <div className="flex flex-col gap-2">
-            <div className="w-10 h-10 rounded-xl bg-[var(--gp-info-soft)]  flex items-center justify-center">
-              <Users className="h-5 w-5 text-[var(--gp-info-ink)] " />
+            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Clientes</p>
@@ -293,8 +296,8 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
         {/* Valoración Media */}
         <div className="ios-card p-4">
           <div className="flex flex-col gap-2">
-            <div className="w-10 h-10 rounded-xl bg-[var(--gp-warn-soft)]  flex items-center justify-center">
-              <Star className="h-5 w-5 text-[var(--gp-warn-ink)] " />
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+              <Star className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Valoración</p>
@@ -314,13 +317,13 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
         className="ios-card p-4 overflow-hidden relative"
       >
         {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[var(--gp-ok)] to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
 
         <div className="relative">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-[var(--gp-ok-soft)]  flex items-center justify-center">
-                <Target className="h-5 w-5 text-[var(--gp-ok-ink)] " />
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <Target className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Objetivo mensual</p>
@@ -347,9 +350,12 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min((revenueData.monthlyRevenue / revenueData.monthlyGoal) * 100, 100)}%` }}
-              transition={{ duration: 1, ease: "easeOut"}} className={cn("h-full rounded-full",
+              transition={{ duration: 1, ease: "easeOut" }}
+              className={cn(
+                "h-full rounded-full",
                 revenueData.monthlyRevenue >= revenueData.monthlyGoal
-                  ? "bg-gradient-to-r from-[var(--gp-ok)] to-[var(--gp-ok)]":"bg-gradient-to-r from-primary to-[var(--gp-purple)]",
+                  ? "bg-gradient-to-r from-emerald-500 to-green-400"
+                  : "bg-gradient-to-r from-primary to-violet-400",
               )}
             />
           </div>
@@ -359,7 +365,8 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
               className={cn(
                 "font-medium",
                 revenueData.monthlyRevenue >= revenueData.monthlyGoal
-                  ? "text-[var(--gp-ok-ink)] ":"text-muted-foreground",
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-muted-foreground",
               )}
             >
               {Math.round((revenueData.monthlyRevenue / revenueData.monthlyGoal) * 100)}% completado
@@ -384,9 +391,9 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mt-3 p-2 rounded-lg bg-[var(--gp-ok-soft)]  text-center"
+              className="mt-3 p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-center"
             >
-              <p className="text-sm font-medium text-[var(--gp-ok-ink)] ">🎉 ¡Objetivo alcanzado!</p>
+              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">🎉 ¡Objetivo alcanzado!</p>
             </motion.div>
           )}
         </div>
@@ -401,7 +408,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[var(--gp-info)]" />
+                <div className="w-3 h-3 rounded-full bg-cyan-500" />
                 <span className="text-sm font-medium text-foreground">Panel Admin</span>
               </div>
               <div className="flex items-center gap-2">
@@ -413,7 +420,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-[var(--gp-info)] rounded-full transition-all duration-500"
+                className="h-full bg-cyan-500 rounded-full transition-all duration-500"
                 style={{ width: `${getPercentage(currentPeriodData.byChannel.crm)}%` }}
               />
             </div>
@@ -423,7 +430,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[var(--gp-warn)]" />
+                <div className="w-3 h-3 rounded-full bg-orange-500" />
                 <span className="text-sm font-medium text-foreground">Web / App</span>
               </div>
               <div className="flex items-center gap-2">
@@ -435,7 +442,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-[var(--gp-warn)] rounded-full transition-all duration-500"
+                className="h-full bg-orange-500 rounded-full transition-all duration-500"
                 style={{ width: `${getPercentage(currentPeriodData.byChannel.web)}%` }}
               />
             </div>
@@ -455,7 +462,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
 
       {/* Period comparison hint */}
       <p className="text-xs text-center text-muted-foreground px-4">
-        Comparado con {activeTab === "daily"?"ayer": activeTab ==="weekly"?"la semana pasada":"el mes pasado"}
+        Comparado con {activeTab === "daily" ? "ayer" : activeTab === "weekly" ? "la semana pasada" : "el mes pasado"}
       </p>
     </div>
   );

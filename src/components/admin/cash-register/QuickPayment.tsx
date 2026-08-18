@@ -58,7 +58,7 @@ interface SelectedItem {
   name: string;
   price: number;
   quantity: number;
-  type: "service"|"product"|"manual";
+  type: "service" | "product" | "manual";
 }
 
 interface Product {
@@ -75,8 +75,8 @@ interface QuickPaymentProps {
   tenantId: string;
 }
 
-type PaymentMethod = "cash"|"card"|"mixed";
-type DiscountType = "percentage"|"fixed" | null;
+type PaymentMethod = "cash" | "card" | "mixed";
+type DiscountType = "percentage" | "fixed" | null;
 
 export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentProps) => {
   const [loading, setLoading] = useState(false);
@@ -218,7 +218,10 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     setShowDiscount(false);
     setShowTip(false);
     setWantsInvoice(false);
-    setInvoiceData({ fiscalName: "", nif: "", fiscalAddress: ""}); // Set customer name setCustomerName(booking.customer_name ||"Cliente");
+    setInvoiceData({ fiscalName: "", nif: "", fiscalAddress: "" });
+    
+    // Set customer name
+    setCustomerName(booking.customer_name || "Cliente");
     
     // Find and preselect stylist
     const matchedStylist = stList.find(s => s.slug === booking.stylist);
@@ -240,7 +243,16 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           name: s.name,
           price: price,
           quantity: 1,
-          type: "service"as const }; }); setSelectedItems(bookingServices); } setSelectedBookingId(booking.id); toast({ title:"Cita cargada",
+          type: "service" as const
+        };
+      });
+      setSelectedItems(bookingServices);
+    }
+    
+    setSelectedBookingId(booking.id);
+    
+    toast({
+      title: "Cita cargada",
       description: `Servicios de ${booking.customer_name} listos para cobrar`,
     });
   };
@@ -304,12 +316,29 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   const calculateDiscount = () => {
     if (!discountType || !discountValue) return 0;
     const value = parseFloat(discountValue) || 0;
-    return discountType === "percentage"? Math.min((subtotal * value) / 100, subtotal) : Math.min(value, subtotal); }; const discountAmount = calculateDiscount(); const total = Math.max(subtotal - discountAmount, 0); const tip = parseFloat(tipAmount) || 0; const grandTotal = total + tip; const numericCashAmount = parseFloat(cashAmount) || 0; const numericCardAmount = parseFloat(cardAmount) || 0; const numericCashGiven = parseFloat(cashGiven) || 0; const getMixedRemaining = () => Math.max(grandTotal - numericCashAmount - numericCardAmount, 0); const getChange = () => { if (paymentMethod ==="mixed") return Math.max(numericCashGiven - numericCashAmount, 0);
+    return discountType === "percentage" ? Math.min((subtotal * value) / 100, subtotal) : Math.min(value, subtotal);
+  };
+
+  const discountAmount = calculateDiscount();
+  const total = Math.max(subtotal - discountAmount, 0);
+  const tip = parseFloat(tipAmount) || 0;
+  const grandTotal = total + tip;
+
+  const numericCashAmount = parseFloat(cashAmount) || 0;
+  const numericCardAmount = parseFloat(cardAmount) || 0;
+  const numericCashGiven = parseFloat(cashGiven) || 0;
+
+  const getMixedRemaining = () => Math.max(grandTotal - numericCashAmount - numericCardAmount, 0);
+  const getChange = () => {
+    if (paymentMethod === "mixed") return Math.max(numericCashGiven - numericCashAmount, 0);
     return Math.max(numericCashGiven - grandTotal, 0);
   };
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR"}).format(value); const categories = ["all",
+    new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(value);
+
+  const categories = [
+    "all",
     ...new Set([
       ...services.map((s) => s.category || "Otros"),
       ...products.map((p) => `📦 ${p.category || "Productos"}`),
@@ -317,7 +346,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   ];
 
   const byCategory =
-    activeCategory === "all"? [...services, ...products.map((p) => ({ ...p, category: `📦 ${p.category ||"Productos"}` }))]
+    activeCategory === "all"
+      ? [...services, ...products.map((p) => ({ ...p, category: `📦 ${p.category || "Productos"}` }))]
       : activeCategory.startsWith("📦")
         ? products.filter((p) => `📦 ${p.category || "Productos"}` === activeCategory)
         : services.filter((s) => (s.category || "Otros") === activeCategory);
@@ -331,7 +361,20 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   const selectedStylist = stylists.find((s) => s.id === selectedStylistId);
 
   const toggleItem = (item: Service | Product) => {
-    const isProduct = "stock"in item; const existing = selectedItems.find((s) => s.id === item.id); if (existing) { setSelectedItems(selectedItems.filter((s) => s.id !== item.id)); } else { setSelectedItems([ ...selectedItems, { id: item.id, name: item.name, price: item.price || 0, quantity: 1, type: isProduct ?"product":"service",
+    const isProduct = "stock" in item;
+    const existing = selectedItems.find((s) => s.id === item.id);
+
+    if (existing) {
+      setSelectedItems(selectedItems.filter((s) => s.id !== item.id));
+    } else {
+      setSelectedItems([
+        ...selectedItems,
+        {
+          id: item.id,
+          name: item.name,
+          price: item.price || 0,
+          quantity: 1,
+          type: isProduct ? "product" : "service",
         },
       ]);
     }
@@ -383,7 +426,21 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     setShowDiscount(false);
     setShowTip(false);
     setWantsInvoice(false);
-    setInvoiceData({ fiscalName: "", nif: "", fiscalAddress: ""}); setSelectedBookingId(null); }; const handleSubmit = async () => { if (selectedItems.length === 0) { toast({ title:"Selecciona al menos un servicio", variant: "destructive"}); return; } if (!selectedStylistId) { toast({ title:"Selecciona un estilista", variant: "destructive"}); return; } if (paymentMethod ==="mixed"&& getMixedRemaining() > 0.01) { toast({ title: `Faltan ${formatCurrency(getMixedRemaining())}`, variant:"destructive" });
+    setInvoiceData({ fiscalName: "", nif: "", fiscalAddress: "" });
+    setSelectedBookingId(null);
+  };
+
+  const handleSubmit = async () => {
+    if (selectedItems.length === 0) {
+      toast({ title: "Selecciona al menos un servicio", variant: "destructive" });
+      return;
+    }
+    if (!selectedStylistId) {
+      toast({ title: "Selecciona un estilista", variant: "destructive" });
+      return;
+    }
+    if (paymentMethod === "mixed" && getMixedRemaining() > 0.01) {
+      toast({ title: `Faltan ${formatCurrency(getMixedRemaining())}`, variant: "destructive" });
       return;
     }
 
@@ -409,7 +466,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         paymentDetails.cash_amount = numericCashAmount;
         paymentDetails.card_amount = numericCardAmount;
       }
-      if ((paymentMethod === "cash"|| paymentMethod ==="mixed") && numericCashGiven > 0) {
+      if ((paymentMethod === "cash" || paymentMethod === "mixed") && numericCashGiven > 0) {
         paymentDetails.cash_given = numericCashGiven;
         paymentDetails.change = getChange();
       }
@@ -439,46 +496,20 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         .single();
       if (error) throw error;
 
-      // Email de la clienta: el escrito a mano manda; si no, lo buscamos en su
-      // ficha (por teléfono de la cita o por nombre) para enviarlo solo.
-      let resolvedEmail = customerEmail.trim();
-      if (!resolvedEmail) {
-        try {
-          const booking = todayBookings.find((b) => b.id === selectedBookingId);
-          let clientQuery = supabase
-            .from("clients")
-            .select("email")
-            .eq("tenant_id", tenantId)
-            .not("email", "is", null)
-            .limit(1);
-          if (booking?.Telefono) {
-            clientQuery = clientQuery.eq("phone", booking.Telefono);
-          } else if (customerName.trim()) {
-            clientQuery = clientQuery.ilike("name", customerName.trim());
-          } else {
-            clientQuery = null as never;
-          }
-          if (clientQuery) {
-            const { data: client } = await clientQuery.maybeSingle();
-            if (client?.email) resolvedEmail = client.email;
-          }
-        } catch (clientError) {
-          console.error("client email lookup", clientError);
-        }
-      }
-
       // Enlace de valoración de un solo uso: la clienta de mostrador no tiene
       // cuenta, así que el permiso se lo da este token, no una sesión.
       let reviewUrl: string | null = null;
       try {
-        const { data: invite } = await supabase
+        // `as any`: los tipos generados de Supabase aún no incluyen la tabla
+        // (se regeneran al aplicar la migración 20260729140000_review_invites)
+        const { data: invite } = await (supabase as any)
           .from("review_invites")
           .insert({
             tenant_id: tenantId,
             transaction_id: (inserted as any)?.id ?? null,
             booking_id: selectedBookingId || null,
             customer_name: customerName.trim() || null,
-            customer_email: resolvedEmail || null,
+            customer_email: customerEmail.trim() || null,
           })
           .select("token")
           .single();
@@ -487,7 +518,6 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         // Que falle la invitación no puede tumbar el cobro
         console.error("review invite", inviteError);
       }
-
 
       // If this was from a booking, mark it as completed and charged
       if (selectedBookingId) {
@@ -528,30 +558,16 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
       // Fiscal data is no longer saved to database
 
-      const txSnapshot = {
+      setLastTransaction({
         ...transactionData,
         stylistName: selectedStylist?.name || "Estilista",
         items: servicesData,
         grandTotal,
-        customerEmail: resolvedEmail,
+        customerEmail,
         wantsInvoice,
         invoiceData,
         reviewUrl,
-        autoSent: false as boolean,
-      };
-
-      // Si ya tenemos su email, el ticket se envía solo: la peluquera no hace nada
-      if (resolvedEmail) {
-        txSnapshot.autoSent = true;
-        void postTicket(txSnapshot, resolvedEmail)
-          .then(() => toast({ title: "Ticket enviado por email ✉️" }))
-          .catch((e) => {
-            console.error("auto ticket", e);
-            toast({ title: "No se pudo enviar el ticket automáticamente", variant: "destructive" });
-          });
-      }
-
-      setLastTransaction(txSnapshot);
+      });
 
       setPayOpen(false);
       setShowSuccess(true);
@@ -560,40 +576,50 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       fetchData(); // Refresh products to show updated stock
     } catch (error: unknown) {
       console.error("Error:", error);
-      toast({ title: "Error al registrar", variant: "destructive"}); } finally { setLoading(false); } }; const getEmailToUse = () => customerEmail || lastTransaction?.customerEmail ||"";
+      toast({ title: "Error al registrar", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  async function postTicket(tx: any, email: string) {
-    const { error } = await supabase.functions.invoke("send-ticket", {
-      body: {
-        type: "ticket",
-        customerEmail: email,
-        customerName: tx.customer_name,
-        tenantId,
-        items: tx.items,
-        subtotal: tx.subtotal,
-        discount: tx.discount,
-        discountReason: tx.discount_reason,
-        tip: tx.tip_amount,
-        total: tx.grandTotal,
-        paymentMethod: tx.payment_method,
-        stylistName: tx.stylistName,
-        reviewUrl: tx.reviewUrl || undefined,
-        date: new Date().toLocaleDateString("es-ES", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-    });
-    if (error) throw error;
-  }
+  const getEmailToUse = () => customerEmail || lastTransaction?.customerEmail || "";
 
   const sendTicketEmail = async () => {
     const email = getEmailToUse();
     if (!lastTransaction || !email) {
-      toast({ title: "Introduce un email", variant: "destructive"}); return; } try { setSendingEmail(true); await postTicket(lastTransaction, email); toast({ title:"Ticket enviado por email ✉️" });
+      toast({ title: "Introduce un email", variant: "destructive" });
+      return;
+    }
+
+    try {
+      setSendingEmail(true);
+      const { data, error } = await supabase.functions.invoke("send-ticket", {
+        body: {
+          type: "ticket",
+          customerEmail: email,
+          customerName: lastTransaction.customer_name,
+          tenantId,
+          items: lastTransaction.items,
+          subtotal: lastTransaction.subtotal,
+          discount: lastTransaction.discount,
+          discountReason: lastTransaction.discount_reason,
+          tip: lastTransaction.tip_amount,
+          total: lastTransaction.grandTotal,
+          paymentMethod: lastTransaction.payment_method,
+          stylistName: lastTransaction.stylistName,
+          reviewUrl: lastTransaction.reviewUrl || undefined,
+          date: new Date().toLocaleDateString("es-ES", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+      });
+
+      if (error) throw error;
+      toast({ title: "Ticket enviado por email ✉️" });
       setShowSuccess(false);
     } catch (error) {
       console.error("Error sending email:", error);
@@ -602,7 +628,6 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       setSendingEmail(false);
     }
   };
-
 
   const downloadInvoicePdf = async () => {
     if (!lastTransaction || !tenantData) return;
@@ -767,7 +792,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
         <div class="footer">
           <div>Atendido por: ${lastTransaction.stylistName}</div>
-          <div>Pago: ${lastTransaction.payment_method === "cash"?"Efectivo": lastTransaction.payment_method ==="card"?"Tarjeta":"Mixto"}</div>
+          <div>Pago: ${lastTransaction.payment_method === "cash" ? "Efectivo" : lastTransaction.payment_method === "card" ? "Tarjeta" : "Mixto"}</div>
         </div>
       </body>
       </html>
@@ -817,7 +842,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   onClick={() => loadBookingData(booking, services, stylists)}
                   className={`shrink-0 w-[150px] text-left rounded-2xl border px-3 py-2.5 transition-colors ${
                     isSelected
-                      ? "border-primary/50 bg-primary/[0.06]":"border-line bg-surface min-[920px]:hover:border-primary/30"
+                      ? "border-primary/50 bg-primary/[0.06]"
+                      : "border-line bg-surface min-[920px]:hover:border-primary/30"
                   }`}
                 >
                   <span className="flex items-center gap-1 text-[11px] font-bold text-outline tabular-nums">
@@ -861,7 +887,10 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-semibold whitespace-nowrap transition-colors ${
-                on ? "bg-gradient-brand text-white":"bg-chip text-ink-2"}`} > {cat ==="all"?"Todo" : cat}
+                on ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
+              }`}
+            >
+              {cat === "all" ? "Todo" : cat}
             </button>
           );
         })}
@@ -879,7 +908,15 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
         {filteredItems.map((item) => {
           const picked = selectedItems.find((s) => s.id === item.id);
-          const isProduct = "stock"in item; return ( <button key={item.id} onClick={() => toggleItem(item)} className={`relative text-left rounded-2xl border px-3 py-2.5 transition-colors ${ picked ?"border-primary bg-primary/[0.06]":"border-line bg-surface min-[920px]:hover:border-primary/30"
+          const isProduct = "stock" in item;
+          return (
+            <button
+              key={item.id}
+              onClick={() => toggleItem(item)}
+              className={`relative text-left rounded-2xl border px-3 py-2.5 transition-colors ${
+                picked
+                  ? "border-primary bg-primary/[0.06]"
+                  : "border-line bg-surface min-[920px]:hover:border-primary/30"
               }`}
             >
               {isProduct && (
@@ -909,15 +946,17 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
       {/* ── BARRA DE CARRITO ─────────────────────────────────
           Flota sobre el contenido en móvil (encima de la nav) y
-          queda pegada abajo (sticky) en escritorio. */}
+          en escritorio se queda al final del catálogo. */}
       {selectedItems.length > 0 && (
         <>
-          <div className="h-24 min-[920px]:h-4" />
+          <div className="h-24 min-[920px]:h-0" />
           <div
-            className="fixed left-0 right-0 z-30 px-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] min-[920px]:sticky min-[920px]:left-auto min-[920px]:right-auto min-[920px]:bottom-4 min-[920px]:px-0 min-[920px]:mt-2"
+            className="fixed left-0 right-0 z-30 px-3 min-[920px]:static min-[920px]:px-0 min-[920px]:mt-4"
+            style={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}
           >
             <div
-              className="flex items-center gap-3 rounded-2xl bg-surface border border-line px-4 py-3"style={{ boxShadow:"0 2px 6px rgba(20,22,40,.08), 0 18px 40px -20px rgba(20,22,40,.5)" }}
+              className="flex items-center gap-3 rounded-2xl bg-surface border border-line px-4 py-3"
+              style={{ boxShadow: "0 2px 6px rgba(20,22,40,.08), 0 18px 40px -20px rgba(20,22,40,.5)" }}
             >
               <button onClick={clearAll} aria-label="Vaciar carrito" className="flex-none text-outline">
                 <X className="w-4 h-4" />
@@ -927,13 +966,14 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   {formatCurrency(grandTotal)}
                 </span>
                 <span className="block text-[11px] text-outline truncate">
-                  {itemCount} {itemCount === 1 ? "línea":"líneas"}
+                  {itemCount} {itemCount === 1 ? "línea" : "líneas"}
                   {selectedStylist ? ` · ${selectedStylist.name}` : ""}
                 </span>
               </span>
               <button
                 onClick={() => setPayOpen(true)}
-                className="flex-none h-11 rounded-full bg-gradient-brand text-white text-[15px] font-semibold px-5 inline-flex items-center gap-1 active:scale-95 transition-transform"style={{ boxShadow:"0 8px 22px -10px rgba(34,64,140,.6)" }}
+                className="flex-none h-11 rounded-full bg-gradient-brand text-white text-[15px] font-semibold px-5 inline-flex items-center gap-1 active:scale-95 transition-transform"
+                style={{ boxShadow: "0 8px 22px -10px rgba(34,64,140,.6)" }}
               >
                 Cobrar
                 <ChevronRight className="w-4 h-4" />
@@ -965,7 +1005,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                 {selectedItems.map((item, idx) => (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-2 px-3.5 py-2.5 ${idx > 0 ? "border-t border-line":""}`}
+                    className={`flex items-center gap-2 px-3.5 py-2.5 ${idx > 0 ? "border-t border-line" : ""}`}
                   >
                     <span className="flex-1 min-w-0">
                       <span className="block text-[14px] font-medium text-ink-2 truncate">
@@ -1033,18 +1073,21 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   onClick={() => setShowDiscount(!showDiscount)}
                   className={`flex-1 h-10 rounded-full text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 transition-colors ${
                     showDiscount || discountAmount > 0
-                      ? "bg-gradient-brand text-white":"bg-chip text-ink-2"
+                      ? "bg-gradient-brand text-white"
+                      : "bg-chip text-ink-2"
                   }`}
                 >
-                  <Percent className="w-3.5 h-3.5"/> {discountAmount > 0 ? `-${formatCurrency(discountAmount)}` :"Descuento"}
+                  <Percent className="w-3.5 h-3.5" />
+                  {discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : "Descuento"}
                 </button>
                 <button
                   onClick={() => setShowTip(!showTip)}
                   className={`flex-1 h-10 rounded-full text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 transition-colors ${
-                    showTip || tip > 0 ? "bg-gradient-brand text-white":"bg-chip text-ink-2"
+                    showTip || tip > 0 ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
                   }`}
                 >
-                  <Heart className="w-3.5 h-3.5"/> {tip > 0 ? `+${formatCurrency(tip)}` :"Propina"}
+                  <Heart className="w-3.5 h-3.5" />
+                  {tip > 0 ? `+${formatCurrency(tip)}` : "Propina"}
                 </button>
               </div>
 
@@ -1053,7 +1096,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   <button
                     onClick={() => setDiscountType("percentage")}
                     className={`w-12 h-10 rounded-2xl text-[14px] font-bold ${
-                      discountType === "percentage"?"bg-primary text-white":"bg-chip text-ink-2"
+                      discountType === "percentage" ? "bg-primary text-white" : "bg-chip text-ink-2"
                     }`}
                   >
                     %
@@ -1061,7 +1104,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   <button
                     onClick={() => setDiscountType("fixed")}
                     className={`w-12 h-10 rounded-2xl text-[14px] font-bold ${
-                      discountType === "fixed"?"bg-primary text-white":"bg-chip text-ink-2"
+                      discountType === "fixed" ? "bg-primary text-white" : "bg-chip text-ink-2"
                     }`}
                   >
                     €
@@ -1082,7 +1125,9 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   {[1, 2, 5, 10].map((v) => (
                     <button
                       key={v}
-                      onClick={() => setTipAmount(parseFloat(tipAmount) === v ? "": v.toString())} className={`flex-1 h-10 rounded-2xl text-[14px] font-semibold tabular-nums ${ parseFloat(tipAmount) === v ?"bg-primary text-white":"bg-chip text-ink-2"
+                      onClick={() => setTipAmount(parseFloat(tipAmount) === v ? "" : v.toString())}
+                      className={`flex-1 h-10 rounded-2xl text-[14px] font-semibold tabular-nums ${
+                        parseFloat(tipAmount) === v ? "bg-primary text-white" : "bg-chip text-ink-2"
                       }`}
                     >
                       {v}€
@@ -1097,7 +1142,17 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
               <label className="text-[13px] font-semibold text-ink-2">Cómo paga</label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: "cash"as const, icon: Banknote, label:"Efectivo"}, { value:"card"as const, icon: CreditCard, label:"Tarjeta"}, { value:"mixed"as const, icon: Sparkles, label:"Mixto"}, ].map(({ value, icon: Icon, label }) => { const on = paymentMethod === value; return ( <button key={value} onClick={() => setPaymentMethod(value)} className={`h-16 rounded-2xl flex flex-col items-center justify-center gap-1 transition-colors ${ on ?"bg-gradient-brand text-white":"bg-chip text-ink-2"
+                  { value: "cash" as const, icon: Banknote, label: "Efectivo" },
+                  { value: "card" as const, icon: CreditCard, label: "Tarjeta" },
+                  { value: "mixed" as const, icon: Sparkles, label: "Mixto" },
+                ].map(({ value, icon: Icon, label }) => {
+                  const on = paymentMethod === value;
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setPaymentMethod(value)}
+                      className={`h-16 rounded-2xl flex flex-col items-center justify-center gap-1 transition-colors ${
+                        on ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -1139,7 +1194,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                 </div>
               )}
 
-              {(paymentMethod === "cash"|| (paymentMethod ==="mixed" && numericCashAmount > 0)) && (
+              {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
                 <>
                   <label className="flex items-center justify-between rounded-2xl bg-surface border border-line px-3.5 py-2.5">
                     <span className="text-[13px] font-semibold text-outline">Entrega</span>
@@ -1175,11 +1230,12 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                       key={stylist.id}
                       onClick={() => setSelectedStylistId(stylist.id)}
                       className={`h-11 rounded-2xl inline-flex items-center justify-center gap-2 text-[13px] font-semibold transition-colors ${
-                        on ? "bg-gradient-brand text-white":"bg-chip text-ink-2"
+                        on ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
                       }`}
                     >
                       <span
-                        className="w-2 h-2 rounded-full flex-none"style={{ background: on ?"#fff": stylist.color ||"#8B5CF6" }}
+                        className="w-2 h-2 rounded-full flex-none"
+                        style={{ background: on ? "#fff" : stylist.color || "#8B5CF6" }}
                       />
                       <span className="truncate">{stylist.name}</span>
                     </button>
@@ -1216,12 +1272,14 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           </div>
 
           <div
-            className="shrink-0 border-t border-line px-5 pt-3.5 bg-background/95 backdrop-blur-xl"style={{ paddingBottom:"calc(0.75rem + env(safe-area-inset-bottom))" }}
+            className="shrink-0 border-t border-line px-5 pt-3.5 bg-background/95 backdrop-blur-xl"
+            style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
           >
             <button
               onClick={handleSubmit}
               disabled={loading || selectedItems.length === 0 || !selectedStylistId}
-              className="w-full h-12 rounded-full bg-gradient-brand text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[.99] transition-transform"style={{ boxShadow:"0 8px 22px -10px rgba(34,64,140,.6)" }}
+              className="w-full h-12 rounded-full bg-gradient-brand text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[.99] transition-transform"
+              style={{ boxShadow: "0 8px 22px -10px rgba(34,64,140,.6)" }}
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

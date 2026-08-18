@@ -39,7 +39,7 @@ type ServiceRow = {
   name: string;
   category: string | null;
   price: number | null;
-  type: "Simple"|"Compuesto";
+  type: "Simple" | "Compuesto";
   duration_part1_active: number;
   duration_exposure_pause: number;
   duration_part2_active: number;
@@ -60,8 +60,23 @@ interface QuickBookingSheetProps {
   onOpenChange: (open: boolean) => void;
   tenantId: string;
   initialDate: Date;
-  initialTime: string; // "HH:mm"initialStylistSlug: string; stylists: Array<{ slug: string; name: string; color: string }>; onCreated: () => void; onMoreOptions?: (preset: { date: Date; time: string; stylistSlug: string; clientName?: string; services?: ServiceRow[]; }) => void;
-} const TIME_SLOTS_15 = Array.from({ length: 24 * 4 }, (_, i) => { const h = Math.floor(i / 4); const m = (i % 4) * 15; return `${String(h).padStart(2,"0")}:${String(m).padStart(2, "0")}`;
+  initialTime: string; // "HH:mm"
+  initialStylistSlug: string;
+  stylists: Array<{ slug: string; name: string; color: string }>;
+  onCreated: () => void;
+  onMoreOptions?: (preset: {
+    date: Date;
+    time: string;
+    stylistSlug: string;
+    clientName?: string;
+    services?: ServiceRow[];
+  }) => void;
+}
+
+const TIME_SLOTS_15 = Array.from({ length: 24 * 4 }, (_, i) => {
+  const h = Math.floor(i / 4);
+  const m = (i % 4) * 15;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 });
 
 export const QuickBookingSheet = ({
@@ -257,7 +272,13 @@ export const QuickBookingSheet = ({
       } catch {}
 
       // If conflict and we didn't force, ask the admin whether to overlap on purpose
-      if (!force && (reason === "conflict"|| reason ==="no_stylist_available"|| /solap|ya tiene una cita/i.test(description))) { setConflictPrompt({ message: description }); return; } toast({ title:"Error",
+      if (!force && (reason === "conflict" || reason === "no_stylist_available" || /solap|ya tiene una cita/i.test(description))) {
+        setConflictPrompt({ message: description });
+        return;
+      }
+
+      toast({
+        title: "Error",
         description,
         variant: "destructive",
       });
@@ -275,7 +296,8 @@ export const QuickBookingSheet = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-[92vh] flex flex-col p-0 rounded-t-[28px] border-t-0 bg-background/95 backdrop-blur-xl"style={{ boxShadow:"0 -8px 40px -12px rgba(20,22,40,.28)" }}
+        className="h-[92vh] flex flex-col p-0 rounded-t-[28px] border-t-0 bg-background/95 backdrop-blur-xl"
+        style={{ boxShadow: "0 -8px 40px -12px rgba(20,22,40,.28)" }}
       >
         {/* Drag handle + header */}
         <div className="shrink-0 pt-2.5 px-5 pb-4 border-b border-line">
@@ -292,7 +314,8 @@ export const QuickBookingSheet = ({
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="inline-flex items-center gap-1.5 rounded-full bg-chip text-ink-2 px-3.5 py-2 text-[13px] font-semibold active:scale-95 transition">
-                    <CalendarIcon className="h-4 w-4 text-primary"/> {format(date,"EEE d MMM", { locale: es })}
+                    <CalendarIcon className="h-4 w-4 text-primary" />
+                    {format(date, "EEE d MMM", { locale: es })}
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -338,12 +361,17 @@ export const QuickBookingSheet = ({
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold active:scale-95 transition"style={{ backgroundColor: `${currentStylist?.color ||"#6366f1"}15`,
+                      className="inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold active:scale-95 transition"
+                      style={{
+                        backgroundColor: `${currentStylist?.color || "#6366f1"}15`,
                         color: currentStylist?.color || "#6366f1",
                       }}
                     >
                       <span
-                        className="w-2 h-2 rounded-full flex-none"style={{ background: currentStylist?.color ||"#6366f1"}} /> {currentStylist?.name ||"Profesional"}
+                        className="w-2 h-2 rounded-full flex-none"
+                        style={{ background: currentStylist?.color || "#6366f1" }}
+                      />
+                      {currentStylist?.name || "Profesional"}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-48 p-1" align="start">
@@ -569,7 +597,7 @@ export const QuickBookingSheet = ({
                           <span
                             className={cn(
                               "w-[22px] h-[22px] rounded-full flex-none flex items-center justify-center transition",
-                              active ? "bg-gradient-brand":"border-[1.5px] border-outline/40",
+                              active ? "bg-gradient-brand" : "border-[1.5px] border-outline/40",
                             )}
                           >
                             {active && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />}
@@ -578,7 +606,7 @@ export const QuickBookingSheet = ({
                             <span
                               className={cn(
                                 "block text-[15px] truncate tracking-[-0.01em]",
-                                active ? "font-semibold text-ink-2":"font-medium text-ink-2",
+                                active ? "font-semibold text-ink-2" : "font-medium text-ink-2",
                               )}
                             >
                               {s.name}
@@ -602,7 +630,8 @@ export const QuickBookingSheet = ({
 
         {/* Sticky footer */}
         <div
-          className="shrink-0 border-t border-line px-5 pt-3.5 bg-background/95 backdrop-blur-xl"style={{ paddingBottom:"calc(0.75rem + env(safe-area-inset-bottom))" }}
+          className="shrink-0 border-t border-line px-5 pt-3.5 bg-background/95 backdrop-blur-xl"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
         >
           <div className="flex gap-2">
             {onMoreOptions && (
@@ -624,7 +653,8 @@ export const QuickBookingSheet = ({
               </Button>
             )}
             <Button
-              className="flex-1 h-12 rounded-full text-[15px] font-semibold bg-gradient-brand text-white border-0 hover:opacity-95 active:scale-[.98] transition disabled:opacity-40"style={{ boxShadow:"0 8px 22px -10px rgba(34,64,140,.6)" }}
+              className="flex-1 h-12 rounded-full text-[15px] font-semibold bg-gradient-brand text-white border-0 hover:opacity-95 active:scale-[.98] transition disabled:opacity-40"
+              style={{ boxShadow: "0 8px 22px -10px rgba(34,64,140,.6)" }}
               disabled={!canSubmit}
               onClick={handleCreate}
             >
@@ -632,7 +662,21 @@ export const QuickBookingSheet = ({
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  <Plus className="h-[18px] w-[18px] mr-1.5"/> Crear cita </> )} </Button> </div> </div> </SheetContent> <AlertDialog open={!!conflictPrompt} onOpenChange={(o) => !o && setConflictPrompt(null)}> <AlertDialogContent> <AlertDialogHeader> <AlertDialogTitle>Hora ocupada</AlertDialogTitle> <AlertDialogDescription> {conflictPrompt?.message ||"Esa hora se solapa con otra cita."} ¿Quieres crearla de
+                  <Plus className="h-[18px] w-[18px] mr-1.5" />
+                  Crear cita
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </SheetContent>
+
+      <AlertDialog open={!!conflictPrompt} onOpenChange={(o) => !o && setConflictPrompt(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hora ocupada</AlertDialogTitle>
+            <AlertDialogDescription>
+              {conflictPrompt?.message || "Esa hora se solapa con otra cita."} ¿Quieres crearla de
               todos modos? Quedará solapada en la agenda.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -645,7 +689,7 @@ export const QuickBookingSheet = ({
                 submitBooking(true);
               }}
             >
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin"/> :"Crear igualmente"}
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear igualmente"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
