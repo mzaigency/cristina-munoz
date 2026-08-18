@@ -156,8 +156,10 @@ export function ConversationList({
                 : conv.user?.full_name || conv.user?.email || 'Cliente';
             const avatarUrl = role === 'user' ? conv.tenant?.logo_url : conv.user?.avatar_url;
             const isSelected = selectedId === conv.id;
+            const previewMessage =
+              (preferHumanPreview ? conv.last_human_message : null) || conv.last_message;
             const ownLast =
-              conv.last_message?.sender_type === (role === 'user' ? 'user' : 'salon');
+              previewMessage?.sender_type === (role === 'user' ? 'user' : 'salon');
 
             return (
               <div key={conv.id} className="relative group">
