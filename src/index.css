@@ -1878,6 +1878,9 @@
   box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--gp-accent), transparent 40%);
 }
 .gp-subtab-count { font-size: 11px; font-weight: 800; background: color-mix(in oklab, currentColor, transparent 85%); padding: 1px 6px; border-radius: 99px; }
+@media (min-width: 920px) {
+  .gp-subtab-count { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
+}
 
 /* ── Semantic color tokens (needed by component classes below) ── */
 .gp-shell {
