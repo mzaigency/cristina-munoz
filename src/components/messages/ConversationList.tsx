@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, KeyboardEvent } from 'react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Building2, MessageCircle, Search } from 'lucide-react';
+import { Building2, MailOpen, Mail, MessageCircle, Search } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Conversation } from '@/hooks/useConversations';
@@ -14,7 +14,9 @@ interface ConversationListProps {
   onSelect: (conversation: Conversation) => void;
   role: 'user' | 'salon';
   showSearch?: boolean;
+  onToggleUnread?: (conversation: Conversation, markUnread: boolean) => void;
 }
+
 
 export function ConversationList({
   conversations,
