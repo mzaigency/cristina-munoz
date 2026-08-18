@@ -217,6 +217,40 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
 
       if (error) throw error;
 
+      // Email de modificación de cita (no bloquea el flujo)
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const email = userData?.user?.email;
+        if (email) {
+          let tenant: any = null;
+          if (booking.tenant_id) {
+            const { data } = await supabase.rpc('get_public_tenant_by_id', { _id: booking.tenant_id });
+            tenant = Array.isArray(data) ? data[0] : data;
+          }
+          await supabase.functions.invoke('send-transactional-email', {
+            body: {
+              templateName: 'booking-updated',
+              recipientEmail: email,
+              idempotencyKey: `booking-updated-${booking.id}-${format(selectedDate, 'yyyy-MM-dd')}-${horaToSave}`,
+              templateData: {
+                customerName: userData?.user?.user_metadata?.full_name || 'Hola',
+                tenantName: booking.tenant_name || tenant?.name || 'el salón',
+                tenantLogoUrl: tenant?.logo_url ?? null,
+                previousDate: format(parseISODateToLocal(booking.Fecha), "d 'de' MMMM", { locale: es }),
+                previousTime: formatTimeHHmm(booking.Hora),
+                date: format(selectedDate, "d 'de' MMMM", { locale: es }),
+                time: selectedTime,
+                services: serviceNames,
+                stylist: booking.stylist || null,
+                manageUrl: 'https://glowapp.app/mis-citas',
+              },
+            },
+          });
+        }
+      } catch (mailErr) {
+        console.error('Error sending reschedule email:', mailErr);
+      }
+
       toast({
         title: "Cita reagendada",
         description: `Tu cita ha sido movida al ${format(selectedDate, "d 'de' MMMM", { locale: es })} a las ${selectedTime}`,
