@@ -1907,7 +1907,22 @@
   --gp-surface-2: oklch(0.985 0.004 265);
   --gp-shadow: 0 1px 2px rgba(20,22,40,.04), 0 10px 30px -16px rgba(20,22,40,.18);
 }
+/* Fallbacks para portales (dialogs/sheets) fuera de .gp-shell */
+:root {
+  --gp-accent: #22408b;
+  --gp-accent-ink: #1a3270;
+  --gp-accent-soft: color-mix(in oklab, #22408b, white 88%);
+  --gp-accent-softer: color-mix(in oklab, #22408b, white 94%);
+  --gp-purple: #99329a;
+  --gp-surface: #ffffff;
+  --gp-ink: oklch(0.24 0.02 265);
+  --gp-ink2: oklch(0.45 0.02 265);
+  --gp-muted-c: oklch(0.62 0.015 265);
+  --gp-line: oklch(0.925 0.007 265);
+  --gp-chip: oklch(0.968 0.006 265);
+}
 .gp-shell {
+
 
 
   /* Notification badges: centralized tokens; red solid on desktop, subtle accent on mobile */
