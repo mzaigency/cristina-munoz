@@ -40,6 +40,9 @@ import {
   XCircle,
   ChevronDown,
   ChevronUp,
+  Link as LinkIcon,
+  RotateCcw,
+  AlertTriangle,
 } from "lucide-react";
 import {
   DropdownMenu,
