@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { InlineScheduleEditor } from "./InlineScheduleEditor";
 import { StylistAbsences } from "./StylistAbsences";
+import { GP_STYLIST_COLORS } from "@/components/admin/chartPalette";
 
 /**
  * Ficha del profesional — una sola página scrolleable, sin pestañas.
@@ -78,7 +79,7 @@ interface DaySchedule {
   end_time: string | null;
 }
 
-const PRESET_COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6", "#EF4444", "#06B6D4", "#84CC16"];
+const PRESET_COLORS = GP_STYLIST_COLORS;
 const COMMISSION_PRESETS = [30, 40, 50, 60];
 /** Lunes primero, como InlineScheduleEditor. */
 const WEEK_DAYS = [
