@@ -135,7 +135,7 @@ export function AdminAccountMenu({
           <div className="p-1.5">
             <DropdownMenuItem
               onClick={onSignOut}
-              className="gap-3 cursor-pointer rounded-lg px-3 py-2.5 text-[13.5px] font-medium text-red-600 focus:bg-red-50/80 focus:text-red-700"
+              className="gap-3 cursor-pointer rounded-lg px-3 py-2.5 text-[13.5px] font-medium text-[var(--gp-danger-ink)] focus:bg-red-50/80 focus:text-[var(--gp-danger-ink)]"
             >
               <LogOut className="h-4 w-4" strokeWidth={2} />
               Cerrar sesión

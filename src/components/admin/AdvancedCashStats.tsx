@@ -173,11 +173,11 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
             {weeklyComparison.length === 2 && (
               <p className="text-xs text-center text-muted-foreground mt-2">
                 {weeklyComparison[1].value > weeklyComparison[0].value ? (
-                  <span className="text-green-600">
+                  <span className="text-[var(--gp-ok-ink)]">
                     ↑ +{((weeklyComparison[1].value - weeklyComparison[0].value) / Math.max(weeklyComparison[0].value, 1) * 100).toFixed(0)}% vs semana anterior
                   </span>
                 ) : weeklyComparison[1].value < weeklyComparison[0].value ? (
-                  <span className="text-red-600">
+                  <span className="text-[var(--gp-danger-ink)]">
                     ↓ {((weeklyComparison[1].value - weeklyComparison[0].value) / Math.max(weeklyComparison[0].value, 1) * 100).toFixed(0)}% vs semana anterior
                   </span>
                 ) : (

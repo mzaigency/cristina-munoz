@@ -163,7 +163,7 @@ export function AdminSubNav({
                   <Icon className="h-3.5 w-3.5 shrink-0" />
                   <span>{item.label}</span>
                   {locked && (
-                    <span className="text-[10px] font-semibold text-amber-600">Pro</span>
+                    <span className="text-[10px] font-semibold text-[var(--gp-warn-ink)]">Pro</span>
                   )}
                   {badge > 0 && !isActive && (
                     <span className="gp-subtab-count">{badge}</span>

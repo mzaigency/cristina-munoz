@@ -220,7 +220,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Euro className="h-4 w-4 text-green-600" />
+              <Euro className="h-4 w-4 text-[var(--gp-ok-ink)]" />
               Facturación
             </CardTitle>
           </CardHeader>
@@ -248,7 +248,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
                 <Progress value={getProgressPercent(progress.revenue, goals.revenue_goal)} className="h-2" />
                 
                 {goals.revenue_goal > 0 && (
-                  <div className={`flex items-center gap-1 mt-2 text-xs ${revenuePrediction.onTrack ? 'text-green-600' : 'text-amber-600'}`}>
+                  <div className={`flex items-center gap-1 mt-2 text-xs ${revenuePrediction.onTrack ? 'text-[var(--gp-ok-ink)]' : 'text-[var(--gp-warn-ink)]'}`}>
                     {revenuePrediction.onTrack ? (
                       <TrendingUp className="h-3 w-3" />
                     ) : (
@@ -269,7 +269,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
+              <Calendar className="h-4 w-4 text-[var(--gp-info-ink)]" />
               Citas
             </CardTitle>
           </CardHeader>
@@ -297,7 +297,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
                 <Progress value={getProgressPercent(progress.bookings, goals.bookings_goal)} className="h-2" />
                 
                 {goals.bookings_goal > 0 && (
-                  <div className={`flex items-center gap-1 mt-2 text-xs ${bookingsPrediction.onTrack ? 'text-green-600' : 'text-amber-600'}`}>
+                  <div className={`flex items-center gap-1 mt-2 text-xs ${bookingsPrediction.onTrack ? 'text-[var(--gp-ok-ink)]' : 'text-[var(--gp-warn-ink)]'}`}>
                     {bookingsPrediction.onTrack ? (
                       <TrendingUp className="h-3 w-3" />
                     ) : (
@@ -315,7 +315,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4 text-purple-600" />
+              <Users className="h-4 w-4 text-[var(--gp-purple-ink)]" />
               Nuevos Clientes
             </CardTitle>
           </CardHeader>
@@ -351,7 +351,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
       {!isEditing && goals.revenue_goal > 0 && !revenuePrediction.onTrack && (
         <Card className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
           <CardContent className="py-3">
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+            <div className="flex items-center gap-2 text-[var(--gp-warn-ink)] ">
               <AlertTriangle className="h-4 w-4" />
               <p className="text-sm">
                 Vas por debajo del objetivo de facturación. Necesitas facturar <strong>{revenuePrediction.dailyNeeded.toFixed(0)}€/día</strong> para alcanzarlo.

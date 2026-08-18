@@ -112,7 +112,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
             )}
             {client.birthday && (
               <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Gift className="h-3 w-3 text-pink-500" />
+                <Gift className="h-3 w-3 text-[var(--gp-purple)]" />
                 {format(new Date(client.birthday + "T00:00:00"), "d MMMM", { locale: es })}
               </p>
             )}
@@ -125,17 +125,17 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
             <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
               <Avatar className="h-6 w-6">
                 {linkedProfile.avatar_url && <AvatarImage src={linkedProfile.avatar_url} />}
-                <AvatarFallback className="text-[10px] bg-green-500/20 text-green-700">
+                <AvatarFallback className="text-[10px] bg-green-500/20 text-[var(--gp-ok-ink)]">
                   {(linkedProfile.full_name || linkedProfile.email)?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-medium text-green-700">
+                <span className="text-xs font-medium text-[var(--gp-ok-ink)]">
                   {linkedProfile.username ? `@${linkedProfile.username}` : linkedProfile.full_name || linkedProfile.email}
                 </span>
               </div>
-              <UserCheck className="h-3.5 w-3.5 text-green-600 shrink-0" />
-              <span className="text-[10px] text-green-600 font-medium">Vinculado</span>
+              <UserCheck className="h-3.5 w-3.5 text-[var(--gp-ok-ink)] shrink-0" />
+              <span className="text-[10px] text-[var(--gp-ok-ink)] font-medium">Vinculado</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border">
@@ -159,7 +159,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
             <p className="text-[10px] text-muted-foreground">Visitas</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-background/60">
-            <p className="text-lg font-bold text-green-600">{(client.total_spent || 0).toFixed(0)}€</p>
+            <p className="text-lg font-bold text-[var(--gp-ok-ink)]">{(client.total_spent || 0).toFixed(0)}€</p>
             <p className="text-[10px] text-muted-foreground">Total</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-background/60">
@@ -205,7 +205,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
       {client.notes && (
         <div className="p-4 border-b">
           <div className="flex items-center gap-2 mb-2">
-            <StickyNote className="h-4 w-4 text-amber-500" />
+            <StickyNote className="h-4 w-4 text-[var(--gp-warn)]" />
             <span className="text-sm font-medium">Notas</span>
           </div>
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">{client.notes}</p>

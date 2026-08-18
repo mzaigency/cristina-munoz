@@ -2393,7 +2393,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                       const fb = (fullDayBlocksByStylist[stylist.slug] || [])[0];
                                       if (fb) handleDeleteBooking(fb);
                                     }}
-                                    className="p-1 rounded-md bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 transition-all"
+                                    className="p-1 rounded-md bg-[var(--gp-danger-soft)] text-[var(--gp-danger)] hover:bg-[var(--gp-danger-soft)] hover:text-[var(--gp-danger-ink)] transition-all"
                                     title="Desbloquear"
                                   >
                                     <Trash2 style={{ width: 11, height: 11 }} />
@@ -2667,8 +2667,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                           className={cn(
                                             "p-1 rounded-md transition-all",
                                             isCompleted
-                                              ? "bg-green-500 text-white"
-                                              : "bg-foreground/10 text-foreground/60 hover:bg-green-500 hover:text-white",
+                                              ? "bg-[var(--gp-ok)] text-white"
+                                              : "bg-foreground/10 text-foreground/60 hover:bg-[var(--gp-ok)] hover:text-white",
                                           )}
                                           title={isCompleted ? "Desmarcar" : "Completar"}
                                         >
@@ -2692,7 +2692,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                               if (isMobile) setActiveBookingActions(null);
                                               onNavigateToCash();
                                             }}
-                                            className="p-1 rounded-md bg-foreground/10 text-foreground/60 hover:bg-emerald-500 hover:text-white transition-all"
+                                            className="p-1 rounded-md bg-foreground/10 text-foreground/60 hover:bg-[var(--gp-ok)] hover:text-white transition-all"
                                             title="Cobrar"
                                           >
                                             <Banknote style={{ width: 12, height: 12 }} />
@@ -2704,7 +2704,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                             if (isMobile) setActiveBookingActions(null);
                                             handleDeleteBooking(booking);
                                           }}
-                                          className="p-1 rounded-md bg-foreground/10 text-foreground/60 hover:bg-red-500 hover:text-white transition-all"
+                                          className="p-1 rounded-md bg-foreground/10 text-foreground/60 hover:bg-[var(--gp-danger)] hover:text-white transition-all"
                                           title="Eliminar"
                                         >
                                           <Trash2 style={{ width: 12, height: 12 }} />
@@ -2720,7 +2720,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                             e.stopPropagation();
                                             handleDeleteBooking(booking);
                                           }}
-                                          className="p-1 rounded-md bg-gray-200 text-gray-500 hover:bg-red-100 hover:text-red-600 transition-all"
+                                          className="p-1 rounded-md bg-gray-200 text-gray-500 hover:bg-[var(--gp-danger-soft)] hover:text-[var(--gp-danger-ink)] transition-all"
                                           title="Desbloquear"
                                         >
                                           <Trash2 style={{ width: 12, height: 12 }} />

@@ -49,9 +49,9 @@ interface SubscriptionManagerProps {
 type PlanSlug = "starter" | "pro" | "business";
 
 const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
-  starter: { icon: <Zap className="h-5 w-5" />, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-  pro: { icon: <Crown className="h-5 w-5" />, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-  business: { icon: <Sparkles className="h-5 w-5" />, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+  starter: { icon: <Zap className="h-5 w-5" />, color: "text-[var(--gp-info)]", bgColor: "bg-blue-500/10" },
+  pro: { icon: <Crown className="h-5 w-5" />, color: "text-[var(--gp-warn)]", bgColor: "bg-amber-500/10" },
+  business: { icon: <Sparkles className="h-5 w-5" />, color: "text-[var(--gp-purple)]", bgColor: "bg-purple-500/10" },
 };
 
 const PLAN_ORDER: PlanSlug[] = ["starter", "pro", "business"];
@@ -204,7 +204,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   const getStatusBadge = () => {
     if (isTrialing) {
       return (
-        <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-[10px]">
+        <Badge className="bg-blue-500/10 text-[var(--gp-info)] border-blue-500/20 text-[10px]">
           <Clock className="h-2.5 w-2.5 mr-0.5" />
           Prueba
         </Badge>
@@ -213,7 +213,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
     if (cancelAtPeriodEnd) {
       return (
-        <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-[10px]">
+        <Badge className="bg-amber-500/10 text-[var(--gp-warn-ink)] border-amber-500/30 text-[10px]">
           <AlertCircle className="h-2.5 w-2.5 mr-0.5" />
           Se cancelará
         </Badge>
@@ -222,7 +222,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
     if (isActive) {
       return (
-        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]">
+        <Badge className="bg-emerald-500/10 text-[var(--gp-ok-ink)] border-emerald-500/30 text-[10px]">
           <CheckCircle className="h-2.5 w-2.5 mr-0.5" />
           Activo
         </Badge>
@@ -230,7 +230,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
     }
 
     return (
-      <Badge className="bg-red-500/10 text-red-600 border-red-500/30 text-[10px]">
+      <Badge className="bg-red-500/10 text-[var(--gp-danger-ink)] border-red-500/30 text-[10px]">
         <AlertCircle className="h-2.5 w-2.5 mr-0.5" />
         Expirado
       </Badge>
@@ -263,7 +263,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
       {/* Current Plan Card */}
       <Card className="relative overflow-hidden">
-        <div className={`absolute top-0 left-0 w-1 h-full ${isActive ? (cancelAtPeriodEnd ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-red-500'}`} />
+        <div className={`absolute top-0 left-0 w-1 h-full ${isActive ? (cancelAtPeriodEnd ? 'bg-[var(--gp-warn)]' : 'bg-[var(--gp-ok)]') : 'bg-[var(--gp-danger)]'}`} />
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -290,7 +290,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
                       {format(new Date(subscriptionEnd), "d MMM yyyy", { locale: es })}
                     </span>
                     {daysRemaining !== null && daysRemaining <= 7 && (
-                      <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 text-amber-600">
+                      <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 text-[var(--gp-warn-ink)]">
                         {daysRemaining} días
                       </Badge>
                     )}
@@ -304,9 +304,9 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
           {isTrialing && trialEnd && (
             <div className="mt-3 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-500" />
+                <Clock className="h-4 w-4 text-[var(--gp-info)]" />
                 <div>
-                  <p className="text-xs font-medium text-blue-600">Periodo de prueba activo</p>
+                  <p className="text-xs font-medium text-[var(--gp-info-ink)]">Periodo de prueba activo</p>
                   <p className="text-[11px] text-muted-foreground">
                     Tu prueba termina el {format(new Date(trialEnd), "d 'de' MMMM, yyyy", { locale: es })}
                   </p>
@@ -319,9 +319,9 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
           {cancelAtPeriodEnd && (
             <div className="mt-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
               <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                <AlertCircle className="h-4 w-4 text-[var(--gp-warn)] mt-0.5" />
                 <div>
-                  <p className="text-xs font-medium text-amber-600">Cancelación programada</p>
+                  <p className="text-xs font-medium text-[var(--gp-warn-ink)]">Cancelación programada</p>
                   <p className="text-[11px] text-muted-foreground">
                     Tu suscripción se cancelará al final del periodo actual. 
                     Puedes reactivarla desde el portal de gestión.

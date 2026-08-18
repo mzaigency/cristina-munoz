@@ -53,25 +53,25 @@ const TYPE_META: Record<
   review: {
     icon: Star,
     bg: "bg-amber-500/10",
-    fg: "text-amber-600",
+    fg: "text-[var(--gp-warn-ink)]",
     ring: "ring-amber-500/20",
   },
   message: {
     icon: MessageCircle,
     bg: "bg-blue-500/10",
-    fg: "text-blue-600",
+    fg: "text-[var(--gp-info-ink)]",
     ring: "ring-blue-500/20",
   },
   order: {
     icon: ShoppingCart,
     bg: "bg-emerald-500/10",
-    fg: "text-emerald-600",
+    fg: "text-[var(--gp-ok-ink)]",
     ring: "ring-emerald-500/20",
   },
   client: {
     icon: UserPlus,
     bg: "bg-purple-500/10",
-    fg: "text-purple-600",
+    fg: "text-[var(--gp-purple-ink)]",
     ring: "ring-purple-500/20",
   },
 };

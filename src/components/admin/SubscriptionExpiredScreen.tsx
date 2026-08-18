@@ -27,9 +27,9 @@ interface SubscriptionExpiredScreenProps {
 type PlanSlug = "starter" | "pro" | "business";
 
 const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
-  starter: { icon: <Zap className="h-6 w-6" />, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-  pro: { icon: <Crown className="h-6 w-6" />, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-  business: { icon: <Sparkles className="h-6 w-6" />, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+  starter: { icon: <Zap className="h-6 w-6" />, color: "text-[var(--gp-info)]", bgColor: "bg-blue-500/10" },
+  pro: { icon: <Crown className="h-6 w-6" />, color: "text-[var(--gp-warn)]", bgColor: "bg-amber-500/10" },
+  business: { icon: <Sparkles className="h-6 w-6" />, color: "text-[var(--gp-purple)]", bgColor: "bg-purple-500/10" },
 };
 
 export function SubscriptionExpiredScreen({ 
@@ -78,7 +78,7 @@ export function SubscriptionExpiredScreen({
           {/* Warning Icon */}
           <div className="flex justify-center">
             <div className="p-4 rounded-full bg-amber-500/10">
-              <AlertTriangle className="h-12 w-12 text-amber-500" />
+              <AlertTriangle className="h-12 w-12 text-[var(--gp-warn)]" />
             </div>
           </div>
 

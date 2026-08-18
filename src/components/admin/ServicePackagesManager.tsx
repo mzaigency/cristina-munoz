@@ -361,7 +361,7 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
                 />
               </div>
               {discountPercentage > 0 && (
-                <p className="text-sm text-green-600 mt-2">
+                <p className="text-sm text-[var(--gp-ok-ink)] mt-2">
                   Ahorro: {discountPercentage.toFixed(0)}% ({(originalTotal - formData.package_price).toFixed(2)}€)
                 </p>
               )}

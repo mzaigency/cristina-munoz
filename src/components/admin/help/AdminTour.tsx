@@ -699,7 +699,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-[15px] font-semibold leading-tight text-foreground">{step.title}</h3>
                       {locked && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gp-warn-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--gp-warn-ink)] dark:bg-amber-950/50 ">
                           <Lock className="h-2.5 w-2.5" />
                           {step.requiredPlan === "business" ? "Business" : "Pro"}
                         </span>
