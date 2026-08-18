@@ -3,14 +3,14 @@
  * Deriva de la identidad Glowapp (azul + púrpura) con acentos suaves,
  * para que ninguna sección invente colores propios.
  */
-export const GP_CHART_COLORS = [
+export const GP_CHART_COLORS: string[] = [
   "#22408b", // azul marca
   "#99329a", // púrpura marca
   "#4A7FD1", // azul claro
   "#16A249", // verde éxito
   "#E0A63C", // ámbar aviso
   "#8A8FA3", // gris neutro
-] as const;
+];
 
 export const GP_CHART = {
   primary: "#22408b",
@@ -28,7 +28,7 @@ export const GP_CHART = {
  * Derivados de la marca (azul → púrpura) más acentos suaves,
  * para que la agenda no mezcle azules genéricos de Tailwind.
  */
-export const GP_STYLIST_COLORS = [
+export const GP_STYLIST_COLORS: string[] = [
   "#22408b", // azul marca
   "#99329a", // púrpura marca
   "#4A7FD1", // azul claro
@@ -37,4 +37,4 @@ export const GP_STYLIST_COLORS = [
   "#E0A63C", // ámbar
   "#C9764D", // terracota
   "#5B6B8C", // azul grisáceo
-] as const;
+];
