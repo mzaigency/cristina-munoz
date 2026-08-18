@@ -72,8 +72,11 @@ const Email = ({
       <Section style={s.ctaWrap}>
         <Button style={s.button} href={acceptUrl}>Confirmar este hueco</Button>
       </Section>
-      <Text style={{ ...s.muted, textAlign: 'center' as const, margin: '12px 0 24px' }}>
+      <Text style={{ ...s.muted, textAlign: 'center' as const, margin: '12px 0 4px' }}>
         Reservado para ti durante {expiresIn}. Si no lo confirmas, pasará a la siguiente persona.
+      </Text>
+      <Text style={{ ...s.muted, textAlign: 'center' as const, margin: '0 0 24px' }}>
+        ¿No te va bien? Puedes rechazarlo desde el mismo enlace y seguirás en la lista de espera.
       </Text>
     </Section>
   </BrandEmail>
