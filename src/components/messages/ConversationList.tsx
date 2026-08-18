@@ -144,7 +144,9 @@ export function ConversationList({
       >
         {filteredConversations.length === 0 ? (
           <div className="msg-list-empty">
-            <p className="msg-list-empty-text">Sin resultados para «{searchTerm}»</p>
+            <p className="msg-list-empty-text">
+              {searchTerm ? `Sin resultados para «${searchTerm}»` : 'No hay conversaciones aquí'}
+            </p>
           </div>
         ) : (
           filteredConversations.map((conv, index) => {
