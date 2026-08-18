@@ -1486,7 +1486,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
               className="gh-glow"
               style={{
                 background:
-                  "radial-gradient(120% 140% at 88% -10%, color-mix(in oklab, #4361ee, transparent 78%), transparent 60%)",
+                  "radial-gradient(120% 140% at 88% -10%, color-mix(in oklab, var(--gp-accent), transparent 78%), transparent 60%)",
               }}
             />
             <div className="gh-date">
@@ -1516,13 +1516,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         cy={SIZE / 2}
                         r={R}
                         fill="none"
-                        stroke="#4361ee"
                         strokeWidth={SW}
                         strokeLinecap="round"
                         strokeDasharray={circ}
                         strokeDashoffset={offset}
                         transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
-                        style={{ transition: "stroke-dashoffset .6s cubic-bezier(.3,.9,.3,1)" }}
+                        style={{ stroke: "var(--gp-accent)", transition: "stroke-dashoffset .6s cubic-bezier(.3,.9,.3,1)" }}
+
                       />
                     </svg>
                     <div
@@ -1540,7 +1540,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                     </div>
                   </div>
                   <div className="gh-occ">
-                    <span className="gh-occ-pct" style={{ color: "#4361ee" }}>
+                    <span className="gh-occ-pct" style={{ color: "var(--gp-accent)" }}>
                       {Math.round(occPct * 100)}%
                     </span>
                     <span className="gh-occ-lbl">ocupación</span>
@@ -1557,7 +1557,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   <div className="gh-stat">
                     <span className="gh-stat-num">{heroPending}</span>
                     <span className="gh-stat-lbl">
-                      <span className="gh-stat-dot" style={{ background: "#4361ee" }} />
+                      <span className="gh-stat-dot" style={{ background: "var(--gp-accent)" }} />
                       pendientes
                     </span>
                   </div>
@@ -1566,7 +1566,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   <span className="gh-next-lbl">Próxima cita</span>
                   {heroNext ? (
                     <>
-                      <span className="gh-next-time" style={{ color: "#4361ee" }}>
+                      <span className="gh-next-time" style={{ color: "var(--gp-accent)" }}>
                         {heroNext.Hora.slice(0, 5)}
                       </span>
                       <span className="gh-next-client">{heroNext.customer_name}</span>
@@ -1593,13 +1593,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           <span className="wk-month">{format(weekStart, "MMMM yyyy", { locale: es })}</span>
           <button
             className="wk-today"
-            style={{ color: "#4361ee" }}
+            style={{ color: "var(--gp-accent)" }}
             onClick={() => {
               setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
               setActiveTab(format(new Date(), "yyyy-MM-dd"));
             }}
           >
-            <span className="wk-today-dot" style={{ background: "#4361ee" }} />
+            <span className="wk-today-dot" style={{ background: "var(--gp-accent)" }} />
             Volver a hoy
           </button>
         </div>
@@ -1644,7 +1644,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 >
                   <span className="wk-name">{format(day, "EEE", { locale: es }).toUpperCase()}</span>
                   <span className="wk-num">{format(day, "d")}</span>
-                  {isToday && !isOn && <span className="wk-today-pip" style={{ background: "#4361ee" }} />}
+                  {isToday && !isOn && <span className="wk-today-pip" style={{ background: "var(--gp-accent)" }} />}
                   {isClosed ? (
                     <span className="wk-closed-tag">
                       <Ban style={{ width: 11, height: 11 }} />
@@ -1654,7 +1654,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                       <span className="wk-bar">
                         <span
                           className="wk-bar-fill"
-                          style={{ width: `${20 + pct * 80}%`, background: isOn ? "rgba(255,255,255,.9)" : "#4361ee" }}
+                          style={{ width: `${20 + pct * 80}%`, background: isOn ? "rgba(255,255,255,.9)" : "var(--gp-accent)" }}
                         />
                       </span>
                       <span className="wk-count" style={{ display: "flex", alignItems: "center", gap: 3 }}>
@@ -1808,7 +1808,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   </p>
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <p style={{ fontSize: 15, fontWeight: 800, color: "#4361ee" }}>{result.Hora.slice(0, 5)}</p>
+                  <p style={{ fontSize: 15, fontWeight: 800, color: "var(--gp-accent)" }}>{result.Hora.slice(0, 5)}</p>
                   <p style={{ fontSize: 12, color: "oklch(0.62 0.015 265)" }}>
                     {format(parseISO(result.Fecha), "d MMM", { locale: es })}
                   </p>
@@ -2273,8 +2273,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                         top: Math.max(0, topDrag),
                                         height: hDrag,
                                         borderRadius: 10,
-                                        background: "#4361ee20",
-                                        border: "2px dashed #4361ee80",
+                                        background: "color-mix(in oklab, var(--gp-accent), transparent 88%)",
+                                        border: "2px dashed color-mix(in oklab, var(--gp-accent), transparent 50%)",
                                         pointerEvents: "none",
                                         zIndex: 40,
                                         display: "flex",
@@ -2286,7 +2286,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                         style={{
                                           fontSize: 12,
                                           fontWeight: 700,
-                                          color: "#4361ee",
+                                          color: "var(--gp-accent)",
                                           background: "white",
                                           padding: "2px 8px",
                                           borderRadius: 6,
@@ -2450,10 +2450,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                       cursor: isBlocked ? "default" : "grab",
                                       opacity: isDragging ? 0.4 : isCompleted ? 0.72 : 1,
                                       boxShadow: isHighlighted
-                                        ? `0 0 0 2px #4361ee, 0 4px 12px -4px ${bColor}60`
+                                        ? `0 0 0 2px var(--gp-accent), 0 4px 12px -4px ${bColor}60`
                                         : `0 1px 2px rgba(20,22,40,.05)`,
                                       transition: "transform .13s, box-shadow .13s",
-                                      outline: isResizing2 ? `2px solid #4361ee` : undefined,
+                                      outline: isResizing2 ? `2px solid var(--gp-accent)` : undefined,
                                       // Los bloqueos dejan pasar hover/click a los slots de cita rápida
                                       pointerEvents: isBlocked ? "none" : undefined,
                                     }}
