@@ -376,9 +376,10 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   const proposedEntries = entries.filter((e) => e.status === "proposed");
   const conflictCount = proposedEntries.filter((e) => hasConflict(e)).length;
   const urgentCount = proposedEntries.filter((e) => getExpiry(e)?.urgent).length;
-  const historyEntries = entries.filter((e) =>
-    ["booked", "cancelled", "expired"].includes(e.status)
-  );
+  const historyEntries = entries
+    .filter((e) => ["booked", "cancelled", "expired"].includes(e.status))
+    .slice()
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const tabEntries =
     activeTab === "active"
