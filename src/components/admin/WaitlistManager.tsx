@@ -567,6 +567,19 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                       )}
                     </div>
 
+                    {activeTab === "active" && (() => {
+                      const days = Math.floor((now - new Date(entry.created_at).getTime()) / 86400000);
+                      const left = entry.preferred_date ? null : Math.max(0, 60 - days);
+                      return (
+                        <p style={{ margin: "6px 0 0", fontSize: 11.5, fontWeight: 600, color: "var(--gp-muted-c)" }}>
+                          {days === 0 ? "Apuntada hoy" : `Esperando ${days} ${days === 1 ? "día" : "días"}`}
+                          {left !== null && ` · caduca en ${left} ${left === 1 ? "día" : "días"}`}
+                        </p>
+                      );
+                    })()}
+
+
+
                     {entry.status === "proposed" && entry.proposed_date && (
                       <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--gp-info), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-ink)" }}>
                         🎯 Propuesto: {format(new Date(entry.proposed_date), "d MMM", { locale: es })} · {String(entry.proposed_time).slice(0, 5)}
