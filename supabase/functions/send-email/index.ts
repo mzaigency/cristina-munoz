@@ -16,99 +16,49 @@ const FROM_EMAIL = "GlowApp <contacto@glowapp.app>";
 const LOGO_ICON_URL = `${APP_URL}/email-assets/glowapp-icon.png`;
 const LOGO_TEXT_URL = `${APP_URL}/email-assets/glowapp-logo.png`;
 
-// Brand Colors - GlowApp Design System
+// Brand Colors - Glowapp (misma estética que el ticket de caja)
 const BRAND = {
-  // Primary gradient
-  primaryStart: "#6366F1", // Indigo
-  primaryEnd: "#8B5CF6", // Violet
-  primary: "#7C3AED", // Purple main
-
-  // Accent
-  accent: "#A855F7", // Purple lighter
-  accentSoft: "#C4B5FD", // Soft violet
-
-  // Status colors
-  success: "#10B981",
-  warning: "#F59E0B",
-  danger: "#EF4444",
-
-  // Text hierarchy
-  textPrimary: "#1E1B4B", // Deep indigo - títulos
-  textSecondary: "#4B5563", // Gray 600 - body
-  textMuted: "#6B7280", // Gray 500
-  textLight: "#9CA3AF", // Gray 400
-
-  // Backgrounds
-  bgGradientStart: "#FAF5FF", // Purple 50
-  bgGradientEnd: "#F3E8FF", // Purple 100
+  primaryStart: "#22408B",
+  primaryEnd: "#98329A",
+  primary: "#22408B",
+  success: "#0F7A47",
+  warning: "#E07A21",
+  textPrimary: "#131520",
+  textSecondary: "#4a4d5c",
+  textLight: "#8A8FA3",
+  bgGradientStart: "#F6F7FB",
+  bgGradientEnd: "#F6F7FB",
   bgCard: "#FFFFFF",
-  bgSoft: "#F5F3FF", // Violet 50
-  bgHighlight: "#EDE9FE", // Violet 100
-
-  // Others
+  bgSoft: "#F6F7FB",
+  bgHighlight: "#EEF1FA",
   white: "#FFFFFF",
-  border: "#E5E7EB",
-  borderSoft: "#DDD6FE", // Violet 200
+  border: "#ECEDF3",
+  borderSoft: "#ECEDF3",
 };
 
-// Email base wrapper con gradiente de fondo
+const GRADIENT = `linear-gradient(100deg, ${BRAND.primaryStart}, ${BRAND.primaryEnd})`;
+
+// Envoltorio: fondo gris muy claro + tarjeta blanca con barra de marca
 const emailWrapper = `
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
-  <title>GlowApp</title>
-  <!--[if mso]>
-  <noscript>
-    <xml>
-      <o:OfficeDocumentSettings>
-        <o:PixelsPerInch>96</o:PixelsPerInch>
-      </o:OfficeDocumentSettings>
-    </xml>
-  </noscript>
-  <![endif]-->
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    
-    * {
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-  </style>
+  <meta name="color-scheme" content="light only">
+  <title>Glowapp</title>
 </head>
-<body style="
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: linear-gradient(180deg, ${BRAND.bgGradientStart} 0%, ${BRAND.bgGradientEnd} 50%, ${BRAND.bgGradientStart} 100%);
-  margin: 0;
-  padding: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="min-height: 100vh;">
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${BRAND.bgGradientStart};padding:28px 12px;">
     <tr>
-      <td align="center" style="padding: 40px 16px;">
+      <td align="center">
 `;
 
 const emailContainerStart = `
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background:${BRAND.bgCard};border-radius:22px;overflow:hidden;border:1px solid ${BRAND.border};">
+          <tr><td style="height:5px;line-height:5px;font-size:0;background:${BRAND.primaryStart};background-image:${GRADIENT};">&nbsp;</td></tr>
           <tr>
-            <td style="
-              background: ${BRAND.bgCard};
-              border-radius: 28px;
-              padding: 48px 40px;
-              box-shadow: 
-                0 0 0 1px rgba(124, 58, 237, 0.05),
-                0 4px 6px -1px rgba(124, 58, 237, 0.05),
-                0 20px 40px -8px rgba(124, 58, 237, 0.12);
-            ">
+            <td style="padding:26px 28px 24px;">
 `;
 
 const emailContainerEnd = `
@@ -125,118 +75,51 @@ const emailFooterWrapper = `
 </html>
 `;
 
-// Logo header con imagotipo y tipográfico
+// Cabecera con el logotipo de Glowapp
 const logoHeader = `
-          <tr>
-            <td align="center">
-              <!-- Logotipo tipográfico -->
-              <img 
-                src="${LOGO_TEXT_URL}" 
-                width="130" 
-                height="auto" 
-                alt="GlowApp" 
-                style="display: block;"
-              />
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td align="center" style="padding-bottom:18px;">
+                <img src="${LOGO_TEXT_URL}" width="128" height="auto" alt="Glowapp" style="display:block;">
+              </td>
+            </tr>
+          </table>
 `;
 
-// Footer del email
 const emailFooter = `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 36px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:26px;">
     <tr>
-      <td style="padding-top: 28px; border-top: 1px solid ${BRAND.border};">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td align="center" style="padding-bottom: 16px;">
-              <img 
-                src="${LOGO_ICON_URL}" 
-                width="32" 
-                height="32" 
-                alt="GlowApp" 
-                style="display: block; border-radius: 8px; opacity: 0.8;"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td align="center">
-              <p style="color: ${BRAND.textLight}; font-size: 13px; margin: 0 0 8px; line-height: 1.5;">
-                © ${new Date().getFullYear()} GlowApp. Todos los derechos reservados.
-              </p>
-              <p style="color: ${BRAND.textLight}; font-size: 12px; margin: 0; line-height: 1.5;">
-                Enviado con 💜 desde 
-                <a href="${APP_URL}" style="color: ${BRAND.primary}; text-decoration: none; font-weight: 500;">glowapp.app</a>
-              </p>
-            </td>
-          </tr>
-        </table>
+      <td align="center" style="padding-top:18px;border-top:1px solid ${BRAND.border};">
+        <p style="color:#A2A6B6;font-size:11px;margin:0;line-height:1.6;">
+          Enviado con <a href="${APP_URL}" style="color:${BRAND.primary};text-decoration:none;font-weight:700;">Glowapp</a> · reservas y gestión para tu salón
+        </p>
       </td>
     </tr>
   </table>
 `;
 
-// Botón con gradiente
-const button = (text: string, href: string, variant: "primary" | "warning" = "primary") => {
-  const bgGradient =
-    variant === "primary"
-      ? `linear-gradient(135deg, ${BRAND.primaryStart} 0%, ${BRAND.primaryEnd} 100%)`
-      : `linear-gradient(135deg, ${BRAND.warning} 0%, #F97316 100%)`;
-
-  const shadowColor = variant === "primary" ? "rgba(99, 102, 241, 0.35)" : "rgba(245, 158, 11, 0.35)";
-
-  return `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
+// Botón píldora con gradiente de marca
+const button = (text: string, href: string, _variant: "primary" | "warning" = "primary") => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0;">
     <tr>
       <td align="center">
-        <a href="${href}" target="_blank" style="
-          display: inline-block;
-          background: ${bgGradient};
-          color: ${BRAND.white};
-          padding: 16px 44px;
-          border-radius: 14px;
-          text-decoration: none;
-          font-weight: 700;
-          font-size: 15px;
-          letter-spacing: -0.01em;
-          box-shadow: 0 8px 20px -4px ${shadowColor};
-          transition: transform 0.2s;
-        ">
+        <a href="${href}" target="_blank" style="display:inline-block;background:${BRAND.primaryStart};background-image:${GRADIENT};color:${BRAND.white};padding:13px 30px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;">
           ${text}
         </a>
       </td>
     </tr>
   </table>
 `;
-};
 
-// Badge/chip
+// Píldora sobria (no gradiente) como en el ticket
 const badge = (text: string, variant: "primary" | "success" | "warning" = "primary") => {
-  const bgGradient =
-    variant === "primary"
-      ? `linear-gradient(135deg, ${BRAND.primaryStart} 0%, ${BRAND.primaryEnd} 100%)`
-      : variant === "success"
-        ? `linear-gradient(135deg, ${BRAND.success} 0%, #059669 100%)`
-        : `linear-gradient(135deg, ${BRAND.warning} 0%, #F97316 100%)`;
-
+  const bg = variant === "success" ? "#E8F7EF" : variant === "warning" ? "#FDF1E3" : BRAND.bgHighlight;
+  const fg = variant === "success" ? BRAND.success : variant === "warning" ? BRAND.warning : BRAND.primary;
   return `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
     <tr>
       <td align="center">
-        <span style="
-          display: inline-block;
-          background: ${bgGradient};
-          color: ${BRAND.white};
-          padding: 10px 24px;
-          border-radius: 100px;
-          font-weight: 700;
-          font-size: 13px;
-          letter-spacing: 0.02em;
-          text-transform: uppercase;
-        ">
+        <span style="display:inline-block;background:${bg};color:${fg};padding:5px 14px;border-radius:999px;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;">
           ${text}
         </span>
       </td>
@@ -245,58 +128,37 @@ const badge = (text: string, variant: "primary" | "success" | "warning" = "prima
 `;
 };
 
-// Caja de información
 const infoBox = (content: string) => `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 28px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0;">
     <tr>
-      <td style="
-        background: ${BRAND.bgSoft};
-        border-radius: 18px;
-        padding: 28px;
-        border: 1px solid ${BRAND.borderSoft};
-      ">
+      <td style="background:${BRAND.bgSoft};border-radius:16px;padding:20px;">
         ${content}
       </td>
     </tr>
   </table>
 `;
 
-// Caja de advertencia
 const warningBox = (title: string, items: string[]) => `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0;">
     <tr>
-      <td style="
-        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-        border-radius: 16px;
-        padding: 22px;
-        border: 1px solid #FCD34D;
-      ">
-        <p style="color: #92400E; font-weight: 700; margin: 0 0 12px; font-size: 14px; letter-spacing: -0.01em;">${title}</p>
-        ${items.map((item) => `<p style="color: #92400E; font-size: 13px; margin: 4px 0; line-height: 1.5;">• ${item}</p>`).join("")}
+      <td style="background:${BRAND.bgSoft};border-radius:16px;padding:18px 20px;border-left:3px solid ${BRAND.warning};">
+        <p style="color:${BRAND.textPrimary};font-weight:700;margin:0 0 8px;font-size:14px;">${title}</p>
+        ${items.map((item) => `<p style="color:${BRAND.textSecondary};font-size:13px;margin:4px 0;line-height:1.55;">• ${item}</p>`).join("")}
       </td>
     </tr>
   </table>
 `;
 
-// Feature item con icono
 const featureItem = (emoji: string, text: string) => `
   <tr>
-    <td style="padding: 10px 0;">
-      <table role="presentation" cellpadding="0" cellspacing="0">
+    <td style="padding:8px 0;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td style="vertical-align: middle; padding-right: 14px;">
-            <div style="
-              background: linear-gradient(135deg, ${BRAND.primaryStart} 0%, ${BRAND.primaryEnd} 100%);
-              width: 40px;
-              height: 40px;
-              border-radius: 12px;
-              text-align: center;
-              line-height: 40px;
-              font-size: 18px;
-            ">${emoji}</div>
+          <td style="vertical-align:middle;padding-right:12px;">
+            <div style="background:${BRAND.primaryStart};background-image:${GRADIENT};width:34px;height:34px;border-radius:11px;text-align:center;line-height:34px;font-size:16px;">${emoji}</div>
           </td>
-          <td style="vertical-align: middle;">
-            <span style="color: ${BRAND.textSecondary}; font-size: 14px; line-height: 1.4;">${text}</span>
+          <td style="vertical-align:middle;">
+            <span style="color:${BRAND.textSecondary};font-size:14px;line-height:1.45;">${text}</span>
           </td>
         </tr>
       </table>
@@ -304,15 +166,6 @@ const featureItem = (emoji: string, text: string) => `
   </tr>
 `;
 
-type EmailType = "welcome" | "password-reset" | "email-verification";
-
-interface EmailRequest {
-  type: EmailType;
-  to: string;
-  data: Record<string, unknown>;
-}
-
-// ============ EMAIL TEMPLATES ============
 
 const templates = {
   "email-verification": (data: { userName?: string; confirmationUrl: string }) => ({
