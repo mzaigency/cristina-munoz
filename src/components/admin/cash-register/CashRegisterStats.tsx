@@ -250,13 +250,13 @@ export const CashRegisterStats = () => {
         <Card>
           <CardContent className="p-2.5 sm:p-4">
             <p className="text-[10px] sm:text-xs text-muted-foreground">Propinas</p>
-            <p className="text-base sm:text-xl font-bold text-pink-600 truncate">{formatCurrency(totals.tips)}</p>
+            <p className="text-base sm:text-xl font-bold text-[var(--gp-purple-ink)] truncate">{formatCurrency(totals.tips)}</p>
           </CardContent>
         </Card>
         <Card className="col-span-2 sm:col-span-1">
           <CardContent className="p-2.5 sm:p-4">
             <p className="text-[10px] sm:text-xs text-muted-foreground">Descuentos</p>
-            <p className="text-base sm:text-xl font-bold text-orange-600 truncate">-{formatCurrency(totals.discounts)}</p>
+            <p className="text-base sm:text-xl font-bold text-[var(--gp-warn-ink)] truncate">-{formatCurrency(totals.discounts)}</p>
           </CardContent>
         </Card>
       </div>
@@ -397,7 +397,7 @@ export const CashRegisterStats = () => {
                             <td className="text-right">{s.transactions}</td>
                             <td className="text-right">{s.services}</td>
                             <td className="text-right">{formatCurrency(s.avgTicket)}</td>
-                            <td className="text-right text-pink-600">{formatCurrency(s.tips)}</td>
+                            <td className="text-right text-[var(--gp-purple-ink)]">{formatCurrency(s.tips)}</td>
                           </tr>
                         ))}
                       </tbody>

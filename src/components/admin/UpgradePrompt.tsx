@@ -103,7 +103,7 @@ export const UpgradePrompt = ({
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg"
+          className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--gp-warn)] to-[var(--gp-warn-ink)] flex items-center justify-center shadow-lg"
         >
           <Crown className="w-8 h-8 text-white" />
         </motion.div>
@@ -149,8 +149,8 @@ export const UpgradePrompt = ({
               transition={{ delay: index * 0.05 }}
               className="flex items-center gap-2 text-sm"
             >
-              <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
+              <div className="w-5 h-5 rounded-full bg-[var(--gp-ok-soft)]  flex items-center justify-center flex-shrink-0">
+                <Check className="w-3 h-3 text-[var(--gp-ok-ink)] " />
               </div>
               <span className="text-foreground">{feat}</span>
             </motion.div>

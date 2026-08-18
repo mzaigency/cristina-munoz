@@ -247,7 +247,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
                             />
                             <span className="flex-1">{b.text}</span>
                             {locked && (
-                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 uppercase">
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[var(--gp-warn-soft)] text-[var(--gp-warn-ink)]   uppercase">
                                 <Lock className="h-2 w-2" />
                                 {b.requiredPlan === "business" ? "Biz" : "Pro"}
                               </span>

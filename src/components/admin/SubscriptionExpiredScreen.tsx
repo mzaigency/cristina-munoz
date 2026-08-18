@@ -27,9 +27,9 @@ interface SubscriptionExpiredScreenProps {
 type PlanSlug = "starter" | "pro" | "business";
 
 const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
-  starter: { icon: <Zap className="h-6 w-6" />, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-  pro: { icon: <Crown className="h-6 w-6" />, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-  business: { icon: <Sparkles className="h-6 w-6" />, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+  starter: { icon: <Zap className="h-6 w-6" />, color: "text-[var(--gp-info)]", bgColor: "bg-[var(--gp-info-soft)]" },
+  pro: { icon: <Crown className="h-6 w-6" />, color: "text-[var(--gp-warn)]", bgColor: "bg-[var(--gp-warn-soft)]" },
+  business: { icon: <Sparkles className="h-6 w-6" />, color: "text-[var(--gp-purple)]", bgColor: "bg-[var(--gp-purple-soft)]" },
 };
 
 export function SubscriptionExpiredScreen({ 
@@ -77,8 +77,8 @@ export function SubscriptionExpiredScreen({
         <div className="w-full max-w-md space-y-6">
           {/* Warning Icon */}
           <div className="flex justify-center">
-            <div className="p-4 rounded-full bg-amber-500/10">
-              <AlertTriangle className="h-12 w-12 text-amber-500" />
+            <div className="p-4 rounded-full bg-[var(--gp-warn-soft)]">
+              <AlertTriangle className="h-12 w-12 text-[var(--gp-warn)]" />
             </div>
           </div>
 
@@ -91,7 +91,7 @@ export function SubscriptionExpiredScreen({
           </div>
 
           {/* What's affected */}
-          <Card className="border-amber-500/30 bg-amber-500/5">
+          <Card className="border-[var(--gp-warn)] bg-[var(--gp-warn-soft)]">
             <CardContent className="p-4">
               <h3 className="font-medium text-sm mb-2">Sin suscripción activa:</h3>
               <ul className="text-sm text-muted-foreground space-y-1">

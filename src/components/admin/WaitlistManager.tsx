@@ -615,13 +615,13 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                   </SelectItem>
                   <SelectItem value="1">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      <span className="w-2 h-2 rounded-full bg-[var(--gp-warn)]" />
                       Media
                     </span>
                   </SelectItem>
                   <SelectItem value="2">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-500" />
+                      <span className="w-2 h-2 rounded-full bg-[var(--gp-danger)]" />
                       Alta
                     </span>
                   </SelectItem>

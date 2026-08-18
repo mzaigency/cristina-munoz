@@ -196,21 +196,21 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
           title="Impresiones"
           value={loading ? "—" : totals.impressions.toLocaleString()}
           icon={Eye}
-          gradient="bg-gradient-to-br from-blue-500 to-indigo-600"
+          gradient="bg-gradient-to-br from-[var(--gp-info)] to-[var(--gp-info-ink)]"
         />
         <KPI
           title="Clics"
           value={loading ? "—" : totals.clicks.toLocaleString()}
           sub={`CTR ${pct(totals.clicks, totals.impressions)}`}
           icon={MousePointerClick}
-          gradient="bg-gradient-to-br from-amber-500 to-orange-600"
+          gradient="bg-gradient-to-br from-[var(--gp-warn)] to-[var(--gp-warn-ink)]"
         />
         <KPI
           title="Reservas"
           value={loading ? "—" : totals.conversions.toLocaleString()}
           sub={`CVR ${pct(totals.conversions, totals.clicks)}`}
           icon={Sparkles}
-          gradient="bg-gradient-to-br from-emerald-500 to-green-600"
+          gradient="bg-gradient-to-br from-[var(--gp-ok)] to-[var(--gp-ok-ink)]"
         />
         <KPI
           title="Conv. global"
@@ -219,7 +219,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
           }
           sub="reservas / impresiones"
           icon={Trophy}
-          gradient="bg-gradient-to-br from-purple-500 to-pink-600"
+          gradient="bg-gradient-to-br from-[var(--gp-purple)] to-[var(--gp-purple-ink)]"
         />
       </div>
 
@@ -318,7 +318,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                         <td className="p-2.5 text-right tabular-nums">
                           {r.conversions.toLocaleString()}
                         </td>
-                        <td className="p-2.5 text-right tabular-nums font-semibold text-emerald-600">
+                        <td className="p-2.5 text-right tabular-nums font-semibold text-[var(--gp-ok-ink)]">
                           {r.cvr}%
                         </td>
                       </tr>
