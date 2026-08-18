@@ -330,14 +330,15 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
             <Plus className="h-4 w-4" />
           </button>
         </header>
+        {filterTabs}
         <ConversationList
-          conversations={conversations}
+          conversations={visibleConversations}
           loading={loadingConversations}
           selectedId={selectedConversation?.id || null}
           onSelect={setSelectedConversation}
           role="salon"
           onToggleUnread={handleToggleUnread}
-
+          preferHumanPreview={tab === 'personas'}
         />
         <div className="msg-sidebar-hint">
           <span>
