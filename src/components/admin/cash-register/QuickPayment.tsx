@@ -496,20 +496,46 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         .single();
       if (error) throw error;
 
+      // Email de la clienta: el escrito a mano manda; si no, lo buscamos en su
+      // ficha (por teléfono de la cita o por nombre) para enviarlo solo.
+      let resolvedEmail = customerEmail.trim();
+      if (!resolvedEmail) {
+        try {
+          const booking = todayBookings.find((b) => b.id === selectedBookingId);
+          let clientQuery = supabase
+            .from("clients")
+            .select("email")
+            .eq("tenant_id", tenantId)
+            .not("email", "is", null)
+            .limit(1);
+          if (booking?.Telefono) {
+            clientQuery = clientQuery.eq("phone", booking.Telefono);
+          } else if (customerName.trim()) {
+            clientQuery = clientQuery.ilike("name", customerName.trim());
+          } else {
+            clientQuery = null as never;
+          }
+          if (clientQuery) {
+            const { data: client } = await clientQuery.maybeSingle();
+            if (client?.email) resolvedEmail = client.email;
+          }
+        } catch (clientError) {
+          console.error("client email lookup", clientError);
+        }
+      }
+
       // Enlace de valoración de un solo uso: la clienta de mostrador no tiene
       // cuenta, así que el permiso se lo da este token, no una sesión.
       let reviewUrl: string | null = null;
       try {
-        // `as any`: los tipos generados de Supabase aún no incluyen la tabla
-        // (se regeneran al aplicar la migración 20260729140000_review_invites)
-        const { data: invite } = await (supabase as any)
+        const { data: invite } = await supabase
           .from("review_invites")
           .insert({
             tenant_id: tenantId,
             transaction_id: (inserted as any)?.id ?? null,
             booking_id: selectedBookingId || null,
             customer_name: customerName.trim() || null,
-            customer_email: customerEmail.trim() || null,
+            customer_email: resolvedEmail || null,
           })
           .select("token")
           .single();
@@ -518,6 +544,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         // Que falle la invitación no puede tumbar el cobro
         console.error("review invite", inviteError);
       }
+
 
       // If this was from a booking, mark it as completed and charged
       if (selectedBookingId) {
