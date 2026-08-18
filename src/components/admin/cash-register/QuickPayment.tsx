@@ -585,16 +585,30 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
       // Fiscal data is no longer saved to database
 
-      setLastTransaction({
+      const txSnapshot = {
         ...transactionData,
         stylistName: selectedStylist?.name || "Estilista",
         items: servicesData,
         grandTotal,
-        customerEmail,
+        customerEmail: resolvedEmail,
         wantsInvoice,
         invoiceData,
         reviewUrl,
-      });
+        autoSent: false as boolean,
+      };
+
+      // Si ya tenemos su email, el ticket se envía solo: la peluquera no hace nada
+      if (resolvedEmail) {
+        txSnapshot.autoSent = true;
+        void postTicket(txSnapshot, resolvedEmail)
+          .then(() => toast({ title: "Ticket enviado por email ✉️" }))
+          .catch((e) => {
+            console.error("auto ticket", e);
+            toast({ title: "No se pudo enviar el ticket automáticamente", variant: "destructive" });
+          });
+      }
+
+      setLastTransaction(txSnapshot);
 
       setPayOpen(false);
       setShowSuccess(true);
@@ -611,6 +625,34 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
   const getEmailToUse = () => customerEmail || lastTransaction?.customerEmail || "";
 
+  async function postTicket(tx: any, email: string) {
+    const { error } = await supabase.functions.invoke("send-ticket", {
+      body: {
+        type: "ticket",
+        customerEmail: email,
+        customerName: tx.customer_name,
+        tenantId,
+        items: tx.items,
+        subtotal: tx.subtotal,
+        discount: tx.discount,
+        discountReason: tx.discount_reason,
+        tip: tx.tip_amount,
+        total: tx.grandTotal,
+        paymentMethod: tx.payment_method,
+        stylistName: tx.stylistName,
+        reviewUrl: tx.reviewUrl || undefined,
+        date: new Date().toLocaleDateString("es-ES", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      },
+    });
+    if (error) throw error;
+  }
+
   const sendTicketEmail = async () => {
     const email = getEmailToUse();
     if (!lastTransaction || !email) {
@@ -620,32 +662,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
     try {
       setSendingEmail(true);
-      const { data, error } = await supabase.functions.invoke("send-ticket", {
-        body: {
-          type: "ticket",
-          customerEmail: email,
-          customerName: lastTransaction.customer_name,
-          tenantId,
-          items: lastTransaction.items,
-          subtotal: lastTransaction.subtotal,
-          discount: lastTransaction.discount,
-          discountReason: lastTransaction.discount_reason,
-          tip: lastTransaction.tip_amount,
-          total: lastTransaction.grandTotal,
-          paymentMethod: lastTransaction.payment_method,
-          stylistName: lastTransaction.stylistName,
-          reviewUrl: lastTransaction.reviewUrl || undefined,
-          date: new Date().toLocaleDateString("es-ES", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        },
-      });
-
-      if (error) throw error;
+      await postTicket(lastTransaction, email);
       toast({ title: "Ticket enviado por email ✉️" });
       setShowSuccess(false);
     } catch (error) {
@@ -655,6 +672,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       setSendingEmail(false);
     }
   };
+
 
   const downloadInvoicePdf = async () => {
     if (!lastTransaction || !tenantData) return;
